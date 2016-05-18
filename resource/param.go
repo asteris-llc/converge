@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package module
+package resource
 
 // Param is essentially the calling arguments of a module
 type Param struct {

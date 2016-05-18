@@ -12,13 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package module
+package parse
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"bytes"
+	"fmt"
 
-// Module is the container for tasks and is the basic compositional unit of the
-// system.
-type Module struct {
-	Params    map[string]*Param `hcl:"param"`
-	Resources []resource.Resource
+	"github.com/hashicorp/hcl/hcl/token"
+)
+
+// ParseError is returned for errors in parsing the AST into a config.
+type ParseError struct {
+	Pos     token.Pos
+	Message string
+}
+
+func (err *ParseError) Error() string {
+	return fmt.Sprintf("At %s: %s", err.Pos, err.Message)
+}
+
+// MultiError combines multiple errors into one
+type MultiError []error
+
+func (err MultiError) Error() string {
+	max := len(err) - 1
+	var b bytes.Buffer
+	for i, e := range err {
+		b.Write([]byte(e.Error()))
+		if i != max {
+			b.WriteByte('\n')
+		}
+	}
+	return b.String()
 }

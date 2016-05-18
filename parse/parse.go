@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package module
+package parse
 
 import (
 	"fmt"
@@ -23,9 +23,9 @@ import (
 )
 
 // New parses a module and returns it
-func New(content []byte) (*Module, error) {
-	module := &Module{
-		Params: map[string]*Param{},
+func New(content []byte) (*resource.Module, error) {
+	module := &resource.Module{
+		Params: map[string]*resource.Param{},
 	}
 	var errs MultiError
 
@@ -76,7 +76,7 @@ func New(content []byte) (*Module, error) {
 	return module, errs
 }
 
-func parseParam(item *ast.ObjectItem) (id string, p *Param, err error) {
+func parseParam(item *ast.ObjectItem) (id string, p *resource.Param, err error) {
 	/*
 		ideal input:
 
@@ -89,7 +89,7 @@ func parseParam(item *ast.ObjectItem) (id string, p *Param, err error) {
 
 	id = item.Keys[1].Token.Value().(string)
 
-	p = new(Param)
+	p = new(resource.Param)
 	err = hcl.DecodeObject(p, item.Val)
 	return
 }
