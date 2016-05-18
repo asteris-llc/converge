@@ -14,21 +14,29 @@
 
 package resource
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, error) // TODO: calling args
+// Template is a task defined by content and a destination
+type Template struct {
+	TemplateName string
+	Content      string `hcl:"content"`
+	Destination  string `hcl:"destination"`
 }
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() error // TODO: calling args
+// Name returns the name of this template
+func (t *Template) Name() string {
+	return t.TemplateName
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Task
-	Name() string
-	Validate() error
+// Validate validates the template config
+func (t *Template) Validate() error {
+	return nil
+}
+
+// Check satisfies the Monitor interface
+func (t *Template) Check() (string, error) {
+	return "", nil
+}
+
+// Apply (plus Check) satisfies the Task interface
+func (t *Template) Apply() error {
+	return nil
 }

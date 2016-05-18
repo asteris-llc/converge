@@ -16,9 +16,19 @@ package resource
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	Name        string
+	TaskName    string
 	CheckSource string `hcl:"check"`
 	ApplySource string `hcl:"apply"`
+}
+
+// Name returns name for metadata
+func (st *ShellTask) Name() string {
+	return st.TaskName
+}
+
+// Validate checks shell tasks validity
+func (st *ShellTask) Validate() error {
+	return nil
 }
 
 // Check satisfies the Monitor interface
