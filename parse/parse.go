@@ -24,17 +24,21 @@ import (
 
 // New parses a module and returns it
 func New(content []byte) (*resource.Module, error) {
-	module := &resource.Module{
-		Params: map[string]*resource.Param{},
-	}
-	var errs MultiError
-
 	f, err := hcl.ParseBytes(content)
 	if err != nil {
 		return nil, err
 	}
 
-	ast.Walk(f.Node, func(n ast.Node) (ast.Node, bool) {
+	return parseModule(f.Node)
+}
+
+func parseModule(node ast.Node) (*resource.Module, error) {
+	module := &resource.Module{
+		Params: map[string]*resource.Param{},
+	}
+	var errs MultiError
+
+	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
 		if item, ok := n.(*ast.ObjectItem); ok {
 			switch item.Keys[0].Token.Text {
 			case "param":
@@ -61,6 +65,14 @@ func New(content []byte) (*resource.Module, error) {
 					errs = append(errs, err)
 				} else {
 					module.Resources = append(module.Resources, template)
+				}
+
+			case "module":
+				call, err := parseModuleCall(item)
+				if err != nil {
+					errs = append(errs, err)
+				} else {
+					module.Resources = append(module.Resources, call)
 				}
 
 			default:
@@ -132,6 +144,29 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 	t = new(resource.Template)
 	t.TemplateName = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
+
+	return
+}
+
+func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err error) {
+	/*
+		ideal input:
+
+		module "source" "name" {
+		  args = 1
+		}
+	*/
+	if len(item.Keys) < 3 {
+		err = &ParseError{item.Pos(), "module missing source or name (expected `module \"source\" \"name\"`)"}
+		return
+	}
+
+	module = &resource.ModuleTask{
+		Args:       map[string]interface{}{},
+		Source:     item.Keys[1].Token.Value().(string),
+		ModuleName: item.Keys[2].Token.Value().(string),
+	}
+	err = hcl.DecodeObject(&module.Args, item.Val)
 
 	return
 }

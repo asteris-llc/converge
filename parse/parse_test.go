@@ -60,6 +60,15 @@ func TestNewAnonymousTemplate(t *testing.T) {
 	}
 }
 
+func TestNewModuleCall(t *testing.T) {
+	t.Parallel()
+
+	mod, err := parse.New([]byte(moduleCall))
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(mod.Resources), 1)
+}
+
 var (
 	basicModule = `
 param "filename" { }
@@ -78,4 +87,9 @@ template "test" {
 	duplicateParam = `
 param "x" {}
 param "x" {}`
+
+	moduleCall = `
+module "x" "y" {
+  arg1 = "z"
+}`
 )
