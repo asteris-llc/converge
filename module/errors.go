@@ -14,11 +14,34 @@
 
 package module
 
-// Task is a task that will be run on the system
-type Task struct {
-	Add     string   `hcl:"add"`
-	Remove  string   `hcl:"remove"`
-	Result  string   `hcl:"result"`
-	Status  string   `hcl:"status"`
-	Depends []string `hcl:"depends"`
+import (
+	"bytes"
+	"fmt"
+
+	"github.com/hashicorp/hcl/hcl/token"
+)
+
+// ParseError is returned for errors in parsing the AST into a config.
+type ParseError struct {
+	Pos     token.Pos
+	Message string
+}
+
+func (err *ParseError) Error() string {
+	return fmt.Sprintf("At %s: %s", err.Pos, err.Message)
+}
+
+// MultiError combines multiple errors into one
+type MultiError []error
+
+func (err MultiError) Error() string {
+	max := len(err) - 1
+	var b bytes.Buffer
+	for i, e := range err {
+		b.Write([]byte(e.Error()))
+		if i != max {
+			b.WriteByte('\n')
+		}
+	}
+	return b.String()
 }

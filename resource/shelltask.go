@@ -12,11 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package module
+package resource
 
-// Template defines a template that will be rendered to disk
-type Template struct {
-	Destination string   `hcl:"destination"`
-	Content     string   `hcl:"content"`
-	Depends     []string `hcl:"depends"`
+// ShellTask is a task defined as two shell scripts
+type ShellTask struct {
+	Name        string
+	CheckSource string `hcl:"check"`
+	ApplySource string `hcl:"apply"`
+}
+
+// Check satisfies the Monitor interface
+func (st *ShellTask) Check() (string, error) {
+	return "", nil
+}
+
+// Apply (plus Check) satisfies the Task interface
+func (st *ShellTask) Apply() error {
+	return nil
 }

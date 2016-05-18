@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package module
+package resource
 
-import "github.com/asteris-llc/converge/resource"
+// Monitor checks if a resource is correct.
+type Monitor interface {
+	Check() (string, error) // TODO: calling args
+}
 
-// Module is the container for tasks and is the basic compositional unit of the
-// system.
-type Module struct {
-	Params    map[string]*Param `hcl:"param"`
-	Resources []resource.Task
+// Task does checking as Monitor does, but it can also make changes to make the
+// checks pass.
+type Task interface {
+	Monitor
+	Apply() error // TODO: calling args
 }
