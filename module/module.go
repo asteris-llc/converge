@@ -20,5 +20,5 @@ import "github.com/asteris-llc/converge/resource"
 // system.
 type Module struct {
 	Params    map[string]*Param `hcl:"param"`
-	Resources []resource.Task
+	Resources []resource.Resource
 }

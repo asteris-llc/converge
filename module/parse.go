@@ -55,8 +55,16 @@ func New(content []byte) (*Module, error) {
 					module.Resources = append(module.Resources, task)
 				}
 
+			case "template":
+				template, err := parseTemplate(item)
+				if err != nil {
+					errs = append(errs, err)
+				} else {
+					module.Resources = append(module.Resources, template)
+				}
+
 			default:
-				fmt.Println(item.Keys[0].Token)
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())})
 			}
 
 			return n, false
@@ -79,12 +87,7 @@ func parseParam(item *ast.ObjectItem) (id string, p *Param, err error) {
 		return
 	}
 
-	if pID, ok := item.Keys[1].Token.Value().(string); ok {
-		id = pID
-	} else {
-		err = &ParseError{item.Pos(), fmt.Sprintf("param needs a string name (have %s)", item.Keys[1].Token.Type)}
-		return
-	}
+	id = item.Keys[1].Token.Value().(string)
 
 	p = new(Param)
 	err = hcl.DecodeObject(p, item.Val)
@@ -105,14 +108,29 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 		return
 	}
 
-	id, ok := item.Keys[1].Token.Value().(string)
-	if !ok {
-		err = &ParseError{item.Pos(), fmt.Sprintf("task needs a string name (have %s)", item.Keys[1].Token.Type)}
+	t = new(resource.ShellTask)
+	t.TaskName = item.Keys[1].Token.Value().(string)
+	err = hcl.DecodeObject(t, item.Val)
+
+	return
+}
+
+func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
+	/*
+		ideal input:
+
+		template "x" {
+		  content = "y"
+		  destination = "z"
+		}
+	*/
+	if len(item.Keys) < 2 {
+		err = &ParseError{item.Pos(), "template has no name (expected `template \"name\"`)"}
 		return
 	}
 
-	t = new(resource.ShellTask)
-	t.Name = id
+	t = new(resource.Template)
+	t.TemplateName = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
 
 	return
