@@ -40,8 +40,8 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
 		if item, ok := n.(*ast.ObjectItem); ok {
-			switch item.Keys[0].Token.Text {
-			case "param":
+			token := item.Keys[0].Token.Text
+			if token == "param" {
 				id, param, err := parseParam(item)
 				if err != nil {
 					errs = append(errs, err)
@@ -50,35 +50,32 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				} else {
 					errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate param %q", id)})
 				}
+			} else {
+				var (
+					resource resource.Resource
+					err      error
+				)
 
-			case "task":
-				task, err := parseTask(item)
+				switch token {
+				case "task":
+					resource, err = parseTask(item)
+
+				case "template":
+					resource, err = parseTemplate(item)
+
+				case "module":
+					resource, err = parseModuleCall(item)
+
+				default:
+					err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
+				}
+
 				if err != nil {
 					errs = append(errs, err)
 				} else {
-					module.Resources = append(module.Resources, task)
+					module.Resources = append(module.Resources, resource)
 				}
-
-			case "template":
-				template, err := parseTemplate(item)
-				if err != nil {
-					errs = append(errs, err)
-				} else {
-					module.Resources = append(module.Resources, template)
-				}
-
-			case "module":
-				call, err := parseModuleCall(item)
-				if err != nil {
-					errs = append(errs, err)
-				} else {
-					module.Resources = append(module.Resources, call)
-				}
-
-			default:
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())})
 			}
-
 			return n, false
 		}
 
