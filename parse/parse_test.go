@@ -1,16 +1,16 @@
-package module_test
+package parse_test
 
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/module"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	m, err := module.New([]byte(basicModule))
+	m, err := parse.New([]byte(basicModule))
 
 	assert.NoError(t, err)
 
@@ -27,7 +27,7 @@ func TestNew(t *testing.T) {
 func TestNewAnonymousParam(t *testing.T) {
 	t.Parallel()
 
-	_, err := module.New([]byte(`param {}`))
+	_, err := parse.New([]byte(`param {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: param has no name (expected `param \"name\"`)")
 	}
@@ -36,7 +36,7 @@ func TestNewAnonymousParam(t *testing.T) {
 func TestNewDuplicateParam(t *testing.T) {
 	t.Parallel()
 
-	_, err := module.New([]byte(duplicateParam))
+	_, err := parse.New([]byte(duplicateParam))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 3:1: duplicate param \"x\"")
 	}
@@ -45,7 +45,7 @@ func TestNewDuplicateParam(t *testing.T) {
 func TestNewAnonymousTask(t *testing.T) {
 	t.Parallel()
 
-	_, err := module.New([]byte(`task {}`))
+	_, err := parse.New([]byte(`task {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: task has no name (expected `task \"name\"`)")
 	}
@@ -54,7 +54,7 @@ func TestNewAnonymousTask(t *testing.T) {
 func TestNewAnonymousTemplate(t *testing.T) {
 	t.Parallel()
 
-	_, err := module.New([]byte(`template {}`))
+	_, err := parse.New([]byte(`template {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: template has no name (expected `template \"name\"`)")
 	}
