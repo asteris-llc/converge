@@ -19,7 +19,7 @@ import (
 	"io/ioutil"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/module"
+	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +42,7 @@ var checkCmd = &cobra.Command{
 				logger.WithError(err).Fatal("could not read file")
 			}
 
-			_, err = module.New(content)
+			_, err = load.New(content)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
