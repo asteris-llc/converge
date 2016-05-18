@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package parse
+package load
 
 import (
 	"fmt"
@@ -73,7 +73,12 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if err != nil {
 					errs = append(errs, err)
 				} else {
-					module.Resources = append(module.Resources, resource)
+					err = resource.Validate()
+					if err != nil {
+						errs = append(errs, err)
+					} else {
+						module.Resources = append(module.Resources, resource)
+					}
 				}
 			}
 			return n, false
