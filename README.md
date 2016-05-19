@@ -41,7 +41,8 @@ module "systemd-unit-running" "traefik" {
 ```
 
 Invoke this with `converge apply traefik.hcl` to install Traefik from yum on
-your system.
+your system. You can also `converge check traefik.hcl` to check correctness
+before you apply.
 
 ### Writing modules
 
@@ -52,25 +53,20 @@ The content of a simple module is below:
 param "name" { }
 
 task "start-unit" {
-  add = "systemctl start {{param `name`}}"
-  remove = "systemctl stop {{param `name`}}"
-  result = "echo running"
-  status = "systemctl status {{param `name`}}"
+  check = "systemctl status {{param `name`}} | tee /dev/stderr | grep -q running"
+  apply = "systemctl start {{param `name`}}"
 }
 ```
 
-Within a module, you can have tasks. Shown here is a task with the four required
-stanzas:
+Within a module, you can have tasks. Shown here is a task with two stanzas:
 
-- `add` is run to create the resource controlled by this task
-- `remove` is run to remove the same
-- `result` returns the ideal state
-- `status` returns the actual state
+- `status` returns the actual state, and an error code indicating if it needs to
+  be changed
+- `apply` is run to create the resource controlled by this task. You can omit
+  this stanza if you want the command to be purely informational.
 
-Put simply, if the output of `result` and `status` are not the same (here if the
-named unit is not running) `add` will be applied to correct that. It is an error
-at the task level if the result is not the same as status after an application.
-This task can also be removed, in this instance by stopping the unit.
+The execution goes something like: if the exit code of `check` is non-zero,
+`apply` will be called, then `check`ed again to get the current state.
 
 A module can have multiple tasks. It can also have templates, which render data
 to the filesystem from the module's parameters:
@@ -82,7 +78,7 @@ param "execStart" { }
 param "user" { default = "root" }
 param "group" { default = "root" }
 param "description" { default = "{{param `name`}}" }
-param "targets" { default = [], list = true }
+param "targets" { default = [], type = list }
 
 template "unit" {
   destination = "/etc/systemd/system/{{params `name`}}.service"
@@ -107,16 +103,14 @@ EOF
 }
 
 task "reload-daemon" {
-  add = "systemctl reload-daemon" # run after content is rendered
-  remove = "systemctl reload-daemon" # run after content is removed
-  result = ""
-  status = "systemd-delta --type=overridden {{param `name`}}"
-  depends = ["unit"]
+  check = "systemd-delta --type=overridden {{param `name`}}"
+  apply = "systemctl daemon-reload"
+  depends = [ "unit" ]
 }
 ```
 
 This module creates a systemd unit file and registers it with the system. Note
-that both resource blocks have a name, and that "reload-daemon" depends on
+that both resource blocks have a name, and that "daemon-reload" depends on
 "unit". Converge uses these dependencies to determine build order.
 
 The arguments for the template resource:
