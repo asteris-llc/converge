@@ -45,3 +45,13 @@ func (err MultiError) Error() string {
 	}
 	return b.String()
 }
+
+// NotFoundError indicates an error in the loading process
+type NotFoundError struct {
+	Protocol string
+	Path     string
+}
+
+func (err *NotFoundError) Error() string {
+	return fmt.Sprintf("Not found: %q using protocol %q", err.Path, err.Protocol)
+}
