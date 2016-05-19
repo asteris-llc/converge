@@ -3,14 +3,14 @@ package load_test
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestParse(t *testing.T) {
 	t.Parallel()
 
-	m, err := parse.New([]byte(basicModule))
+	m, err := load.Parse([]byte(basicModule))
 
 	assert.NoError(t, err)
 
@@ -24,46 +24,46 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, len(m.Resources), 2)
 }
 
-func TestNewAnonymousParam(t *testing.T) {
+func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
-	_, err := parse.New([]byte(`param {}`))
+	_, err := load.Parse([]byte(`param {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: param has no name (expected `param \"name\"`)")
 	}
 }
 
-func TestNewDuplicateParam(t *testing.T) {
+func TestParseDuplicateParam(t *testing.T) {
 	t.Parallel()
 
-	_, err := parse.New([]byte(duplicateParam))
+	_, err := load.Parse([]byte(duplicateParam))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 3:1: duplicate param \"x\"")
 	}
 }
 
-func TestNewAnonymousTask(t *testing.T) {
+func TestParseAnonymousTask(t *testing.T) {
 	t.Parallel()
 
-	_, err := parse.New([]byte(`task {}`))
+	_, err := load.Parse([]byte(`task {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: task has no name (expected `task \"name\"`)")
 	}
 }
 
-func TestNewAnonymousTemplate(t *testing.T) {
+func TestParseAnonymousTemplate(t *testing.T) {
 	t.Parallel()
 
-	_, err := parse.New([]byte(`template {}`))
+	_, err := load.Parse([]byte(`template {}`))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "At 1:1: template has no name (expected `template \"name\"`)")
 	}
 }
 
-func TestNewModuleCall(t *testing.T) {
+func TestParseModuleCall(t *testing.T) {
 	t.Parallel()
 
-	mod, err := parse.New([]byte(moduleCall))
+	mod, err := load.Parse([]byte(moduleCall))
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(mod.Resources), 1)
