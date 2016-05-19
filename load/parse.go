@@ -87,6 +87,9 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		return n, true
 	})
 
+	if len(errs) == 0 {
+		return module, nil
+	}
 	return module, errs
 }
 
