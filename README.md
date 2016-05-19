@@ -31,11 +31,11 @@ param "version" { }
 
 module "yum" "traefik" { }
 
-module "systemd-unit-enabled" "traefik" { 
+module "systemd-unit-enabled" "traefik" {
   depends = [ "yum.traefik" ]
 }
 
-module "systemd-unit-running" "traefik" { 
+module "systemd-unit-running" "traefik" {
   depends = [ "yum.traefik" ]
 }
 ```
@@ -60,7 +60,7 @@ task "start-unit" {
 
 Within a module, you can have tasks. Shown here is a task with two stanzas:
 
-- `status` returns the actual state, and an error code indicating if it needs to
+- `check` returns the actual state, and an error code indicating if it needs to
   be changed
 - `apply` is run to create the resource controlled by this task. You can omit
   this stanza if you want the command to be purely informational.
