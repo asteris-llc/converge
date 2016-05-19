@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"errors"
-	"io/ioutil"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
@@ -37,12 +36,7 @@ var checkCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			content, err := ioutil.ReadFile(fname)
-			if err != nil {
-				logger.WithError(err).Fatal("could not read file")
-			}
-
-			_, err = load.New(content)
+			_, err := load.Load(fname)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}

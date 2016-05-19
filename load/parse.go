@@ -22,8 +22,8 @@ import (
 	"github.com/hashicorp/hcl/hcl/ast"
 )
 
-// New parses a module and returns it
-func New(content []byte) (*resource.Module, error) {
+// Parse parses a module and returns it
+func Parse(content []byte) (*resource.Module, error) {
 	f, err := hcl.ParseBytes(content)
 	if err != nil {
 		return nil, err
