@@ -69,6 +69,15 @@ func TestParseModuleCall(t *testing.T) {
 	assert.Equal(t, len(mod.Resources), 1)
 }
 
+func TestParseDuplicateTask(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(duplicateTask))
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "At 3:1: duplicate task \"x\"")
+	}
+}
+
 var (
 	basicModule = `
 param "filename" { }
@@ -92,4 +101,9 @@ param "x" {}`
 module "x" "y" {
   arg1 = "z"
 }`
+
+	duplicateTask = `
+task "x" { }
+task "x" { }
+`
 )
