@@ -17,8 +17,9 @@ package load
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
-	"strings"
+	"path"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -26,7 +27,12 @@ import (
 // Load a module from a resource. This uses the protocol in the path (or file://
 // if not present) to determine from where the module should be loaded.
 func Load(source string) (*resource.Module, error) {
-	initial, err := loadAny(source)
+	initial, err := loadAny(nil, source)
+	if err != nil {
+		return initial, err
+	}
+
+	root, err := parseSource(source)
 	if err != nil {
 		return initial, err
 	}
@@ -42,7 +48,7 @@ func Load(source string) (*resource.Module, error) {
 		// with Modules
 		for i, res := range module.Resources {
 			if mt, ok := res.(*resource.ModuleTask); ok {
-				newModule, err := loadAny(mt.Source)
+				newModule, err := loadAny(root, mt.Source)
 				if err != nil {
 					return initial, err
 				}
@@ -60,26 +66,35 @@ func Load(source string) (*resource.Module, error) {
 	return initial, err
 }
 
-func loadAny(source string) (*resource.Module, error) {
-	var (
-		protocol string
-		path     string
-	)
-	if strings.Contains(source, "://") {
-		split := strings.SplitN(source, "://", 2)
-		protocol = split[0]
-		path = split[1]
-	} else {
-		protocol = "file"
-		path = source
+func parseSource(source string) (*url.URL, error) {
+	url, err := url.Parse(source)
+	if err != nil {
+		return url, err
 	}
 
-	switch protocol {
+	if url.Scheme == "" {
+		url.Scheme = "file"
+	}
+
+	return url, nil
+}
+
+func loadAny(root *url.URL, source string) (*resource.Module, error) {
+	url, err := parseSource(source)
+	if err != nil {
+		return nil, err
+	}
+
+	if root != nil && !path.IsAbs(url.Path) {
+		url.Path = path.Join(path.Dir(root.Path), url.Path)
+	}
+
+	switch url.Scheme {
 	case "file":
-		return FromFile(path)
+		return FromFile(url.Path)
 
 	default:
-		return nil, fmt.Errorf("protocol %q is not implemented", protocol)
+		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
 	}
 }
 
