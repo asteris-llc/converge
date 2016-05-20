@@ -16,5 +16,5 @@ package resource
 
 // Param is essentially the calling arguments of a module
 type Param struct {
-	Default *string `hcl:"default"`
+	Default *interface{} `hcl:"default"`
 }

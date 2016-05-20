@@ -28,7 +28,6 @@ type Task interface {
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
-	Task
 	Name() string
 	Validate() error
 }

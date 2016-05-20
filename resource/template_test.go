@@ -12,22 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package resource_test
 
-// Module is the container for tasks and is the basic compositional unit of the
-// system.
-type Module struct {
-	ModuleTask
-	Params    map[string]*Param `hcl:"param"`
-	Resources []Resource
-}
+import (
+	"testing"
 
-// Name returns name for metadata
-func (m *Module) Name() string {
-	return m.ModuleName
-}
+	"github.com/asteris-llc/converge/resource"
+	"github.com/stretchr/testify/assert"
+)
 
-// Validate checks shell tasks validity
-func (m *Module) Validate() error {
-	return nil
+func TestTemplateInterfaces(t *testing.T) {
+	t.Parallel()
+
+	assert.Implements(t, (*resource.Resource)(nil), new(resource.Template))
+	assert.Implements(t, (*resource.Monitor)(nil), new(resource.Template))
+	assert.Implements(t, (*resource.Task)(nil), new(resource.Template))
 }
