@@ -99,7 +99,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				// finally, see if the resource is valid according to it's internal
 				// semantics
 				if err = resource.Validate(); err != nil {
-					errs = append(errs, err)
+					errs = append(errs, &ParseError{item.Pos(), err.Error()})
 					return n, false
 				}
 
