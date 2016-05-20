@@ -33,15 +33,27 @@ func Parse(content []byte) (*resource.Module, error) {
 }
 
 func parseModule(node ast.Node) (*resource.Module, error) {
-	module := &resource.Module{
-		Params: map[string]*resource.Param{},
-	}
-	var errs MultiError
+	// the approach were taking here is to create some state that we'll manage
+	// locally, and then walk over the nodes in the AST, gathering errors as we
+	// go. This is also the point at which we enforce module-level semantic
+	// checks, such as erroring out on duplicate param or resource names.
+	var (
+		errs   MultiError
+		module = &resource.Module{
+			Params: map[string]*resource.Param{},
+		}
+		names = map[string]bool{}
+	)
 
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
+		// we're only interested in ObjectItems. These are a path plus a value, and
+		// quite handy.
 		if item, ok := n.(*ast.ObjectItem); ok {
 			token := item.Keys[0].Token.Text
+
 			if token == "param" {
+				// we deal with params first, since they require a different processing
+				// logic than resources.
 				id, param, err := parseParam(item)
 				if err != nil {
 					errs = append(errs, err)
@@ -51,6 +63,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 					errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate param %q", id)})
 				}
 			} else {
+				// we'll also handle resources.
 				var (
 					resource resource.Resource
 					err      error
@@ -70,16 +83,29 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 					err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
 				}
 
+				// check if any errors happened during parsing
 				if err != nil {
 					errs = append(errs, err)
-				} else {
-					err = resource.Validate()
-					if err != nil {
-						errs = append(errs, err)
-					} else {
-						module.Resources = append(module.Resources, resource)
-					}
+					return n, false
 				}
+
+				// check if the name is already present, error if so
+				if present := names[resource.Name()]; present {
+					errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate task %q", resource.Name())})
+					return n, false
+				}
+				names[resource.Name()] = true
+
+				// finally, see if the resource is valid according to it's internal
+				// semantics
+				if err = resource.Validate(); err != nil {
+					errs = append(errs, err)
+					return n, false
+				}
+
+				// now that we've run the gauntlet, it's safe to add the resource to the
+				// resource list.
+				module.Resources = append(module.Resources, resource)
 			}
 			return n, false
 		}
