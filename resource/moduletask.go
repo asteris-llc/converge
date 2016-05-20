@@ -30,13 +30,3 @@ func (m *ModuleTask) Name() string {
 func (m *ModuleTask) Validate() error {
 	return nil
 }
-
-// Check satisfies the Monitor interface
-func (m *ModuleTask) Check() (string, error) {
-	return "", nil
-}
-
-// Apply (plus Check) satisfies the Task interface
-func (m *ModuleTask) Apply() error {
-	return nil
-}
