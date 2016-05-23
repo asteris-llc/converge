@@ -28,3 +28,25 @@ func TestShellTaskInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
+
+func TestShellTaskValidate(t *testing.T) {
+	t.Parallel()
+	st := resource.ShellTask{
+		TaskName:    "testing validation: should pass",
+		CheckSource: "echo test",
+		ApplySource: "echo test",
+	}
+	err := st.Validate()
+	if err != nil {
+		t.Error("validation failed: false positive")
+	}
+	st = resource.ShellTask{
+		TaskName:    "testing validation: should fail",
+		CheckSource: "if while do then; fi end esac",
+		ApplySource: "echo test",
+	}
+	err = st.Validate()
+	if err == nil {
+		t.Error("validation failed: false negative")
+	}
+}
