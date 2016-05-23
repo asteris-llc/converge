@@ -1,9 +1,9 @@
-.PHONY = test _testgo _testcheck
+.PHONY = test
 
-converge: main.go cmd/* load/* resource/* exec/*
+converge: main.go cmd/* load/* resource/* exec/* vendor/**/*
 	go build .
 
-test: converge samples/*
+test: converge samples/*.hcl
 	go test -v ./...
 	find samples -type f -name '*.hcl' -exec ./converge check \{\} \;
 
