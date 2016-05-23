@@ -71,7 +71,7 @@ func (e *Executor) String() string {
 	return strings.TrimSpace(e.graph.String())
 }
 
-// GraphString returns the loaded graph
+// GraphString returns the loaded graph as a GraphViz string
 func (e *Executor) GraphString() string {
 	s := "digraph {\n"
 
