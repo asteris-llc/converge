@@ -9,3 +9,6 @@ test: converge samples/*.hcl
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
+
+vendor: main.go cmd/* load/* resource/* exec/*
+	godep save -t ./...
