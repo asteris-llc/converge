@@ -25,4 +25,5 @@ func TestModuleInterfaces(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(resource.Module))
+	assert.Implements(t, (*resource.Parent)(nil), new(resource.Module))
 }

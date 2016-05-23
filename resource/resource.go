@@ -31,3 +31,9 @@ type Resource interface {
 	Name() string
 	Validate() error
 }
+
+// Parent expresses a resource that has sub-resources instead of being
+// executable
+type Parent interface {
+	Children() []Resource
+}
