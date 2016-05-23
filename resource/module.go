@@ -31,3 +31,8 @@ func (m *Module) Name() string {
 func (m *Module) Validate() error {
 	return nil
 }
+
+// Children returns the managed resources under this module
+func (m *Module) Children() []Resource {
+	return m.Resources
+}
