@@ -27,7 +27,7 @@ func New(mod *resource.Module) (*Executor, error) {
 	e := &Executor{
 		module:    mod,
 		resources: map[string]resource.Resource{},
-		graph:     new(dag.Graph),
+		graph:     new(dag.AcyclicGraph),
 	}
 	return e, e.dagify()
 }
@@ -36,7 +36,7 @@ func New(mod *resource.Module) (*Executor, error) {
 type Executor struct {
 	module    *resource.Module
 	resources map[string]resource.Resource
-	graph     *dag.Graph
+	graph     *dag.AcyclicGraph
 }
 
 type ident struct {
