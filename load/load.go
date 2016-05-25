@@ -20,7 +20,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -90,20 +89,13 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 		url.Path = path.Join(path.Dir(root.Path), url.Path)
 	}
 
-	var mod *resource.Module
 	switch url.Scheme {
 	case "file":
-		mod, err = FromFile(url.Path)
+		return FromFile(url.Path)
 
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
 	}
-
-	if err == nil {
-		mod.ModuleName = strings.SplitN(path.Base(url.Path), ".", 2)[0]
-	}
-
-	return mod, err
 }
 
 // FromFile loads a module from a file
@@ -116,5 +108,11 @@ func FromFile(filename string) (*resource.Module, error) {
 		return nil, err
 	}
 
-	return Parse(content)
+	mod, err := Parse(content)
+
+	if err == nil {
+		mod.ModuleName = path.Base(filename)
+	}
+
+	return mod, err
 }
