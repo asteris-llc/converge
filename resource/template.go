@@ -31,9 +31,6 @@ func (t *Template) Name() string {
 // Validate validates the template config
 func (t *Template) Validate() error {
 	_, err := template.New("validating").Parse(t.Content)
-	if err != nil {
-		return err
-	}
 	return err
 }
 
