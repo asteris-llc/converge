@@ -14,6 +14,8 @@
 
 package resource
 
+import "text/template"
+
 // Template is a task defined by content and a destination
 type Template struct {
 	TemplateName string
@@ -28,7 +30,11 @@ func (t *Template) Name() string {
 
 // Validate validates the template config
 func (t *Template) Validate() error {
-	return nil
+	_, err := template.New("validating").Parse(t.Content)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // Check satisfies the Monitor interface
