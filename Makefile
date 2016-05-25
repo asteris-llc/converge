@@ -1,6 +1,6 @@
 .PHONY = test
 
-converge: main.go cmd/* load/* resource/* exec/* vendor/**/*
+converge: main.go cmd/* load/* resource/* vendor/**/*
 	go build .
 
 test: converge samples/*.hcl
