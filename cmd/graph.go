@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +26,7 @@ import (
 // graphCmd represents the check command
 var graphCmd = &cobra.Command{
 	Use:   "graph",
-	Short: "graph the execution of a module",
+	Short: "graph the loadution of a module",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -38,17 +37,12 @@ var graphCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			mod, err := load.Load(fname)
+			graph, err := load.Load(fname)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			executor, err := exec.New(mod)
-			if err != nil {
-				logger.WithError(err).Fatal("could not load executor")
-			}
-
-			fmt.Println(executor.GraphString())
+			fmt.Println(graph.GraphString())
 		}
 	},
 }
