@@ -27,6 +27,6 @@ func (m *ModuleTask) Name() string {
 }
 
 // Validate checks shell tasks validity
-func (m *ModuleTask) Validate() ParamError {
-	return ParamError{}
+func (m *ModuleTask) Validate() error {
+	return nil
 }

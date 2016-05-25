@@ -28,8 +28,8 @@ func (m *Module) Name() string {
 }
 
 // Validate checks shell tasks validity
-func (m *Module) Validate() ParamError {
-	return ParamError{}
+func (m *Module) Validate() error {
+	return nil
 }
 
 // Children returns the managed resources under this module

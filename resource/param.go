@@ -14,14 +14,20 @@
 
 package resource
 
+import "fmt"
+
 // Param is essentially the calling arguments of a module
 type Param struct {
 	Default *interface{} `hcl:"default"`
 }
 
-// ParamError is the type returned by each resource's Validate method. It
-// describes both what went wrong and which parameter caused the problem.
-type ParamError struct {
-	Field string
-	Error error
+// ValidationError is the type returned by each resource's Validate method. It
+// describes both what went wrong and which stanza caused the problem.
+type ValidationError struct {
+	Location string
+	Err      error
+}
+
+func (v ValidationError) Error() string {
+	return fmt.Sprintf("%s: %s", v.Location, v.Err)
 }
