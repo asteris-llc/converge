@@ -44,7 +44,14 @@ func (st *ShellTask) Validate() error {
 		}
 		// validate the script using sh's built-in validation
 		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
-			return err
+			switch script {
+			case st.CheckSource:
+				return ValidationError{"check", err}
+			case st.ApplySource:
+				return ValidationError{"apply", err}
+			default:
+				return err
+			}
 		}
 		if err := os.Remove(file.Name()); err != nil {
 			return err
