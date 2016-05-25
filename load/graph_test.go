@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exec_test
+package load_test
 
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/exec"
+	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestNewGraph(t *testing.T) {
 	t.Parallel()
 
 	mod := &resource.Module{
@@ -31,6 +31,6 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	_, err := exec.New(mod)
+	_, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exec
+package load
 
 import (
 	"fmt"
@@ -22,19 +22,24 @@ import (
 	"github.com/hashicorp/terraform/dag"
 )
 
-// New returns a new Executor from a module
-func New(mod *resource.Module) (*Executor, error) {
-	e := &Executor{
-		module:    mod,
+var (
+	graphIDSeperator = "."
+)
+
+// NewGraph returns a DAG of the given Module
+func NewGraph(root *resource.Module) (*Graph, error) {
+	g := &Graph{
+		root:      root,
 		resources: map[string]resource.Resource{},
 		graph:     new(dag.AcyclicGraph),
 	}
-	return e, e.dagify()
+
+	return g, g.load()
 }
 
-// Executor executes resources
-type Executor struct {
-	module    *resource.Module
+// Graph represents the graph of resources loaded
+type Graph struct {
+	root      *resource.Module
 	resources map[string]resource.Resource
 	graph     *dag.AcyclicGraph
 }
@@ -44,46 +49,46 @@ type ident struct {
 	Resource resource.Resource
 }
 
-func (e *Executor) dagify() error {
-	ids := []ident{{e.module.Name(), e.module}}
+func (g *Graph) load() error {
+	ids := []ident{{g.root.Name(), g.root}}
 
 	for len(ids) > 0 {
 		var id ident
 		id, ids = ids[0], ids[1:]
 
-		e.resources[id.ID] = id.Resource
-		e.graph.Add(id.ID)
+		g.resources[id.ID] = id.Resource
+		g.graph.Add(id.ID)
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + "." + child.Name(), child}
-				e.graph.Add(childID.ID)
-				e.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
+				childID := ident{id.ID + graphIDSeperator + child.Name(), child}
+				g.graph.Add(childID.ID)
+				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
 			}
 		}
 	}
 
-	return nil
+	return g.graph.Validate()
 }
 
-func (e *Executor) String() string {
-	return strings.TrimSpace(e.graph.String())
+func (g *Graph) String() string {
+	return strings.TrimSpace(g.graph.String())
 }
 
 // GraphString returns the loaded graph as a GraphViz string
-func (e *Executor) GraphString() string {
+func (g *Graph) GraphString() string {
 	s := "digraph {\n"
 
-	for _, node := range e.graph.Vertices() {
+	for _, node := range g.graph.Vertices() {
 		s += fmt.Sprintf(
 			"  \"%s\"[label=\"%s\"];\n",
 			node,
-			e.resources[node.(string)].Name(),
+			g.resources[node.(string)].Name(),
 		)
 	}
 
-	for _, edge := range e.graph.Edges() {
+	for _, edge := range g.graph.Edges() {
 		s += fmt.Sprintf(
 			"  \"%s\" -> \"%s\";\n",
 			edge.Source(),
