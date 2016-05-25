@@ -14,6 +14,12 @@
 
 package resource
 
+import (
+	"io/ioutil"
+	"os"
+	"os/exec"
+)
+
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
 	TaskName    string
@@ -28,6 +34,29 @@ func (st *ShellTask) Name() string {
 
 // Validate checks shell tasks validity
 func (st *ShellTask) Validate() error {
+	for _, script := range []string{st.CheckSource, st.ApplySource} {
+		file, err := ioutil.TempFile("", "")
+		if err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(file.Name(), []byte(script), 0664); err != nil {
+			return err
+		}
+		// validate the script using sh's built-in validation
+		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
+			switch script {
+			case st.CheckSource:
+				return ValidationError{Location: "check", Err: err}
+			case st.ApplySource:
+				return ValidationError{Location: "apply", Err: err}
+			default:
+				return err
+			}
+		}
+		if err := os.Remove(file.Name()); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

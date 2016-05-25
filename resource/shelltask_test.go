@@ -28,3 +28,25 @@ func TestShellTaskInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
+
+func TestShellTaskValidateCheckSource(t *testing.T) {
+	t.Parallel()
+	st := resource.ShellTask{
+		CheckSource: "echo test",
+		ApplySource: "echo test",
+	}
+	assert.Nil(t, st.Validate())
+	st = resource.ShellTask{CheckSource: "if do then; esac"}
+	assert.NotNil(t, st.Validate())
+}
+
+func TestShellTaskValidateApplySource(t *testing.T) {
+	t.Parallel()
+	st := resource.ShellTask{
+		CheckSource: "echo test",
+		ApplySource: "echo test",
+	}
+	assert.Nil(t, st.Validate())
+	st = resource.ShellTask{ApplySource: "if do then; esac"}
+	assert.NotNil(t, st.Validate())
+}
