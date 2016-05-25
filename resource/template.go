@@ -27,8 +27,8 @@ func (t *Template) Name() string {
 }
 
 // Validate validates the template config
-func (t *Template) Validate() error {
-	return nil
+func (t *Template) Validate() ParamError {
+	return ParamError{Field: "", Error: nil}
 }
 
 // Check satisfies the Monitor interface

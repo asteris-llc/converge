@@ -18,3 +18,10 @@ package resource
 type Param struct {
 	Default *interface{} `hcl:"default"`
 }
+
+// ParamError is the type returned by each resource's Validate method. It
+// describes both what went wrong and which parameter caused the problem.
+type ParamError struct {
+	Field string
+	Error error
+}
