@@ -26,15 +26,15 @@ import (
 
 // Load a module from a resource. This uses the protocol in the path (or file://
 // if not present) to determine from where the module should be loaded.
-func Load(source string) (*resource.Module, error) {
+func Load(source string) (*Graph, error) {
 	initial, err := loadAny(nil, source)
 	if err != nil {
-		return initial, err
+		return nil, err
 	}
 
 	root, err := parseSource(source)
 	if err != nil {
-		return initial, err
+		return nil, err
 	}
 
 	modules := []*resource.Module{initial}
@@ -50,7 +50,7 @@ func Load(source string) (*resource.Module, error) {
 			if mt, ok := res.(*resource.ModuleTask); ok {
 				newModule, err := loadAny(root, mt.Source)
 				if err != nil {
-					return initial, err
+					return nil, err
 				}
 
 				newModule.Args = mt.Args
@@ -63,7 +63,7 @@ func Load(source string) (*resource.Module, error) {
 		}
 	}
 
-	return initial, err
+	return NewGraph(initial)
 }
 
 func parseSource(source string) (*url.URL, error) {
