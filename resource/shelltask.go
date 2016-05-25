@@ -46,9 +46,9 @@ func (st *ShellTask) Validate() error {
 		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
 			switch script {
 			case st.CheckSource:
-				return ValidationError{"check", err}
+				return ValidationError{Location: "check", Err: err}
 			case st.ApplySource:
-				return ValidationError{"apply", err}
+				return ValidationError{Location: "apply", Err: err}
 			default:
 				return err
 			}
