@@ -29,7 +29,7 @@ type Task interface {
 // Resource adds metadata about the executed tasks
 type Resource interface {
 	Name() string
-	Validate() error
+	Validate() ParamError
 }
 
 // Parent expresses a resource that has sub-resources instead of being

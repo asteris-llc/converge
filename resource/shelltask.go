@@ -27,8 +27,8 @@ func (st *ShellTask) Name() string {
 }
 
 // Validate checks shell tasks validity
-func (st *ShellTask) Validate() error {
-	return nil
+func (st *ShellTask) Validate() ParamError {
+	return ParamError{Field: "", Error: nil}
 }
 
 // Check satisfies the Monitor interface
