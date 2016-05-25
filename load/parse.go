@@ -142,8 +142,8 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 		ideal input:
 
 		task "x" {
-		  check = "y"
-		  apply = "z"
+			check = "y"
+			apply = "z"
 		}
 	*/
 	if len(item.Keys) < 2 {
@@ -163,8 +163,8 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 		ideal input:
 
 		template "x" {
-		  content = "y"
-		  destination = "z"
+			content = "y"
+			destination = "z"
 		}
 	*/
 	if len(item.Keys) < 2 {
@@ -184,7 +184,7 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 		ideal input:
 
 		module "source" "name" {
-		  args = 1
+			args = 1
 		}
 	*/
 	if len(item.Keys) < 3 {
