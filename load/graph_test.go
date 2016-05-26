@@ -83,3 +83,23 @@ func TestGraphWalk(t *testing.T) {
 		},
 	)
 }
+
+func TestGraphParents(t *testing.T) {
+	t.Parallel()
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{
+			ModuleName: "test",
+		},
+		Resources: []resource.Resource{
+			&resource.ShellTask{TaskName: "task"},
+		},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	parents, err := graph.Parents("test.task")
+	assert.NoError(t, err)
+	assert.Equal(t, []resource.Resource{mod}, parents)
+}
