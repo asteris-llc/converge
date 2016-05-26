@@ -34,3 +34,52 @@ func TestNewGraph(t *testing.T) {
 	_, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 }
+
+func TestGraphWalk(t *testing.T) {
+	t.Parallel()
+
+	mod2 := &resource.Module{
+		ModuleTask: resource.ModuleTask{
+			ModuleName: "test2",
+		},
+		Resources: []resource.Resource{
+			&resource.ShellTask{TaskName: "task2"},
+			&resource.Template{TemplateName: "template2"},
+		},
+	}
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{
+			ModuleName: "test",
+		},
+		Resources: []resource.Resource{
+			&resource.ShellTask{TaskName: "task"},
+			&resource.Template{TemplateName: "template"},
+			mod2,
+		},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	results := []string{}
+
+	err = graph.Walk(func(path string, r resource.Resource) error {
+		results = append(results, path)
+		return nil
+	})
+	assert.NoError(t, err)
+
+	assert.Equal(
+		t,
+		results,
+		[]string{
+			"test",
+			"test.test2",
+			"test.test2.template2",
+			"test.test2.task2",
+			"test.template",
+			"test.task",
+		},
+	)
+}
