@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/types"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
@@ -65,7 +66,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			} else {
 				// we'll also handle resources.
 				var (
-					resource resource.Resource
+					resource types.Resource
 					err      error
 				)
 

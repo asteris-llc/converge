@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/types"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -31,7 +32,7 @@ var (
 func NewGraph(root *resource.Module) (*Graph, error) {
 	g := &Graph{
 		root:      root,
-		resources: map[string]resource.Resource{},
+		resources: map[string]types.Resource{},
 		graph:     new(dag.AcyclicGraph),
 	}
 
@@ -41,13 +42,13 @@ func NewGraph(root *resource.Module) (*Graph, error) {
 // Graph represents the graph of resources loaded
 type Graph struct {
 	root      *resource.Module
-	resources map[string]resource.Resource
+	resources map[string]types.Resource
 	graph     *dag.AcyclicGraph
 }
 
 type ident struct {
 	ID       string
-	Resource resource.Resource
+	Resource types.Resource
 }
 
 func (g *Graph) load() error {
@@ -60,7 +61,7 @@ func (g *Graph) load() error {
 		g.resources[id.ID] = id.Resource
 		g.graph.Add(id.ID)
 
-		if parent, ok := id.Resource.(resource.Parent); ok {
+		if parent, ok := id.Resource.(types.Parent); ok {
 			for _, child := range parent.Children() {
 				childID := ident{id.ID + graphIDSeperator + child.Name(), child}
 				g.graph.Add(childID.ID)
@@ -103,7 +104,7 @@ func (g *Graph) GraphString() string {
 }
 
 // Walk the graph, calling the specified function at each vertex
-func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
+func (g *Graph) Walk(f func(path string, res types.Resource) error) error {
 	root, err := g.graph.Root()
 	if err != nil {
 		return err
@@ -119,9 +120,9 @@ func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
 }
 
 // Parents retrieves the parents of a given path
-func (g *Graph) Parents(path string) ([]resource.Resource, error) {
+func (g *Graph) Parents(path string) ([]types.Resource, error) {
 	var (
-		parents []resource.Resource
+		parents []types.Resource
 		lock    = new(sync.Mutex)
 	)
 
