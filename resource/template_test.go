@@ -18,13 +18,14 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTemplateInterfaces(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Resource)(nil), new(resource.Template))
-	assert.Implements(t, (*resource.Monitor)(nil), new(resource.Template))
-	assert.Implements(t, (*resource.Task)(nil), new(resource.Template))
+	assert.Implements(t, (*types.Resource)(nil), new(resource.Template))
+	assert.Implements(t, (*types.Monitor)(nil), new(resource.Template))
+	assert.Implements(t, (*types.Task)(nil), new(resource.Template))
 }
