@@ -17,6 +17,7 @@ package load
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/hashicorp/terraform/dag"
@@ -118,4 +119,31 @@ func (g *Graph) Walk(f WalkFunc) error {
 			return f(path.(string), resource)
 		},
 	)
+}
+
+// Parents retrieves the parents of a given path
+func (g *Graph) Parents(path string) ([]resource.Resource, error) {
+	var (
+		parents []resource.Resource
+		lock    = new(sync.Mutex)
+	)
+
+	err := g.graph.ReverseDepthFirstWalk(
+		[]dag.Vertex{path},
+		func(vertex dag.Vertex, depth int) error {
+			if vertex.(string) == path {
+				return nil
+			}
+
+			parent := g.resources[vertex.(string)]
+
+			lock.Lock()
+			defer lock.Unlock()
+			parents = append(parents, parent)
+
+			return nil
+		},
+	)
+
+	return parents, err
 }
