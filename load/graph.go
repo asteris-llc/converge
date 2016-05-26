@@ -113,8 +113,8 @@ func (g *Graph) Walk(f func(path string, res types.Resource) error) error {
 	return g.graph.DepthFirstWalk(
 		[]dag.Vertex{root},
 		func(path dag.Vertex, depth int) error {
-			resource := g.resources[path.(string)]
-			return f(path.(string), resource)
+			res := g.resources[path.(string)]
+			return f(path.(string), res)
 		},
 	)
 }
