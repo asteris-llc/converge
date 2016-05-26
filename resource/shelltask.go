@@ -60,6 +60,11 @@ func (st *ShellTask) Validate() error {
 	return nil
 }
 
+// Requires satisfies the Resource interface. ShellTask has no requirements.
+func (st *ShellTask) Requires() []string {
+	return []string{}
+}
+
 // Check satisfies the Monitor interface
 func (st *ShellTask) Check() (string, error) {
 	return "", nil

@@ -31,6 +31,11 @@ func (t *Template) Validate() error {
 	return nil
 }
 
+// Requires satisfies the Resource interface. Template has no requirements.
+func (t *Template) Requires() []string {
+	return []string{}
+}
+
 // Check satisfies the Monitor interface
 func (t *Template) Check() (string, error) {
 	return "", nil

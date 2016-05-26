@@ -30,6 +30,7 @@ type Task interface {
 type Resource interface {
 	Name() string
 	Validate() error
+	Requires() []string
 }
 
 // Parent expresses a resource that has sub-resources instead of being
