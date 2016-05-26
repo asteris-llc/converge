@@ -100,3 +100,22 @@ func (g *Graph) GraphString() string {
 
 	return s
 }
+
+// WalkFunc is the callback signature for Walk
+type WalkFunc func(path string, res resource.Resource) error
+
+// Walk the graph, calling the specified function at each vertex
+func (g *Graph) Walk(f WalkFunc) error {
+	root, err := g.graph.Root()
+	if err != nil {
+		return err
+	}
+
+	return g.graph.DepthFirstWalk(
+		[]dag.Vertex{root},
+		func(path dag.Vertex, depth int) error {
+			resource := g.resources[path.(string)]
+			return f(path.(string), resource)
+		},
+	)
+}
