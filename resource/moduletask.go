@@ -30,3 +30,9 @@ func (m *ModuleTask) Name() string {
 func (m *ModuleTask) Validate() error {
 	return nil
 }
+
+// Requires satisfies the Resource interface. ModuleTask has no requirements in
+// itself, but the module it calls might.
+func (m *ModuleTask) Requires() []string {
+	return []string{}
+}
