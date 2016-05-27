@@ -16,9 +16,28 @@ package resource
 
 import "fmt"
 
+// Value contains the different values for a param
+type Value interface{}
+
+// Values is a named collection of values
+type Values map[string]Value
+
+// CoalesceValue returns the first non-nil value, or nil if they're all nil
+func CoalesceValue(vs ...Value) Value {
+	for _, v := range vs {
+		if v != nil {
+			return v
+		}
+	}
+
+	return nil
+}
+
 // Param is essentially the calling arguments of a module
 type Param struct {
-	Default *interface{} `hcl:"default"`
+	Name    string
+	Default Value  `hcl:"default"`
+	Type    string `hcl:"type"`
 }
 
 // ValidationError is the type returned by each resource's Validate method. It
