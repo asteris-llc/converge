@@ -14,14 +14,12 @@
 
 package resource
 
-import "github.com/asteris-llc/converge/types"
-
 // Module is the container for tasks and is the basic compositional unit of the
 // system.
 type Module struct {
 	ModuleTask
 	Params    map[string]*Param `hcl:"param"`
-	Resources []types.Resource
+	Resources []Resource
 }
 
 // Name returns name for metadata
@@ -35,6 +33,6 @@ func (m *Module) Validate() error {
 }
 
 // Children returns the managed resources under this module
-func (m *Module) Children() []types.Resource {
+func (m *Module) Children() []Resource {
 	return m.Resources
 }
