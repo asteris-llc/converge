@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/types"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
@@ -40,10 +39,8 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	// checks, such as erroring out on duplicate param or resource names.
 	var (
 		errs   MultiError
-		module = &resource.Module{
-			Params: map[string]*resource.Param{},
-		}
-		names = map[string]bool{}
+		module = new(resource.Module)
+		names  = map[string]bool{}
 	)
 
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
@@ -52,62 +49,53 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		if item, ok := n.(*ast.ObjectItem); ok {
 			token := item.Keys[0].Token.Text
 
-			if token == "param" {
-				// we deal with params first, since they require a different processing
-				// logic than resources.
-				id, param, err := parseParam(item)
-				if err != nil {
-					errs = append(errs, err)
-				} else if _, present := module.Params[id]; !present {
-					module.Params[id] = param
-				} else {
-					errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate param %q", id)})
-				}
-			} else {
-				// we'll also handle resources.
-				var (
-					resource types.Resource
-					err      error
-				)
+			var (
+				resource resource.Resource
+				err      error
+			)
 
-				switch token {
-				case "task":
-					resource, err = parseTask(item)
+			switch token {
+			case "task":
+				resource, err = parseTask(item)
 
-				case "template":
-					resource, err = parseTemplate(item)
+			case "template":
+				resource, err = parseTemplate(item)
 
-				case "module":
-					resource, err = parseModuleCall(item)
+			case "module":
+				resource, err = parseModuleCall(item)
 
-				default:
-					err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
-				}
+			case "param":
+				resource, err = parseParam(item)
 
-				// check if any errors happened during parsing
-				if err != nil {
-					errs = append(errs, err)
-					return n, false
-				}
-
-				// check if the name is already present, error if so
-				if present := names[resource.Name()]; present {
-					errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate task %q", resource.Name())})
-					return n, false
-				}
-				names[resource.Name()] = true
-
-				// finally, see if the resource is valid according to it's internal
-				// semantics
-				if err = resource.Validate(); err != nil {
-					errs = append(errs, &ParseError{item.Pos(), err.Error()})
-					return n, false
-				}
-
-				// now that we've run the gauntlet, it's safe to add the resource to the
-				// resource list.
-				module.Resources = append(module.Resources, resource)
+			default:
+				err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
 			}
+
+			// check if any errors happened during parsing
+			if err != nil {
+				errs = append(errs, err)
+				return n, false
+			}
+
+			// check if the name is already present, error if so
+			dupCheckName := token + "." + resource.Name()
+			if present := names[dupCheckName]; present {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, resource.Name())})
+				return n, false
+			}
+			names[dupCheckName] = true
+
+			// finally, see if the resource is valid according to it's internal
+			// semantics
+			if err = resource.Validate(); err != nil {
+				errs = append(errs, &ParseError{item.Pos(), err.Error()})
+				return n, false
+			}
+
+			// now that we've run the gauntlet, it's safe to add the resource to the
+			// resource list.
+			module.Resources = append(module.Resources, resource)
+
 			return n, false
 		}
 
@@ -120,7 +108,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	return module, errs
 }
 
-func parseParam(item *ast.ObjectItem) (id string, p *resource.Param, err error) {
+func parseParam(item *ast.ObjectItem) (p *resource.Param, err error) {
 	/*
 		ideal input:
 
@@ -131,9 +119,9 @@ func parseParam(item *ast.ObjectItem) (id string, p *resource.Param, err error) 
 		return
 	}
 
-	id = item.Keys[1].Token.Value().(string)
-
-	p = new(resource.Param)
+	p = &resource.Param{
+		ParamName: item.Keys[1].Token.Value().(string),
+	}
 	err = hcl.DecodeObject(p, item.Val)
 	return
 }
@@ -194,7 +182,7 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 	}
 
 	module = &resource.ModuleTask{
-		Args:       map[string]interface{}{},
+		Args:       map[string]string{},
 		Source:     item.Keys[1].Token.Value().(string),
 		ModuleName: item.Keys[2].Token.Value().(string),
 	}
