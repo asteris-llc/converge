@@ -28,3 +28,11 @@ func TestTemplateInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.Template))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.Template))
 }
+
+func TestTemplateValidation(t *testing.T) {
+	tmpl := resource.Template{Content: `{{"string"}}`}
+	assert.Nil(t, tmpl.Validate())
+
+	tmpl = resource.Template{Content: "{{{{}{}}"}
+	assert.NotNil(t, tmpl.Validate())
+}
