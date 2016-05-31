@@ -26,3 +26,4 @@ _testmain.go
 # binaries
 converge
 *.png
+*.dot

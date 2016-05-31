@@ -15,10 +15,11 @@
 package exec
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/awalterschulze/gographviz"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -27,16 +28,18 @@ func New(mod *resource.Module) (*Executor, error) {
 	e := &Executor{
 		module:    mod,
 		resources: map[string]resource.Resource{},
-		graph:     new(dag.Graph),
+		graph:     &dag.AcyclicGraph{},
 	}
 	return e, e.dagify()
 }
 
 // Executor executes resources
+// Should Executer be unexported since it has a constructor.
 type Executor struct {
 	module    *resource.Module
 	resources map[string]resource.Resource
-	graph     *dag.Graph
+	graph     *dag.AcyclicGraph
+	graphViz  *gographviz.Graph
 }
 
 type ident struct {
@@ -44,9 +47,13 @@ type ident struct {
 	Resource resource.Resource
 }
 
+// Now Using a GraphViz Library for prettier graphs
 func (e *Executor) dagify() error {
+	graphViz := gographviz.NewGraph()
+	graphName := e.module.Name()
+	graphViz.SetName(graphName)
+	graphViz.SetDir(true)
 	ids := []ident{{e.module.Name(), e.module}}
-
 	for len(ids) > 0 {
 		var id ident
 		id, ids = ids[0], ids[1:]
@@ -56,42 +63,48 @@ func (e *Executor) dagify() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + "." + child.Name(), child}
+				childID := ident{id.ID + "_" + child.Name(), child}
 				e.graph.Add(childID.ID)
 				e.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
 			}
 		}
+
 	}
+
+	walkDeptFunc := func(vert dag.Vertex, dept int) error {
+		attrs := make(map[string]string)
+		if dept == 0 {
+			attrs["shape"] = "Msquare"
+		} else {
+			maxDept := dept
+			if maxDept == 5 {
+				maxDept = 5
+			}
+			attrs["peripheries"] = strconv.Itoa(maxDept)
+		}
+		graphViz.AddNode(graphName, vert.(string), attrs)
+		return nil
+	}
+
+	e.graph.DepthFirstWalk(e.graph.Vertices()[:1], walkDeptFunc)
+
+	for _, edge := range e.graph.Edges() {
+		graphViz.AddEdge(edge.Source().(string), edge.Target().(string), true, nil)
+	}
+	e.graphViz = graphViz
 
 	return nil
 }
 
 func (e *Executor) String() string {
+	e.dagify()
 	return strings.TrimSpace(e.graph.String())
 }
 
 // GraphString returns the loaded graph as a GraphViz string
 func (e *Executor) GraphString() string {
-	s := "digraph {\n"
+	e.dagify()
 
-	for _, node := range e.graph.Vertices() {
-		s += fmt.Sprintf(
-			"  \"%s\"[label=\"%s\"];\n",
-			node,
-			e.resources[node.(string)].Name(),
-		)
-	}
-
-	for _, edge := range e.graph.Edges() {
-		s += fmt.Sprintf(
-			"  \"%s\" -> \"%s\";\n",
-			edge.Source(),
-			edge.Target(),
-		)
-	}
-
-	s += "}\n"
-
-	return s
+	return e.graphViz.String()
 }
