@@ -6,7 +6,7 @@ converge: main.go cmd/* load/* resource/* vendor/**/*
 
 test: converge samples/*.hcl
 	go test -v ${TESTDIRS}
-	find samples -type f -name '*.hcl' -exec ./converge check \{\} \;
+	find samples -type f -name '*.hcl' -exec ./converge validate \{\} \;
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
