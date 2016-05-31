@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,7 @@ func TestParse(t *testing.T) {
 	params := m.Params()
 	assert.NotNil(t, params["filename"])
 	if assert.NotNil(t, params["permissions"]) {
-		assert.Equal(t, params["permissions"].Default, "0600")
+		assert.Equal(t, params["permissions"].Default, resource.Value("0600"))
 	}
 
 	// resources

@@ -175,7 +175,7 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 	}
 
 	module = &resource.ModuleTask{
-		Args:       map[string]string{},
+		Args:       resource.Values{},
 		Source:     item.Keys[1].Token.Value().(string),
 		ModuleName: item.Keys[2].Token.Value().(string),
 	}
