@@ -31,7 +31,8 @@ func (t *Template) Name() string {
 
 // Validate validates the template config
 func (t *Template) Validate() error {
-	return nil
+	_, err := t.renderer.Render(t.Content)
+	return err
 }
 
 // Check satisfies the Monitor interface
