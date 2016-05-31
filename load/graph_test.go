@@ -19,7 +19,6 @@ import (
 
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func TestNewGraph(t *testing.T) {
 	t.Parallel()
 
 	mod := &resource.Module{
-		Resources: []types.Resource{
+		Resources: []resource.Resource{
 			new(resource.ShellTask),
 		},
 	}
@@ -43,7 +42,7 @@ func TestGraphWalk(t *testing.T) {
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test2",
 		},
-		Resources: []types.Resource{
+		Resources: []resource.Resource{
 			&resource.ShellTask{TaskName: "task2"},
 			&resource.Template{TemplateName: "template2"},
 		},
@@ -53,7 +52,7 @@ func TestGraphWalk(t *testing.T) {
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
-		Resources: []types.Resource{
+		Resources: []resource.Resource{
 			&resource.ShellTask{TaskName: "task"},
 			&resource.Template{TemplateName: "template"},
 			mod2,
@@ -65,7 +64,7 @@ func TestGraphWalk(t *testing.T) {
 
 	results := []string{}
 
-	err = graph.Walk(func(path string, r types.Resource) error {
+	err = graph.Walk(func(path string, r resource.Resource) error {
 		results = append(results, path)
 		return nil
 	})
@@ -92,7 +91,7 @@ func TestGraphParents(t *testing.T) {
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
-		Resources: []types.Resource{
+		Resources: []resource.Resource{
 			&resource.ShellTask{TaskName: "task"},
 		},
 	}
@@ -102,5 +101,5 @@ func TestGraphParents(t *testing.T) {
 
 	parents, err := graph.Parents("test.task")
 	assert.NoError(t, err)
-	assert.Equal(t, []types.Resource{mod}, parents)
+	assert.Equal(t, []resource.Resource{mod}, parents)
 }
