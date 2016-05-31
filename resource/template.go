@@ -29,14 +29,6 @@ func (t *Template) Name() string {
 	return t.TemplateName
 }
 
-// SetContext sets a context with a list of parent modules, ordered from parent
-// to grandparent
-func (t *Template) SetContext(parents []*Module) error {
-	var err error
-	t.renderer, err = NewRenderer(parents)
-	return err
-}
-
 // Validate validates the template config
 func (t *Template) Validate() error {
 	return nil
@@ -55,5 +47,9 @@ func (t *Template) Apply() error {
 // Prepare this module for use
 func (t *Template) Prepare(parent *Module) error {
 	t.parent = parent
-	return nil
+
+	var err error
+	t.renderer, err = NewRenderer(parent)
+
+	return err
 }
