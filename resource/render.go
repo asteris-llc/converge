@@ -16,25 +16,31 @@ package resource
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 )
 
 // NewRenderer creates a new Renderer
 func NewRenderer(ctx *Module) (*Renderer, error) {
 	renderer := &Renderer{
-		ctx: ctx,
+		ctx:   ctx,
+		funcs: map[string]interface{}{},
 	}
+
+	renderer.funcs["param"] = renderer.tParam
+
 	return renderer, nil
 }
 
 // Renderer renders template strings in Resources
 type Renderer struct {
-	ctx *Module
+	ctx   *Module
+	funcs template.FuncMap
 }
 
 // Render the given template using the set context
 func (r *Renderer) Render(source string) (string, error) {
-	tmpl, err := template.New("").Parse(source)
+	tmpl, err := template.New("").Funcs(r.funcs).Parse(source)
 	if err != nil {
 		return "", err
 	}
@@ -46,4 +52,15 @@ func (r *Renderer) Render(source string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// Template Functions
+
+func (r *Renderer) tParam(name string) (string, error) {
+	val, ok := r.ctx.Params()[name]
+
+	if !ok {
+		return "", fmt.Errorf("no such param %q", name)
+	}
+	return val.Value.String(), nil
 }

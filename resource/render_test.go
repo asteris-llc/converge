@@ -49,3 +49,22 @@ func TestRendererRenderInvalid(t *testing.T) {
 		assert.EqualError(t, err, "template: :1: unexpected unclosed action in command")
 	}
 }
+
+func TestRendererRenderParam(t *testing.T) {
+	t.Parallel()
+
+	param := &resource.Param{
+		ParamName: "test",
+		Value:     "1",
+	}
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{ModuleName: "test"},
+		Resources:  []resource.Resource{param},
+	}
+	renderer, err := resource.NewRenderer(mod)
+	assert.NoError(t, err)
+
+	result, err := renderer.Render("{{param `test`}}")
+	assert.NoError(t, err)
+	assert.EqualValues(t, param.Value, result)
+}
