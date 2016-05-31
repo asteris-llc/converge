@@ -19,11 +19,22 @@ type Template struct {
 	TemplateName string
 	Content      string `hcl:"content"`
 	Destination  string `hcl:"destination"`
+
+	renderer *Renderer
+	parent   *Module
 }
 
 // Name returns the name of this template
 func (t *Template) Name() string {
 	return t.TemplateName
+}
+
+// SetContext sets a context with a list of parent modules, ordered from parent
+// to grandparent
+func (t *Template) SetContext(parents []*Module) error {
+	var err error
+	t.renderer, err = NewRenderer(parents)
+	return err
 }
 
 // Validate validates the template config
@@ -38,5 +49,11 @@ func (t *Template) Check() (string, error) {
 
 // Apply (plus Check) satisfies the Task interface
 func (t *Template) Apply() error {
+	return nil
+}
+
+// Prepare this module for use
+func (t *Template) Prepare(parent *Module) error {
+	t.parent = parent
 	return nil
 }

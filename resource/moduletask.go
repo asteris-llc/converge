@@ -16,9 +16,11 @@ package resource
 
 // ModuleTask is the task for calling a module. It mostly defers to
 type ModuleTask struct {
-	Args       map[string]interface{}
+	Args       map[string]string
 	Source     string
 	ModuleName string
+
+	parent *Module
 }
 
 // Name returns name for metadata
@@ -28,5 +30,11 @@ func (m *ModuleTask) Name() string {
 
 // Validate checks shell tasks validity
 func (m *ModuleTask) Validate() error {
+	return nil
+}
+
+// Prepare this module for use
+func (m *ModuleTask) Prepare(parent *Module) error {
+	m.parent = parent
 	return nil
 }
