@@ -16,7 +16,7 @@ package resource
 
 // Monitor checks if a resource is correct.
 type Monitor interface {
-	Check() (string, error) // TODO: calling args
+	Check() (string, bool, error)
 }
 
 // Task does checking as Monitor does, but it can also make changes to make the

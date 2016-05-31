@@ -63,8 +63,8 @@ func (st *ShellTask) Validate() error {
 }
 
 // Check satisfies the Monitor interface
-func (st *ShellTask) Check() (string, error) {
-	return "", nil
+func (st *ShellTask) Check() (string, bool, error) {
+	return "", false, nil
 }
 
 // Apply (plus Check) satisfies the Task interface

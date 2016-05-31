@@ -36,8 +36,8 @@ func (t *Template) Validate() error {
 }
 
 // Check satisfies the Monitor interface
-func (t *Template) Check() (string, error) {
-	return "", nil
+func (t *Template) Check() (string, bool, error) {
+	return "", false, nil
 }
 
 // Apply (plus Check) satisfies the Task interface
