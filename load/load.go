@@ -37,6 +37,7 @@ func Load(source string) (*Graph, error) {
 		return nil, err
 	}
 
+	// transform ModuleTasks with Modules by loading them; do this iteratively
 	modules := []*resource.Module{initial}
 	for len(modules) > 0 {
 		// bookkeeping to avoid recursive calls. Using `range` here would copy and
@@ -44,8 +45,6 @@ func Load(source string) (*Graph, error) {
 		var module *resource.Module
 		module, modules = modules[0], modules[1:]
 
-		// actual work - loading modules recursively and replacing their ModuleTasks
-		// with Modules
 		for i, res := range module.Resources {
 			if mt, ok := res.(*resource.ModuleTask); ok {
 				newModule, err := loadAny(root, mt.Source)
@@ -63,7 +62,31 @@ func Load(source string) (*Graph, error) {
 		}
 	}
 
-	return NewGraph(initial)
+	graph, err := NewGraph(initial)
+	if err != nil {
+		return nil, err
+	}
+
+	// prepare modules for use
+	err = graph.Walk(func(path string, res resource.Resource) error {
+		parent, err := graph.Parent(path)
+		if err != nil {
+			return err
+		}
+
+		return res.Prepare(parent)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// validate modules
+	err = graph.Walk(func(path string, res resource.Resource) error {
+		return res.Validate()
+	})
+
+	return graph, nil
 }
 
 func parseSource(source string) (*url.URL, error) {
