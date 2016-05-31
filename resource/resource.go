@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package types
+package resource
 
 // Monitor checks if a resource is correct.
 type Monitor interface {
