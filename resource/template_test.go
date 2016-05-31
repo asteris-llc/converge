@@ -28,3 +28,22 @@ func TestTemplateInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.Template))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.Template))
 }
+
+func TestTemplateValid(t *testing.T) {
+	t.Parallel()
+
+	tmpl := resource.Template{Content: `{{.}}`}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+
+	assert.NoError(t, tmpl.Validate())
+}
+
+func TestTemplateInvalid(t *testing.T) {
+	t.Parallel()
+
+	tmpl := resource.Template{Content: "{{"}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+
+	err := tmpl.Validate()
+	assert.Error(t, err)
+}
