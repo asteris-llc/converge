@@ -107,11 +107,21 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				// resource list.
 				module.Resources = append(module.Resources, resource)
 			}
+
 			return n, false
 		}
 		return n, true
 	})
-
+	//Check that all dependencies were are resources in this module
+	for _, r := range module.Resources {
+		dependencies := r.Depends()
+		for _, dep := range dependencies {
+			if present, _ := names[dep]; !present {
+				errs = append(errs, &ParseError{node.(*ast.ObjectList).Pos(),
+					fmt.Sprintf("Resource %q depends on resource, %q,  which does not exist in this module", r.Name(), dep)})
+			}
+		}
+	}
 	if len(errs) == 0 {
 		return module, nil
 	}
@@ -198,13 +208,25 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 		ModuleName: item.Keys[2].Token.Value().(string),
 	}
 	err = hcl.DecodeObject(&module.Args, item.Val)
+	//Check if there is a dependencies argument
 	if arg, ok := module.Args["depends"]; ok {
-		dependencies, ok := arg.([]string)
-		if !ok {
-			err = &ParseError{item.Pos(), "malformed \"depends\" argument. (expected depends = [\"resource_name\"])"}
+		//Check that dependencies is an array
+		list, isList := arg.([]interface{})
+		if !isList {
+			err = &ParseError{item.Pos(), "malformed \"depends\" argument (expected list of dependencies)"}
 			return
 		}
-		module.Dependencies = dependencies
+		dependencies := make([]string, 0, len(list))
+		for _, dep := range arg.([]interface{}) {
+			if str, isString := dep.(string); isString {
+				dependencies = append(dependencies, str)
+			}
+		}
+		if !ok {
+			err = &ParseError{item.Pos(), fmt.Sprintf("malformed \"depends\" argument (expected depends = [\"resource_name\"] Got %v).", arg)}
+			return
+		}
+		module.Dependencies = []string(dependencies)
 	}
 	return
 }

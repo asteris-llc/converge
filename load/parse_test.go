@@ -93,11 +93,14 @@ func TestParseModuleCall(t *testing.T) {
 func TestParseDependentCall(t *testing.T) {
 	t.Parallel()
 
-	mod, err := load.Parse([]byte(moduleCall))
+	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-
-	assert.Equal(t, len(mod.Resources), 1)
-	assert.Equal(t, len(mod.Depends()), 1)
+	assert.Equal(t, len(mod.Resources), 2)
+	dependencies := make([]string, 0, 1)
+	for _, r := range mod.Resources {
+		dependencies = append(dependencies, r.Depends()...)
+	}
+	assert.Equal(t, len(dependencies), 1)
 }
 
 func TestParseDuplicateTask(t *testing.T) {
@@ -154,7 +157,7 @@ module "x" "y" {
 }
 module "a" "b" {
 	arg1 = "c"
-	depends = ["x.y"]
+	depends = ["y"]
 }
 `
 
