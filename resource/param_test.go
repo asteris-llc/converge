@@ -21,31 +21,49 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCoalesceValueZero(t *testing.T) {
+func TestParamPreparePresent(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, resource.CoalesceValue())
+	var (
+		p = &resource.Param{
+			ParamName: "test",
+			Default:   "x",
+			Type:      "string",
+		}
+
+		value = "a"
+
+		m = &resource.Module{
+			ModuleTask: resource.ModuleTask{
+				Args: map[string]resource.Value{p.ParamName: "a"},
+			},
+			Resources: []resource.Resource{p},
+		}
+	)
+
+	err := p.Prepare(m)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, value, p.Value)
 }
 
-func TestCoalesceValueOne(t *testing.T) {
+func TestParamPrepareDefault(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(
-		t,
-		1,
-		resource.CoalesceValue(resource.Value(1)),
-	)
-}
+	var (
+		p = &resource.Param{
+			ParamName: "test",
+			Default:   "x",
+			Type:      "string",
+		}
 
-func TestCoalesceValueMany(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		1,
-		resource.CoalesceValue(
-			resource.Value(nil),
-			resource.Value(1),
-		),
+		m = &resource.Module{
+			Resources: []resource.Resource{p},
+		}
 	)
+
+	err := p.Prepare(m)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, p.Default, p.Value)
 }
