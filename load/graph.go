@@ -17,14 +17,13 @@ package load
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/hashicorp/terraform/dag"
 )
 
 var (
-	graphIDSeperator = "."
+	graphIDSeparator = "/"
 )
 
 // NewGraph returns a DAG of the given Module
@@ -62,7 +61,7 @@ func (g *Graph) load() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + graphIDSeperator + child.Name(), child}
+				childID := ident{id.ID + graphIDSeparator + child.Name(), child}
 				g.graph.Add(childID.ID)
 				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
@@ -118,29 +117,20 @@ func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
 	)
 }
 
-// Parents retrieves the parents of a given path
-func (g *Graph) Parents(path string) ([]resource.Resource, error) {
-	var (
-		parents []resource.Resource
-		lock    = new(sync.Mutex)
-	)
+// Parent retrieves the parent module of a given path
+func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
+	parts := strings.Split(path, graphIDSeparator)
+	parentPath := strings.Join(parts[:len(parts)-1], graphIDSeparator)
 
-	err := g.graph.ReverseDepthFirstWalk(
-		[]dag.Vertex{path},
-		func(vertex dag.Vertex, depth int) error {
-			if vertex.(string) == path {
-				return nil
-			}
+	above, ok := g.resources[parentPath]
+	if !ok {
+		return nil, fmt.Errorf("no parent for %q", path)
+	}
 
-			parent := g.resources[vertex.(string)]
+	parent, ok = above.(*resource.Module)
+	if !ok {
+		return nil, fmt.Errorf("bad parent for %q", path)
+	}
 
-			lock.Lock()
-			defer lock.Unlock()
-			parents = append(parents, parent)
-
-			return nil
-		},
-	)
-
-	return parents, err
+	return parent, nil
 }

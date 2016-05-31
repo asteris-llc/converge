@@ -75,16 +75,16 @@ func TestGraphWalk(t *testing.T) {
 		results,
 		[]string{
 			"test",
-			"test.test2",
-			"test.test2.template2",
-			"test.test2.task2",
-			"test.template",
-			"test.task",
+			"test/test2",
+			"test/test2/template2",
+			"test/test2/task2",
+			"test/template",
+			"test/task",
 		},
 	)
 }
 
-func TestGraphParents(t *testing.T) {
+func TestGraphParent(t *testing.T) {
 	t.Parallel()
 
 	mod := &resource.Module{
@@ -99,7 +99,7 @@ func TestGraphParents(t *testing.T) {
 	graph, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 
-	parents, err := graph.Parents("test.task")
+	parent, err := graph.Parent("test/task")
 	assert.NoError(t, err)
-	assert.Equal(t, []resource.Resource{mod}, parents)
+	assert.Equal(t, mod, parent)
 }
