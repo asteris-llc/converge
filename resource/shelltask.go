@@ -22,9 +22,10 @@ import (
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	TaskName    string
-	CheckSource string `hcl:"check"`
-	ApplySource string `hcl:"apply"`
+	TaskName     string
+	CheckSource  string   `hcl:"check"`
+	ApplySource  string   `hcl:"apply"`
+	Dependencies []string `hcl:"depends"`
 }
 
 // Name returns name for metadata
@@ -60,9 +61,9 @@ func (st *ShellTask) Validate() error {
 	return nil
 }
 
-// Requires satisfies the Resource interface. ShellTask has no requirements.
-func (st *ShellTask) Requires() []string {
-	return []string{}
+// Depends satisfies the Resource interface. ShellTask has no requirements.
+func (st *ShellTask) Depends() []string {
+	return st.Dependencies
 }
 
 // Check satisfies the Monitor interface

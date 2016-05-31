@@ -16,9 +16,10 @@ package resource
 
 // ModuleTask is the task for calling a module. It mostly defers to
 type ModuleTask struct {
-	Args       map[string]interface{}
-	Source     string
-	ModuleName string
+	Args         map[string]interface{}
+	Source       string
+	ModuleName   string
+	Dependencies []string
 }
 
 // Name returns name for metadata
@@ -31,8 +32,8 @@ func (m *ModuleTask) Validate() error {
 	return nil
 }
 
-// Requires satisfies the Resource interface. ModuleTask has no requirements in
+// Depends satisfies the Resource interface. ModuleTask has no requirements in
 // itself, but the module it calls might.
-func (m *ModuleTask) Requires() []string {
-	return []string{}
+func (m *ModuleTask) Depends() []string {
+	return m.Dependencies
 }
