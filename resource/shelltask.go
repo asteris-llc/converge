@@ -25,6 +25,8 @@ type ShellTask struct {
 	TaskName    string
 	CheckSource string `hcl:"check"`
 	ApplySource string `hcl:"apply"`
+
+	parent *Module
 }
 
 // Name returns name for metadata
@@ -67,5 +69,11 @@ func (st *ShellTask) Check() (string, error) {
 
 // Apply (plus Check) satisfies the Task interface
 func (st *ShellTask) Apply() error {
+	return nil
+}
+
+// Prepare this module for use
+func (st *ShellTask) Prepare(parent *Module) error {
+	st.parent = parent
 	return nil
 }

@@ -35,9 +35,11 @@ func CoalesceValue(vs ...Value) Value {
 
 // Param is essentially the calling arguments of a module
 type Param struct {
-	Name    string
-	Default Value  `hcl:"default"`
-	Type    string `hcl:"type"`
+	ParamName string
+	Default   Value  `hcl:"default"`
+	Type      string `hcl:"type"`
+
+	parent *Module
 }
 
 // ValidationError is the type returned by each resource's Validate method. It
@@ -49,4 +51,20 @@ type ValidationError struct {
 
 func (v ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", v.Location, v.Err)
+}
+
+// Name returns the name of this param
+func (p *Param) Name() string {
+	return p.ParamName
+}
+
+// Validate that this value is correct
+func (p *Param) Validate() error {
+	return nil
+}
+
+// Prepare this module for use
+func (p *Param) Prepare(parent *Module) error {
+	p.parent = parent
+	return nil
 }
