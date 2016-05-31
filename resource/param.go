@@ -17,27 +17,17 @@ package resource
 import "fmt"
 
 // Value contains the different values for a param
-type Value interface{}
+type Value string
 
 // Values is a named collection of values
 type Values map[string]Value
-
-// CoalesceValue returns the first non-nil value, or nil if they're all nil
-func CoalesceValue(vs ...Value) Value {
-	for _, v := range vs {
-		if v != nil {
-			return v
-		}
-	}
-
-	return nil
-}
 
 // Param is essentially the calling arguments of a module
 type Param struct {
 	ParamName string
 	Default   Value  `hcl:"default"`
 	Type      string `hcl:"type"`
+	Value     Value
 
 	parent *Module
 }
@@ -66,5 +56,12 @@ func (p *Param) Validate() error {
 // Prepare this module for use
 func (p *Param) Prepare(parent *Module) error {
 	p.parent = parent
+
+	if val, ok := parent.Args[p.ParamName]; ok {
+		p.Value = val
+	} else {
+		p.Value = p.Default
+	}
+
 	return nil
 }
