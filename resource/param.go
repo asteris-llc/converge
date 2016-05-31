@@ -19,6 +19,10 @@ import "fmt"
 // Value contains the different values for a param
 type Value string
 
+func (v Value) String() string {
+	return string(v)
+}
+
 // Values is a named collection of values
 type Values map[string]Value
 
