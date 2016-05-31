@@ -38,17 +38,9 @@ func (m *Module) Children() []Resource {
 	return m.Resources
 }
 
-// Prepare prepares this module and all it's resources for use.
+// Prepare this module
 func (m *Module) Prepare(parent *Module) error {
 	m.parent = parent
-
-	// prepare all the rest of the resources
-	for _, res := range m.Resources {
-		if err := res.Prepare(m); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
