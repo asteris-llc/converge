@@ -14,6 +14,11 @@
 
 package resource
 
+import (
+	"bytes"
+	"html/template"
+)
+
 // NewRenderer creates a new Renderer
 func NewRenderer(ctx *Module) (*Renderer, error) {
 	renderer := &Renderer{
@@ -25,4 +30,20 @@ func NewRenderer(ctx *Module) (*Renderer, error) {
 // Renderer renders template strings in Resources
 type Renderer struct {
 	ctx *Module
+}
+
+// Render the given template using the set context
+func (r *Renderer) Render(source string) (string, error) {
+	tmpl, err := template.New("").Parse(source)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, r.ctx)
+	if err != nil {
+		return "", nil
+	}
+
+	return buf.String(), nil
 }
