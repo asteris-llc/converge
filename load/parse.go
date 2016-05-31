@@ -109,7 +109,6 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 			return n, false
 		}
-
 		return n, true
 	})
 
@@ -144,6 +143,7 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 		task "x" {
 			check = "y"
 			apply = "z"
+			depends = [""]
 		}
 	*/
 	if len(item.Keys) < 2 {
@@ -198,6 +198,13 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 		ModuleName: item.Keys[2].Token.Value().(string),
 	}
 	err = hcl.DecodeObject(&module.Args, item.Val)
-
+	if arg, ok := module.Args["depends"]; ok {
+		dependencies, ok := arg.([]string)
+		if !ok {
+			err = &ParseError{item.Pos(), "malformed \"depends\" argument. (expected depends = [\"resource_name\"])"}
+			return
+		}
+		module.Dependencies = dependencies
+	}
 	return
 }

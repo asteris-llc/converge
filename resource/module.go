@@ -32,10 +32,10 @@ func (m *Module) Validate() error {
 	return nil
 }
 
-// Requires satisfies the Resource interface. Module has the same requirements
+// Depends satisfies the Resource interface. Module has the same requirements
 // as the ModuleTask it contains.
-func (m *Module) Requires() []string {
-	return m.ModuleTask.Requires()
+func (m *Module) Depends() []string {
+	return m.ModuleTask.Depends()
 }
 
 // Children returns the managed resources under this module

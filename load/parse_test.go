@@ -24,6 +24,27 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, len(m.Resources), 2)
 }
 
+func TestParseDependcies(t *testing.T) {
+	t.Parallel()
+
+	m, err := load.Parse([]byte(dependentModule))
+
+	assert.NoError(t, err)
+
+	// params
+	assert.NotNil(t, m.Params["filename"])
+	if assert.NotNil(t, m.Params["permissions"]) {
+		assert.Equal(t, *m.Params["permissions"].Default, "0600")
+	}
+	// resources
+	assert.Equal(t, len(m.Resources), 2)
+	dependencies := []string{}
+	for _, r := range m.Resources {
+		dependencies = append(dependencies, r.Depends()...)
+	}
+	assert.Equal(t, len(dependencies), 1)
+}
+
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
@@ -69,6 +90,16 @@ func TestParseModuleCall(t *testing.T) {
 	assert.Equal(t, len(mod.Resources), 1)
 }
 
+func TestParseDependentCall(t *testing.T) {
+	t.Parallel()
+
+	mod, err := load.Parse([]byte(moduleCall))
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(mod.Resources), 1)
+	assert.Equal(t, len(mod.Depends()), 1)
+}
+
 func TestParseDuplicateTask(t *testing.T) {
 	t.Parallel()
 
@@ -83,13 +114,28 @@ var (
 param "filename" { }
 param "permissions" { default = "0600" }
 
+
+template "test" {
+content = ""
+}
 task "permission" {
   check = "stat -f \"%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
   apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
 }
+`
+
+	dependentModule = `
+param "filename" { }
+param "permissions" { default = "0600" }
 
 template "test" {
-  content = ""
+content = ""
+}
+
+task "permission" {
+check = "stat -f \"%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
+apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
+depends = ["test"]
 }
 `
 
@@ -101,6 +147,16 @@ param "x" {}`
 module "x" "y" {
   arg1 = "z"
 }`
+
+	dependentCall = `
+	module "x" "y" {
+	arg1 = "z"
+}
+module "a" "b" {
+	arg1 = "c"
+	depends = ["x.y"]
+}
+`
 
 	duplicateTask = `
 task "x" { }

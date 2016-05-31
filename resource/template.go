@@ -17,8 +17,9 @@ package resource
 // Template is a task defined by content and a destination
 type Template struct {
 	TemplateName string
-	Content      string `hcl:"content"`
-	Destination  string `hcl:"destination"`
+	Content      string   `hcl:"content"`
+	Destination  string   `hcl:"destination"`
+	Dependencies []string `hcl:"depends"`
 }
 
 // Name returns the name of this template
@@ -31,9 +32,9 @@ func (t *Template) Validate() error {
 	return nil
 }
 
-// Requires satisfies the Resource interface. Template has no requirements.
-func (t *Template) Requires() []string {
-	return []string{}
+// Depends satisfies the Resource interface. Template has no requirements.
+func (t *Template) Depends() []string {
+	return t.Dependencies
 }
 
 // Check satisfies the Monitor interface
