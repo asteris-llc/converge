@@ -124,7 +124,8 @@ func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 
 	above, ok := g.resources[parentPath]
 	if !ok {
-		return nil, fmt.Errorf("no parent for %q", path)
+		// having no parent is alright, it could be the root of the graph
+		return nil, nil
 	}
 
 	parent, ok = above.(*resource.Module)
