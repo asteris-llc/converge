@@ -14,7 +14,12 @@
 
 package resource
 
-import "os/exec"
+import (
+	"bytes"
+	"fmt"
+	"os/exec"
+	"syscall"
+)
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
@@ -80,12 +85,57 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 
 // Check satisfies the Monitor interface
 func (st *ShellTask) Check() (string, bool, error) {
-	return "", false, nil
+	check, err := st.CheckSource()
+	if err != nil {
+		return "", false, err
+	}
+
+	out, code, err := st.exec(check)
+	return out, code != 0, err
 }
 
 // Apply (plus Check) satisfies the Task interface
 func (st *ShellTask) Apply() error {
 	return nil
+}
+
+func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
+	command := exec.Command("sh")
+	stdin, err := command.StdinPipe()
+	if err != nil {
+		return "", 0, err
+	}
+
+	// TODO: does this create a race condition?
+	var sink bytes.Buffer
+	command.Stdout = &sink
+	command.Stderr = &sink
+
+	if err := command.Start(); err != nil {
+		return "", 0, err
+	}
+
+	if _, err := stdin.Write([]byte(script)); err != nil {
+		return "", 0, err
+	}
+
+	if err := stdin.Close(); err != nil {
+		return "", 0, err
+	}
+
+	err = command.Wait()
+	if _, ok := err.(*exec.ExitError); !ok && err != nil {
+		return "", 0, err
+	}
+
+	switch result := command.ProcessState.Sys().(type) {
+	case syscall.WaitStatus:
+		code = uint32(result)
+	default:
+		panic(fmt.Sprintf("unknown type %+v", result))
+	}
+
+	return sink.String(), code, nil
 }
 
 // Prepare this module for use

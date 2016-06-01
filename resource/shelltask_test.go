@@ -85,3 +85,31 @@ func TestShellTaskApplySource(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "1", check)
 }
+
+func TestShellTaskCheckNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawCheckSource: "echo test && exit 1",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	current, change, err := st.Check()
+	assert.Equal(t, "test\n", current)
+	assert.True(t, change)
+	assert.Nil(t, err)
+}
+
+func TestShellTaskCheckNoChange(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawCheckSource: "echo test",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	current, change, err := st.Check()
+	assert.Equal(t, "test\n", current)
+	assert.False(t, change)
+	assert.Nil(t, err)
+}
