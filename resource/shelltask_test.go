@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
@@ -25,6 +26,7 @@ func TestShellTaskInterfaces(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(resource.ShellTask))
+	assert.Implements(t, (*fmt.Stringer)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
