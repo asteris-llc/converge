@@ -14,11 +14,7 @@
 
 package resource
 
-import (
-	"io/ioutil"
-	"os"
-	"os/exec"
-)
+import "os/exec"
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
@@ -36,29 +32,49 @@ func (st *ShellTask) Name() string {
 
 // Validate checks shell tasks validity
 func (st *ShellTask) Validate() error {
-	for _, script := range []string{st.RawCheckSource, st.RawApplySource} {
-		file, err := ioutil.TempFile("", "")
-		if err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(file.Name(), []byte(script), 0664); err != nil {
-			return err
-		}
-		// validate the script using sh's built-in validation
-		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
-			switch script {
-			case st.RawCheckSource:
-				return ValidationError{Location: "check", Err: err}
-			case st.RawApplySource:
-				return ValidationError{Location: "apply", Err: err}
-			default:
-				return err
-			}
-		}
-		if err := os.Remove(file.Name()); err != nil {
-			return err
-		}
+	script, err := st.CheckSource()
+	if err != nil {
+		return ValidationError{Location: "check", Err: err}
 	}
+	if err := st.validateScriptSyntax(script); err != nil {
+		return ValidationError{Location: "check", Err: err}
+	}
+
+	script, err = st.ApplySource()
+	if err != nil {
+		return ValidationError{Location: "apply", Err: err}
+	}
+	if err := st.validateScriptSyntax(script); err != nil {
+		return ValidationError{Location: "apply", Err: err}
+	}
+
+	return nil
+}
+
+func (st *ShellTask) validateScriptSyntax(script string) error {
+	command := exec.Command("sh", "-n")
+
+	in, err := command.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := command.Start(); err != nil {
+		return err
+	}
+
+	if _, err := in.Write([]byte(script)); err != nil {
+		return err
+	}
+
+	if err := in.Close(); err != nil {
+		return err
+	}
+
+	if err := command.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -76,4 +92,14 @@ func (st *ShellTask) Apply() error {
 func (st *ShellTask) Prepare(parent *Module) (err error) {
 	st.renderer, err = NewRenderer(parent)
 	return err
+}
+
+// CheckSource renders RawCheckSource for execution
+func (st *ShellTask) CheckSource() (string, error) {
+	return st.renderer.Render(st.RawCheckSource)
+}
+
+// ApplySource renders RawApplySource for execution
+func (st *ShellTask) ApplySource() (string, error) {
+	return st.renderer.Render(st.RawApplySource)
 }

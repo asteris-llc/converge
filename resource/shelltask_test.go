@@ -36,6 +36,7 @@ func TestShellTaskValidateValid(t *testing.T) {
 		RawCheckSource: "echo test",
 		RawApplySource: "echo test",
 	}
+	assert.NoError(t, st.Prepare(nil))
 	assert.NoError(t, st.Validate())
 }
 
@@ -43,6 +44,8 @@ func TestShellTaskValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
 
 	st := resource.ShellTask{RawCheckSource: "if do then; esac"}
+	assert.NoError(t, st.Prepare(nil))
+
 	err := st.Validate()
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "check: exit status 2")
@@ -53,8 +56,32 @@ func TestShellTaskValidateInvalidApply(t *testing.T) {
 	t.Parallel()
 
 	st := resource.ShellTask{RawApplySource: "if do then; esac"}
+	assert.NoError(t, st.Prepare(nil))
+
 	err := st.Validate()
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "apply: exit status 2")
 	}
+}
+
+func TestShellTaskCheckSource(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{RawCheckSource: "{{1}}"}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	check, err := st.CheckSource()
+	assert.NoError(t, err)
+	assert.Equal(t, "1", check)
+}
+
+func TestShellTaskApplySource(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{RawApplySource: "{{1}}"}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	check, err := st.ApplySource()
+	assert.NoError(t, err)
+	assert.Equal(t, "1", check)
 }
