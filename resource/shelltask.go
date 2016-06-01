@@ -32,8 +32,8 @@ type ShellTask struct {
 }
 
 // Name returns name for metadata
-func (st *ShellTask) Name() string {
-	return "task." + st.TaskName
+func (st *ShellTask) String() string {
+	return st.TaskName
 }
 
 // Validate checks shell tasks validity

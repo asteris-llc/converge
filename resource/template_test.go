@@ -29,6 +29,7 @@ func TestTemplateInterfaces(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(resource.Template))
+	assert.Implements(t, (*fmt.Stringer)(nil), new(resource.Template))
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.Template))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.Template))
 }

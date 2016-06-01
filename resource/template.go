@@ -30,8 +30,8 @@ type Template struct {
 }
 
 // Name returns the name of this template
-func (t *Template) Name() string {
-	return "template." + t.TemplateName
+func (t *Template) String() string {
+	return t.TemplateName
 }
 
 // Validate validates the template config

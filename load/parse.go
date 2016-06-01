@@ -69,7 +69,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
-				previousTaskName = res.Name()
+				previousTaskName = res.String()
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -91,15 +91,15 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// validate the name
-			if !nameRe.MatchString(res.Name()) {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.Name())})
+			if !nameRe.MatchString(res.String()) {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.String())})
 				return n, false
 			}
 
 			// check if the name is already present, error if so
-			dupCheckName := res.Name()
-			if _, present := names[dupCheckName]; present {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
+			dupCheckName := token + "." + res.String()
+			if present := names[dupCheckName]; present {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.String())})
 				return n, false
 			}
 			//Dependencies are always in the form depends = [resource_type.name]""
@@ -116,7 +116,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		dependencies := res.Depends()
 		for _, dep := range dependencies {
 			if _, present := names[dep]; !present {
-				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
+				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.String(), dep))
 			}
 		}
 	}

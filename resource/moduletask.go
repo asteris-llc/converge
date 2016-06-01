@@ -25,7 +25,7 @@ type ModuleTask struct {
 }
 
 // Name returns name for metadata
-func (m *ModuleTask) Name() string {
+func (m *ModuleTask) String() string {
 	return m.ModuleName
 }
 
