@@ -14,7 +14,7 @@
 
 package resource
 
-// ModuleTask is the task for calling a module. It mostly defers to
+// ModuleTask is the task for calling a module.
 type ModuleTask struct {
 	Args       Values
 	Source     string
