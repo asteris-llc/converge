@@ -22,9 +22,9 @@ import (
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	TaskName    string
-	CheckSource string `hcl:"check"`
-	ApplySource string `hcl:"apply"`
+	TaskName       string
+	RawCheckSource string `hcl:"check"`
+	RawApplySource string `hcl:"apply"`
 
 	renderer *Renderer
 }
@@ -36,7 +36,7 @@ func (st *ShellTask) Name() string {
 
 // Validate checks shell tasks validity
 func (st *ShellTask) Validate() error {
-	for _, script := range []string{st.CheckSource, st.ApplySource} {
+	for _, script := range []string{st.RawCheckSource, st.RawApplySource} {
 		file, err := ioutil.TempFile("", "")
 		if err != nil {
 			return err
@@ -47,9 +47,9 @@ func (st *ShellTask) Validate() error {
 		// validate the script using sh's built-in validation
 		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
 			switch script {
-			case st.CheckSource:
+			case st.RawCheckSource:
 				return ValidationError{Location: "check", Err: err}
-			case st.ApplySource:
+			case st.RawApplySource:
 				return ValidationError{Location: "apply", Err: err}
 			default:
 				return err

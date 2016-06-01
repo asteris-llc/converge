@@ -33,8 +33,8 @@ func TestShellTaskValidateValid(t *testing.T) {
 	t.Parallel()
 
 	st := resource.ShellTask{
-		CheckSource: "echo test",
-		ApplySource: "echo test",
+		RawCheckSource: "echo test",
+		RawApplySource: "echo test",
 	}
 	assert.NoError(t, st.Validate())
 }
@@ -42,7 +42,7 @@ func TestShellTaskValidateValid(t *testing.T) {
 func TestShellTaskValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
 
-	st := resource.ShellTask{CheckSource: "if do then; esac"}
+	st := resource.ShellTask{RawCheckSource: "if do then; esac"}
 	err := st.Validate()
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "check: exit status 2")
@@ -52,7 +52,7 @@ func TestShellTaskValidateInvalidCheck(t *testing.T) {
 func TestShellTaskValidateInvalidApply(t *testing.T) {
 	t.Parallel()
 
-	st := resource.ShellTask{ApplySource: "if do then; esac"}
+	st := resource.ShellTask{RawApplySource: "if do then; esac"}
 	err := st.Validate()
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "apply: exit status 2")
