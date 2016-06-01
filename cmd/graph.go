@@ -26,7 +26,7 @@ import (
 // graphCmd represents the check command
 var graphCmd = &cobra.Command{
 	Use:   "graph",
-	Short: "graph the loadution of a module",
+	Short: "graph the execution of a module",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
