@@ -26,7 +26,7 @@ type ShellTask struct {
 	CheckSource string `hcl:"check"`
 	ApplySource string `hcl:"apply"`
 
-	parent *Module
+	renderer *Renderer
 }
 
 // Name returns name for metadata
@@ -73,7 +73,7 @@ func (st *ShellTask) Apply() error {
 }
 
 // Prepare this module for use
-func (st *ShellTask) Prepare(parent *Module) error {
-	st.parent = parent
-	return nil
+func (st *ShellTask) Prepare(parent *Module) (err error) {
+	st.renderer, err = NewRenderer(parent)
+	return err
 }
