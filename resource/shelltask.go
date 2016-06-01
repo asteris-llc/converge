@@ -15,16 +15,19 @@
 package resource
 
 import (
-	"io/ioutil"
-	"os"
+	"bytes"
+	"fmt"
 	"os/exec"
+	"syscall"
 )
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	TaskName    string
-	CheckSource string `hcl:"check"`
-	ApplySource string `hcl:"apply"`
+	TaskName       string
+	RawCheckSource string `hcl:"check"`
+	RawApplySource string `hcl:"apply"`
+
+	renderer *Renderer
 }
 
 // Name returns name for metadata
@@ -34,38 +37,119 @@ func (st *ShellTask) Name() string {
 
 // Validate checks shell tasks validity
 func (st *ShellTask) Validate() error {
-	for _, script := range []string{st.CheckSource, st.ApplySource} {
-		file, err := ioutil.TempFile("", "")
-		if err != nil {
-			return err
-		}
-		if err := ioutil.WriteFile(file.Name(), []byte(script), 0664); err != nil {
-			return err
-		}
-		// validate the script using sh's built-in validation
-		if err := exec.Command("sh", "-n", file.Name()).Run(); err != nil {
-			switch script {
-			case st.CheckSource:
-				return ValidationError{Location: "check", Err: err}
-			case st.ApplySource:
-				return ValidationError{Location: "apply", Err: err}
-			default:
-				return err
-			}
-		}
-		if err := os.Remove(file.Name()); err != nil {
-			return err
-		}
+	script, err := st.CheckSource()
+	if err != nil {
+		return ValidationError{Location: "check", Err: err}
 	}
+	if err := st.validateScriptSyntax(script); err != nil {
+		return ValidationError{Location: "check", Err: err}
+	}
+
+	script, err = st.ApplySource()
+	if err != nil {
+		return ValidationError{Location: "apply", Err: err}
+	}
+	if err := st.validateScriptSyntax(script); err != nil {
+		return ValidationError{Location: "apply", Err: err}
+	}
+
+	return nil
+}
+
+func (st *ShellTask) validateScriptSyntax(script string) error {
+	command := exec.Command("sh", "-n")
+
+	in, err := command.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := command.Start(); err != nil {
+		return err
+	}
+
+	if _, err := in.Write([]byte(script)); err != nil {
+		return err
+	}
+
+	if err := in.Close(); err != nil {
+		return err
+	}
+
+	if err := command.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Check satisfies the Monitor interface
-func (st *ShellTask) Check() (string, error) {
-	return "", nil
+func (st *ShellTask) Check() (string, bool, error) {
+	check, err := st.CheckSource()
+	if err != nil {
+		return "", false, err
+	}
+
+	out, code, err := st.exec(check)
+	return out, code != 0, err
 }
 
 // Apply (plus Check) satisfies the Task interface
 func (st *ShellTask) Apply() error {
 	return nil
+}
+
+func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
+	command := exec.Command("sh")
+	stdin, err := command.StdinPipe()
+	if err != nil {
+		return "", 0, err
+	}
+
+	// TODO: does this create a race condition?
+	var sink bytes.Buffer
+	command.Stdout = &sink
+	command.Stderr = &sink
+
+	if err := command.Start(); err != nil {
+		return "", 0, err
+	}
+
+	if _, err := stdin.Write([]byte(script)); err != nil {
+		return "", 0, err
+	}
+
+	if err := stdin.Close(); err != nil {
+		return "", 0, err
+	}
+
+	err = command.Wait()
+	if _, ok := err.(*exec.ExitError); !ok && err != nil {
+		return "", 0, err
+	}
+
+	switch result := command.ProcessState.Sys().(type) {
+	case syscall.WaitStatus:
+		code = uint32(result)
+	default:
+		panic(fmt.Sprintf("unknown type %+v", result))
+	}
+
+	return sink.String(), code, nil
+}
+
+// Prepare this module for use
+func (st *ShellTask) Prepare(parent *Module) (err error) {
+	st.renderer, err = NewRenderer(parent)
+	return err
+}
+
+// CheckSource renders RawCheckSource for execution
+func (st *ShellTask) CheckSource() (string, error) {
+	return st.renderer.Render(st.RawCheckSource)
+}
+
+// ApplySource renders RawApplySource for execution
+func (st *ShellTask) ApplySource() (string, error) {
+	return st.renderer.Render(st.RawApplySource)
 }
