@@ -15,10 +15,14 @@
 package resource_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateInterfaces(t *testing.T) {
@@ -32,7 +36,7 @@ func TestTemplateInterfaces(t *testing.T) {
 func TestTemplateValid(t *testing.T) {
 	t.Parallel()
 
-	tmpl := resource.Template{Content: `{{.}}`}
+	tmpl := resource.Template{RawContent: `{{.}}`}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
 	assert.NoError(t, tmpl.Validate())
@@ -41,9 +45,83 @@ func TestTemplateValid(t *testing.T) {
 func TestTemplateInvalid(t *testing.T) {
 	t.Parallel()
 
-	tmpl := resource.Template{Content: "{{"}
+	tmpl := resource.Template{RawContent: "{{"}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
 	err := tmpl.Validate()
 	assert.Error(t, err)
+}
+
+func TestTemplateDestinationRenders(t *testing.T) {
+	t.Parallel()
+
+	tmpl := resource.Template{RawDestination: "{{1}}"}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	assert.Equal(t, "1", tmpl.Destination())
+}
+
+func TestTemplateCheckEmptyFile(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
+	require.NoError(t, err)
+	defer require.NoError(t, os.Remove(tmpfile.Name()))
+
+	tmpl := resource.Template{
+		RawDestination: tmpfile.Name(),
+		RawContent:     "this is a test",
+	}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	current, change, err := tmpl.Check()
+	assert.Equal(t, "", current)
+	assert.True(t, change)
+	assert.NoError(t, err)
+}
+
+func TestTemplateCheckEmptyDir(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "test-check-empty-dir")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
+
+	tmpl := resource.Template{
+		RawDestination: tmpdir,
+		RawContent:     "this is a test",
+	}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	current, change, err := tmpl.Check()
+	assert.Equal(t, "", current)
+	assert.True(t, change)
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			fmt.Sprintf("cannot template %q, is a directory", tmpdir),
+		)
+	}
+}
+
+func TestTemplateCheckContentGood(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "test-check-content-good")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
+
+	_, err = tmpfile.Write([]byte("this is a test"))
+	require.NoError(t, err)
+	require.NoError(t, tmpfile.Sync())
+
+	tmpl := resource.Template{
+		RawDestination: tmpfile.Name(),
+		RawContent:     "this is a test",
+	}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	current, change, err := tmpl.Check()
+	assert.Equal(t, "this is a test", current)
+	assert.False(t, change)
+	assert.NoError(t, err)
 }
