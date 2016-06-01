@@ -16,16 +16,18 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
 
-// checkCmd represents the check command
-var checkCmd = &cobra.Command{
-	Use:   "check",
-	Short: "check that the syntax of a module file is valid",
+// planCmd represents the plan command
+var planCmd = &cobra.Command{
+	Use:   "plan",
+	Short: "plan what needs to change in the system",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -36,16 +38,23 @@ var checkCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			_, err := load.Load(fname)
+			graph, err := load.Load(fname)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			logger.Info("module valid")
+			results, err := exec.Plan(graph)
+			if err != nil {
+				logger.WithError(err).Fatal("planning failed")
+			}
+
+			for _, result := range results {
+				fmt.Println(result)
+			}
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(checkCmd)
+	RootCmd.AddCommand(planCmd)
 }

@@ -16,7 +16,7 @@ package resource
 
 // Monitor checks if a resource is correct.
 type Monitor interface {
-	Check() (string, error) // TODO: calling args
+	Check() (string, bool, error)
 }
 
 // Task does checking as Monitor does, but it can also make changes to make the
@@ -29,6 +29,7 @@ type Task interface {
 // Resource adds metadata about the executed tasks
 type Resource interface {
 	Name() string
+	Prepare(*Module) error
 	Validate() error
 }
 

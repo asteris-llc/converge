@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,13 +16,14 @@ func TestParse(t *testing.T) {
 	assert.NoError(t, err)
 
 	// params
-	assert.NotNil(t, m.Params["filename"])
-	if assert.NotNil(t, m.Params["permissions"]) {
-		assert.Equal(t, *m.Params["permissions"].Default, "0600")
+	params := m.Params()
+	assert.NotNil(t, params["filename"])
+	if assert.NotNil(t, params["permissions"]) {
+		assert.Equal(t, params["permissions"].Default, resource.Value("0600"))
 	}
 
 	// resources
-	assert.Equal(t, len(m.Resources), 2)
+	assert.Equal(t, len(m.Resources), 4)
 }
 
 func TestParseAnonymousParam(t *testing.T) {

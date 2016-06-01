@@ -1,11 +1,12 @@
 .PHONY = test
+TESTDIRS = $(shell find . -name '*_test.go' | cut -d/ -f1-2 | uniq | grep -v vendor)
 
-converge: main.go cmd/* load/* resource/* exec/* vendor/**/*
+converge: main.go cmd/* load/* resource/* vendor/**/*
 	go build .
 
 test: converge samples/*.hcl
-	go test -v ./...
-	find samples -type f -name '*.hcl' -exec ./converge check \{\} \;
+	go test -v ${TESTDIRS}
+	find samples -type f -name '*.hcl' -exec ./converge validate \{\} \;
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@

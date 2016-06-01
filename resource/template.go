@@ -14,11 +14,19 @@
 
 package resource
 
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
 // Template is a task defined by content and a destination
 type Template struct {
-	TemplateName string
-	Content      string `hcl:"content"`
-	Destination  string `hcl:"destination"`
+	TemplateName   string
+	RawContent     string `hcl:"content"`
+	RawDestination string `hcl:"destination"`
+
+	renderer *Renderer
 }
 
 // Name returns the name of this template
@@ -28,15 +36,58 @@ func (t *Template) Name() string {
 
 // Validate validates the template config
 func (t *Template) Validate() error {
-	return nil
+	_, err := t.renderer.Render(t.RawContent)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.renderer.Render(t.RawDestination)
+	return err
 }
 
 // Check satisfies the Monitor interface
-func (t *Template) Check() (string, error) {
-	return "", nil
+func (t *Template) Check() (string, bool, error) {
+	dest := t.Destination()
+
+	stat, err := os.Stat(dest)
+	if os.IsNotExist(err) {
+		return "", true, nil
+	} else if err != nil {
+		return "", false, err
+	} else if stat.IsDir() {
+		return "", true, fmt.Errorf("cannot template %q, is a directory", dest)
+	}
+
+	actual, err := ioutil.ReadFile(dest)
+	if err != nil {
+		return "", false, err
+	}
+
+	return string(actual), t.Content() != string(actual), nil
 }
 
 // Apply (plus Check) satisfies the Task interface
 func (t *Template) Apply() error {
 	return nil
+}
+
+// Prepare this module for use
+func (t *Template) Prepare(parent *Module) (err error) {
+	t.renderer, err = NewRenderer(parent)
+
+	return err
+}
+
+// Destination renders the destination
+func (t *Template) Destination() string {
+	// we're ignoring the error here because it's already been validated
+	dest, _ := t.renderer.Render(t.RawDestination)
+	return dest
+}
+
+// Content renders the content
+func (t *Template) Content() string {
+	// we're ignoring the error here because it's already been validated
+	content, _ := t.renderer.Render(t.RawContent)
+	return content
 }

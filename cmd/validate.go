@@ -16,17 +16,16 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
 
-// graphCmd represents the check command
-var graphCmd = &cobra.Command{
-	Use:   "graph",
-	Short: "graph the execution of a module",
+// validateCmd represents the validate command
+var validateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "validate that the syntax of a module file is valid",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -37,16 +36,16 @@ var graphCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			graph, err := load.Load(fname)
+			_, err := load.Load(fname)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			fmt.Println(graph.GraphString())
+			logger.Info("module valid")
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(graphCmd)
+	RootCmd.AddCommand(validateCmd)
 }
