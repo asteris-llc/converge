@@ -29,24 +29,32 @@ func TestShellTaskInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
 
-func TestShellTaskValidateCheckSource(t *testing.T) {
+func TestShellTaskValidateValid(t *testing.T) {
 	t.Parallel()
+
 	st := resource.ShellTask{
 		CheckSource: "echo test",
 		ApplySource: "echo test",
 	}
-	assert.Nil(t, st.Validate())
-	st = resource.ShellTask{CheckSource: "if do then; esac"}
-	assert.NotNil(t, st.Validate())
+	assert.NoError(t, st.Validate())
 }
 
-func TestShellTaskValidateApplySource(t *testing.T) {
+func TestShellTaskValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
-	st := resource.ShellTask{
-		CheckSource: "echo test",
-		ApplySource: "echo test",
+
+	st := resource.ShellTask{CheckSource: "if do then; esac"}
+	err := st.Validate()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "check: exit status 2")
 	}
-	assert.Nil(t, st.Validate())
-	st = resource.ShellTask{ApplySource: "if do then; esac"}
-	assert.NotNil(t, st.Validate())
+}
+
+func TestShellTaskValidateInvalidApply(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{ApplySource: "if do then; esac"}
+	err := st.Validate()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "apply: exit status 2")
+	}
 }
