@@ -28,22 +28,22 @@ func (p *PlanResult) string(pretty bool) string {
 	if pretty {
 		if p.WillChange {
 			return fmt.Sprintf(
-				"%s:\n\tCurrently: %s\tWill Change: %s",
+				"%s:\n\tCurrently: %s\n\tWill Change: %s",
 				skittles.BoldBlack(p.Path),
-				skittles.Yellow(fmt.Sprint(p.CurrentStatus)),
-				skittles.Yellow(fmt.Sprint(p.WillChange)),
+				skittles.Yellow(p.CurrentStatus),
+				skittles.Yellow(p.WillChange),
 			)
 		}
 		return fmt.Sprintf(
-			"%s:\n\tCurrently: %s\tWill Change: %s",
+			"%s:\n\tCurrently: %s\n\tWill Change: %s",
 			skittles.BoldBlack(p.Path),
-			skittles.Blue(fmt.Sprint(p.CurrentStatus)),
-			skittles.Blue(fmt.Sprint(p.WillChange)),
+			skittles.Blue(p.CurrentStatus),
+			skittles.Blue(p.WillChange),
 		)
 	}
 
 	return fmt.Sprintf(
-		"%s:\n\tCurrently: %s\tWill Change: %t",
+		"%s:\n\tCurrently: %s\n\tWill Change: %t",
 		p.Path,
 		p.CurrentStatus,
 		p.WillChange,
@@ -72,8 +72,11 @@ func (rs Results) string(pretty bool) (printMe string) {
 	// sort them by lexical order, which ends up being module path
 	sort.Strings(results)
 
-	// join them together (each already has a newline)
-	for _, r := range results {
+	// join them together with newlines
+	for i, r := range results {
+		if i != 0 {
+			printMe += "\n"
+		}
 		printMe += r
 	}
 	return printMe
