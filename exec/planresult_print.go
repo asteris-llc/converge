@@ -24,8 +24,6 @@ import (
 // Results is the type of a slice of PlanResults
 type Results []*PlanResult
 
-/* Printing */
-
 func (p *PlanResult) string(pretty bool) string {
 	if pretty {
 		if p.WillChange {
