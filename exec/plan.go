@@ -15,7 +15,6 @@
 package exec
 
 import (
-	"fmt"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -29,15 +28,6 @@ type PlanResult struct {
 	Path          string
 	CurrentStatus string
 	WillChange    bool
-}
-
-func (p *PlanResult) String() string {
-	return fmt.Sprintf(
-		"%s:\n\tCurrently: %q\n\tWill Change: %t",
-		p.Path,
-		p.CurrentStatus,
-		p.WillChange,
-	)
 }
 
 // PlanWithStatus plans the operations to be performed and outputs status
