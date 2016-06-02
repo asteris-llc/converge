@@ -19,6 +19,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ var validateCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			_, err := load.Load(fname)
+			_, err := load.Load(fname, resource.Values{})
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}

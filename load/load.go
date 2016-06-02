@@ -26,11 +26,12 @@ import (
 
 // Load a module from a resource. This uses the protocol in the path (or file://
 // if not present) to determine from where the module should be loaded.
-func Load(source string) (*Graph, error) {
+func Load(source string, args resource.Values) (*Graph, error) {
 	initial, err := loadAny(nil, source)
 	if err != nil {
 		return nil, err
 	}
+	initial.Args = args
 
 	root, err := parseSource(source)
 	if err != nil {
