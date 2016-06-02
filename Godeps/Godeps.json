@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/asteris-llc/converge",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v70",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
@@ -15,6 +15,10 @@
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.10.0-16-gcd7d1bb",
 			"Rev": "cd7d1bbe41066b6c1f19780f895901052150a575"
+		},
+		{
+			"ImportPath": "github.com/acmacalister/skittles",
+			"Rev": "8f7bde0f0de4cb42c1e8db861e67627558e97019"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
