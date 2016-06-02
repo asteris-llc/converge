@@ -17,6 +17,7 @@ package load
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -115,6 +116,8 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 	switch url.Scheme {
 	case "file":
 		return FromFile(url.Path)
+	case "http":
+		return FromHTTP(url.String())
 
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
@@ -135,6 +138,27 @@ func FromFile(filename string) (*resource.Module, error) {
 
 	if err == nil {
 		mod.ModuleName = path.Base(filename)
+	}
+
+	return mod, err
+}
+
+// FromHTTP fetches a module from an HTTP server, and then loads it
+func FromHTTP(url string) (*resource.Module, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	mod, err := Parse(content)
+
+	if err == nil {
+		mod.ModuleName = path.Base(url)
 	}
 
 	return mod, err
