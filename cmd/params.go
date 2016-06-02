@@ -12,33 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exec_test
+package cmd
 
 import (
-	"testing"
+	"encoding/json"
 
-	"github.com/asteris-llc/converge/exec"
-	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-func TestPlan(t *testing.T) {
-	t.Parallel()
+func addParamsArguments(flags *pflag.FlagSet) {
+	flags.StringP("paramsJSON", "p", "{}", "parameters for the top-level module, in JSON format")
+}
 
-	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
-	require.NoError(t, err)
+func getParamsFromFlags() (resource.Values, error) {
+	params := resource.Values{}
+	err := json.Unmarshal([]byte(viper.GetString("paramsJson")), &params)
 
-	results, err := exec.Plan(graph)
-	assert.NoError(t, err)
-	assert.Equal(
-		t,
-		[]*exec.PlanResult{{
-			Path:          "basic.hcl/render",
-			CurrentStatus: "cat: test.txt: No such file or directory\n",
-			WillChange:    true,
-		}},
-		results,
-	)
+	return params, err
 }

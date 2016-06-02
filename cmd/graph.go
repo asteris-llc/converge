@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// graphCmd represents the check command
+// graphCmd represents the graph command
 var graphCmd = &cobra.Command{
 	Use:   "graph",
 	Short: "graph the execution of a module",
@@ -37,7 +37,7 @@ var graphCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(fname, nil)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}

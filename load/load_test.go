@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,19 +33,19 @@ func init() {
 }
 
 func TestLoadBasic(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "basic.hcl"))
+	_, err := load.Load(path.Join(samplesDir, "basic.hcl"), resource.Values{})
 	assert.NoError(t, err)
 }
 
 func TestLoadNotExist(t *testing.T) {
 	badPath := path.Join(samplesDir, "doesNotExist.hcl")
-	_, err := load.Load(badPath)
+	_, err := load.Load(badPath, resource.Values{})
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, fmt.Sprintf("Not found: %q using protocol \"file\"", badPath))
 	}
 }
 
 func TestLoadFileModule(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "sourceFile.hcl"))
+	_, err := load.Load(path.Join(samplesDir, "sourceFile.hcl"), resource.Values{})
 	assert.NoError(t, err)
 }
