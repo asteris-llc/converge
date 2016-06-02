@@ -27,34 +27,34 @@ type Results []*PlanResult
 /* Printing */
 
 func (p *PlanResult) string(pretty bool) string {
-	// defaults: no colors
-	printablePath := p.Path
-	printableStatus := p.CurrentStatus
-	printableChange := fmt.Sprint(p.WillChange)
-
-	// add color
 	if pretty {
-		printablePath = skittles.BoldBlack(printablePath)
 		if p.WillChange {
-			printableStatus = skittles.Yellow(printableStatus)
-			printableChange = skittles.Yellow(printableChange)
-		} else {
-			printableStatus = skittles.Blue(printableStatus)
-			printableChange = skittles.Blue(printableChange)
+			return fmt.Sprintf(
+				"%s:\n\tCurrently: %s\tWill Change: %s",
+				skittles.BoldBlack(p.Path),
+				skittles.Yellow(fmt.Sprint(p.CurrentStatus)),
+				skittles.Yellow(fmt.Sprint(p.WillChange)),
+			)
 		}
+		return fmt.Sprintf(
+			"%s:\n\tCurrently: %s\tWill Change: %s",
+			skittles.BoldBlack(p.Path),
+			skittles.Blue(fmt.Sprint(p.CurrentStatus)),
+			skittles.Blue(fmt.Sprint(p.WillChange)),
+		)
 	}
 
 	return fmt.Sprintf(
-		"%s:\n\tCurrently: %s\n\tWill Change: %s",
+		"%s:\n\tCurrently: %s\tWill Change: %t",
 		p.Path,
-		printableStatus,
-		printableChange,
+		p.CurrentStatus,
+		p.WillChange,
 	)
 }
 
 // Pretty prints a PlanResult, optionally with ANSI terminal colors. It is used
 // in PlanResult.String and Results.String.
-func (p *PlanResult) Pretty(color bool) string {
+func (p *PlanResult) Pretty() string {
 	return p.string(true)
 }
 
@@ -65,11 +65,18 @@ func (p *PlanResult) String() string {
 }
 
 func (rs Results) string(pretty bool) (printMe string) {
-	if pretty {
-		sort.Sort(rs)
-	}
+	// first, collect string representations of all the PlanResults
+	results := []string{}
 	for _, r := range rs {
-		printMe += r.Pretty(pretty)
+		results = append(results, r.string(pretty))
+	}
+
+	// sort them by lexical order, which ends up being module path
+	sort.Strings(results)
+
+	// join them together (each already has a newline)
+	for _, r := range results {
+		printMe += r
 	}
 	return printMe
 }
@@ -84,32 +91,4 @@ func (rs Results) Pretty() string {
 // ANSI terminal colors for a slice of PlanResults.
 func (rs Results) String() string {
 	return rs.string(false)
-}
-
-/* Sorting */
-
-// Len is part of sort.Interface.
-func (rs Results) Len() int {
-	return len(rs)
-}
-
-// Swap is part of sort.Interface.
-func (rs Results) Swap(i, j int) {
-	rs[i], rs[j] = rs[j], rs[i]
-}
-
-// Less is part of sort.Interface. It sorts first based on Path, and second on
-// WillChange.
-func (rs Results) Less(i, j int) bool {
-	if rs[i].Path == rs[j].Path {
-		// If the result's have the same path, show the one that will change first.
-		if rs[i].WillChange && !rs[j].WillChange {
-			return true
-		}
-		return false
-	}
-	if rs[i].Path < rs[j].Path {
-		return true
-	}
-	return false
 }

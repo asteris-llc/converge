@@ -75,7 +75,7 @@ var planCmd = &cobra.Command{
 			isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
 			// giving the results the type exec.Results allows us to pretty-print them
 			var typedResults exec.Results = results
-			if !nocolor && isColorTerminal {
+			if !viper.GetBool("nocolor") && isColorTerminal {
 				fmt.Println(typedResults.Pretty())
 			} else {
 				fmt.Println(typedResults)
