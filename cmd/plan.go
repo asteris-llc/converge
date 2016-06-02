@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -35,10 +36,15 @@ var planCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		params, err := getParamsFromFlags()
+		if err != nil {
+			logrus.WithError(err).Fatal("could not load params")
+		}
+
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(fname, params)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
@@ -56,5 +62,8 @@ var planCmd = &cobra.Command{
 }
 
 func init() {
+	addParamsArguments(planCmd.Flags())
+	viper.BindPFlags(planCmd.Flags())
+
 	RootCmd.AddCommand(planCmd)
 }
