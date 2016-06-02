@@ -53,6 +53,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.converge.yaml)")
+	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
 
 	if err := viper.BindPFlags(RootCmd.PersistentFlags()); err != nil {
 		logrus.WithError(err).Fatal("could not bind flags")
