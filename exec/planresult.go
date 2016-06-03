@@ -42,7 +42,7 @@ func (p *PlanResult) string(pretty bool) string {
 	}
 	tmplStr := "{{boldBlack (trimNewline .Path)}}:"
 	tmplStr += "\n\tCurrently: {{blueOrYellow (trimNewline .CurrentStatus)}}"
-	tmplStr += "\n\tWill Change: {{blueOrYellow (trimNewline .WillChange)}}"
+	tmplStr += "\n\tWill Change: {{blueOrYellow .WillChange}}"
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
