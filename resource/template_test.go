@@ -65,7 +65,7 @@ func TestTemplateDestinationRenders(t *testing.T) {
 func TestTemplateCheckEmptyFile(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
 	require.NoError(t, err)
-	defer require.NoError(t, os.Remove(tmpfile.Name()))
+	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
 
 	tmpl := resource.Template{
 		RawDestination: tmpfile.Name(),
@@ -123,5 +123,30 @@ func TestTemplateCheckContentGood(t *testing.T) {
 	current, change, err := tmpl.Check()
 	assert.Equal(t, "this is a test", current)
 	assert.False(t, change)
+	assert.NoError(t, err)
+}
+
+func TestTemplateApply(t *testing.T) {
+	t.Parallel()
+
+	tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
+
+	tmpl := resource.Template{
+		RawDestination: tmpfile.Name(),
+		RawContent:     "{{1}}",
+	}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	new, success, err := tmpl.Apply()
+	assert.Equal(t, "1", new)
+	assert.True(t, success)
+	assert.NoError(t, err)
+
+	// read the new file
+	content, err := ioutil.ReadFile(tmpfile.Name())
+	assert.Equal(t, "1", string(content))
 	assert.NoError(t, err)
 }
