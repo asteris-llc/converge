@@ -95,8 +95,14 @@ func (st *ShellTask) Check() (string, bool, error) {
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (st *ShellTask) Apply() error {
-	return nil
+func (st *ShellTask) Apply() (string, bool, error) {
+	apply, err := st.ApplySource()
+	if err != nil {
+		return "", false, err
+	}
+
+	out, code, err := st.exec(apply)
+	return out, code == 0, err
 }
 
 func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
