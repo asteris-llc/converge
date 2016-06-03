@@ -67,8 +67,8 @@ func (t *Template) Check() (string, bool, error) {
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (t *Template) Apply() error {
-	return nil
+func (t *Template) Apply() (string, bool, error) {
+	return "", false, nil
 }
 
 // Prepare this module for use
