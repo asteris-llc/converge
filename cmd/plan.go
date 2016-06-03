@@ -28,8 +28,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var nocolor bool
-
 // planCmd represents the plan command
 var planCmd = &cobra.Command{
 	Use:   "plan",
