@@ -67,7 +67,7 @@ func (rs Results) Print() string {
 	var printMe string
 	for i, r := range results {
 		if i != 0 {
-			printMe += "\n"
+			printMe += "\n\n"
 		}
 		printMe += r
 	}
