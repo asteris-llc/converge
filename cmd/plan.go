@@ -55,7 +55,15 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			results, err := exec.Plan(ctx, graph)
+			status := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range status {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(status)
+			}()
+
+			results, err := exec.PlanWithStatus(ctx, graph, status)
 			if err != nil {
 				logger.WithError(err).Fatal("planning failed")
 			}
