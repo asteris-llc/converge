@@ -33,16 +33,6 @@ type prettyPrinter interface {
 	Pretty() string
 }
 
-// condFmt returns a function that only formats its input if a condition is true.
-func condFmt(cond bool, format func(interface{}) string) func(interface{}) string {
-	return func(in interface{}) string {
-		if cond {
-			return format(in)
-		}
-		return fmt.Sprint(in)
-	}
-}
-
 // Print implements a pretty printer that uses ANSI terminal colors when a color
 // terminal is available.
 func (rs Results) Print() string {
