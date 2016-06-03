@@ -85,13 +85,12 @@ var applyCmd = &cobra.Command{
 
 			var failed bool
 
-			fmt.Print("\n")
+			// giving the results the type exec.Results allows us to pretty-print them
+			var typedResults exec.Results
 			for _, result := range results {
-				if !result.Success {
-					failed = true
-				}
-				fmt.Println(result)
+				typedResults = append(typedResults, result)
 			}
+			fmt.Println(typedResults.Print())
 
 			if failed {
 				os.Exit(1)

@@ -1,0 +1,75 @@
+// Copyright © 2016 Asteris, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package exec
+
+import (
+	"fmt"
+	"runtime"
+	"sort"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/spf13/viper"
+)
+
+// Results is the type of a slice of PlanResults or ApplyResults (both of which
+// statisfy the prettyPrinter interface.)
+type Results []prettyPrinter
+
+type prettyPrinter interface {
+	fmt.Stringer
+	Pretty() string
+}
+
+// condFmt returns a function that only formats its input if a condition is true.
+func condFmt(cond bool, format func(interface{}) string) func(interface{}) string {
+	return func(in interface{}) string {
+		if cond {
+			return format(in)
+		}
+		return fmt.Sprint(in)
+	}
+}
+
+// Print implements a pretty printer that uses ANSI terminal colors when a color
+// terminal is available.
+func (rs Results) Print() string {
+	// decide if we should use terminal colors
+	// borrowed from Logrus's text_formatter.go
+	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
+	useColor := !viper.GetBool("nocolor") && isColorTerminal
+
+	// first, collect string representations of all the PlanResults
+	results := []string{}
+	for _, r := range rs {
+		if useColor {
+			results = append(results, r.Pretty())
+		} else {
+			results = append(results, r.String())
+		}
+	}
+
+	// sort them by lexical order, which ends up being module path
+	sort.Strings(results)
+
+	// join them together with newlines
+	var printMe string
+	for i, r := range results {
+		if i != 0 {
+			printMe += "\n"
+		}
+		printMe += r
+	}
+	return printMe
+}

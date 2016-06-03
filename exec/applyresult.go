@@ -17,44 +17,54 @@ package exec
 import (
 	"bytes"
 	"html/template"
+	"strings"
 
 	"github.com/acmacalister/skittles"
 )
 
-// PlanResult contains the result of a resource check
-type PlanResult struct {
-	Path          string
-	CurrentStatus string
-	WillChange    bool
+// ApplyResult contains the result of a resource check
+type ApplyResult struct {
+	Path      string
+	OldStatus string
+	NewStatus string
+	Success   bool
 }
 
-func (p *PlanResult) string(pretty bool) string {
+func (a *ApplyResult) string(pretty bool) string {
 	funcs := map[string]interface{}{
 		"boldBlack": condFmt(pretty, skittles.BoldBlack),
 		"blueOrYellow": condFmt(pretty, func(in interface{}) string {
-			if p.WillChange {
+			if a.OldStatus != a.NewStatus {
 				return skittles.Yellow(in)
 			}
 			return skittles.Blue(in)
 		}),
+		"redOrGreen": condFmt(pretty, func(in interface{}) string {
+			if a.Success {
+				return skittles.Green(in)
+			}
+			return skittles.Red(in)
+		}),
+		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := "{{boldBlack .Path}}:"
-	tmplStr += "\n\tCurrently: {{blueOrYellow .CurrentStatus}}"
-	tmplStr += "\n\tWill Change: {{blueOrYellow .WillChange}}"
+	tmplStr := "{{boldBlack .Path}}:\n\t"
+	tmplStr += `Status: "{{blueOrYellow (trimNewline .OldStatus)}}" `
+	tmplStr += `=> "{{blueOrYellow (trimNewline .NewStatus)}}"`
+	tmplStr += "\n\tSuccess: {{redOrGreen .Success}}"
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
-	_ = tmpl.Execute(&buf, p)
+	_ = tmpl.Execute(&buf, a)
 	return buf.String()
 }
 
-// Pretty pretty-prints a PlanResult with ANSI terminal colors.
-func (p *PlanResult) Pretty() string {
-	return p.string(true)
+// Pretty pretty-prints an ApplyResult with ANSI terminal colors.
+func (a *ApplyResult) Pretty() string {
+	return a.string(true)
 }
 
 // String satisfies the Stringer interface, and is used to print a string
-// representation of a PlanResult.
-func (p *PlanResult) String() string {
-	return p.string(false)
+// representation of a ApplyResult.
+func (a *ApplyResult) String() string {
+	return a.string(false)
 }
