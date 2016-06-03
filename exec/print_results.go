@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"runtime"
 	"sort"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -63,13 +64,5 @@ func (rs Results) Print() string {
 	// sort them by lexical order, which ends up being module path
 	sort.Strings(results)
 
-	// join them together with newlines
-	var printMe string
-	for i, r := range results {
-		if i != 0 {
-			printMe += "\n\n"
-		}
-		printMe += r
-	}
-	return printMe
+	return strings.Join(results, "\n\n")
 }
