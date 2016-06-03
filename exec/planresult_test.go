@@ -46,15 +46,15 @@ func TestResultPretty(t *testing.T) {
 	t.Parallel()
 
 	expected1 := "\x1b[1;30mmoduleA/submodule1\x1b[0m:\n\tCurrently: \x1b[33mstatus\x1b[0m\n\tWill Change: \x1b[33mtrue\x1b[0m"
-	expected2 := "moduleB/submodule1:\n\tCurrently: status\n\tWill Change: false"
+	expected2 := "\x1b[1;30mmoduleB/submodule1\x1b[0m:\n\tCurrently: \x1b[34mstatus\x1b[0m\n\tWill Change: \x1b[34mfalse\x1b[0m"
 	assert.Equal(t, expected1, result1.Pretty())
-	assert.Equal(t, expected2, result2.String())
+	assert.Equal(t, expected2, result2.Pretty())
 }
 
 func TestResultsString(t *testing.T) {
 	t.Parallel()
 
-	rs := exec.Results{result2, result1}
+	rs := exec.Results{result1, result2}
 	expected := "moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\n"
 	expected += "moduleB/submodule1:\n\tCurrently: status\n\tWill Change: false"
 	assert.Equal(t, expected, rs.String())
@@ -63,7 +63,18 @@ func TestResultsString(t *testing.T) {
 func TestResultsPretty(t *testing.T) {
 	t.Parallel()
 
-	rs := exec.Results{result2, result1}
+	rs := exec.Results{result1, result2}
 	expected := "\x1b[1;30mmoduleA/submodule1\x1b[0m:\n\tCurrently: \x1b[33mstatus\x1b[0m\n\tWill Change: \x1b[33mtrue\x1b[0m\n\x1b[1;30mmoduleB/submodule1\x1b[0m:\n\tCurrently: \x1b[34mstatus\x1b[0m\n\tWill Change: \x1b[34mfalse\x1b[0m"
-	assert.EqualValues(t, expected, rs.Pretty())
+	assert.Equal(t, expected, rs.Pretty())
+}
+
+func TestResultsSorting(t *testing.T) {
+	t.Parallel()
+
+	// the results should be printed in the opposite order in which they appear in
+	// this slice, they should be sorted by path
+	rs := exec.Results{result2, result1}
+	expected := "moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\n"
+	expected += "moduleB/submodule1:\n\tCurrently: status\n\tWill Change: false"
+	assert.Equal(t, expected, rs.Pretty())
 }
