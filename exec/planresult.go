@@ -16,6 +16,7 @@ package exec
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"text/template"
 
@@ -34,12 +35,12 @@ type Results []*PlanResult
 
 func (p *PlanResult) string(pretty bool) string {
 	// condFmt returns a function that only formats its input if `pretty` is true.
-	condFmt := func(format func(interface{}) string) func(string) string {
-		return func(in string) string {
+	condFmt := func(format func(interface{}) string) func(interface{}) string {
+		return func(in interface{}) string {
 			if pretty {
 				return format(in)
 			}
-			return in
+			return fmt.Sprint(in)
 		}
 	}
 	funcs := map[string]interface{}{
