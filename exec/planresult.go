@@ -17,6 +17,7 @@ package exec
 import (
 	"bytes"
 	"html/template"
+	"strings"
 
 	"github.com/acmacalister/skittles"
 )
@@ -37,10 +38,11 @@ func (p *PlanResult) string(pretty bool) string {
 			}
 			return skittles.Blue(in)
 		}),
+		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := "{{boldBlack .Path}}:"
-	tmplStr += "\n\tCurrently: {{blueOrYellow .CurrentStatus}}"
-	tmplStr += "\n\tWill Change: {{blueOrYellow .WillChange}}"
+	tmplStr := "{{boldBlack (trimNewline .Path)}}:"
+	tmplStr += "\n\tCurrently: {{blueOrYellow (trimNewline .CurrentStatus)}}"
+	tmplStr += "\n\tWill Change: {{blueOrYellow (trimNewline .WillChange)}}"
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
