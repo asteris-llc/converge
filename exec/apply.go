@@ -42,8 +42,8 @@ func (p *ApplyResult) String() string {
 	)
 }
 
-// Apply the operations to be performed
-func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
+// ApplyWithStatus applies the operations checked in plan
+func ApplyWithStatus(ctx context.Context, graph *load.Graph, plan []*PlanResult, status chan<- *StatusMessage) (results []*ApplyResult, err error) {
 	// transform checks into something we can look up easily
 	planResults := map[string]*PlanResult{}
 	for _, result := range plan {
@@ -78,6 +78,12 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 			}
 		)
 
+		select {
+		case <-ctx.Done():
+			return nil
+		case status <- &StatusMessage{Path: path, Status: "applying"}:
+		}
+
 		result.NewStatus, result.Success, err = task.Apply()
 		if err != nil {
 			return err
@@ -91,4 +97,17 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 	})
 
 	return results, err
+}
+
+// Apply does the same thing as ApplyWithStatus, but drops all status messages
+func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
+	status := make(chan *StatusMessage, 1)
+	defer close(status)
+	go func() {
+		for range status {
+			continue
+		}
+	}()
+
+	return ApplyWithStatus(ctx, graph, plan, status)
 }
