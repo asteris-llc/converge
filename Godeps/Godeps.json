@@ -122,6 +122,10 @@
 			"Rev": "c5d7a69bf8a2c9c374798160849c071093e41dd1"
 		},
 		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "4876518f9e71663000c348837735820161a42df7"
+		},
+		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03"
 		},
