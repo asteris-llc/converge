@@ -17,6 +17,8 @@ package exec_test
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
@@ -30,7 +32,7 @@ func TestPlan(t *testing.T) {
 	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
 	require.NoError(t, err)
 
-	results, err := exec.Plan(graph)
+	results, err := exec.Plan(context.Background(), graph)
 	assert.NoError(t, err)
 	assert.Equal(
 		t,

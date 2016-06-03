@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 
+	"golang.org/x/net/context"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
@@ -42,6 +44,11 @@ var applyCmd = &cobra.Command{
 			logrus.WithError(err).Fatal("could not load params")
 		}
 
+		// set up execution context
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
+		// iterate over modules
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
@@ -50,18 +57,35 @@ var applyCmd = &cobra.Command{
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			plan, err := exec.Plan(graph)
+			planStatus := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range planStatus {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(planStatus)
+			}()
+
+			plan, err := exec.PlanWithStatus(ctx, graph, planStatus)
 			if err != nil {
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			results, err := exec.Apply(graph, plan)
+			status := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range status {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(status)
+			}()
+
+			results, err := exec.ApplyWithStatus(ctx, graph, plan, status)
 			if err != nil {
 				logger.WithError(err).Fatal("applying failed")
 			}
 
 			var failed bool
 
+			fmt.Print("\n")
 			for _, result := range results {
 				if !result.Success {
 					failed = true
