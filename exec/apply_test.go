@@ -17,6 +17,8 @@ package exec_test
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
@@ -31,11 +33,11 @@ func TestApply(t *testing.T) {
 	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
 	require.NoError(t, err)
 
-	plan, err := exec.Plan(graph)
+	plan, err := exec.Plan(context.Background(), graph)
 	assert.NoError(t, err)
 
 	helpers.InTempDir(t, func() {
-		results, err := exec.Apply(graph, plan)
+		results, err := exec.Apply(context.Background(), graph, plan)
 		assert.NoError(t, err)
 		assert.Equal(
 			t,

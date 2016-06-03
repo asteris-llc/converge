@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 
+	"golang.org/x/net/context"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
@@ -42,6 +44,11 @@ var applyCmd = &cobra.Command{
 			logrus.WithError(err).Fatal("could not load params")
 		}
 
+		// set up execution context
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
+		// iterate over modules
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
@@ -50,12 +57,12 @@ var applyCmd = &cobra.Command{
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			plan, err := exec.Plan(graph)
+			plan, err := exec.Plan(ctx, graph)
 			if err != nil {
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			results, err := exec.Apply(graph, plan)
+			results, err := exec.Apply(ctx, graph, plan)
 			if err != nil {
 				logger.WithError(err).Fatal("applying failed")
 			}
