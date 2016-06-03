@@ -19,6 +19,7 @@ import (
 	"html/template"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
 )
 
@@ -54,7 +55,10 @@ func (a *ApplyResult) string(pretty bool) string {
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
-	_ = tmpl.Execute(&buf, a)
+	err := tmpl.Execute(&buf, a)
+	if err != nil {
+		logrus.WithError(err).Warn("error while outputting the result of `apply`")
+	}
 	return buf.String()
 }
 
