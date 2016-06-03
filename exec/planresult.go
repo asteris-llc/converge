@@ -19,6 +19,7 @@ import (
 	"html/template"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
 )
 
@@ -46,7 +47,10 @@ func (p *PlanResult) string(pretty bool) string {
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
-	_ = tmpl.Execute(&buf, p)
+	err := tmpl.Execute(&buf, p)
+	if err != nil {
+		logrus.WithError(err).Warn("error while outputting the result of `plan`")
+	}
 	return buf.String()
 }
 
