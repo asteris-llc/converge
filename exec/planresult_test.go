@@ -76,5 +76,5 @@ func TestResultsSorting(t *testing.T) {
 	rs := exec.Results{result2, result1}
 	expected := "moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\n"
 	expected += "moduleB/submodule1:\n\tCurrently: status\n\tWill Change: false"
-	assert.Equal(t, expected, rs.Pretty())
+	assert.Equal(t, expected, rs.String())
 }
