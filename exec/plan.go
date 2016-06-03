@@ -40,15 +40,15 @@ func (p *PlanResult) String() string {
 	)
 }
 
-// Plan the operations to be performed
-func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
+// PlanWithStatus plans the operations to be performed and outputs status
+func PlanWithStatus(ctx context.Context, graph *load.Graph, status chan<- *StatusMessage) (results []*PlanResult, err error) {
 	lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, res resource.Resource) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		default:
+		case status <- &StatusMessage{Path: path, Status: "checking status"}:
 		}
 
 		monitor, ok := res.(resource.Monitor)
@@ -74,4 +74,17 @@ func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err er
 	})
 
 	return results, err
+}
+
+// Plan does the same thing as PlanWithStatus, but drops all status messages
+func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
+	status := make(chan *StatusMessage, 1)
+	defer close(status)
+	go func() {
+		for range status {
+			continue
+		}
+	}()
+
+	return PlanWithStatus(ctx, graph, status)
 }
