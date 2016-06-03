@@ -68,6 +68,7 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("planning failed")
 			}
 
+			fmt.Print("\n")
 			for _, result := range results {
 				fmt.Println(result)
 			}

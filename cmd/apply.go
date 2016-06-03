@@ -85,6 +85,7 @@ var applyCmd = &cobra.Command{
 
 			var failed bool
 
+			fmt.Print("\n")
 			for _, result := range results {
 				if !result.Success {
 					failed = true
