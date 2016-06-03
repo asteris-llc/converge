@@ -48,7 +48,7 @@ func PlanWithStatus(ctx context.Context, graph *load.Graph, status chan<- *Statu
 		select {
 		case <-ctx.Done():
 			return nil
-		case status <- &StatusMessage{Path: path, Status: "checking status"}:
+		default:
 		}
 
 		monitor, ok := res.(resource.Monitor)
@@ -60,6 +60,12 @@ func PlanWithStatus(ctx context.Context, graph *load.Graph, status chan<- *Statu
 			err    error
 			result = &PlanResult{Path: path}
 		)
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case status <- &StatusMessage{Path: path, Status: "checking status"}:
+		}
 
 		result.CurrentStatus, result.WillChange, err = monitor.Check()
 		if err != nil {
