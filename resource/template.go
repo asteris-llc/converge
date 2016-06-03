@@ -68,7 +68,19 @@ func (t *Template) Check() (string, bool, error) {
 
 // Apply (plus Check) satisfies the Task interface
 func (t *Template) Apply() (string, bool, error) {
-	return "", false, nil
+	dest := t.Destination()
+	content := t.Content()
+	err := ioutil.WriteFile(dest, []byte(content), 0755)
+	if err != nil {
+		return "", false, err
+	}
+
+	actual, err := ioutil.ReadFile(dest)
+	if err != nil {
+		return "", false, err
+	}
+
+	return content, content == string(actual), err
 }
 
 // Prepare this module for use
