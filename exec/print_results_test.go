@@ -27,7 +27,7 @@ func TestPlanResultsPrint(t *testing.T) {
 
 	rs := exec.Results{planResult1, planResult2}
 	viper.Set("nocolor", true)
-	assert.Equal(t, "moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\nmoduleB/submodule1:\n\tCurrently: status\n\tWill Change: false", rs.Print())
+	assert.Equal(t, "moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\n\nmoduleB/submodule1:\n\tCurrently: status\n\tWill Change: false", rs.Print())
 }
 
 func TestApplyResultsPrint(t *testing.T) {
@@ -35,5 +35,5 @@ func TestApplyResultsPrint(t *testing.T) {
 
 	rs := exec.Results{applyResult1, applyResult2}
 	viper.Set("nocolor", true)
-	assert.Equal(t, "moduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: true\nmoduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: false", rs.Print())
+	assert.Equal(t, "moduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: true\n\nmoduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: false", rs.Print())
 }
