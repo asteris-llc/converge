@@ -57,12 +57,28 @@ var applyCmd = &cobra.Command{
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			plan, err := exec.Plan(ctx, graph)
+			planStatus := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range planStatus {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(planStatus)
+			}()
+
+			plan, err := exec.PlanWithStatus(ctx, graph, planStatus)
 			if err != nil {
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			results, err := exec.Apply(ctx, graph, plan)
+			status := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range status {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(status)
+			}()
+
+			results, err := exec.ApplyWithStatus(ctx, graph, plan, status)
 			if err != nil {
 				logger.WithError(err).Fatal("applying failed")
 			}
