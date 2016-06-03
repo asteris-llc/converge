@@ -15,8 +15,9 @@
 package exec
 
 import (
-	"fmt"
+	"bytes"
 	"sort"
+	"text/template"
 
 	"github.com/acmacalister/skittles"
 )
@@ -32,29 +33,32 @@ type PlanResult struct {
 type Results []*PlanResult
 
 func (p *PlanResult) string(pretty bool) string {
-	if pretty {
-		if p.WillChange {
-			return fmt.Sprintf(
-				"%s:\n\tCurrently: %s\n\tWill Change: %s",
-				skittles.BoldBlack(p.Path),
-				skittles.Yellow(p.CurrentStatus),
-				skittles.Yellow(p.WillChange),
-			)
+	// condFmt returns a function that only formats its input if `pretty` is true.
+	condFmt := func(format func(interface{}) string) func(string) string {
+		return func(in string) string {
+			if pretty {
+				return format(in)
+			}
+			return in
 		}
-		return fmt.Sprintf(
-			"%s:\n\tCurrently: %s\n\tWill Change: %s",
-			skittles.BoldBlack(p.Path),
-			skittles.Blue(p.CurrentStatus),
-			skittles.Blue(p.WillChange),
-		)
 	}
+	funcs := map[string]interface{}{
+		"boldBlack": condFmt(skittles.BoldBlack),
+		"blueOrYellow": condFmt(func(in interface{}) string {
+			if p.WillChange {
+				return skittles.Yellow(in)
+			}
+			return skittles.Blue(in)
+		}),
+	}
+	tmplStr := "{{boldBlack .Path}}:"
+	tmplStr += "\n\tCurrently: {{blueOrYellow .CurrentStatus}}"
+	tmplStr += "\n\tWill Change: {{blueOrYellow .WillChange}}"
+	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
-	return fmt.Sprintf(
-		"%s:\n\tCurrently: %s\n\tWill Change: %t",
-		p.Path,
-		p.CurrentStatus,
-		p.WillChange,
-	)
+	var buf bytes.Buffer
+	_ = tmpl.Execute(&buf, p)
+	return buf.String()
 }
 
 // Pretty prints a PlanResult, optionally with ANSI terminal colors. It is used
