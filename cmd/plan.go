@@ -17,7 +17,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"runtime"
 
 	"golang.org/x/net/context"
 
@@ -69,15 +68,12 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			// borrowed from Logrus's text_formatter.go
-			isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
 			// giving the results the type exec.Results allows us to pretty-print them
-			var typedResults exec.Results = results
-			if !viper.GetBool("nocolor") && isColorTerminal {
-				fmt.Println(typedResults.Pretty())
-			} else {
-				fmt.Println(typedResults)
+			var typedResults exec.Results
+			for _, result := range results {
+				typedResults = append(typedResults, result)
 			}
+			fmt.Println(typedResults.Print())
 		}
 	},
 }
