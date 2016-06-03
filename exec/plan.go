@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -39,10 +41,16 @@ func (p *PlanResult) String() string {
 }
 
 // Plan the operations to be performed
-func Plan(graph *load.Graph) (results []*PlanResult, err error) {
+func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
 	lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, res resource.Resource) error {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
 		monitor, ok := res.(resource.Monitor)
 		if !ok {
 			return nil
