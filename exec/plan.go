@@ -23,13 +23,6 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// PlanResult contains the result of a resource check
-type PlanResult struct {
-	Path          string
-	CurrentStatus string
-	WillChange    bool
-}
-
 // PlanWithStatus plans the operations to be performed and outputs status
 func PlanWithStatus(ctx context.Context, graph *load.Graph, status chan<- *StatusMessage) (results []*PlanResult, err error) {
 	lock := new(sync.Mutex)
