@@ -21,6 +21,13 @@ import (
 	"github.com/acmacalister/skittles"
 )
 
+// PlanResult contains the result of a resource check
+type PlanResult struct {
+	Path          string
+	CurrentStatus string
+	WillChange    bool
+}
+
 // Results is the type of a slice of PlanResults
 type Results []*PlanResult
 
