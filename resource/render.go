@@ -39,8 +39,8 @@ type Renderer struct {
 }
 
 // Render the given template using the set context
-func (r *Renderer) Render(source string) (string, error) {
-	tmpl, err := template.New("").Funcs(r.funcs).Parse(source)
+func (r *Renderer) Render(name, source string) (string, error) {
+	tmpl, err := template.New(name).Funcs(r.funcs).Parse(source)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func (r *Renderer) Render(source string) (string, error) {
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, r.ctx)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return buf.String(), nil
@@ -62,5 +62,5 @@ func (r *Renderer) tParam(name string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("no such param %q", name)
 	}
-	return val.Value.String(), nil
+	return val.Value().String(), nil
 }
