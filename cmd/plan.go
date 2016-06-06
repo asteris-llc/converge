@@ -68,10 +68,20 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("planning failed")
 			}
 
+			var counts struct {
+				results, changes int
+			}
+
 			fmt.Print("\n")
 			for _, result := range results {
 				fmt.Println(result)
+				counts.results++
+				if result.WillChange {
+					counts.changes++
+				}
 			}
+
+			fmt.Printf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
 		}
 	},
 }
