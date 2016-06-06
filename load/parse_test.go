@@ -54,6 +54,19 @@ func TestParseDependcies(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "module.y", getAllDeps(mod)[0])
 
+	//Test task is a dependency of subsequent task.
+	mod, err = load.Parse([]byte(taskDependenciesModule))
+	assert.NoError(t, err)
+	//First task
+	r := mod.Resources[0]
+	assert.Empty(t, r.Depends())
+	//Second task
+	r = mod.Resources[1]
+	assert.Contains(t, r.Depends(), "task.a")
+	//Third task
+	r = mod.Resources[2]
+	assert.Contains(t, r.Depends(), "task.b")
+
 }
 
 func TestParseAnonymousParam(t *testing.T) {
@@ -151,6 +164,24 @@ task "permission" {
   apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
 	depends = []
 }
+`
+
+	taskDependenciesModule = `
+	task "a" {
+	check = ""
+	apply = ""
+}
+
+	task "b" {
+	check = ""
+	apply = ""
+}
+
+	task "c" {
+		check = ""
+		apply = ""
+	}
+
 `
 
 	duplicateParam = `

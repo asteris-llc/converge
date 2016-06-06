@@ -57,7 +57,7 @@ func (p *Param) Validate() error {
 	return nil
 }
 
-// Depends :
+// Depends : Does nothing
 func (p *Param) Depends() []string {
 	return nil
 }
