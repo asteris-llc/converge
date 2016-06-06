@@ -71,7 +71,7 @@ func TestRendererRenderParam(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("{{param `test_parameter`}}")
+	result, err := renderer.Render("test", "{{param `test_parameter`}}")
 	assert.NoError(t, err)
 	assert.EqualValues(t, "test_value", result)
 }
