@@ -54,13 +54,13 @@ func TestRendererRenderParam(t *testing.T) {
 	t.Parallel()
 
 	param := &resource.Param{
-		ParamName: "test parameter",
-		Default:   "test default",
+		ParamName: "test_parameter",
+		Default:   "test_default",
 	}
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
-			ModuleName: "test module",
-			Args:       map[string]resource.Value{"test parameter": "test value"},
+			ModuleName: "test_module",
+			Args:       map[string]resource.Value{"test_parameter": "test_value"},
 		},
 		Resources: []resource.Resource{param},
 	}
@@ -71,9 +71,9 @@ func TestRendererRenderParam(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("{{param `test parameter`}}")
+	result, err := renderer.Render("{{param `test_parameter`}}")
 	assert.NoError(t, err)
-	assert.EqualValues(t, "test value", result)
+	assert.EqualValues(t, "test_value", result)
 }
 
 func TestRenderMissingParam(t *testing.T) {
