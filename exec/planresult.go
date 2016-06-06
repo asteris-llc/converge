@@ -32,7 +32,6 @@ type PlanResult struct {
 
 func (p *PlanResult) string(pretty bool) string {
 	funcs := map[string]interface{}{
-		"boldBlack": condFmt(pretty, skittles.BoldBlack),
 		"blueOrYellow": condFmt(pretty, func(in interface{}) string {
 			if p.WillChange {
 				return skittles.Yellow(in)
@@ -41,9 +40,9 @@ func (p *PlanResult) string(pretty bool) string {
 		}),
 		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := "{{boldBlack (trimNewline .Path)}}:"
-	tmplStr += "\n\tCurrently: {{blueOrYellow (trimNewline .CurrentStatus)}}"
-	tmplStr += "\n\tWill Change: {{blueOrYellow .WillChange}}"
+	tmplStr := `{{blueOrYellow (trimNewline .Path)}}:
+	Currently: {{trimNewline .CurrentStatus}}
+	Will Change: {{blueOrYellow .WillChange}}`
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer

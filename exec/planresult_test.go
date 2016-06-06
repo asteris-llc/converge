@@ -45,8 +45,8 @@ func TestPlanResultString(t *testing.T) {
 func TestPlanResultPretty(t *testing.T) {
 	t.Parallel()
 
-	expected1 := "\x1b[1;30mmoduleA/submodule1\x1b[0m:\n\tCurrently: \x1b[33mstatus\x1b[0m\n\tWill Change: \x1b[33mtrue\x1b[0m"
-	expected2 := "\x1b[1;30mmoduleB/submodule1\x1b[0m:\n\tCurrently: \x1b[34mstatus\x1b[0m\n\tWill Change: \x1b[34mfalse\x1b[0m"
+	expected1 := "\x1b[33mmoduleA/submodule1\x1b[0m:\n\tCurrently: status\n\tWill Change: \x1b[33mtrue\x1b[0m"
+	expected2 := "\x1b[34mmoduleB/submodule1\x1b[0m:\n\tCurrently: status\n\tWill Change: \x1b[34mfalse\x1b[0m"
 	assert.Equal(t, expected1, planResult1.Pretty())
 	assert.Equal(t, expected2, planResult2.Pretty())
 }

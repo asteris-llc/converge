@@ -16,8 +16,8 @@ package exec
 
 import (
 	"bytes"
-	"html/template"
 	"strings"
+	"text/template"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
@@ -33,13 +33,18 @@ type ApplyResult struct {
 
 func (a *ApplyResult) string(pretty bool) string {
 	funcs := map[string]interface{}{
-		"boldBlack": condFmt(pretty, skittles.BoldBlack),
-		"blueOrYellow": condFmt(pretty, func(in interface{}) string {
-			if a.OldStatus != a.NewStatus {
-				return skittles.Yellow(in)
+		"plusOrMinus": func() string {
+			if a.Success {
+				if pretty {
+					return skittles.Green("+")
+				}
+				return "+"
 			}
-			return skittles.Blue(in)
-		}),
+			if pretty {
+				return skittles.Red("-")
+			}
+			return "-"
+		},
 		"redOrGreen": condFmt(pretty, func(in interface{}) string {
 			if a.Success {
 				return skittles.Green(in)
@@ -48,10 +53,9 @@ func (a *ApplyResult) string(pretty bool) string {
 		}),
 		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := "{{boldBlack .Path}}:\n\t"
-	tmplStr += `Status: "{{blueOrYellow (trimNewline .OldStatus)}}" `
-	tmplStr += `=> "{{blueOrYellow (trimNewline .NewStatus)}}"`
-	tmplStr += "\n\tSuccess: {{redOrGreen .Success}}"
+	tmplStr := `{{plusOrMinus}}{{.Path}}:
+	Status: "{{trimNewline .OldStatus}}" => "{{trimNewline .NewStatus}}"
+	Success: {{redOrGreen .Success}}`
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
 
 	var buf bytes.Buffer
