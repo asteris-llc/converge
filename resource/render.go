@@ -48,7 +48,7 @@ func (r *Renderer) Render(source string) (string, error) {
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, r.ctx)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return buf.String(), nil
