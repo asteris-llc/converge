@@ -53,7 +53,7 @@ func (a *ApplyResult) string(pretty bool) string {
 		}),
 		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := `{{plusOrMinus}}{{.Path}}:
+	tmplStr := `{{plusOrMinus}}{{redOrGreen .Path}}:
 	Status: "{{trimNewline .OldStatus}}" => "{{trimNewline .NewStatus}}"
 	Success: {{redOrGreen .Success}}`
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))

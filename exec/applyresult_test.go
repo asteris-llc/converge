@@ -47,8 +47,8 @@ func TestApplyResultString(t *testing.T) {
 func TestApplyResultPretty(t *testing.T) {
 	t.Parallel()
 
-	expected1 := "\x1b[32m+\x1b[0mmoduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: \x1b[32mtrue\x1b[0m"
-	expected2 := "\x1b[31m-\x1b[0mmoduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: \x1b[31mfalse\x1b[0m"
+	expected1 := "\x1b[32m+\x1b[0m\x1b[32mmoduleC/submodule1\x1b[0m:\n\tStatus: \"old\" => \"new\"\n\tSuccess: \x1b[32mtrue\x1b[0m"
+	expected2 := "\x1b[31m-\x1b[0m\x1b[31mmoduleD/submodule1\x1b[0m:\n\tStatus: \"old\" => \"old\"\n\tSuccess: \x1b[31mfalse\x1b[0m"
 	assert.Equal(t, expected1, applyResult1.Pretty())
 	assert.Equal(t, expected2, applyResult2.Pretty())
 }
