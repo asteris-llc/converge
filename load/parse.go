@@ -42,7 +42,8 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		module = &resource.Module{
 			Params: map[string]*resource.Param{},
 		}
-		names = map[string]bool{}
+		names            = map[string]bool{}
+		previousResource resource.Resource //Name of the Resource Declared before this one
 	)
 
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
@@ -105,6 +106,10 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 				// now that we've run the gauntlet, it's safe to add the resource to the
 				// resource list.
+				if previousResource != nil {
+					resource.AddDependency(previousResource.Name())
+				}
+				previousResource = resource
 				module.Resources = append(module.Resources, resource)
 			}
 

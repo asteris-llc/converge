@@ -31,6 +31,9 @@ type Resource interface {
 	Name() string
 	Validate() error
 	Depends() []string
+	HasDependency(string)
+	AddDependency(string)
+	RemoveDependency(string)
 }
 
 // Parent expresses a resource that has sub-resources instead of being

@@ -32,8 +32,13 @@ func (m *ModuleTask) Validate() error {
 	return nil
 }
 
-// Depends satisfies the Resource interface. ModuleTask has no requirements in
+// Depends satisfies the Resource interface.
 // itself, but the module it calls might.
 func (m *ModuleTask) Depends() []string {
 	return m.Dependencies
+}
+
+// AddDependency satisfies the Resource interface.
+func (m *ModuleTask) AddDependency(dependency string) {
+	m.Dependencies = append(m.Dependencies, dependency)
 }
