@@ -80,6 +80,15 @@ func TestParseDuplicateTask(t *testing.T) {
 	}
 }
 
+func TestBadName(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(badName))
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, `At 2:1: invalid name "a b"`)
+	}
+}
+
 var (
 	basicModule = `
 param "filename" { }
@@ -107,5 +116,9 @@ module "x" "y" {
 	duplicateTask = `
 task "x" { }
 task "x" { }
+`
+
+	badName = `
+task "a b" { }
 `
 )
