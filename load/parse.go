@@ -82,8 +82,8 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// validate the name
-			if !nameRe.MatchString(resource.Name()) {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", resource.Name())})
+			if !nameRe.MatchString(res.Name()) {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.Name())})
 				return n, false
 			}
 
