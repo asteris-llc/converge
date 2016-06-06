@@ -50,6 +50,20 @@ func (t *Template) Depends() []string {
 	return t.Dependencies
 }
 
+// AddDep adds a dependency..
+func (t *Template) AddDep(dep string) {
+	t.Dependencies = append(t.Dependencies, dep)
+}
+
+// RemoveDep removes a dependency.
+func (t *Template) RemoveDep(dep string) {
+	for i, d := range t.Dependencies {
+		if dep == d {
+			t.Dependencies = append(t.Dependencies[:i], t.Dependencies[i+1:]...)
+		}
+	}
+}
+
 // Check satisfies the Monitor interface
 func (t *Template) Check() (string, bool, error) {
 	dest := t.Destination()
