@@ -35,5 +35,5 @@ func TestApplyResultsPrint(t *testing.T) {
 
 	rs := exec.Results{applyResult1, applyResult2}
 	viper.Set("nocolor", true)
-	assert.Equal(t, "moduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: true\n\nmoduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: false", rs.Print())
+	assert.Equal(t, "+moduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: true\n\n-moduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: false", rs.Print())
 }
