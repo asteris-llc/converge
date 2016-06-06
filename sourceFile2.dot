@@ -1,0 +1,21 @@
+digraph {
+  "sourceFile2.hcl"[label="sourceFile2.hcl"];
+  "sourceFile2.hcl/basic/message"[label="message"];
+  "sourceFile2.hcl/basic/filename"[label="filename"];
+  "sourceFile2.hcl/basic/render"[label="render"];
+  "sourceFile2.hcl/advanced/filename"[label="filename"];
+  "sourceFile2.hcl/basic"[label="basic"];
+  "sourceFile2.hcl/advanced"[label="advanced"];
+  "sourceFile2.hcl/advanced/message"[label="message"];
+  "sourceFile2.hcl/advanced/render"[label="render"];
+  "sourceFile2.hcl" -> "sourceFile2.hcl/basic";
+  "sourceFile2.hcl" -> "sourceFile2.hcl/advanced";
+  "sourceFile2.hcl/advanced" -> "sourceFile2.hcl/basic";
+  "sourceFile2.hcl/basic" -> "sourceFile2.hcl/basic/render";
+  "sourceFile2.hcl/advanced" -> "sourceFile2.hcl/advanced/render";
+  "sourceFile2.hcl/basic" -> "sourceFile2.hcl/basic/message";
+  "sourceFile2.hcl/basic" -> "sourceFile2.hcl/basic/filename";
+  "sourceFile2.hcl/advanced" -> "sourceFile2.hcl/advanced/message";
+  "sourceFile2.hcl/advanced" -> "sourceFile2.hcl/advanced/filename";
+}
+
