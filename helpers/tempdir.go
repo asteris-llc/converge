@@ -12,30 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package helpers
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
-}
+import (
+	"io/ioutil"
+	"os"
+	"testing"
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Name() string
-	Prepare(*Module) error
-	Validate() error
-	Depends() []string
-}
+// InTempDir runs a function in a temporary directory
+func InTempDir(t *testing.T, inner func()) {
+	tempdir, err := ioutil.TempDir("", "")
+	require.NoError(t, err)
+	defer func() { assert.NoError(t, os.RemoveAll(tempdir)) }()
 
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tempdir))
+	defer func() { assert.NoError(t, os.Chdir(oldWd)) }()
+
+	inner()
 }

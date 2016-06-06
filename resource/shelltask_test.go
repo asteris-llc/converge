@@ -29,24 +29,115 @@ func TestShellTaskInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
 
-func TestShellTaskValidateCheckSource(t *testing.T) {
+func TestShellTaskValidateValid(t *testing.T) {
 	t.Parallel()
+
 	st := resource.ShellTask{
-		CheckSource: "echo test",
-		ApplySource: "echo test",
+		RawCheckSource: "echo test",
+		RawApplySource: "echo test",
 	}
-	assert.Nil(t, st.Validate())
-	st = resource.ShellTask{CheckSource: "if do then; esac"}
-	assert.NotNil(t, st.Validate())
+	assert.NoError(t, st.Prepare(nil))
+	assert.NoError(t, st.Validate())
 }
 
-func TestShellTaskValidateApplySource(t *testing.T) {
+func TestShellTaskValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
-	st := resource.ShellTask{
-		CheckSource: "echo test",
-		ApplySource: "echo test",
+
+	st := resource.ShellTask{RawCheckSource: "if do then; esac"}
+	assert.NoError(t, st.Prepare(nil))
+
+	err := st.Validate()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "check: exit status 2")
 	}
-	assert.Nil(t, st.Validate())
-	st = resource.ShellTask{ApplySource: "if do then; esac"}
-	assert.NotNil(t, st.Validate())
+}
+
+func TestShellTaskValidateInvalidApply(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{RawApplySource: "if do then; esac"}
+	assert.NoError(t, st.Prepare(nil))
+
+	err := st.Validate()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "apply: exit status 2")
+	}
+}
+
+func TestShellTaskCheckSource(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{RawCheckSource: "{{1}}"}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	check, err := st.CheckSource()
+	assert.NoError(t, err)
+	assert.Equal(t, "1", check)
+}
+
+func TestShellTaskApplySource(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{RawApplySource: "{{1}}"}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	check, err := st.ApplySource()
+	assert.NoError(t, err)
+	assert.Equal(t, "1", check)
+}
+
+func TestShellTaskCheckNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawCheckSource: "echo test && exit 1",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	current, change, err := st.Check()
+	assert.Equal(t, "test\n", current)
+	assert.True(t, change)
+	assert.Nil(t, err)
+}
+
+func TestShellTaskCheckNoChange(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawCheckSource: "echo test",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	current, change, err := st.Check()
+	assert.Equal(t, "test\n", current)
+	assert.False(t, change)
+	assert.Nil(t, err)
+}
+
+func TestShellTaskApplySuccess(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawApplySource: "echo test",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	new, success, err := st.Apply()
+	assert.Equal(t, "test\n", new)
+	assert.True(t, success)
+	assert.NoError(t, err)
+}
+
+func TestShellTaskApplyError(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawApplySource: "echo bad && exit 1",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	new, success, err := st.Apply()
+	assert.Equal(t, "bad\n", new)
+	assert.False(t, success)
+	assert.NoError(t, err)
 }

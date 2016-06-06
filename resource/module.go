@@ -18,8 +18,9 @@ package resource
 // system.
 type Module struct {
 	ModuleTask
-	Params    map[string]*Param `hcl:"param"`
 	Resources []Resource
+
+	parent *Module
 }
 
 // Name returns name for metadata
@@ -27,7 +28,7 @@ func (m *Module) Name() string {
 	return m.ModuleName
 }
 
-// Validate checks shell tasks validity
+// Validate this module
 func (m *Module) Validate() error {
 	return nil
 }
@@ -41,4 +42,23 @@ func (m *Module) Depends() []string {
 // Children returns the managed resources under this module
 func (m *Module) Children() []Resource {
 	return m.Resources
+}
+
+// Prepare this module
+func (m *Module) Prepare(parent *Module) error {
+	m.parent = parent
+	return nil
+}
+
+// Params returns the params of this module
+func (m *Module) Params() map[string]*Param {
+	params := map[string]*Param{}
+
+	for _, res := range m.Resources {
+		if param, ok := res.(*Param); ok {
+			params[param.Name()] = param
+		}
+	}
+
+	return params
 }

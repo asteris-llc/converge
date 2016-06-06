@@ -20,24 +20,25 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 )
 
 // Load a module from a resource. This uses the protocol in the path (or file://
 // if not present) to determine from where the module should be loaded.
-func Load(source string) (*resource.Module, error) {
+func Load(source string, args resource.Values) (*Graph, error) {
 	initial, err := loadAny(nil, source)
 	if err != nil {
-		return initial, err
+		return nil, err
 	}
+	initial.Args = args
 
 	root, err := parseSource(source)
 	if err != nil {
-		return initial, err
+		return nil, err
 	}
 
+	// transform ModuleTasks with Modules by loading them; do this iteratively
 	modules := []*resource.Module{initial}
 	for len(modules) > 0 {
 		// bookkeeping to avoid recursive calls. Using `range` here would copy and
@@ -45,13 +46,11 @@ func Load(source string) (*resource.Module, error) {
 		var module *resource.Module
 		module, modules = modules[0], modules[1:]
 
-		// actual work - loading modules recursively and replacing their ModuleTasks
-		// with Modules
 		for i, res := range module.Resources {
 			if mt, ok := res.(*resource.ModuleTask); ok {
 				newModule, err := loadAny(root, mt.Source)
 				if err != nil {
-					return initial, err
+					return nil, err
 				}
 
 				newModule.Args = mt.Args
@@ -64,7 +63,31 @@ func Load(source string) (*resource.Module, error) {
 		}
 	}
 
-	return initial, err
+	graph, err := NewGraph(initial)
+	if err != nil {
+		return nil, err
+	}
+
+	// prepare modules for use
+	err = graph.Walk(func(path string, res resource.Resource) error {
+		parent, err := graph.Parent(path)
+		if err != nil {
+			return err
+		}
+
+		return res.Prepare(parent)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// validate modules
+	err = graph.Walk(func(path string, res resource.Resource) error {
+		return res.Validate()
+	})
+
+	return graph, nil
 }
 
 func parseSource(source string) (*url.URL, error) {
@@ -90,20 +113,13 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 		url.Path = path.Join(path.Dir(root.Path), url.Path)
 	}
 
-	var mod *resource.Module
 	switch url.Scheme {
 	case "file":
-		mod, err = FromFile(url.Path)
+		return FromFile(url.Path)
 
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
 	}
-
-	if err == nil {
-		mod.ModuleName = strings.SplitN(path.Base(url.Path), ".", 2)[0]
-	}
-
-	return mod, err
 }
 
 // FromFile loads a module from a file
@@ -116,5 +132,11 @@ func FromFile(filename string) (*resource.Module, error) {
 		return nil, err
 	}
 
-	return Parse(content)
+	mod, err := Parse(content)
+
+	if err == nil {
+		mod.ModuleName = path.Base(filename)
+	}
+
+	return mod, err
 }

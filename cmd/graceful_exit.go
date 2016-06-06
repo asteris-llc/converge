@@ -12,30 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package cmd
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
-}
+import (
+	"os"
+	"os/signal"
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
+	"github.com/Sirupsen/logrus"
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Name() string
-	Prepare(*Module) error
-	Validate() error
-	Depends() []string
-}
+	"golang.org/x/net/context"
+)
 
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+// GracefulExit traps interrupt signals for a graceful exit
+func GracefulExit(cancel context.CancelFunc) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		interruptCount := 0
+
+		for range c {
+			interruptCount++
+
+			switch interruptCount {
+			case 1:
+				logrus.Info("gracefully shutting down (interrupt again to halt)")
+				cancel()
+			case 2:
+				logrus.Warn("hard stop! System may be in an incomplete state")
+				os.Exit(2)
+			}
+		}
+	}()
 }

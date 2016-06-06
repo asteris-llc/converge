@@ -12,30 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package exec
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
+import "fmt"
+
+// StatusMessage is returned as status for Plan and Apply
+type StatusMessage struct {
+	Path   string
+	Status string
 }
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
-
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Name() string
-	Prepare(*Module) error
-	Validate() error
-	Depends() []string
-}
-
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+func (s *StatusMessage) String() string {
+	return fmt.Sprintf("%s: %s", s.Path, s.Status)
 }

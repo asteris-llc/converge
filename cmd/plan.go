@@ -18,15 +18,19 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// graphCmd represents the graph command
-var graphCmd = &cobra.Command{
-	Use:   "graph",
-	Short: "graph the execution of a module",
+// planCmd represents the plan command
+var planCmd = &cobra.Command{
+	Use:   "plan",
+	Short: "plan what needs to change in the system",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -34,19 +38,47 @@ var graphCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		params, err := getParamsFromFlags()
+		if err != nil {
+			logrus.WithError(err).Fatal("could not load params")
+		}
+
+		// set up execution context
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			graph, err := load.Load(fname, nil)
+			graph, err := load.Load(fname, params)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			fmt.Println(graph.GraphString())
+			status := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range status {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(status)
+			}()
+
+			results, err := exec.PlanWithStatus(ctx, graph, status)
+			if err != nil {
+				logger.WithError(err).Fatal("planning failed")
+			}
+
+			fmt.Print("\n")
+			for _, result := range results {
+				fmt.Println(result)
+			}
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(graphCmd)
+	addParamsArguments(planCmd.Flags())
+	viper.BindPFlags(planCmd.Flags())
+
+	RootCmd.AddCommand(planCmd)
 }

@@ -12,40 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package load_test
+package exec_test
 
 import (
-	"fmt"
-	"os"
-	"path"
 	"testing"
 
+	"golang.org/x/net/context"
+
+	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var samplesDir string
+func TestPlan(t *testing.T) {
+	t.Parallel()
 
-func init() {
-	wd, _ := os.Getwd()
-	samplesDir = path.Join(wd, "..", "samples")
-}
+	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
+	require.NoError(t, err)
 
-func TestLoadBasic(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "basic.hcl"), resource.Values{})
+	results, err := exec.Plan(context.Background(), graph)
 	assert.NoError(t, err)
-}
-
-func TestLoadNotExist(t *testing.T) {
-	badPath := path.Join(samplesDir, "doesNotExist.hcl")
-	_, err := load.Load(badPath, resource.Values{})
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, fmt.Sprintf("Not found: %q using protocol \"file\"", badPath))
-	}
-}
-
-func TestLoadFileModule(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "sourceFile.hcl"), resource.Values{})
-	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		[]*exec.PlanResult{{
+			Path:          "basic.hcl/render",
+			CurrentStatus: "cat: test.txt: No such file or directory\n",
+			WillChange:    true,
+		}},
+		results,
+	)
 }
