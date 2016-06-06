@@ -1,9 +1,14 @@
 
 module "basic.hcl" "basic" {
-  message = "Hello from another module!"
+  params = {
+    message = "Hello from another module!"
+
+  }
 }
 
 module "basic.hcl" "advanced" {
-  message = "Hello from advanced module!"
-  depends = ["basic.hcl.basic"]
+  params = {
+    message = "Hello from advanced module!"
+  }
+  depends = ["basic"]
 }

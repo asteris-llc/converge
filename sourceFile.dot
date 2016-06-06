@@ -1,9 +1,0 @@
-digraph sourceFile {
-	sourceFile->sourceFile_basic;
-	sourceFile_basic->sourceFile_basic_render;
-	sourceFile [ shape=Msquare ];
-	sourceFile_basic [ peripheries=1 ];
-	sourceFile_basic_render [ peripheries=2 ];
-
-}
-

@@ -52,7 +52,7 @@ func TestParseDependcies(t *testing.T) {
 	//Test DependentCall
 	mod, err = load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-	assert.Equal(t, "module.y", getAllDeps(mod)[0])
+	assert.Equal(t, "y", getAllDeps(mod)[0])
 
 	//Test task is a dependency of subsequent task.
 	mod, err = load.Parse([]byte(taskDependenciesModule))
@@ -62,10 +62,10 @@ func TestParseDependcies(t *testing.T) {
 	assert.Empty(t, r.Depends())
 	//Second task
 	r = mod.Resources[1]
-	assert.Contains(t, r.Depends(), "task.a")
+	assert.Contains(t, r.Depends(), "a")
 	//Third task
 	r = mod.Resources[2]
-	assert.Contains(t, r.Depends(), "task.b")
+	assert.Contains(t, r.Depends(), "b")
 
 }
 
@@ -138,23 +138,24 @@ task "permission" {
 `
 
 	dependentModule = `
-param "filename" { }
-param "permissions" { default = "0600" }
+	param "message" { default = "Hello, World!" }
+	param "filename" { default = "test.txt" }
 
+	task "nothing" {
+	check = ""
+	apply = ""
+	}
 
-template "test" {
-content = ""
-}
-task "permission" {
-  check = "stat -f \"test%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
-  apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
-	depends = ["template.test", "param.permissions"]
-}
+	task "render" {
+	  check = "cat {{param 'filename'}} | tee /dev/stderr | grep -q '{{param 'message'}}'"
+	  apply = "echo '{{param 'message'}}' > {{param 'filename'}} && cat {{param 'filename'}}"
+	  depends = ["nothing"]
+	}
+
 `
 	emptyDependenciesModule = `
 param "filename" { }
 param "permissions" { default = "0600" }
-
 
 template "test" {
 content = ""
@@ -206,7 +207,7 @@ module "x" "y" {
 	params = {
 		arg1 = "z"
 	}
-	depends = ["module.y"]
+	depends = ["y"]
 }`
 
 	duplicateTask = `
