@@ -152,10 +152,10 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 
 // CheckSource renders RawCheckSource for execution
 func (st *ShellTask) CheckSource() (string, error) {
-	return st.renderer.Render(st.RawCheckSource)
+	return st.renderer.Render("check", st.RawCheckSource)
 }
 
 // ApplySource renders RawApplySource for execution
 func (st *ShellTask) ApplySource() (string, error) {
-	return st.renderer.Render(st.RawApplySource)
+	return st.renderer.Render("apply", st.RawApplySource)
 }
