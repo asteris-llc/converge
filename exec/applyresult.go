@@ -33,18 +33,7 @@ type ApplyResult struct {
 
 func (a *ApplyResult) string(pretty bool) string {
 	funcs := map[string]interface{}{
-		"plusOrMinus": func() string {
-			if a.Success {
-				if pretty {
-					return skittles.Green("+")
-				}
-				return "+"
-			}
-			if pretty {
-				return skittles.Red("-")
-			}
-			return "-"
-		},
+		"plusOrMinus": plusOrMinus(pretty),
 		"redOrGreen": condFmt(pretty, func(in interface{}) string {
 			if a.Success {
 				return skittles.Green(in)
@@ -53,7 +42,7 @@ func (a *ApplyResult) string(pretty bool) string {
 		}),
 		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := `{{plusOrMinus}} {{redOrGreen .Path}}:
+	tmplStr := `{{plusOrMinus .Success}} {{redOrGreen .Path}}:
 	Status: "{{trimNewline .OldStatus}}" => "{{trimNewline .NewStatus}}"
 	Success: {{redOrGreen .Success}}`
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))
