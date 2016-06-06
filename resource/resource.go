@@ -24,6 +24,8 @@ type Monitor interface {
 type Task interface {
 	Monitor
 	Apply() (string, bool, error)
+	AddDep(string)
+	RemoveDep(string)
 }
 
 // Resource adds metadata about the executed tasks

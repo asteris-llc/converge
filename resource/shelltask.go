@@ -89,9 +89,18 @@ func (st *ShellTask) Depends() []string {
 	return st.Dependencies
 }
 
-// AddDependency satisfies the Resource interface.
-func (st *ShellTask) AddDependency(dependency string) {
-	st.Dependencies = append(st.Dependencies, dependency)
+// AddDep adds a dependency..
+func (st *ShellTask) AddDep(dep string) {
+	st.Dependencies = append(st.Dependencies, dep)
+}
+
+// RemoveDep removes a dependency.
+func (st *ShellTask) RemoveDep(dep string) {
+	for i, d := range st.Dependencies {
+		if dep == d {
+			st.Dependencies = append(st.Dependencies[:i], st.Dependencies[i+1:]...)
+		}
+	}
 }
 
 // Check satisfies the Monitor interface

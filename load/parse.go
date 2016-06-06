@@ -42,28 +42,29 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		module = new(resource.Module)
 		names  = map[string]bool{}
 	)
+	previousTaskName := ""
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
 		// we're only interested in ObjectItems. These are a path plus a value, and
 		// quite handy.
 		if item, ok := n.(*ast.ObjectItem); ok {
 			token := item.Keys[0].Token.Text
 			var (
-				resource resource.Resource
-				err      error
+				res resource.Resource
+				err error
 			)
 
 			switch token {
 			case "task":
-				resource, err = parseTask(item)
+				res, err = parseTask(item)
 
 			case "template":
-				resource, err = parseTemplate(item)
+				res, err = parseTemplate(item)
 
 			case "module":
-				resource, err = parseModuleCall(item)
+				res, err = parseModuleCall(item)
 
 			case "param":
-				resource, err = parseParam(item)
+				res, err = parseParam(item)
 
 			default:
 				err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
@@ -76,15 +77,22 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// check if the name is already present, error if so
-			dupCheckName := token + "." + resource.Name()
+			dupCheckName := token + "." + res.Name()
 			if present := names[dupCheckName]; present {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, resource.Name())})
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
 				return n, false
 			}
 			names[dupCheckName] = true
 			// now that we've run the gauntlet, it's safe to add the resource to the
 			// resource list.
-			module.Resources = append(module.Resources, resource)
+			if token == "task" {
+				if previousTaskName != "" {
+					task := res.(resource.Task)
+					task.AddDep(previousTaskName)
+				}
+				previousTaskName = dupCheckName
+			}
+			module.Resources = append(module.Resources, res)
 
 			return n, false
 		}

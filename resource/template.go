@@ -50,11 +50,6 @@ func (t *Template) Depends() []string {
 	return t.Dependencies
 }
 
-// AddDependency satisfies the Resource interface.
-func (t *Template) AddDependency(dependency string) {
-	t.Dependencies = append(t.Dependencies, dependency)
-}
-
 // Check satisfies the Monitor interface
 func (t *Template) Check() (string, bool, error) {
 	dest := t.Destination()
