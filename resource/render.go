@@ -62,5 +62,5 @@ func (r *Renderer) tParam(name string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("no such param %q", name)
 	}
-	return val.Value.String(), nil
+	return val.Value().String(), nil
 }
