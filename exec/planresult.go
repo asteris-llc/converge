@@ -16,8 +16,8 @@ package exec
 
 import (
 	"bytes"
-	"html/template"
 	"strings"
+	"text/template"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
@@ -32,6 +32,7 @@ type PlanResult struct {
 
 func (p *PlanResult) string(pretty bool) string {
 	funcs := map[string]interface{}{
+		"plusOrMinus": plusOrMinus(pretty),
 		"blueOrYellow": condFmt(pretty, func(in interface{}) string {
 			if p.WillChange {
 				return skittles.Yellow(in)
@@ -40,7 +41,7 @@ func (p *PlanResult) string(pretty bool) string {
 		}),
 		"trimNewline": func(in string) string { return strings.TrimSuffix(in, "\n") },
 	}
-	tmplStr := `{{blueOrYellow (trimNewline .Path)}}:
+	tmplStr := `{{plusOrMinus .WillChange}} {{blueOrYellow (trimNewline .Path)}}:
 	Currently: {{trimNewline .CurrentStatus}}
 	Will Change: {{blueOrYellow .WillChange}}`
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(tmplStr))

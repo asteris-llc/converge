@@ -14,7 +14,11 @@
 
 package exec
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/acmacalister/skittles"
+)
 
 // condFmt returns a function that only formats its input if a condition is true.
 func condFmt(cond bool, format func(interface{}) string) func(interface{}) string {
@@ -23,5 +27,22 @@ func condFmt(cond bool, format func(interface{}) string) func(interface{}) strin
 			return format(in)
 		}
 		return fmt.Sprint(in)
+	}
+}
+
+// plusOrMinus returns a function for use in templates that either prints a
+// plus or a minus, optionally with ASCII green/red coloration.
+func plusOrMinus(pretty bool) func(bool) string {
+	return func(plus bool) string {
+		if plus {
+			if pretty {
+				return skittles.Green("+")
+			}
+			return "+"
+		}
+		if pretty {
+			return skittles.Red("-")
+		}
+		return "-"
 	}
 }
