@@ -31,7 +31,6 @@ type Param struct {
 	ParamName string
 	Default   Value  `hcl:"default"`
 	Type      string `hcl:"type"`
-	Value     Value
 
 	parent *Module
 }
@@ -65,12 +64,13 @@ func (p *Param) Depends() []string {
 // Prepare this module for use
 func (p *Param) Prepare(parent *Module) error {
 	p.parent = parent
-
-	if val, ok := parent.Args[p.ParamName]; ok {
-		p.Value = val
-	} else {
-		p.Value = p.Default
-	}
-
 	return nil
+}
+
+// Value returns either a value set by the parameters or a default.
+func (p *Param) Value() Value {
+	if val, ok := p.parent.Args[p.ParamName]; ok {
+		return val
+	}
+	return p.Default
 }

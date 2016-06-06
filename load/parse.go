@@ -16,10 +16,15 @@ package load
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
+)
+
+var (
+	nameRe = regexp.MustCompile(`^[\w\-\.]+$`)
 )
 
 // Parse parses a module and returns it
@@ -73,6 +78,12 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			// check if any errors happened during parsing
 			if err != nil {
 				errs = append(errs, err)
+				return n, false
+			}
+
+			// validate the name
+			if !nameRe.MatchString(resource.Name()) {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", resource.Name())})
 				return n, false
 			}
 
