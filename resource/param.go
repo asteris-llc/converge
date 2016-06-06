@@ -16,9 +16,24 @@ package resource
 
 import "fmt"
 
+// Value contains the different values for a param
+type Value string
+
+func (v Value) String() string {
+	return string(v)
+}
+
+// Values is a named collection of values
+type Values map[string]Value
+
 // Param is essentially the calling arguments of a module
 type Param struct {
-	Default *interface{} `hcl:"default"`
+	ParamName string
+	Default   Value  `hcl:"default"`
+	Type      string `hcl:"type"`
+	Value     Value
+
+	parent *Module
 }
 
 // ValidationError is the type returned by each resource's Validate method. It
@@ -30,4 +45,32 @@ type ValidationError struct {
 
 func (v ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", v.Location, v.Err)
+}
+
+// Name returns the name of this param
+func (p *Param) Name() string {
+	return p.ParamName
+}
+
+// Validate that this value is correct
+func (p *Param) Validate() error {
+	return nil
+}
+
+// Depends :
+func (p *Param) Depends() []string {
+	return nil
+}
+
+// Prepare this module for use
+func (p *Param) Prepare(parent *Module) error {
+	p.parent = parent
+
+	if val, ok := parent.Args[p.ParamName]; ok {
+		p.Value = val
+	} else {
+		p.Value = p.Default
+	}
+
+	return nil
 }

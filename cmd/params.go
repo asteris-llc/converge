@@ -12,30 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package cmd
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
+import (
+	"encoding/json"
+
+	"github.com/asteris-llc/converge/resource"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+)
+
+func addParamsArguments(flags *pflag.FlagSet) {
+	flags.StringP("paramsJSON", "p", "{}", "parameters for the top-level module, in JSON format")
 }
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
+func getParamsFromFlags() (resource.Values, error) {
+	params := resource.Values{}
+	err := json.Unmarshal([]byte(viper.GetString("paramsJson")), &params)
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Name() string
-	Prepare(*Module) error
-	Validate() error
-	Depends() []string
-}
-
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+	return params, err
 }

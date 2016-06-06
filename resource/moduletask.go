@@ -14,12 +14,13 @@
 
 package resource
 
-// ModuleTask is the task for calling a module. It mostly defers to
+// ModuleTask is the task for calling a module.
 type ModuleTask struct {
-	Args         map[string]interface{}
+	Args         Values `hcl:"params"`
 	Source       string
 	ModuleName   string
-	Dependencies []string
+	Dependencies []string `hcl:"depends"`
+	parent       *Module
 }
 
 // Name returns name for metadata
@@ -38,7 +39,8 @@ func (m *ModuleTask) Depends() []string {
 	return m.Dependencies
 }
 
-// AddDependency satisfies the Resource interface.
-func (m *ModuleTask) AddDependency(dependency string) {
-	m.Dependencies = append(m.Dependencies, dependency)
+// Prepare this module for use
+func (m *ModuleTask) Prepare(parent *Module) error {
+	m.parent = parent
+	return nil
 }

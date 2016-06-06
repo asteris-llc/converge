@@ -19,13 +19,14 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/cobra"
 )
 
-// checkCmd represents the check command
-var checkCmd = &cobra.Command{
-	Use:   "check",
-	Short: "check that the syntax of a module file is valid",
+// validateCmd represents the validate command
+var validateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "validate that the syntax of a module file is valid",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -36,7 +37,7 @@ var checkCmd = &cobra.Command{
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			_, err := load.Load(fname)
+			_, err := load.Load(fname, resource.Values{})
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
@@ -47,5 +48,5 @@ var checkCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(checkCmd)
+	RootCmd.AddCommand(validateCmd)
 }

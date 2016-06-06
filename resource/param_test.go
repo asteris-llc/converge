@@ -12,40 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package load_test
+package resource_test
 
 import (
-	"fmt"
-	"os"
-	"path"
 	"testing"
 
-	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
 
-var samplesDir string
+func TestParamPreparePresent(t *testing.T) {
+	t.Parallel()
 
-func init() {
-	wd, _ := os.Getwd()
-	samplesDir = path.Join(wd, "..", "samples")
-}
+	var (
+		p = &resource.Param{
+			ParamName: "test",
+			Default:   "x",
+			Type:      "string",
+		}
 
-func TestLoadBasic(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "basic.hcl"), resource.Values{})
+		value = "a"
+
+		m = &resource.Module{
+			ModuleTask: resource.ModuleTask{
+				Args: map[string]resource.Value{p.ParamName: "a"},
+			},
+			Resources: []resource.Resource{p},
+		}
+	)
+
+	err := p.Prepare(m)
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, value, p.Value)
 }
 
-func TestLoadNotExist(t *testing.T) {
-	badPath := path.Join(samplesDir, "doesNotExist.hcl")
-	_, err := load.Load(badPath, resource.Values{})
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, fmt.Sprintf("Not found: %q using protocol \"file\"", badPath))
-	}
-}
+func TestParamPrepareDefault(t *testing.T) {
+	t.Parallel()
 
-func TestLoadFileModule(t *testing.T) {
-	_, err := load.Load(path.Join(samplesDir, "sourceFile.hcl"), resource.Values{})
+	var (
+		p = &resource.Param{
+			ParamName: "test",
+			Default:   "x",
+			Type:      "string",
+		}
+
+		m = &resource.Module{
+			Resources: []resource.Resource{p},
+		}
+	)
+
+	err := p.Prepare(m)
 	assert.NoError(t, err)
+
+	assert.EqualValues(t, p.Default, p.Value)
 }
