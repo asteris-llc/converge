@@ -70,7 +70,7 @@ func (t *Template) Check() (string, bool, error) {
 func (t *Template) Apply() (string, bool, error) {
 	dest := t.Destination()
 	content := t.Content()
-	err := ioutil.WriteFile(dest, []byte(content), 0755)
+	err := ioutil.WriteFile(dest, []byte(content), 0600)
 	if err != nil {
 		return "", false, err
 	}
