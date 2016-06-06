@@ -84,23 +84,33 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	return nil
 }
 
-// Depends satisfies the Resource interface.
-func (st *ShellTask) Depends() []string {
-	return st.Dependencies
-}
-
-// AddDep adds a dependency..
+//AddDep Addes a dependency to this task
 func (st *ShellTask) AddDep(dep string) {
+	if st.Dependencies == nil {
+		st.Dependencies = []string{dep}
+		return
+	}
+	for _, same := range st.Dependencies {
+		if same == dep {
+			return
+		}
+	}
 	st.Dependencies = append(st.Dependencies, dep)
 }
 
-// RemoveDep removes a dependency.
+//RemoveDep Removes a depencency from this task
 func (st *ShellTask) RemoveDep(dep string) {
-	for i, d := range st.Dependencies {
-		if dep == d {
+	for i, same := range st.Dependencies {
+		if same == dep {
 			st.Dependencies = append(st.Dependencies[:i], st.Dependencies[i+1:]...)
 		}
 	}
+}
+
+//Depends list dependencies for this task
+func (st *ShellTask) Depends() []string {
+
+	return st.Dependencies
 }
 
 // Check satisfies the Monitor interface
