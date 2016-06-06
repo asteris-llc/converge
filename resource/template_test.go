@@ -150,3 +150,29 @@ func TestTemplateApply(t *testing.T) {
 	assert.Equal(t, "1", string(content))
 	assert.NoError(t, err)
 }
+
+func TestTemplateApplyPermission(t *testing.T) {
+	t.Parallel()
+
+	tmpfile, err := ioutil.TempFile("", "test-template-apply-permission")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
+
+	tmpl := resource.Template{
+		RawDestination: tmpfile.Name(),
+		RawContent:     "{{1}}",
+	}
+	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
+	assert.NoError(t, tmpl.Validate())
+
+	_, success, err := tmpl.Apply()
+	assert.True(t, success)
+	assert.NoError(t, err)
+
+	// stat the new file
+	stat, err := os.Stat(tmpfile.Name())
+	assert.NoError(t, err)
+
+	perm := stat.Mode().Perm()
+	assert.Equal(t, os.FileMode(0600), perm)
+}
