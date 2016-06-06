@@ -83,17 +83,24 @@ var applyCmd = &cobra.Command{
 				logger.WithError(err).Fatal("applying failed")
 			}
 
-			var failed bool
+			var counts struct {
+				results, success, failures int
+			}
 
 			fmt.Print("\n")
 			for _, result := range results {
-				if !result.Success {
-					failed = true
-				}
 				fmt.Println(result)
+				counts.results++
+				if result.Success {
+					counts.success++
+				} else {
+					counts.failures++
+				}
 			}
 
-			if failed {
+			fmt.Printf("\nApply complete. %d changes, %d successful, %d failed\n", counts.results, counts.success, counts.failures)
+
+			if counts.failures > 0 {
 				os.Exit(1)
 			}
 		}
