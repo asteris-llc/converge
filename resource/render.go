@@ -39,8 +39,8 @@ type Renderer struct {
 }
 
 // Render the given template using the set context
-func (r *Renderer) Render(source string) (string, error) {
-	tmpl, err := template.New("").Funcs(r.funcs).Parse(source)
+func (r *Renderer) Render(name, source string) (string, error) {
+	tmpl, err := template.New(name).Funcs(r.funcs).Parse(source)
 	if err != nil {
 		return "", err
 	}
