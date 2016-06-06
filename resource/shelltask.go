@@ -61,9 +61,14 @@ func (st *ShellTask) Validate() error {
 	return nil
 }
 
-// Depends satisfies the Resource interface. ShellTask has no requirements.
+// Depends satisfies the Resource interface.
 func (st *ShellTask) Depends() []string {
 	return st.Dependencies
+}
+
+// AddDependency satisfies the Resource interface.
+func (st *ShellTask) AddDependency(dependency string) {
+	st.Dependencies = append(st.Dependencies, dependency)
 }
 
 // Check satisfies the Monitor interface

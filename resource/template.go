@@ -32,9 +32,14 @@ func (t *Template) Validate() error {
 	return nil
 }
 
-// Depends satisfies the Resource interface. Template has no requirements.
+// Depends satisfies the Resource interface.
 func (t *Template) Depends() []string {
 	return t.Dependencies
+}
+
+// AddDependency satisfies the Resource interface.
+func (t *Template) AddDependency(dependency string) {
+	t.Dependencies = append(t.Dependencies, dependency)
 }
 
 // Check satisfies the Monitor interface
