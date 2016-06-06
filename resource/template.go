@@ -45,23 +45,33 @@ func (t *Template) Validate() error {
 	return err
 }
 
-// Depends satisfies the Resource interface.
-func (t *Template) Depends() []string {
-	return t.Dependencies
-}
-
-// AddDep adds a dependency..
+//AddDep Addes a dependency to this task
 func (t *Template) AddDep(dep string) {
+	if t.Dependencies == nil {
+		t.Dependencies = []string{dep}
+		return
+	}
+	for _, same := range t.Dependencies {
+		if same == dep {
+			return
+		}
+	}
 	t.Dependencies = append(t.Dependencies, dep)
 }
 
-// RemoveDep removes a dependency.
+//RemoveDep Removes a depencency from this task
 func (t *Template) RemoveDep(dep string) {
-	for i, d := range t.Dependencies {
-		if dep == d {
+	for i, same := range t.Dependencies {
+		if same == dep {
 			t.Dependencies = append(t.Dependencies[:i], t.Dependencies[i+1:]...)
 		}
 	}
+}
+
+//Depends list dependencies for this task
+func (t *Template) Depends() []string {
+
+	return t.Dependencies
 }
 
 // Check satisfies the Monitor interface
