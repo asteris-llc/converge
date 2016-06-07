@@ -69,7 +69,6 @@ func (g *Graph) load() error {
 			}
 		}
 		for _, id := range ids {
-			//fmt.Printf("ID: %q, Res: %+v\n\n", id.ID, id.Resource)
 			for _, dep := range id.Resource.Depends() {
 				g.graph.Connect(dag.BasicEdge(id.ID, rootID+graphIDSeparator+dep))
 			}
