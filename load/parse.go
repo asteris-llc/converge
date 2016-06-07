@@ -100,19 +100,9 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			//See https://github.com/asteris-llc/converge/issues/10
 			if token == "task" {
 				if previousTaskName != "" {
-					task := res.(resource.Task)
-					task.AddDep(previousTaskName)
+					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
 				previousTaskName = res.Name()
-			}
-
-			//Check that all dependencies were a resources in this module.
-			dependencies := res.Depends()
-			for _, dep := range dependencies {
-				if _, present := names[dep]; !present {
-					errs = append(errs, &ParseError{item.Pos(),
-						fmt.Sprintf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep)})
-				}
 			}
 
 			// now that we've run the gauntlet, it's safe to add the resource to the
@@ -123,6 +113,16 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		}
 		return n, true
 	})
+	//Check that all dependencies were a resources in this module.
+	for _, res := range module.Children() {
+
+		dependencies := res.Depends()
+		for _, dep := range dependencies {
+			if _, present := names[dep]; !present {
+				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
+			}
+		}
+	}
 
 	if len(errs) == 0 {
 		return module, nil
