@@ -16,6 +16,8 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/pflag"
@@ -23,12 +25,65 @@ import (
 )
 
 func addParamsArguments(flags *pflag.FlagSet) {
-	flags.StringP("paramsJSON", "p", "{}", "parameters for the top-level module, in JSON format")
+	flags.String("paramsJSON", "{}", "parameters for the top-level module, in JSON format")
+	flags.StringSliceP("params", "p", []string{}, "parameters for the top-level module in key=value format")
 }
 
-func getParamsFromFlags() (resource.Values, error) {
-	params := resource.Values{}
-	err := json.Unmarshal([]byte(viper.GetString("paramsJson")), &params)
+// parseKVPair parses an input of the form "key=value" into its
+// corresponding pair of strings. It returns an error on malformed input.
+// Everything before the first "=" is considered the key, while everything after
+// it is the value.
+func parseKVPair(raw string) (string, string, error) {
+	pair := strings.SplitN(raw, "=", 2)
+	if len(pair) < 2 {
+		return "", "", fmt.Errorf("malformed parameter: %v", raw)
+	}
+	return pair[0], pair[1], nil
+}
 
-	return params, err
+// insert either puts a key and value into a map, or returns an error if there
+// is a duplicate key.
+func insert(values resource.Values, key string, value resource.Value) error {
+	if _, duplicate := values[key]; duplicate {
+		return fmt.Errorf("duplicate entry: found %v=%v and %v=%v", key, values[key], key, value)
+	}
+	values[key] = resource.Value(value)
+	return nil
+}
+
+// parseKVPairs parses a list of key=value pairs into a map[string]Value.
+func parseKVPairs(pairs []string) (values resource.Values, errors []error) {
+	values = make(resource.Values)
+	for _, raw := range pairs {
+		if key, value, err := parseKVPair(raw); err != nil {
+			errors = append(errors, err)
+		} else {
+			if err = insert(values, key, resource.Value(value)); err != nil {
+				errors = append(errors, err)
+			}
+		}
+	}
+	return values, errors
+}
+
+func getParamsFromFlags() (params resource.Values, errors []error) {
+	params, errors = parseKVPairs(viper.GetStringSlice("params"))
+
+	jsonParams := resource.Values{}
+	if jsonString := viper.GetString("paramsJSON"); len(jsonString) > 0 {
+		err := json.Unmarshal([]byte(jsonString), &jsonParams)
+		// accumulate errors
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	// merge the two sets of parameters
+	for key, value := range jsonParams {
+		if err := insert(params, key, value); err != nil {
+			errors = append(errors)
+		}
+	}
+
+	return params, errors
 }
