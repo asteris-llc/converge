@@ -84,17 +84,10 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	return nil
 }
 
-//SetDepends : Overwrites the Dependencies of this resource
+//SetDepends overwrites the Dependencies of this resource
 func (st *ShellTask) SetDepends(deps []string) {
 	//Remove duplicateTask
-	set := make(map[string]struct{})
-	for _, dep := range deps {
-		set[dep] = struct{}{}
-	}
-	st.Dependencies = make([]string, 0, len(set))
-	for dep := range set {
-		st.Dependencies = append(st.Dependencies, dep)
-	}
+	st.Dependencies = deps
 }
 
 //Depends list dependencies for this task

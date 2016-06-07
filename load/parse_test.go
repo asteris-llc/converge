@@ -53,7 +53,7 @@ func TestParseEmptyDependencies(t *testing.T) {
 	assert.Equal(t, 0, len(dependencies))
 }
 func TestDependentCall(t *testing.T) {
-
+	t.Parallel()
 	//Test DependentCall
 	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
@@ -63,6 +63,7 @@ func TestDependentCall(t *testing.T) {
 //TestAutoDependencies test that if the depends field is not set for a Task,
 //the previously declared Task becomes that Task's dependency
 func TestAutoDependencies(t *testing.T) {
+	t.Parallel()
 	//Test task is a dependency of subsequent task.
 	mod, err := load.Parse([]byte(taskDependenciesModule))
 	assert.NoError(t, err)

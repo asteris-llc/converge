@@ -50,8 +50,7 @@ type ident struct {
 }
 
 func (g *Graph) load() error {
-	rootID := g.root.Name()
-	ids := []ident{{rootID, g.root}}
+	ids := []ident{{g.root.Name(), g.root}}
 
 	for len(ids) > 0 {
 		var id ident
