@@ -104,8 +104,9 @@ var applyCmd = &cobra.Command{
 			if helpers.UseColor() {
 				if counts.failures > 0 {
 					summary = skittles.Red(summary)
+				} else {
+					summary = skittles.Green(summary)
 				}
-				summary = skittles.Green(summary)
 			}
 			fmt.Print(summary)
 

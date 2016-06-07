@@ -87,8 +87,9 @@ var planCmd = &cobra.Command{
 			if helpers.UseColor() {
 				if counts.changes > 0 {
 					summary = skittles.Yellow(summary)
+				} else {
+					summary = skittles.Green(summary)
 				}
-				summary = skittles.Green(summary)
 			}
 			fmt.Print(summary)
 		}
