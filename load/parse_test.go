@@ -1,6 +1,7 @@
 package load_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/asteris-llc/converge/load"
@@ -79,6 +80,52 @@ func TestAutoDependencies(t *testing.T) {
 
 }
 
+//TestRequirementsOrder double checks that the tree walks depth first
+func TestRequirementsOrder(t *testing.T) {
+	t.Parallel()
+	//Test DependentCall
+	depthMap := map[string]int{}
+	graph, err := load.Load("../samples/requirementsOrder.hcl", resource.Values{})
+	assert.NoError(t, err)
+	graph.WalkWithDepth(func(path string, res resource.Resource, depth int) error {
+		depthMap[path] = depth
+		return nil
+	})
+	//It should go all the way to the bottom, then move up one level at a time.
+	lock := sync.Mutex{}
+	depths := []int{}
+	graph.WalkWithDepth(func(path string, res resource.Resource, depth int) error {
+		//Double check that the depth of a dependency is lower than the resource
+		for _, dep := range res.Depends() {
+			childDepth := depthMap["requirementsOrder.hcl/"+dep]
+			assert.True(t, childDepth > depth)
+		}
+		lock.Lock()
+		depths = append(depths, depthMap[path])
+		lock.Unlock()
+		return nil
+	})
+	var expectedDepth int
+	var counter = 4
+	var reachedBottom bool
+	for _, depth := range depths {
+		assert.Equal(t, expectedDepth, depth)
+		if !reachedBottom {
+			expectedDepth = expectedDepth + 1
+			if depth == 12 {
+				expectedDepth = 11
+				reachedBottom = true
+			}
+		} else {
+			counter = counter - 1
+			if counter == 0 {
+				expectedDepth = expectedDepth - 1
+				counter = 4
+			}
+		}
+	}
+
+}
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
