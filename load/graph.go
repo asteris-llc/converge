@@ -50,7 +50,8 @@ type ident struct {
 }
 
 func (g *Graph) load() error {
-	ids := []ident{{g.root.Name(), g.root}}
+	rootID := g.root.Name()
+	ids := []ident{{rootID, g.root}}
 
 	for len(ids) > 0 {
 		var id ident
@@ -67,8 +68,13 @@ func (g *Graph) load() error {
 				ids = append(ids, childID)
 			}
 		}
+		for _, id := range ids {
+			//fmt.Printf("ID: %q, Res: %+v\n\n", id.ID, id.Resource)
+			for _, dep := range id.Resource.Depends() {
+				g.graph.Connect(dag.BasicEdge(id.ID, rootID+graphIDSeparator+dep))
+			}
+		}
 	}
-
 	return g.graph.Validate()
 }
 
@@ -89,6 +95,7 @@ func (g *Graph) GraphString() string {
 	}
 
 	for _, edge := range g.graph.Edges() {
+
 		s += fmt.Sprintf(
 			"  \"%s\" -> \"%s\";\n",
 			edge.Source(),

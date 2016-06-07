@@ -16,11 +16,11 @@ package resource
 
 // ModuleTask is the task for calling a module.
 type ModuleTask struct {
-	Args       Values
-	Source     string
-	ModuleName string
-
-	parent *Module
+	Args         Values `hcl:"params"`
+	Source       string
+	ModuleName   string
+	Dependencies []string `hcl:"depends"`
+	parent       *Module
 }
 
 // Name returns name for metadata
@@ -31,6 +31,35 @@ func (m *ModuleTask) Name() string {
 // Validate checks shell tasks validity
 func (m *ModuleTask) Validate() error {
 	return nil
+}
+
+//AddDep Addes a dependency to this task
+func (m *ModuleTask) AddDep(dep string) {
+	if m.Dependencies == nil {
+		m.Dependencies = []string{dep}
+		return
+	}
+	for _, same := range m.Dependencies {
+		if same == dep {
+			return
+		}
+	}
+	m.Dependencies = append(m.Dependencies, dep)
+}
+
+//RemoveDep Removes a depencency from this task
+func (m *ModuleTask) RemoveDep(dep string) {
+	for i, same := range m.Dependencies {
+		if same == dep {
+			m.Dependencies = append(m.Dependencies[:i], m.Dependencies[i+1:]...)
+		}
+	}
+}
+
+//Depends list dependencies for this task
+func (m *ModuleTask) Depends() []string {
+
+	return m.Dependencies
 }
 
 // Prepare this module for use
