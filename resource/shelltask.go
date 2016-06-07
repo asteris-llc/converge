@@ -24,11 +24,11 @@ import (
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
 	TaskName       string
-	RawCheckSource string `hcl:"check"`
-	RawApplySource string `hcl:"apply"`
+	RawCheckSource string   `hcl:"check"`
+	RawApplySource string   `hcl:"apply"`
+	Dependencies   []string `hcl:"depends"`
 
-	Dependencies []string `hcl:"depends"`
-	renderer     *Renderer
+	renderer *Renderer
 }
 
 // Name returns name for metadata
@@ -86,10 +86,6 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 
 //AddDep Addes a dependency to this task
 func (st *ShellTask) AddDep(dep string) {
-	if st.Dependencies == nil {
-		st.Dependencies = []string{dep}
-		return
-	}
 	for _, same := range st.Dependencies {
 		if same == dep {
 			return
