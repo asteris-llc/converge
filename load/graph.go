@@ -68,11 +68,12 @@ func (g *Graph) load() error {
 				ids = append(ids, childID)
 			}
 		}
-		for _, id := range ids {
-			//fmt.Printf("ID: %q, Res: %+v\n\n", id.ID, id.Resource)
-			for _, dep := range id.Resource.Depends() {
-				g.graph.Connect(dag.BasicEdge(id.ID, rootID+graphIDSeparator+dep))
-			}
+
+		segments := strings.Split(id.ID, graphIDSeparator)
+		for _, dep := range id.Resource.Depends() {
+			// connect dep to siblings
+			depPath := strings.Join(append(segments[:len(segments)-1], dep), graphIDSeparator)
+			g.graph.Connect(dag.BasicEdge(id.ID, depPath))
 		}
 	}
 	return g.graph.Validate()
