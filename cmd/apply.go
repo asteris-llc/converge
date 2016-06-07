@@ -88,11 +88,11 @@ var applyCmd = &cobra.Command{
 			for _, result := range results {
 				typedResults = append(typedResults, result)
 			}
-			fmt.Println(typedResults.Print())
+			fmt.Println(typedResults.Print(UseColor()))
 
 			// count successes and failures to print summary
 			var counts struct {
-				results, success, failures int
+				// results, success, failures int
 			}
 
 			for _, result := range results {

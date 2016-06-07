@@ -73,7 +73,7 @@ var planCmd = &cobra.Command{
 			for _, result := range results {
 				typedResults = append(typedResults, result)
 			}
-			fmt.Println(typedResults.Print())
+			fmt.Println(typedResults.Print(UseColor()))
 
 			// count results and changes to print summary
 			var counts struct {

@@ -16,12 +16,8 @@ package exec
 
 import (
 	"fmt"
-	"runtime"
 	"sort"
 	"strings"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // Results is the type of a slice of PlanResults or ApplyResults (both of which
@@ -35,16 +31,11 @@ type prettyPrinter interface {
 
 // Print implements a pretty printer that uses ANSI terminal colors when a color
 // terminal is available.
-func (rs Results) Print() string {
-	// decide if we should use terminal colors
-	// borrowed from Logrus's text_formatter.go
-	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
-	useColor := !viper.GetBool("nocolor") && isColorTerminal
-
+func (rs Results) Print(color bool) string {
 	// first, collect string representations of all the PlanResults
 	results := []string{}
 	for _, r := range rs {
-		if useColor {
+		if color {
 			results = append(results, r.Pretty())
 		} else {
 			results = append(results, r.String())
