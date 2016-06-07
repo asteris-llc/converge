@@ -40,9 +40,13 @@ can be done separately to see what needs to be changed before execution.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params, err := getParamsFromFlags()
-		if err != nil {
-			logrus.WithError(err).Fatal("could not load params")
+		// get module parameters
+		params, errors := getParamsFromFlags()
+		for _, err := range errors {
+			logrus.WithError(err).Warn("error while parsing params")
+		}
+		if len(errors) > 1 {
+			logrus.Fatal("error while loading parameters (see log above)")
 		}
 
 		// set up execution context
