@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -55,9 +54,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.converge.yaml)")
 	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
 
-	if err := viper.BindPFlags(RootCmd.PersistentFlags()); err != nil {
-		logrus.WithError(err).Fatal("could not bind flags")
-	}
+	viperBindPFlags(RootCmd.PersistentFlags())
 }
 
 // initConfig reads in config file and ENV variables if set.
