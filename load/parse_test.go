@@ -174,6 +174,10 @@ param "permissions" { default = "0600" }
 template "test" {
 content = ""
 }
+task "nothing" {
+check = ""
+apply = ""
+}
 task "permission" {
   check = "stat -f \"test%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
   apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"

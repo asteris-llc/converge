@@ -97,7 +97,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			// now that we've run the gauntlet, it's safe to add the resource to the
 			// resource list.
 			if token == "task" {
-				if previousTaskName != "" {
+				if previousTaskName != "" && res.Depends() == nil {
 					task := res.(resource.Task)
 					task.AddDep(previousTaskName)
 				}
@@ -158,9 +158,9 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 		return
 	}
 
-	t = new(resource.ShellTask)
-	t.TaskName = item.Keys[1].Token.Value().(string)
+	t = &resource.ShellTask{Dependencies: nil}
 	err = hcl.DecodeObject(t, item.Val)
+	t.TaskName = item.Keys[1].Token.Value().(string)
 
 	return
 }
