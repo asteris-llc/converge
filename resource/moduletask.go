@@ -33,26 +33,16 @@ func (m *ModuleTask) Validate() error {
 	return nil
 }
 
-//AddDep Addes a dependency to this task
-func (m *ModuleTask) AddDep(dep string) {
-	if m.Dependencies == nil {
-		m.Dependencies = []string{dep}
-		return
+//SetDepends : Overrides the Dependencies of this module
+func (m *ModuleTask) SetDepends(deps []string) {
+	//Remove duplicateTask
+	set := make(map[string]struct{})
+	for _, dep := range deps {
+		set[dep] = struct{}{}
 	}
-	for _, same := range m.Dependencies {
-		if same == dep {
-			return
-		}
-	}
-	m.Dependencies = append(m.Dependencies, dep)
-}
-
-//RemoveDep Removes a depencency from this task
-func (m *ModuleTask) RemoveDep(dep string) {
-	for i, same := range m.Dependencies {
-		if same == dep {
-			m.Dependencies = append(m.Dependencies[:i], m.Dependencies[i+1:]...)
-		}
+	m.Dependencies = make([]string, 0, len(set))
+	for dep := range set {
+		m.Dependencies = append(m.Dependencies, dep)
 	}
 }
 

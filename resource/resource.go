@@ -24,8 +24,6 @@ type Monitor interface {
 type Task interface {
 	Monitor
 	Apply() (string, bool, error)
-	AddDep(string)
-	RemoveDep(string)
 }
 
 // Resource adds metadata about the executed tasks
@@ -34,6 +32,7 @@ type Resource interface {
 	Prepare(*Module) error
 	Validate() error
 	Depends() []string
+	SetDepends([]string)
 }
 
 // Parent expresses a resource that has sub-resources instead of being

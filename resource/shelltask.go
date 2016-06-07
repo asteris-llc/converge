@@ -84,28 +84,21 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	return nil
 }
 
-//AddDep Addes a dependency to this task
-func (st *ShellTask) AddDep(dep string) {
-	for _, same := range st.Dependencies {
-		if same == dep {
-			return
-		}
+//SetDepends : Overwrites the Dependencies of this resource
+func (st *ShellTask) SetDepends(deps []string) {
+	//Remove duplicateTask
+	set := make(map[string]struct{})
+	for _, dep := range deps {
+		set[dep] = struct{}{}
 	}
-	st.Dependencies = append(st.Dependencies, dep)
-}
-
-//RemoveDep Removes a depencency from this task
-func (st *ShellTask) RemoveDep(dep string) {
-	for i, same := range st.Dependencies {
-		if same == dep {
-			st.Dependencies = append(st.Dependencies[:i], st.Dependencies[i+1:]...)
-		}
+	st.Dependencies = make([]string, 0, len(set))
+	for dep := range set {
+		st.Dependencies = append(st.Dependencies, dep)
 	}
 }
 
 //Depends list dependencies for this task
 func (st *ShellTask) Depends() []string {
-
 	return st.Dependencies
 }
 
