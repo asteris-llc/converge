@@ -21,10 +21,10 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -81,14 +81,23 @@ var planCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Printf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
+			// summarize the potential changes for the user
+			summary := fmt.Sprintf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
+			if UseColor() {
+				if counts.changes > 0 {
+					summary = skittles.Yellow(summary)
+				} else {
+					summary = skittles.Green(summary)
+				}
+			}
+			fmt.Print(summary)
 		}
 	},
 }
 
 func init() {
 	addParamsArguments(planCmd.Flags())
-	viper.BindPFlags(planCmd.Flags())
+	viperBindPFlags(planCmd.Flags())
 
 	RootCmd.AddCommand(planCmd)
 }
