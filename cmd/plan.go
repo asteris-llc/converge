@@ -80,9 +80,7 @@ var planCmd = &cobra.Command{
 				results, changes int
 			}
 
-			fmt.Print("\n")
 			for _, result := range results {
-				fmt.Println(result)
 				counts.results++
 				if result.WillChange {
 					counts.changes++
