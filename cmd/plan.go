@@ -74,6 +74,22 @@ var planCmd = &cobra.Command{
 				typedResults = append(typedResults, result)
 			}
 			fmt.Println(typedResults.Print())
+
+			// count results and changes to print summary
+			var counts struct {
+				results, changes int
+			}
+
+			fmt.Print("\n")
+			for _, result := range results {
+				fmt.Println(result)
+				counts.results++
+				if result.WillChange {
+					counts.changes++
+				}
+			}
+
+			fmt.Printf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
 		}
 	},
 }

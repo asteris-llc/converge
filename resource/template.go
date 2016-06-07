@@ -36,12 +36,12 @@ func (t *Template) Name() string {
 
 // Validate validates the template config
 func (t *Template) Validate() error {
-	_, err := t.renderer.Render(t.RawContent)
+	_, err := t.renderer.Render("content", t.RawContent)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.renderer.Render(t.RawDestination)
+	_, err = t.renderer.Render("destination", t.RawDestination)
 	return err
 }
 
@@ -70,7 +70,7 @@ func (t *Template) Check() (string, bool, error) {
 func (t *Template) Apply() (string, bool, error) {
 	dest := t.Destination()
 	content := t.Content()
-	err := ioutil.WriteFile(dest, []byte(content), 0755)
+	err := ioutil.WriteFile(dest, []byte(content), 0600)
 	if err != nil {
 		return "", false, err
 	}
@@ -93,13 +93,13 @@ func (t *Template) Prepare(parent *Module) (err error) {
 // Destination renders the destination
 func (t *Template) Destination() string {
 	// we're ignoring the error here because it's already been validated
-	dest, _ := t.renderer.Render(t.RawDestination)
+	dest, _ := t.renderer.Render("destination", t.RawDestination)
 	return dest
 }
 
 // Content renders the content
 func (t *Template) Content() string {
 	// we're ignoring the error here because it's already been validated
-	content, _ := t.renderer.Render(t.RawContent)
+	content, _ := t.renderer.Render("content", t.RawContent)
 	return content
 }
