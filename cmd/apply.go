@@ -92,7 +92,7 @@ var applyCmd = &cobra.Command{
 
 			// count successes and failures to print summary
 			var counts struct {
-				// results, success, failures int
+				results, success, failures int
 			}
 
 			for _, result := range results {
