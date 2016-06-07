@@ -68,6 +68,7 @@ func (g *Graph) load() error {
 				ids = append(ids, childID)
 			}
 		}
+
 		segments := strings.Split(id.ID, graphIDSeparator)
 		for _, dep := range id.Resource.Depends() {
 			// connect dep to siblings
