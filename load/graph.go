@@ -76,7 +76,14 @@ func (g *Graph) load() error {
 			g.graph.Connect(dag.BasicEdge(id.ID, depPath))
 		}
 	}
-	return g.graph.Validate()
+
+	err := g.graph.Validate()
+	if err != nil {
+		return err
+	}
+
+	g.graph.TransitiveReduction()
+	return nil
 }
 
 func (g *Graph) String() string {
