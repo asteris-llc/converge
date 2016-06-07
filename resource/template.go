@@ -45,17 +45,9 @@ func (t *Template) Validate() error {
 	return err
 }
 
-//SetDepends : Overwrites the Dependencies of this resource
+//SetDepends overwrites the Dependencies of this resource
 func (t *Template) SetDepends(deps []string) {
-	//Remove duplicateTask
-	set := make(map[string]struct{})
-	for _, dep := range deps {
-		set[dep] = struct{}{}
-	}
-	t.Dependencies = make([]string, 0, len(set))
-	for dep := range set {
-		t.Dependencies = append(t.Dependencies, dep)
-	}
+	t.Dependencies = deps
 }
 
 //Depends list dependencies for this task

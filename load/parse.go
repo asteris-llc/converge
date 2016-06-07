@@ -58,7 +58,6 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				err error
 			)
 
-			//Taks Currently being parsed
 			switch token {
 			case "task":
 				res, err = parseTask(item)
@@ -67,7 +66,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if err != nil {
 					break
 				}
-				if previousTaskName != "" {
+				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
 				previousTaskName = res.Name()

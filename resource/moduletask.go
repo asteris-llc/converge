@@ -20,7 +20,8 @@ type ModuleTask struct {
 	Source       string
 	ModuleName   string
 	Dependencies []string `hcl:"depends"`
-	parent       *Module
+
+	parent *Module
 }
 
 // Name returns name for metadata
@@ -33,17 +34,10 @@ func (m *ModuleTask) Validate() error {
 	return nil
 }
 
-//SetDepends : Overrides the Dependencies of this module
+//SetDepends overwrites the Dependencies of this resource
 func (m *ModuleTask) SetDepends(deps []string) {
 	//Remove duplicateTask
-	set := make(map[string]struct{})
-	for _, dep := range deps {
-		set[dep] = struct{}{}
-	}
-	m.Dependencies = make([]string, 0, len(set))
-	for dep := range set {
-		m.Dependencies = append(m.Dependencies, dep)
-	}
+	m.Dependencies = deps
 }
 
 //Depends list dependencies for this task
