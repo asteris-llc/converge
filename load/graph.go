@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/awalterschulze/gographviz"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -49,6 +50,10 @@ type ident struct {
 	Resource resource.Resource
 }
 
+func genID(previousID, name string) string {
+	return previousID + graphIDSeparator + name
+}
+
 func (g *Graph) load() error {
 	ids := []ident{{g.root.String(), g.root}}
 
@@ -61,7 +66,7 @@ func (g *Graph) load() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + graphIDSeparator + child.String(), child}
+				childID := ident{genID(id.ID, child.Name()), child}
 				g.graph.Add(childID.ID)
 				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
@@ -85,28 +90,60 @@ func (g *Graph) String() string {
 
 // GraphString returns the loaded graph as a GraphViz string
 func (g *Graph) GraphString() string {
-	s := "digraph {\n"
 
+	graphViz := gographviz.NewGraph()
+	graphName := "\"test\""
+	graphViz.SetName(graphName)
+	graphViz.SetDir(true)
 	for _, node := range g.graph.Vertices() {
-		s += fmt.Sprintf(
-			"  \"%s\"[label=\"%s\"];\n",
-			node,
-			g.resources[node.(string)].String(),
-		)
+		attrs := map[string]string{"label": escape(g.resources[node.(string)].Name())}
+		graphViz.AddNode(graphName, escape(node.(string)), attrs)
 	}
 
 	for _, edge := range g.graph.Edges() {
-
-		s += fmt.Sprintf(
-			"  \"%s\" -> \"%s\";\n",
-			edge.Source(),
-			edge.Target(),
-		)
+		graphViz.AddEdge(escape(edge.Source().(string)), escape(edge.Target().(string)), true, nil)
 	}
 
-	s += "}\n"
+	//Create Subgraphs
+	var subGraphFromModule func(rootID string, mod *resource.Module)
+	subGraphFromModule = func(rootID string, mod *resource.Module) {
+		rootID = genID(rootID, mod.Name())
+		name := "cluster_module_" + mod.Name()
+		children := mod.Children()
+		graphViz.AddNode(name, escape(rootID), nil)
+		for i := 0; i < len(children)-1; i++ {
+			current := escape(genID(rootID, children[i].Name()))
+			nxtChild := escape(genID(rootID, children[i+1].Name()))
+			//fmt.Println("Nodes", current, nxtChild)
+			graphViz.AddNode(name, current, nil)
+			graphViz.AddNode(name, nxtChild, nil)
+			graphViz.AddEdge(current, nxtChild, true, nil)
+			//Handle a module
+			switch v := children[i].(type) {
+			case *resource.Module:
+				subGraphFromModule(rootID, v)
+				graphViz.AddSubGraph(name, "cluster_module_"+v.Name(), nil)
+			}
+		}
+	}
 
-	return s
+	for _, res := range g.root.Children() {
+		switch v := res.(type) {
+		case *resource.Module:
+			subGraphFromModule(g.root.Name(), v)
+			graphViz.AddSubGraph(graphName, "cluster_module_"+v.Name(), nil)
+		}
+	}
+
+	for name, sub := range graphViz.SubGraphs.SubGraphs {
+		sub.Attrs.Add("style", "filled")
+		sub.Attrs.Add("color", "lightgrey")
+		sub.Attrs.Add("label", name)
+	}
+	return graphViz.String()
+}
+func escape(str string) string {
+	return fmt.Sprintf("%q", str)
 }
 
 // Walk the graph, calling the specified function at each vertex
