@@ -44,7 +44,7 @@ func TestParamPreparePresent(t *testing.T) {
 	err := p.Prepare(m)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, value, p.Value)
+	assert.EqualValues(t, value, p.Value())
 }
 
 func TestParamPrepareDefault(t *testing.T) {
@@ -65,5 +65,5 @@ func TestParamPrepareDefault(t *testing.T) {
 	err := p.Prepare(m)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, p.Default, p.Value)
+	assert.EqualValues(t, p.Default, p.Value())
 }
