@@ -2,8 +2,8 @@ param "message" { default = "Hello, World!" }
 param "filename" { default = "test.txt" }
 
 task "nothing" {
-check = ""
-apply = ""
+  check = ""
+  apply = ""
 }
 
 task "render" {
