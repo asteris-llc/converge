@@ -24,7 +24,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
-	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -101,7 +100,7 @@ var applyCmd = &cobra.Command{
 
 			// summarize the changes for the user
 			summary := fmt.Sprintf("\nApply complete. %d changes, %d successful, %d failed\n", counts.results, counts.success, counts.failures)
-			if helpers.UseColor() {
+			if UseColor() {
 				if counts.failures > 0 {
 					summary = skittles.Red(summary)
 				} else {

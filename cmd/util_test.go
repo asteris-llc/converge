@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helpers
+package cmd_test
 
 import (
-	"runtime"
+	"testing"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/spf13/viper"
+	"github.com/asteris-llc/converge/cmd"
+	"github.com/stretchr/testify/assert"
 )
 
-// UseColor tells us whether or not to print colors using ANSI escape sequences
-// based on the following: 1. If we're in a color terminal 2. If the user has
-// specified the `nocolor` option (deduced via Viper) 3. If we're on Windows.
-func UseColor() bool {
-	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
-	return !viper.GetBool("nocolor") && isColorTerminal
+func TestUseColor(t *testing.T) {
+	assert.NotPanics(t, func() { cmd.UseColor() })
 }
