@@ -1,6 +1,7 @@
 package load_test
 
 import (
+	"strings"
 	"sync"
 	"testing"
 
@@ -80,12 +81,9 @@ func TestAutoDependencies(t *testing.T) {
 
 }
 
-//TestRequirementsOrder double checks that the tree walks depth first
-func TestRequirementsOrder(t *testing.T) {
-	t.Parallel()
-	//Test DependentCall
+func requirementsOrderLarge(t *testing.T) {
 	depthMap := map[string]int{}
-	graph, err := load.Load("../samples/requirementsOrder.hcl", resource.Values{})
+	graph, err := load.Load("../samples/requirementsOrderLarge.hcl", resource.Values{})
 	assert.NoError(t, err)
 	graph.WalkWithDepth(func(path string, res resource.Resource, depth int) error {
 		depthMap[path] = depth
@@ -97,7 +95,7 @@ func TestRequirementsOrder(t *testing.T) {
 	graph.WalkWithDepth(func(path string, res resource.Resource, depth int) error {
 		//Double check that the depth of a dependency is lower than the resource
 		for _, dep := range res.Depends() {
-			childDepth := depthMap["requirementsOrder.hcl/"+dep]
+			childDepth := depthMap["requirementsOrderLarge.hcl/"+dep]
 			assert.True(t, childDepth > depth)
 		}
 		lock.Lock()
@@ -125,6 +123,37 @@ func TestRequirementsOrder(t *testing.T) {
 		}
 	}
 
+}
+
+func requirementsOrderSmall(t *testing.T) {
+	/*Tree in the form
+						a
+					 / \
+					b		c
+					 \ /
+					  d
+	A proper depth first search would always result in b or c being the last element processed
+	*/
+	graph, err := load.Load("../samples/requirementsOrderSmall.hcl", resource.Values{})
+	assert.NoError(t, err)
+	paths := []string{}
+	graph.WalkWithDepth(func(path string, res resource.Resource, depth int) error {
+		if depth != 0 {
+			base := strings.Split(path, "/")[1]
+			paths = append(paths, base)
+		}
+		return nil
+	})
+	last := paths[len(paths)-1]
+	assert.True(t, last == "c" || last == "b")
+
+}
+
+//TestRequirementsOrder double checks that the tree walks depth first
+func TestRequirementsOrder(t *testing.T) {
+	t.Parallel()
+	requirementsOrderSmall(t)
+	//use requirementsOrderLarge for extreme conditions
 }
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
