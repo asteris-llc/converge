@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/exec"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +25,6 @@ func TestPlanResultsPrint(t *testing.T) {
 	t.Parallel()
 
 	rs := exec.Results{planResult1, planResult2}
-	viper.Set("nocolor", true)
 	assert.Equal(t, "+ moduleA/submodule1:\n\tCurrently: status\n\tWill Change: true\n\n- moduleB/submodule1:\n\tCurrently: status\n\tWill Change: false", rs.Print(false))
 }
 
@@ -34,6 +32,5 @@ func TestApplyResultsPrint(t *testing.T) {
 	t.Parallel()
 
 	rs := exec.Results{applyResult1, applyResult2}
-	viper.Set("nocolor", true)
 	assert.Equal(t, "+ moduleC/submodule1:\n\tStatus: \"old\" => \"new\"\n\tSuccess: true\n\n- moduleD/submodule1:\n\tStatus: \"old\" => \"old\"\n\tSuccess: false", rs.Print(false))
 }
