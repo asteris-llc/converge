@@ -58,6 +58,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				err error
 			)
 
+			//Taks Currently being parsed
 			switch token {
 			case "task":
 				res, err = parseTask(item)
@@ -94,31 +95,35 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				return n, false
 			}
 			names[dupCheckName] = true
-			// now that we've run the gauntlet, it's safe to add the resource to the
-			// resource list.
+
+			// If no requirements are specified, it is assumed that the task before the current task is the only requirement
+			//See https://github.com/asteris-llc/converge/issues/10
 			if token == "task" {
 				if previousTaskName != "" {
 					task := res.(resource.Task)
 					task.AddDep(previousTaskName)
 				}
-				previousTaskName = dupCheckName
+				previousTaskName = res.Name()
 			}
-			module.Resources = append(module.Resources, res)
 
+			//Check that all dependencies were a resources in this module.
+			dependencies := res.Depends()
+			for _, dep := range dependencies {
+				if _, present := names[dep]; !present {
+					errs = append(errs, &ParseError{item.Pos(),
+						fmt.Sprintf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep)})
+				}
+			}
+
+			// now that we've run the gauntlet, it's safe to add the resource to the
+			// resource list.
+
+			module.Resources = append(module.Resources, res)
 			return n, false
 		}
 		return n, true
 	})
-	//Check that all dependencies were a resources in this module.
-	for _, r := range module.Resources {
-		dependencies := r.Depends()
-		for _, dep := range dependencies {
-			if _, present := names[dep]; !present {
-				errs = append(errs, &ParseError{node.(*ast.ObjectList).Pos(),
-					fmt.Sprintf("Resource %q depends on resource, %q,  which does not exist in this module", r.Name(), dep)})
-			}
-		}
-	}
+
 	if len(errs) == 0 {
 		return module, nil
 	}
@@ -159,8 +164,8 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 	}
 
 	t = new(resource.ShellTask)
-	t.TaskName = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
+	t.TaskName = item.Keys[1].Token.Value().(string)
 
 	return
 }
