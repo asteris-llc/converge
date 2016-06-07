@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"runtime"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -25,4 +27,12 @@ func viperBindPFlags(flags *pflag.FlagSet) {
 	if err := viper.BindPFlags(flags); err != nil {
 		logrus.WithError(err).Fatal("could not bind flags")
 	}
+}
+
+// UseColor tells us whether or not to print colors using ANSI escape sequences
+// based on the following: 1. If we're in a color terminal 2. If the user has
+// specified the `nocolor` option (deduced via Viper) 3. If we're on Windows.
+func UseColor() bool {
+	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
+	return !viper.GetBool("nocolor") && isColorTerminal
 }
