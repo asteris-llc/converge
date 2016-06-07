@@ -61,6 +61,12 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			switch token {
 			case "task":
 				res, err = parseTask(item)
+					if previousTaskName != "" && res.Depends() == nil {
+						task := res.(resource.Task)
+						task.AddDep(previousTaskName)
+					}
+					previousTaskName = res.Name()
+				}
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -96,13 +102,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			names[dupCheckName] = true
 			// now that we've run the gauntlet, it's safe to add the resource to the
 			// resource list.
-			if token == "task" {
-				if previousTaskName != "" && res.Depends() == nil {
-					task := res.(resource.Task)
-					task.AddDep(previousTaskName)
-				}
-				previousTaskName = dupCheckName
-			}
+
 			module.Resources = append(module.Resources, res)
 
 			return n, false
