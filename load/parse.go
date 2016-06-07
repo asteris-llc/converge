@@ -109,7 +109,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		}
 		return n, true
 	})
-	//Check that all dependencies were are resources in this module
+	//Check that all dependencies were a resources in this module.
 	for _, r := range module.Resources {
 		dependencies := r.Depends()
 		for _, dep := range dependencies {

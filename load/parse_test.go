@@ -35,13 +35,13 @@ func getAllDeps(mod *resource.Module) []string {
 }
 
 func TestParseDependcies(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	//Test simple Dependencies list
 	mod, err := load.Parse([]byte(dependentModule))
 	assert.NoError(t, err)
-	assert.Equal(t, 4, len(mod.Resources))
+	assert.Equal(t, 5, len(mod.Resources))
 	dependencies := getAllDeps(mod)
-	assert.Equal(t, 2, len(dependencies))
+	assert.Equal(t, 3, len(dependencies))
 
 	//Test empty Dependencies
 	mod, err = load.Parse([]byte(emptyDependenciesModule))
@@ -150,6 +150,11 @@ task "permission" {
 	param "message" { default = "Hello, World!" }
 	param "filename" { default = "test.txt" }
 
+	task "morenothing" {
+	check = ""
+	apply = ""
+}
+
 	task "nothing" {
 	check = ""
 	apply = ""
@@ -158,7 +163,7 @@ task "permission" {
 	task "render" {
 	  check = "cat {{param 'filename'}} | tee /dev/stderr | grep -q '{{param 'message'}}'"
 	  apply = "echo '{{param 'message'}}' > {{param 'filename'}} && cat {{param 'filename'}}"
-	  depends = ["nothing"]
+	  depends = ["nothing", "morenothing"]
 	}
 
 `
