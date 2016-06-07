@@ -24,7 +24,6 @@ import (
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -88,7 +87,7 @@ var planCmd = &cobra.Command{
 
 func init() {
 	addParamsArguments(planCmd.Flags())
-	viper.BindPFlags(planCmd.Flags())
+	viperBindPFlags(planCmd.Flags())
 
 	RootCmd.AddCommand(planCmd)
 }
