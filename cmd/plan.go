@@ -21,7 +21,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -80,7 +82,15 @@ var planCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Printf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
+			// summarize the potential changes for the user
+			summary := fmt.Sprintf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
+			if helpers.UseColor() {
+				if counts.changes > 0 {
+					summary = skittles.Yellow(summary)
+				}
+				summary = skittles.Green(summary)
+			}
+			fmt.Print(summary)
 		}
 	},
 }

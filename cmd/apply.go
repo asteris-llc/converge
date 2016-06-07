@@ -22,7 +22,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -97,7 +99,15 @@ var applyCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Printf("\nApply complete. %d changes, %d successful, %d failed\n", counts.results, counts.success, counts.failures)
+			// summarize the changes for the user
+			summary := fmt.Sprintf("\nApply complete. %d changes, %d successful, %d failed\n", counts.results, counts.success, counts.failures)
+			if helpers.UseColor() {
+				if counts.failures > 0 {
+					summary = skittles.Red(summary)
+				}
+				summary = skittles.Green(summary)
+			}
+			fmt.Print(summary)
 
 			if counts.failures > 0 {
 				os.Exit(1)
