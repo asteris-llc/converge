@@ -53,7 +53,6 @@ func Load(source string, args resource.Values) (*Graph, error) {
 				if err != nil {
 					return nil, err
 				}
-				//TODO : Write a merge function
 				newModule.Args = mt.Args
 				newModule.Source = mt.Source
 				newModule.ModuleName = mt.ModuleName

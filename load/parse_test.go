@@ -27,14 +27,14 @@ func TestParse(t *testing.T) {
 }
 
 func getAllDeps(mod *resource.Module) []string {
-	dependencies := make([]string, 0, 1)
+	dependencies := make([]string, 0)
 	for _, r := range mod.Resources {
 		dependencies = append(dependencies, r.Depends()...)
 	}
 	return dependencies
 }
 
-func TestParseDependcies(t *testing.T) {
+func TestParseSimpleDependcies(t *testing.T) {
 	t.Parallel()
 	//Test simple Dependencies list
 	mod, err := load.Parse([]byte(dependentModule))
@@ -42,20 +42,29 @@ func TestParseDependcies(t *testing.T) {
 	assert.Equal(t, 5, len(mod.Resources))
 	dependencies := getAllDeps(mod)
 	assert.Equal(t, 3, len(dependencies))
+}
 
+func TestParseEmptyDependencies(t *testing.T) {
+	t.Parallel()
 	//Test empty Dependencies
-	mod, err = load.Parse([]byte(emptyDependenciesModule))
+	mod, err := load.Parse([]byte(emptyDependenciesModule))
 	assert.NoError(t, err)
-	dependencies = getAllDeps(mod)
+	dependencies := getAllDeps(mod)
 	assert.Equal(t, 0, len(dependencies))
+}
+func TestDependentCall(t *testing.T) {
 
 	//Test DependentCall
-	mod, err = load.Parse([]byte(dependentCall))
+	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
 	assert.Equal(t, "y", getAllDeps(mod)[0])
+}
 
+//TestAutoDependencies test that if the depends field is not set for a Task,
+//the previously declared Task becomes that Task's dependency
+func TestAutoDependencies(t *testing.T) {
 	//Test task is a dependency of subsequent task.
-	mod, err = load.Parse([]byte(taskDependenciesModule))
+	mod, err := load.Parse([]byte(taskDependenciesModule))
 	assert.NoError(t, err)
 	//First task
 	r := mod.Resources[0]
@@ -167,6 +176,7 @@ task "permission" {
 	}
 
 `
+
 	emptyDependenciesModule = `
 param "filename" { }
 param "permissions" { default = "0600" }
