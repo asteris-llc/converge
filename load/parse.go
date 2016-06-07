@@ -62,6 +62,15 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			switch token {
 			case "task":
 				res, err = parseTask(item)
+				// If no requirements are specified, it is assumed that the task before the current task is the only requirement
+				//See https://github.com/asteris-llc/converge/issues/10
+				if err != nil {
+					break
+				}
+				if previousTaskName != "" {
+					res.SetDepends(append(res.Depends(), previousTaskName))
+				}
+				previousTaskName = res.Name()
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -95,15 +104,6 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				return n, false
 			}
 			names[dupCheckName] = true
-
-			// If no requirements are specified, it is assumed that the task before the current task is the only requirement
-			//See https://github.com/asteris-llc/converge/issues/10
-			if token == "task" {
-				if previousTaskName != "" {
-					res.SetDepends(append(res.Depends(), previousTaskName))
-				}
-				previousTaskName = res.Name()
-			}
 
 			// now that we've run the gauntlet, it's safe to add the resource to the
 			// resource list.
