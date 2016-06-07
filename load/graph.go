@@ -131,6 +131,22 @@ func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
 	)
 }
 
+// WalkWithDepth walks the graph, calling the specified function at each vertex
+func (g *Graph) WalkWithDepth(f func(path string, res resource.Resource, depth int) error) error {
+	root, err := g.graph.Root()
+	if err != nil {
+		return err
+	}
+
+	return g.graph.DepthFirstWalk(
+		[]dag.Vertex{root},
+		func(path dag.Vertex, depth int) error {
+			res := g.resources[path.(string)]
+			return f(path.(string), res, depth)
+		},
+	)
+}
+
 // Parent retrieves the parent module of a given path
 func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 	parts := strings.Split(path, graphIDSeparator)
