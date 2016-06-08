@@ -51,26 +51,26 @@ type Parent interface {
 func LongName(res Resource) string {
 	switch res.(type) {
 	case *Module:
-		return fmt.Sprintf("module(%s)", res.Name())
+		return fmt.Sprintf("module.%s", res.Name())
 	case *ModuleTask:
-		return fmt.Sprintf("module_task(%s)", res.Name())
+		return fmt.Sprintf("module_task.%s", res.Name())
 	case *Template:
-		return fmt.Sprintf("template(%s)", res.Name())
+		return fmt.Sprintf("template.%s", res.Name())
 	case *Param:
-		return fmt.Sprintf("param(%s)", res.Name())
+		return fmt.Sprintf("param.%s", res.Name())
 	case Task:
-		return fmt.Sprintf("task(%s)", res.Name())
+		return fmt.Sprintf("task.%s", res.Name())
 	case Monitor:
-		return fmt.Sprintf("monitor(%s)", res.Name())
+		return fmt.Sprintf("monitor.%s", res.Name())
 	}
-	return fmt.Sprintf("unsupported(%s)", res.Name())
+	return fmt.Sprintf("unsupported.%s", res.Name())
 }
+
+var shortNameRegex = regexp.MustCompile(`\w+\.(\w+)`)
 
 //ShortName returns the name of a Resource
 //If longName = "type(a)" it returns "a" otherwise it
 //returns longName
-var shortNameRegex = regexp.MustCompile(`\w+\((\w+)\)`)
-
 func ShortName(longName string) string {
 	res := shortNameRegex.FindStringSubmatch(longName)
 	if res == nil || res[1] == "" {

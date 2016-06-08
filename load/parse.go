@@ -37,6 +37,8 @@ func Parse(content []byte) (*resource.Module, error) {
 	return parseModule(f.Node)
 }
 
+var dependencyValidator = regexp.MustCompile(`^\w+(\.\w+)?$`)
+
 func parseModule(node ast.Node) (*resource.Module, error) {
 	// the approach were taking here is to create some state that we'll manage
 	// locally, and then walk over the nodes in the AST, gathering errors as we
@@ -121,6 +123,13 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 		dependencies := res.Depends()
 		for i, dep := range dependencies {
+			match := dependencyValidator.MatchString(dep)
+			if !match {
+				errs = append(errs, fmt.Errorf("Dependencies should be in the form"+
+					"deps = [\"resourceName.depencency\"] or deps = [\"dependency\"] found %s", dep))
+				break
+			}
+
 			if dups, present := names[dep]; !present || len(dups) > 1 {
 				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
 			}
