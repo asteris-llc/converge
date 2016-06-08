@@ -23,10 +23,10 @@ import (
 // Template is a task defined by content and a destination
 type Template struct {
 	TemplateName   string
-	RawContent     string `hcl:"content"`
-	RawDestination string `hcl:"destination"`
-
-	renderer *Renderer
+	RawContent     string   `hcl:"content"`
+	RawDestination string   `hcl:"destination"`
+	Dependencies   []string `hcl:"depends"`
+	renderer       *Renderer
 }
 
 // Name returns the name of this template
@@ -43,6 +43,17 @@ func (t *Template) Validate() error {
 
 	_, err = t.renderer.Render("destination", t.RawDestination)
 	return err
+}
+
+//SetDepends overwrites the Dependencies of this resource
+func (t *Template) SetDepends(deps []string) {
+	t.Dependencies = deps
+}
+
+//Depends list dependencies for this task
+func (t *Template) Depends() []string {
+
+	return t.Dependencies
 }
 
 // Check satisfies the Monitor interface

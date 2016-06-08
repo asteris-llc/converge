@@ -40,6 +40,7 @@ func Load(source string, args resource.Values) (*Graph, error) {
 
 	// transform ModuleTasks with Modules by loading them; do this iteratively
 	modules := []*resource.Module{initial}
+
 	for len(modules) > 0 {
 		// bookkeeping to avoid recursive calls. Using `range` here would copy and
 		// not process any new items.
@@ -52,13 +53,14 @@ func Load(source string, args resource.Values) (*Graph, error) {
 				if err != nil {
 					return nil, err
 				}
-
 				newModule.Args = mt.Args
 				newModule.Source = mt.Source
 				newModule.ModuleName = mt.ModuleName
+				newModule.Dependencies = append(newModule.Dependencies, mt.Dependencies...)
 
 				module.Resources[i] = newModule
 				modules = append(modules, newModule)
+
 			}
 		}
 	}
@@ -133,10 +135,8 @@ func FromFile(filename string) (*resource.Module, error) {
 	}
 
 	mod, err := Parse(content)
-
 	if err == nil {
 		mod.ModuleName = path.Base(filename)
 	}
-
 	return mod, err
 }

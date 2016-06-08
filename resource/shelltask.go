@@ -24,8 +24,9 @@ import (
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
 	TaskName       string
-	RawCheckSource string `hcl:"check"`
-	RawApplySource string `hcl:"apply"`
+	RawCheckSource string   `hcl:"check"`
+	RawApplySource string   `hcl:"apply"`
+	Dependencies   []string `hcl:"depends"`
 
 	renderer *Renderer
 }
@@ -81,6 +82,17 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	}
 
 	return nil
+}
+
+//SetDepends overwrites the Dependencies of this resource
+func (st *ShellTask) SetDepends(deps []string) {
+	//Remove duplicateTask
+	st.Dependencies = deps
+}
+
+//Depends list dependencies for this task
+func (st *ShellTask) Depends() []string {
+	return st.Dependencies
 }
 
 // Check satisfies the Monitor interface

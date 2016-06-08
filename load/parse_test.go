@@ -26,6 +26,59 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, len(m.Resources), 4)
 }
 
+func getAllDeps(mod *resource.Module) []string {
+	dependencies := make([]string, 0)
+	for _, r := range mod.Resources {
+		dependencies = append(dependencies, r.Depends()...)
+	}
+	return dependencies
+}
+
+func TestParseSimpleDependcies(t *testing.T) {
+	t.Parallel()
+	//Test simple Dependencies list
+	mod, err := load.Parse([]byte(dependentModule))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, len(mod.Resources))
+	dependencies := getAllDeps(mod)
+	assert.Equal(t, 3, len(dependencies))
+}
+
+func TestParseEmptyDependencies(t *testing.T) {
+	t.Parallel()
+	//Test empty Dependencies
+	mod, err := load.Parse([]byte(emptyDependenciesModule))
+	assert.NoError(t, err)
+	dependencies := getAllDeps(mod)
+	assert.Equal(t, 0, len(dependencies))
+}
+func TestDependentCall(t *testing.T) {
+	t.Parallel()
+	//Test DependentCall
+	mod, err := load.Parse([]byte(dependentCall))
+	assert.NoError(t, err)
+	assert.Equal(t, "y", getAllDeps(mod)[0])
+}
+
+//TestAutoDependencies test that if the depends field is not set for a Task,
+//the previously declared Task becomes that Task's dependency
+func TestAutoDependencies(t *testing.T) {
+	t.Parallel()
+	//Test task is a dependency of subsequent task.
+	mod, err := load.Parse([]byte(taskDependenciesModule))
+	assert.NoError(t, err)
+	//First task
+	r := mod.Resources[0]
+	assert.Empty(t, r.Depends())
+	//Second task
+	r = mod.Resources[1]
+	assert.Contains(t, r.Depends(), "a")
+	//Third task
+	r = mod.Resources[2]
+	assert.Contains(t, r.Depends(), "b")
+
+}
+
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
@@ -67,7 +120,6 @@ func TestParseModuleCall(t *testing.T) {
 
 	mod, err := load.Parse([]byte(moduleCall))
 	assert.NoError(t, err)
-
 	assert.Equal(t, len(mod.Resources), 1)
 }
 
@@ -94,14 +146,68 @@ var (
 param "filename" { }
 param "permissions" { default = "0600" }
 
+
+template "test" {
+content = ""
+}
 task "permission" {
   check = "stat -f \"%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
   apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
 }
+`
+
+	dependentModule = `
+	param "message" { default = "Hello, World!" }
+	param "filename" { default = "test.txt" }
+
+	task "morenothing" {
+	check = ""
+	apply = ""
+}
+
+	task "nothing" {
+	check = ""
+	apply = ""
+	}
+
+	task "render" {
+	  check = "cat {{param 'filename'}} | tee /dev/stderr | grep -q '{{param 'message'}}'"
+	  apply = "echo '{{param 'message'}}' > {{param 'filename'}} && cat {{param 'filename'}}"
+	  depends = ["nothing", "morenothing"]
+	}
+
+`
+
+	emptyDependenciesModule = `
+param "filename" { }
+param "permissions" { default = "0600" }
 
 template "test" {
-  content = ""
+content = ""
 }
+task "permission" {
+  check = "stat -f \"test%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
+  apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
+	depends = []
+}
+`
+
+	taskDependenciesModule = `
+	task "a" {
+	check = ""
+	apply = ""
+}
+
+	task "b" {
+	check = ""
+	apply = ""
+}
+
+	task "c" {
+		check = ""
+		apply = ""
+	}
+
 `
 
 	duplicateParam = `
@@ -110,7 +216,23 @@ param "x" {}`
 
 	moduleCall = `
 module "x" "y" {
-  arg1 = "z"
+	params = {
+		arg1 = "z"
+	}
+}`
+
+	dependentCall = `
+	module "x" "y" {
+	params = {
+		arg1 = "z"
+	}
+}
+
+	module "a" "b" {
+	params = {
+		arg1 = "z"
+	}
+	depends = ["y"]
 }`
 
 	duplicateTask = `
