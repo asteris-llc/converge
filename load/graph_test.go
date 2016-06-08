@@ -15,7 +15,6 @@
 package load_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -75,16 +74,15 @@ func TestGraphWalk(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-
 	assert.Equal(
 		t,
 		[]string{
 			"test",
-			"test/task(task)",
-			"test/template(template)",
-			"test/module(test2)",
-			"test/module(test2)/template(task2)",
-			"test/module(test2)/template(template2)",
+			"test/template.template",
+			"test/task.task",
+			"test/module.test2",
+			"test/module.test2/template.template2",
+			"test/module.test2/task.task2",
 		},
 		results,
 	)
@@ -130,7 +128,6 @@ func TestRequirementsOrdering(t *testing.T) {
 	paths := []string{}
 
 	assert.NoError(t, graph.Walk(func(path string, res resource.Resource) error {
-		fmt.Println(path)
 		lock.Lock()
 		defer lock.Unlock()
 		paths = append(paths, path)
@@ -138,6 +135,6 @@ func TestRequirementsOrdering(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, "requirementsOrderSmall.hcl/task(d)", paths[1])
-	assert.Equal(t, "requirementsOrderSmall.hcl/task(a)", paths[len(paths)-1])
+	assert.Equal(t, "requirementsOrderSmall.hcl/task.d", paths[1])
+	assert.Equal(t, "requirementsOrderSmall.hcl/task.a", paths[len(paths)-1])
 }

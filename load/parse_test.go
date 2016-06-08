@@ -35,7 +35,7 @@ func getAllDeps(mod *resource.Module) []string {
 }
 
 func TestParseSimpleDependencies(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	//Test simple Dependencies list
 	mod, err := load.Parse([]byte(dependentModule))
 	assert.NoError(t, err)
@@ -57,13 +57,13 @@ func TestDependentCall(t *testing.T) {
 	//Test DependentCall
 	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-	assert.Equal(t, "module_task(y)", getAllDeps(mod)[0])
+	assert.Equal(t, "module_task.y", getAllDeps(mod)[0])
 }
 
 //TestAutoDependencies test that if the depends field is not set for a Task,
 //the previously declared Task becomes that Task's dependency
 func TestAutoDependencies(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	//Test task is a dependency of subsequent task.
 	mod, err := load.Parse([]byte(taskDependenciesModule))
 	assert.NoError(t, err)
@@ -72,11 +72,19 @@ func TestAutoDependencies(t *testing.T) {
 	assert.Empty(t, r.Depends())
 	//Second task
 	r = mod.Resources[1]
-	assert.Contains(t, r.Depends(), "task(a)")
+	assert.Contains(t, r.Depends(), "task.a")
 	//Third task
 	r = mod.Resources[2]
-	assert.Contains(t, r.Depends(), "task(b)")
+	assert.Contains(t, r.Depends(), "task.b")
 
+}
+
+func TestSameNameDependencies(t *testing.T) {
+	//t.Parallel()
+	_, err := load.Parse([]byte(sameNameDependenciesWrong))
+	assert.Error(t, err)
+	_, err = load.Parse([]byte(sameNameDependenciesRight))
+	assert.NoError(t, err)
 }
 
 func TestParseAnonymousParam(t *testing.T) {
@@ -208,6 +216,40 @@ task "permission" {
 		apply = ""
 	}
 
+`
+
+	sameNameDependenciesWrong = `
+template "a" {
+content = ""
+}
+
+task "a" {
+check = ""
+apply = ""
+}
+
+task "c" {
+	check = ""
+	apply = ""
+	depends = ["a"]
+}
+`
+
+	sameNameDependenciesRight = `
+template "a" {
+content = ""
+}
+
+task "a" {
+check = ""
+apply = ""
+}
+
+task "c" {
+check = ""
+apply = ""
+depends = ["template.a"]
+}
 `
 
 	duplicateParam = `
