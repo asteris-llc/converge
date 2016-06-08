@@ -15,11 +15,13 @@
 package load_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewGraph(t *testing.T) {
@@ -102,4 +104,35 @@ func TestGraphParent(t *testing.T) {
 	parent, err := graph.Parent("test/task")
 	assert.NoError(t, err)
 	assert.Equal(t, mod, parent)
+}
+
+func TestRequirementsOrdering(t *testing.T) {
+	/*
+		Tree in the form
+
+								a
+							 / \
+							b		c
+							 \ /
+							  d
+
+			A proper dependency order search would always result in a being the last
+			element processed
+	*/
+	graph, err := load.Load("../samples/requirementsOrderSmall.hcl", resource.Values{})
+	require.NoError(t, err)
+
+	lock := new(sync.Mutex)
+	paths := []string{}
+
+	assert.NoError(t, graph.Walk(func(path string, res resource.Resource) error {
+		lock.Lock()
+		defer lock.Unlock()
+		paths = append(paths, path)
+
+		return nil
+	}))
+
+	assert.Equal(t, "requirementsOrderSmall.hcl/d", paths[1])
+	assert.Equal(t, "requirementsOrderSmall.hcl/a", paths[len(paths)-1])
 }

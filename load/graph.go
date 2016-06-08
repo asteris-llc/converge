@@ -76,13 +76,7 @@ func (g *Graph) load() error {
 		}
 	}
 
-	err := g.graph.Validate()
-	if err != nil {
-		return err
-	}
-
-	g.graph.TransitiveReduction()
-	return nil
+	return g.graph.Validate()
 }
 
 func (g *Graph) String() string {
@@ -127,22 +121,6 @@ func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
 		func(path dag.Vertex, depth int) error {
 			res := g.resources[path.(string)]
 			return f(path.(string), res)
-		},
-	)
-}
-
-// WalkWithDepth walks the graph, calling the specified function at each vertex
-func (g *Graph) WalkWithDepth(f func(path string, res resource.Resource, depth int) error) error {
-	root, err := g.graph.Root()
-	if err != nil {
-		return err
-	}
-
-	return g.graph.DepthFirstWalk(
-		[]dag.Vertex{root},
-		func(path dag.Vertex, depth int) error {
-			res := g.resources[path.(string)]
-			return f(path.(string), res, depth)
 		},
 	)
 }
