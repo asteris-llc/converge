@@ -6,10 +6,20 @@ Converge is a configuration management tool.
 **Table of Contents**
 
 - [Converge](#converge)
+    - [Installation](#installation)
     - [Usage](#usage)
         - [Writing modules](#writing-modules)
 
 <!-- markdown-toc end -->
+
+## Installation
+
+```sh
+go get github.com/asteris-llc/converge
+```
+
+or download a release for your platform from the
+[releases page on Github](https://github.com/asteris-llc/converge/releases).
 
 ## Usage
 
