@@ -1,3 +1,5 @@
 module "basic.hcl" "basic" {
-  message = "Hello from another module!"
+  params = {
+    message = "Hello from another module!"
+  }
 }
