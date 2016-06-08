@@ -37,11 +37,11 @@ param "version" { }
 module "yum" "traefik" { }
 
 module "systemd-unit-enabled" "traefik" {
-  depends = [ "yum.traefik" ]
+  requires = [ "yum.traefik" ]
 }
 
 module "systemd-unit-running" "traefik" {
-  depends = [ "yum.traefik" ]
+  requires = [ "yum.traefik" ]
 }
 ```
 
@@ -105,13 +105,13 @@ EOF
 task "reload-daemon" {
   check = "systemd-delta --type=overridden {{param `name`}}"
   apply = "systemctl daemon-reload"
-  depends = [ "unit" ]
+  requires = [ "template.unit" ]
 }
 ```
 
 This module creates a systemd unit file and registers it with the system. Note
 that both resource blocks have a name, and that "daemon-reload" depends on
-"unit". Converge uses these dependencies to determine build order.
+"unit". Converge uses these dependencies to determine execution order.
 
 The arguments for the template resource:
 
