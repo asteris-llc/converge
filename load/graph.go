@@ -76,7 +76,6 @@ func (g *Graph) load() error {
 		}
 	}
 
-	g.graph.TransitiveReduction()
 	return g.graph.Validate()
 
 }
