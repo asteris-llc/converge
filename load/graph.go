@@ -67,6 +67,13 @@ func (g *Graph) load() error {
 				ids = append(ids, childID)
 			}
 		}
+
+		segments := strings.Split(id.ID, graphIDSeparator)
+		for _, dep := range id.Resource.Depends() {
+			// connect dep to siblings
+			depPath := strings.Join(append(segments[:len(segments)-1], dep), graphIDSeparator)
+			g.graph.Connect(dag.BasicEdge(id.ID, depPath))
+		}
 	}
 
 	return g.graph.Validate()
@@ -89,6 +96,7 @@ func (g *Graph) GraphString() string {
 	}
 
 	for _, edge := range g.graph.Edges() {
+
 		s += fmt.Sprintf(
 			"  \"%s\" -> \"%s\";\n",
 			edge.Source(),
