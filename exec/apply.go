@@ -15,7 +15,6 @@
 package exec
 
 import (
-	"fmt"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -23,24 +22,6 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 )
-
-// ApplyResult contains the result of a resource check
-type ApplyResult struct {
-	Path      string
-	OldStatus string
-	NewStatus string
-	Success   bool
-}
-
-func (p *ApplyResult) String() string {
-	return fmt.Sprintf(
-		"%s:\n\tStatus: %q => %q\n\tSuccess: %t",
-		p.Path,
-		p.OldStatus,
-		p.NewStatus,
-		p.Success,
-	)
-}
 
 // ApplyWithStatus applies the operations checked in plan
 func ApplyWithStatus(ctx context.Context, graph *load.Graph, plan []*PlanResult, status chan<- *StatusMessage) (results []*ApplyResult, err error) {
