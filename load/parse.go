@@ -45,7 +45,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	var (
 		errs   MultiError
 		module = new(resource.Module)
-		names  = map[string]bool{}
+		names  = map[string][]string{}
 	)
 	previousTaskName := ""
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
@@ -69,7 +69,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
-				previousTaskName = res.Name()
+				previousTaskName = resource.LongName(res)
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -97,13 +97,16 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// check if the name is already present, error if so
-			dupCheckName := res.Name()
-			if present := names[dupCheckName]; present {
+			dupCheckName := resource.LongName(res)
+			if _, present := names[dupCheckName]; present {
 				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
 				return n, false
 			}
-			names[dupCheckName] = true
-
+			//Want to support having dependencies in short form (depends = [a])
+			//when there is only one resource with the name a. otherwise use (depends = [task(a)])
+			names[dupCheckName] = append(names[dupCheckName], dupCheckName)
+			sN := resource.ShortName(dupCheckName)
+			names[sN] = append(names[sN], dupCheckName)
 			// now that we've run the gauntlet, it's safe to add the resource to the
 			// resource list.
 
@@ -113,13 +116,15 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		return n, true
 	})
 	//Check that all dependencies were a resources in this module.
+	//Also convert dependencies from the form depends=[a] to depends = [task(a)]
 	for _, res := range module.Children() {
 
 		dependencies := res.Depends()
-		for _, dep := range dependencies {
-			if _, present := names[dep]; !present {
+		for i, dep := range dependencies {
+			if dups, present := names[dep]; !present || len(dups) > 1 {
 				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
 			}
+			dependencies[i] = names[dep][0]
 		}
 	}
 

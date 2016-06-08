@@ -34,8 +34,8 @@ func getAllDeps(mod *resource.Module) []string {
 	return dependencies
 }
 
-func TestParseSimpleDependcies(t *testing.T) {
-	t.Parallel()
+func TestParseSimpleDependencies(t *testing.T) {
+	//t.Parallel()
 	//Test simple Dependencies list
 	mod, err := load.Parse([]byte(dependentModule))
 	assert.NoError(t, err)
@@ -57,13 +57,13 @@ func TestDependentCall(t *testing.T) {
 	//Test DependentCall
 	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-	assert.Equal(t, "y", getAllDeps(mod)[0])
+	assert.Equal(t, "module_task(y)", getAllDeps(mod)[0])
 }
 
 //TestAutoDependencies test that if the depends field is not set for a Task,
 //the previously declared Task becomes that Task's dependency
 func TestAutoDependencies(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 	//Test task is a dependency of subsequent task.
 	mod, err := load.Parse([]byte(taskDependenciesModule))
 	assert.NoError(t, err)
@@ -72,10 +72,10 @@ func TestAutoDependencies(t *testing.T) {
 	assert.Empty(t, r.Depends())
 	//Second task
 	r = mod.Resources[1]
-	assert.Contains(t, r.Depends(), "a")
+	assert.Contains(t, r.Depends(), "task(a)")
 	//Third task
 	r = mod.Resources[2]
-	assert.Contains(t, r.Depends(), "b")
+	assert.Contains(t, r.Depends(), "task(b)")
 
 }
 
