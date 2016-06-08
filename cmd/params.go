@@ -19,14 +19,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
+// Once the command line options are parsed, these will hold real values
+var paramsJSON string
+var params []string
+
 func addParamsArguments(flags *pflag.FlagSet) {
-	flags.String("paramsJSON", "{}", "parameters for the top-level module, in JSON format")
-	flags.StringSliceP("params", "p", []string{}, "parameters for the top-level module in key=value format")
+	flags.StringVar(&paramsJSON, "paramsJSON", "{}", "parameters for the top-level module, in JSON format")
+	flags.StringSliceVarP(&params, "params", "p", []string{}, "parameters for the top-level module in key=value format")
 }
 
 // parseKVPair parses an input of the form "key=value" into its
@@ -66,12 +70,16 @@ func parseKVPairs(pairs []string) (values resource.Values, errors []error) {
 	return values, errors
 }
 
-func getParamsFromFlags() (params resource.Values, errors []error) {
-	params, errors = parseKVPairs(viper.GetStringSlice("params"))
+func getParamsFromFlags(flags *pflag.FlagSet) (vals resource.Values, errors []error) {
+	// get parameters passed to the --params flag
+	vals, errors = parseKVPairs(params)
 
+	// get parameters passed to the --paramsJSON flag
 	jsonParams := resource.Values{}
-	if jsonString := viper.GetString("paramsJSON"); len(jsonString) > 0 {
-		err := json.Unmarshal([]byte(jsonString), &jsonParams)
+	if len(paramsJSON) > 0 {
+		logrus.Debug("parsing --paramsJSON")
+
+		err := json.Unmarshal([]byte(paramsJSON), &jsonParams)
 		// accumulate errors
 		if err != nil {
 			errors = append(errors, err)
@@ -80,10 +88,10 @@ func getParamsFromFlags() (params resource.Values, errors []error) {
 
 	// merge the two sets of parameters
 	for key, value := range jsonParams {
-		if err := insert(params, key, value); err != nil {
+		if err := insert(vals, key, value); err != nil {
 			errors = append(errors)
 		}
 	}
 
-	return params, errors
+	return vals, errors
 }

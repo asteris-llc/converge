@@ -18,9 +18,31 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/spf13/viper"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
+
+// set up a FlagSet for testing
+func setupFlags(params, paramsJSON string) *pflag.FlagSet {
+	flagSet := pflag.NewFlagSet("TestGetParamsFromFlags", pflag.PanicOnError)
+	addParamsArguments(flagSet)
+	// mirror actual usage by using Parse rather than Set
+	cmdline := []string{"apply"}
+	if params != "" {
+		cmdline = append(cmdline, "--params", params)
+	}
+	if paramsJSON != "" {
+		cmdline = append(cmdline, "--paramsJSON", paramsJSON)
+	}
+	flagSet.Parse(append(cmdline, "samples/test.hcl"))
+	return flagSet
+}
+
+func TestAddParamsArguments(t *testing.T) {
+	flagSet := pflag.NewFlagSet("", pflag.PanicOnError)
+	addParamsArguments(flagSet)
+	assert.True(t, flagSet.HasAvailableFlags())
+}
 
 func TestParseKVPairFailure(t *testing.T) {
 	t.Parallel()
@@ -51,30 +73,42 @@ func TestParseKVPairSuccess(t *testing.T) {
 }
 
 func TestGetParamsFromFlags(t *testing.T) {
-	viper.Reset()
-
-	viper.Set("params", []string{"key1=1", "key2=2", "key3=3"})
-	viper.Set("paramsJson", `{"key4": "4", "key5": "5"}`)
-
-	values, errors := getParamsFromFlags()
+	flagSet := setupFlags("key1=1,key2=2", `{"key3":"3","key4":"4"}`)
+	values, errors := getParamsFromFlags(flagSet)
 	assert.Empty(t, errors)
 
+	// compare to expected values
 	expected := resource.Values(map[string]resource.Value{
-		"key1": "1", "key2": "2", "key3": "3", "key4": "4", "key5": "5",
+		"key1": "1", "key2": "2", "key3": "3", "key4": "4",
 	})
 	assert.EqualValues(t, expected, values)
 }
 
 func TestDuplicateParameters(t *testing.T) {
-	viper.Reset()
-
-	viper.Set("params", []string{"key1=1", "key1=2"})
-	values, errors := getParamsFromFlags()
+	// test that duplicates in --params are detected
+	flagSet := setupFlags("key1=1,key1=2", "")
+	values, errors := getParamsFromFlags(flagSet)
 	assert.Len(t, values, 1)
 	assert.Len(t, errors, 1)
 
-	viper.Set("jsonParams", `{"key1": 1, "key1", "2"}`)
-	values, errors = getParamsFromFlags()
+	flagSet = setupFlags("", `{"key1":"val1","key1":"2"}`)
+	values, errors = getParamsFromFlags(flagSet)
+	assert.Len(t, values, 1)
+	assert.Len(t, errors, 0) // golang ignore duplicate JSON keys
+
+	// test that duplicates between --params and --paramJSON are detected
+	flagSet = setupFlags("key1=1,", `{"key1":"2"}`)
+	values, errors = getParamsFromFlags(flagSet)
 	assert.Len(t, values, 1)
 	assert.Len(t, errors, 1)
+}
+
+// test that defining -p multiple times results in multiple parameters
+func TestMultipleArgs(t *testing.T) {
+	flagSet := pflag.NewFlagSet("", pflag.PanicOnError)
+	addParamsArguments(flagSet)
+	assert.NoError(t, flagSet.Parse([]string{"-p", "key1=1", "-p", "key2=2"}))
+	values, errors := getParamsFromFlags(flagSet)
+	assert.Len(t, values, 2)
+	assert.Len(t, errors, 0)
 }

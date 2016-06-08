@@ -41,14 +41,7 @@ real happens.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params, errors := getParamsFromFlags()
-		for i, err := range errors {
-			logrus.WithError(err).Warn("error while parsing parameters")
-			// after the last error is printed, exit
-			if i == len(errors)-1 {
-				logrus.Fatal("errors while parsing parameters, see log above")
-			}
-		}
+		params := getParams(cmd)
 
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
