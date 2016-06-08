@@ -2,7 +2,7 @@ task "a" {
   check = ""
   apply = ""
 
-  depends = ["b","c"]
+  depends = ["b", "c"]
 }
 
 task "b" {
@@ -13,13 +13,13 @@ task "b" {
 }
 
 task "c" {
-  check = ""
-  apply = ""
+  check   = ""
+  apply   = ""
   depends = ["d"]
 }
 
 task "d" {
-  check = ""
-  apply = ""
+  check   = ""
+  apply   = ""
   depends = []
 }
