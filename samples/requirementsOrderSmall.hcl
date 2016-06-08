@@ -1,25 +1,25 @@
 task "a" {
-check = ""
-apply = ""
+  check = ""
+  apply = ""
 
-depends = ["b","c"]
+  depends = ["b","c"]
 }
 
 task "b" {
-check = ""
-apply = ""
+  check = ""
+  apply = ""
 
-depends = ["d"]
+  depends = ["d"]
 }
 
 task "c" {
-	check = ""
-	apply = ""
-	depends = ["d"]
+  check = ""
+  apply = ""
+  depends = ["d"]
 }
 
 task "d" {
-	check = ""
-	apply = ""
-	depends = []
+  check = ""
+  apply = ""
+  depends = []
 }
