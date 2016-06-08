@@ -83,13 +83,19 @@ var applyCmd = &cobra.Command{
 				logger.WithError(err).Fatal("applying failed")
 			}
 
+			// giving the results the type exec.Results allows us to pretty-print them
+			var typedResults exec.Results
+			for _, result := range results {
+				typedResults = append(typedResults, result)
+			}
+			fmt.Println(typedResults.Print(UseColor()))
+
+			// count successes and failures to print summary
 			var counts struct {
 				results, success, failures int
 			}
 
-			fmt.Print("\n")
 			for _, result := range results {
-				fmt.Println(result)
 				counts.results++
 				if result.Success {
 					counts.success++

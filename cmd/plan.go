@@ -68,13 +68,19 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("planning failed")
 			}
 
+			// giving the results the type exec.Results allows us to pretty-print them
+			var typedResults exec.Results
+			for _, result := range results {
+				typedResults = append(typedResults, result)
+			}
+			fmt.Println(typedResults.Print(UseColor()))
+
+			// count results and changes to print summary
 			var counts struct {
 				results, changes int
 			}
 
-			fmt.Print("\n")
 			for _, result := range results {
-				fmt.Println(result)
 				counts.results++
 				if result.WillChange {
 					counts.changes++

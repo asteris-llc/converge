@@ -52,6 +52,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.converge.yaml)")
+	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
 
 	viperBindPFlags(RootCmd.PersistentFlags())
 }
