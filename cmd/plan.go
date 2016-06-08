@@ -95,8 +95,6 @@ can be done separately to see what needs to be changed before execution.`,
 }
 
 func init() {
-	addParamsArguments(planCmd.Flags())
-	viperBindPFlags(planCmd.Flags())
-
+	addParamsArguments(planCmd.PersistentFlags())
 	RootCmd.AddCommand(planCmd)
 }
