@@ -78,11 +78,11 @@ func TestGraphWalk(t *testing.T) {
 		t,
 		[]string{
 			"test",
+			"test/test2",
+			"test/test2/template.template2",
+			"test/test2/task.task2",
 			"test/template.template",
 			"test/task.task",
-			"test/module.test2",
-			"test/module.test2/template.template2",
-			"test/module.test2/task.task2",
 		},
 		results,
 	)

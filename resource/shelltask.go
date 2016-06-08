@@ -33,7 +33,7 @@ type ShellTask struct {
 
 // Name returns name for metadata
 func (st *ShellTask) Name() string {
-	return st.TaskName
+	return "task." + st.TaskName
 }
 
 // Validate checks shell tasks validity

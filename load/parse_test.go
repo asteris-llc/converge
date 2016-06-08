@@ -57,7 +57,7 @@ func TestDependentCall(t *testing.T) {
 	//Test DependentCall
 	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-	assert.Equal(t, "module_task.y", getAllDeps(mod)[0])
+	assert.Equal(t, "y", getAllDeps(mod)[0])
 }
 
 //TestAutoDependencies test that if the depends field is not set for a Task,
@@ -79,11 +79,15 @@ func TestAutoDependencies(t *testing.T) {
 
 }
 
-func TestSameNameDependencies(t *testing.T) {
-	//t.Parallel()
+func TestSameNameDependencies_Wrong(t *testing.T) {
+	t.Parallel()
 	_, err := load.Parse([]byte(sameNameDependenciesWrong))
 	assert.Error(t, err)
-	_, err = load.Parse([]byte(sameNameDependenciesRight))
+}
+
+func TestSameNameDependencies_Right(t *testing.T) {
+	t.Parallel()
+	_, err := load.Parse([]byte(sameNameDependenciesRight))
 	assert.NoError(t, err)
 }
 
@@ -101,7 +105,7 @@ func TestParseDuplicateParam(t *testing.T) {
 
 	_, err := load.Parse([]byte(duplicateParam))
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "At 3:1: duplicate param \"x\"")
+		assert.EqualError(t, err, "At 3:1: duplicate param \"param.x\"")
 	}
 }
 
@@ -136,7 +140,7 @@ func TestParseDuplicateTask(t *testing.T) {
 
 	_, err := load.Parse([]byte(duplicateTask))
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "At 3:1: duplicate task \"x\"")
+		assert.EqualError(t, err, "At 3:1: duplicate task \"task.x\"")
 	}
 }
 
@@ -145,7 +149,7 @@ func TestBadName(t *testing.T) {
 
 	_, err := load.Parse([]byte(badName))
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, `At 2:1: invalid name "a b"`)
+		assert.EqualError(t, err, `At 2:1: invalid name "task.a b"`)
 	}
 }
 
@@ -181,35 +185,35 @@ task "permission" {
 	task "render" {
 	  check = "cat {{param 'filename'}} | tee /dev/stderr | grep -q '{{param 'message'}}'"
 	  apply = "echo '{{param 'message'}}' > {{param 'filename'}} && cat {{param 'filename'}}"
-	  depends = ["nothing", "morenothing"]
+	  depends = ["task.nothing", "task.morenothing"]
 	}
 
 `
 
 	emptyDependenciesModule = `
-param "filename" { }
-param "permissions" { default = "0600" }
+	param "filename" { }
+	param "permissions" { default = "0600" }
 
-template "test" {
-content = ""
-}
-task "permission" {
-  check = "stat -f \"test%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
-  apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
-	depends = []
-}
+	template "test" {
+		content = ""
+	}
+	task "permission" {
+	  check = "stat -f \"test%Op\" {{param \"filename\"}} tee /dev/stderr | grep -q {{param \"permission\"}}"
+	  apply = "chmod {{param \"permission\"}} {{param \"filename\"}}"
+		depends = []
+	}
 `
 
 	taskDependenciesModule = `
 	task "a" {
-	check = ""
-	apply = ""
-}
+		check = ""
+		apply = ""
+	}
 
 	task "b" {
-	check = ""
-	apply = ""
-}
+		check = ""
+		apply = ""
+	}
 
 	task "c" {
 		check = ""
@@ -219,37 +223,37 @@ task "permission" {
 `
 
 	sameNameDependenciesWrong = `
-template "a" {
-content = ""
-}
+	template "a" {
+		content = ""
+	}
 
-task "a" {
-check = ""
-apply = ""
-}
+	task "a" {
+		check = ""
+		apply = ""
+	}
 
-task "c" {
-	check = ""
-	apply = ""
-	depends = ["a"]
-}
+	task "c" {
+		check = ""
+		apply = ""
+		depends = ["a"]
+	}
 `
 
 	sameNameDependenciesRight = `
-template "a" {
-content = ""
-}
+	template "a" {
+		content = ""
+	}
 
-task "a" {
-check = ""
-apply = ""
-}
+	task "a" {
+		check = ""
+		apply = ""
+	}
 
-task "c" {
-check = ""
-apply = ""
-depends = ["template.a"]
-}
+	task "c" {
+		check = ""
+		apply = ""
+		depends = ["template.a"]
+	}
 `
 
 	duplicateParam = `
@@ -265,17 +269,17 @@ module "x" "y" {
 
 	dependentCall = `
 	module "x" "y" {
-	params = {
-		arg1 = "z"
+		params = {
+			arg1 = "z"
+		}
 	}
-}
 
 	module "a" "b" {
-	params = {
-		arg1 = "z"
-	}
-	depends = ["y"]
-}`
+		params = {
+			arg1 = "z"
+		}
+		depends = ["y"]
+	}`
 
 	duplicateTask = `
 task "x" { }

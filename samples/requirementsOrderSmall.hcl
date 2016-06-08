@@ -2,20 +2,20 @@ task "a" {
   check = ""
   apply = ""
 
-  depends = ["b", "c"]
+  depends = ["task.b", "task.c"]
 }
 
 task "b" {
   check = ""
   apply = ""
 
-  depends = ["d"]
+  depends = ["task.d"]
 }
 
 task "c" {
   check   = ""
   apply   = ""
-  depends = ["d"]
+  depends = ["task.d"]
 }
 
 task "d" {

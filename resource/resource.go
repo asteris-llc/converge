@@ -14,11 +14,6 @@
 
 package resource
 
-import (
-	"fmt"
-	"regexp"
-)
-
 // Monitor checks if a resource is correct.
 type Monitor interface {
 	Check() (string, bool, error)
@@ -44,37 +39,4 @@ type Resource interface {
 // executable
 type Parent interface {
 	Children() []Resource
-}
-
-//LongName returns the name of the resource wrapped around its type
-//e.g template(a)
-func LongName(res Resource) string {
-	switch res.(type) {
-	case *Module:
-		return fmt.Sprintf("module.%s", res.Name())
-	case *ModuleTask:
-		return fmt.Sprintf("module.%s", res.Name())
-	case *Template:
-		return fmt.Sprintf("template.%s", res.Name())
-	case *Param:
-		return fmt.Sprintf("param.%s", res.Name())
-	case Task:
-		return fmt.Sprintf("task.%s", res.Name())
-	case Monitor:
-		return fmt.Sprintf("monitor.%s", res.Name())
-	}
-	return fmt.Sprintf("unsupported.%s", res.Name())
-}
-
-var shortNameRegex = regexp.MustCompile(`\w+\.(\w+)`)
-
-//ShortName returns the name of a Resource
-//If longName = "type(a)" it returns "a" otherwise it
-//returns longName
-func ShortName(longName string) string {
-	res := shortNameRegex.FindStringSubmatch(longName)
-	if res == nil || res[1] == "" {
-		return longName
-	}
-	return res[1]
 }
