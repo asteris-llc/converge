@@ -31,6 +31,8 @@ import (
 var planCmd = &cobra.Command{
 	Use:   "plan",
 	Short: "plan what needs to change in the system",
+	Long: `planning is the first stage in the execution of your changes, and it
+can be done separately to see what needs to be changed before execution.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -68,19 +70,13 @@ var planCmd = &cobra.Command{
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			// giving the results the type exec.Results allows us to pretty-print them
-			var typedResults exec.Results
-			for _, result := range results {
-				typedResults = append(typedResults, result)
-			}
-			fmt.Println(typedResults.Print(UseColor()))
-
-			// count results and changes to print summary
 			var counts struct {
 				results, changes int
 			}
 
+			fmt.Print("\n")
 			for _, result := range results {
+				fmt.Println(result)
 				counts.results++
 				if result.WillChange {
 					counts.changes++

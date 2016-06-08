@@ -32,6 +32,8 @@ import (
 var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "apply what needs to change in the system",
+	Long: `application is where the actual work of making your execution graph
+real happens.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
