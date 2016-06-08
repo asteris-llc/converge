@@ -61,7 +61,7 @@ func (g *Graph) load() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + graphIDSeparator + resource.LongName(child), child}
+				childID := ident{id.ID + graphIDSeparator + child.Name(), child}
 				g.graph.Add(childID.ID)
 				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
@@ -77,7 +77,6 @@ func (g *Graph) load() error {
 	}
 
 	return g.graph.Validate()
-
 }
 
 func (g *Graph) String() string {
@@ -92,7 +91,7 @@ func (g *Graph) GraphString() string {
 		s += fmt.Sprintf(
 			"  \"%s\"[label=\"%s\"];\n",
 			node,
-			resource.LongName(g.resources[node.(string)]),
+			g.resources[node.(string)].Name(),
 		)
 	}
 

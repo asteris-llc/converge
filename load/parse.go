@@ -37,8 +37,6 @@ func Parse(content []byte) (*resource.Module, error) {
 	return parseModule(f.Node)
 }
 
-var dependencyValidator = regexp.MustCompile(`^\w+(\.\w+)?$`)
-
 func parseModule(node ast.Node) (*resource.Module, error) {
 	// the approach were taking here is to create some state that we'll manage
 	// locally, and then walk over the nodes in the AST, gathering errors as we
@@ -47,7 +45,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	var (
 		errs   MultiError
 		module = new(resource.Module)
-		names  = map[string][]string{}
+		names  = map[string]struct{}{}
 	)
 	previousTaskName := ""
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
@@ -71,7 +69,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
-				previousTaskName = resource.LongName(res)
+				previousTaskName = res.Name()
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -99,18 +97,13 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// check if the name is already present, error if so
-			dupCheckName := resource.LongName(res)
+			dupCheckName := res.Name()
 			if _, present := names[dupCheckName]; present {
 				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
 				return n, false
 			}
-			//Want to support having dependencies in short form (depends = [a])
-			//when there is only one resource with the name a. otherwise use (depends = [task(a)])
-			names[dupCheckName] = append(names[dupCheckName], dupCheckName)
-			sN := resource.ShortName(dupCheckName)
-			names[sN] = append(names[sN], dupCheckName)
-			// now that we've run the gauntlet, it's safe to add the resource to the
-			// resource list.
+			//Dependencies are always in the form depends = [resource_type.name]""
+			names[dupCheckName] = struct{}{}
 
 			module.Resources = append(module.Resources, res)
 			return n, false
@@ -118,22 +111,13 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		return n, true
 	})
 	//Check that all dependencies were a resources in this module.
-	//Also convert dependencies from the form depends=[a] to depends = [task(a)]
 	for _, res := range module.Children() {
 
 		dependencies := res.Depends()
-		for i, dep := range dependencies {
-			match := dependencyValidator.MatchString(dep)
-			if !match {
-				errs = append(errs, fmt.Errorf("Dependencies should be in the form"+
-					"deps = [\"resourceName.depencency\"] or deps = [\"dependency\"] found %s", dep))
-				break
-			}
-
-			if dups, present := names[dep]; !present || len(dups) > 1 {
+		for _, dep := range dependencies {
+			if _, present := names[dep]; !present {
 				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
 			}
-			dependencies[i] = names[dep][0]
 		}
 	}
 
