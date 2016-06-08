@@ -18,6 +18,8 @@ import (
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -35,4 +37,20 @@ func viperBindPFlags(flags *pflag.FlagSet) {
 func UseColor() bool {
 	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
 	return !viper.GetBool("nocolor") && isColorTerminal
+}
+
+// getParams wraps getParamsFromFlags, logging and exiting upon error
+func getParams(cmd *cobra.Command) resource.Values {
+	if !cmd.HasPersistentFlags() {
+		logrus.WithField("command", cmd.Name).Fatal("can't get parameters, command doesn't have persistent flags")
+	}
+	params, errors := getParamsFromFlags(cmd.PersistentFlags())
+	for i, err := range errors {
+		logrus.WithError(err).Warn("error while parsing parameters")
+		// after the last error is printed, exit
+		if i == len(errors)-1 {
+			logrus.Fatal("errors while parsing parameters, see log above")
+		}
+	}
+	return params
 }
