@@ -53,7 +53,7 @@ func LongName(res Resource) string {
 	case *Module:
 		return fmt.Sprintf("module.%s", res.Name())
 	case *ModuleTask:
-		return fmt.Sprintf("module_task.%s", res.Name())
+		return fmt.Sprintf("module.%s", res.Name())
 	case *Template:
 		return fmt.Sprintf("template.%s", res.Name())
 	case *Param:
