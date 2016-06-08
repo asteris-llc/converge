@@ -16,14 +16,9 @@ Converge is a configuration management tool.
 Converge uses [HCL](https://github.com/hashicorp/hcl) as a base for
 configuration, on top of which it add it's own semantics.
 
-**NOTE: The below documentation is a documentation of the semantics involved
-rather than an absolute guide to the system. The commands noted don't work
-yet.**
-
 The basic unit of composition in converge is the module. Modules have parameters
-and can call tasks and render templates. You're unlikely to have to write a
-module yourself, as a consumer of the system. Your usage is more likely to look
-this this:
+and can call tasks and render templates, among other things. Your usage is
+likely to look this this:
 
 ```hcl
 # install traefik
@@ -41,8 +36,8 @@ module "systemd-unit-running" "traefik" {
 ```
 
 Invoke this with `converge apply traefik.hcl` to install Traefik from yum on
-your system. You can also `converge check traefik.hcl` to check correctness
-before you apply.
+your system. You can also `converge plan traefik.hcl` to see what changes will
+be made before you apply them.
 
 ### Writing modules
 
@@ -65,8 +60,8 @@ Within a module, you can have tasks. Shown here is a task with two stanzas:
 - `apply` is run to create the resource controlled by this task. You can omit
   this stanza if you want the command to be purely informational.
 
-The execution goes something like: if the exit code of `check` is non-zero,
-`apply` will be called, then `check`ed again to get the current state.
+If the exit code of `check` is non-zero, `apply` will be called. Both of them
+are expected to output current state.
 
 A module can have multiple tasks. It can also have templates, which render data
 to the filesystem from the module's parameters:
@@ -78,19 +73,14 @@ param "execStart" { }
 param "user" { default = "root" }
 param "group" { default = "root" }
 param "description" { default = "{{param `name`}}" }
-param "targets" { default = [], type = list }
 
 template "unit" {
-  destination = "/etc/systemd/system/{{params `name`}}.service"
+  destination = "/etc/systemd/system/{{param `name`}}.service"
   content = <<EOF
 [Unit]
 Description={{param `description`}}
 After=network-online.target
 Wants=network-online.target
-{{range (params `targets`)}}
-After={{.}}
-Wants={{.}}
-{{end}}
 
 [Service]
 User={{param `user`}}
