@@ -39,39 +39,43 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/ast",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/parser",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/printer",
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/scanner",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/strconv",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/token",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/parser",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/scanner",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/token",
-			"Rev": "9a905a34e6280ce905da1a32344b25e81011197a"
+			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/dag",

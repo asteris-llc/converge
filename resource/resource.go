@@ -31,6 +31,8 @@ type Resource interface {
 	Name() string
 	Prepare(*Module) error
 	Validate() error
+	Depends() []string
+	SetDepends([]string)
 }
 
 // Parent expresses a resource that has sub-resources instead of being

@@ -6,7 +6,8 @@ converge: main.go cmd/* load/* resource/* vendor/**/*
 
 test: converge samples/*.hcl samples/errors/*.hcl
 	go test -v ${TESTDIRS}
-	find samples -type f -name '*.hcl' -exec ./converge validate \{\} \;
+	./converge validate samples/*.hcl
+	./converge fmt --check samples/*.hcl
 
 samples/errors/*.hcl: converge
 	@echo === planning $@ should fail ===

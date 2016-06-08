@@ -56,6 +56,14 @@ func (p *Param) Validate() error {
 	return nil
 }
 
+//SetDepends overwrites the Dependencies of this resource
+func (p *Param) SetDepends(deps []string) {}
+
+// Depends : Does nothing
+func (p *Param) Depends() []string {
+	return nil
+}
+
 // Prepare this module for use
 func (p *Param) Prepare(parent *Module) error {
 	p.parent = parent
