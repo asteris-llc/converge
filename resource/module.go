@@ -24,7 +24,7 @@ type Module struct {
 }
 
 // Name returns name for metadata
-func (m *Module) Name() string {
+func (m *Module) String() string {
 	return m.ModuleName
 }
 
@@ -56,7 +56,7 @@ func (m *Module) Params() map[string]*Param {
 
 	for _, res := range m.Resources {
 		if param, ok := res.(*Param); ok {
-			params[param.ParamName] = param
+			params[param.Name] = param
 		}
 	}
 

@@ -69,7 +69,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
-				previousTaskName = res.Name()
+				previousTaskName = res.String()
 
 			case "template":
 				res, err = parseTemplate(item)
@@ -91,15 +91,15 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			}
 
 			// validate the name
-			if !nameRe.MatchString(res.Name()) {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.Name())})
+			if !nameRe.MatchString(res.String()) {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.String())})
 				return n, false
 			}
 
 			// check if the name is already present, error if so
-			dupCheckName := res.Name()
+			dupCheckName := res.String()
 			if _, present := names[dupCheckName]; present {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.String())})
 				return n, false
 			}
 			//Dependencies are always in the form depends = [resource_type.name]""
@@ -116,7 +116,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		dependencies := res.Depends()
 		for _, dep := range dependencies {
 			if _, present := names[dep]; !present {
-				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.Name(), dep))
+				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.String(), dep))
 			}
 		}
 	}
@@ -139,7 +139,7 @@ func parseParam(item *ast.ObjectItem) (p *resource.Param, err error) {
 	}
 
 	p = &resource.Param{
-		ParamName: item.Keys[1].Token.Value().(string),
+		Name: item.Keys[1].Token.Value().(string),
 	}
 	err = hcl.DecodeObject(p, item.Val)
 	return
@@ -162,7 +162,7 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 
 	t = new(resource.ShellTask)
 	err = hcl.DecodeObject(t, item.Val)
-	t.TaskName = item.Keys[1].Token.Value().(string)
+	t.Name = item.Keys[1].Token.Value().(string)
 
 	return
 }
@@ -183,7 +183,7 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 	}
 
 	t = new(resource.Template)
-	t.TemplateName = item.Keys[1].Token.Value().(string)
+	t.Name = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
 
 	return

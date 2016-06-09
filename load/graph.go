@@ -50,7 +50,7 @@ type ident struct {
 }
 
 func (g *Graph) load() error {
-	ids := []ident{{g.root.Name(), g.root}}
+	ids := []ident{{g.root.String(), g.root}}
 
 	for len(ids) > 0 {
 		var id ident
@@ -61,7 +61,7 @@ func (g *Graph) load() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{id.ID + graphIDSeparator + child.Name(), child}
+				childID := ident{id.ID + graphIDSeparator + child.String(), child}
 				g.graph.Add(childID.ID)
 				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
@@ -91,7 +91,7 @@ func (g *Graph) GraphString() string {
 		s += fmt.Sprintf(
 			"  \"%s\"[label=\"%s\"];\n",
 			node,
-			g.resources[node.(string)].Name(),
+			g.resources[node.(string)].String(),
 		)
 	}
 
