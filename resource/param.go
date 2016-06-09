@@ -28,9 +28,9 @@ type Values map[string]Value
 
 // Param is essentially the calling arguments of a module
 type Param struct {
-	ParamName string
-	Default   Value  `hcl:"default"`
-	Type      string `hcl:"type"`
+	Name    string
+	Default Value  `hcl:"default"`
+	Type    string `hcl:"type"`
 
 	parent *Module
 }
@@ -49,7 +49,7 @@ func (v ValidationError) Error() string {
 // String returns the name of this param. It satisfies the fmt.Stringer
 // interface.
 func (p *Param) String() string {
-	return p.ParamName
+	return "param." + p.Name
 }
 
 // Validate that this value is correct
@@ -73,7 +73,7 @@ func (p *Param) Prepare(parent *Module) error {
 
 // Value returns either a value set by the parameters or a default.
 func (p *Param) Value() Value {
-	if val, ok := p.parent.Args[p.ParamName]; ok {
+	if val, ok := p.parent.Args[p.Name]; ok {
 		return val
 	}
 	return p.Default

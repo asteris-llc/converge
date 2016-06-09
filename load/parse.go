@@ -139,7 +139,7 @@ func parseParam(item *ast.ObjectItem) (p *resource.Param, err error) {
 	}
 
 	p = &resource.Param{
-		ParamName: item.Keys[1].Token.Value().(string),
+		Name: item.Keys[1].Token.Value().(string),
 	}
 	err = hcl.DecodeObject(p, item.Val)
 	return
