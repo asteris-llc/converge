@@ -23,7 +23,7 @@ import (
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	TaskName       string
+	Name           string
 	RawCheckSource string   `hcl:"check"`
 	RawApplySource string   `hcl:"apply"`
 	Dependencies   []string `hcl:"depends"`
@@ -33,7 +33,7 @@ type ShellTask struct {
 
 // Name returns name for metadata
 func (st *ShellTask) String() string {
-	return st.TaskName
+	return "task." + st.Name
 }
 
 // Validate checks shell tasks validity
