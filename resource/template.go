@@ -29,7 +29,7 @@ type Template struct {
 	renderer       *Renderer
 }
 
-// Name returns the name of this template
+// String returns the name of this template
 func (t *Template) String() string {
 	return "template." + t.Name
 }
@@ -45,12 +45,12 @@ func (t *Template) Validate() error {
 	return err
 }
 
-//SetDepends overwrites the Dependencies of this resource
+// SetDepends overwrites the Dependencies of this resource
 func (t *Template) SetDepends(deps []string) {
 	t.Dependencies = deps
 }
 
-//Depends list dependencies for this task
+// Depends list dependencies for this task
 func (t *Template) Depends() []string {
 
 	return t.Dependencies

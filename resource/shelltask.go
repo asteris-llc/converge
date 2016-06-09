@@ -31,7 +31,7 @@ type ShellTask struct {
 	renderer *Renderer
 }
 
-// Name returns name for metadata
+// String returns name for metadata
 func (st *ShellTask) String() string {
 	return "task." + st.Name
 }
