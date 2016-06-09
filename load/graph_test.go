@@ -122,7 +122,7 @@ func TestRequirementsOrdering(t *testing.T) {
 			A proper dependency order search would always result in a being the last
 			element processed
 	*/
-	graph, err := load.Load("../samples/requirementsOrderSmall.hcl", resource.Values{})
+	graph, err := load.Load("../samples/requirementsOrderDiamond.hcl", resource.Values{})
 	require.NoError(t, err)
 
 	lock := new(sync.Mutex)
@@ -136,8 +136,8 @@ func TestRequirementsOrdering(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, "requirementsOrderSmall.hcl/task.d", paths[1])
-	assert.Equal(t, "requirementsOrderSmall.hcl/task.a", paths[len(paths)-1])
+	assert.Equal(t, "requirementsOrderDiamond.hcl/task.d", paths[1])
+	assert.Equal(t, "requirementsOrderDiamond.hcl/task.a", paths[len(paths)-1])
 }
 
 /*////////////////////////////////////////////////////////////
