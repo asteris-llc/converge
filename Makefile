@@ -11,8 +11,8 @@ test: converge samples/*.hcl samples/errors/*.hcl
 	./converge fmt --check samples/*.hcl
 
 samples/errors/*.hcl: converge
-	@echo === planning $@ should fail ===
-	./converge plan $@ || exit 0 && exit 1
+	@echo === validating $@ should fail ==
+	./converge validate $@ || exit 0 && exit 1
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
