@@ -5,14 +5,26 @@ TESTDIRS = $(shell find . -name '*_test.go' | cut -d/ -f1-2 | uniq | grep -v ven
 converge: main.go cmd/* load/* resource/* vendor/**/*
 	go build .
 
-test: converge samples/*.hcl samples/errors/*.hcl
-	go test -v ${TESTDIRS}
+test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
+	@echo
+	@echo === check validity of all samples ===
 	./converge validate samples/*.hcl
+	@echo
+	@echo === check formatting of all samples ===
 	./converge fmt --check samples/*.hcl
 
+gotest:
+	go test -v ${TESTDIRS}
+
 samples/errors/*.hcl: converge
+	@echo
 	@echo === validating $@ should fail ==
 	./converge validate $@ || exit 0 && exit 1
+
+blackbox/*.sh: converge
+	@echo
+	@echo === testing $@ ===
+	@$@
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
@@ -38,4 +50,4 @@ package: xcompile
     echo $$f; \
   done
 
-.PHONY: test xcompile package
+.PHONY: test gotest xcompile package samples/errors/*.hcl blackbox/*.sh

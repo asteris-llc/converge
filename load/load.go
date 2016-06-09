@@ -60,7 +60,6 @@ func Load(source string, args resource.Values) (*Graph, error) {
 
 				module.Resources[i] = newModule
 				modules = append(modules, newModule)
-
 			}
 		}
 	}
