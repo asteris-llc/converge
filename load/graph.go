@@ -66,7 +66,7 @@ func (g *Graph) load() error {
 
 		if parent, ok := id.Resource.(resource.Parent); ok {
 			for _, child := range parent.Children() {
-				childID := ident{genID(id.ID, child.Name()), child}
+				childID := ident{genID(id.ID, child.String()), child}
 				g.graph.Add(childID.ID)
 				g.graph.Connect(dag.BasicEdge(id.ID, childID.ID))
 				ids = append(ids, childID)
@@ -93,13 +93,13 @@ func (g *Graph) GraphString() string {
 
 	//Create Graph
 	graphViz := gographviz.NewGraph()
-	graphName := escape(g.root.Name())
+	graphName := escape(g.root.String())
 	graphViz.SetName(graphName)
 	graphViz.SetDir(true)
 
 	//Add all Nodes and Edges
 	for _, node := range g.graph.Vertices() {
-		attrs := map[string]string{"label": escape(g.resources[node.(string)].Name())}
+		attrs := map[string]string{"label": escape(g.resources[node.(string)].String())}
 		graphViz.AddNode(graphName, escape(node.(string)), attrs)
 	}
 	for _, edge := range g.graph.Edges() {
@@ -109,22 +109,22 @@ func (g *Graph) GraphString() string {
 	//Create Subgraphs
 	var subGraphFromModule func(rootID string, mod *resource.Module)
 	subGraphFromModule = func(rootID string, mod *resource.Module) {
-		rootID = genID(rootID, mod.Name()) //ID of this resource
+		rootID = genID(rootID, mod.String()) //ID of this resource
 		var (
-			name     = "cluster_module_" + mod.Name() //name of this cluster. "cluster_" prefix required
-			children = mod.Children()                 //resources in this module
+			name     = "cluster_module_" + mod.String() //name of this cluster. "cluster_" prefix required
+			children = mod.Children()                   //resources in this module
 		)
 		//Make sure to include this node in the graph
 		graphViz.AddNode(name, escape(rootID), nil)
 		for i := 0; i < len(children)-1; i++ {
-			current := escape(genID(rootID, children[i].Name()))
-			nxtChild := escape(genID(rootID, children[i+1].Name()))
+			current := escape(genID(rootID, children[i].String()))
+			nxtChild := escape(genID(rootID, children[i+1].String()))
 
 			//Using a switch case in case different resources get different attributes
 			switch v := children[i].(type) {
 			case *resource.Module:
 				subGraphFromModule(rootID, v)
-				graphViz.AddSubGraph(name, "cluster_module_"+v.Name(), nil)
+				graphViz.AddSubGraph(name, "cluster_module_"+v.String(), nil)
 			}
 			graphViz.AddNode(name, current, nil)
 			graphViz.AddNode(name, nxtChild, nil)
@@ -134,8 +134,8 @@ func (g *Graph) GraphString() string {
 	//Add a cluster
 	for _, res := range g.root.Children() {
 		if mod, ok := res.(*resource.Module); ok {
-			subGraphFromModule(g.root.Name(), mod)
-			graphViz.AddSubGraph(graphName, "cluster_module_"+mod.Name(), nil)
+			subGraphFromModule(g.root.String(), mod)
+			graphViz.AddSubGraph(graphName, "cluster_module_"+mod.String(), nil)
 		}
 	}
 
