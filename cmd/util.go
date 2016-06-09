@@ -42,7 +42,7 @@ func UseColor() bool {
 // getParams wraps getParamsFromFlags, logging and exiting upon error
 func getParams(cmd *cobra.Command) resource.Values {
 	if !cmd.HasPersistentFlags() {
-		logrus.WithField("command", cmd.Name).Fatal("can't get parameters, command doesn't have persistent flags")
+		logrus.WithField("command", cmd.Name()).Fatal("can't get parameters, command doesn't have persistent flags")
 	}
 	params, errors := getParamsFromFlags(cmd.PersistentFlags())
 	for i, err := range errors {

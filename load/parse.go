@@ -61,11 +61,13 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			switch token {
 			case "task":
 				res, err = parseTask(item)
-				// If no requirements are specified, it is assumed that the task before the current task is the only requirement
-				//See https://github.com/asteris-llc/converge/issues/10
 				if err != nil {
 					break
 				}
+
+				// If no requirements are specified, it is assumed that the task before
+				// the current task is the only requirement
+				// See https://github.com/asteris-llc/converge/issues/10
 				if previousTaskName != "" && res.Depends() == nil {
 					res.SetDepends(append(res.Depends(), previousTaskName))
 				}
@@ -102,21 +104,30 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.String())})
 				return n, false
 			}
-			//Dependencies are always in the form depends = [resource_type.name]""
+
+			// Dependencies are always in the form `depends = [ "resource_type.name" ]`
 			names[dupCheckName] = struct{}{}
 
 			module.Resources = append(module.Resources, res)
 			return n, false
 		}
+
 		return n, true
 	})
-	//Check that all dependencies were a resources in this module.
-	for _, res := range module.Children() {
 
+	// Check that all dependencies were a resources in this module.
+	for _, res := range module.Children() {
 		dependencies := res.Depends()
 		for _, dep := range dependencies {
 			if _, present := names[dep]; !present {
-				errs = append(errs, fmt.Errorf("Resource %q depends on resource, %q,  which does not exist in this module", res.String(), dep))
+				errs = append(
+					errs,
+					fmt.Errorf(
+						"Resource %q depends on resource, %q,  which does not exist in this module",
+						res.String(),
+						dep,
+					),
+				)
 			}
 		}
 	}

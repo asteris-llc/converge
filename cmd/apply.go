@@ -122,7 +122,7 @@ real happens.`,
 }
 
 func init() {
-	addParamsArguments(applyCmd.Flags())
+	addParamsArguments(applyCmd.PersistentFlags())
 	viperBindPFlags(applyCmd.Flags())
 
 	RootCmd.AddCommand(applyCmd)
