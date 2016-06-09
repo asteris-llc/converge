@@ -14,5 +14,5 @@ task "nothing" {
 task "render" {
   check   = "cat {{param `filename`}} | tee /dev/stderr | grep -q '{{param `message`}}'"
   apply   = "echo '{{param `message`}}' > {{param `filename`}} && cat {{param `filename`}}"
-  depends = ["nothing"]
+  depends = ["task.nothing"]
 }

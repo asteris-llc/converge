@@ -31,7 +31,7 @@ type Template struct {
 
 // Name returns the name of this template
 func (t *Template) Name() string {
-	return t.TemplateName
+	return "template." + t.TemplateName
 }
 
 // Validate validates the template config

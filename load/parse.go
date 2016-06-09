@@ -45,7 +45,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	var (
 		errs   MultiError
 		module = new(resource.Module)
-		names  = map[string]bool{}
+		names  = map[string]struct{}{}
 	)
 	previousTaskName := ""
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
@@ -98,14 +98,12 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 			// check if the name is already present, error if so
 			dupCheckName := res.Name()
-			if present := names[dupCheckName]; present {
+			if _, present := names[dupCheckName]; present {
 				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.Name())})
 				return n, false
 			}
-			names[dupCheckName] = true
-
-			// now that we've run the gauntlet, it's safe to add the resource to the
-			// resource list.
+			//Dependencies are always in the form depends = [resource_type.name]""
+			names[dupCheckName] = struct{}{}
 
 			module.Resources = append(module.Resources, res)
 			return n, false
