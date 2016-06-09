@@ -26,16 +26,16 @@ func TestParamPreparePresent(t *testing.T) {
 
 	var (
 		p = &resource.Param{
-			ParamName: "test",
-			Default:   "x",
-			Type:      "string",
+			Name:    "test",
+			Default: "x",
+			Type:    "string",
 		}
 
 		value = "a"
 
 		m = &resource.Module{
 			ModuleTask: resource.ModuleTask{
-				Args: map[string]resource.Value{p.ParamName: "a"},
+				Args: map[string]resource.Value{p.Name: "a"},
 			},
 			Resources: []resource.Resource{p},
 		}
@@ -52,9 +52,9 @@ func TestParamPrepareDefault(t *testing.T) {
 
 	var (
 		p = &resource.Param{
-			ParamName: "test",
-			Default:   "x",
-			Type:      "string",
+			Name:    "test",
+			Default: "x",
+			Type:    "string",
 		}
 
 		m = &resource.Module{

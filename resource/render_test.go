@@ -30,9 +30,9 @@ func TestRendererRenderValid(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("", "{{.Name}}")
+	result, err := renderer.Render("", "{{.}}")
 	assert.NoError(t, err)
-	assert.Equal(t, mod.Name(), result)
+	assert.Equal(t, mod.String(), result)
 }
 
 func TestRendererRenderInvalid(t *testing.T) {
@@ -54,8 +54,8 @@ func TestRendererRenderParam(t *testing.T) {
 	t.Parallel()
 
 	param := &resource.Param{
-		ParamName: "test_parameter",
-		Default:   "test_default",
+		Name:    "test_parameter",
+		Default: "test_default",
 	}
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
