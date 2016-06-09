@@ -16,6 +16,12 @@ package main
 
 import "github.com/asteris-llc/converge/cmd"
 
+// Name describes the name for packaging
+const Name = "converge"
+
+// Version describes the version for packaging
+const Version = "0.1.0"
+
 func main() {
 	cmd.Execute()
 }
