@@ -98,7 +98,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 			// check if the name is already present, error if so
 			dupCheckName := token + "." + res.String()
-			if present := names[dupCheckName]; present {
+			if _, present := names[dupCheckName]; present {
 				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.String())})
 				return n, false
 			}
