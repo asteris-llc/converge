@@ -11,9 +11,6 @@ test: converge samples/*.hcl samples/errors/*.hcl
 	./converge fmt --check samples/*.hcl
 
 samples/errors/*.hcl: converge
-	@echo === validating $@ should vail ==
-	./converge validate $@ || exit 0 && exit 1
-	@echo
 	@echo === planning $@ should fail ===
 	./converge plan $@ || exit 0 && exit 1
 
@@ -28,7 +25,11 @@ xcompile: test
 	@mkdir -p build/
 	gox \
 		-os="darwin" \
-		-output="build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
+		-os="linux" \
+		-os="freebsd" \
+		-os="openbsd" \
+		-os="solaris" \
+		-output="build/$(NAME)_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile
 	@mkdir -p build/tgz
