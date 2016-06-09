@@ -91,15 +91,17 @@ func (g *Graph) String() string {
 // GraphString returns the loaded graph as a GraphViz string
 func (g *Graph) GraphString() string {
 
+	//Create Graph
 	graphViz := gographviz.NewGraph()
-	graphName := "\"test\""
+	graphName := escape(g.root.Name())
 	graphViz.SetName(graphName)
 	graphViz.SetDir(true)
+
+	//Add all Nodes and Edges
 	for _, node := range g.graph.Vertices() {
 		attrs := map[string]string{"label": escape(g.resources[node.(string)].Name())}
 		graphViz.AddNode(graphName, escape(node.(string)), attrs)
 	}
-
 	for _, edge := range g.graph.Edges() {
 		graphViz.AddEdge(escape(edge.Source().(string)), escape(edge.Target().(string)), true, nil)
 	}
@@ -107,34 +109,37 @@ func (g *Graph) GraphString() string {
 	//Create Subgraphs
 	var subGraphFromModule func(rootID string, mod *resource.Module)
 	subGraphFromModule = func(rootID string, mod *resource.Module) {
-		rootID = genID(rootID, mod.Name())
-		name := "cluster_module_" + mod.Name()
-		children := mod.Children()
+		rootID = genID(rootID, mod.Name()) //ID of this resource
+		var (
+			name     = "cluster_module_" + mod.Name() //name of this cluster. "cluster_" prefix required
+			children = mod.Children()                 //resources in this module
+		)
+		//Make sure to include this node in the graph
 		graphViz.AddNode(name, escape(rootID), nil)
 		for i := 0; i < len(children)-1; i++ {
 			current := escape(genID(rootID, children[i].Name()))
 			nxtChild := escape(genID(rootID, children[i+1].Name()))
-			//fmt.Println("Nodes", current, nxtChild)
-			graphViz.AddNode(name, current, nil)
-			graphViz.AddNode(name, nxtChild, nil)
-			graphViz.AddEdge(current, nxtChild, true, nil)
-			//Handle a module
+
+			//Using a switch case in case different resources get different attributes
 			switch v := children[i].(type) {
 			case *resource.Module:
 				subGraphFromModule(rootID, v)
 				graphViz.AddSubGraph(name, "cluster_module_"+v.Name(), nil)
 			}
+			graphViz.AddNode(name, current, nil)
+			graphViz.AddNode(name, nxtChild, nil)
+			graphViz.AddEdge(current, nxtChild, true, nil)
 		}
 	}
-
+	//Add a cluster
 	for _, res := range g.root.Children() {
-		switch v := res.(type) {
-		case *resource.Module:
-			subGraphFromModule(g.root.Name(), v)
-			graphViz.AddSubGraph(graphName, "cluster_module_"+v.Name(), nil)
+		if mod, ok := res.(*resource.Module); ok {
+			subGraphFromModule(g.root.Name(), mod)
+			graphViz.AddSubGraph(graphName, "cluster_module_"+mod.Name(), nil)
 		}
 	}
 
+	//Set Attributes for Subgraphs
 	for name, sub := range graphViz.SubGraphs.SubGraphs {
 		sub.Attrs.Add("style", "filled")
 		sub.Attrs.Add("color", "lightgrey")

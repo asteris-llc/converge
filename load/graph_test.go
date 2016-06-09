@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/awalterschulze/gographviz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -137,4 +138,15 @@ func TestRequirementsOrdering(t *testing.T) {
 
 	assert.Equal(t, "requirementsOrderSmall.hcl/task.d", paths[1])
 	assert.Equal(t, "requirementsOrderSmall.hcl/task.a", paths[len(paths)-1])
+}
+
+/*////////////////////////////////////////////////////////////
+GraphString Test
+////////////////////////////////////////////////////////////*/
+func TestValidGraphString(t *testing.T) {
+	t.Parallel()
+	graph, err := load.Load("../samples/sourceFile.hcl", resource.Values{})
+	assert.NoError(t, err)
+	_, err = gographviz.Read([]byte(graph.GraphString()))
+	assert.NoError(t, err)
 }
