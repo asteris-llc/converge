@@ -65,24 +65,26 @@ func TestGraphWalk(t *testing.T) {
 	assert.NoError(t, err)
 
 	results := []string{}
+	lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, r resource.Resource) error {
+		lock.Lock()
+		defer lock.Unlock()
 		results = append(results, path)
 		return nil
 	})
 	assert.NoError(t, err)
-
 	assert.Equal(
 		t,
-		results,
 		[]string{
 			"test",
 			"test/test2",
-			"test/test2/template2",
-			"test/test2/task2",
-			"test/template",
-			"test/task",
+			"test/test2/template.template2",
+			"test/test2/task.task2",
+			"test/template.template",
+			"test/task.task",
 		},
+		results,
 	)
 }
 
@@ -133,6 +135,6 @@ func TestRequirementsOrdering(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, "requirementsOrderSmall.hcl/d", paths[1])
-	assert.Equal(t, "requirementsOrderSmall.hcl/a", paths[len(paths)-1])
+	assert.Equal(t, "requirementsOrderSmall.hcl/task.d", paths[1])
+	assert.Equal(t, "requirementsOrderSmall.hcl/task.a", paths[len(paths)-1])
 }

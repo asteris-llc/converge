@@ -42,7 +42,7 @@ func TestApply(t *testing.T) {
 		assert.Equal(
 			t,
 			[]*exec.ApplyResult{{
-				Path:      "basic.hcl/render",
+				Path:      "basic.hcl/task.render",
 				OldStatus: "cat: test.txt: No such file or directory\n",
 				NewStatus: "Hello, World!\n",
 				Success:   true,

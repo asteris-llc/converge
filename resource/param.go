@@ -46,9 +46,9 @@ func (v ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", v.Location, v.Err)
 }
 
-// Name returns the name of this param
+// Name returns the fully qualified name of this param
 func (p *Param) Name() string {
-	return p.ParamName
+	return "param." + p.ParamName
 }
 
 // Validate that this value is correct

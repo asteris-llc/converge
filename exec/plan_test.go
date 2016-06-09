@@ -37,7 +37,7 @@ func TestPlan(t *testing.T) {
 	assert.Equal(
 		t,
 		[]*exec.PlanResult{{
-			Path:          "basic.hcl/render",
+			Path:          "basic.hcl/task.render",
 			CurrentStatus: "cat: test.txt: No such file or directory\n",
 			WillChange:    true,
 		}},
