@@ -88,6 +88,9 @@ func Load(source string, args resource.Values) (*Graph, error) {
 	err = graph.Walk(func(path string, res resource.Resource) error {
 		return res.Validate()
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return graph, nil
 }
