@@ -54,8 +54,8 @@ func TestRendererRenderParam(t *testing.T) {
 	t.Parallel()
 
 	param := &resource.Param{
-		ParamName: "test_parameter",
-		Default:   "test_default",
+		Name:    "test_parameter",
+		Default: "test_default",
 	}
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{

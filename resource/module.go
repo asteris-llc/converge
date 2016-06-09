@@ -56,7 +56,7 @@ func (m *Module) Params() map[string]*Param {
 
 	for _, res := range m.Resources {
 		if param, ok := res.(*Param); ok {
-			params[param.String()] = param
+			params[param.Name] = param
 		}
 	}
 
