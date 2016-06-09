@@ -30,3 +30,6 @@ converge
 *.png
 *.dot
 *-fuzz.zip
+
+# release
+build
