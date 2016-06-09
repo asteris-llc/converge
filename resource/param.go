@@ -57,7 +57,7 @@ func (p *Param) Validate() error {
 	return nil
 }
 
-//SetDepends overwrites the Dependencies of this resource
+// SetDepends overwrites the Dependencies of this resource
 func (p *Param) SetDepends(deps []string) {}
 
 // Depends : Does nothing
