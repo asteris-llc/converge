@@ -162,7 +162,7 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 
 	t = new(resource.ShellTask)
 	err = hcl.DecodeObject(t, item.Val)
-	t.TaskName = item.Keys[1].Token.Value().(string)
+	t.Name = item.Keys[1].Token.Value().(string)
 
 	return
 }
