@@ -30,7 +30,7 @@ func TestRendererRenderValid(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("", "{{.String}}")
+	result, err := renderer.Render("", "{{.}}")
 	assert.NoError(t, err)
 	assert.Equal(t, mod.String(), result)
 }
