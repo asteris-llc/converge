@@ -9,7 +9,7 @@ function finish {
 }
 trap finish EXIT
 
-pushd $TMP 2&>/dev/null
+pushd $TMP
 
 $ROOT/converge apply -p filename=test.txt -p "message=x" $ROOT/samples/basic.hcl
 
@@ -24,4 +24,4 @@ if [[ "$(cat test.txt)" != "x" ]]; then
     exit 1
 fi
 
-popd 2&>/dev/null
+popd
