@@ -38,7 +38,7 @@ func (err MultiError) Error() string {
 	max := len(err) - 1
 	var b bytes.Buffer
 	for i, e := range err {
-		b.Write([]byte(e.Error()))
+		b.WriteString(e.Error())
 		if i != max {
 			b.WriteByte('\n')
 		}
