@@ -40,10 +40,7 @@ can be done separately to see what needs to be changed before execution.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params, err := getParamsFromFlags()
-		if err != nil {
-			logrus.WithError(err).Fatal("could not load params")
-		}
+		params := getParams(cmd)
 
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
@@ -98,8 +95,6 @@ can be done separately to see what needs to be changed before execution.`,
 }
 
 func init() {
-	addParamsArguments(planCmd.Flags())
-	viperBindPFlags(planCmd.Flags())
-
+	addParamsArguments(planCmd.PersistentFlags())
 	RootCmd.AddCommand(planCmd)
 }
