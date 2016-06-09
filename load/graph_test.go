@@ -140,9 +140,6 @@ func TestRequirementsOrdering(t *testing.T) {
 	assert.Equal(t, "requirementsOrderDiamond.hcl/task.a", paths[len(paths)-1])
 }
 
-/*////////////////////////////////////////////////////////////
-GraphString Test
-////////////////////////////////////////////////////////////*/
 func TestValidGraphString(t *testing.T) {
 	t.Parallel()
 	graph, err := load.Load("../samples/sourceFile.hcl", resource.Values{})
