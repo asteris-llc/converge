@@ -41,10 +41,7 @@ real happens.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params, err := getParamsFromFlags()
-		if err != nil {
-			logrus.WithError(err).Fatal("could not load params")
-		}
+		params := getParams(cmd)
 
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
