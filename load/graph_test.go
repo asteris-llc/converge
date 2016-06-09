@@ -46,7 +46,7 @@ func TestGraphWalk(t *testing.T) {
 		},
 		Resources: []resource.Resource{
 			&resource.ShellTask{Name: "task2"},
-			&resource.Template{TemplateName: "template2"},
+			&resource.Template{Name: "template2"},
 		},
 	}
 
@@ -56,7 +56,7 @@ func TestGraphWalk(t *testing.T) {
 		},
 		Resources: []resource.Resource{
 			&resource.ShellTask{Name: "task"},
-			&resource.Template{TemplateName: "template"},
+			&resource.Template{Name: "template"},
 			mod2,
 		},
 	}

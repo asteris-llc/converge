@@ -183,7 +183,7 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 	}
 
 	t = new(resource.Template)
-	t.TemplateName = item.Keys[1].Token.Value().(string)
+	t.Name = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
 
 	return
