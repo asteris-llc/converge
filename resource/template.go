@@ -22,7 +22,7 @@ import (
 
 // Template is a task defined by content and a destination
 type Template struct {
-	TemplateName   string
+	Name           string
 	RawContent     string   `hcl:"content"`
 	RawDestination string   `hcl:"destination"`
 	Dependencies   []string `hcl:"depends"`
@@ -31,7 +31,7 @@ type Template struct {
 
 // Name returns the name of this template
 func (t *Template) String() string {
-	return t.TemplateName
+	return "template." + t.Name
 }
 
 // Validate validates the template config
