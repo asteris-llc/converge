@@ -18,9 +18,10 @@ package resource
 // system.
 type Module struct {
 	ModuleTask
-	Resources []Resource
+	Resources    []Resource
+	RenderedArgs Values
 
-	parent *Module
+	renderer *Renderer
 }
 
 // Name returns name for metadata
@@ -45,9 +46,20 @@ func (m *Module) Children() []Resource {
 }
 
 // Prepare this module
-func (m *Module) Prepare(parent *Module) error {
-	m.parent = parent
-	return nil
+func (m *Module) Prepare(parent *Module) (err error) {
+	m.renderer, err = NewRenderer(parent)
+
+	// render and validate args
+	m.RenderedArgs = Values{}
+	for k, raw := range m.Args {
+		v, err := m.renderer.Render(m.String()+".params."+k, raw.String())
+		if err != nil {
+			return err
+		}
+		m.RenderedArgs[k] = Value(v)
+	}
+
+	return err
 }
 
 // Params returns the params of this module
