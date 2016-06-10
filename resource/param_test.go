@@ -40,6 +40,7 @@ func TestParamPreparePresent(t *testing.T) {
 			Resources: []resource.Resource{p},
 		}
 	)
+	assert.NoError(t, m.Prepare(nil))
 
 	err := p.Prepare(m)
 	assert.NoError(t, err)
@@ -61,6 +62,7 @@ func TestParamPrepareDefault(t *testing.T) {
 			Resources: []resource.Resource{p},
 		}
 	)
+	assert.NoError(t, m.Prepare(nil))
 
 	err := p.Prepare(m)
 	assert.NoError(t, err)

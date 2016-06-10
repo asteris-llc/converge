@@ -33,6 +33,10 @@ func Load(source string, args resource.Values) (*Graph, error) {
 	}
 	initial.Args = args
 
+	if err := initial.Prepare(nil); err != nil {
+		return nil, err
+	}
+
 	root, err := parseSource(source)
 	if err != nil {
 		return nil, err
@@ -60,33 +64,18 @@ func Load(source string, args resource.Values) (*Graph, error) {
 
 				module.Resources[i] = newModule
 				modules = append(modules, newModule)
+				res = newModule
+			}
+
+			// prepare modules for first use
+			err = res.Prepare(module)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
 
 	graph, err := NewGraph(initial)
-	if err != nil {
-		return nil, err
-	}
-
-	// prepare modules for use
-	err = graph.Walk(func(path string, res resource.Resource) error {
-		parent, err := graph.Parent(path)
-		if err != nil {
-			return err
-		}
-
-		return res.Prepare(parent)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// validate modules
-	err = graph.Walk(func(path string, res resource.Resource) error {
-		return res.Validate()
-	})
 	if err != nil {
 		return nil, err
 	}

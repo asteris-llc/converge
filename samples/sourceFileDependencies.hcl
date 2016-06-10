@@ -9,5 +9,5 @@ module "basic.hcl" "advanced" {
     message = "Hello from advanced module!"
   }
 
-  depends = ["basic"]
+  depends = ["module.basic"]
 }
