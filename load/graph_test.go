@@ -113,10 +113,10 @@ func TestRequirementsOrdering(t *testing.T) {
 							 / \
 							b		c
 							 \ /
-							  d
+								d
 
-			A proper dependency order search would always result in a being the last
-			element processed
+		A proper dependency order search would always result in a being the last
+		element processed
 	*/
 	defer (helpers.HideLogs(t))()
 
