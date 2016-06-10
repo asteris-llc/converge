@@ -28,7 +28,7 @@ import (
 )
 
 func TestApply(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestApply(t *testing.T) {
 		assert.Equal(
 			t,
 			[]*exec.ApplyResult{{
-				Path:      "basic.hcl/task.render",
+				Path:      "module.basic.hcl/task.render",
 				OldStatus: "cat: test.txt: No such file or directory\n",
 				NewStatus: "Hello, World!\n",
 				Success:   true,

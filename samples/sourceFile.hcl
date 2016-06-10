@@ -1,5 +1,9 @@
+param "message" {
+  default = "Hello from another module!"
+}
+
 module "basic.hcl" "basic" {
   params = {
-    message = "Hello from another module!"
+    message = "{{param `message`}}"
   }
 }

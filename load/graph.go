@@ -131,6 +131,7 @@ func (g *Graph) GraphString() string {
 			graphViz.AddEdge(current, nxtChild, true, nil)
 		}
 	}
+
 	//Add a cluster
 	for _, res := range g.root.Children() {
 		if mod, ok := res.(*resource.Module); ok {
@@ -147,20 +148,15 @@ func (g *Graph) GraphString() string {
 	}
 	return graphViz.String()
 }
+
 func escape(str string) string {
 	return fmt.Sprintf("%q", str)
 }
 
 // Walk the graph, calling the specified function at each vertex
 func (g *Graph) Walk(f func(path string, res resource.Resource) error) error {
-	root, err := g.graph.Root()
-	if err != nil {
-		return err
-	}
-
-	return g.graph.DepthFirstWalk(
-		[]dag.Vertex{root},
-		func(path dag.Vertex, depth int) error {
+	return g.graph.Walk(
+		func(path dag.Vertex) error {
 			res := g.resources[path.(string)]
 			return f(path.(string), res)
 		},

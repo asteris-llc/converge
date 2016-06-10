@@ -12,32 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package helpers
 
-import "fmt"
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"log"
+	"os"
+	"testing"
+)
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
-}
+// HideLogs hides logs during test execution
+func HideLogs(t *testing.T) func() {
+	var b bytes.Buffer
+	writer := bufio.NewWriter(&b)
+	log.SetOutput(writer)
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
+	return func() {
+		if t.Failed() {
+			writer.Flush()
+			fmt.Print(b.String())
+		}
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(*Module) error
-	Depends() []string
-	SetDepends([]string)
-	fmt.Stringer
-}
-
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+		log.SetOutput(os.Stderr)
+	}
 }

@@ -14,30 +14,12 @@
 
 package resource
 
-import "fmt"
+// Value contains the different values for a param
+type Value string
 
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
+func (v Value) String() string {
+	return string(v)
 }
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Monitor
-	Apply() (string, bool, error)
-}
-
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(*Module) error
-	Depends() []string
-	SetDepends([]string)
-	fmt.Stringer
-}
-
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
-}
+// Values is a named collection of values
+type Values map[string]Value
