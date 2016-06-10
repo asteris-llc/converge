@@ -45,7 +45,7 @@ func (p *Param) Prepare(parent *Module) error {
 
 // Value returns either a value set by the parameters or a default.
 func (p *Param) Value() Value {
-	if val, ok := p.parent.Args[p.Name]; ok {
+	if val, ok := p.parent.RenderedArgs[p.Name]; ok {
 		return val
 	}
 	return p.Default
