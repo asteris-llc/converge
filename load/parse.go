@@ -69,7 +69,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				// the current task is the only requirement
 				// See https://github.com/asteris-llc/converge/issues/10
 				if previousTaskName != "" && res.Depends() == nil {
-					res.SetDepends(append(res.Depends(), previousTaskName))
+					res.SetDepends([]string{previousTaskName})
 				}
 				previousTaskName = res.String()
 
@@ -117,8 +117,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 	// Check that all dependencies were a resources in this module.
 	for _, res := range module.Children() {
-		dependencies := res.Depends()
-		for _, dep := range dependencies {
+		for _, dep := range res.Depends() {
 			if _, present := names[dep]; !present {
 				errs = append(
 					errs,

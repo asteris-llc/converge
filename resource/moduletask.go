@@ -24,7 +24,7 @@ type ModuleTask struct {
 
 // Name returns name for metadata
 func (m *ModuleTask) String() string {
-	return m.ModuleName
+	return "module." + m.ModuleName
 }
 
 //SetDepends overwrites the Dependencies of this resource
