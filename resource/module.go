@@ -25,7 +25,7 @@ type Module struct {
 
 // Name returns name for metadata
 func (m *Module) String() string {
-	return m.ModuleName
+	return "module." + m.ModuleName
 }
 
 // Validate this module
