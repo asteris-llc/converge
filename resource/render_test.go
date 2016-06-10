@@ -64,9 +64,8 @@ func TestRendererRenderParam(t *testing.T) {
 		},
 		Resources: []resource.Resource{param},
 	}
-
-	err := param.Prepare(mod)
-	assert.NoError(t, err)
+	assert.NoError(t, mod.Prepare(nil))
+	assert.NoError(t, param.Prepare(mod))
 
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
