@@ -20,18 +20,11 @@ type ModuleTask struct {
 	Source       string
 	ModuleName   string
 	Dependencies []string `hcl:"depends"`
-
-	parent *Module
 }
 
 // Name returns name for metadata
 func (m *ModuleTask) String() string {
 	return m.ModuleName
-}
-
-// Validate checks shell tasks validity
-func (m *ModuleTask) Validate() error {
-	return nil
 }
 
 //SetDepends overwrites the Dependencies of this resource
@@ -46,8 +39,14 @@ func (m *ModuleTask) Depends() []string {
 	return m.Dependencies
 }
 
-// Prepare this module for use
-func (m *ModuleTask) Prepare(parent *Module) error {
-	m.parent = parent
+// Validate this module - these are replaced with Modules very early in the
+// loading process, so this is just a stub
+func (m *ModuleTask) Validate() error {
+	return nil
+}
+
+// Prepare this module for use - these are replaced with Modules very early in
+// the loading process, so this is just a stub
+func (m *ModuleTask) Prepare(*Module) error {
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/awalterschulze/gographviz"
@@ -26,7 +27,7 @@ import (
 )
 
 func TestNewGraph(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		Resources: []resource.Resource{
@@ -38,27 +39,22 @@ func TestNewGraph(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGraphWalk(t *testing.T) {
-	t.Parallel()
-
-	mod2 := &resource.Module{
-		ModuleTask: resource.ModuleTask{
-			ModuleName: "test2",
-		},
-		Resources: []resource.Resource{
-			&resource.ShellTask{Name: "task2"},
-			&resource.Template{Name: "template2"},
-		},
-	}
+func TestGraphWalkTaskOrder(t *testing.T) {
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
 		Resources: []resource.Resource{
-			&resource.ShellTask{Name: "task"},
-			&resource.Template{Name: "template"},
-			mod2,
+			&resource.ShellTask{
+				Name:         "task",
+				Dependencies: []string{},
+			},
+			&resource.Template{
+				Name:         "template",
+				Dependencies: []string{"task.task"},
+			},
 		},
 	}
 
@@ -71,26 +67,26 @@ func TestGraphWalk(t *testing.T) {
 	err = graph.Walk(func(path string, r resource.Resource) error {
 		lock.Lock()
 		defer lock.Unlock()
+
 		results = append(results, path)
+
 		return nil
 	})
+
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		[]string{
-			"test",
-			"test/test2",
-			"test/test2/template.template2",
-			"test/test2/task.task2",
-			"test/template.template",
-			"test/task.task",
+			"module.test/task.task",
+			"module.test/template.template",
+			"module.test",
 		},
 		results,
 	)
 }
 
 func TestGraphParent(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
@@ -104,7 +100,7 @@ func TestGraphParent(t *testing.T) {
 	graph, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 
-	parent, err := graph.Parent("test/task")
+	parent, err := graph.Parent("module.test/task")
 	assert.NoError(t, err)
 	assert.Equal(t, mod, parent)
 }
@@ -122,6 +118,8 @@ func TestRequirementsOrdering(t *testing.T) {
 			A proper dependency order search would always result in a being the last
 			element processed
 	*/
+	defer (helpers.HideLogs(t))()
+
 	graph, err := load.Load("../samples/requirementsOrderDiamond.hcl", resource.Values{})
 	require.NoError(t, err)
 
@@ -136,14 +134,16 @@ func TestRequirementsOrdering(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, "requirementsOrderDiamond.hcl/task.d", paths[1])
-	assert.Equal(t, "requirementsOrderDiamond.hcl/task.a", paths[len(paths)-1])
+	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.d", paths[0])
+	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.a", paths[len(paths)-2])
 }
 
 func TestValidGraphString(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
+
 	graph, err := load.Load("../samples/sourceFile.hcl", resource.Values{})
 	assert.NoError(t, err)
+
 	_, err = gographviz.Read([]byte(graph.GraphString()))
 	assert.NoError(t, err)
 }
