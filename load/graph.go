@@ -131,6 +131,7 @@ func (g *Graph) GraphString() string {
 			graphViz.AddEdge(current, nxtChild, true, nil)
 		}
 	}
+
 	//Add a cluster
 	for _, res := range g.root.Children() {
 		if mod, ok := res.(*resource.Module); ok {
@@ -147,6 +148,7 @@ func (g *Graph) GraphString() string {
 	}
 	return graphViz.String()
 }
+
 func escape(str string) string {
 	return fmt.Sprintf("%q", str)
 }

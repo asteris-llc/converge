@@ -52,12 +52,13 @@ func TestParseEmptyDependencies(t *testing.T) {
 	dependencies := getAllDeps(mod)
 	assert.Equal(t, 0, len(dependencies))
 }
+
 func TestDependentCall(t *testing.T) {
 	t.Parallel()
 	//Test DependentCall
 	mod, err := load.Parse([]byte(dependentCall))
 	assert.NoError(t, err)
-	assert.Equal(t, "y", getAllDeps(mod)[0])
+	assert.Equal(t, "module.y", getAllDeps(mod)[0])
 }
 
 //TestAutoDependencies test that if the depends field is not set for a Task,
@@ -278,7 +279,7 @@ module "x" "y" {
 		params = {
 			arg1 = "z"
 		}
-		depends = ["y"]
+		depends = ["module.y"]
 	}`
 
 	duplicateTask = `

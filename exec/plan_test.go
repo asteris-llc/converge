@@ -20,6 +20,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/exec"
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ import (
 )
 
 func TestPlan(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	graph, err := load.Load("../samples/basic.hcl", resource.Values{})
 	require.NoError(t, err)
@@ -37,7 +38,7 @@ func TestPlan(t *testing.T) {
 	assert.Equal(
 		t,
 		[]*exec.PlanResult{{
-			Path:          "basic.hcl/task.render",
+			Path:          "module.basic.hcl/task.render",
 			CurrentStatus: "cat: test.txt: No such file or directory\n",
 			WillChange:    true,
 		}},
