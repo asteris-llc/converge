@@ -31,7 +31,6 @@ type Task interface {
 // Resource adds metadata about the executed tasks
 type Resource interface {
 	Prepare(*Module) error
-	Validate() error
 	Depends() []string
 	SetDepends([]string)
 	fmt.Stringer
