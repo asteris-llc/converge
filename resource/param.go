@@ -29,11 +29,6 @@ func (p *Param) String() string {
 	return "param." + p.Name
 }
 
-// Validate that this value is correct
-func (p *Param) Validate() error {
-	return nil
-}
-
 // SetDepends overwrites the Dependencies of this resource
 func (p *Param) SetDepends(deps []string) {}
 
