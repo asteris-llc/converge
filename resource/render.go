@@ -57,10 +57,10 @@ func (r *Renderer) Render(name, source string) (string, error) {
 // Template Functions
 
 func (r *Renderer) tParam(name string) (string, error) {
-	val, ok := r.ctx.Params()[name]
-
+	param, ok := r.ctx.Params()[name]
 	if !ok {
 		return "", fmt.Errorf("no such param %q", name)
 	}
-	return val.Value().String(), nil
+
+	return param.Value().String(), nil
 }
