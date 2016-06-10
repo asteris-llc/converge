@@ -11,7 +11,7 @@ trap finish EXIT
 
 pushd $TMP
 
-$ROOT/converge apply -p filename=test.txt -p "message=x" $ROOT/samples/basic.hcl
+$ROOT/converge apply -p "message=x" $ROOT/samples/sourceFile.hcl
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"
