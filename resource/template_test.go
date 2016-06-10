@@ -39,28 +39,13 @@ func TestTemplateValid(t *testing.T) {
 
 	tmpl := resource.Template{RawContent: `{{.}}`}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-
-	assert.NoError(t, tmpl.Validate())
 }
 
 func TestTemplateInvalid(t *testing.T) {
 	t.Parallel()
 
 	tmpl := resource.Template{RawContent: "{{"}
-	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-
-	err := tmpl.Validate()
-	assert.Error(t, err)
-}
-
-func TestTemplateDestinationRenders(t *testing.T) {
-	t.Parallel()
-
-	tmpl := resource.Template{RawDestination: "{{1}}"}
-	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
-
-	assert.Equal(t, "1", tmpl.Destination())
+	assert.Error(t, tmpl.Prepare(&resource.Module{}))
 }
 
 func TestTemplateCheckEmptyFile(t *testing.T) {
@@ -73,7 +58,6 @@ func TestTemplateCheckEmptyFile(t *testing.T) {
 		RawContent:     "this is a test",
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
 
 	current, change, err := tmpl.Check()
 	assert.Equal(t, "", current)
@@ -91,7 +75,6 @@ func TestTemplateCheckEmptyDir(t *testing.T) {
 		RawContent:     "this is a test",
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
 
 	current, change, err := tmpl.Check()
 	assert.Equal(t, "", current)
@@ -119,7 +102,6 @@ func TestTemplateCheckContentGood(t *testing.T) {
 		RawContent:     "this is a test",
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
 
 	current, change, err := tmpl.Check()
 	assert.Equal(t, "this is a test", current)
@@ -139,7 +121,6 @@ func TestTemplateApply(t *testing.T) {
 		RawContent:     "{{1}}",
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
 
 	new, success, err := tmpl.Apply()
 	assert.Equal(t, "1", new)
@@ -164,7 +145,6 @@ func TestTemplateApplyPermission(t *testing.T) {
 		RawContent:     "{{1}}",
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
-	assert.NoError(t, tmpl.Validate())
 
 	_, success, err := tmpl.Apply()
 	assert.True(t, success)
