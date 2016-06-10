@@ -14,18 +14,6 @@
 
 package resource
 
-import "fmt"
-
-// Value contains the different values for a param
-type Value string
-
-func (v Value) String() string {
-	return string(v)
-}
-
-// Values is a named collection of values
-type Values map[string]Value
-
 // Param is essentially the calling arguments of a module
 type Param struct {
 	Name    string
@@ -33,17 +21,6 @@ type Param struct {
 	Type    string `hcl:"type"`
 
 	parent *Module
-}
-
-// ValidationError is the type returned by each resource's Validate method. It
-// describes both what went wrong and which stanza caused the problem.
-type ValidationError struct {
-	Location string
-	Err      error
-}
-
-func (v ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", v.Location, v.Err)
 }
 
 // String returns the name of this param. It satisfies the fmt.Stringer
