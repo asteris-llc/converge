@@ -73,10 +73,15 @@ can be done separately to see what needs to be changed before execution.`,
 
 			fmt.Print("\n")
 			for _, result := range results {
-				fmt.Println(result)
 				counts.results++
 				if result.WillChange {
 					counts.changes++
+				}
+
+				if UseColor() {
+					fmt.Println(result.Pretty())
+				} else {
+					fmt.Println(result)
 				}
 			}
 
