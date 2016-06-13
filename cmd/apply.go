@@ -17,11 +17,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"golang.org/x/net/context"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
@@ -49,37 +49,35 @@ real happens.`,
 
 		// iterate over modules
 		for _, fname := range args {
-			logger := logrus.WithField("filename", fname)
-
 			graph, err := load.Load(fname, params)
 			if err != nil {
-				logger.WithError(err).Fatal("could not parse file")
+				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
 			planStatus := make(chan *exec.StatusMessage, 1)
 			go func() {
 				for msg := range planStatus {
-					logger.WithField("path", msg.Path).Info(msg.Status)
+					log.Printf("[INFO] %s: %s: %s\n", fname, msg.Path, msg.Status)
 				}
 				close(planStatus)
 			}()
 
 			plan, err := exec.PlanWithStatus(ctx, graph, planStatus)
 			if err != nil {
-				logger.WithError(err).Fatal("planning failed")
+				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
 			status := make(chan *exec.StatusMessage, 1)
 			go func() {
 				for msg := range status {
-					logger.WithField("path", msg.Path).Info(msg.Status)
+					log.Printf("[INFO] %s: %s: %s\n", fname, msg.Path, msg.Status)
 				}
 				close(status)
 			}()
 
 			results, err := exec.ApplyWithStatus(ctx, graph, plan, status)
 			if err != nil {
-				logger.WithError(err).Fatal("applying failed")
+				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}
 
 			// count successes and failures to print summary

@@ -15,10 +15,9 @@
 package cmd
 
 import (
+	"log"
 	"os"
 	"os/signal"
-
-	"github.com/Sirupsen/logrus"
 
 	"golang.org/x/net/context"
 )
@@ -35,10 +34,10 @@ func GracefulExit(cancel context.CancelFunc) {
 
 			switch interruptCount {
 			case 1:
-				logrus.Info("gracefully shutting down (interrupt again to halt)")
+				log.Println("[INFO] gracefully shutting down (interrupt again to halt)")
 				cancel()
 			case 2:
-				logrus.Warn("hard stop! System may be in an incomplete state")
+				log.Println("[WARN] hard stop! System may be left in an incomplete state")
 				os.Exit(2)
 			}
 		}

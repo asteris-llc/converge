@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/logutils"
 )
 
-var levels = []logutils.LogLevel{"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"}
+var levels = []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
 
 // SetLogLevel sets the log level to the passed-in level, erroring if invalid
 func SetLogLevel(level string) error {

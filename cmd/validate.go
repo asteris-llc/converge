@@ -16,8 +16,8 @@ package cmd
 
 import (
 	"errors"
+	"log"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/cobra"
@@ -35,14 +35,12 @@ var validateCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, fname := range args {
-			logger := logrus.WithField("filename", fname)
-
 			_, err := load.Load(fname, resource.Values{})
 			if err != nil {
-				logger.WithError(err).Fatal("could not parse file")
+				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			logger.Info("module valid")
+			log.Printf("[INFO] %s: module valid\n", fname)
 		}
 	},
 }
