@@ -17,9 +17,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/pflag"
 )
@@ -77,7 +77,7 @@ func getParamsFromFlags(flags *pflag.FlagSet) (vals resource.Values, errors []er
 	// get parameters passed to the --paramsJSON flag
 	jsonParams := resource.Values{}
 	if len(paramsJSON) > 0 {
-		logrus.Debug("parsing --paramsJSON")
+		log.Println("[DEBUG] parsing --paramsJSON")
 
 		err := json.Unmarshal([]byte(paramsJSON), &jsonParams)
 		// accumulate errors

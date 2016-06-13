@@ -39,6 +39,15 @@ The workflow generally looks like this:
 
 You can also visualize the execution graph with "converge graph yourfile.hcl" -
 see "converge graph --help" for more details.`,
+
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		level, err := cmd.Flags().GetString("log-level")
+		if err != nil {
+			return err
+		}
+
+		return SetLogLevel(level)
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -55,6 +64,7 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.converge.yaml)")
 	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
+	RootCmd.PersistentFlags().StringP("log-level", "l", "INFO", fmt.Sprintf("log level, one of %v", levels))
 
 	viperBindPFlags(RootCmd.PersistentFlags())
 }
