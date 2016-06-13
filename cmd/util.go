@@ -15,10 +15,12 @@
 package cmd
 
 import (
+	"log"
+	"os"
 	"runtime"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -27,7 +29,7 @@ import (
 // bind a set of PFlags to Viper, failing and exiting on error
 func viperBindPFlags(flags *pflag.FlagSet) {
 	if err := viper.BindPFlags(flags); err != nil {
-		logrus.WithError(err).Fatal("could not bind flags")
+		log.Fatalf("[FATAL] could not bind flags: %s", err)
 	}
 }
 
@@ -35,21 +37,23 @@ func viperBindPFlags(flags *pflag.FlagSet) {
 // based on the following: 1. If we're in a color terminal 2. If the user has
 // specified the `nocolor` option (deduced via Viper) 3. If we're on Windows.
 func UseColor() bool {
-	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
+	isColorTerminal := isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows")
 	return !viper.GetBool("nocolor") && isColorTerminal
 }
 
 // getParams wraps getParamsFromFlags, logging and exiting upon error
 func getParams(cmd *cobra.Command) resource.Values {
 	if !cmd.HasPersistentFlags() {
-		logrus.WithField("command", cmd.Name()).Fatal("can't get parameters, command doesn't have persistent flags")
+		log.Fatalf("[FATAL] %s: can't get parameters, command doesn't have persistent flags\n", cmd.Name())
 	}
+
 	params, errors := getParamsFromFlags(cmd.PersistentFlags())
 	for i, err := range errors {
-		logrus.WithError(err).Warn("error while parsing parameters")
+		log.Printf("[ERROR] error while parsing parameters: %s\n", err)
+
 		// after the last error is printed, exit
 		if i == len(errors)-1 {
-			logrus.Fatal("errors while parsing parameters, see log above")
+			log.Fatalf("[FATAL] errors while parsing parameters, see log above")
 		}
 	}
 	return params
