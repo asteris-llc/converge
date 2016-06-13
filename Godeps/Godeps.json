@@ -19,8 +19,8 @@
 		{
 			"ImportPath": "github.com/acmacalister/skittles",
 			"Rev": "8f7bde0f0de4cb42c1e8db861e67627558e97019"
-    },
-    {
+		},
+		{
 			"ImportPath": "github.com/awalterschulze/gographviz",
 			"Rev": "7c3cf72121515513fad9d6c9a090db2aa4f47143"
 		},
@@ -96,6 +96,10 @@
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/token",
 			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/logutils",
+			"Rev": "0dc08b1671f34c4250ce212759ebd880f743d883"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/dag",
