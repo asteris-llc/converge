@@ -22,72 +22,78 @@ import (
 
 // Template is a task defined by content and a destination
 type Template struct {
-	TemplateName   string
-	RawContent     string `hcl:"content"`
-	RawDestination string `hcl:"destination"`
+	Name           string
+	RawContent     string   `hcl:"content"`
+	RawDestination string   `hcl:"destination"`
+	Dependencies   []string `hcl:"depends"`
 
-	renderer *Renderer
+	renderer    *Renderer
+	content     string
+	destination string
 }
 
-// Name returns the name of this template
-func (t *Template) Name() string {
-	return t.TemplateName
+// String returns the name of this template
+func (t *Template) String() string {
+	return "template." + t.Name
 }
 
-// Validate validates the template config
-func (t *Template) Validate() error {
-	_, err := t.renderer.Render(t.RawContent)
-	if err != nil {
-		return err
-	}
+// SetDepends overwrites the Dependencies of this resource
+func (t *Template) SetDepends(deps []string) {
+	t.Dependencies = deps
+}
 
-	_, err = t.renderer.Render(t.RawDestination)
-	return err
+// Depends list dependencies for this task
+func (t *Template) Depends() []string {
+	return t.Dependencies
 }
 
 // Check satisfies the Monitor interface
 func (t *Template) Check() (string, bool, error) {
-	dest := t.Destination()
-
-	stat, err := os.Stat(dest)
+	stat, err := os.Stat(t.destination)
 	if os.IsNotExist(err) {
 		return "", true, nil
 	} else if err != nil {
 		return "", false, err
 	} else if stat.IsDir() {
-		return "", true, fmt.Errorf("cannot template %q, is a directory", dest)
+		return "", true, fmt.Errorf("cannot template %q, is a directory", t.destination)
 	}
 
-	actual, err := ioutil.ReadFile(dest)
+	actual, err := ioutil.ReadFile(t.destination)
 	if err != nil {
 		return "", false, err
 	}
 
-	return string(actual), t.Content() != string(actual), nil
+	return string(actual), t.content != string(actual), nil
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (t *Template) Apply() error {
-	return nil
+func (t *Template) Apply() (string, bool, error) {
+	err := ioutil.WriteFile(t.destination, []byte(t.content), 0600)
+	if err != nil {
+		return "", false, err
+	}
+
+	actual, err := ioutil.ReadFile(t.destination)
+	if err != nil {
+		return "", false, err
+	}
+
+	return string(actual), t.content == string(actual), err
 }
 
 // Prepare this module for use
 func (t *Template) Prepare(parent *Module) (err error) {
 	t.renderer, err = NewRenderer(parent)
+	if err != nil {
+		return err
+	}
 
+	// check the rendered input is good
+	t.content, err = t.renderer.Render(t.String()+".content", t.RawContent)
+	if err != nil {
+		return err
+	}
+
+	t.destination, err = t.renderer.Render(t.String()+".destination", t.RawDestination)
 	return err
-}
-
-// Destination renders the destination
-func (t *Template) Destination() string {
-	// we're ignoring the error here because it's already been validated
-	dest, _ := t.renderer.Render(t.RawDestination)
-	return dest
-}
-
-// Content renders the content
-func (t *Template) Content() string {
-	// we're ignoring the error here because it's already been validated
-	content, _ := t.renderer.Render(t.RawContent)
-	return content
 }

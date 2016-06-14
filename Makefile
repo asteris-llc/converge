@@ -1,15 +1,53 @@
-.PHONY = test
+NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' main.go)
+VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' main.go)
 TESTDIRS = $(shell find . -name '*_test.go' | cut -d/ -f1-2 | uniq | grep -v vendor)
 
 converge: main.go cmd/* load/* resource/* vendor/**/*
 	go build .
 
-test: converge samples/*.hcl
+test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
+	@echo
+	@echo === check validity of all samples ===
+	./converge validate samples/*.hcl
+	@echo
+	@echo === check formatting of all samples ===
+	./converge fmt --check samples/*.hcl
+
+gotest:
 	go test -v ${TESTDIRS}
-	find samples -type f -name '*.hcl' -exec ./converge validate \{\} \;
+
+samples/errors/*.hcl: converge
+	@echo
+	@echo === validating $@ should fail ==
+	./converge validate $@ || exit 0 && exit 1
+
+blackbox/*.sh: converge
+	@echo
+	@echo === testing $@ ===
+	@$@
 
 samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 vendor: main.go cmd/* load/* resource/* exec/*
 	godep save -t ./...
+
+xcompile: test
+	@rm -rf build/
+	@mkdir -p build/
+	gox \
+		-os="darwin" \
+		-os="linux" \
+		-os="freebsd" \
+		-os="openbsd" \
+		-os="solaris" \
+		-output="build/$(NAME)_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
+
+package: xcompile
+	@mkdir -p build/tgz
+	for f in $(shell find build -name converge | cut -d/ -f2); do \
+	  (cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz converge); \
+    echo $$f; \
+  done
+
+.PHONY: test gotest xcompile package samples/errors/*.hcl blackbox/*.sh

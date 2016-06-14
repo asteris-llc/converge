@@ -18,19 +18,26 @@ package resource
 // system.
 type Module struct {
 	ModuleTask
-	Resources []Resource
+	Resources    []Resource
+	RenderedArgs Values
 
-	parent *Module
+	renderer *Renderer
 }
 
 // Name returns name for metadata
-func (m *Module) Name() string {
-	return m.ModuleName
+func (m *Module) String() string {
+	return "module." + m.ModuleName
 }
 
 // Validate this module
 func (m *Module) Validate() error {
 	return nil
+}
+
+// Depends satisfies the Resource interface. Module has the same requirements
+// as the ModuleTask it contains.
+func (m *Module) Depends() []string {
+	return m.ModuleTask.Depends()
 }
 
 // Children returns the managed resources under this module
@@ -39,9 +46,20 @@ func (m *Module) Children() []Resource {
 }
 
 // Prepare this module
-func (m *Module) Prepare(parent *Module) error {
-	m.parent = parent
-	return nil
+func (m *Module) Prepare(parent *Module) (err error) {
+	m.renderer, err = NewRenderer(parent)
+
+	// render and validate args
+	m.RenderedArgs = Values{}
+	for k, raw := range m.Args {
+		v, err := m.renderer.Render(m.String()+".params."+k, raw.String())
+		if err != nil {
+			return err
+		}
+		m.RenderedArgs[k] = Value(v)
+	}
+
+	return err
 }
 
 // Params returns the params of this module
@@ -50,7 +68,7 @@ func (m *Module) Params() map[string]*Param {
 
 	for _, res := range m.Resources {
 		if param, ok := res.(*Param); ok {
-			params[param.Name()] = param
+			params[param.Name] = param
 		}
 	}
 

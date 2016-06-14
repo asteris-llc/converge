@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
@@ -25,6 +26,7 @@ func TestShellTaskInterfaces(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(resource.ShellTask))
+	assert.Implements(t, (*fmt.Stringer)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Monitor)(nil), new(resource.ShellTask))
 	assert.Implements(t, (*resource.Task)(nil), new(resource.ShellTask))
 }
@@ -37,53 +39,34 @@ func TestShellTaskValidateValid(t *testing.T) {
 		RawApplySource: "echo test",
 	}
 	assert.NoError(t, st.Prepare(nil))
-	assert.NoError(t, st.Validate())
 }
 
 func TestShellTaskValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
 
-	st := resource.ShellTask{RawCheckSource: "if do then; esac"}
-	assert.NoError(t, st.Prepare(nil))
+	st := resource.ShellTask{
+		Name:           "test",
+		RawCheckSource: "if do then; esac",
+	}
 
-	err := st.Validate()
+	err := st.Prepare(nil)
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "check: exit status 2")
+		assert.EqualError(t, err, "task.test.check: exit status 2")
 	}
 }
 
 func TestShellTaskValidateInvalidApply(t *testing.T) {
 	t.Parallel()
 
-	st := resource.ShellTask{RawApplySource: "if do then; esac"}
-	assert.NoError(t, st.Prepare(nil))
-
-	err := st.Validate()
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "apply: exit status 2")
+	st := resource.ShellTask{
+		Name:           "test",
+		RawApplySource: "if do then; esac",
 	}
-}
 
-func TestShellTaskCheckSource(t *testing.T) {
-	t.Parallel()
-
-	st := resource.ShellTask{RawCheckSource: "{{1}}"}
-	assert.NoError(t, st.Prepare(&resource.Module{}))
-
-	check, err := st.CheckSource()
-	assert.NoError(t, err)
-	assert.Equal(t, "1", check)
-}
-
-func TestShellTaskApplySource(t *testing.T) {
-	t.Parallel()
-
-	st := resource.ShellTask{RawApplySource: "{{1}}"}
-	assert.NoError(t, st.Prepare(&resource.Module{}))
-
-	check, err := st.ApplySource()
-	assert.NoError(t, err)
-	assert.Equal(t, "1", check)
+	err := st.Prepare(nil)
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "task.test.apply: exit status 2")
+	}
 }
 
 func TestShellTaskCheckNeedsChange(t *testing.T) {
@@ -112,4 +95,32 @@ func TestShellTaskCheckNoChange(t *testing.T) {
 	assert.Equal(t, "test\n", current)
 	assert.False(t, change)
 	assert.Nil(t, err)
+}
+
+func TestShellTaskApplySuccess(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawApplySource: "echo test",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	new, success, err := st.Apply()
+	assert.Equal(t, "test\n", new)
+	assert.True(t, success)
+	assert.NoError(t, err)
+}
+
+func TestShellTaskApplyError(t *testing.T) {
+	t.Parallel()
+
+	st := resource.ShellTask{
+		RawApplySource: "echo bad && exit 1",
+	}
+	assert.NoError(t, st.Prepare(&resource.Module{}))
+
+	new, success, err := st.Apply()
+	assert.Equal(t, "bad\n", new)
+	assert.False(t, success)
+	assert.NoError(t, err)
 }

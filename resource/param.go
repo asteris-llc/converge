@@ -14,58 +14,39 @@
 
 package resource
 
-import "fmt"
-
-// Value contains the different values for a param
-type Value string
-
-func (v Value) String() string {
-	return string(v)
-}
-
-// Values is a named collection of values
-type Values map[string]Value
-
 // Param is essentially the calling arguments of a module
 type Param struct {
-	ParamName string
-	Default   Value  `hcl:"default"`
-	Type      string `hcl:"type"`
-	Value     Value
+	Name    string
+	Default Value  `hcl:"default"`
+	Type    string `hcl:"type"`
 
 	parent *Module
 }
 
-// ValidationError is the type returned by each resource's Validate method. It
-// describes both what went wrong and which stanza caused the problem.
-type ValidationError struct {
-	Location string
-	Err      error
+// String returns the name of this param. It satisfies the fmt.Stringer
+// interface.
+func (p *Param) String() string {
+	return "param." + p.Name
 }
 
-func (v ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", v.Location, v.Err)
-}
+// SetDepends overwrites the Dependencies of this resource
+func (p *Param) SetDepends(deps []string) {}
 
-// Name returns the name of this param
-func (p *Param) Name() string {
-	return p.ParamName
-}
-
-// Validate that this value is correct
-func (p *Param) Validate() error {
+// Depends : Does nothing
+func (p *Param) Depends() []string {
 	return nil
 }
 
 // Prepare this module for use
 func (p *Param) Prepare(parent *Module) error {
 	p.parent = parent
-
-	if val, ok := parent.Args[p.ParamName]; ok {
-		p.Value = val
-	} else {
-		p.Value = p.Default
-	}
-
 	return nil
+}
+
+// Value returns either a value set by the parameters or a default.
+func (p *Param) Value() Value {
+	if val, ok := p.parent.RenderedArgs[p.Name]; ok {
+		return val
+	}
+	return p.Default
 }

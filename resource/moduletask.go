@@ -16,25 +16,37 @@ package resource
 
 // ModuleTask is the task for calling a module.
 type ModuleTask struct {
-	Args       Values
-	Source     string
-	ModuleName string
-
-	parent *Module
+	Args         Values `hcl:"params"`
+	Source       string
+	ModuleName   string
+	Dependencies []string `hcl:"depends"`
 }
 
 // Name returns name for metadata
-func (m *ModuleTask) Name() string {
-	return m.ModuleName
+func (m *ModuleTask) String() string {
+	return "module." + m.ModuleName
 }
 
-// Validate checks shell tasks validity
+//SetDepends overwrites the Dependencies of this resource
+func (m *ModuleTask) SetDepends(deps []string) {
+	//Remove duplicateTask
+	m.Dependencies = deps
+}
+
+//Depends list dependencies for this task
+func (m *ModuleTask) Depends() []string {
+
+	return m.Dependencies
+}
+
+// Validate this module - these are replaced with Modules very early in the
+// loading process, so this is just a stub
 func (m *ModuleTask) Validate() error {
 	return nil
 }
 
-// Prepare this module for use
-func (m *ModuleTask) Prepare(parent *Module) error {
-	m.parent = parent
+// Prepare this module for use - these are replaced with Modules very early in
+// the loading process, so this is just a stub
+func (m *ModuleTask) Prepare(*Module) error {
 	return nil
 }

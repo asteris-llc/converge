@@ -18,7 +18,10 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
@@ -28,6 +31,8 @@ import (
 var planCmd = &cobra.Command{
 	Use:   "plan",
 	Short: "plan what needs to change in the system",
+	Long: `planning is the first stage in the execution of your changes, and it
+can be done separately to see what needs to be changed before execution.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -35,26 +40,66 @@ var planCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		params := getParams(cmd)
+
+		// set up execution context
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
 		for _, fname := range args {
 			logger := logrus.WithField("filename", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(fname, params)
 			if err != nil {
 				logger.WithError(err).Fatal("could not parse file")
 			}
 
-			results, err := exec.Plan(graph)
+			status := make(chan *exec.StatusMessage, 1)
+			go func() {
+				for msg := range status {
+					logger.WithField("path", msg.Path).Info(msg.Status)
+				}
+				close(status)
+			}()
+
+			results, err := exec.PlanWithStatus(ctx, graph, status)
 			if err != nil {
 				logger.WithError(err).Fatal("planning failed")
 			}
 
-			for _, result := range results {
-				fmt.Println(result)
+			var counts struct {
+				results, changes int
 			}
+
+			fmt.Print("\n")
+			for _, result := range results {
+				counts.results++
+				if result.WillChange {
+					counts.changes++
+				}
+
+				if UseColor() {
+					fmt.Println(result.Pretty())
+				} else {
+					fmt.Println(result)
+				}
+			}
+
+			// summarize the potential changes for the user
+			summary := fmt.Sprintf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
+			if UseColor() {
+				if counts.changes > 0 {
+					summary = skittles.Yellow(summary)
+				} else {
+					summary = skittles.Green(summary)
+				}
+			}
+			fmt.Print(summary)
 		}
 	},
 }
 
 func init() {
+	addParamsArguments(planCmd.PersistentFlags())
 	RootCmd.AddCommand(planCmd)
 }

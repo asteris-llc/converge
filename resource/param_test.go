@@ -26,25 +26,26 @@ func TestParamPreparePresent(t *testing.T) {
 
 	var (
 		p = &resource.Param{
-			ParamName: "test",
-			Default:   "x",
-			Type:      "string",
+			Name:    "test",
+			Default: "x",
+			Type:    "string",
 		}
 
 		value = "a"
 
 		m = &resource.Module{
 			ModuleTask: resource.ModuleTask{
-				Args: map[string]resource.Value{p.ParamName: "a"},
+				Args: map[string]resource.Value{p.Name: "a"},
 			},
 			Resources: []resource.Resource{p},
 		}
 	)
+	assert.NoError(t, m.Prepare(nil))
 
 	err := p.Prepare(m)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, value, p.Value)
+	assert.EqualValues(t, value, p.Value())
 }
 
 func TestParamPrepareDefault(t *testing.T) {
@@ -52,18 +53,19 @@ func TestParamPrepareDefault(t *testing.T) {
 
 	var (
 		p = &resource.Param{
-			ParamName: "test",
-			Default:   "x",
-			Type:      "string",
+			Name:    "test",
+			Default: "x",
+			Type:    "string",
 		}
 
 		m = &resource.Module{
 			Resources: []resource.Resource{p},
 		}
 	)
+	assert.NoError(t, m.Prepare(nil))
 
 	err := p.Prepare(m)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, p.Default, p.Value)
+	assert.EqualValues(t, p.Default, p.Value())
 }

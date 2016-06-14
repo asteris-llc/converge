@@ -15,15 +15,19 @@
 package load_test
 
 import (
+	"sync"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/awalterschulze/gographviz"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewGraph(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		Resources: []resource.Resource{
@@ -35,27 +39,22 @@ func TestNewGraph(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGraphWalk(t *testing.T) {
-	t.Parallel()
-
-	mod2 := &resource.Module{
-		ModuleTask: resource.ModuleTask{
-			ModuleName: "test2",
-		},
-		Resources: []resource.Resource{
-			&resource.ShellTask{TaskName: "task2"},
-			&resource.Template{TemplateName: "template2"},
-		},
-	}
+func TestGraphWalkTaskOrder(t *testing.T) {
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
 		Resources: []resource.Resource{
-			&resource.ShellTask{TaskName: "task"},
-			&resource.Template{TemplateName: "template"},
-			mod2,
+			&resource.ShellTask{
+				Name:         "task",
+				Dependencies: []string{},
+			},
+			&resource.Template{
+				Name:         "template",
+				Dependencies: []string{"task.task"},
+			},
 		},
 	}
 
@@ -63,43 +62,88 @@ func TestGraphWalk(t *testing.T) {
 	assert.NoError(t, err)
 
 	results := []string{}
+	lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, r resource.Resource) error {
+		lock.Lock()
+		defer lock.Unlock()
+
 		results = append(results, path)
+
 		return nil
 	})
-	assert.NoError(t, err)
 
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
-		results,
 		[]string{
-			"test",
-			"test/test2",
-			"test/test2/template2",
-			"test/test2/task2",
-			"test/template",
-			"test/task",
+			"module.test/task.task",
+			"module.test/template.template",
+			"module.test",
 		},
+		results,
 	)
 }
 
 func TestGraphParent(t *testing.T) {
-	t.Parallel()
+	defer (helpers.HideLogs(t))()
 
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
 		Resources: []resource.Resource{
-			&resource.ShellTask{TaskName: "task"},
+			&resource.ShellTask{Name: "task"},
 		},
 	}
 
 	graph, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 
-	parent, err := graph.Parent("test/task")
+	parent, err := graph.Parent("module.test/task")
 	assert.NoError(t, err)
 	assert.Equal(t, mod, parent)
+}
+
+func TestRequirementsOrdering(t *testing.T) {
+	/*
+		Tree in the form
+
+								a
+							 / \
+							b		c
+							 \ /
+								d
+
+		A proper dependency order search would always result in a being the last
+		element processed
+	*/
+	defer (helpers.HideLogs(t))()
+
+	graph, err := load.Load("../samples/requirementsOrderDiamond.hcl", resource.Values{})
+	require.NoError(t, err)
+
+	lock := new(sync.Mutex)
+	paths := []string{}
+
+	assert.NoError(t, graph.Walk(func(path string, res resource.Resource) error {
+		lock.Lock()
+		defer lock.Unlock()
+		paths = append(paths, path)
+
+		return nil
+	}))
+
+	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.d", paths[0])
+	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.a", paths[len(paths)-2])
+}
+
+func TestValidGraphString(t *testing.T) {
+	defer (helpers.HideLogs(t))()
+
+	graph, err := load.Load("../samples/sourceFile.hcl", resource.Values{})
+	assert.NoError(t, err)
+
+	_, err = gographviz.Read([]byte(graph.GraphString()))
+	assert.NoError(t, err)
 }
