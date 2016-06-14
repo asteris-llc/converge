@@ -25,4 +25,11 @@ _testmain.go
 
 # binaries
 converge
+*.dot
+*.ps
 *.png
+*.dot
+*-fuzz.zip
+
+# release
+build

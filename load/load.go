@@ -27,9 +27,14 @@ import (
 
 // Load a module from a resource. This uses the protocol in the path (or file://
 // if not present) to determine from where the module should be loaded.
-func Load(source string) (*Graph, error) {
+func Load(source string, args resource.Values) (*Graph, error) {
 	initial, err := loadAny(nil, source)
 	if err != nil {
+		return nil, err
+	}
+	initial.Args = args
+
+	if err := initial.Prepare(nil); err != nil {
 		return nil, err
 	}
 
@@ -40,6 +45,7 @@ func Load(source string) (*Graph, error) {
 
 	// transform ModuleTasks with Modules by loading them; do this iteratively
 	modules := []*resource.Module{initial}
+
 	for len(modules) > 0 {
 		// bookkeeping to avoid recursive calls. Using `range` here would copy and
 		// not process any new items.
@@ -52,13 +58,20 @@ func Load(source string) (*Graph, error) {
 				if err != nil {
 					return nil, err
 				}
-
 				newModule.Args = mt.Args
 				newModule.Source = mt.Source
 				newModule.ModuleName = mt.ModuleName
+				newModule.Dependencies = append(newModule.Dependencies, mt.Dependencies...)
 
 				module.Resources[i] = newModule
 				modules = append(modules, newModule)
+				res = newModule
+			}
+
+			// prepare modules for first use
+			err = res.Prepare(module)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -67,25 +80,6 @@ func Load(source string) (*Graph, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// prepare modules for use
-	err = graph.Walk(func(path string, res resource.Resource) error {
-		parent, err := graph.Parent(path)
-		if err != nil {
-			return err
-		}
-
-		return res.Prepare(parent)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// validate modules
-	err = graph.Walk(func(path string, res resource.Resource) error {
-		return res.Validate()
-	})
 
 	return graph, nil
 }
@@ -137,11 +131,9 @@ func FromFile(filename string) (*resource.Module, error) {
 	}
 
 	mod, err := Parse(content)
-
 	if err == nil {
 		mod.ModuleName = path.Base(filename)
 	}
-
 	return mod, err
 }
 

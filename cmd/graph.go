@@ -23,27 +23,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// graphCmd represents the check command
+// graphCmd represents the graph command
 var graphCmd = &cobra.Command{
 	Use:   "graph",
 	Short: "graph the execution of a module",
+	Long: `graphing is a convenient way to visualize how your graph and
+dependencies are structured.
+
+Pipe the output of this function into something like:
+
+    dot -Tpng -oyourgraph.png`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return errors.New("Need at least one module filename as argument, got 0")
+		if len(args) != 1 {
+			return errors.New("Need one module filename as argument, got 0")
 		}
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, fname := range args {
-			logger := logrus.WithField("filename", fname)
+		fname := args[0]
 
-			graph, err := load.Load(fname)
-			if err != nil {
-				logger.WithError(err).Fatal("could not parse file")
-			}
+		logger := logrus.WithField("filename", fname)
 
-			fmt.Println(graph.GraphString())
+		graph, err := load.Load(fname, nil)
+		if err != nil {
+			logger.WithError(err).Fatal("could not parse file")
 		}
+
+		fmt.Println(graph.GraphString())
 	},
 }
 

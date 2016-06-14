@@ -15,34 +15,25 @@
 package exec
 
 import (
-	"fmt"
 	"sync"
+
+	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 )
 
-// PlanResult contains the result of a resource check
-type PlanResult struct {
-	Path          string
-	CurrentStatus string
-	WillChange    bool
-}
-
-func (p *PlanResult) String() string {
-	return fmt.Sprintf(
-		"%s:\n\tCurrently: %q\n\tWill Change: %t",
-		p.Path,
-		p.CurrentStatus,
-		p.WillChange,
-	)
-}
-
-// Plan the operations to be performed
-func Plan(graph *load.Graph) (results []*PlanResult, err error) {
+// PlanWithStatus plans the operations to be performed and outputs status
+func PlanWithStatus(ctx context.Context, graph *load.Graph, status chan<- *StatusMessage) (results []*PlanResult, err error) {
 	lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, res resource.Resource) error {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
 		monitor, ok := res.(resource.Monitor)
 		if !ok {
 			return nil
@@ -52,6 +43,12 @@ func Plan(graph *load.Graph) (results []*PlanResult, err error) {
 			err    error
 			result = &PlanResult{Path: path}
 		)
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case status <- &StatusMessage{Path: path, Status: "checking status"}:
+		}
 
 		result.CurrentStatus, result.WillChange, err = monitor.Check()
 		if err != nil {
@@ -66,4 +63,17 @@ func Plan(graph *load.Graph) (results []*PlanResult, err error) {
 	})
 
 	return results, err
+}
+
+// Plan does the same thing as PlanWithStatus, but drops all status messages
+func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
+	status := make(chan *StatusMessage, 1)
+	defer close(status)
+	go func() {
+		for range status {
+			continue
+		}
+	}()
+
+	return PlanWithStatus(ctx, graph, status)
 }

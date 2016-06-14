@@ -14,6 +14,8 @@
 
 package resource
 
+import "fmt"
+
 // Monitor checks if a resource is correct.
 type Monitor interface {
 	Check() (string, bool, error)
@@ -23,14 +25,15 @@ type Monitor interface {
 // checks pass.
 type Task interface {
 	Monitor
-	Apply() error // TODO: calling args
+	Apply() (string, bool, error)
 }
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
-	Name() string
 	Prepare(*Module) error
-	Validate() error
+	Depends() []string
+	SetDepends([]string)
+	fmt.Stringer
 }
 
 // Parent expresses a resource that has sub-resources instead of being

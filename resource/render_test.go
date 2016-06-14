@@ -30,9 +30,9 @@ func TestRendererRenderValid(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("{{.Name}}")
+	result, err := renderer.Render("", "{{.}}")
 	assert.NoError(t, err)
-	assert.Equal(t, mod.Name(), result)
+	assert.Equal(t, mod.String(), result)
 }
 
 func TestRendererRenderInvalid(t *testing.T) {
@@ -44,7 +44,7 @@ func TestRendererRenderInvalid(t *testing.T) {
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	_, err = renderer.Render("{{")
+	_, err = renderer.Render("", "{{")
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "template: :1: unexpected unclosed action in command")
 	}
@@ -54,17 +54,35 @@ func TestRendererRenderParam(t *testing.T) {
 	t.Parallel()
 
 	param := &resource.Param{
-		ParamName: "test",
-		Value:     "1",
+		Name:    "test_parameter",
+		Default: "test_default",
 	}
 	mod := &resource.Module{
-		ModuleTask: resource.ModuleTask{ModuleName: "test"},
-		Resources:  []resource.Resource{param},
+		ModuleTask: resource.ModuleTask{
+			ModuleName: "test_module",
+			Args:       map[string]resource.Value{"test_parameter": "test_value"},
+		},
+		Resources: []resource.Resource{param},
 	}
+	assert.NoError(t, mod.Prepare(nil))
+	assert.NoError(t, param.Prepare(mod))
+
 	renderer, err := resource.NewRenderer(mod)
 	assert.NoError(t, err)
 
-	result, err := renderer.Render("{{param `test`}}")
+	result, err := renderer.Render("test", "{{param `test_parameter`}}")
 	assert.NoError(t, err)
-	assert.EqualValues(t, param.Value, result)
+	assert.EqualValues(t, "test_value", result)
+}
+
+func TestRenderMissingParam(t *testing.T) {
+	t.Parallel()
+
+	renderer, err := resource.NewRenderer(&resource.Module{})
+	assert.NoError(t, err)
+
+	_, err = renderer.Render("x", "{{param `nonexistent`}}")
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "template: x:1:2: executing \"x\" at <param `nonexistent`>: error calling param: no such param \"nonexistent\"")
+	}
 }

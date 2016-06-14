@@ -23,37 +23,19 @@ import (
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
-	TaskName       string
-	RawCheckSource string `hcl:"check"`
-	RawApplySource string `hcl:"apply"`
+	Name           string
+	RawCheckSource string   `hcl:"check"`
+	RawApplySource string   `hcl:"apply"`
+	Dependencies   []string `hcl:"depends"`
 
-	renderer *Renderer
+	renderer    *Renderer
+	checkSource string
+	applySource string
 }
 
-// Name returns name for metadata
-func (st *ShellTask) Name() string {
-	return st.TaskName
-}
-
-// Validate checks shell tasks validity
-func (st *ShellTask) Validate() error {
-	script, err := st.CheckSource()
-	if err != nil {
-		return ValidationError{Location: "check", Err: err}
-	}
-	if err := st.validateScriptSyntax(script); err != nil {
-		return ValidationError{Location: "check", Err: err}
-	}
-
-	script, err = st.ApplySource()
-	if err != nil {
-		return ValidationError{Location: "apply", Err: err}
-	}
-	if err := st.validateScriptSyntax(script); err != nil {
-		return ValidationError{Location: "apply", Err: err}
-	}
-
-	return nil
+// String returns name for metadata
+func (st *ShellTask) String() string {
+	return "task." + st.Name
 }
 
 func (st *ShellTask) validateScriptSyntax(script string) error {
@@ -83,20 +65,27 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	return nil
 }
 
+//SetDepends overwrites the Dependencies of this resource
+func (st *ShellTask) SetDepends(deps []string) {
+	//Remove duplicateTask
+	st.Dependencies = deps
+}
+
+//Depends list dependencies for this task
+func (st *ShellTask) Depends() []string {
+	return st.Dependencies
+}
+
 // Check satisfies the Monitor interface
 func (st *ShellTask) Check() (string, bool, error) {
-	check, err := st.CheckSource()
-	if err != nil {
-		return "", false, err
-	}
-
-	out, code, err := st.exec(check)
+	out, code, err := st.exec(st.checkSource)
 	return out, code != 0, err
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (st *ShellTask) Apply() error {
-	return nil
+func (st *ShellTask) Apply() (string, bool, error) {
+	out, code, err := st.exec(st.applySource)
+	return out, code == 0, err
 }
 
 func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
@@ -141,15 +130,29 @@ func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
 // Prepare this module for use
 func (st *ShellTask) Prepare(parent *Module) (err error) {
 	st.renderer, err = NewRenderer(parent)
+	if err != nil {
+		return err
+	}
+
+	// validate and cache check
+	st.checkSource, err = st.renderer.Render(st.String()+".check", st.RawCheckSource)
+	if err != nil {
+		return ValidationError{Location: st.String() + ".check", Err: err}
+	}
+
+	if err := st.validateScriptSyntax(st.checkSource); err != nil {
+		return ValidationError{Location: st.String() + ".check", Err: err}
+	}
+
+	// validate and cache apply
+	st.applySource, err = st.renderer.Render(st.String()+".apply", st.RawApplySource)
+	if err != nil {
+		return ValidationError{Location: st.String() + ".apply", Err: err}
+	}
+
+	if err := st.validateScriptSyntax(st.applySource); err != nil {
+		return ValidationError{Location: st.String() + ".apply", Err: err}
+	}
+
 	return err
-}
-
-// CheckSource renders RawCheckSource for execution
-func (st *ShellTask) CheckSource() (string, error) {
-	return st.renderer.Render(st.RawCheckSource)
-}
-
-// ApplySource renders RawApplySource for execution
-func (st *ShellTask) ApplySource() (string, error) {
-	return st.renderer.Render(st.RawApplySource)
 }

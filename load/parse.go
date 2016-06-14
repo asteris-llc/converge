@@ -16,10 +16,15 @@ package load
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
+)
+
+var (
+	nameRe = regexp.MustCompile(`^[\w\-\.]+$`)
 )
 
 // Parse parses a module and returns it
@@ -40,32 +45,42 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 	var (
 		errs   MultiError
 		module = new(resource.Module)
-		names  = map[string]bool{}
+		names  = map[string]struct{}{}
 	)
-
+	previousTaskName := ""
 	ast.Walk(node, func(n ast.Node) (ast.Node, bool) {
 		// we're only interested in ObjectItems. These are a path plus a value, and
 		// quite handy.
 		if item, ok := n.(*ast.ObjectItem); ok {
 			token := item.Keys[0].Token.Text
-
 			var (
-				resource resource.Resource
-				err      error
+				res resource.Resource
+				err error
 			)
 
 			switch token {
 			case "task":
-				resource, err = parseTask(item)
+				res, err = parseTask(item)
+				if err != nil {
+					break
+				}
+
+				// If no requirements are specified, it is assumed that the task before
+				// the current task is the only requirement
+				// See https://github.com/asteris-llc/converge/issues/10
+				if previousTaskName != "" && res.Depends() == nil {
+					res.SetDepends([]string{previousTaskName})
+				}
+				previousTaskName = res.String()
 
 			case "template":
-				resource, err = parseTemplate(item)
+				res, err = parseTemplate(item)
 
 			case "module":
-				resource, err = parseModuleCall(item)
+				res, err = parseModuleCall(item)
 
 			case "param":
-				resource, err = parseParam(item)
+				res, err = parseParam(item)
 
 			default:
 				err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
@@ -77,23 +92,44 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				return n, false
 			}
 
-			// check if the name is already present, error if so
-			dupCheckName := token + "." + resource.Name()
-			if present := names[dupCheckName]; present {
-				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, resource.Name())})
+			// validate the name
+			if !nameRe.MatchString(res.String()) {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("invalid name %q", res.String())})
 				return n, false
 			}
-			names[dupCheckName] = true
 
-			// now that we've run the gauntlet, it's safe to add the resource to the
-			// resource list.
-			module.Resources = append(module.Resources, resource)
+			// check if the name is already present, error if so
+			dupCheckName := res.String()
+			if _, present := names[dupCheckName]; present {
+				errs = append(errs, &ParseError{item.Pos(), fmt.Sprintf("duplicate %s %q", token, res.String())})
+				return n, false
+			}
 
+			// Dependencies are always in the form `depends = [ "resource_type.name" ]`
+			names[dupCheckName] = struct{}{}
+
+			module.Resources = append(module.Resources, res)
 			return n, false
 		}
 
 		return n, true
 	})
+
+	// Check that all dependencies were a resources in this module.
+	for _, res := range module.Children() {
+		for _, dep := range res.Depends() {
+			if _, present := names[dep]; !present {
+				errs = append(
+					errs,
+					fmt.Errorf(
+						"Resource %q depends on resource, %q,  which does not exist in this module",
+						res.String(),
+						dep,
+					),
+				)
+			}
+		}
+	}
 
 	if len(errs) == 0 {
 		return module, nil
@@ -113,7 +149,7 @@ func parseParam(item *ast.ObjectItem) (p *resource.Param, err error) {
 	}
 
 	p = &resource.Param{
-		ParamName: item.Keys[1].Token.Value().(string),
+		Name: item.Keys[1].Token.Value().(string),
 	}
 	err = hcl.DecodeObject(p, item.Val)
 	return
@@ -126,6 +162,7 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 		task "x" {
 			check = "y"
 			apply = "z"
+			depends = [""]
 		}
 	*/
 	if len(item.Keys) < 2 {
@@ -134,8 +171,8 @@ func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
 	}
 
 	t = new(resource.ShellTask)
-	t.TaskName = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
+	t.Name = item.Keys[1].Token.Value().(string)
 
 	return
 }
@@ -147,6 +184,7 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 		template "x" {
 			content = "y"
 			destination = "z"
+			depends = [""]
 		}
 	*/
 	if len(item.Keys) < 2 {
@@ -155,7 +193,7 @@ func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
 	}
 
 	t = new(resource.Template)
-	t.TemplateName = item.Keys[1].Token.Value().(string)
+	t.Name = item.Keys[1].Token.Value().(string)
 	err = hcl.DecodeObject(t, item.Val)
 
 	return
@@ -166,7 +204,10 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 		ideal input:
 
 		module "source" "name" {
-			args = 1
+			args = {
+				arg1 = 1
+			}
+			depends = [""]
 		}
 	*/
 	if len(item.Keys) < 3 {
@@ -175,11 +216,10 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 	}
 
 	module = &resource.ModuleTask{
-		Args:       resource.Values{},
-		Source:     item.Keys[1].Token.Value().(string),
-		ModuleName: item.Keys[2].Token.Value().(string),
+		Args: resource.Values{},
 	}
-	err = hcl.DecodeObject(&module.Args, item.Val)
-
-	return
+	err = hcl.DecodeObject(&module, item.Val)
+	module.Source = item.Keys[1].Token.Value().(string)
+	module.ModuleName = item.Keys[2].Token.Value().(string)
+	return module, err
 }
