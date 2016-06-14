@@ -107,21 +107,30 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 		url.Path = path.Join(path.Dir(root.Path), url.Path)
 	}
 
+	var content []byte
 	switch url.Scheme {
 	case "file":
-		return FromFile(url.Path)
+		content, err = FromFile(url.Path)
 	case "http":
-		return FromHTTP(url.String())
+		fallthrough
 	case "https":
-		return FromHTTP(url.String())
-
+		content, err = FromHTTP(url.String())
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	mod, err := Parse(content)
+	if err == nil {
+		mod.ModuleName = path.Base(url.String())
+	}
+	return mod, err
 }
 
 // FromFile loads a module from a file
-func FromFile(filename string) (*resource.Module, error) {
+func FromFile(filename string) ([]byte, error) {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -130,15 +139,11 @@ func FromFile(filename string) (*resource.Module, error) {
 		return nil, err
 	}
 
-	mod, err := Parse(content)
-	if err == nil {
-		mod.ModuleName = path.Base(filename)
-	}
-	return mod, err
+	return content, err
 }
 
 // FromHTTP fetches a module from an HTTP server, and then loads it
-func FromHTTP(url string) (*resource.Module, error) {
+func FromHTTP(url string) ([]byte, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -149,11 +154,5 @@ func FromHTTP(url string) (*resource.Module, error) {
 		return nil, err
 	}
 
-	mod, err := Parse(content)
-
-	if err == nil {
-		mod.ModuleName = path.Base(url)
-	}
-
-	return mod, err
+	return content, err
 }
