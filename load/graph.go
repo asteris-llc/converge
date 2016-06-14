@@ -136,7 +136,7 @@ func (g *Graph) GraphString() string {
 	for _, res := range g.root.Children() {
 		if mod, ok := res.(*resource.Module); ok {
 			subGraphFromModule(g.root.String(), mod)
-			graphViz.AddSubGraph(graphName, "cluster_module_"+mod.String(), nil)
+			graphViz.AddSubGraph(graphName, escape("cluster_module_"+mod.String()), nil)
 		}
 	}
 
