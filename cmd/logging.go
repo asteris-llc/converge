@@ -15,31 +15,37 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"os/signal"
 
-	"golang.org/x/net/context"
+	"github.com/hashicorp/logutils"
 )
 
-// GracefulExit traps interrupt signals for a graceful exit
-func GracefulExit(cancel context.CancelFunc) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		interruptCount := 0
+var levels = []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
 
-		for range c {
-			interruptCount++
+// SetLogLevel sets the log level to the passed-in level, erroring if invalid
+func SetLogLevel(level string) error {
+	if !validLevel(level) {
+		return fmt.Errorf("%q is not a valid log level", level)
+	}
 
-			switch interruptCount {
-			case 1:
-				log.Println("[INFO] gracefully shutting down (interrupt again to halt)")
-				cancel()
-			case 2:
-				log.Println("[WARN] hard stop! System may be left in an incomplete state")
-				os.Exit(2)
-			}
+	filter := &logutils.LevelFilter{
+		Levels:   levels,
+		MinLevel: logutils.LogLevel(level),
+		Writer:   os.Stderr,
+	}
+	log.SetOutput(filter)
+
+	return nil
+}
+
+func validLevel(level string) bool {
+	for _, lvl := range levels {
+		if lvl == logutils.LogLevel(level) {
+			return true
 		}
-	}()
+	}
+
+	return false
 }

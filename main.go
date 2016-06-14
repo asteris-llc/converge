@@ -20,7 +20,7 @@ import "github.com/asteris-llc/converge/cmd"
 const Name = "converge"
 
 // Version describes the version for packaging
-const Version = "0.1.0"
+const Version = "0.1.1"
 
 func main() {
 	cmd.Execute()
