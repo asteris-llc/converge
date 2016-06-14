@@ -17,8 +17,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -42,11 +42,9 @@ Pipe the output of this function into something like:
 	Run: func(cmd *cobra.Command, args []string) {
 		fname := args[0]
 
-		logger := logrus.WithField("filename", fname)
-
 		graph, err := load.Load(fname, nil)
 		if err != nil {
-			logger.WithError(err).Fatal("could not parse file")
+			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
 		fmt.Println(graph.GraphString())

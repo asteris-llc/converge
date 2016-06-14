@@ -16,10 +16,10 @@ package exec
 
 import (
 	"bytes"
+	"log"
 	"strings"
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/acmacalister/skittles"
 )
 
@@ -50,7 +50,7 @@ func (a *ApplyResult) string(pretty bool) string {
 	var buf bytes.Buffer
 	err := tmpl.Execute(&buf, a)
 	if err != nil {
-		logrus.WithError(err).Warn("error while outputting the result of `apply`")
+		log.Printf("[WARN] error while outputting the result of `apply`: %s\n", err)
 	}
 	return buf.String()
 }
