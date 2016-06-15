@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 )
 
 // NewRenderer creates a new Renderer
@@ -34,8 +35,9 @@ func NewRenderer(ctx *Module) (*Renderer, error) {
 
 // Renderer renders template strings in Resources
 type Renderer struct {
-	ctx   *Module
-	funcs template.FuncMap
+	ctx      *Module
+	funcs    template.FuncMap
+	depFuncs template.FuncMap
 }
 
 // Render the given template using the set context
@@ -52,6 +54,34 @@ func (r *Renderer) Render(name, source string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// Dependencies inside the template string
+func (r *Renderer) Dependencies(name, source string) ([]string, error) {
+	var (
+		deps  []string
+		funcs = map[string]interface{}{
+			"param": func(name string) (string, error) {
+				param, ok := r.ctx.Params()[name]
+				if !ok {
+					return "", fmt.Errorf("no such param %q", name)
+				}
+
+				deps = append(deps, param.String())
+
+				return "", nil
+			},
+		}
+	)
+
+	tmpl, err := template.New(name).Funcs(funcs).Parse(source)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tmpl.Execute(ioutil.Discard, r.ctx)
+
+	return deps, err
 }
 
 // Template Functions
