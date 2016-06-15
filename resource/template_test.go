@@ -122,10 +122,7 @@ func TestTemplateApply(t *testing.T) {
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
-	new, success, err := tmpl.Apply()
-	assert.Equal(t, "1", new)
-	assert.True(t, success)
-	assert.NoError(t, err)
+	assert.NoError(t, tmpl.Apply())
 
 	// read the new file
 	content, err := ioutil.ReadFile(tmpfile.Name())
@@ -146,9 +143,7 @@ func TestTemplateApplyPermission(t *testing.T) {
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
-	_, success, err := tmpl.Apply()
-	assert.True(t, success)
-	assert.NoError(t, err)
+	assert.NoError(t, tmpl.Apply())
 
 	// stat the new file
 	stat, err := os.Stat(tmpfile.Name())

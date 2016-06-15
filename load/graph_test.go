@@ -119,7 +119,7 @@ func TestRequirementsOrdering(t *testing.T) {
 	*/
 	defer (helpers.HideLogs(t))()
 
-	graph, err := load.Load("../samples/requirementsOrderDiamond.hcl", resource.Values{})
+	graph, err := load.Load("../samples/testdata/requirementsOrderDiamond.hcl", resource.Values{})
 	require.NoError(t, err)
 
 	lock := new(sync.Mutex)

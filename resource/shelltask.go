@@ -82,9 +82,12 @@ func (st *ShellTask) Check() (string, bool, error) {
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (st *ShellTask) Apply() (string, bool, error) {
+func (st *ShellTask) Apply() error {
 	out, code, err := st.exec(st.applySource)
-	return out, code == 0, err
+	if code != 0 {
+		return fmt.Errorf("exit code %d, output: %q", code, out)
+	}
+	return err
 }
 
 func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
