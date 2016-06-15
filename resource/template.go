@@ -117,3 +117,8 @@ func (t *Template) Prepare(parent *Module) (err error) {
 
 	return nil
 }
+
+// SetName modifies the name of this Template
+func (t *Template) SetName(name string) {
+	t.Name = name
+}
