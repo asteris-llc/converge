@@ -47,7 +47,12 @@ Pipe the output of this function into something like:
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
-		fmt.Println(graph.GraphString())
+		out, err := graph.GraphString()
+		if err != nil {
+			log.Fatalf("[FATAL]: %s: could not render graph: %s\n", fname, err)
+		}
+
+		fmt.Println(out)
 	},
 }
 
