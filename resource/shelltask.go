@@ -67,7 +67,6 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 
 //SetDepends overwrites the Dependencies of this resource
 func (st *ShellTask) SetDepends(deps []string) {
-	//Remove duplicateTask
 	st.Dependencies = deps
 }
 
