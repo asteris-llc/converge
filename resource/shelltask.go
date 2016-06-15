@@ -67,7 +67,6 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 
 //SetDepends overwrites the Dependencies of this resource
 func (st *ShellTask) SetDepends(deps []string) {
-	//Remove duplicateTask
 	st.Dependencies = deps
 }
 
@@ -154,5 +153,15 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 		return ValidationError{Location: st.String() + ".apply", Err: err}
 	}
 
-	return err
+	st.Dependencies, err = st.renderer.Dependencies(
+		st.String()+".dependencies",
+		st.Dependencies,
+		st.RawCheckSource,
+		st.RawApplySource,
+	)
+	if err != nil {
+		return ValidationError{Location: st.String() + ".dependencies", Err: err}
+	}
+
+	return nil
 }

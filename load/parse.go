@@ -115,22 +115,6 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		return n, true
 	})
 
-	// Check that all dependencies were a resources in this module.
-	for _, res := range module.Children() {
-		for _, dep := range res.Depends() {
-			if _, present := names[dep]; !present {
-				errs = append(
-					errs,
-					fmt.Errorf(
-						"Resource %q depends on resource, %q,  which does not exist in this module",
-						res.String(),
-						dep,
-					),
-				)
-			}
-		}
-	}
-
 	if len(errs) == 0 {
 		return module, nil
 	}
