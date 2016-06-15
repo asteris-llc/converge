@@ -50,3 +50,8 @@ func (m *ModuleTask) Validate() error {
 func (m *ModuleTask) Prepare(*Module) error {
 	return nil
 }
+
+// SetName modifies the name of this ModuleTask
+func (m *ModuleTask) SetName(name string) {
+	m.ModuleName = name
+}
