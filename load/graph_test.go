@@ -136,3 +136,22 @@ func TestRequirementsOrdering(t *testing.T) {
 	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.d", paths[0])
 	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.a", paths[len(paths)-2])
 }
+
+func TestGraphValidateDanlingDependencyInvalid(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.NewGraph(&resource.Module{
+		ModuleTask: resource.ModuleTask{
+			ModuleName:   "bad",
+			Dependencies: []string{"nonexistent"},
+		},
+	})
+
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`Resource "module.bad" depends on resource "nonexistent", which does not exist`,
+		)
+	}
+}
