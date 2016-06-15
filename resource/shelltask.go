@@ -168,3 +168,8 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 
 	return nil
 }
+
+// SetName modifies the name of this ShellTask
+func (st *ShellTask) SetName(name string) {
+	st.Name = name
+}

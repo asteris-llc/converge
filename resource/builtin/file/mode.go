@@ -81,6 +81,11 @@ func (m *Mode) SetDepends(new []string) {
 	m.Dependencies = new
 }
 
+// SetName modifies the name of this mode
+func (m *Mode) SetName(name string) {
+	m.Name = name
+}
+
 // Check whether the destination has the right mode
 func (m *Mode) Check() (status string, willChange bool, err error) {
 	stat, err := os.Stat(m.destination)
