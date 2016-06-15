@@ -50,3 +50,8 @@ func (p *Param) Value() Value {
 	}
 	return p.Default
 }
+
+// SetName modifies the name of this param
+func (p *Param) SetName(name string) {
+	p.Name = name
+}

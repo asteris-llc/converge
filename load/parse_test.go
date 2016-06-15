@@ -142,6 +142,22 @@ func TestBadName(t *testing.T) {
 	}
 }
 
+func TestParseFileMode(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(`file.mode "x" {}`))
+	assert.NoError(t, err)
+}
+
+func TestParseAnonymousFileMode(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(`file.mode {}`))
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "At 1:1: file.mode has no name (expected `file.mode \"name\"`)")
+	}
+}
+
 var (
 	basicModule = `
 param "filename" { }
