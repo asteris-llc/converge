@@ -62,10 +62,18 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 
 		log.Printf("[INFO] %s\n", &StatusMessage{Path: path, Status: "applying"})
 
-		result.NewStatus, result.Success, err = task.Apply()
+		err = task.Apply()
 		if err != nil {
 			return err
 		}
+
+		status, willChange, err := task.Check()
+		if err != nil {
+			return err
+		}
+
+		result.NewStatus = status
+		result.Success = !willChange // so if there is no change to be made, we've succeeded
 
 		lock.Lock()
 		defer lock.Unlock()
