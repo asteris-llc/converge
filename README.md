@@ -12,6 +12,7 @@ Converge is a configuration management tool.
         - [Built-in Modules](#built-in-modules)
             - [File](#file)
                 - [Mode](#mode)
+    - [License](#license)
 
 <!-- markdown-toc end -->
 
@@ -152,3 +153,8 @@ file.mode "test" {
   mode = "0644"
 }
 ```
+
+## License
+
+Converge is licensed under the Apache 2.0 license. See [LICENSE](LICENSE) for
+full details.
