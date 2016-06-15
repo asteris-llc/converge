@@ -47,20 +47,14 @@ can be done separately to see what needs to be changed before execution.`,
 		GracefulExit(cancel)
 
 		for _, fname := range args {
+			log.Printf("[INFO] planning %s\n", fname)
+
 			graph, err := load.Load(fname, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			status := make(chan *exec.StatusMessage, 1)
-			go func() {
-				for msg := range status {
-					log.Printf("[INFO] %s: %s: %s\n", fname, msg.Path, msg.Status)
-				}
-				close(status)
-			}()
-
-			results, err := exec.PlanWithStatus(ctx, graph, status)
+			results, err := exec.Plan(ctx, graph)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
