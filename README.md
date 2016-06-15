@@ -8,7 +8,10 @@ Converge is a configuration management tool.
 - [Converge](#converge)
     - [Installation](#installation)
     - [Usage](#usage)
-        - [Writing modules](#writing-modules)
+        - [Writing Modules](#writing-modules)
+        - [Built-in Modules](#built-in-modules)
+            - [File](#file)
+                - [Mode](#mode)
 
 <!-- markdown-toc end -->
 
@@ -49,7 +52,7 @@ Invoke this with `converge apply traefik.hcl` to install Traefik from yum on
 your system. You can also `converge plan traefik.hcl` to see what changes will
 be made before you apply them.
 
-### Writing modules
+### Writing Modules
 
 The content of a simple module is below:
 
@@ -70,8 +73,8 @@ Within a module, you can have tasks. Shown here is a task with two stanzas:
 - `apply` is run to create the resource controlled by this task. You can omit
   this stanza if you want the command to be purely informational.
 
-If the exit code of `check` is non-zero, `apply` will be called. Both of them
-are expected to output current state.
+If the exit code of `check` is non-zero, `apply` will be called, after which
+time `check` will be called again to get the new state and success.
 
 A module can have multiple tasks. It can also have templates, which render data
 to the filesystem from the module's parameters:
@@ -126,3 +129,26 @@ The arguments for the template resource:
 The `task` and `template` blocks are the only ones currently specified. There
 may be more low-level resources in the future as we write more modules and find
 out where they're needed.
+
+### Built-in Modules
+
+Converge ships with a number of built-in modules. These can be used for common
+tasks without having to write your own `task` declarations.
+
+#### File
+
+##### Mode
+
+The `file.mode` module takes two required parameters: 
+
+- `destination`: the file whose permissions should be checked
+- `mode`: the octal mode of the file
+
+Sample:
+
+```hcl
+file.mode "test" {
+  destination = "test.txt"
+  mode = "0644"
+}
+```
