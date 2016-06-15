@@ -12,10 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
-import "github.com/asteris-llc/converge/cmd"
+import (
+	"fmt"
 
-func main() {
-	cmd.Execute()
+	"github.com/spf13/cobra"
+)
+
+// Version describes the version for packaging
+const Version = "0.1.1"
+
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "display the version of " + Name,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(Name + " " + Version)
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(versionCmd)
 }
