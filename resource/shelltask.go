@@ -153,33 +153,15 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 		return ValidationError{Location: st.String() + ".apply", Err: err}
 	}
 
-	// validate and cache dependencies
-	deps := map[string]struct{}{}
-	checkDeps, err := st.renderer.Dependencies(st.String()+".check.dependencies", st.RawCheckSource)
+	st.Dependencies, err = st.renderer.Dependencies(
+		st.String()+".dependencies",
+		st.Dependencies,
+		st.RawCheckSource,
+		st.RawApplySource,
+	)
 	if err != nil {
-		return ValidationError{Location: st.String() + ".check.dependencies", Err: err}
-	}
-	for _, dep := range checkDeps {
-		deps[dep] = struct{}{}
+		return ValidationError{Location: st.String() + ".dependencies", Err: err}
 	}
 
-	applyDeps, err := st.renderer.Dependencies(st.String()+".apply.dependencies", st.RawApplySource)
-	if err != nil {
-		return ValidationError{Location: st.String() + ".apply.dependencies", Err: err}
-	}
-	for _, dep := range applyDeps {
-		deps[dep] = struct{}{}
-	}
-
-	// add the already known deps
-	for _, dep := range st.Dependencies {
-		deps[dep] = struct{}{}
-	}
-
-	st.Dependencies = []string{}
-	for dep := range deps {
-		st.Dependencies = append(st.Dependencies, dep)
-	}
-
-	return err
+	return nil
 }

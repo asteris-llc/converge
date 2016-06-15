@@ -57,9 +57,12 @@ func (r *Renderer) Render(name, source string) (string, error) {
 }
 
 // Dependencies inside the template string
-func (r *Renderer) Dependencies(name, source string) ([]string, error) {
+func (r *Renderer) Dependencies(name string, base []string, sources ...string) ([]string, error) {
 	var (
-		deps  []string
+		out []string
+
+		deps = map[string]struct{}{}
+
 		funcs = map[string]interface{}{
 			"param": func(name string) (string, error) {
 				param, ok := r.ctx.Params()[name]
@@ -67,21 +70,34 @@ func (r *Renderer) Dependencies(name, source string) ([]string, error) {
 					return "", fmt.Errorf("no such param %q", name)
 				}
 
-				deps = append(deps, param.String())
+				deps[param.String()] = struct{}{}
 
 				return "", nil
 			},
 		}
 	)
 
-	tmpl, err := template.New(name).Funcs(funcs).Parse(source)
-	if err != nil {
-		return nil, err
+	// add the already known deps
+	for _, dep := range base {
+		deps[dep] = struct{}{}
 	}
 
-	err = tmpl.Execute(ioutil.Discard, r.ctx)
+	for _, source := range sources {
+		tmpl, err := template.New(name).Funcs(funcs).Parse(source)
+		if err != nil {
+			return out, err
+		}
 
-	return deps, err
+		if tmpl.Execute(ioutil.Discard, r.ctx) != nil {
+			return out, err
+		}
+	}
+
+	for dep := range deps {
+		out = append(out, dep)
+	}
+
+	return out, nil
 }
 
 // Template Functions
