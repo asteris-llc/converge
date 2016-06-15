@@ -91,9 +91,25 @@ func (t *Template) Prepare(parent *Module) (err error) {
 	// check the rendered input is good
 	t.content, err = t.renderer.Render(t.String()+".content", t.RawContent)
 	if err != nil {
-		return err
+		return ValidationError{Location: t.String() + ".content", Err: err}
 	}
 
+	// check the rendered destination
 	t.destination, err = t.renderer.Render(t.String()+".destination", t.RawDestination)
-	return err
+	if err != nil {
+		return ValidationError{Location: t.String() + ".destination", Err: err}
+	}
+
+	// get param dependencies
+	t.Dependencies, err = t.renderer.Dependencies(
+		t.String()+".dependencies",
+		t.Dependencies,
+		t.RawContent,
+		t.RawDestination,
+	)
+	if err != nil {
+		return ValidationError{Location: t.String() + ".dependencies", Err: err}
+	}
+
+	return nil
 }
