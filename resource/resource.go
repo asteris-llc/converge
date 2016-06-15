@@ -25,7 +25,7 @@ type Monitor interface {
 // checks pass.
 type Task interface {
 	Monitor
-	Apply() (string, bool, error)
+	Apply() error
 }
 
 // Resource adds metadata about the executed tasks

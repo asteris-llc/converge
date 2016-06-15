@@ -67,18 +67,22 @@ func (t *Template) Check() (string, bool, error) {
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (t *Template) Apply() (string, bool, error) {
+func (t *Template) Apply() error {
 	err := ioutil.WriteFile(t.destination, []byte(t.content), 0600)
 	if err != nil {
-		return "", false, err
+		return err
 	}
 
 	actual, err := ioutil.ReadFile(t.destination)
 	if err != nil {
-		return "", false, err
+		return err
 	}
 
-	return string(actual), t.content == string(actual), err
+	if t.content != string(actual) {
+		return fmt.Errorf("planned content does not match on-disk content")
+	}
+
+	return nil
 }
 
 // Prepare this module for use
