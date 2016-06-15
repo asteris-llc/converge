@@ -82,7 +82,7 @@ func (g *Graph) load() error {
 		}
 	}
 
-	return g.graph.Validate()
+	return g.Validate()
 }
 
 func (g *Graph) String() string {
@@ -181,4 +181,34 @@ func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 	}
 
 	return parent, nil
+}
+
+// Validate this graph
+func (g *Graph) Validate() error {
+	err := g.graph.Validate()
+	if err != nil {
+		return err
+	}
+
+	root, err := g.graph.Root()
+	if err != nil {
+		return err
+	}
+
+	return g.graph.DepthFirstWalk(
+		[]dag.Vertex{root},
+		func(path dag.Vertex, _ int) error {
+			for _, dep := range g.graph.DownEdges(path).List() {
+				if !g.graph.HasVertex(dep) {
+					return fmt.Errorf(
+						"Resource %q depends on resource %q, which does not exist",
+						path,
+						dep,
+					)
+				}
+			}
+
+			return nil
+		},
+	)
 }

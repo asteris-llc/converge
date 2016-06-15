@@ -80,18 +80,6 @@ func TestAutoDependencies(t *testing.T) {
 
 }
 
-func TestSameNameDependencies_Wrong(t *testing.T) {
-	t.Parallel()
-	_, err := load.Parse([]byte(sameNameDependenciesWrong))
-	assert.Error(t, err)
-}
-
-func TestSameNameDependencies_Right(t *testing.T) {
-	t.Parallel()
-	_, err := load.Parse([]byte(sameNameDependenciesRight))
-	assert.NoError(t, err)
-}
-
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
@@ -221,40 +209,6 @@ task "permission" {
 		apply = ""
 	}
 
-`
-
-	sameNameDependenciesWrong = `
-	template "a" {
-		content = ""
-	}
-
-	task "a" {
-		check = ""
-		apply = ""
-	}
-
-	task "c" {
-		check = ""
-		apply = ""
-		depends = ["a"]
-	}
-`
-
-	sameNameDependenciesRight = `
-	template "a" {
-		content = ""
-	}
-
-	task "a" {
-		check = ""
-		apply = ""
-	}
-
-	task "c" {
-		check = ""
-		apply = ""
-		depends = ["template.a"]
-	}
 `
 
 	duplicateParam = `
