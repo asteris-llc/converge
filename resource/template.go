@@ -91,9 +91,42 @@ func (t *Template) Prepare(parent *Module) (err error) {
 	// check the rendered input is good
 	t.content, err = t.renderer.Render(t.String()+".content", t.RawContent)
 	if err != nil {
-		return err
+		return ValidationError{Location: t.String() + ".content", Err: err}
 	}
 
+	// check the rendered destination
 	t.destination, err = t.renderer.Render(t.String()+".destination", t.RawDestination)
-	return err
+	if err != nil {
+		return ValidationError{Location: t.String() + ".destination", Err: err}
+	}
+
+	// get param dependencies
+	deps := map[string]struct{}{}
+	contentDeps, err := t.renderer.Dependencies(t.String()+".content.dependencies", t.RawContent)
+	if err != nil {
+		return ValidationError{Location: t.String() + ".content.dependencies", Err: err}
+	}
+	for _, dep := range contentDeps {
+		deps[dep] = struct{}{}
+	}
+
+	destinationDeps, err := t.renderer.Dependencies(t.String()+".destination.dependencies", t.RawDestination)
+	if err != nil {
+		return ValidationError{Location: t.String() + ".destination.dependencies", Err: err}
+	}
+	for _, dep := range destinationDeps {
+		deps[dep] = struct{}{}
+	}
+
+	// add the already known deps
+	for _, dep := range t.Dependencies {
+		deps[dep] = struct{}{}
+	}
+
+	t.Dependencies = []string{}
+	for dep := range deps {
+		t.Dependencies = append(t.Dependencies, dep)
+	}
+
+	return nil
 }
