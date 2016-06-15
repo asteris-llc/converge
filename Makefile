@@ -1,5 +1,5 @@
-NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' main.go)
-VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' main.go)
+NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
+VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
 TESTDIRS = $(shell find . -name '*_test.go' | cut -d/ -f1-2 | uniq | grep -v vendor)
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
 

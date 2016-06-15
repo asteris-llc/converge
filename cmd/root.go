@@ -24,11 +24,14 @@ import (
 
 var cfgFile string
 
+// Name describes the name for packaging
+const Name = "converge"
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "converge",
-	Short: "converge applies changes to systems over a graph",
-	Long: `converge is a tool that reads modules files (see the samples directory
+	Use:   Name,
+	Short: Name + " applies changes to systems over a graph",
+	Long: Name + ` is a tool that reads modules files (see the samples directory
 in the source) and applies their actions to a system.
 
 The workflow generally looks like this:
