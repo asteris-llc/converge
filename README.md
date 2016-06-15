@@ -10,8 +10,8 @@ Converge is a configuration management tool.
     - [Usage](#usage)
         - [Writing Modules](#writing-modules)
         - [Built-in Modules](#built-in-modules)
-            - [File](#file)
-                - [Mode](#mode)
+            - [File Modules](#file-modules)
+                - [Mode (file.mode)](#mode-filemode)
     - [License](#license)
 
 <!-- markdown-toc end -->
@@ -136,9 +136,9 @@ out where they're needed.
 Converge ships with a number of built-in modules. These can be used for common
 tasks without having to write your own `task` declarations.
 
-#### File
+#### File Modules
 
-##### Mode
+##### Mode (file.mode)
 
 The `file.mode` module takes two required parameters: 
 
