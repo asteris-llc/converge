@@ -66,7 +66,7 @@ func TestOwnerValidate(t *testing.T) {
 	require.Error(t, o.Prepare(nil))
 }
 
-//TestApply : Will fail without sudo permisions
+//TestApply Checks if the owner will change.
 func TestOwnerApply(t *testing.T) {
 	helpers.InTempDir(t, func() {
 		err := ioutil.WriteFile("x", []byte{}, 0755)
@@ -78,7 +78,8 @@ func TestOwnerApply(t *testing.T) {
 		o.Apply()
 		status, willChange, err := o.Check()
 
-		if isSudo := os.Geteuid(); isSudo != 0 {
+		//Should fail if not root
+		if isSu := os.Geteuid(); isSu != 0 {
 			assert.NoError(t, err)
 			assert.True(t, willChange)
 			assert.Equal(t, "david", status)
