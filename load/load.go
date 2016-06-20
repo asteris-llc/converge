@@ -104,7 +104,9 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 	}
 
 	if root != nil && !path.IsAbs(url.Path) {
-		url.Path = path.Join(path.Dir(root.Path), url.Path)
+		path := path.Join(path.Dir(root.Path), url.Path)
+		*url = *root // shallow copy of root to url
+		url.Path = path
 	}
 
 	var content []byte
