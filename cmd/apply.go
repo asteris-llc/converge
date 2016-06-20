@@ -49,33 +49,19 @@ real happens.`,
 
 		// iterate over modules
 		for _, fname := range args {
+			log.Printf("[INFO] applying %s\n", fname)
+
 			graph, err := load.Load(fname, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			planStatus := make(chan *exec.StatusMessage, 1)
-			go func() {
-				for msg := range planStatus {
-					log.Printf("[INFO] %s: %s: %s\n", fname, msg.Path, msg.Status)
-				}
-				close(planStatus)
-			}()
-
-			plan, err := exec.PlanWithStatus(ctx, graph, planStatus)
+			plan, err := exec.Plan(ctx, graph)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			status := make(chan *exec.StatusMessage, 1)
-			go func() {
-				for msg := range status {
-					log.Printf("[INFO] %s: %s: %s\n", fname, msg.Path, msg.Status)
-				}
-				close(status)
-			}()
-
-			results, err := exec.ApplyWithStatus(ctx, graph, plan, status)
+			results, err := exec.Apply(ctx, graph, plan)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}

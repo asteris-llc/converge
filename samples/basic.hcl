@@ -8,5 +8,5 @@ param "filename" {
 
 task "render" {
   check = "cat {{param `filename`}} | tee /dev/stderr | grep -q '{{param `message`}}'"
-  apply = "echo '{{param `message`}}' > {{param `filename`}} && cat {{param `filename`}}"
+  apply = "echo '{{param `message`}}' > {{param `filename`}}"
 }
