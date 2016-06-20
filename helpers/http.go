@@ -51,7 +51,7 @@ func HTTPServeFile(filePath string) (address string, stop func(), err error) {
 		port := rand.Intn(65535-49151) + 49151
 
 		// start an HTTP server on that port
-		server := server.New(ctx)
+		server := server.NewContextServer(ctx)
 		errors := make(chan error)
 
 		go func(errors chan error) {

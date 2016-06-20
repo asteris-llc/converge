@@ -39,12 +39,12 @@ func init() {
 	mux.HandleFunc("/ping", testServeFunc)
 }
 
-func TestServerListenAndServe(t *testing.T) {
+func TestContextServerListenAndServe(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	server := server.New(ctx)
+	server := server.NewContextServer(ctx)
 	go func() {
 		err := server.ListenAndServe("localhost:18080", mux)
 		assert.NoError(t, err)
