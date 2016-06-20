@@ -26,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/server"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testServeFunc(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +51,10 @@ func TestContextServerListenAndServe(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
+	time.Sleep(500 * time.Millisecond)
+
 	resp, err := http.Get("http://localhost:18080/ping")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	val, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err)
