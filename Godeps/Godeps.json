@@ -16,6 +16,11 @@
 			"Rev": "8f7bde0f0de4cb42c1e8db861e67627558e97019"
 		},
 		{
+			"ImportPath": "github.com/braintree/manners",
+			"Comment": "0.4.0-15-g82a8879",
+			"Rev": "82a8879fc5fd0381fa8b2d8033b19bf255252088"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
