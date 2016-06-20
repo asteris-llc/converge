@@ -24,15 +24,16 @@ import (
 	"time"
 )
 
-// HTTPServeFile serves a single file on a random port, returning the port it
-// chose.
-func HTTPServeFile(filePath string) (int, error) {
+// HTTPServeFile serves a single file on a random port, returning the fully
+// qualified path to the file
+func HTTPServeFile(filePath string) (string, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	http.HandleFunc(path.Join("/", path.Base(filePath)), func(w http.ResponseWriter, r *http.Request) {
+	basename := path.Base(filePath)
+	http.HandleFunc(path.Join("/"), func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, path.Base(filePath), time.Now(), f)
 	})
 
@@ -51,8 +52,8 @@ func HTTPServeFile(filePath string) (int, error) {
 		select {
 		case <-errors:
 		case <-time.After(dur):
-			return port, nil
+			return fmt.Sprintf("http://localhost:%v/%v", port, basename), nil
 		}
 	}
-	return 0, errors.New("Couldn't find port to listen on")
+	return "", errors.New("Couldn't find port to listen on")
 }

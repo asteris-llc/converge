@@ -60,10 +60,9 @@ func TestLoadFileModule(t *testing.T) {
 func TestLoadHTTPModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
-	port, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	URI, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
 	assert.NoError(t, err)
-	serverAddress := fmt.Sprintf("http://localhost:%v/basic.hcl", port)
 
-	_, err = load.Load(serverAddress, resource.Values{})
+	_, err = load.Load(URI, resource.Values{})
 	assert.NoError(t, err)
 }
