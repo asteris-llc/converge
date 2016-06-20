@@ -28,10 +28,10 @@ type Server struct {
 	ctx context.Context
 }
 
-// NewServer constructs and returns a server. Mux has the same meaning as in the
+// New constructs and returns a server. Mux has the same meaning as in the
 // standard HTTP package (that is, if nil it will use the globally registered
 // handlers)
-func NewServer(ctx context.Context) *Server {
+func New(ctx context.Context) *Server {
 	return &Server{ctx}
 }
 
