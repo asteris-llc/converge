@@ -105,10 +105,7 @@ func TestShellTaskApplySuccess(t *testing.T) {
 	}
 	assert.NoError(t, st.Prepare(&resource.Module{}))
 
-	new, success, err := st.Apply()
-	assert.Equal(t, "test\n", new)
-	assert.True(t, success)
-	assert.NoError(t, err)
+	assert.NoError(t, st.Apply())
 }
 
 func TestShellTaskApplyError(t *testing.T) {
@@ -119,8 +116,78 @@ func TestShellTaskApplyError(t *testing.T) {
 	}
 	assert.NoError(t, st.Prepare(&resource.Module{}))
 
-	new, success, err := st.Apply()
-	assert.Equal(t, "bad\n", new)
-	assert.False(t, success)
-	assert.NoError(t, err)
+	err := st.Apply()
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`exit code 256, output: "bad\n"`,
+		)
+	}
+}
+
+func TestShellTaskApplyDependencies(t *testing.T) {
+	t.Parallel()
+
+	var (
+		param = &resource.Param{
+			Name: "test",
+		}
+
+		st = &resource.ShellTask{
+			RawApplySource: "{{param `test`}}",
+		}
+
+		mod = &resource.Module{
+			Resources: []resource.Resource{
+				param,
+				st,
+			},
+			RenderedArgs: resource.Values{
+				"test": resource.Value("test"),
+			},
+		}
+	)
+
+	assert.NoError(t, param.Prepare(mod))
+	assert.NoError(t, st.Prepare(mod))
+
+	assert.Equal(
+		t,
+		[]string{"param.test"},
+		st.Depends(),
+	)
+}
+
+func TestShellTaskCheckDependencies(t *testing.T) {
+	t.Parallel()
+
+	var (
+		param = &resource.Param{
+			Name: "test",
+		}
+
+		st = &resource.ShellTask{
+			RawCheckSource: "{{param `test`}}",
+		}
+
+		mod = &resource.Module{
+			Resources: []resource.Resource{
+				param,
+				st,
+			},
+			RenderedArgs: resource.Values{
+				"test": resource.Value("test"),
+			},
+		}
+	)
+
+	assert.NoError(t, param.Prepare(mod))
+	assert.NoError(t, st.Prepare(mod))
+
+	assert.Equal(
+		t,
+		[]string{"param.test"},
+		st.Depends(),
+	)
 }

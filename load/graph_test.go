@@ -21,7 +21,6 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/awalterschulze/gographviz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,7 +119,7 @@ func TestRequirementsOrdering(t *testing.T) {
 	*/
 	defer (helpers.HideLogs(t))()
 
-	graph, err := load.Load("../samples/requirementsOrderDiamond.hcl", resource.Values{})
+	graph, err := load.Load("../samples/testdata/requirementsOrderDiamond.hcl", resource.Values{})
 	require.NoError(t, err)
 
 	lock := new(sync.Mutex)
@@ -138,12 +137,21 @@ func TestRequirementsOrdering(t *testing.T) {
 	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.a", paths[len(paths)-2])
 }
 
-func TestValidGraphString(t *testing.T) {
-	defer (helpers.HideLogs(t))()
+func TestGraphValidateDanlingDependencyInvalid(t *testing.T) {
+	t.Parallel()
 
-	graph, err := load.Load("../samples/sourceFile.hcl", resource.Values{})
-	assert.NoError(t, err)
+	_, err := load.NewGraph(&resource.Module{
+		ModuleTask: resource.ModuleTask{
+			ModuleName:   "bad",
+			Dependencies: []string{"nonexistent"},
+		},
+	})
 
-	_, err = gographviz.Read([]byte(graph.GraphString()))
-	assert.NoError(t, err)
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`Resource "module.bad" depends on resource "nonexistent", which does not exist`,
+		)
+	}
 }

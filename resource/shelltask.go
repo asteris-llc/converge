@@ -67,7 +67,6 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 
 //SetDepends overwrites the Dependencies of this resource
 func (st *ShellTask) SetDepends(deps []string) {
-	//Remove duplicateTask
 	st.Dependencies = deps
 }
 
@@ -83,9 +82,12 @@ func (st *ShellTask) Check() (string, bool, error) {
 }
 
 // Apply (plus Check) satisfies the Task interface
-func (st *ShellTask) Apply() (string, bool, error) {
+func (st *ShellTask) Apply() error {
 	out, code, err := st.exec(st.applySource)
-	return out, code == 0, err
+	if code != 0 {
+		return fmt.Errorf("exit code %d, output: %q", code, out)
+	}
+	return err
 }
 
 func (st *ShellTask) exec(script string) (out string, code uint32, err error) {
@@ -154,5 +156,20 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 		return ValidationError{Location: st.String() + ".apply", Err: err}
 	}
 
-	return err
+	st.Dependencies, err = st.renderer.Dependencies(
+		st.String()+".dependencies",
+		st.Dependencies,
+		st.RawCheckSource,
+		st.RawApplySource,
+	)
+	if err != nil {
+		return ValidationError{Location: st.String() + ".dependencies", Err: err}
+	}
+
+	return nil
+}
+
+// SetName modifies the name of this ShellTask
+func (st *ShellTask) SetName(name string) {
+	st.Name = name
 }
