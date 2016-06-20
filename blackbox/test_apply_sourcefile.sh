@@ -2,6 +2,7 @@
 set -eo pipefail
 
 ROOT=$(pwd)
+SOURCE=${1:-${ROOT}/samples/sourceFile.hcl}
 
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
@@ -11,7 +12,7 @@ trap finish EXIT
 
 pushd $TMP
 
-$ROOT/converge apply -p "message=x" $ROOT/samples/sourceFile.hcl
+$ROOT/converge apply -p "message=x" $SOURCE
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"
