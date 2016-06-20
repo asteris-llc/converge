@@ -60,9 +60,17 @@ func TestLoadFileModule(t *testing.T) {
 func TestLoadHTTPModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
-	URI, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	sfs, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+
+	// clean up when we're done testing
+	defer func(sfs *helpers.SingleFileServer) {
+		if sfs != nil {
+			sfs.Stop()
+		}
+	}(sfs)
+
 	assert.NoError(t, err)
 
-	_, err = load.Load(URI, resource.Values{})
+	_, err = load.Load(sfs.URL(), resource.Values{})
 	assert.NoError(t, err)
 }
