@@ -28,8 +28,9 @@ import (
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
-	Use:   "server",
-	Short: "serve content over HTTP(S)",
+	Use:     "server",
+	Short:   "serve content over HTTP(S)",
+	Aliases: []string{"serve"},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// check HTTPS
 		if viper.GetBool("https") {
