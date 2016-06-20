@@ -18,42 +18,99 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"path"
 	"time"
 )
 
-// HTTPServeFile serves a single file on a random port, returning the fully
-// qualified path to the file
-func HTTPServeFile(filePath string) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
+type Stoppable interface {
+	Serve() error
+	Stop() error
+	URL() error
+}
 
-	basename := path.Base(filePath)
-	http.HandleFunc(path.Join("/"), func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, path.Base(filePath), time.Now(), f)
+// StoppableHTTP is an HTTP server that can be stopped.
+type StoppableHTTP struct {
+	Server   *http.Server // http server to listen with
+	listener net.Listener // listener to close
+}
+
+// Serve starts the HTTP server. It should generally be called in its own
+// goroutine.
+func (s *StoppableHTTP) Serve() (err error) {
+	s.listener, err = net.Listen("tcp", s.Server.Addr)
+	if err != nil {
+		return
+	}
+	return s.Server.Serve(s.listener)
+}
+
+// Stop closes the underlying listener, effectively killing the server
+func (s *StoppableHTTP) Stop() error {
+	return s.listener.Close()
+}
+
+// URL returns the URL that the server would listen on/is listening on.
+func (s *StoppableHTTP) URL() string {
+	return s.Server.Addr
+}
+
+// SingleFileServer is a Stoppable server that serves a single static file.
+type SingleFileServer struct {
+	Path      string
+	Port      int
+	server    *http.Server
+	stoppable *StoppableHTTP
+}
+
+// Serve satisfies the Stoppable interface
+func (sfs *SingleFileServer) Serve() error {
+	f, err := os.Open(sfs.Path)
+	if err != nil {
+		return err
+	}
+	http.HandleFunc(path.Join("/", path.Base(sfs.Path)), func(w http.ResponseWriter, r *http.Request) {
+		http.ServeContent(w, r, path.Base(sfs.Path), time.Now(), f)
 	})
 
+	sfs.server = &http.Server{Addr: fmt.Sprintf(":%v", sfs.Port)}
+	sfs.stoppable = &StoppableHTTP{Server: sfs.server}
+	return sfs.stoppable.Serve()
+}
+
+// Stop satisfies the Stoppable interface
+func (sfs *SingleFileServer) Stop() error {
+	return sfs.stoppable.Stop()
+}
+
+// URL satisfies the Stoppable interface
+func (sfs *SingleFileServer) URL() string {
+	return fmt.Sprintf("http://localhost:%v/%v", sfs.Port, path.Base(sfs.Path))
+}
+
+// HTTPServeFile constructs a SingleFileServer on a random port, returning that
+// server.
+func HTTPServeFile(filePath string) (sfs *SingleFileServer, err error) {
 	for tries := 5; tries > 0; tries-- {
 		// get a random port in the IANA dynamic/ephemeral range
 		port := rand.Intn(65535-49151) + 49151
 
 		// start an HTTP server on that port
 		errors := make(chan error)
-		go func(errors chan error) {
-			errors <- http.ListenAndServe(fmt.Sprintf(":%v", port), nil)
-		}(errors)
+		sfs := &SingleFileServer{Port: port, Path: filePath}
+		go func(stoppable *SingleFileServer, errors chan error) {
+			errors <- stoppable.Serve()
+		}(sfs, errors)
 
 		// if it hasn't terminated in .1s, assume it's listening
 		dur, _ := time.ParseDuration(".1s")
 		select {
 		case <-errors:
 		case <-time.After(dur):
-			return fmt.Sprintf("http://localhost:%v/%v", port, basename), nil
+			return sfs, nil
 		}
 	}
-	return "", errors.New("Couldn't find port to listen on")
+	return sfs, errors.New("Couldn't find port to listen on")
 }
