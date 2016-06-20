@@ -15,11 +15,12 @@
 package load
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/awalterschulze/gographviz"
 	"github.com/hashicorp/terraform/dag"
 )
 
@@ -81,7 +82,7 @@ func (g *Graph) load() error {
 		}
 	}
 
-	return g.graph.Validate()
+	return g.Validate()
 }
 
 func (g *Graph) String() string {
@@ -89,64 +90,64 @@ func (g *Graph) String() string {
 }
 
 // GraphString returns the loaded graph as a GraphViz string
-func (g *Graph) GraphString() string {
+func (g *Graph) GraphString() (*bytes.Buffer, error) {
+	buf := new(bytes.Buffer)
 
-	//Create Graph
-	graphViz := gographviz.NewGraph()
-	graphName := escape(g.root.String())
-	graphViz.SetName(graphName)
-	graphViz.SetDir(true)
+	// create graph
+	fmt.Fprintf(buf, "digraph %q {\n", g.root)
+	defer buf.WriteString("}")
 
-	//Add all Nodes and Edges
-	for _, node := range g.graph.Vertices() {
-		attrs := map[string]string{"label": escape(g.resources[node.(string)].String())}
-		graphViz.AddNode(graphName, escape(node.(string)), attrs)
-	}
-	for _, edge := range g.graph.Edges() {
-		graphViz.AddEdge(escape(edge.Source().(string)), escape(edge.Target().(string)), true, nil)
-	}
+	lock := new(sync.Mutex)
 
-	//Create Subgraphs
-	var subGraphFromModule func(rootID string, mod *resource.Module)
-	subGraphFromModule = func(rootID string, mod *resource.Module) {
-		rootID = genID(rootID, mod.String()) //ID of this resource
-		var (
-			name     = "cluster_module_" + mod.String() //name of this cluster. "cluster_" prefix required
-			children = mod.Children()                   //resources in this module
-		)
-		//Make sure to include this node in the graph
-		graphViz.AddNode(name, escape(rootID), nil)
-		for i := 0; i < len(children)-1; i++ {
-			current := escape(genID(rootID, children[i].String()))
-			nxtChild := escape(genID(rootID, children[i+1].String()))
+	err := g.Walk(func(path string, res resource.Resource) error {
+		lock.Lock()
+		defer lock.Unlock()
 
-			//Using a switch case in case different resources get different attributes
-			switch v := children[i].(type) {
-			case *resource.Module:
-				subGraphFromModule(rootID, v)
-				graphViz.AddSubGraph(name, "cluster_module_"+v.String(), nil)
+		parent, ok := res.(resource.Parent)
+		if !ok {
+			return nil
+		}
+
+		label := path
+		if path == g.root.String() {
+			label += " (root)"
+		}
+
+		fmt.Fprintf(buf, "\tsubgraph \"cluster_%s\" {\n", path)
+		fmt.Fprintf(buf, "\t\t%q[label=%q,shape=box];\n", path, label)
+		defer fmt.Fprintf(buf, "\t}\n\n")
+
+		for _, child := range parent.Children() {
+			var color string
+			switch child.(type) {
+			case *resource.Param:
+				color = "blue"
+			default:
+				color = "black"
 			}
-			graphViz.AddNode(name, current, nil)
-			graphViz.AddNode(name, nxtChild, nil)
-			graphViz.AddEdge(current, nxtChild, true, nil)
+
+			fmt.Fprintf(
+				buf,
+				"\t\t%q[label=%q,color=%q];\n",
+				genID(path, child.String()),
+				child,
+				color,
+			)
 		}
+
+		return nil
+	})
+
+	if err != nil {
+		return buf, err // this shouldn't ever happen. But just so we know if it *does*...
 	}
 
-	//Add a cluster
-	for _, res := range g.root.Children() {
-		if mod, ok := res.(*resource.Module); ok {
-			subGraphFromModule(g.root.String(), mod)
-			graphViz.AddSubGraph(graphName, "cluster_module_"+mod.String(), nil)
-		}
+	// add edges
+	for _, edge := range g.graph.Edges() {
+		fmt.Fprintf(buf, "\t%q -> %q;\n", edge.Source(), edge.Target())
 	}
 
-	//Set Attributes for Subgraphs
-	for name, sub := range graphViz.SubGraphs.SubGraphs {
-		sub.Attrs.Add("style", "filled")
-		sub.Attrs.Add("color", "lightgrey")
-		sub.Attrs.Add("label", name)
-	}
-	return graphViz.String()
+	return buf, nil
 }
 
 func escape(str string) string {
@@ -180,4 +181,34 @@ func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 	}
 
 	return parent, nil
+}
+
+// Validate this graph
+func (g *Graph) Validate() error {
+	err := g.graph.Validate()
+	if err != nil {
+		return err
+	}
+
+	root, err := g.graph.Root()
+	if err != nil {
+		return err
+	}
+
+	return g.graph.DepthFirstWalk(
+		[]dag.Vertex{root},
+		func(path dag.Vertex, _ int) error {
+			for _, dep := range g.graph.DownEdges(path).List() {
+				if !g.graph.HasVertex(dep) {
+					return fmt.Errorf(
+						"Resource %q depends on resource %q, which does not exist",
+						path,
+						dep,
+					)
+				}
+			}
+
+			return nil
+		},
+	)
 }

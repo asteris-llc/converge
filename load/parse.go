@@ -19,6 +19,7 @@ import (
 	"regexp"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/builtin/file"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
@@ -60,7 +61,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 			switch token {
 			case "task":
-				res, err = parseTask(item)
+				res, err = parseNamedResource(new(resource.ShellTask), item)
 				if err != nil {
 					break
 				}
@@ -73,14 +74,17 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 				}
 				previousTaskName = res.String()
 
-			case "template":
-				res, err = parseTemplate(item)
-
 			case "module":
 				res, err = parseModuleCall(item)
 
+			case "template":
+				res, err = parseNamedResource(new(resource.Template), item)
+
 			case "param":
-				res, err = parseParam(item)
+				res, err = parseNamedResource(new(resource.Param), item)
+
+			case "file.mode":
+				res, err = parseNamedResource(new(file.Mode), item)
 
 			default:
 				err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
@@ -115,88 +119,10 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 		return n, true
 	})
 
-	// Check that all dependencies were a resources in this module.
-	for _, res := range module.Children() {
-		for _, dep := range res.Depends() {
-			if _, present := names[dep]; !present {
-				errs = append(
-					errs,
-					fmt.Errorf(
-						"Resource %q depends on resource, %q,  which does not exist in this module",
-						res.String(),
-						dep,
-					),
-				)
-			}
-		}
-	}
-
 	if len(errs) == 0 {
 		return module, nil
 	}
 	return module, errs
-}
-
-func parseParam(item *ast.ObjectItem) (p *resource.Param, err error) {
-	/*
-		ideal input:
-
-		param "x" { default = "y" }
-	*/
-	if len(item.Keys) < 2 {
-		err = &ParseError{item.Pos(), "param has no name (expected `param \"name\"`)"}
-		return
-	}
-
-	p = &resource.Param{
-		Name: item.Keys[1].Token.Value().(string),
-	}
-	err = hcl.DecodeObject(p, item.Val)
-	return
-}
-
-func parseTask(item *ast.ObjectItem) (t *resource.ShellTask, err error) {
-	/*
-		ideal input:
-
-		task "x" {
-			check = "y"
-			apply = "z"
-			depends = [""]
-		}
-	*/
-	if len(item.Keys) < 2 {
-		err = &ParseError{item.Pos(), "task has no name (expected `task \"name\"`)"}
-		return
-	}
-
-	t = new(resource.ShellTask)
-	err = hcl.DecodeObject(t, item.Val)
-	t.Name = item.Keys[1].Token.Value().(string)
-
-	return
-}
-
-func parseTemplate(item *ast.ObjectItem) (t *resource.Template, err error) {
-	/*
-		ideal input:
-
-		template "x" {
-			content = "y"
-			destination = "z"
-			depends = [""]
-		}
-	*/
-	if len(item.Keys) < 2 {
-		err = &ParseError{item.Pos(), "template has no name (expected `template \"name\"`)"}
-		return
-	}
-
-	t = new(resource.Template)
-	t.Name = item.Keys[1].Token.Value().(string)
-	err = hcl.DecodeObject(t, item.Val)
-
-	return
 }
 
 func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err error) {
@@ -222,4 +148,22 @@ func parseModuleCall(item *ast.ObjectItem) (module *resource.ModuleTask, err err
 	module.Source = item.Keys[1].Token.Value().(string)
 	module.ModuleName = item.Keys[2].Token.Value().(string)
 	return module, err
+}
+
+func parseNamedResource(base resource.Resource, item *ast.ObjectItem) (resource.Resource, error) {
+	if len(item.Keys) < 2 {
+		return nil, &ParseError{
+			item.Pos(),
+			fmt.Sprintf(
+				"%s has no name (expected `%s \"name\"`)",
+				item.Keys[0].Token.Value(),
+				item.Keys[0].Token.Value(),
+			),
+		}
+	}
+
+	err := hcl.DecodeObject(base, item.Val)
+	base.SetName(item.Keys[1].Token.Value().(string))
+
+	return base, err
 }

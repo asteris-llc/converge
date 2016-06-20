@@ -80,18 +80,6 @@ func TestAutoDependencies(t *testing.T) {
 
 }
 
-func TestSameNameDependencies_Wrong(t *testing.T) {
-	t.Parallel()
-	_, err := load.Parse([]byte(sameNameDependenciesWrong))
-	assert.Error(t, err)
-}
-
-func TestSameNameDependencies_Right(t *testing.T) {
-	t.Parallel()
-	_, err := load.Parse([]byte(sameNameDependenciesRight))
-	assert.NoError(t, err)
-}
-
 func TestParseAnonymousParam(t *testing.T) {
 	t.Parallel()
 
@@ -151,6 +139,22 @@ func TestBadName(t *testing.T) {
 	_, err := load.Parse([]byte(badName))
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, `At 2:1: invalid name "task.a b"`)
+	}
+}
+
+func TestParseFileMode(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(`file.mode "x" {}`))
+	assert.NoError(t, err)
+}
+
+func TestParseAnonymousFileMode(t *testing.T) {
+	t.Parallel()
+
+	_, err := load.Parse([]byte(`file.mode {}`))
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "At 1:1: file.mode has no name (expected `file.mode \"name\"`)")
 	}
 }
 
@@ -221,40 +225,6 @@ task "permission" {
 		apply = ""
 	}
 
-`
-
-	sameNameDependenciesWrong = `
-	template "a" {
-		content = ""
-	}
-
-	task "a" {
-		check = ""
-		apply = ""
-	}
-
-	task "c" {
-		check = ""
-		apply = ""
-		depends = ["a"]
-	}
-`
-
-	sameNameDependenciesRight = `
-	template "a" {
-		content = ""
-	}
-
-	task "a" {
-		check = ""
-		apply = ""
-	}
-
-	task "c" {
-		check = ""
-		apply = ""
-		depends = ["template.a"]
-	}
 `
 
 	duplicateParam = `
