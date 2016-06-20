@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var samplesDir string
@@ -54,5 +55,16 @@ func TestLoadFileModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
 	_, err := load.Load(path.Join(samplesDir, "sourceFile.hcl"), resource.Values{})
+	assert.NoError(t, err)
+}
+
+func TestLoadHTTPModule(t *testing.T) {
+	defer (helpers.HideLogs(t))()
+
+	server, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	require.NoError(t, err)
+	defer server.Stop() // clean up when we're done testing
+
+	_, err = load.Load(server.URL(), resource.Values{})
 	assert.NoError(t, err)
 }
