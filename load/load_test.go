@@ -61,10 +61,10 @@ func TestLoadFileModule(t *testing.T) {
 func TestLoadHTTPModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
-	server, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	addr, cancel, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	defer cancel()
 	require.NoError(t, err)
-	defer server.Stop() // clean up when we're done testing
 
-	_, err = load.Load(server.URL(), resource.Values{})
+	_, err = load.Load(addr, resource.Values{})
 	assert.NoError(t, err)
 }
