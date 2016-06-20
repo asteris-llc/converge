@@ -111,9 +111,7 @@ func loadAny(root *url.URL, source string) (*resource.Module, error) {
 	switch url.Scheme {
 	case "file":
 		content, err = FromFile(url.Path)
-	case "http":
-		fallthrough
-	case "https":
+	case "http", "https":
 		content, err = FromHTTP(url.String())
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)

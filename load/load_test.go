@@ -15,14 +15,10 @@
 package load_test
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
@@ -61,28 +57,13 @@ func TestLoadFileModule(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// utility function to fire up a single file http server on the given port
-func httpServeFile(t *testing.T, port, filePath string) {
-	content, err := ioutil.ReadFile(filePath)
-	assert.NoError(t, err)
-
-	http.HandleFunc(path.Join("/", path.Base(filePath)), func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, path.Base(filePath), time.Now(), bytes.NewReader(content))
-	})
-
-	go func(t *testing.T) {
-		assert.NoError(t, http.ListenAndServe(":8234", nil))
-	}(t)
-
-}
-
 func TestLoadHTTPModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
-	serverPort := "8234"
-	serverAddress := "http://localhost:" + serverPort + "/basic.hcl"
-	httpServeFile(t, serverPort, path.Join(samplesDir, "basic.hcl"))
+	port, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	assert.NoError(t, err)
+	serverAddress := fmt.Sprintf("http://localhost:%v/basic.hcl", port)
 
-	_, err := load.Load(serverAddress, resource.Values{})
+	_, err = load.Load(serverAddress, resource.Values{})
 	assert.NoError(t, err)
 }
