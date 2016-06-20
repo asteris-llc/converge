@@ -15,7 +15,10 @@
 package server
 
 import (
+	"log"
 	"net/http"
+
+	"github.com/kardianos/osext"
 
 	"golang.org/x/net/context"
 )
@@ -28,13 +31,15 @@ type Server struct {
 
 // New creates and returns a new Server
 func New(ctx context.Context, moduleDir string) *Server {
-	mux := http.NewServeMux()
-	mux.Handle("/modules/", http.StripPrefix("/modules/", http.FileServer(http.Dir(moduleDir))))
-
-	return &Server{
-		mux:    mux,
+	server := &Server{
+		mux:    http.NewServeMux(),
 		server: NewContextServer(ctx),
 	}
+
+	server.mux.Handle("/modules/", http.StripPrefix("/modules/", http.FileServer(http.Dir(moduleDir))))
+	server.mux.HandleFunc("/bootstrap/binary", server.handleSelfServe)
+
+	return server
 }
 
 // ListenAndServe serves the current mux
@@ -45,4 +50,16 @@ func (s *Server) ListenAndServe(addr string) error {
 // ListenAndServeTLS serves the current mux over TLS
 func (s *Server) ListenAndServeTLS(addr, certFile, keyFile string) error {
 	return s.server.ListenAndServeTLS(addr, certFile, keyFile, s.mux)
+}
+
+// handleSelfServe serves the converge binary for bootstrapping in a cluster
+func (s *Server) handleSelfServe(w http.ResponseWriter, r *http.Request) {
+	name, err := osext.Executable()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("[ERROR]: %s", err)
+		return
+	}
+
+	http.ServeFile(w, r, name)
 }
