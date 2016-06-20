@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var samplesDir string
@@ -60,17 +61,10 @@ func TestLoadFileModule(t *testing.T) {
 func TestLoadHTTPModule(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
-	sfs, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	server, err := helpers.HTTPServeFile(path.Join(samplesDir, "basic.hcl"))
+	require.NoError(t, err)
+	defer server.Stop() // clean up when we're done testing
 
-	// clean up when we're done testing
-	defer func(sfs *helpers.SingleFileServer) {
-		if sfs != nil {
-			sfs.Stop()
-		}
-	}(sfs)
-
-	assert.NoError(t, err)
-
-	_, err = load.Load(sfs.URL(), resource.Values{})
+	_, err = load.Load(server.URL(), resource.Values{})
 	assert.NoError(t, err)
 }
