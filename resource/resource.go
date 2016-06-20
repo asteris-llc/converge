@@ -25,15 +25,19 @@ type Monitor interface {
 // checks pass.
 type Task interface {
 	Monitor
-	Apply() (string, bool, error)
+	Apply() error
 }
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
+	fmt.Stringer
+
 	Prepare(*Module) error
+
 	Depends() []string
 	SetDepends([]string)
-	fmt.Stringer
+
+	SetName(string)
 }
 
 // Parent expresses a resource that has sub-resources instead of being

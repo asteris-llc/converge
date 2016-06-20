@@ -122,10 +122,7 @@ func TestTemplateApply(t *testing.T) {
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
-	new, success, err := tmpl.Apply()
-	assert.Equal(t, "1", new)
-	assert.True(t, success)
-	assert.NoError(t, err)
+	assert.NoError(t, tmpl.Apply())
 
 	// read the new file
 	content, err := ioutil.ReadFile(tmpfile.Name())
@@ -146,9 +143,7 @@ func TestTemplateApplyPermission(t *testing.T) {
 	}
 	assert.NoError(t, tmpl.Prepare(&resource.Module{}))
 
-	_, success, err := tmpl.Apply()
-	assert.True(t, success)
-	assert.NoError(t, err)
+	assert.NoError(t, tmpl.Apply())
 
 	// stat the new file
 	stat, err := os.Stat(tmpfile.Name())
@@ -156,4 +151,70 @@ func TestTemplateApplyPermission(t *testing.T) {
 
 	perm := stat.Mode().Perm()
 	assert.Equal(t, os.FileMode(0600), perm)
+}
+
+func TestTemplateContentDependencies(t *testing.T) {
+	t.Parallel()
+
+	var (
+		param = &resource.Param{
+			Name: "test",
+		}
+
+		tmpl = &resource.Template{
+			RawContent: "{{param `test`}}",
+		}
+
+		mod = &resource.Module{
+			Resources: []resource.Resource{
+				param,
+				tmpl,
+			},
+			RenderedArgs: resource.Values{
+				"test": resource.Value("test"),
+			},
+		}
+	)
+
+	assert.NoError(t, param.Prepare(mod))
+	assert.NoError(t, tmpl.Prepare(mod))
+
+	assert.Equal(
+		t,
+		[]string{"param.test"},
+		tmpl.Depends(),
+	)
+}
+
+func TestTemplateDestinationDependencies(t *testing.T) {
+	t.Parallel()
+
+	var (
+		param = &resource.Param{
+			Name: "test",
+		}
+
+		tmpl = &resource.Template{
+			RawDestination: "{{param `test`}}",
+		}
+
+		mod = &resource.Module{
+			Resources: []resource.Resource{
+				param,
+				tmpl,
+			},
+			RenderedArgs: resource.Values{
+				"test": resource.Value("test"),
+			},
+		}
+	)
+
+	assert.NoError(t, param.Prepare(mod))
+	assert.NoError(t, tmpl.Prepare(mod))
+
+	assert.Equal(
+		t,
+		[]string{"param.test"},
+		tmpl.Depends(),
+	)
 }

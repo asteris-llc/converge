@@ -6,6 +6,13 @@ build:
     # at the right place in the workspace tree
     - setup-go-workspace
 
+    # install graphviz
+    - script:
+        name: install graphviz
+        code: |
+          apt-get update
+          apt-get install -y graphviz
+
     # Test the project
     - script:
         name: go test

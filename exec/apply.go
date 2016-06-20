@@ -15,6 +15,7 @@
 package exec
 
 import (
+	"log"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -23,8 +24,8 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// ApplyWithStatus applies the operations checked in plan
-func ApplyWithStatus(ctx context.Context, graph *load.Graph, plan []*PlanResult, status chan<- *StatusMessage) (results []*ApplyResult, err error) {
+// Apply the operations checked in plan
+func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
 	// transform checks into something we can look up easily
 	planResults := map[string]*PlanResult{}
 	for _, result := range plan {
@@ -59,16 +60,20 @@ func ApplyWithStatus(ctx context.Context, graph *load.Graph, plan []*PlanResult,
 			}
 		)
 
-		select {
-		case <-ctx.Done():
-			return nil
-		case status <- &StatusMessage{Path: path, Status: "applying"}:
-		}
+		log.Printf("[INFO] %s\n", &StatusMessage{Path: path, Status: "applying"})
 
-		result.NewStatus, result.Success, err = task.Apply()
+		err = task.Apply()
 		if err != nil {
 			return err
 		}
+
+		status, willChange, err := task.Check()
+		if err != nil {
+			return err
+		}
+
+		result.NewStatus = status
+		result.Success = !willChange // so if there is no change to be made, we've succeeded
 
 		lock.Lock()
 		defer lock.Unlock()
@@ -78,17 +83,4 @@ func ApplyWithStatus(ctx context.Context, graph *load.Graph, plan []*PlanResult,
 	})
 
 	return results, err
-}
-
-// Apply does the same thing as ApplyWithStatus, but drops all status messages
-func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
-	status := make(chan *StatusMessage, 1)
-	defer close(status)
-	go func() {
-		for range status {
-			continue
-		}
-	}()
-
-	return ApplyWithStatus(ctx, graph, plan, status)
 }
