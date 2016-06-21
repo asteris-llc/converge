@@ -30,14 +30,17 @@ type Server struct {
 }
 
 // New creates and returns a new Server
-func New(ctx context.Context, moduleDir string) *Server {
+func New(ctx context.Context, moduleDir string, selfServe bool) *Server {
 	server := &Server{
 		mux:    http.NewServeMux(),
 		server: NewContextServer(ctx),
 	}
 
 	server.mux.Handle("/modules/", http.StripPrefix("/modules/", http.FileServer(http.Dir(moduleDir))))
-	server.mux.HandleFunc("/bootstrap/binary", server.handleSelfServe)
+
+	if selfServe {
+		server.mux.HandleFunc("/bootstrap/binary", server.handleSelfServe)
+	}
 
 	return server
 }
