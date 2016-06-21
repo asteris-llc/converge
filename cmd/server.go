@@ -60,7 +60,11 @@ var serverCmd = &cobra.Command{
 
 		var (
 			err error
-			s   = server.New(ctx, viper.GetString("root"))
+			s   = server.New(
+				ctx,
+				viper.GetString("root"),
+				viper.GetBool("self-serve"),
+			)
 		)
 		log.Printf("[INFO] serving on %s\n", viper.GetString("addr"))
 		if viper.GetBool("https") {
@@ -86,6 +90,9 @@ func init() {
 
 	// module serving
 	serverCmd.PersistentFlags().String("root", ".", "location of modules to serve")
+
+	// self serve
+	serverCmd.PersistentFlags().Bool("self-serve", false, "serve own binary for bootstrapping")
 
 	viperBindPFlags(serverCmd.PersistentFlags())
 }
