@@ -3,7 +3,7 @@ set -eo pipefail
 
 ROOT=$(pwd)
 
-$ROOT/converge server --root $ROOT/samples &
+$ROOT/converge server --root $ROOT/samples --self-serve &
 PID=$!
 
 sleep 0.5
