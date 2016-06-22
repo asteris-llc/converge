@@ -68,8 +68,7 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 
 				// If no requirements are specified, it is assumed that the task before
 				// the current task is the only requirement
-				// See https://github.com/asteris-llc/converge/issues/10
-				if previousTaskName != "" && res.Depends() == nil {
+				if previousTaskName != "" && !res.HasBaseDependencies() {
 					res.SetDepends([]string{previousTaskName})
 				}
 				previousTaskName = res.String()
