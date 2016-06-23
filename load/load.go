@@ -61,7 +61,10 @@ func Load(source string, args resource.Values) (*Graph, error) {
 				newModule.Args = mt.Args
 				newModule.Source = mt.Source
 				newModule.ModuleName = mt.ModuleName
-				newModule.Dependencies = append(newModule.Dependencies, mt.Dependencies...)
+				newModule.SetDepends(append(
+					newModule.Depends(),
+					mt.Depends()...,
+				))
 
 				module.Resources[i] = newModule
 				modules = append(modules, newModule)
