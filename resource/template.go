@@ -22,10 +22,11 @@ import (
 
 // Template is a task defined by content and a destination
 type Template struct {
+	DependencyTracker `hcl:",squash"`
+
 	Name           string
-	RawContent     string   `hcl:"content"`
-	RawDestination string   `hcl:"destination"`
-	Dependencies   []string `hcl:"depends"`
+	RawContent     string `hcl:"content"`
+	RawDestination string `hcl:"destination"`
 
 	renderer    *Renderer
 	content     string
@@ -35,16 +36,6 @@ type Template struct {
 // String returns the name of this template
 func (t *Template) String() string {
 	return "template." + t.Name
-}
-
-// SetDepends overwrites the Dependencies of this resource
-func (t *Template) SetDepends(deps []string) {
-	t.Dependencies = deps
-}
-
-// Depends list dependencies for this task
-func (t *Template) Depends() []string {
-	return t.Dependencies
 }
 
 // Check satisfies the Monitor interface
@@ -105,9 +96,9 @@ func (t *Template) Prepare(parent *Module) (err error) {
 	}
 
 	// get param dependencies
-	t.Dependencies, err = t.renderer.Dependencies(
+	err = t.DependencyTracker.ComputeDependencies(
 		t.String()+".dependencies",
-		t.Dependencies,
+		t.renderer,
 		t.RawContent,
 		t.RawDestination,
 	)

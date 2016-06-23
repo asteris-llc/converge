@@ -36,6 +36,7 @@ type Resource interface {
 
 	Depends() []string
 	SetDepends([]string)
+	HasBaseDependencies() bool
 
 	SetName(string)
 }

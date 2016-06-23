@@ -56,8 +56,8 @@ func (r *Renderer) Render(name, source string) (string, error) {
 	return buf.String(), nil
 }
 
-// Dependencies inside the template string
-func (r *Renderer) Dependencies(name string, base []string, sources ...string) ([]string, error) {
+// Params inside a string
+func (r *Renderer) Params(name, source string) ([]string, error) {
 	var (
 		out []string
 
@@ -77,20 +77,13 @@ func (r *Renderer) Dependencies(name string, base []string, sources ...string) (
 		}
 	)
 
-	// add the already known deps
-	for _, dep := range base {
-		deps[dep] = struct{}{}
+	tmpl, err := template.New(name).Funcs(funcs).Parse(source)
+	if err != nil {
+		return out, err
 	}
 
-	for _, source := range sources {
-		tmpl, err := template.New(name).Funcs(funcs).Parse(source)
-		if err != nil {
-			return out, err
-		}
-
-		if tmpl.Execute(ioutil.Discard, r.ctx) != nil {
-			return out, err
-		}
+	if err := tmpl.Execute(ioutil.Discard, r.ctx); err != nil {
+		return out, err
 	}
 
 	for dep := range deps {
@@ -98,6 +91,11 @@ func (r *Renderer) Dependencies(name string, base []string, sources ...string) (
 	}
 
 	return out, nil
+}
+
+// Dependencies inside the template string
+func (r *Renderer) Dependencies(name string, base []string, sources ...string) ([]string, error) {
+	return []string{}, nil
 }
 
 // Template Functions
