@@ -61,8 +61,5 @@ func (d *DummyTask) String() string {
 // Prepare satisfies the Resource interface
 func (d *DummyTask) Prepare(m *resource.Module) error { return d.PrepareError }
 
-// HasBaseDependencies satisfies the Resource interface
-func (d *DummyTask) HasBaseDependencies() bool { return false }
-
 // SetName satisfies the Resource interface
 func (d *DummyTask) SetName(name string) { d.Name = name }
