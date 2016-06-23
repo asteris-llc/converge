@@ -24,8 +24,10 @@ import (
 // planning), always/never fail (when applying), and always/never throw an error
 // (when planning or applying). It can also act as a monitor.
 type DummyTask struct {
+	resource.DependencyTracker `hcl:",squash"`
+
 	Name string
-	Deps []string
+
 	// configuration options
 	Monitor          bool
 	Change           bool
@@ -58,12 +60,6 @@ func (d *DummyTask) String() string {
 
 // Prepare satisfies the Resource interface
 func (d *DummyTask) Prepare(m *resource.Module) error { return d.PrepareError }
-
-// Depends satisfies the Resource interface
-func (d *DummyTask) Depends() []string { return d.Deps }
-
-// SetDepends satisfies the Resource interface
-func (d *DummyTask) SetDepends(deps []string) { d.Deps = deps }
 
 // HasBaseDependencies satisfies the Resource interface
 func (d *DummyTask) HasBaseDependencies() bool { return false }
