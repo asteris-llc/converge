@@ -53,13 +53,15 @@ func (d *DummyTask) Apply() error {
 // String satisfies the Resource, fmt.Stringer interfaces
 func (d *DummyTask) String() string {
 	if d.Monitor {
-		return "monitor." + d.Name
+		return "dummy_monitor." + d.Name
 	}
-	return "task." + d.Name
+	return "dummy_task." + d.Name
 }
 
 // Prepare satisfies the Resource interface
 func (d *DummyTask) Prepare(m *resource.Module) error { return d.PrepareError }
 
 // SetName satisfies the Resource interface
-func (d *DummyTask) SetName(name string) { d.Name = name }
+func (d *DummyTask) SetName(name string) {
+	d.Name = name
+}
