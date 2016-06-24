@@ -15,6 +15,7 @@
 package exec
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -23,6 +24,21 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/resource"
 )
+
+// ensure that all of a resources dependencies have already run successfully
+func checkDeps(res resource.Resource, results []*ApplyResult) (failed []string) {
+	for _, dep := range res.Depends() {
+		parent, err := load.Parent(res.String)
+		for _, result := range results {
+			if result.Path == dep || (err == nil && result.Path == parent+"/"+dep) {
+				if !result.Success {
+					failed = append(failed, result.Path)
+				}
+			}
+		}
+	}
+	return failed
+}
 
 // Apply the operations checked in plan
 func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
@@ -44,6 +60,22 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 
 		planResult, ok := planResults[path]
 		if !ok || !planResult.WillChange {
+			return nil
+		}
+
+		// check dependencies
+		if failed := checkDeps(res, results); len(failed) > 0 {
+			lock.Lock()
+			defer lock.Unlock()
+
+			result := &ApplyResult{
+				Path:      path,
+				OldStatus: planResult.CurrentStatus,
+				NewStatus: fmt.Sprintf("failed due to dependencies: %s", failed),
+				Success:   false,
+			}
+			results = append(results, result)
+
 			return nil
 		}
 

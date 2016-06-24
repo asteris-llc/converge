@@ -116,12 +116,20 @@ func TestBlockingTaskFailure(t *testing.T) {
 		assert.NoError(t, err) // the first task should return an error
 		assert.Equal(
 			t,
-			[]*exec.ApplyResult{{
-				OldStatus: "will change: true",
-				NewStatus: "will change: true",
-				Success:   false,
-				Path:      "task.fail",
-			}},
+			[]*exec.ApplyResult{
+				{
+					Path:      "module.test_module/task.fail",
+					OldStatus: "will change: true",
+					NewStatus: "will change: true",
+					Success:   false,
+				},
+				{
+					Path:      "module.test_module/task.dont_run",
+					OldStatus: "will change: true",
+					NewStatus: "failed due to dependencies: [module.test_module/task.fail]",
+					Success:   false,
+				},
+			},
 			results,
 		)
 	})
