@@ -183,6 +183,17 @@ func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 	return parent, nil
 }
 
+func (g *Graph) Depends(path string) (paths []string) {
+	list := g.graph.DownEdges(path).List()
+	fmt.Println(list)
+	for _, item := range list {
+		if path, ok := item.(string); ok {
+			paths = append(paths, path)
+		}
+	}
+	return paths
+}
+
 // Validate this graph
 func (g *Graph) Validate() error {
 	err := g.graph.Validate()
