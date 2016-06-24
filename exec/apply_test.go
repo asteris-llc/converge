@@ -55,8 +55,6 @@ func TestApply(t *testing.T) {
 
 // if a task's dependency fails due to an error, that task shouldn't run
 func TestBlockingTaskError(t *testing.T) {
-	t.Parallel()
-
 	defer (helpers.HideLogs(t))()
 
 	task1 := &helpers.DummyTask{
@@ -88,8 +86,6 @@ func TestBlockingTaskError(t *testing.T) {
 // if a task's dependency fails because Check still reports WillChange, that
 // task shouldn't run
 func TestBlockingTaskFailure(t *testing.T) {
-	t.Parallel()
-
 	defer (helpers.HideLogs(t))()
 
 	task1 := &helpers.DummyTask{
