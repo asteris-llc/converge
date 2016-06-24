@@ -26,11 +26,11 @@ import (
 )
 
 // ensure that all of a resources dependencies have already run successfully
-func checkDeps(res resource.Resource, results []*ApplyResult) (failed []string) {
+func checkDeps(graph *load.Graph, res resource.Resource, results []*ApplyResult) (failed []string) {
 	for _, dep := range res.Depends() {
-		parent, err := load.Parent(res.String)
+		parent, err := graph.Parent(res.String())
 		for _, result := range results {
-			if result.Path == dep || (err == nil && result.Path == parent+"/"+dep) {
+			if result.Path == dep || (err == nil && result.Path == parent.String()+"/"+dep) {
 				if !result.Success {
 					failed = append(failed, result.Path)
 				}
@@ -64,7 +64,7 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 		}
 
 		// check dependencies
-		if failed := checkDeps(res, results); len(failed) > 0 {
+		if failed := checkDeps(graph, res, results); len(failed) > 0 {
 			lock.Lock()
 			defer lock.Unlock()
 
