@@ -86,6 +86,9 @@ func parseModule(node ast.Node) (*resource.Module, error) {
 			case "file.mode":
 				res, err = parseNamedResource(new(file.Mode), item)
 
+			case "file.owner":
+				res, err = parseNamedResource(new(file.Owner), item)
+
 			default:
 				err = &ParseError{item.Pos(), fmt.Sprintf("unknown resource type %q", item.Keys[0].Token.Value())}
 			}

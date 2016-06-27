@@ -30,7 +30,6 @@ type Owner struct {
 	RawDestination string   `hcl:"destination"`
 	RawOwner       string   `hcl:"owner"`
 	RawUID         string   `hcl:"uid"`
-	RawGID         string   `hcl:"gid"`
 	Dependencies   []string `hcl:"depends"`
 
 	destination string
@@ -60,39 +59,40 @@ func (o *Owner) Prepare(parent *resource.Module) (err error) {
 	if err != nil {
 		return err
 	}
-	// render gid
-	o.gid, err = o.renderer.Render(o.String()+".gid", o.RawGID)
-	if err != nil {
-		return err
-	}
 	// Validate ids
 	var u *user.User
-	if o.owner == "" && o.uid != "" {
-		if o.uid != "" {
-			u, err = user.LookupId(o.uid)
-		} else {
-			return &resource.ValidationError{
-				Location: o.String() + ".owner",
-				Err:      fmt.Errorf("Empty username field."),
-			}
-		}
-	} else {
+	if o.owner != "" {
 		u, err = user.Lookup(o.owner)
+	} else if o.uid != "" {
+		u, err = user.LookupId(o.uid)
+	} else {
+		return &resource.ValidationError{
+			Location: o.String() + ".owner",
+			Err:      fmt.Errorf("Empty username field."),
+		}
 	}
+
 	if err != nil {
 		return err
 	}
-	if o.RawUID == "" {
+	if o.uid == "" {
 		o.uid = u.Uid
 	}
-	if o.RawGID == "" {
-		o.gid = u.Gid
+	o.gid = u.Gid
+
+	_, err = strconv.Atoi(o.uid)
+	if err != nil {
+		return err
 	}
+
 	if u.Gid != o.gid || u.Uid != o.uid {
 		return resource.ValidationError{
 			Location: o.String() + ".owner",
-			Err: fmt.Errorf("User %q has uid:%q and gid:%q. Recieved uid:%q and gid:%q",
-				u.Username, u.Uid, u.Gid, o.uid, o.gid),
+			Err: fmt.Errorf("User %q has uid:%q. Recieved uid:%q",
+				u.Username,
+				u.Uid,
+				o.uid,
+			),
 		}
 	}
 
@@ -100,7 +100,9 @@ func (o *Owner) Prepare(parent *resource.Module) (err error) {
 	o.Dependencies, err = o.renderer.Dependencies(
 		o.String()+".dependencies",
 		o.Dependencies,
-		o.RawDestination, o.RawOwner)
+		o.RawDestination,
+		o.RawOwner,
+	)
 
 	if err != nil {
 		return err
@@ -123,7 +125,7 @@ func (o *Owner) SetDepends(new []string) {
 	o.Dependencies = new
 }
 
-// SetName modifies the name of this mode
+// SetName modifies the name of this module
 func (o *Owner) SetName(name string) {
 	o.Name = name
 }
@@ -153,13 +155,7 @@ func (o *Owner) Check() (status string, willChange bool, err error) {
 
 // Apply changes the owner
 func (o *Owner) Apply() (err error) {
-	uid, err := strconv.Atoi(o.uid)
-	if err != nil {
-		return err
-	}
-	gid, err := strconv.Atoi(o.gid)
-	if err != nil {
-		return err
-	}
+	uid, _ := strconv.Atoi(o.uid)
+	gid, _ := strconv.Atoi(o.gid)
 	return os.Chown(o.destination, uid, gid)
 }

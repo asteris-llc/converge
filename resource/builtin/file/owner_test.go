@@ -17,7 +17,6 @@ package file_test
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/user"
 	"testing"
 
@@ -28,15 +27,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShellTaskInterfacesForOwner(t *testing.T) {
+// Test that Owner impelements the required interfaces.
+func TestTaskInterfacesForOwner(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Resource)(nil), new(file.Owner))
+	//Should Implement Stringer Interface
 	assert.Implements(t, (*fmt.Stringer)(nil), new(file.Owner))
+	//Should Implement Monitor Interface
 	assert.Implements(t, (*resource.Monitor)(nil), new(file.Owner))
+	//Should Implement Resource Interface
+	assert.Implements(t, (*resource.Resource)(nil), new(file.Owner))
+	//Should Implement Task Interface
 	assert.Implements(t, (*resource.Task)(nil), new(file.Owner))
 }
 
+// Test Preparation fails if there is no owner with that name.
 func TestOwnerCheck(t *testing.T) {
 	helpers.InTempDir(t, func() {
 		err := ioutil.WriteFile("x", []byte{}, 0755)
@@ -55,18 +60,20 @@ func TestOwnerCheck(t *testing.T) {
 	})
 }
 
-//Test that user exist on system
+// Test that user exist on system
 func TestOwnerValidate(t *testing.T) {
 	o := &file.Owner{
 		RawDestination: "x",
 		RawOwner:       "userwillnotexist",
 		RawUID:         "-1",
-		RawGID:         "-1",
 	}
-	require.Error(t, o.Prepare(nil))
+	err := o.Prepare(nil)
+	require.Error(t, err)
+	assert.EqualError(t, err, "user: unknown user userwillnotexist")
+
 }
 
-//TestApply Checks if the owner will change.
+// TestApply Checks if the owner will change.
 func TestOwnerApply(t *testing.T) {
 	helpers.InTempDir(t, func() {
 		err := ioutil.WriteFile("x", []byte{}, 0755)
@@ -74,15 +81,17 @@ func TestOwnerApply(t *testing.T) {
 			RawDestination: "x",
 			RawOwner:       "nobody",
 		}
+		require.NoError(t, err)
 		require.NoError(t, o.Prepare(nil))
 		o.Apply()
 		status, willChange, err := o.Check()
-
+		u, err := user.Current()
+		require.NoError(t, err)
 		//Should fail if not root
-		if isSu := os.Geteuid(); isSu != 0 {
+		if u.Uid != "0" {
 			assert.NoError(t, err)
 			assert.True(t, willChange)
-			assert.Equal(t, "david", status)
+			assert.Equal(t, u.Username, status)
 		} else {
 			assert.NoError(t, err)
 			assert.False(t, willChange)
