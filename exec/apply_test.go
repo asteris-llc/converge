@@ -16,7 +16,6 @@ package exec_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -111,7 +110,6 @@ func TestBlockingTaskFailure(t *testing.T) {
 	helpers.InTempDir(t, func() {
 		results, err := exec.Apply(context.Background(), graph, plan)
 		assert.NoError(t, err) // the first task should return an error
-		fmt.Println(results)
 		assert.Equal(
 			t,
 			[]*exec.ApplyResult{
