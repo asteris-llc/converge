@@ -15,7 +15,9 @@
 package exec
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -44,6 +46,34 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 
 		planResult, ok := planResults[path]
 		if !ok || !planResult.WillChange {
+			return nil
+		}
+
+		// check dependencies
+		var failed []string
+		for _, dep := range graph.Depends(path) {
+			for _, result := range results {
+				if result.Path == dep {
+					if !result.Success {
+						failed = append(failed, result.Path)
+					}
+				}
+			}
+		}
+
+		// don't apply this task if a dependency failed
+		if failed != nil {
+			result := &ApplyResult{
+				Path:      path,
+				OldStatus: planResult.CurrentStatus,
+				NewStatus: fmt.Sprintf("failed due to dependencies: %s", strings.Join(failed, ", ")),
+				Success:   false,
+			}
+
+			lock.Lock()
+			defer lock.Unlock()
+			results = append(results, result)
+
 			return nil
 		}
 

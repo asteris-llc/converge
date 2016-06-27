@@ -153,3 +153,20 @@ func TestGraphValidateDanglingDependencyInvalid(t *testing.T) {
 		)
 	}
 }
+
+func TestGraphDepends(t *testing.T) {
+	dependedOn := &helpers.DummyTask{Name: "depended_on"}
+	dependsOn := &helpers.DummyTask{Name: "depends_on"}
+	dependsOn.SetDepends([]string{"dummy_task.depended_on"})
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{ModuleName: "test_module"},
+		Resources:  []resource.Resource{dependedOn, dependsOn},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	dependencies := graph.Depends("module.test_module/dummy_task.depends_on")
+	assert.Equal(t, []string{"module.test_module/dummy_task.depended_on"}, dependencies)
+}

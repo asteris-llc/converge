@@ -183,6 +183,18 @@ func (g *Graph) Parent(path string) (parent *resource.Module, err error) {
 	return parent, nil
 }
 
+// Depends lists the dependencies of a vertex in the graph. It requires a fully
+// qualified path to function properly.
+func (g *Graph) Depends(path string) (paths []string) {
+	list := g.graph.DownEdges(path).List()
+	for _, item := range list {
+		if path, ok := item.(string); ok {
+			paths = append(paths, path)
+		}
+	}
+	return paths
+}
+
 // Validate this graph
 func (g *Graph) Validate() error {
 	err := g.graph.Validate()
