@@ -16,6 +16,7 @@ package exec_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -110,19 +111,20 @@ func TestBlockingTaskFailure(t *testing.T) {
 	helpers.InTempDir(t, func() {
 		results, err := exec.Apply(context.Background(), graph, plan)
 		assert.NoError(t, err) // the first task should return an error
+		fmt.Println(results)
 		assert.Equal(
 			t,
 			[]*exec.ApplyResult{
 				{
-					Path:      "module.test_module/task.fail",
+					Path:      "module.test_module/dummy_task.fail",
 					OldStatus: "will change: true",
 					NewStatus: "will change: true",
 					Success:   false,
 				},
 				{
-					Path:      "module.test_module/task.dont_run",
+					Path:      "module.test_module/dummy_task.dont_run",
 					OldStatus: "will change: true",
-					NewStatus: "failed due to dependencies: [module.test_module/task.fail]",
+					NewStatus: "failed due to dependencies: [module.test_module/dummy_task.fail]",
 					Success:   false,
 				},
 			},
