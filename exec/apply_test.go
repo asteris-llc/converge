@@ -15,6 +15,7 @@
 package exec_test
 
 import (
+	"errors"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -47,6 +48,84 @@ func TestApply(t *testing.T) {
 				NewStatus: "Hello, World!\n",
 				Success:   true,
 			}},
+			results,
+		)
+	})
+}
+
+// if a task's dependency fails due to an error, that task shouldn't run
+func TestBlockingTaskError(t *testing.T) {
+	defer (helpers.HideLogs(t))()
+
+	task1 := &helpers.DummyTask{
+		Name:       "fail",
+		Change:     true,
+		ApplyError: errors.New("failed applying dummy task"),
+	}
+	task2 := &helpers.DummyTask{Name: "dont_run", Change: true}
+	task2.SetDepends([]string{"dummy_task.fail"})
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{ModuleName: "test_module"},
+		Resources:  []resource.Resource{task1, task2},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	plan, err := exec.Plan(context.Background(), graph)
+	assert.NoError(t, err)
+
+	helpers.InTempDir(t, func() {
+		results, err := exec.Apply(context.Background(), graph, plan)
+		assert.Error(t, err)     // the first task should return an error
+		assert.Empty(t, results) // the second task shouldn't be run
+	})
+}
+
+// if a task's dependency fails because Check still reports WillChange, that
+// task shouldn't run
+func TestBlockingTaskFailure(t *testing.T) {
+	defer (helpers.HideLogs(t))()
+
+	task1 := &helpers.DummyTask{
+		Name:             "fail",
+		Change:           true,
+		ChangeAfterApply: true, // even after applying, Check will report willChange
+	}
+	task2 := &helpers.DummyTask{Name: "dont_run", Change: true}
+	task2.SetDepends([]string{"dummy_task.fail"})
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{ModuleName: "test_module"},
+		Resources:  []resource.Resource{task1, task2},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	plan, err := exec.Plan(context.Background(), graph)
+	assert.NoError(t, err)
+
+	helpers.InTempDir(t, func() {
+		results, err := exec.Apply(context.Background(), graph, plan)
+		assert.NoError(t, err) // the first task should return an error
+		assert.Equal(
+			t,
+			[]*exec.ApplyResult{
+				{
+					Path:      "module.test_module/dummy_task.fail",
+					OldStatus: "will change: true",
+					NewStatus: "will change: true",
+					Success:   false,
+				},
+				{
+					Path:      "module.test_module/dummy_task.dont_run",
+					OldStatus: "will change: true",
+					NewStatus: "failed due to dependencies: module.test_module/dummy_task.fail",
+					Success:   false,
+				},
+			},
 			results,
 		)
 	})
