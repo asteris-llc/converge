@@ -25,21 +25,6 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// ensure that all of a resources dependencies have already run successfully
-func checkDeps(graph *load.Graph, res resource.Resource, results []*ApplyResult) (failed []string) {
-	for _, dep := range res.Depends() {
-		parent, err := graph.Parent(res.String())
-		for _, result := range results {
-			if result.Path == dep || (err == nil && result.Path == parent.String()+"/"+dep) {
-				if !result.Success {
-					failed = append(failed, result.Path)
-				}
-			}
-		}
-	}
-	return failed
-}
-
 // Apply the operations checked in plan
 func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results []*ApplyResult, err error) {
 	// transform checks into something we can look up easily
@@ -64,7 +49,19 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 		}
 
 		// check dependencies
-		if failed := checkDeps(graph, res, results); len(failed) > 0 {
+		var failed []string
+		for _, dep := range graph.Depends(path) {
+			for _, result := range results {
+				if result.Path == dep {
+					if !result.Success {
+						failed = append(failed, result.Path)
+					}
+				}
+			}
+		}
+
+		// don't apply this task if a dependency failed
+		if len(failed) > 0 {
 			lock.Lock()
 			defer lock.Unlock()
 
