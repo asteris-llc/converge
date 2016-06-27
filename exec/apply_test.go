@@ -124,7 +124,7 @@ func TestBlockingTaskFailure(t *testing.T) {
 				{
 					Path:      "module.test_module/dummy_task.dont_run",
 					OldStatus: "will change: true",
-					NewStatus: "failed due to dependencies: [module.test_module/dummy_task.fail]",
+					NewStatus: "failed due to dependencies: module.test_module/dummy_task.fail",
 					Success:   false,
 				},
 			},
