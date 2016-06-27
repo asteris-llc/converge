@@ -15,8 +15,8 @@
 package exec
 
 import (
+	"fmt"
 	"log"
-	"sync"
 
 	"golang.org/x/net/context"
 
@@ -26,15 +26,17 @@ import (
 
 // Plan the operations to be performed and outputs status
 func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
-	lock := new(sync.Mutex)
+	// lock := new(sync.Mutex)
 
 	err = graph.Walk(func(path string, res resource.Resource) error {
+		fmt.Println("path: " + path)
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
 		}
 
+		fmt.Println("monitor")
 		monitor, ok := res.(resource.Monitor)
 		if !ok {
 			return nil
@@ -45,19 +47,23 @@ func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err er
 			result = &PlanResult{Path: path}
 		)
 
+		fmt.Println("log")
 		log.Printf("[INFO] %s\n", &StatusMessage{Path: path, Status: "checking status"})
 
 		result.CurrentStatus, result.WillChange, err = monitor.Check()
 		if err != nil {
 			return err
 		}
+		fmt.Println("check")
 
-		lock.Lock()
-		defer lock.Unlock()
+		// lock.Lock()
+		// defer lock.Unlock()
 		results = append(results, result)
+		fmt.Println("append")
 
 		return nil
 	})
 
+	fmt.Println("return")
 	return results, err
 }
