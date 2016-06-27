@@ -94,7 +94,7 @@ func TestBlockingTaskFailure(t *testing.T) {
 		ChangeAfterApply: true, // even after applying, Check will report willChange
 	}
 	task2 := &helpers.DummyTask{Name: "dont_run", Change: true}
-	task2.SetDepends([]string{"task.fail"})
+	task2.SetDepends([]string{"dummy_task.fail"})
 
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{ModuleName: "test_module"},
