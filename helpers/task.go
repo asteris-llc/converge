@@ -29,7 +29,6 @@ type DummyTask struct {
 	Name string
 
 	// configuration options
-	Monitor          bool
 	Change           bool
 	ChangeAfterApply bool
 	PrepareError     error
@@ -52,9 +51,6 @@ func (d *DummyTask) Apply() error {
 
 // String satisfies the Resource, fmt.Stringer interfaces
 func (d *DummyTask) String() string {
-	if d.Monitor {
-		return "dummy_monitor." + d.Name
-	}
 	return "dummy_task." + d.Name
 }
 
