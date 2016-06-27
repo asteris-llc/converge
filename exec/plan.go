@@ -15,7 +15,6 @@
 package exec
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -60,6 +59,5 @@ func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err er
 		return nil
 	})
 
-	fmt.Println("return")
 	return results, err
 }
