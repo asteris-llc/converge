@@ -167,6 +167,6 @@ func TestGraphDepends(t *testing.T) {
 	graph, err := load.NewGraph(mod)
 	assert.NoError(t, err)
 
-	dependencies := graph.Depends("test_module/dummy_task.depends_on")
-	assert.Len(t, dependencies, 1)
+	dependencies := graph.Depends("module.test_module/dummy_task.depends_on")
+	assert.Equal(t, []string{"module.test_module/dummy_task.depended_on"}, dependencies)
 }
