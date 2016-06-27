@@ -62,7 +62,7 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 		}
 
 		// don't apply this task if a dependency failed
-		if len(failed) > 0 {
+		if failed != nil {
 			result := &ApplyResult{
 				Path:      path,
 				OldStatus: planResult.CurrentStatus,
