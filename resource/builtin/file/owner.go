@@ -26,11 +26,12 @@ import (
 
 // Owner controls the owner of the underlying resource
 type Owner struct {
+	resource.DependencyTracker `hcl:",squash"`
+
 	Name           string
-	RawDestination string   `hcl:"destination"`
-	RawOwner       string   `hcl:"owner"`
-	RawUID         string   `hcl:"uid"`
-	Dependencies   []string `hcl:"depends"`
+	RawDestination string `hcl:"destination"`
+	RawOwner       string `hcl:"owner"`
+	RawUID         string `hcl:"uid"`
 
 	destination string
 	owner       string
@@ -97,9 +98,9 @@ func (o *Owner) Prepare(parent *resource.Module) (err error) {
 	}
 
 	// render dependencies
-	o.Dependencies, err = o.renderer.Dependencies(
+	err = o.DependencyTracker.ComputeDependencies(
 		o.String()+".dependencies",
-		o.Dependencies,
+		o.renderer,
 		o.RawDestination,
 		o.RawOwner,
 	)
@@ -113,16 +114,6 @@ func (o *Owner) Prepare(parent *resource.Module) (err error) {
 
 func (o *Owner) String() string {
 	return "file.owner." + o.Name
-}
-
-// Depends returns the set of dependencies
-func (o *Owner) Depends() []string {
-	return o.Dependencies
-}
-
-// SetDepends sets the set of dependencies
-func (o *Owner) SetDepends(new []string) {
-	o.Dependencies = new
 }
 
 // SetName modifies the name of this module

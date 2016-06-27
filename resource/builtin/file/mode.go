@@ -56,12 +56,13 @@ func (m *Mode) Prepare(parent *resource.Module) (err error) {
 	}
 	m.mode = os.FileMode(imode)
 
-	// render dependencies
-	m.Dependencies, err = m.renderer.Dependencies(
+	err = m.DependencyTracker.ComputeDependencies(
 		m.String()+".dependencies",
-		m.Dependencies,
-		m.RawDestination, m.RawMode,
+		m.renderer,
+		m.RawDestination,
+		m.RawMode,
 	)
+
 	if err != nil {
 		return err
 	}
