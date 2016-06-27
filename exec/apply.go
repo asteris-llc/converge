@@ -63,15 +63,15 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 
 		// don't apply this task if a dependency failed
 		if len(failed) > 0 {
-			lock.Lock()
-			defer lock.Unlock()
-
 			result := &ApplyResult{
 				Path:      path,
 				OldStatus: planResult.CurrentStatus,
 				NewStatus: fmt.Sprintf("failed due to dependencies: %s", strings.Join(failed, ", ")),
 				Success:   false,
 			}
+
+			lock.Lock()
+			defer lock.Unlock()
 			results = append(results, result)
 
 			return nil
