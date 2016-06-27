@@ -17,6 +17,7 @@ package exec
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -68,7 +69,7 @@ func Apply(ctx context.Context, graph *load.Graph, plan []*PlanResult) (results 
 			result := &ApplyResult{
 				Path:      path,
 				OldStatus: planResult.CurrentStatus,
-				NewStatus: fmt.Sprintf("failed due to dependencies: %s", failed),
+				NewStatus: fmt.Sprintf("failed due to dependencies: %s", strings.Join(failed, ", ")),
 				Success:   false,
 			}
 			results = append(results, result)
