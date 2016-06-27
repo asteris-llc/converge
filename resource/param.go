@@ -16,6 +16,8 @@ package resource
 
 // Param is essentially the calling arguments of a module
 type Param struct {
+	DependencyTracker `hcl:",squash"`
+
 	Name    string
 	Default Value  `hcl:"default"`
 	Type    string `hcl:"type"`
@@ -27,14 +29,6 @@ type Param struct {
 // interface.
 func (p *Param) String() string {
 	return "param." + p.Name
-}
-
-// SetDepends overwrites the Dependencies of this resource
-func (p *Param) SetDepends(deps []string) {}
-
-// Depends : Does nothing
-func (p *Param) Depends() []string {
-	return nil
 }
 
 // Prepare this module for use

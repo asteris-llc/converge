@@ -23,10 +23,11 @@ import (
 
 // ShellTask is a task defined as two shell scripts
 type ShellTask struct {
+	DependencyTracker `hcl:",squash"`
+
 	Name           string
-	RawCheckSource string   `hcl:"check"`
-	RawApplySource string   `hcl:"apply"`
-	Dependencies   []string `hcl:"depends"`
+	RawCheckSource string `hcl:"check"`
+	RawApplySource string `hcl:"apply"`
 
 	renderer    *Renderer
 	checkSource string
@@ -63,16 +64,6 @@ func (st *ShellTask) validateScriptSyntax(script string) error {
 	}
 
 	return nil
-}
-
-//SetDepends overwrites the Dependencies of this resource
-func (st *ShellTask) SetDepends(deps []string) {
-	st.Dependencies = deps
-}
-
-//Depends list dependencies for this task
-func (st *ShellTask) Depends() []string {
-	return st.Dependencies
 }
 
 // Check satisfies the Monitor interface
@@ -156,9 +147,9 @@ func (st *ShellTask) Prepare(parent *Module) (err error) {
 		return ValidationError{Location: st.String() + ".apply", Err: err}
 	}
 
-	st.Dependencies, err = st.renderer.Dependencies(
+	err = st.DependencyTracker.ComputeDependencies(
 		st.String()+".dependencies",
-		st.Dependencies,
+		st.renderer,
 		st.RawCheckSource,
 		st.RawApplySource,
 	)

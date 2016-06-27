@@ -16,6 +16,16 @@
 			"Rev": "8f7bde0f0de4cb42c1e8db861e67627558e97019"
 		},
 		{
+			"ImportPath": "github.com/braintree/manners",
+			"Comment": "0.4.0-15-g82a8879",
+			"Rev": "82a8879fc5fd0381fa8b2d8033b19bf255252088"
+		},
+		{
+			"ImportPath": "github.com/braintree/manners/test_helpers",
+			"Comment": "0.4.0-15-g82a8879",
+			"Rev": "82a8879fc5fd0381fa8b2d8033b19bf255252088"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
@@ -34,43 +44,43 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/ast",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/parser",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/printer",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/scanner",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/strconv",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/token",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/parser",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/scanner",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/token",
-			"Rev": "d7400db7143f8e869812e50a53acd6c8d92af3b8"
+			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/logutils",
@@ -78,12 +88,16 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/dag",
-			"Comment": "v0.6.16-345-ged9b8f9",
-			"Rev": "ed9b8f91cf9caf542cc6f598206fc749fd1e8f5b"
+			"Comment": "v0.7.0-rc1",
+			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/mousetrap",
 			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+		},
+		{
+			"ImportPath": "github.com/kardianos/osext",
+			"Rev": "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc"
 		},
 		{
 			"ImportPath": "github.com/magiconair/properties",
@@ -143,6 +157,26 @@
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/vendor/github.com/hashicorp/go-multierror",
+			"Comment": "v0.7.0-rc1",
+			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/vendor/github.com/hashicorp/errwrap",
+			"Comment": "v0.7.0-rc1",
+			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.3-12-gc5d7a69",
+			"Rev": "c5d7a69bf8a2c9c374798160849c071093e41dd1"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.1.3-12-gc5d7a69",
+			"Rev": "c5d7a69bf8a2c9c374798160849c071093e41dd1"
 		}
 	]
 }

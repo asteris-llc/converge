@@ -41,20 +41,16 @@ func TestNewGraph(t *testing.T) {
 func TestGraphWalkTaskOrder(t *testing.T) {
 	defer (helpers.HideLogs(t))()
 
+	shelltask := &resource.ShellTask{Name: "task"}
+
+	template := &resource.Template{Name: "template"}
+	template.SetDepends([]string{"task.task"})
+
 	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
 			ModuleName: "test",
 		},
-		Resources: []resource.Resource{
-			&resource.ShellTask{
-				Name:         "task",
-				Dependencies: []string{},
-			},
-			&resource.Template{
-				Name:         "template",
-				Dependencies: []string{"task.task"},
-			},
-		},
+		Resources: []resource.Resource{shelltask, template},
 	}
 
 	graph, err := load.NewGraph(mod)
@@ -137,15 +133,17 @@ func TestRequirementsOrdering(t *testing.T) {
 	assert.Equal(t, "module.requirementsOrderDiamond.hcl/task.a", paths[len(paths)-2])
 }
 
-func TestGraphValidateDanlingDependencyInvalid(t *testing.T) {
+func TestGraphValidateDanglingDependencyInvalid(t *testing.T) {
 	t.Parallel()
 
-	_, err := load.NewGraph(&resource.Module{
+	mod := &resource.Module{
 		ModuleTask: resource.ModuleTask{
-			ModuleName:   "bad",
-			Dependencies: []string{"nonexistent"},
+			ModuleName: "bad",
 		},
-	})
+	}
+	mod.SetDepends([]string{"nonexistent"})
+
+	_, err := load.NewGraph(mod)
 
 	if assert.Error(t, err) {
 		assert.EqualError(
@@ -154,4 +152,21 @@ func TestGraphValidateDanlingDependencyInvalid(t *testing.T) {
 			`Resource "module.bad" depends on resource "nonexistent", which does not exist`,
 		)
 	}
+}
+
+func TestGraphDepends(t *testing.T) {
+	dependedOn := &helpers.DummyTask{Name: "depended_on"}
+	dependsOn := &helpers.DummyTask{Name: "depends_on"}
+	dependsOn.SetDepends([]string{"dummy_task.depended_on"})
+
+	mod := &resource.Module{
+		ModuleTask: resource.ModuleTask{ModuleName: "test_module"},
+		Resources:  []resource.Resource{dependedOn, dependsOn},
+	}
+
+	graph, err := load.NewGraph(mod)
+	assert.NoError(t, err)
+
+	dependencies := graph.Depends("module.test_module/dummy_task.depends_on")
+	assert.Equal(t, []string{"module.test_module/dummy_task.depended_on"}, dependencies)
 }

@@ -23,6 +23,8 @@ import (
 
 // Mode controls file mode of underlying resources
 type Mode struct {
+	resource.DependencyTracker `hcl:",squash"`
+
 	Name           string
 	RawDestination string   `hcl:"destination"`
 	RawMode        string   `hcl:"mode"`
@@ -69,16 +71,6 @@ func (m *Mode) Prepare(parent *resource.Module) (err error) {
 
 func (m *Mode) String() string {
 	return "file.mode." + m.Name
-}
-
-// Depends returns the set of dependencies
-func (m *Mode) Depends() []string {
-	return m.Dependencies
-}
-
-// SetDepends sets the set of dependencies
-func (m *Mode) SetDepends(new []string) {
-	m.Dependencies = new
 }
 
 // SetName modifies the name of this mode

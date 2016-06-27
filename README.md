@@ -12,7 +12,13 @@ Converge is a configuration management tool.
         - [Built-in Modules](#built-in-modules)
             - [File Modules](#file-modules)
                 - [Mode (file.mode)](#mode-filemode)
+<<<<<<< HEAD
                 - [Owner (file.ownerer)](#owner-fileowner)
+=======
+        - [Server](#server)
+            - [Module Hosting](#module-hosting)
+            - [Binary Hosting](#binary-hosting)
+>>>>>>> 03402919ad9040aaf7da5bd20144621db11ad4b5
     - [License](#license)
 
 <!-- markdown-toc end -->
@@ -182,6 +188,27 @@ file.owner "setroot" {
   uid = 0
 }
 ```
+
+### Server
+
+Converge can run a server to serve modules for bootstrapping. It can also host
+itself for downloading onto new systems. Use `converge server` to start it. See
+the `--help` for how to enable HTTPS.
+
+#### Module Hosting
+
+Modules are hosted at `/modules/`, which is a simple directory listing (control
+with `--root`, set to the current working directory by default), and will be
+made available publically. Use these modules by running `converge plan
+http://your.host:8080/modules/yourModule.hcl` or similar.
+
+#### Binary Hosting
+
+Converge can also host its own binary. This is turned off by default, and is
+enabled with the `--self-serve` flag to `converge server`. You can use this to
+bootstrap a new system without downloading the relevant version of converge over
+an external connection. It will be available at
+`http://your.host:8080/bootstrap/binary`.
 
 ## License
 
