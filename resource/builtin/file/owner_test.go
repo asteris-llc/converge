@@ -65,7 +65,6 @@ func TestOwnerValidate(t *testing.T) {
 	o := &file.Owner{
 		RawDestination: "x",
 		RawOwner:       "userwillnotexist",
-		RawUID:         "-1",
 	}
 	err := o.Prepare(nil)
 	require.Error(t, err)

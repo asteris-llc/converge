@@ -42,6 +42,13 @@ type Owner struct {
 
 // Prepare this resource for use
 func (o *Owner) Prepare(parent *resource.Module) (err error) {
+	if o.RawOwner != "" && o.RawUID != "" {
+		return &resource.ValidationError{
+			Location: o.String() + ".owner",
+			Err:      fmt.Errorf("A username or uid may be provided for file.owner. Not both"),
+		}
+	}
+
 	o.renderer, err = resource.NewRenderer(parent)
 
 	// render destination
@@ -72,30 +79,14 @@ func (o *Owner) Prepare(parent *resource.Module) (err error) {
 			Err:      fmt.Errorf("Empty username field."),
 		}
 	}
-
+	//Failed to find user.
 	if err != nil {
 		return err
 	}
-	if o.uid == "" {
-		o.uid = u.Uid
-	}
+
+	o.owner = u.Username
+	o.uid = u.Uid
 	o.gid = u.Gid
-
-	_, err = strconv.Atoi(o.uid)
-	if err != nil {
-		return err
-	}
-
-	if u.Gid != o.gid || u.Uid != o.uid {
-		return resource.ValidationError{
-			Location: o.String() + ".owner",
-			Err: fmt.Errorf("User %q has uid:%q. Recieved uid:%q",
-				u.Username,
-				u.Uid,
-				o.uid,
-			),
-		}
-	}
 
 	// render dependencies
 	err = o.DependencyTracker.ComputeDependencies(
