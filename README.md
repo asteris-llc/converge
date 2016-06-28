@@ -12,6 +12,7 @@ Converge is a configuration management tool.
         - [Built-in Modules](#built-in-modules)
             - [File Modules](#file-modules)
                 - [Mode (file.mode)](#mode-filemode)
+                - [Owner (file.ownerer)](#owner-fileowner)
         - [Server](#server)
             - [Module Hosting](#module-hosting)
             - [Binary Hosting](#binary-hosting)
@@ -143,7 +144,7 @@ tasks without having to write your own `task` declarations.
 
 ##### Mode (file.mode)
 
-The `file.mode` module takes two required parameters: 
+The `file.mode` module takes two required parameters:
 
 - `destination`: the file whose permissions should be checked
 - `mode`: the octal mode of the file
@@ -154,6 +155,37 @@ Sample:
 file.mode "test" {
   destination = "test.txt"
   mode = "0644"
+}
+```
+
+#### Owner (file.owner)
+
+The `file.owner` module changes the owner of the file.
+Using this module requires superuser privilege.
+
+The `file.owner` module requires either the name of the new owner
+or the uid of the new owner as well as the destination to the file. If both are used, converge will check that the user with the specified username has the specified uid.
+
+Sample:
+```hcl
+file.owner "username" {
+  destination = "/path/to/file"
+  owner = "nobody"
+}
+```
+
+```hcl
+file.owner "uid" {
+  destination = "/path/to/file"
+  uid = 0
+}
+```
+
+```hcl
+file.owner "setroot" {
+  destination = "/path/to/file"
+  owner = "root"
+  uid = 0
 }
 ```
 
