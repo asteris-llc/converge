@@ -70,15 +70,7 @@ func TestWalkOrder(t *testing.T) {
 	out, err := idsInOrderOfExecution(g)
 
 	assert.NoError(t, err)
-	assert.Equal(
-		t,
-		[]string{
-			"child1",
-			"child2",
-			"root",
-		},
-		out,
-	)
+	assert.Equal(t, "root", out[len(out)-1])
 }
 
 func TestWalkOrderDiamond(t *testing.T) {
