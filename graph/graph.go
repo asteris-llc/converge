@@ -17,6 +17,7 @@ package graph
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 
@@ -143,6 +144,7 @@ func (g *Graph) Validate() error {
 		for t := range types {
 			names = append(names, t.String())
 		}
+		sort.Strings(names)
 
 		return fmt.Errorf(
 			"differing types in graph vertices: %s",
