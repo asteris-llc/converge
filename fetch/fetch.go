@@ -14,7 +14,10 @@
 
 package fetch
 
-import "fmt"
+import (
+	"fmt"
+	"path"
+)
 
 // Any fetches a path based on a
 func Any(loc string) ([]byte, error) {
@@ -25,7 +28,7 @@ func Any(loc string) ([]byte, error) {
 
 	switch url.Scheme {
 	case "file":
-		return File(url.Path)
+		return File(path.Join(url.Host, url.Path))
 	case "http", "https":
 		return HTTP(loc)
 	default:

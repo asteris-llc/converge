@@ -26,6 +26,10 @@ func ResolveInContext(loc, context string) (string, error) {
 		return "", err
 	}
 
+	if context == "" {
+		return url.String(), err
+	}
+
 	base, err := parse(context)
 	if err != nil {
 		return "", err
