@@ -77,12 +77,14 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
-func (g *Graph) Transform(cb func(string, interface{}) (interface{}, error)) (transformed *Graph, err error) {
+func (g *Graph) Transform(cb func(string, interface{}, []string) (interface{}, []string, error)) (transformed *Graph, err error) {
 	transformed = New()
 	lock := new(sync.Mutex)
 
 	err = g.Walk(func(id string, value interface{}) error {
-		newValue, err := cb(id, value)
+		edges := g.DownEdges(id)
+
+		newValue, newEdges, err := cb(id, value, edges)
 		if err != nil {
 			return err
 		}
@@ -91,13 +93,12 @@ func (g *Graph) Transform(cb func(string, interface{}) (interface{}, error)) (tr
 		defer lock.Unlock()
 		transformed.Add(id, newValue)
 
+		for _, edge := range newEdges {
+			transformed.Connect(id, edge)
+		}
+
 		return nil
 	})
-
-	// add edges from existing graph
-	for _, edge := range g.inner.Edges() {
-		transformed.Connect(edge.Source().(string), edge.Target().(string))
-	}
 
 	return transformed, transformed.Validate()
 }

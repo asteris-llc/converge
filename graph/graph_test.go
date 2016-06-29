@@ -175,8 +175,8 @@ func TestTransform(t *testing.T) {
 	g.Add("int", 1)
 
 	transformed, err := g.Transform(
-		func(string, interface{}) (interface{}, error) {
-			return 2, nil
+		func(id string, _ interface{}, edges []string) (interface{}, []string, error) {
+			return 2, edges, nil
 		},
 	)
 
