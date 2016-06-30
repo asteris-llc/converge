@@ -15,18 +15,37 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
+	"sync"
 
+	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
+
+// ErrNotFound is returned from Get and friends when the key does not exist
+var ErrNotFound = errors.New("key does not exist")
 
 // Node represents a node in the parsed module
 type Node struct {
 	*ast.ObjectItem
+
+	values map[string]interface{}
+	once   sync.Once
+}
+
+// NewNode constructs a new Node from the given ObjectItem
+func NewNode(item *ast.ObjectItem) *Node {
+	return &Node{ObjectItem: item}
 }
 
 // Validate this node
 func (n *Node) Validate() error {
+	if n == nil {
+		return errors.New("node is empty, check for bad input")
+	}
+
 	switch len(n.Keys) {
 	case 0:
 		return fmt.Errorf("%s: no keys", n.Pos())
@@ -47,7 +66,7 @@ func (n *Node) Validate() error {
 		return fmt.Errorf("%s: too many keys", n.Pos())
 	}
 
-	return nil
+	return n.setValues()
 }
 
 // Kind returns the kind of resource this is
@@ -71,6 +90,89 @@ func (n *Node) Source() string {
 		return n.Keys[1].Token.Value().(string)
 	}
 	return ""
+}
+
+func (n *Node) setValues() (err error) {
+	n.once.Do(func() {
+		n.values = map[string]interface{}{}
+
+		err = hcl.DecodeObject(&n.values, n.Val)
+	})
+
+	return err
+}
+
+// Get a value from the values
+func (n *Node) Get(key string) (val interface{}, err error) {
+	if err := n.setValues(); err != nil {
+		return nil, err
+	}
+
+	val, ok := n.values[key]
+	if !ok {
+		return val, ErrNotFound
+	}
+
+	return val, nil
+}
+
+// GetString retrieves string value from the values
+func (n *Node) GetString(key string) (val string, err error) {
+	raw, err := n.Get(key)
+	if err != nil {
+		return "", err
+	}
+
+	val, ok := raw.(string)
+	if !ok {
+		return "", n.badTypeError(key, "string", raw)
+	}
+
+	return val, nil
+}
+
+// GetStringSlice retrieves a slice of string from the values
+func (n *Node) GetStringSlice(key string) (val []string, err error) {
+	raw, err := n.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	interfaces, ok := raw.([]interface{})
+	if !ok {
+		return nil, n.badTypeError(key, "slice", raw)
+	}
+
+	for i, iface := range interfaces {
+		item, ok := iface.(string)
+		if !ok {
+			return nil, n.badTypeError(fmt.Sprintf("%s.%d", key, i), "string", iface)
+		}
+
+		val = append(val, item)
+	}
+
+	return val, nil
+}
+
+func (n *Node) badTypeError(key, typ string, val interface{}) error {
+	article := func(x string) string {
+		switch x[0] {
+		case 'a', 'e', 'i', 'o', 'u':
+			return "an"
+		default:
+			return "a"
+		}
+	}
+
+	valTyp := reflect.TypeOf(val).String()
+
+	return fmt.Errorf(
+		"%q is not %s %s, it is %s %s",
+		key,
+		article(typ), typ,
+		article(valTyp), valTyp,
+	)
 }
 
 func (n *Node) String() string {

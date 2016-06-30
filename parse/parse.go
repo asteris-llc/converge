@@ -33,7 +33,7 @@ func Parse(content []byte) (resources []*Node, err error) {
 			return n, true
 		}
 
-		item := &Node{baseItem}
+		item := NewNode(baseItem)
 
 		if itemErr := item.Validate(); itemErr != nil {
 			err = multierror.Append(err, itemErr)
