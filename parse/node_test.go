@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fromString(content string) (*parse.Node, error) {
@@ -35,12 +36,12 @@ func fromString(content string) (*parse.Node, error) {
 		return nil, errors.New("not an objectlist")
 	}
 
-	return &parse.Node{list.Items[0]}, nil
+	return parse.NewNode(list.Items[0]), nil
 }
 
 func validateTable(t *testing.T, input, errMsg string) {
 	node, err := fromString(input)
-	assert.NoError(t, err)
+	require.NoError(t, err) // must be syntactically valid
 
 	err = node.Validate()
 	if assert.Error(t, err) {
@@ -123,4 +124,99 @@ func TestNodeSource(t *testing.T) {
 	node, err := fromString("module x y {}")
 	assert.NoError(t, err)
 	assert.Equal(t, "x", node.Source())
+}
+
+func TestNodeGet(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString("module x y { a = 1 }")
+	require.NoError(t, err)
+
+	val, err := node.Get("a")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, val)
+}
+
+func TestNodeGetBad(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString("module x y {}")
+	require.NoError(t, err)
+
+	val, err := node.Get("a")
+	assert.Nil(t, val)
+	assert.Equal(t, err, parse.ErrNotFound)
+}
+
+func TestNodeGetString(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`module x y { a = "a" }`)
+	require.NoError(t, err)
+
+	val, err := node.GetString("a")
+	assert.NoError(t, err)
+	assert.Equal(t, "a", val)
+}
+
+func TestNodeGetStringBad(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`module x y { a = 1 }`)
+	require.NoError(t, err)
+
+	val, err := node.GetString("a")
+	assert.Empty(t, val)
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`"a" is not a string, it is an int`,
+		)
+	}
+}
+
+func TestNodeGetStringSlice(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`module x y { a = ["a", "b"] }`)
+	require.NoError(t, err)
+
+	val, err := node.GetStringSlice("a")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"a", "b"}, val)
+}
+
+func TestNodeGetStringSliceBad(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`module x y { a = 1 }`)
+	require.NoError(t, err)
+
+	val, err := node.GetStringSlice("a")
+	assert.Empty(t, val)
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`"a" is not a slice, it is an int`,
+		)
+	}
+}
+
+func TestNodeGetStringSliceBadItem(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`module x y { a = [ 1 ] }`)
+	require.NoError(t, err)
+
+	val, err := node.GetStringSlice("a")
+	assert.Empty(t, val)
+	if assert.Error(t, err) {
+		assert.EqualError(
+			t,
+			err,
+			`"a.0" is not a string, it is an int`,
+		)
+	}
 }
