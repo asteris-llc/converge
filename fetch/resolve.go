@@ -21,6 +21,10 @@ import (
 
 // ResolveInContext resolves a path relative to another
 func ResolveInContext(loc, context string) (string, error) {
+	if loc == context {
+		return loc, nil
+	}
+
 	url, err := parse(loc)
 	if err != nil {
 		return "", err
@@ -36,9 +40,9 @@ func ResolveInContext(loc, context string) (string, error) {
 	}
 
 	if !path.IsAbs(url.Path) && (url.Scheme == "" || url.Scheme == base.Scheme) {
-		path := path.Join(path.Dir(base.Path), url.Path)
+		newPath := path.Join(path.Dir(base.Path), url.Path)
 		*url = *base // shallow copy of the rest of the fields
-		url.Path = path
+		url.Path = newPath
 	}
 
 	return url.String(), nil
