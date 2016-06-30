@@ -99,6 +99,9 @@ func (g *Graph) Transform(cb func(string, interface{}, []string) (interface{}, [
 
 		return nil
 	})
+	if err != nil {
+		return transformed, err
+	}
 
 	return transformed, transformed.Validate()
 }
@@ -108,7 +111,7 @@ func (g *Graph) Transform(cb func(string, interface{}, []string) (interface{}, [
 // 1. has a root
 // 2. has no cycles
 // 3. has no dangling edges
-// 4. has values of a single type
+// 4. has values of a single type (excepting nil)
 func (g *Graph) Validate() error {
 	err := g.inner.Validate()
 	if err != nil {
@@ -137,13 +140,17 @@ func (g *Graph) Validate() error {
 	// check for differing types
 	types := map[reflect.Type]struct{}{}
 	for _, val := range g.values {
+		if val == nil {
+			continue
+		}
+
 		types[reflect.TypeOf(val)] = struct{}{}
 	}
 
 	if len(types) > 1 {
 		var names []string
 		for t := range types {
-			names = append(names, t.String())
+			names = append(names, fmt.Sprint(t))
 		}
 		sort.Strings(names)
 
