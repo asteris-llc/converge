@@ -58,3 +58,12 @@ func TestResolveInContextPreservesProtocol(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "file://x", resolved)
 }
+
+func TestResolveInContextSelfResolve(t *testing.T) {
+	t.Parallel()
+
+	base := "a/b"
+	resolved, err := fetch.ResolveInContext(base, base)
+	assert.NoError(t, err)
+	assert.Equal(t, base, resolved)
+}
