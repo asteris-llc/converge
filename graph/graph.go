@@ -49,6 +49,12 @@ func (g *Graph) Get(id string) interface{} {
 	return g.values[id]
 }
 
+// GetParent returns the direct parent vertex of the current node. This only
+// works if you're using the hierarchical ID functions from this module.
+func (g *Graph) GetParent(id string) interface{} {
+	return g.Get(ParentID(id))
+}
+
 // Connect two vertices together by ID
 func (g *Graph) Connect(from, to string) {
 	g.inner.Connect(dag.BasicEdge(from, to))
