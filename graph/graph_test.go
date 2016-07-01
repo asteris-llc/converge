@@ -135,7 +135,7 @@ func TestValidateCycle(t *testing.T) {
 
 	err := g.Validate()
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "1 error(s) occurred:\n\n* Cycle: c, b")
+		assert.Contains(t, err.Error(), "1 error(s) occurred:\n\n* Cycle: ")
 	}
 }
 
