@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package shell
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (string, bool, error)
-	Apply() error
+import "github.com/asteris-llc/converge/resource"
+
+// Preparer for Shell tasks
+type Preparer struct {
+	Check string `hcl:"check"`
+	Apply string `hcl:"apply"`
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare() (Task, error)
+// Prepare a new task
+func (p *Preparer) Prepare() (resource.Task, error) {
+	return nil, nil
 }
