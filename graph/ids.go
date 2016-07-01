@@ -12,29 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package load_test
+package graph
 
-import (
-	"testing"
+import "path"
 
-	"github.com/asteris-llc/converge/load"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestID(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "x/y", load.ID("x", "y"))
+// ID for a node in the graph
+func ID(parts ...string) string {
+	return path.Join(parts...)
 }
 
-func TestParentID(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "x", load.ParentID("x/y"))
+// ParentID for a node in the graph
+func ParentID(id string) string {
+	return path.Dir(id)
 }
 
-func TestSiblingID(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "x/z", load.SiblingID("x/y", "z"))
+// SiblingID for a node in the graph
+func SiblingID(id, sibling string) string {
+	return ID(ParentID(id), sibling)
 }

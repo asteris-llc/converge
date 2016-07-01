@@ -62,7 +62,7 @@ func Nodes(root string) (*graph.Graph, error) {
 		}
 
 		for _, resource := range resources {
-			newID := ID(current.Parent, resource.String())
+			newID := graph.ID(current.Parent, resource.String())
 			out.Add(newID, resource)
 			out.Connect(current.Parent, newID)
 
