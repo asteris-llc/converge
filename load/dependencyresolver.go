@@ -37,7 +37,7 @@ func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
 		deps, err := node.GetStringSlice("depends")
 		if err == nil {
 			for _, dep := range deps {
-				edges = append(edges, SiblingID(id, dep))
+				edges = append(edges, graph.SiblingID(id, dep))
 			}
 		} else if err != parse.ErrNotFound {
 			return val, edges, err
