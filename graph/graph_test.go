@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGet(t *testing.T) {
@@ -182,6 +183,22 @@ func TestTransform(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, transformed.Get("int").(int))
+}
+
+func TestParent(t *testing.T) {
+	// the graph should return the parent with ID
+	t.Parallel()
+
+	g := graph.New()
+	g.Add(graph.ID("root"), 1)
+	g.Add(graph.ID("root", "child"), 2)
+
+	g.Connect(graph.ID("root"), graph.ID("root", "child"))
+
+	require.NoError(t, g.Validate())
+
+	parent := g.GetParent(graph.ID("root", "child"))
+	assert.Equal(t, g.Get(graph.ID("root")), parent)
 }
 
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
