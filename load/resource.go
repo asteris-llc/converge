@@ -26,14 +26,14 @@ import (
 
 // SetResources loads the resources for each graph node
 func SetResources(g *graph.Graph) (*graph.Graph, error) {
-	return g.Transform(func(id string, v interface{}, edges []string) (interface{}, []string, error) {
+	return g.Transform(func(id string, out *graph.Graph) error {
 		if id == "root" { // root
-			return v, edges, nil
+			return nil
 		}
 
-		node, ok := v.(*parse.Node)
+		node, ok := out.Get(id).(*parse.Node)
 		if !ok {
-			return v, edges, fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", v)
+			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
 		var dest resource.Resource
@@ -42,14 +42,16 @@ func SetResources(g *graph.Graph) (*graph.Graph, error) {
 			dest = new(shell.Preparer)
 
 		default:
-			return v, edges, fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
+			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
 		}
 
 		err := hcl.DecodeObject(dest, node.ObjectItem)
 		if err != nil {
-			return v, edges, err
+			return err
 		}
 
-		return dest, edges, nil
+		out.Add(id, dest)
+
+		return nil
 	})
 }
