@@ -24,25 +24,25 @@ import (
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
 func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
-	return g.Transform(func(id string, val interface{}, edges []string) (interface{}, []string, error) {
-		if val == nil && id == "root" { // root
-			return val, edges, nil
+	return g.Transform(func(id string, out *graph.Graph) error {
+		if id == "root" { // root
+			return nil
 		}
 
-		node, ok := val.(*parse.Node)
+		node, ok := out.Get(id).(*parse.Node)
 		if !ok {
-			return val, edges, fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", val)
+			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
 		deps, err := node.GetStringSlice("depends")
 		if err == nil {
 			for _, dep := range deps {
-				edges = append(edges, graph.SiblingID(id, dep))
+				out.Connect(id, graph.SiblingID(id, dep))
 			}
 		} else if err != parse.ErrNotFound {
-			return val, edges, err
+			return err
 		}
 
-		return val, edges, nil
+		return nil
 	})
 }
