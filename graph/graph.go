@@ -106,7 +106,12 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, err error) {
 	transformed = New()
 
-	err = g.Walk(func(id string, _ interface{}) error {
+	err = g.Walk(func(id string, val interface{}) error {
+		transformed.Add(id, val)
+		for _, dest := range g.DownEdges(id) {
+			transformed.Connect(id, dest)
+		}
+
 		return cb(id, transformed)
 	})
 	if err != nil {
