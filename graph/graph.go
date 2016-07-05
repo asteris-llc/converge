@@ -28,24 +28,38 @@ import (
 type Graph struct {
 	inner  *dag.AcyclicGraph
 	values map[string]interface{}
+
+	innerLock  *sync.RWMutex
+	valuesLock *sync.RWMutex
 }
 
 // New constructs and returns a new Graph
 func New() *Graph {
 	return &Graph{
-		inner:  new(dag.AcyclicGraph),
-		values: map[string]interface{}{},
+		inner:      new(dag.AcyclicGraph),
+		values:     map[string]interface{}{},
+		innerLock:  new(sync.RWMutex),
+		valuesLock: new(sync.RWMutex),
 	}
 }
 
 // Add a new value by ID
 func (g *Graph) Add(id string, value interface{}) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.valuesLock.Lock()
+	defer g.valuesLock.Unlock()
+
 	g.inner.Add(id)
 	g.values[id] = value
 }
 
 // Get a value by ID
 func (g *Graph) Get(id string) interface{} {
+	g.valuesLock.RLock()
+	defer g.valuesLock.RUnlock()
+
 	return g.values[id]
 }
 
@@ -57,11 +71,17 @@ func (g *Graph) GetParent(id string) interface{} {
 
 // Connect two vertices together by ID
 func (g *Graph) Connect(from, to string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
 	g.inner.Connect(dag.BasicEdge(from, to))
 }
 
 // DownEdges returns outward-facing edges of the specified vertex
 func (g *Graph) DownEdges(id string) (out []string) {
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+
 	for _, edge := range g.inner.DownEdges(id).List() {
 		out = append(out, edge.(string))
 	}
@@ -83,27 +103,11 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
-func (g *Graph) Transform(cb func(string, interface{}, []string) (interface{}, []string, error)) (transformed *Graph, err error) {
+func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, err error) {
 	transformed = New()
-	lock := new(sync.Mutex)
 
-	err = g.Walk(func(id string, value interface{}) error {
-		edges := g.DownEdges(id)
-
-		newValue, newEdges, err := cb(id, value, edges)
-		if err != nil {
-			return err
-		}
-
-		lock.Lock()
-		defer lock.Unlock()
-		transformed.Add(id, newValue)
-
-		for _, edge := range newEdges {
-			transformed.Connect(id, edge)
-		}
-
-		return nil
+	err = g.Walk(func(id string, _ interface{}) error {
+		return cb(id, transformed)
 	})
 	if err != nil {
 		return transformed, err
