@@ -176,8 +176,10 @@ func TestTransform(t *testing.T) {
 	g.Add("int", 1)
 
 	transformed, err := g.Transform(
-		func(id string, _ interface{}, edges []string) (interface{}, []string, error) {
-			return 2, edges, nil
+		func(id string, dest *graph.Graph) error {
+			dest.Add(id, 2)
+
+			return nil
 		},
 	)
 
