@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/resource/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,9 +44,31 @@ task x {
 	item := resourced.Get("root/task.x")
 	preparer, ok := item.(*shell.Preparer)
 
-	assert.True(t, ok, fmt.Sprintf("preparer was %T, not *shell.Preparer", item))
-	assert.Equal(t, preparer.Check, "check")
-	assert.Equal(t, preparer.Apply, "apply")
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not *shell.Preparer", item))
+	assert.Equal(t, "check", preparer.Check)
+	assert.Equal(t, "apply", preparer.Apply)
+}
+
+func TestSetResourcesTemplate(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	resourced, err := getResourcesGraph(
+		t,
+		[]byte(`
+template x {
+  destination = "destination"
+  content = "content"
+}
+`),
+	)
+	assert.NoError(t, err)
+
+	item := resourced.Get("root/template.x")
+	preparer, ok := item.(*template.Preparer)
+
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not *template.Preparer", item))
+	assert.Equal(t, "destination", preparer.Destination)
+	assert.Equal(t, "content", preparer.Content)
 }
 
 func TestSetResourcesBad(t *testing.T) {
