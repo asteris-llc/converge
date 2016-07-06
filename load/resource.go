@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/template"
 	"github.com/hashicorp/hcl"
@@ -39,6 +40,9 @@ func SetResources(g *graph.Graph) (*graph.Graph, error) {
 
 		var dest resource.Resource
 		switch node.Kind() {
+		case "param":
+			dest = new(param.Preparer)
+
 		case "task":
 			dest = new(shell.Preparer)
 
