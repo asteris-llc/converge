@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/resource/template"
 	"github.com/hashicorp/hcl"
 )
 
@@ -40,6 +41,9 @@ func SetResources(g *graph.Graph) (*graph.Graph, error) {
 		switch node.Kind() {
 		case "task":
 			dest = new(shell.Preparer)
+
+		case "template":
+			dest = new(template.Preparer)
 
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
