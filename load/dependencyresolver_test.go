@@ -45,3 +45,18 @@ func TestDependencyResolverBadDependency(t *testing.T) {
 		assert.EqualError(t, err, "nonexistent vertices in edges: root/task.nonexistent")
 	}
 }
+
+func TestDependencyResolverResolvesParam(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	nodes, err := load.Nodes("../samples/basicDependencies.hcl")
+	require.NoError(t, err)
+
+	resolved, err := load.ResolveDependencies(nodes)
+	assert.NoError(t, err)
+
+	assert.Contains(t, resolved.DownEdges("root/task.directory"), "root/param.filename")
+
+	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/param.filename")
+	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/param.message")
+}
