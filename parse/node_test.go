@@ -16,6 +16,7 @@ package parse_test
 
 import (
 	"errors"
+	"sort"
 	"testing"
 
 	"github.com/asteris-llc/converge/parse"
@@ -219,4 +220,22 @@ func TestNodeGetStringSliceBadItem(t *testing.T) {
 			`"a.0" is not a string, it is an int`,
 		)
 	}
+}
+
+func TestNodeGetStrings(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`
+module x y {
+  fst = "fst"
+  snd = "snd"
+}
+`)
+	require.NoError(t, err)
+
+	vals, err := node.GetStrings()
+	assert.NoError(t, err)
+
+	sort.Strings(vals)
+	assert.Equal(t, []string{"fst", "snd"}, vals)
 }
