@@ -102,23 +102,59 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 	})
 }
 
+// DepthFirstWalk walks the graph root-to-leaf
+func (g *Graph) DepthFirstWalk(cb func(string, interface{}) error) error {
+	root, err := g.inner.Root()
+	if err != nil {
+		return err
+	}
+
+	return g.inner.DepthFirstWalk(
+		[]dag.Vertex{root},
+		func(v dag.Vertex, _ int) error {
+			id, ok := v.(string)
+			if !ok {
+				return fmt.Errorf(`ID "%v" was not a string`, v)
+			}
+
+			return cb(id, g.values[id])
+		},
+	)
+}
+
 // Transform a graph of type A to a graph of type B. A and B can be the same.
 func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, err error) {
 	transformed = New()
 
-	err = g.Walk(func(id string, val interface{}) error {
-		transformed.Add(id, val)
-		for _, dest := range g.DownEdges(id) {
-			transformed.Connect(id, dest)
-		}
-
-		return cb(id, transformed)
-	})
+	err = g.Walk(transformed.transformVertexFunc(cb))
 	if err != nil {
 		return transformed, err
 	}
 
 	return transformed, transformed.Validate()
+}
+
+// DepthFirstTransform does Transform, but starting at the root
+func (g *Graph) DepthFirstTransform(cb func(string, *Graph) error) (transformed *Graph, err error) {
+	transformed = New()
+
+	err = g.DepthFirstWalk(transformed.transformVertexFunc(cb))
+	if err != nil {
+		return transformed, err
+	}
+
+	return transformed, transformed.Validate()
+}
+
+func (g *Graph) transformVertexFunc(cb func(string, *Graph) error) func(string, interface{}) error {
+	return func(id string, val interface{}) error {
+		g.Add(id, val)
+		for _, dest := range g.DownEdges(id) {
+			g.Connect(id, dest)
+		}
+
+		return cb(id, g)
+	}
 }
 
 // Validate that the graph...
