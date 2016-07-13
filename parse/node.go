@@ -155,6 +155,21 @@ func (n *Node) GetStringSlice(key string) (val []string, err error) {
 	return val, nil
 }
 
+// GetStrings retrieves all the strings in the node
+func (n *Node) GetStrings() (vals []string, err error) {
+	if err := n.setValues(); err != nil {
+		return nil, err
+	}
+
+	for _, val := range n.values {
+		if s, ok := val.(string); ok {
+			vals = append(vals, s)
+		}
+	}
+
+	return vals, nil
+}
+
 func (n *Node) badTypeError(key, typ string, val interface{}) error {
 	article := func(x string) string {
 		switch x[0] {
