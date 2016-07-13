@@ -16,10 +16,13 @@ package load
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 )
+
+var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
@@ -41,6 +44,26 @@ func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
 			}
 		} else if err != parse.ErrNotFound {
 			return err
+		}
+
+		// get sibling dependencies. In this case, we need to look for template
+		// calls to `param`. Note that I am not proud of this approach. If you,
+		// future reader, have a better idea of what to do here: do it!
+		//
+		// But before you think "oh, I'll just render using a fake param function",
+		// remember that every time we add another function in render we'd have to
+		// add it here too. If you're reading this, let's have a discussion about
+		// what we should do to deduplicate. I'm not sure.
+		strings, err := node.GetStrings()
+		if err != nil {
+			return err
+		}
+
+		for _, s := range strings {
+			for _, match := range paramSeekerRe.FindAllString(s, -1) {
+				name := paramSeekerRe.FindStringSubmatch(match)[1]
+				out.Connect(id, graph.SiblingID(id, "param."+name))
+			}
 		}
 
 		return nil
