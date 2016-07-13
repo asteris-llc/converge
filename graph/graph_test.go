@@ -203,6 +203,46 @@ func TestParent(t *testing.T) {
 	assert.Equal(t, g.Get(graph.ID("root")), parent)
 }
 
+func TestDepthFirstWalk(t *testing.T) {
+	// the graph should walk nodes root-to-leaf
+	defer helpers.HideLogs(t)()
+
+	g := graph.New()
+	g.Add("root", nil)
+	g.Add("child", nil)
+	g.Connect("root", "child")
+
+	var out []string
+	assert.NoError(
+		t,
+		g.DepthFirstWalk(func(id string, _ interface{}) error {
+			out = append(out, id)
+			return nil
+		}),
+	)
+
+	assert.Equal(t, []string{"root", "child"}, out)
+}
+
+func TestDepthFirstTransform(t *testing.T) {
+	// transforming depth first should work
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("int", 1)
+
+	transformed, err := g.DepthFirstTransform(
+		func(id string, dest *graph.Graph) error {
+			dest.Add(id, 2)
+
+			return nil
+		},
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, transformed.Get("int").(int))
+}
+
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 	lock := new(sync.Mutex)
 	out := []string{}
