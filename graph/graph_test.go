@@ -203,7 +203,7 @@ func TestParent(t *testing.T) {
 	assert.Equal(t, g.Get(graph.ID("root")), parent)
 }
 
-func TestDepthFirstWalk(t *testing.T) {
+func TestRootFirstWalk(t *testing.T) {
 	// the graph should walk nodes root-to-leaf
 	defer helpers.HideLogs(t)()
 
@@ -215,7 +215,7 @@ func TestDepthFirstWalk(t *testing.T) {
 	var out []string
 	assert.NoError(
 		t,
-		g.DepthFirstWalk(func(id string, _ interface{}) error {
+		g.RootFirstWalk(func(id string, _ interface{}) error {
 			out = append(out, id)
 			return nil
 		}),
@@ -224,14 +224,43 @@ func TestDepthFirstWalk(t *testing.T) {
 	assert.Equal(t, []string{"root", "child"}, out)
 }
 
-func TestDepthFirstTransform(t *testing.T) {
+func TestRootFirstWalkSiblingDep(t *testing.T) {
+	// the graph should resolve sibling dependencies before their dependers
+	defer helpers.HideLogs(t)()
+
+	g := graph.New()
+	g.Add("root", nil)
+	g.Add("root/child", nil)
+	g.Add("root/sibling", nil)
+
+	g.Connect("root", "root/child")
+	g.Connect("root", "root/sibling")
+	g.Connect("root/child", "root/sibling")
+
+	var out []string
+	assert.NoError(
+		t,
+		g.RootFirstWalk(func(id string, _ interface{}) error {
+			out = append(out, id)
+			return nil
+		}),
+	)
+
+	assert.Equal(
+		t,
+		[]string{"root", "root/sibling", "root/child"},
+		out,
+	)
+}
+
+func TestRootFirstTransform(t *testing.T) {
 	// transforming depth first should work
 	t.Parallel()
 
 	g := graph.New()
 	g.Add("int", 1)
 
-	transformed, err := g.DepthFirstTransform(
+	transformed, err := g.RootFirstTransform(
 		func(id string, dest *graph.Graph) error {
 			dest.Add(id, 2)
 

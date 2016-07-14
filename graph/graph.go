@@ -16,6 +16,7 @@ package graph
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -69,6 +70,12 @@ func (g *Graph) GetParent(id string) interface{} {
 	return g.Get(ParentID(id))
 }
 
+// GetSibling returns the named sibling of the current node. This only works if
+// you're using the hierarchical ID functions from this module.
+func (g *Graph) GetSibling(id, sibling string) interface{} {
+	return g.Get(SiblingID(id, sibling))
+}
+
 // Connect two vertices together by ID
 func (g *Graph) Connect(from, to string) {
 	g.innerLock.Lock()
@@ -102,31 +109,78 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 	})
 }
 
-// DepthFirstWalk walks the graph root-to-leaf
-func (g *Graph) DepthFirstWalk(cb func(string, interface{}) error) error {
+// RootFirstWalk walks the graph root-to-leaf, checking sibling dependencies
+// before descending.
+func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 	root, err := g.inner.Root()
 	if err != nil {
 		return err
 	}
 
-	return g.inner.DepthFirstWalk(
-		[]dag.Vertex{root},
-		func(v dag.Vertex, _ int) error {
-			id, ok := v.(string)
-			if !ok {
-				return fmt.Errorf(`ID "%v" was not a string`, v)
-			}
-
-			return cb(id, g.values[id])
-		},
+	var (
+		todo = []string{root.(string)}
+		done = map[string]struct{}{}
 	)
+
+	for len(todo) > 0 {
+		id := todo[0]
+		todo = todo[1:]
+
+		// first check if we've already done this ID. We check multiple times as a
+		// signal to re-check after a failure.
+		if _, ok := done[id]; ok {
+			continue
+		}
+
+		// make sure all sibling dependencies are finished first
+		var skip bool
+		for _, edge := range g.DownEdges(id) {
+			if _, ok := done[edge]; AreSiblingIDs(id, edge) && !ok {
+				log.Printf("[DEBUG] still waiting for %q", edge)
+				todo = append(todo, id)
+				skip = true
+			}
+		}
+		if skip {
+			continue
+		}
+
+		log.Printf("[DEBUG] walking %s\n", id)
+
+		err := cb(id, g.Get(id))
+		if err != nil {
+			return err
+		}
+
+		// mark this ID as done and do the children
+		done[id] = struct{}{}
+		for _, edge := range g.DownEdges(id) {
+			todo = append(todo, edge)
+		}
+	}
+
+	return nil
+
+	// return g.inner.DepthFirstWalk(
+	// 	[]dag.Vertex{root},
+	// 	func(v dag.Vertex, _ int) error {
+	// 		id, ok := v.(string)
+	// 		if !ok {
+	// 			return fmt.Errorf(`ID "%v" was not a string`, v)
+	// 		}
+
+	// 		return cb(id, g.values[id])
+	// 	},
+	// )
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
 func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, err error) {
-	transformed = New()
+	transformed = g.Copy()
 
-	err = g.Walk(transformed.transformVertexFunc(cb))
+	err = transformed.Walk(func(id string, _ interface{}) error {
+		return cb(id, transformed)
+	})
 	if err != nil {
 		return transformed, err
 	}
@@ -134,11 +188,13 @@ func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, er
 	return transformed, transformed.Validate()
 }
 
-// DepthFirstTransform does Transform, but starting at the root
-func (g *Graph) DepthFirstTransform(cb func(string, *Graph) error) (transformed *Graph, err error) {
-	transformed = New()
+// RootFirstTransform does Transform, but starting at the root
+func (g *Graph) RootFirstTransform(cb func(string, *Graph) error) (transformed *Graph, err error) {
+	transformed = g.Copy()
 
-	err = g.DepthFirstWalk(transformed.transformVertexFunc(cb))
+	err = transformed.RootFirstWalk(func(id string, _ interface{}) error {
+		return cb(id, transformed)
+	})
 	if err != nil {
 		return transformed, err
 	}
@@ -146,15 +202,20 @@ func (g *Graph) DepthFirstTransform(cb func(string, *Graph) error) (transformed 
 	return transformed, transformed.Validate()
 }
 
-func (g *Graph) transformVertexFunc(cb func(string, *Graph) error) func(string, interface{}) error {
-	return func(id string, val interface{}) error {
-		g.Add(id, val)
+// Copy the graph for further modification
+func (g *Graph) Copy() *Graph {
+	out := New()
+
+	g.Walk(func(id string, val interface{}) error {
+		out.Add(id, val)
 		for _, dest := range g.DownEdges(id) {
-			g.Connect(id, dest)
+			out.Connect(id, dest)
 		}
 
-		return cb(id, g)
-	}
+		return nil
+	})
+
+	return out
 }
 
 // Validate that the graph...
