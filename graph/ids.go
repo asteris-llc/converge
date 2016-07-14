@@ -30,3 +30,8 @@ func ParentID(id string) string {
 func SiblingID(id, sibling string) string {
 	return ID(ParentID(id), sibling)
 }
+
+// AreSiblingIDs checks if two IDs are siblings
+func AreSiblingIDs(a, b string) bool {
+	return ParentID(a) == ParentID(b)
+}
