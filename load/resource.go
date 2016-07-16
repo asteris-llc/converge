@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/template"
@@ -48,6 +49,9 @@ func SetResources(g *graph.Graph) (*graph.Graph, error) {
 
 		case "template":
 			dest = new(template.Preparer)
+
+		case "module":
+			dest = new(module.Preparer)
 
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
