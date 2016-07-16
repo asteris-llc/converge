@@ -23,6 +23,16 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare() (resource.Task, error) {
-	return nil, nil
+func (p *Preparer) Prepare(render resource.RenderFunc) (resource.Task, error) {
+	content, err := render("destination", p.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	destination, err := render("content", p.Destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Template{content, destination}, nil
 }
