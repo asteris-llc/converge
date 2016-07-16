@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/template"
@@ -92,6 +93,28 @@ param x {
 	assert.Equal(t, "default", preparer.Default)
 }
 
+func TestSetResourcesModules(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	resourced, err := getResourcesGraph(
+		t,
+		[]byte(`
+module source x {
+	params = {
+	  key = "value"
+  }
+}
+`),
+	)
+	assert.NoError(t, err)
+
+	item := resourced.Get("root/module.x")
+	preparer, ok := item.(*module.Preparer)
+
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", item, preparer))
+	assert.Equal(t, "value", preparer.Params["key"])
+}
+
 func TestSetResourcesBad(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
@@ -100,7 +123,6 @@ func TestSetResourcesBad(t *testing.T) {
 		assert.EqualError(t, err, "1 error(s) occurred:\n\n* \"x\" is not a valid resource type in \"x.x\"")
 	}
 }
-
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	resources, err := parse.Parse(content)
 	require.NoError(t, err)
