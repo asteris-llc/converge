@@ -136,7 +136,7 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
 			if _, ok := done[edge]; AreSiblingIDs(id, edge) && !ok {
-				log.Printf("[DEBUG] still waiting for %q", edge)
+				log.Printf("[DEBUG] walk(rootfirst): %q still waiting for sibling %q", id, edge)
 				todo = append(todo, id)
 				skip = true
 			}
@@ -145,7 +145,7 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 			continue
 		}
 
-		log.Printf("[DEBUG] walking %s\n", id)
+		log.Printf("[DEBUG] walk(rootfirst): walking %s\n", id)
 
 		err := cb(id, g.Get(id))
 		if err != nil {
