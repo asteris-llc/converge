@@ -14,14 +14,29 @@
 
 package module
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"fmt"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for modules
 type Preparer struct {
 	Params map[string]interface{} `hcl:"params"`
 }
 
+// NewPreparer returns a new preparer for modules
+func NewPreparer(params map[string]interface{}) *Preparer {
+	return &Preparer{Params: params}
+}
+
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.RenderFunc) (resource.Task, error) {
-	return nil, nil
+	module := &Module{Params: map[string]string{}}
+
+	for key, value := range p.Params {
+		module.Params[key] = fmt.Sprintf("%s", value)
+	}
+
+	return module, nil
 }
