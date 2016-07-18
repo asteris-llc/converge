@@ -17,8 +17,6 @@ package graph
 import (
 	"fmt"
 	"log"
-	"reflect"
-	"sort"
 	"strings"
 	"sync"
 
@@ -211,7 +209,6 @@ func (g *Graph) Copy() *Graph {
 // 1. has a root
 // 2. has no cycles
 // 3. has no dangling edges
-// 4. has values of a single type (excepting nil)
 func (g *Graph) Validate() error {
 	err := g.inner.Validate()
 	if err != nil {
@@ -234,29 +231,6 @@ func (g *Graph) Validate() error {
 		return fmt.Errorf(
 			"nonexistent vertices in edges: %s",
 			strings.Join(bad, ", "),
-		)
-	}
-
-	// check for differing types
-	types := map[reflect.Type]struct{}{}
-	for _, val := range g.values {
-		if val == nil {
-			continue
-		}
-
-		types[reflect.TypeOf(val)] = struct{}{}
-	}
-
-	if len(types) > 1 {
-		var names []string
-		for t := range types {
-			names = append(names, fmt.Sprint(t))
-		}
-		sort.Strings(names)
-
-		return fmt.Errorf(
-			"differing types in graph vertices: %s",
-			strings.Join(names, ", "),
 		)
 	}
 
