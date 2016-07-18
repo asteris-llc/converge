@@ -152,22 +152,6 @@ func TestValidateDanglingEdge(t *testing.T) {
 	}
 }
 
-func TestValidateDifferingTypes(t *testing.T) {
-	t.Parallel()
-
-	g := graph.New()
-	g.Add("int", 1)
-	g.Add("string", "string")
-
-	// just so we don't have multiple roots
-	g.Connect("int", "string")
-
-	err := g.Validate()
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "differing types in graph vertices: int, string")
-	}
-}
-
 func TestTransform(t *testing.T) {
 	// Transforming in the same type should work
 	t.Parallel()
