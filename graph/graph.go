@@ -125,7 +125,7 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 		todo = todo[1:]
 
 		// first check if we've already done this ID. We check multiple times as a
-		// signal to re-check after a failure.
+		// signal to re-check after finding a dependency needs waiting for.
 		if _, ok := done[id]; ok {
 			continue
 		}
