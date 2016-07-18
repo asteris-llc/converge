@@ -193,8 +193,8 @@ func TestRootFirstWalk(t *testing.T) {
 
 	g := graph.New()
 	g.Add("root", nil)
-	g.Add("child", nil)
-	g.Connect("root", "child")
+	g.Add("root/child", nil)
+	g.Connect("root", "root/child")
 
 	var out []string
 	assert.NoError(
@@ -205,7 +205,7 @@ func TestRootFirstWalk(t *testing.T) {
 		}),
 	)
 
-	assert.Equal(t, []string{"root", "child"}, out)
+	assert.Equal(t, []string{"root", "root/child"}, out)
 }
 
 func TestRootFirstWalkSiblingDep(t *testing.T) {
