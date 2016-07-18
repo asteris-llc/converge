@@ -160,18 +160,6 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 	}
 
 	return nil
-
-	// return g.inner.DepthFirstWalk(
-	// 	[]dag.Vertex{root},
-	// 	func(v dag.Vertex, _ int) error {
-	// 		id, ok := v.(string)
-	// 		if !ok {
-	// 			return fmt.Errorf(`ID "%v" was not a string`, v)
-	// 		}
-
-	// 		return cb(id, g.values[id])
-	// 	},
-	// )
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
