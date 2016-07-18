@@ -35,3 +35,8 @@ func SiblingID(id, sibling string) string {
 func AreSiblingIDs(a, b string) bool {
 	return ParentID(a) == ParentID(b)
 }
+
+// BaseID is the end of the ID, so "just" the original part
+func BaseID(id string) string {
+	return path.Base(id)
+}
