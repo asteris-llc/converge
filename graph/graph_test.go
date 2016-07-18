@@ -154,7 +154,7 @@ func TestValidateDanglingEdge(t *testing.T) {
 
 func TestTransform(t *testing.T) {
 	// Transforming in the same type should work
-	t.Parallel()
+	defer helpers.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("int", 1)
@@ -239,7 +239,7 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 
 func TestRootFirstTransform(t *testing.T) {
 	// transforming depth first should work
-	t.Parallel()
+	defer helpers.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("int", 1)
