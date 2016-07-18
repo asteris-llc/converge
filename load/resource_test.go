@@ -123,6 +123,7 @@ func TestSetResourcesBad(t *testing.T) {
 		assert.EqualError(t, err, "1 error(s) occurred:\n\n* \"x\" is not a valid resource type in \"x.x\"")
 	}
 }
+
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	resources, err := parse.Parse(content)
 	require.NoError(t, err)
