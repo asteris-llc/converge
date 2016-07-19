@@ -37,7 +37,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		task, ok := val.(resource.Task)
 		if !ok {
 			fmt.Println(val)
-			return fmt.Errorf("%s: could not get resoure.Task, was %T", id, val)
+			return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
 		}
 
 		log.Printf("[DEBUG] checking %q\n", id)
