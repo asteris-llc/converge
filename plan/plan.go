@@ -12,52 +12,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exec
+package plan
 
 import (
+	"fmt"
 	"log"
-	"sync"
 
 	"golang.org/x/net/context"
 
-	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Plan the operations to be performed and outputs status
-func Plan(ctx context.Context, graph *load.Graph) (results []*PlanResult, err error) {
-	lock := new(sync.Mutex)
-
-	err = graph.Walk(func(path string, res resource.Resource) error {
+// Plan the execution of a Graph of resource.Tasks
+func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+	return in.Transform(func(id string, out *graph.Graph) error {
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
 		}
 
-		monitor, ok := res.(resource.Monitor)
+		val := out.Get(id)
+		task, ok := val.(resource.Task)
 		if !ok {
-			return nil
+			fmt.Println(val)
+			return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
 		}
 
-		var (
-			err    error
-			result = &PlanResult{Path: path}
-		)
+		log.Printf("[DEBUG] checking %q\n", id)
 
-		log.Printf("[INFO] %s\n", &StatusMessage{Path: path, Status: "checking status"})
-
-		result.CurrentStatus, result.WillChange, err = monitor.Check()
+		status, willChange, err := task.Check()
 		if err != nil {
-			return err
+			return fmt.Errorf("error checking %s: %s", id, err)
 		}
 
-		lock.Lock()
-		defer lock.Unlock()
-		results = append(results, result)
+		out.Add(
+			id,
+			&Result{
+				Status:     status,
+				WillChange: willChange,
+				Task:       task,
+			},
+		)
 
 		return nil
 	})
-
-	return results, err
 }

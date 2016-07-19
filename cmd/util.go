@@ -19,7 +19,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/render"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -42,7 +42,7 @@ func UseColor() bool {
 }
 
 // getParams wraps getParamsFromFlags, logging and exiting upon error
-func getParams(cmd *cobra.Command) resource.Values {
+func getParams(cmd *cobra.Command) render.Values {
 	if !cmd.HasPersistentFlags() {
 		log.Fatalf("[FATAL] %s: can't get parameters, command doesn't have persistent flags\n", cmd.Name())
 	}

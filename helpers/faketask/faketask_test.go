@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exec
+package faketask_test
 
-import "fmt"
+import (
+	"testing"
 
-// StatusMessage is returned as status for Plan and Apply
-type StatusMessage struct {
-	Path   string
-	Status string
-}
+	"github.com/asteris-llc/converge/helpers/faketask"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/stretchr/testify/assert"
+)
 
-func (s *StatusMessage) String() string {
-	return fmt.Sprintf("%s: %s", s.Path, s.Status)
+func TestFakeTaskInterface(t *testing.T) {
+	t.Parallel()
+
+	assert.Implements(t, (*resource.Task)(nil), new(faketask.FakeTask))
 }
