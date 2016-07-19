@@ -17,7 +17,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
@@ -78,9 +78,9 @@ func TestGetParamsFromFlags(t *testing.T) {
 	assert.Empty(t, errors)
 
 	// compare to expected values
-	expected := resource.Values(map[string]resource.Value{
+	expected := render.Values{
 		"key1": "1", "key2": "2", "key3": "3", "key4": "4",
-	})
+	}
 	assert.EqualValues(t, expected, values)
 }
 
