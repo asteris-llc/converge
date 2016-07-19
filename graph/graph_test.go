@@ -279,6 +279,12 @@ func TestRootFirstTransform(t *testing.T) {
 	assert.Equal(t, 2, transformed.Get("int").(int))
 }
 
+func TestToDotReturnsNilWhenInvalidGraph(t *testing.T) {
+	g := invalidGraph()
+	_, actual := g.ToDot()
+	assert.NotEqual(t, nil, actual)
+}
+
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 	lock := new(sync.Mutex)
 	out := []string{}
@@ -296,4 +302,10 @@ func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 	)
 
 	return out, err
+}
+
+func invalidGraph() *graph.Graph {
+	g := graph.New()
+	g.Connect("Bad", "Nodes")
+	return g
 }
