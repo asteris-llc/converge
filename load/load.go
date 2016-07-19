@@ -28,5 +28,10 @@ func Load(root string) (*graph.Graph, error) {
 		return nil, err
 	}
 
-	return resolved, nil
+	resourced, err := SetResources(resolved)
+	if err != nil {
+		return nil, err
+	}
+
+	return resourced, nil
 }
