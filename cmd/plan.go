@@ -25,6 +25,7 @@ import (
 	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
 
@@ -45,6 +46,12 @@ can be done separately to see what needs to be changed before execution.`,
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
+		// params
+		params, err := getParamsFromFlags(cmd.Flags())
+		if err != nil {
+			log.Fatalf("[FATAL] could not read params: %s\n", err)
+		}
+
 		for _, fname := range args {
 			log.Printf("[INFO] planning %s\n", fname)
 
@@ -53,7 +60,12 @@ can be done separately to see what needs to be changed before execution.`,
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			results, err := plan.Plan(ctx, graph)
+			rendered, err := render.Render(graph, params)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+			}
+
+			results, err := plan.Plan(ctx, rendered)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
@@ -81,7 +93,7 @@ can be done separately to see what needs to be changed before execution.`,
 					counts.changes++
 				}
 
-				fmt.Printf("%s\n\tStatus: %s\n\tWill Change: %s\n", id, result.Status, result.WillChange)
+				fmt.Printf("%s:\n\tStatus: %s\n\tWill Change: %t\n\n", id, result.Status, result.WillChange)
 				return nil
 			})
 			if err != nil {
