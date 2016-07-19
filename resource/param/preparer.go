@@ -22,11 +22,12 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.RenderFunc) (resource.Task, error) {
-	// TODO: this isn't quite right. We need to potentially pass in another set of
-	// values instead of just taking the default? This should probably happen in
-	// the call to this function
-	def, err := render("default", p.Default)
+func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	if val := render.Value(); val != nil {
+		return &Param{Value: *val}, nil
+	}
+
+	def, err := render.Render("default", p.Default)
 	if err != nil {
 		return nil, err
 	}

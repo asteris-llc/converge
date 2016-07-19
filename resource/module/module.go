@@ -12,27 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package module
 
-import "github.com/asteris-llc/converge/resource"
+import "fmt"
 
-// Preparer for Templates
-type Preparer struct {
-	Content     string `hcl:"content"`
-	Destination string `hcl:"destination"`
+// Module holds stringified values for parameters
+type Module struct {
+	Params map[string]string
 }
 
-// Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	content, err := render.Render("destination", p.Content)
-	if err != nil {
-		return nil, err
-	}
+// Check just returns the current value of the moduleeter. It should never have to change.
+func (m *Module) Check() (string, bool, error) {
+	return m.String(), false, nil
+}
 
-	destination, err := render.Render("content", p.Destination)
-	if err != nil {
-		return nil, err
-	}
+// Apply doesn't do anything since modules are final values
+func (*Module) Apply() error {
+	return nil
+}
 
-	return &Template{content, destination}, nil
+// String is the final value of thie Module
+func (m *Module) String() string {
+	return fmt.Sprintf("%s", m.Params)
 }
