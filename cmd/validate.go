@@ -19,7 +19,6 @@ import (
 	"log"
 
 	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +34,7 @@ var validateCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, fname := range args {
-			_, err := load.Load(fname, resource.Values{})
+			_, err := load.Load(fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}

@@ -18,12 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"golang.org/x/net/context"
 
 	"github.com/acmacalister/skittles"
-	"github.com/asteris-llc/converge/exec"
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/plan"
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +41,6 @@ can be done separately to see what needs to be changed before execution.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params := getParams(cmd)
-
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
@@ -49,32 +48,44 @@ can be done separately to see what needs to be changed before execution.`,
 		for _, fname := range args {
 			log.Printf("[INFO] planning %s\n", fname)
 
-			graph, err := load.Load(fname, params)
+			graph, err := load.Load(fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			results, err := exec.Plan(ctx, graph)
+			results, err := plan.Plan(ctx, graph)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			var counts struct {
-				results, changes int
-			}
+			var (
+				cLock  = new(sync.Mutex)
+				counts struct {
+					results, changes int
+				}
+			)
 
 			fmt.Print("\n")
-			for _, result := range results {
+
+			err = results.Walk(func(id string, val interface{}) error {
+				result, ok := val.(*plan.Result)
+				if !ok {
+					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)
+				}
+
+				cLock.Lock()
+				defer cLock.Unlock()
+
 				counts.results++
 				if result.WillChange {
 					counts.changes++
 				}
 
-				if UseColor() {
-					fmt.Println(result.Pretty())
-				} else {
-					fmt.Println(result)
-				}
+				fmt.Printf("%s\n\tStatus: %s\n\tWill Change: %s\n", id, result.Status, result.WillChange)
+				return nil
+			})
+			if err != nil {
+				log.Fatalf("[FATAL] %s: printing failed: %s\n", fname, err)
 			}
 
 			// summarize the potential changes for the user
