@@ -23,7 +23,11 @@ type Task interface {
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
-	Prepare(RenderFunc) (Task, error)
+	Prepare(Renderer) (Task, error)
 }
 
-type RenderFunc func(name, content string) (string, error)
+// Renderer is passed to resources
+type Renderer interface {
+	Value() *string
+	Render(name, content string) (string, error)
+}

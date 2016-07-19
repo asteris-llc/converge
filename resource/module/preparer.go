@@ -31,11 +31,22 @@ func NewPreparer(params map[string]interface{}) *Preparer {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.RenderFunc) (resource.Task, error) {
+func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	module := &Module{Params: map[string]string{}}
 
 	for key, value := range p.Params {
-		module.Params[key] = fmt.Sprintf("%s", value)
+		switch value.(type) {
+		case string:
+			rendered, err := render.Render(key, value.(string))
+			if err != nil {
+				return nil, err
+			}
+
+			module.Params[key] = rendered
+
+		default:
+			module.Params[key] = fmt.Sprintf("%v", value)
+		}
 	}
 
 	return module, nil
