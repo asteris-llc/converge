@@ -240,3 +240,10 @@ func (g *Graph) Validate() error {
 func (g *Graph) String() string {
 	return strings.Trim(g.inner.String(), "\n")
 }
+
+func (g *Graph) ToDot() (string, error) {
+	if err := g.Validate(); err != nil {
+		return "", err
+	}
+	return "", nil
+}
