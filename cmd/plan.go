@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -93,7 +94,12 @@ can be done separately to see what needs to be changed before execution.`,
 					counts.changes++
 				}
 
-				fmt.Printf("%s:\n\tStatus: %s\n\tWill Change: %t\n\n", id, result.Status, result.WillChange)
+				fmt.Printf(
+					"%s:\n\tWill Change: %t\n\tStatus:\n\t\t%s\n\n",
+					id,
+					result.WillChange,
+					strings.Replace(result.Status, "\n", "\n\t\t", -1),
+				)
 				return nil
 			})
 			if err != nil {
