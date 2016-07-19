@@ -23,6 +23,6 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(resource.RenderFunc) (resource.Task, error) {
+func (p *Preparer) Prepare(resource.Renderer) (resource.Task, error) {
 	return nil, nil
 }
