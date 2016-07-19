@@ -51,3 +51,12 @@ func Error() *FakeTask {
 		Error:      errors.New("error"),
 	}
 }
+
+// WillChange returns a FakeTask that will always change
+func WillChange() *FakeTask {
+	return &FakeTask{
+		Status:     "changed",
+		WillChange: true,
+		Error:      nil,
+	}
+}
