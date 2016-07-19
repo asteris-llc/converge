@@ -12,17 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package shell
+package plan
 
 import "github.com/asteris-llc/converge/resource"
 
-// Preparer for Shell tasks
-type Preparer struct {
-	Check string `hcl:"check"`
-	Apply string `hcl:"apply"`
-}
-
-// Prepare a new task
-func (p *Preparer) Prepare(resource.Renderer) (resource.Task, error) {
-	return &Shell{}, nil
+// Result is the result of planning execution
+type Result struct {
+	Task       resource.Task
+	Status     string
+	WillChange bool
 }
