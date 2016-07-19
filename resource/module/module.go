@@ -14,7 +14,10 @@
 
 package module
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Module holds stringified values for parameters
 type Module struct {
@@ -33,5 +36,9 @@ func (*Module) Apply() error {
 
 // String is the final value of thie Module
 func (m *Module) String() string {
-	return fmt.Sprintf("%s", m.Params)
+	var lines []string
+	for key, val := range m.Params {
+		lines = append(lines, fmt.Sprintf("%s: %s", key, val))
+	}
+	return strings.Join(lines, "\n")
 }
