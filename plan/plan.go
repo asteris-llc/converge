@@ -18,13 +18,21 @@ import (
 	"fmt"
 	"log"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
 )
 
 // Plan the execution of a Graph of resource.Tasks
-func Plan(in *graph.Graph) (*graph.Graph, error) {
+func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	return in.Transform(func(id string, out *graph.Graph) error {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
 		task, ok := out.Get(id).(resource.Task)
 		if !ok {
 			return fmt.Errorf("could not get task, was %T", out.Get(id))
