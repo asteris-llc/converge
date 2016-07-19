@@ -17,6 +17,8 @@ package plan_test
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/helpers/faketask"
@@ -35,7 +37,7 @@ func TestPlanNoOp(t *testing.T) {
 	require.NoError(t, g.Validate())
 
 	// test that running this results in an appropriate result
-	planned, err := plan.Plan(g)
+	planned, err := plan.Plan(context.Background(), g)
 	assert.NoError(t, err)
 
 	result := getResult(t, planned, "root")
@@ -58,7 +60,7 @@ func TestPlanErrorsBelow(t *testing.T) {
 	// planning will return an error if any of the leaves error, but it won't even
 	// touch vertices that are higher up. This test should show an error in the
 	// leafmost node, and not the root.
-	_, err := plan.Plan(g)
+	_, err := plan.Plan(context.Background(), g)
 	if assert.Error(t, err) {
 		assert.EqualError(
 			t,
