@@ -40,51 +40,55 @@ const (
 )
 
 type GraphvizOptions map[string]string
-type VertexPrinter func(interface{}) (string, error)
+
+type VertexGetId func(interface{}) (string, error)
+type VertexGetLabel func(interface{}) (string, error)
 type SubgraphMarker func(interface{}) SubgraphMarkerKey
 
 type GraphvizPrinter struct {
 	prettyprinters.DigraphPrettyPrinter
 	optsMap  GraphvizOptions
-	vPrinter VertexPrinter
+	vPrinter VertexGetLabel
+	vLabeler VertexGetId
 	vMarker  SubgraphMarker
 }
 
-var defaultOptions GraphvizOptions = map[string]string{
-	"splines": "curved",
-	"rankdir": "LR",
-}
-
-func DefaultOptions() GraphvizOptions {
-	return defaultOptions
-}
-
-func DefaultPrinter(val interface{}) (string, error) {
-	nodeStr := fmt.Sprintf("\"%x\"", val)
-	return nodeStr, nil
-}
-
-func DefaultMarker(val interface{}) SubgraphMarkerKey {
-	return SubgraphMarkerNop
-}
-
-func NewPrinter(opts GraphvizOptions, printer VertexPrinter, marker SubgraphMarker) *GraphvizPrinter {
+func NewPrinter(opts GraphvizOptions, idF VertexGetId, labelF VertexGetLabel, marker SubgraphMarker) *GraphvizPrinter {
 	opts = mergeDefaultOptions(opts)
-	if printer == nil {
-		printer = DefaultPrinter
+
+	if idF == nil {
+		idF = DefaultVertexId
 	}
+
+	if labelF == nil {
+		labelF = func(val interface{}) (string, error) { return idF(val) }
+	}
+
 	if marker == nil {
 		marker = DefaultMarker
 	}
+
 	return &GraphvizPrinter{
 		optsMap:  opts,
-		vPrinter: printer,
+		vPrinter: labelF,
+		vLabeler: idF,
 		vMarker:  marker,
 	}
 }
 
-func (g *GraphvizPrinter) Options() GraphvizOptions {
-	return g.optsMap
+func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
+	switch p.vMarker(g.Get(id)) {
+	case SubgraphMarkerStart:
+		sgMarker(id, true)
+	case SubgraphMarkerEnd:
+		sgMarker(id, false)
+	}
+
+	if nodeStr, err := p.vPrinter(g.Get(id)); err != nil {
+		return "", err
+	} else {
+		return fmt.Sprintf("\"%s\";\n", nodeStr), nil
+	}
 }
 
 /* FIXME: Stubs*/
@@ -104,21 +108,6 @@ func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
-	switch p.vMarker(g.Get(id)) {
-	case SubgraphMarkerStart:
-		sgMarker(id, true)
-	case SubgraphMarkerEnd:
-		sgMarker(id, false)
-	}
-
-	if nodeStr, err := p.vPrinter(g.Get(id)); err != nil {
-		return "", err
-	} else {
-		return fmt.Sprintf("\"%s\";\n", nodeStr), nil
-	}
-}
-
 func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	return "", nil
 }
@@ -134,4 +123,26 @@ func mergeDefaultOptions(opts GraphvizOptions) GraphvizOptions {
 		}
 	}
 	return opts
+}
+
+func (g *GraphvizPrinter) Options() GraphvizOptions {
+	return g.optsMap
+}
+
+var defaultOptions GraphvizOptions = map[string]string{
+	"splines": "curved",
+	"rankdir": "LR",
+}
+
+func DefaultOptions() GraphvizOptions {
+	return defaultOptions
+}
+
+func DefaultVertexId(val interface{}) (string, error) {
+	nodeStr := fmt.Sprintf("%x", val)
+	return nodeStr, nil
+}
+
+func DefaultMarker(val interface{}) SubgraphMarkerKey {
+	return SubgraphMarkerNop
 }
