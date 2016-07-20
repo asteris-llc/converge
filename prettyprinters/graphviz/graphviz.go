@@ -15,6 +15,7 @@
 package graphviz
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
@@ -24,15 +25,23 @@ import (
 var (
 	//BadOptionsError is returned when a GraphvizOptionMap contains invalid keys
 	//or values, or is missing required values.
-	BadOptionsError = error.Error
+	BadOptionsError = errors.New("Invalid configuration option")
 
 	//BadGraphError is returned when a provided graph.Graph is not valid
-	BadGraphError = error.Error
+	BadGraphError = errors.New("Provided graph was invalid, or missing ID")
+)
+
+type SubgraphMarkerKey int
+
+const (
+	SubgraphMarkerStart SubgraphMarkerKey = iota
+	SubgraphMarkerEnd
+	SubgraphMarkerNop
 )
 
 type GraphvizOptions map[string]string
 type VertexPrinter func(interface{}) (string, error)
-type SubgraphMarker func(interface{}) bool
+type SubgraphMarker func(interface{}) SubgraphMarkerKey
 
 type GraphvizPrinter struct {
 	prettyprinters.DigraphPrettyPrinter
@@ -55,8 +64,8 @@ func DefaultPrinter(val interface{}) (string, error) {
 	return nodeStr, nil
 }
 
-func DefaultMarker(val interface{}) bool {
-	return false
+func DefaultMarker(val interface{}) SubgraphMarkerKey {
+	return SubgraphMarkerNop
 }
 
 func NewPrinter(opts GraphvizOptions, printer VertexPrinter, marker SubgraphMarker) *GraphvizPrinter {
@@ -95,11 +104,23 @@ func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) DrawNode(g *graph.Graph, val interface{}, sgMarker func(*graph.Graph)) (string, error) {
-	if p.vMarker(val) {
-		sgMarker(g)
+func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
+	switch p.vMarker(g.Get(id)) {
+	case SubgraphMarkerStart:
+		sgMarker(id, true)
+	case SubgraphMarkerEnd:
+		sgMarker(id, false)
 	}
-	return p.vPrinter(val)
+
+	if nodeStr, err := p.vPrinter(g.Get(id)); err != nil {
+		return "", err
+	} else {
+		return fmt.Sprintf("\"%s\";\n", nodeStr), nil
+	}
+}
+
+func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
+	return "", nil
 }
 
 // Utility Functions
