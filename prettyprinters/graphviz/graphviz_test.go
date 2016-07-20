@@ -16,6 +16,8 @@ package graphviz_test
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -29,29 +31,31 @@ var (
 	stubID       = "stub"
 )
 
-func Test_NewGraphvizPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
+// NewPrinter
+func Test_NewPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
 
-	printer := graphviz.NewPrinter(emptyOptsMap, stubPrinter, stubMarker)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, nil)
 	actual := printer.Options()
 	expected := graphviz.DefaultOptions()
 	assert.Equal(t, actual, expected)
 }
 
-func Test_NewGraphvizPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
+func Test_NewPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
 	opts := map[string]string{"rankdir": "TB"} // not the default
-	printer := graphviz.NewPrinter(opts, stubPrinter, stubMarker)
+	printer := graphviz.NewPrinter(opts, nil, nil, nil)
 	setOpts := printer.Options()
 	rankdir := setOpts["rankdir"]
 	assert.Equal(t, "TB", rankdir)
 }
 
+// Draw Node
 func Test_DrawNode_WhenRenderFunction_CallsRenderFunction(t *testing.T) {
 	calledFlag := false
-	renderF := func(_ interface{}) (string, error) {
+	idF := func(_ interface{}) (string, error) {
 		calledFlag = true
 		return "", nil
 	}
-	printer := graphviz.NewPrinter(emptyOptsMap, renderF, stubMarker)
+	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, stubMarker)
 	printer.DrawNode(emptyGraph, stubID, stubFlagFunc)
 	assert.True(t, calledFlag)
 }
@@ -63,7 +67,7 @@ func Test_DrawNode_CallsShouldMark(t *testing.T) {
 		return graphviz.SubgraphMarkerNop
 	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
 	printer.DrawNode(g, stubID, stubFlagFunc)
 	assert.True(t, calledFlag)
 }
@@ -79,7 +83,7 @@ func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarTruek(t *testing.T) {
 		return graphviz.SubgraphMarkerStart
 	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.True(t, calledFlag)
 	assert.True(t, calledWith)
@@ -96,7 +100,7 @@ func Test_DrawNode_WhenMarkerReturnsEnd_CallSubgraphMarkFalse(t *testing.T) {
 		return graphviz.SubgraphMarkerEnd
 	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.True(t, calledFlag)
 	assert.False(t, calledWith)
@@ -111,35 +115,50 @@ func Test_DrawNode_WhenMarkerReturnsNop_DoesNotCallSubgraphMark(t *testing.T) {
 		return graphviz.SubgraphMarkerNop
 	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.False(t, calledFlag)
 }
 
-func Test_DrawNode_WhenNoAttributes_ReturnsDotFormattedNode(t *testing.T) {
-	expected := "\"A\";\n"
-	vertexPrinter := func(interface{}) (string, error) {
-		return "A", nil
+func Test_DrawNode_WhenIDFunc_SetsIDToIDFunc(t *testing.T) {
+	nodeID := "A"
+	idF := func(interface{}) (string, error) {
+		return nodeID, nil
 	}
 	g := graph.New()
 	g.Add("test", nil)
-	printer := graphviz.NewPrinter(emptyOptsMap, vertexPrinter, nil)
-	actual, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, nil)
+	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	actual := getDotNodeID(dotCode)
+	assert.Equal(t, actual, nodeID)
+}
+
+func Test_DrawNode_WhenNoIDFunc_SetsIDStructValue(t *testing.T) {
+	nodeVal := "A"
+	expected := fmt.Sprintf("%x", nodeVal)
+	g := graph.New()
+	g.Add("test", nodeVal)
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, nil)
+	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	actual := getDotNodeID(dotCode)
 	assert.Equal(t, actual, expected)
 }
 
 func Test_DrawNode_WhenVertexPrinterReturnsError_ReturnsError(t *testing.T) {
 	expectedError := errors.New("test error")
-	vertexPrinter := func(interface{}) (string, error) {
+	idF := func(interface{}) (string, error) {
 		return "", expectedError
 	}
-	printer := graphviz.NewPrinter(emptyOptsMap, vertexPrinter, nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, nil)
 	g := graph.New()
 	g.Add("test", nil)
 	_, actualError := printer.DrawNode(g, "test", stubFlagFunc)
 	assert.Equal(t, actualError, expectedError)
 }
 
+// DrawEdge
+
+// Stubs / Utility Functions
 func stubFlagFunc(string, bool) {
 }
 
@@ -149,6 +168,30 @@ func stubPrinter(_ interface{}) (string, error) {
 
 func stubMarker(_ interface{}) graphviz.SubgraphMarkerKey {
 	return graphviz.SubgraphMarkerNop
+}
+
+func getDotNodeID(s string) string {
+	trimmed := strings.TrimSpace(s)
+	firstChar := trimmed[0]
+	if firstChar == '\'' || firstChar == '"' {
+		sep := fmt.Sprintf("%c", firstChar)
+		return strings.Split(s, sep)[1]
+	}
+	return strings.Split(trimmed, " ")[0]
+}
+
+func getDotNodeLabel(s string) string {
+	labelSplit := strings.Split(s, "label=")
+	if len(labelSplit) < 2 {
+		return ""
+	}
+	labelPart := labelSplit[1]
+	firstChar := labelPart[0]
+	if firstChar == '\'' || firstChar == '"' {
+		sep := fmt.Sprintf("%c", firstChar)
+		return strings.Split(labelPart, sep)[1]
+	}
+	return strings.Split(labelPart, " ")[0]
 }
 
 func testGraph() *graph.Graph {
