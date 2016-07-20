@@ -14,16 +14,54 @@
 
 package template
 
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
 // Template renders a template to disk
 type Template struct {
 	Content     string
 	Destination string
 }
 
+// Check if the template needs to be rendered
 func (t *Template) Check() (status string, willChange bool, err error) {
-	return
+	stat, err := os.Stat(t.Destination)
+	if os.IsNotExist(err) {
+		return "", true, nil
+	} else if err != nil {
+		return "", false, err
+	} else if stat.IsDir() {
+		return "", true, fmt.Errorf("cannot template %q, is a directory", t.Destination)
+	}
+
+	actual, err := ioutil.ReadFile(t.Destination)
+	if err != nil {
+		return "", false, err
+	}
+
+	return string(actual), t.Content != string(actual), nil
 }
 
+// Apply writes the content to disk
 func (t *Template) Apply() error {
+	var perm os.FileMode
+
+	stat, err := os.Stat(t.Destination)
+	if os.IsNotExist(err) {
+		perm = 0600
+	} else if err != nil {
+		return err
+	} else {
+		perm = stat.Mode()
+	}
+
+	err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
