@@ -20,10 +20,14 @@ import (
 	"os"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/builtin/file/mode"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +40,7 @@ func TestTemplateInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Task)(nil), new(mode.Mode))
 }
 
-func TestFunctionality(t *testing.T) {
+func TestParsing(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	tmpfile, err := ioutil.TempFile("", "mode_test")
@@ -59,7 +63,32 @@ func TestFunctionality(t *testing.T) {
 	assert.Equal(t, "777", preparer.Mode)
 }
 
-//TODO test plan and apply when implemented
+func TestPlan(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	tmpfile, err := ioutil.TempFile("", "mode_test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpfile.Name())
+
+	module := fmt.Sprintf(
+		`file.mode "x" {
+		destination = %q
+		mode = 777
+	}`, tmpfile.Name())
+
+	tmpfile.Write([]byte(module))
+
+	graph, err := load.Load(tmpfile.Name())
+	assert.NoError(t, err)
+	rendered, err := render.Render(graph, nil)
+	assert.NoError(t, err)
+	planned, err := plan.Plan(context.Background(), rendered)
+	assert.NoError(t, err)
+
+	result := getResult(t, planned, "root/file.mode.x")
+	assert.Equal(t, "600", result.Status)
+	assert.Equal(t, true, result.WillChange)
+}
 
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	resources, err := parse.Parse(content)
@@ -75,4 +104,15 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	require.NoError(t, g.Validate())
 
 	return load.SetResources(g)
+}
+
+func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
+	val := src.Get(key)
+	result, ok := val.(*plan.Result)
+	if !ok {
+		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
+		t.FailNow()
+	}
+
+	return result
 }

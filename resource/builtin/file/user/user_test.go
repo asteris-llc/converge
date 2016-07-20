@@ -18,12 +18,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	osuser "os/user"
 	"testing"
+
+	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/builtin/file/user"
 	"github.com/stretchr/testify/assert"
@@ -58,6 +63,35 @@ func TestFunctionality(t *testing.T) {
 	assert.Equal(t, "nobody", preparer.User)
 }
 
+func TestPlan(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	tmpfile, err := ioutil.TempFile("", "mode_test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpfile.Name())
+
+	module := fmt.Sprintf(
+		`file.user "x" {
+    destination = %q
+    user = "nobody"
+  }`, tmpfile.Name())
+
+	tmpfile.Write([]byte(module))
+
+	graph, err := load.Load(tmpfile.Name())
+	assert.NoError(t, err)
+	rendered, err := render.Render(graph, nil)
+	assert.NoError(t, err)
+	planned, err := plan.Plan(context.Background(), rendered)
+	assert.NoError(t, err)
+
+	result := getResult(t, planned, "root/file.user.x")
+	u, err := osuser.Current()
+	assert.NoError(t, err)
+	assert.Equal(t, u.Username, result.Status)
+	assert.Equal(t, true, result.WillChange)
+}
+
 //TODO test plan and apply when implemented
 
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
@@ -74,4 +108,15 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	require.NoError(t, g.Validate())
 
 	return load.SetResources(g)
+}
+
+func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
+	val := src.Get(key)
+	result, ok := val.(*plan.Result)
+	if !ok {
+		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
+		t.FailNow()
+	}
+
+	return result
 }
