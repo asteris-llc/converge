@@ -21,12 +21,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewGraphvizPrinter_UsesDefaultOptionsWhenMissing(t *testing.T) {
+func Test_NewGraphvizPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
 	emptyOptsMap := map[string]string{}
 	printer, _ := graphviz.NewPrinter(emptyOptsMap, stubPrinter)
 	actual := printer.Options()
 	expected := graphviz.DefaultOptions()
 	assert.Equal(t, actual, expected)
+}
+
+func Test_NewGraphvizPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
 }
 
 func stubPrinter(_ interface{}) (string, error) {
