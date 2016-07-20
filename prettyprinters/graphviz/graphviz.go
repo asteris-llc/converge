@@ -50,8 +50,7 @@ func checkOptions(opts GraphvizOptions) {
 }
 
 func NewPrinter(opts GraphvizOptions, printer VertexPrinter) (*GraphvizPrinter, error) {
-	// opts = mergeDefaultOptions(opts)
-	opts = DefaultOptions()
+	opts = mergeDefaultOptions(opts)
 	return &GraphvizPrinter{
 		optsMap:  opts,
 		vPrinter: printer,
