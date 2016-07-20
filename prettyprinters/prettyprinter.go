@@ -36,8 +36,10 @@ type DigraphPrettyPrinter interface {
 	//of the prettyprinted output.
 	FinishPP(*graph.Graph) (string, error)
 
-	StartSubgraph(*graph.Graph) (string, error)
-	FinishSubgraph(*graph.Graph) (string, error)
+	//When DrawNode() calls the provided node mark function,
+	StartSubgraph(*graph.Graph, string) (string, error)
+	FinishSubgraph(*graph.Graph, string) (string, error)
 
-	DrawNode(*graph.Graph, interface{}, func(*graph.Graph)) (string, error)
+	DrawNode(*graph.Graph, string, func(string, bool)) (string, error)
+	DrawEdge(*graph.Graph, string, string) (string, error)
 }
