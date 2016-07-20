@@ -15,6 +15,7 @@
 package graphviz_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -25,6 +26,7 @@ import (
 var (
 	emptyOptsMap = map[string]string{}
 	emptyGraph   = graph.New()
+	stubID       = "stub"
 )
 
 func Test_NewGraphvizPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
@@ -50,55 +52,103 @@ func Test_DrawNode_WhenRenderFunction_CallsRenderFunction(t *testing.T) {
 		return "", nil
 	}
 	printer := graphviz.NewPrinter(emptyOptsMap, renderF, stubMarker)
-	printer.DrawNode(emptyGraph, 1, stubFlagFunc)
+	printer.DrawNode(emptyGraph, stubID, stubFlagFunc)
 	assert.True(t, calledFlag)
 }
 
 func Test_DrawNode_CallsShouldMark(t *testing.T) {
 	calledFlag := false
-	shouldMark := func(_ interface{}) bool {
+	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
 		calledFlag = true
-		return false
+		return graphviz.SubgraphMarkerNop
 	}
 	g := testGraph()
 	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
-	printer.DrawNode(g, 1, stubFlagFunc)
+	printer.DrawNode(g, stubID, stubFlagFunc)
 	assert.True(t, calledFlag)
 }
 
-func Test_DrawNode_WhenMarkerReturnsTrue_CallsSubgraphMark(t *testing.T) {
+func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarTruek(t *testing.T) {
 	calledFlag := false
-	subgraphMarker := func(_ *graph.Graph) {
+	calledWith := false
+	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
+		calledWith = c
 	}
-	shouldMark := func(_ interface{}) bool { return true }
+	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
+		return graphviz.SubgraphMarkerStart
+	}
 	g := testGraph()
 	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
-	printer.DrawNode(g, 1, subgraphMarker)
+	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.True(t, calledFlag)
+	assert.True(t, calledWith)
 }
 
-func Test_DrawNode_WhenMarkerReturnsFalse_NotCallSubgraphMark(t *testing.T) {
+func Test_DrawNode_WhenMarkerReturnsEnd_CallSubgraphMarkFalse(t *testing.T) {
 	calledFlag := false
-	subgraphMarker := func(_ *graph.Graph) {
+	calledWith := true
+	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
+		calledWith = c
 	}
-	shouldMark := func(_ interface{}) bool { return false }
+	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
+		return graphviz.SubgraphMarkerEnd
+	}
 	g := testGraph()
 	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
-	printer.DrawNode(g, 1, subgraphMarker)
+	printer.DrawNode(g, stubID, subgraphMarker)
+	assert.True(t, calledFlag)
+	assert.False(t, calledWith)
+}
+
+func Test_DrawNode_WhenMarkerReturnsNop_DoesNotCallSubgraphMark(t *testing.T) {
+	calledFlag := false
+	subgraphMarker := func(_ string, c bool) {
+		calledFlag = true
+	}
+	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
+		return graphviz.SubgraphMarkerNop
+	}
+	g := testGraph()
+	printer := graphviz.NewPrinter(emptyOptsMap, nil, shouldMark)
+	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.False(t, calledFlag)
 }
 
-func stubFlagFunc(_ *graph.Graph) {
+func Test_DrawNode_WhenNoAttributes_ReturnsDotFormattedNode(t *testing.T) {
+	expected := "\"A\";\n"
+	vertexPrinter := func(interface{}) (string, error) {
+		return "A", nil
+	}
+	g := graph.New()
+	g.Add("test", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, vertexPrinter, nil)
+	actual, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	assert.Equal(t, actual, expected)
+}
+
+func Test_DrawNode_WhenVertexPrinterReturnsError_ReturnsError(t *testing.T) {
+	expectedError := errors.New("test error")
+	vertexPrinter := func(interface{}) (string, error) {
+		return "", expectedError
+	}
+	printer := graphviz.NewPrinter(emptyOptsMap, vertexPrinter, nil)
+	g := graph.New()
+	g.Add("test", nil)
+	_, actualError := printer.DrawNode(g, "test", stubFlagFunc)
+	assert.Equal(t, actualError, expectedError)
+}
+
+func stubFlagFunc(string, bool) {
 }
 
 func stubPrinter(_ interface{}) (string, error) {
 	return "", nil
 }
 
-func stubMarker(_ interface{}) bool {
-	return false
+func stubMarker(_ interface{}) graphviz.SubgraphMarkerKey {
+	return graphviz.SubgraphMarkerNop
 }
 
 func testGraph() *graph.Graph {
