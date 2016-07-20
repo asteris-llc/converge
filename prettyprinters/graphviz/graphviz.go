@@ -15,6 +15,8 @@
 package graphviz
 
 import (
+	"fmt"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters"
 )
@@ -30,11 +32,13 @@ var (
 
 type GraphvizOptions map[string]string
 type VertexPrinter func(interface{}) (string, error)
+type SubgraphMarker func(interface{}) bool
 
 type GraphvizPrinter struct {
 	prettyprinters.DigraphPrettyPrinter
 	optsMap  GraphvizOptions
 	vPrinter VertexPrinter
+	vMarker  SubgraphMarker
 }
 
 var defaultOptions GraphvizOptions = map[string]string{
@@ -46,15 +50,28 @@ func DefaultOptions() GraphvizOptions {
 	return defaultOptions
 }
 
-func checkOptions(opts GraphvizOptions) {
+func DefaultPrinter(val interface{}) (string, error) {
+	nodeStr := fmt.Sprintf("\"%x\"", val)
+	return nodeStr, nil
 }
 
-func NewPrinter(opts GraphvizOptions, printer VertexPrinter) (*GraphvizPrinter, error) {
+func DefaultMarker(val interface{}) bool {
+	return false
+}
+
+func NewPrinter(opts GraphvizOptions, printer VertexPrinter, marker SubgraphMarker) *GraphvizPrinter {
 	opts = mergeDefaultOptions(opts)
+	if printer == nil {
+		printer = DefaultPrinter
+	}
+	if marker == nil {
+		marker = DefaultMarker
+	}
 	return &GraphvizPrinter{
 		optsMap:  opts,
 		vPrinter: printer,
-	}, nil
+		vMarker:  marker,
+	}
 }
 
 func (g *GraphvizPrinter) Options() GraphvizOptions {
@@ -78,8 +95,11 @@ func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (*GraphvizPrinter) DrawNode(*graph.Graph, interface{}, func(*graph.Graph)) (string, error) {
-	return "", nil
+func (p *GraphvizPrinter) DrawNode(g *graph.Graph, val interface{}, sgMarker func(*graph.Graph)) (string, error) {
+	if p.vMarker(val) {
+		sgMarker(g)
+	}
+	return p.vPrinter(val)
 }
 
 // Utility Functions
