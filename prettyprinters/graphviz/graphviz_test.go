@@ -21,8 +21,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	emptyOptsMap = map[string]string{}
+)
+
 func Test_NewGraphvizPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
-	emptyOptsMap := map[string]string{}
+
 	printer, _ := graphviz.NewPrinter(emptyOptsMap, stubPrinter)
 	actual := printer.Options()
 	expected := graphviz.DefaultOptions()
@@ -30,6 +34,11 @@ func Test_NewGraphvizPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T)
 }
 
 func Test_NewGraphvizPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
+	opts := map[string]string{"rankdir": "TB"} // not the default
+	printer, _ := graphviz.NewPrinter(opts, stubPrinter)
+	setOpts := printer.Options()
+	rankdir := setOpts["rankdir"]
+	assert.Equal(t, "TB", rankdir)
 }
 
 func stubPrinter(_ interface{}) (string, error) {
