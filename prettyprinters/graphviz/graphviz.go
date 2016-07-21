@@ -89,13 +89,22 @@ func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(stri
 	return dotCode, nil
 }
 
-func buildAttributeString(p PropertySet) string {
-	accumulator := "["
-	for k, v := range p {
-		accumulator = fmt.Sprintf("%s %s='%s',", accumulator, k, v)
+func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
+	sourceVertex, err := p.printProvider.VertexGetId(g.Get(id1))
+	if err != nil {
+		return "", err
 	}
-	accumulator = accumulator[0 : len(accumulator)-1]
-	return fmt.Sprintf("%s]", accumulator)
+	destVertex, err := p.printProvider.VertexGetId(g.Get(id2))
+	if err != nil {
+		return "", err
+	}
+	label, err := p.printProvider.EdgeGetLabel(id1, id2)
+	if err != nil {
+		return "", err
+	}
+	attributes := p.printProvider.EdgeGetProperties(g.Get(id1), g.Get(id2))
+	attributes["label"] = label
+	return fmt.Sprintf("%s -> %s %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
 }
 
 /* FIXME: Stubs*/
@@ -112,10 +121,6 @@ func (*GraphvizPrinter) StartSubgraph(*graph.Graph) (string, error) {
 }
 
 func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
-	return "", nil
-}
-
-func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	return "", nil
 }
 
@@ -136,6 +141,15 @@ func (p *GraphvizPrinter) FinishEdgeSection(*graph.Graph) (string, error) {
 }
 
 // Utility Functions
+
+func buildAttributeString(p PropertySet) string {
+	accumulator := "["
+	for k, v := range p {
+		accumulator = fmt.Sprintf("%s %s='%s',", accumulator, k, v)
+	}
+	accumulator = accumulator[0 : len(accumulator)-1]
+	return fmt.Sprintf("%s]", accumulator)
+}
 
 //mergeDefaultOptions iterates over an option map and copies the defaults for
 //any missing entries.

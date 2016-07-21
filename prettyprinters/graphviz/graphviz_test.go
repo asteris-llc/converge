@@ -33,13 +33,20 @@ var (
 	stubID       = "stub"
 )
 
+// TODO: Create a mock factory or something to reduce some of the boilerplate
+// code where we have to set default bindings on the mock that we don't care
+// about, because we can't just override a binding after calling
+// defaultMockProvider().  Probably take a bunch of functions as args and just
+// set them to the default implementation if they are nil, the
+// defaultMockProvider() would just be the case where every param is nil.
+
 // NewPrinter
 func Test_NewPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	actual := printer.Options()
 	expected := graphviz.DefaultOptions()
-	assert.Equal(t, actual, expected)
+	assert.Equal(t, expected, actual)
 }
 
 func Test_NewPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
@@ -132,7 +139,7 @@ func Test_DrawNode_SetsNodeNameToVertexId(t *testing.T) {
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
 	actual := getDotNodeID(dotCode)
-	assert.Equal(t, actual, vertexID)
+	assert.Equal(t, vertexID, actual)
 }
 
 func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
@@ -146,7 +153,7 @@ func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
-	assert.Equal(t, actualErr, err)
+	assert.Equal(t, err, actualErr)
 }
 
 func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
@@ -161,7 +168,7 @@ func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
 	actual := getDotNodeLabel(dotCode)
-	assert.Equal(t, actual, vertexLabel)
+	assert.Equal(t, vertexLabel, actual)
 }
 
 func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
@@ -175,7 +182,7 @@ func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
-	assert.Equal(t, actualErr, err)
+	assert.Equal(t, err, actualErr)
 }
 
 func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
@@ -206,8 +213,100 @@ func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
 	assert.True(t, compareAttrMap(expectedAttrs, actualAttrs))
 }
 
+/////////////////////////////////
 // DrawEdge
+func edgeTestGraph() *graph.Graph {
+	g := graph.New()
+	g.Add("A", "A")
+	g.Add("B", "B")
+	g.Add("C", "C")
+	g.Connect("A", "B")
+	g.Connect("A", "C")
+	return g
+}
 
+func Test_DrawEdge_GetsIDForEachNode(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	printer.DrawEdge(edgeTestGraph(), "A", "B")
+	provider.AssertCalled(t, "VertexGetId", "A")
+	provider.AssertCalled(t, "VertexGetId", "B")
+}
+
+func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", "A").Return("A", nil)
+	provider.On("VertexGetId", "B").Return("B", nil)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	dotSource, _ := printer.DrawEdge(edgeTestGraph(), "A", "B")
+	sourceVertex, destVertex := parseDotEdge(dotSource)
+	assert.Equal(t, "A", sourceVertex)
+	assert.Equal(t, "B", destVertex)
+}
+
+func Test_DrawEdge_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
+	err := errors.New("test error")
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", err)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	_, actualErr := printer.DrawEdge(edgeTestGraph(), "test1", "test2")
+	assert.Equal(t, actualErr, err)
+}
+
+func Test_DrawEdge_SetsLabelToEdgeLabel(t *testing.T) {
+	edgeLabel := "test label"
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("test", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(edgeLabel, nil)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
+	fmt.Printf("dotCode: %s\n", dotCode)
+	actual := getDotNodeLabel(dotCode)
+	assert.Equal(t, edgeLabel, actual)
+}
+
+func Test_DrawEdge_WhenEdgeLabelReturnsError_ReturnsError(t *testing.T) {
+	err := errors.New("test error")
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", err)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	_, actualErr := printer.DrawEdge(edgeTestGraph(), "test", "test")
+	assert.Equal(t, actualErr, err)
+}
+
+func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
+	expectedAttrs := graphviz.PropertySet{
+		"key1": "val1",
+		"key2": "val2",
+	}
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(expectedAttrs)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
+	fmt.Printf("dotCode = %s\n", dotCode)
+	actualAttrs := getDotAttributes(dotCode)
+	fmt.Println("expected Attrs:")
+	fmt.Println(expectedAttrs)
+	fmt.Println("Actual Attrs:")
+	fmt.Println(actualAttrs)
+	// NB: compareAttrMap does not commute.  As written this will only assert that
+	// the found attr map contains at a minimum the expected attributes. This is
+	// desireable for this test since we do not want to make assumptions about any
+	// additional attributes that should be included (e.g. label), just that we
+	// also have the ones that were specified
+	assert.True(t, compareAttrMap(expectedAttrs, actualAttrs))
+}
+
+/////////////////////////////////
 // Stubs / Utility Functions
 
 type MockPrintProvider struct {
@@ -250,7 +349,7 @@ func defaultMockProvider() *MockPrintProvider {
 	m.On("VertexGetLabel", mock.Anything).Return("label1", nil)
 	m.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	m.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("label1", nil)
-	m.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(map[string]string))
+	m.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	m.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
 	return m
 }
@@ -328,6 +427,24 @@ func getDotAttributes(s string) map[string]string {
 		results[key] = value
 	}
 	return results
+}
+
+func parseDotEdge(e string) (string, string) {
+	var dest string
+	ef := strings.Split(strings.TrimSpace(e), "->")
+	source := stripQuotes(strings.TrimSpace(ef[0]))
+	destRaw := strings.TrimSpace(ef[1])
+	quoteWrapper := destRaw[0]
+	if quoteWrapper == '"' || quoteWrapper == '\'' {
+		destRaw = destRaw[1:len(destRaw)]
+		idx := strings.IndexByte(destRaw, quoteWrapper)
+		dest = destRaw[0:idx]
+	} else {
+		dest = strings.TrimSpace(destRaw)
+		idx := strings.IndexAny(dest, " \t")
+		dest = dest[0:idx]
+	}
+	return source, dest
 }
 
 func compareAttrMap(a, b map[string]string) bool {
