@@ -40,6 +40,11 @@ type DigraphPrettyPrinter interface {
 	StartSubgraph(*graph.Graph, string) (string, error)
 	FinishSubgraph(*graph.Graph, string) (string, error)
 
+	StartNodeSection(*graph.Graph) (string, error)
+	FinishNodeSection(*graph.Graph) (string, error)
 	DrawNode(*graph.Graph, string, func(string, bool)) (string, error)
+
+	StartEdgeSection(*graph.Graph) (string, error)
+	FinishEdgeSection(*graph.Graph) (string, error)
 	DrawEdge(*graph.Graph, string, string) (string, error)
 }
