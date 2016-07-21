@@ -71,6 +71,7 @@ func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarkTrue(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", nil)
 	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerStart)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	calledFlag := false
 	calledWith := false
 	subgraphMarker := func(_ string, c bool) {
@@ -89,6 +90,7 @@ func Test_DrawNode_WhenMarkerReturnsEnd_CallSubgraphMarkFalse(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", nil)
 	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerEnd)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	calledFlag := false
 	calledWith := true
 	subgraphMarker := func(_ string, c bool) {
@@ -107,6 +109,7 @@ func Test_DrawNode_WhenMarkerReturnsNop_DoesNotCallSubgraphMark(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", nil)
 	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	calledFlag := false
 	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
@@ -123,6 +126,7 @@ func Test_DrawNode_SetsNodeNameToVertexId(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return(vertexID, nil)
 	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
@@ -137,6 +141,7 @@ func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", err)
 	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
@@ -150,6 +155,7 @@ func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", nil)
 	provider.On("VertexGetLabel", mock.Anything).Return(vertexLabel, nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
@@ -164,11 +170,40 @@ func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
 	provider.On("VertexGetId", mock.Anything).Return("", nil)
 	provider.On("VertexGetLabel", mock.Anything).Return("", err)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
 	assert.Equal(t, actualErr, err)
+}
+
+func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
+	expectedAttrs := graphviz.PropertySet{
+		"key1": "val1",
+		"key2": "val2",
+	}
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	provider.On("VertexGetProperties", mock.Anything).Return(expectedAttrs)
+	g := graph.New()
+	g.Add("test", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	fmt.Printf("dotCode = %s\n", dotCode)
+	actualAttrs := getDotAttributes(dotCode)
+	fmt.Println("expected Attrs:")
+	fmt.Println(expectedAttrs)
+	fmt.Println("Actual Attrs:")
+	fmt.Println(actualAttrs)
+	// NB: compareAttrMap does not commute.  As written this will only assert that
+	// the found attr map contains at a minimum the expected attributes. This is
+	// desireable for this test since we do not want to make assumptions about any
+	// additional attributes that should be included (e.g. label), just that we
+	// also have the ones that were specified
+	assert.True(t, compareAttrMap(expectedAttrs, actualAttrs))
 }
 
 // DrawEdge
@@ -189,15 +224,33 @@ func (m *MockPrintProvider) VertexGetLabel(i interface{}) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockPrintProvider) VertexGetProperties(i interface{}) graphviz.PropertySet {
+	args := m.Called(i)
+	return args.Get(0).(graphviz.PropertySet)
+}
+
 func (m *MockPrintProvider) SubgraphMarker(i interface{}) graphviz.SubgraphMarkerKey {
 	args := m.Called(i)
 	return args.Get(0).(graphviz.SubgraphMarkerKey)
+}
+
+func (m *MockPrintProvider) EdgeGetLabel(i, j interface{}) (string, error) {
+	args := m.Called(i, j)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockPrintProvider) EdgeGetProperties(i, j interface{}) graphviz.PropertySet {
+	args := m.Called(i, j)
+	return args.Get(0).(graphviz.PropertySet)
 }
 
 func defaultMockProvider() *MockPrintProvider {
 	m := new(MockPrintProvider)
 	m.On("VertexGetId", mock.Anything).Return("id1", nil)
 	m.On("VertexGetLabel", mock.Anything).Return("label1", nil)
+	m.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
+	m.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("label1", nil)
+	m.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(map[string]string))
 	m.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
 	return m
 }
@@ -235,6 +288,60 @@ func getDotNodeLabel(s string) string {
 		return strings.Split(labelPart, sep)[1]
 	}
 	return strings.Split(labelPart, " ")[0]
+}
+
+func getAttributeSubstr(s string) (string, bool) {
+	start := strings.IndexRune(s, '[')
+	end := strings.IndexRune(s, ']')
+	if start == -1 || end == -1 {
+		return "", false
+	}
+	return s[start+1 : end], true
+}
+
+func stripQuotes(s string) string {
+	if s[0] == '"' || s[0] == '\'' {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+
+func get_kv(attr string) (string, string) {
+	pair := strings.Split(attr, "=")
+	key := stripQuotes(strings.TrimSpace(pair[0]))
+	val := stripQuotes(strings.TrimSpace(pair[1]))
+	return key, val
+}
+
+func getDotAttributes(s string) map[string]string {
+	results := make(map[string]string)
+	attributes, found := getAttributeSubstr(s)
+
+	if !found {
+		return results
+	}
+
+	attributePairs := strings.Split(attributes, ",")
+
+	for pair := range attributePairs {
+		key, value := get_kv(attributePairs[pair])
+		results[key] = value
+	}
+	return results
+}
+
+func compareAttrMap(a, b map[string]string) bool {
+	for key, refVal := range a {
+		foundVal, found := b[key]
+		if !found {
+			fmt.Printf("key %s missing in dest\n", key)
+			return false
+		}
+		if refVal != foundVal {
+			fmt.Printf("mismatched values: refVal = \"%s\", foundVal = \"%s\"\n", refVal, foundVal)
+		}
+	}
+	return true
 }
 
 func testGraph() *graph.Graph {
