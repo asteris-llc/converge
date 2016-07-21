@@ -180,12 +180,7 @@ func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
-	fmt.Printf("dotCode = %s\n", dotCode)
 	actualAttrs := getDotAttributes(dotCode)
-	fmt.Println("expected Attrs:")
-	fmt.Println(expectedAttrs)
-	fmt.Println("Actual Attrs:")
-	fmt.Println(actualAttrs)
 	// NB: compareAttrMap does not commute.  As written this will only assert that
 	// the found attr map contains at a minimum the expected attributes. This is
 	// desireable for this test since we do not want to make assumptions about any
@@ -234,7 +229,6 @@ func Test_DrawEdge_SetsLabelToEdgeLabel(t *testing.T) {
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
-	fmt.Printf("dotCode: %s\n", dotCode)
 	actual := getDotNodeLabel(dotCode)
 	assert.Equal(t, edgeLabel, actual)
 }
@@ -261,12 +255,7 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(expectedAttrs)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
-	fmt.Printf("dotCode = %s\n", dotCode)
 	actualAttrs := getDotAttributes(dotCode)
-	fmt.Println("expected Attrs:")
-	fmt.Println(expectedAttrs)
-	fmt.Println("Actual Attrs:")
-	fmt.Println(actualAttrs)
 	// NB: compareAttrMap does not commute.  As written this will only assert that
 	// the found attr map contains at a minimum the expected attributes. This is
 	// desireable for this test since we do not want to make assumptions about any
