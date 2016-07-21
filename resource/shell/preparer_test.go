@@ -29,7 +29,7 @@ func TestPreparerInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(shell.Preparer))
 }
 
-func TestShellValidateValid(t *testing.T) {
+func TestPreparerValidateValid(t *testing.T) {
 	t.Parallel()
 
 	sp := &shell.Preparer{
@@ -42,7 +42,7 @@ func TestShellValidateValid(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestShellValidateInvalidCheck(t *testing.T) {
+func TestPreparerValidateInvalidCheck(t *testing.T) {
 	t.Parallel()
 
 	sp := &shell.Preparer{
@@ -56,7 +56,7 @@ func TestShellValidateInvalidCheck(t *testing.T) {
 	}
 }
 
-func TestShellValidateInvalidApply(t *testing.T) {
+func TestPreparerValidateInvalidApply(t *testing.T) {
 	t.Parallel()
 
 	sp := &shell.Preparer{
