@@ -65,12 +65,14 @@ type Printer struct {
 	prettyprinters.DigraphPrettyPrinter
 	options       Options
 	printProvider GraphvizPrintProvider
+	clusterIndex  int
 }
 
 func New(opts Options, provider GraphvizPrintProvider) *Printer {
 	return &Printer{
 		options:       opts,
 		printProvider: provider,
+		clusterIndex:  0,
 	}
 }
 
@@ -116,20 +118,13 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	return fmt.Sprintf("%s -> %s %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
 }
 
-func (*Printer) StartPP(*graph.Graph) (string, error) {
-	return "digraph {", nil
-}
-
-func (*Printer) FinishPP(*graph.Graph) (string, error) {
-	return "}", nil
-}
-
 /* FIXME: Stubs*/
-func (*Printer) StartSubgraph(*graph.Graph) (string, error) {
+func (*Printer) StartSubgraph(*graph.Graph, string) (string, error) {
+
 	return "", nil
 }
 
-func (*Printer) FinishSubgraph(*graph.Graph) (string, error) {
+func (*Printer) FinishSubgraph(*graph.Graph, string) (string, error) {
 	return "", nil
 }
 
@@ -147,6 +142,14 @@ func (p *Printer) StartEdgeSection(*graph.Graph) (string, error) {
 
 func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
+}
+
+func (*Printer) StartPP(*graph.Graph) (string, error) {
+	return "digraph {", nil
+}
+
+func (*Printer) FinishPP(*graph.Graph) (string, error) {
+	return "}", nil
 }
 
 // Utility Functions
