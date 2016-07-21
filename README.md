@@ -39,16 +39,16 @@ likely to look this this:
 
 ```hcl
 # install traefik
-param "version" { }
+param "version" {}
 
-module "yum" "traefik" { }
+module "yum" "traefik" {}
 
 module "systemd-unit-enabled" "traefik" {
-  requires = [ "yum.traefik" ]
+  requires = ["yum.traefik"]
 }
 
 module "systemd-unit-running" "traefik" {
-  requires = [ "yum.traefik" ]
+  requires = ["yum.traefik"]
 }
 ```
 
@@ -62,7 +62,7 @@ The content of a simple module is below:
 
 ```hcl
 # start a systemd unit
-param "name" { }
+param "name" {}
 
 task "start-unit" {
   check = "systemctl status {{param `name`}} | tee /dev/stderr | grep -q running"
@@ -85,14 +85,25 @@ to the filesystem from the module's parameters:
 
 ```hcl
 # create systemd unit file
-param "name" { }
-param "execStart" { }
-param "user" { default = "root" }
-param "group" { default = "root" }
-param "description" { default = "{{param `name`}}" }
+param "name" {}
+
+param "execStart" {}
+
+param "user" {
+  default = "root"
+}
+
+param "group" {
+  default = "root"
+}
+
+param "description" {
+  default = "{{param `name`}}"
+}
 
 template "unit" {
   destination = "/etc/systemd/system/{{param `name`}}.service"
+
   content = <<EOF
 [Unit]
 Description={{param `description`}}
@@ -110,9 +121,9 @@ EOF
 }
 
 task "reload-daemon" {
-  check = "systemd-delta --type=overridden {{param `name`}}"
-  apply = "systemctl daemon-reload"
-  requires = [ "template.unit" ]
+  check    = "systemd-delta --type=overridden {{param `name`}}"
+  apply    = "systemctl daemon-reload"
+  requires = ["template.unit"]
 }
 ```
 
@@ -153,7 +164,7 @@ Sample:
 ```hcl
 file.mode "test" {
   destination = "test.txt"
-  mode = "0644"
+  mode        = "0644"
 }
 ```
 
