@@ -21,20 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResolveInContextBadLoc(t *testing.T) {
-	t.Parallel()
-
-	_, err := fetch.ResolveInContext("::", "file://x")
-	assert.Error(t, err)
-}
-
-func TestResolveInContextBadContext(t *testing.T) {
-	t.Parallel()
-
-	_, err := fetch.ResolveInContext("file://x", "::")
-	assert.Error(t, err)
-}
-
 func TestResolveInContextAbsolute(t *testing.T) {
 	t.Parallel()
 
@@ -51,6 +37,14 @@ func TestResolveInContextRelative(t *testing.T) {
 	assert.Equal(t, "file:///a/b/x", resolved)
 }
 
+func TestResolveInContextRelativeNonDefaultProtocol(t *testing.T) {
+	t.Parallel()
+
+	resolved, err := fetch.ResolveInContext("x", "http://a.com/b/c")
+	assert.NoError(t, err)
+	assert.Equal(t, "http://a.com/b/x", resolved)
+}
+
 func TestResolveInContextPreservesProtocol(t *testing.T) {
 	t.Parallel()
 
@@ -65,5 +59,21 @@ func TestResolveInContextSelfResolve(t *testing.T) {
 	base := "a/b"
 	resolved, err := fetch.ResolveInContext(base, base)
 	assert.NoError(t, err)
-	assert.Equal(t, base, resolved)
+	assert.Equal(t, "file://"+base, resolved)
+}
+
+func TestResolveInContextRelativePathsFile(t *testing.T) {
+	t.Parallel()
+
+	resolved, err := fetch.ResolveInContext("../a/b", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "file://../a/b", resolved)
+}
+
+func TestResolveInContextNoSchemesAtAll(t *testing.T) {
+	t.Parallel()
+
+	resolved, err := fetch.ResolveInContext("basic.hcl", "../samples/sourceFile.hcl")
+	assert.NoError(t, err)
+	assert.Equal(t, "file://../samples/basic.hcl", resolved)
 }
