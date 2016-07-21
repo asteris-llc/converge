@@ -51,7 +51,8 @@ func Render(g *graph.Graph, top Values) (*graph.Graph, error) {
 			}
 
 			if val, ok := parent.Params[name[len("param."):]]; ok {
-				renderer.DotValue = &val
+				renderer.DotValue = val
+				renderer.DotValuePresent = true
 			}
 		}
 
