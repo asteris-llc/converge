@@ -22,7 +22,9 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -33,8 +35,8 @@ var (
 
 // NewPrinter
 func Test_NewPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
-
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, nil)
+	provider := defaultMockProvider()
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	actual := printer.Options()
 	expected := graphviz.DefaultOptions()
 	assert.Equal(t, actual, expected)
@@ -42,7 +44,7 @@ func Test_NewPrinter_WhenMissingOptions_UsesDefaultOptions(t *testing.T) {
 
 func Test_NewPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
 	opts := map[string]string{"rankdir": "TB"} // not the default
-	printer := graphviz.NewPrinter(opts, nil, nil, nil)
+	printer := graphviz.NewPrinter(opts, defaultMockProvider())
 	setOpts := printer.Options()
 	rankdir := setOpts["rankdir"]
 	assert.Equal(t, "TB", rankdir)
@@ -50,119 +52,160 @@ func Test_NewPrinter_WhenProvidedOptions_UsesProvidedOptions(t *testing.T) {
 
 // Draw Node
 func Test_DrawNode_WhenRenderFunction_CallsRenderFunction(t *testing.T) {
-	calledFlag := false
-	idF := func(_ interface{}) (string, error) {
-		calledFlag = true
-		return "", nil
-	}
-	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, stubMarker)
+	provider := defaultMockProvider()
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	printer.DrawNode(emptyGraph, stubID, stubFlagFunc)
-	assert.True(t, calledFlag)
+	provider.AssertCalled(t, "VertexGetId", mock.Anything)
 }
 
 func Test_DrawNode_CallsShouldMark(t *testing.T) {
-	calledFlag := false
-	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
-		calledFlag = true
-		return graphviz.SubgraphMarkerNop
-	}
+	provider := defaultMockProvider()
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	printer.DrawNode(g, stubID, stubFlagFunc)
-	assert.True(t, calledFlag)
+	provider.AssertCalled(t, "SubgraphMarker", mock.Anything)
 }
 
-func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarTruek(t *testing.T) {
+func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarkTrue(t *testing.T) {
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerStart)
 	calledFlag := false
 	calledWith := false
 	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
 		calledWith = c
 	}
-	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
-		return graphviz.SubgraphMarkerStart
-	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.True(t, calledFlag)
 	assert.True(t, calledWith)
 }
 
 func Test_DrawNode_WhenMarkerReturnsEnd_CallSubgraphMarkFalse(t *testing.T) {
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerEnd)
 	calledFlag := false
 	calledWith := true
 	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
 		calledWith = c
 	}
-	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
-		return graphviz.SubgraphMarkerEnd
-	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.True(t, calledFlag)
 	assert.False(t, calledWith)
 }
 
 func Test_DrawNode_WhenMarkerReturnsNop_DoesNotCallSubgraphMark(t *testing.T) {
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
 	calledFlag := false
 	subgraphMarker := func(_ string, c bool) {
 		calledFlag = true
 	}
-	shouldMark := func(_ interface{}) graphviz.SubgraphMarkerKey {
-		return graphviz.SubgraphMarkerNop
-	}
 	g := testGraph()
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, shouldMark)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	printer.DrawNode(g, stubID, subgraphMarker)
 	assert.False(t, calledFlag)
 }
 
-func Test_DrawNode_WhenIDFunc_SetsIDToIDFunc(t *testing.T) {
-	nodeID := "A"
-	idF := func(interface{}) (string, error) {
-		return nodeID, nil
-	}
+func Test_DrawNode_SetsNodeNameToVertexId(t *testing.T) {
+	vertexID := "testID"
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return(vertexID, nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
 	g := graph.New()
 	g.Add("test", nil)
-	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
 	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
 	actual := getDotNodeID(dotCode)
-	assert.Equal(t, actual, nodeID)
+	assert.Equal(t, actual, vertexID)
 }
 
-func Test_DrawNode_WhenNoIDFunc_SetsIDStructValue(t *testing.T) {
-	nodeVal := "A"
-	expected := fmt.Sprintf("%x", nodeVal)
-	g := graph.New()
-	g.Add("test", nodeVal)
-	printer := graphviz.NewPrinter(emptyOptsMap, nil, nil, nil)
-	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
-	actual := getDotNodeID(dotCode)
-	assert.Equal(t, actual, expected)
-}
-
-func Test_DrawNode_WhenVertexPrinterReturnsError_ReturnsError(t *testing.T) {
-	expectedError := errors.New("test error")
-	idF := func(interface{}) (string, error) {
-		return "", expectedError
-	}
-	printer := graphviz.NewPrinter(emptyOptsMap, idF, nil, nil)
+func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
+	err := errors.New("test error")
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", err)
+	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
 	g := graph.New()
 	g.Add("test", nil)
-	_, actualError := printer.DrawNode(g, "test", stubFlagFunc)
-	assert.Equal(t, actualError, expectedError)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
+	assert.Equal(t, actualErr, err)
+}
+
+func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
+	vertexLabel := "test label"
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return(vertexLabel, nil)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	g := graph.New()
+	g.Add("test", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	actual := getDotNodeLabel(dotCode)
+	assert.Equal(t, actual, vertexLabel)
+}
+
+func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
+	err := errors.New("test error")
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetId", mock.Anything).Return("", nil)
+	provider.On("VertexGetLabel", mock.Anything).Return("", err)
+	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	g := graph.New()
+	g.Add("test", nil)
+	printer := graphviz.NewPrinter(emptyOptsMap, provider)
+	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
+	assert.Equal(t, actualErr, err)
 }
 
 // DrawEdge
 
 // Stubs / Utility Functions
-func stubFlagFunc(string, bool) {
+
+type MockPrintProvider struct {
+	mock.Mock
 }
 
-func stubPrinter(_ interface{}) (string, error) {
+func (m *MockPrintProvider) VertexGetId(i interface{}) (string, error) {
+	args := m.Called(i)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockPrintProvider) VertexGetLabel(i interface{}) (string, error) {
+	args := m.Called(i)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockPrintProvider) SubgraphMarker(i interface{}) graphviz.SubgraphMarkerKey {
+	args := m.Called(i)
+	return args.Get(0).(graphviz.SubgraphMarkerKey)
+}
+
+func defaultMockProvider() *MockPrintProvider {
+	m := new(MockPrintProvider)
+	m.On("VertexGetId", mock.Anything).Return("id1", nil)
+	m.On("VertexGetLabel", mock.Anything).Return("label1", nil)
+	m.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNop)
+	return m
+}
+
+func stubFlagFunc(_ string, _ bool) {
+}
+
+func stubPrinter(interface{}) (string, error) {
 	return "", nil
 }
 
