@@ -14,7 +14,11 @@
 
 package shell
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"os/exec"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for Shell tasks
 type Preparer struct {
@@ -23,6 +27,51 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(resource.Renderer) (resource.Task, error) {
-	return &Shell{}, nil
+func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	check, err := render.Render("check", p.Check)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.validateScriptSyntax(check); err != nil {
+		return nil, err
+	}
+
+	apply, err := render.Render("apply", p.Apply)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.validateScriptSyntax(apply); err != nil {
+		return nil, err
+	}
+
+	return &Shell{check, apply}, nil
+}
+
+func (p *Preparer) validateScriptSyntax(script string) error {
+	command := exec.Command("sh", "-n")
+
+	in, err := command.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := command.Start(); err != nil {
+		return err
+	}
+
+	if _, err := in.Write([]byte(script)); err != nil {
+		return err
+	}
+
+	if err := in.Close(); err != nil {
+		return err
+	}
+
+	if err := command.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }

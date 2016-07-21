@@ -14,16 +14,67 @@
 
 package shell
 
+import (
+	"bytes"
+	"fmt"
+	"os/exec"
+	"syscall"
+)
+
 // Shell task
 type Shell struct {
-	CheckStmt string `prepare:"Check"`
-	ApplyStmt string `prepare:"Apply"`
+	CheckStmt string
+	ApplyStmt string
 }
 
 func (s *Shell) Check() (status string, willChange bool, err error) {
-	return
+	out, code, err := s.exec(s.CheckStmt)
+	return out, code != 0, err
 }
 
 func (s *Shell) Apply() (err error) {
-	return
+	out, code, err := s.exec(s.ApplyStmt)
+	if code != 0 {
+		return fmt.Errorf("exit code %d, output: %q", code, out)
+	}
+	return err
+}
+
+func (s *Shell) exec(script string) (out string, code uint32, err error) {
+	command := exec.Command("sh")
+	stdin, err := command.StdinPipe()
+	if err != nil {
+		return "", 0, err
+	}
+
+	// TODO: does this create a race condition?
+	var sink bytes.Buffer
+	command.Stdout = &sink
+	command.Stderr = &sink
+
+	if err := command.Start(); err != nil {
+		return "", 0, err
+	}
+
+	if _, err := stdin.Write([]byte(script)); err != nil {
+		return "", 0, err
+	}
+
+	if err := stdin.Close(); err != nil {
+		return "", 0, err
+	}
+
+	err = command.Wait()
+	if _, ok := err.(*exec.ExitError); !ok && err != nil {
+		return "", 0, err
+	}
+
+	switch result := command.ProcessState.Sys().(type) {
+	case syscall.WaitStatus:
+		code = uint32(result)
+	default:
+		panic(fmt.Sprintf("unknown type %+v", result))
+	}
+
+	return sink.String(), code, nil
 }
