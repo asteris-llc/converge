@@ -247,7 +247,7 @@ func Test_DrawEdge_WhenEdgeLabelReturnsError_ReturnsError(t *testing.T) {
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawEdge(edgeTestGraph(), "test", "test")
-	assert.Equal(t, actualErr, err)
+	assert.Equal(t, err, actualErr)
 }
 
 func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
@@ -273,6 +273,15 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 	// additional attributes that should be included (e.g. label), just that we
 	// also have the ones that were specified
 	assert.True(t, compareAttrMap(expectedAttrs, actualAttrs))
+}
+
+func Test_StartNodeSection_ReturnsEmptyString(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := ""
+	actual, err := printer.StartNodeSection(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
 }
 
 /////////////////////////////////
