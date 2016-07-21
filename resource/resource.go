@@ -17,7 +17,7 @@ package resource
 // Task does checking as Monitor does, but it can also make changes to make the
 // checks pass.
 type Task interface {
-	Check() (string, bool, error)
+	Check() (status string, willChange bool, err error)
 	Apply() error
 }
 
@@ -28,6 +28,6 @@ type Resource interface {
 
 // Renderer is passed to resources
 type Renderer interface {
-	Value() *string
+	Value() (value string, present bool)
 	Render(name, content string) (string, error)
 }
