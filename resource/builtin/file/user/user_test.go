@@ -23,6 +23,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
@@ -92,7 +93,39 @@ func TestPlan(t *testing.T) {
 	assert.Equal(t, true, result.WillChange)
 }
 
-//TODO test plan and apply when implemented
+func TestApply(t *testing.T) {
+	// Don't run if not root
+	u, err := osuser.Current()
+	if err != nil || u.Uid != "0" {
+		return
+	}
+	defer helpers.HideLogs(t)()
+
+	tmpfile, err := ioutil.TempFile("", "mode_test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpfile.Name())
+
+	module := fmt.Sprintf(
+		`file.user "x" {
+    destination = %q
+    user = "nobody"
+  }`, tmpfile.Name())
+
+	tmpfile.Write([]byte(module))
+
+	graph, err := load.Load(tmpfile.Name())
+	assert.NoError(t, err)
+	rendered, err := render.Render(graph, nil)
+	assert.NoError(t, err)
+	planned, err := plan.Plan(context.Background(), rendered)
+	assert.NoError(t, err)
+	applied, err := apply.Apply(context.Background(), planned)
+	assert.NoError(t, err)
+
+	result := getResultApply(t, applied, "root/file.user.x")
+	assert.Equal(t, "nobody", result.Status)
+	assert.True(t, result.Ran)
+}
 
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	resources, err := parse.Parse(content)
@@ -113,6 +146,17 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
 	val := src.Get(key)
 	result, ok := val.(*plan.Result)
+	if !ok {
+		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
+		t.FailNow()
+	}
+
+	return result
+}
+
+func getResultApply(t *testing.T, src *graph.Graph, key string) *apply.Result {
+	val := src.Get(key)
+	result, ok := val.(*apply.Result)
 	if !ok {
 		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
 		t.FailNow()
