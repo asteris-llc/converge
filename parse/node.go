@@ -17,6 +17,7 @@ package parse
 import (
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"sync"
 
@@ -161,9 +162,31 @@ func (n *Node) GetStrings() (vals []string, err error) {
 		return nil, err
 	}
 
+	toConsider := []interface{}{}
 	for _, val := range n.values {
-		if s, ok := val.(string); ok {
-			vals = append(vals, s)
+		toConsider = append(toConsider, val)
+	}
+
+	for len(toConsider) > 0 {
+		val := toConsider[0]
+		toConsider = toConsider[1:]
+
+		switch val.(type) {
+		case string:
+			vals = append(vals, val.(string))
+
+		case []map[string]interface{}:
+			for _, sub := range val.([]map[string]interface{}) {
+				toConsider = append(toConsider, interface{}(sub))
+			}
+
+		case map[string]interface{}:
+			for _, value := range val.(map[string]interface{}) {
+				toConsider = append(toConsider, value)
+			}
+
+		default:
+			log.Printf("[DEBUG] Node.GetStrings: unknown value: %T (%v)\n", val, val)
 		}
 	}
 
