@@ -3,7 +3,7 @@ VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
 
-converge: main.go cmd/* load/* resource/* vendor/**/*
+converge: $(shell find . -name '*.go')
 	go build .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh ${PNGS}
