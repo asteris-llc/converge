@@ -116,15 +116,15 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	return fmt.Sprintf("%s -> %s %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
 }
 
-/* FIXME: Stubs*/
 func (*Printer) StartPP(*graph.Graph) (string, error) {
-	return "", nil
+	return "digraph {", nil
 }
 
 func (*Printer) FinishPP(*graph.Graph) (string, error) {
-	return "", nil
+	return "}", nil
 }
 
+/* FIXME: Stubs*/
 func (*Printer) StartSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
