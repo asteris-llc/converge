@@ -32,6 +32,7 @@ var (
 )
 
 type SubgraphMarkerKey int
+type PropertySet map[string]string
 
 const (
 	SubgraphMarkerStart SubgraphMarkerKey = iota
@@ -42,6 +43,9 @@ const (
 type GraphvizPrintProvider interface {
 	VertexGetId(interface{}) (string, error)
 	VertexGetLabel(interface{}) (string, error)
+	VertexGetProperties(interface{}) PropertySet
+	EdgeGetLabel(interface{}, interface{}) (string, error)
+	EdgeGetProperties(interface{}, interface{}) PropertySet
 	SubgraphMarker(interface{}) SubgraphMarkerKey
 }
 
@@ -71,6 +75,7 @@ func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(stri
 	if err != nil {
 		return "", err
 	}
+	attributes := p.printProvider.VertexGetProperties(g.Get(id))
 	switch p.printProvider.SubgraphMarker(g.Get(id)) {
 	case SubgraphMarkerStart:
 		sgMarker(id, true)
@@ -78,12 +83,19 @@ func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(stri
 		sgMarker(id, false)
 	}
 
-	dotCode := fmt.Sprintf(
-		"\"%s\" [label=\"%s\"];\n",
-		vertexId,
-		vertexLabel,
-	)
+	attributes["label"] = vertexLabel
+
+	dotCode := fmt.Sprintf("\"%s\" %s;\n", vertexId, buildAttributeString(attributes))
 	return dotCode, nil
+}
+
+func buildAttributeString(p PropertySet) string {
+	accumulator := "["
+	for k, v := range p {
+		accumulator = fmt.Sprintf("%s %s='%s',", accumulator, k, v)
+	}
+	accumulator = accumulator[0 : len(accumulator)-1]
+	return fmt.Sprintf("%s]", accumulator)
 }
 
 /* FIXME: Stubs*/
