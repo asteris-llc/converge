@@ -264,6 +264,28 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 	assert.True(t, compareAttrMap(expectedAttrs, actualAttrs))
 }
 
+// The tests for StartPP and FinishPP are simple tests asserting the expected
+// static return values for starting and stoping the dot source
+func Test_StartPP_ReturnsGraphvizStart(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := "digraph {"
+	actual, err := printer.StartPP(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_FinishPP_ReturnsGraphvizStart(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := "}"
+	actual, err := printer.FinishPP(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+// NB: The node and edge section callbacks are unnecessary for graphviz output
+// so we just assert that they all return no errors and empty strings.
 func Test_StartNodeSection_ReturnsEmptyString(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
@@ -271,6 +293,36 @@ func Test_StartNodeSection_ReturnsEmptyString(t *testing.T) {
 	actual, err := printer.StartNodeSection(emptyGraph)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
+}
+
+func Test_FinishNodeSection_ReturnsEmptyString(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := ""
+	actual, err := printer.FinishNodeSection(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_StartEdgeSection_ReturnsEmptyString(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := ""
+	actual, err := printer.StartEdgeSection(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := ""
+	actual, err := printer.FinishEdgeSection(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_StartSubgraph_IncrementsClusterIDEachRun(t *testing.T) {
 }
 
 /////////////////////////////////
@@ -412,6 +464,12 @@ func parseDotEdge(e string) (string, string) {
 		dest = dest[0:idx]
 	}
 	return source, dest
+}
+
+func getClusterIndex(s string) int {
+	var clusterIndex int
+	fmt.Sscanf("subgraph cluster_%d {", s, &clusterIndex)
+	return clusterIndex
 }
 
 func compareAttrMap(a, b map[string]string) bool {
