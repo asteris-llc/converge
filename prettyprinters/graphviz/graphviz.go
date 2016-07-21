@@ -39,56 +39,51 @@ const (
 	SubgraphMarkerNop
 )
 
-type GraphvizOptions map[string]string
+type GraphvizPrintProvider interface {
+	VertexGetId(interface{}) (string, error)
+	VertexGetLabel(interface{}) (string, error)
+	SubgraphMarker(interface{}) SubgraphMarkerKey
+}
 
-type VertexGetId func(interface{}) (string, error)
-type VertexGetLabel func(interface{}) (string, error)
-type SubgraphMarker func(interface{}) SubgraphMarkerKey
+type GraphvizOptions map[string]string
 
 type GraphvizPrinter struct {
 	prettyprinters.DigraphPrettyPrinter
-	optsMap  GraphvizOptions
-	vPrinter VertexGetLabel
-	vLabeler VertexGetId
-	vMarker  SubgraphMarker
+	optsMap       GraphvizOptions
+	printProvider GraphvizPrintProvider
 }
 
-func NewPrinter(opts GraphvizOptions, idF VertexGetId, labelF VertexGetLabel, marker SubgraphMarker) *GraphvizPrinter {
+func NewPrinter(opts GraphvizOptions, provider GraphvizPrintProvider) *GraphvizPrinter {
 	opts = mergeDefaultOptions(opts)
-
-	if idF == nil {
-		idF = DefaultVertexId
-	}
-
-	if labelF == nil {
-		labelF = func(val interface{}) (string, error) { return idF(val) }
-	}
-
-	if marker == nil {
-		marker = DefaultMarker
-	}
-
 	return &GraphvizPrinter{
-		optsMap:  opts,
-		vPrinter: labelF,
-		vLabeler: idF,
-		vMarker:  marker,
+		optsMap:       opts,
+		printProvider: provider,
 	}
 }
 
 func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
-	switch p.vMarker(g.Get(id)) {
+	graphValue := g.Get(id)
+	vertexId, err := p.printProvider.VertexGetId(graphValue)
+	if err != nil {
+		return "", err
+	}
+	vertexLabel, err := p.printProvider.VertexGetLabel(graphValue)
+	if err != nil {
+		return "", err
+	}
+	switch p.printProvider.SubgraphMarker(g.Get(id)) {
 	case SubgraphMarkerStart:
 		sgMarker(id, true)
 	case SubgraphMarkerEnd:
 		sgMarker(id, false)
 	}
 
-	if nodeStr, err := p.vPrinter(g.Get(id)); err != nil {
-		return "", err
-	} else {
-		return fmt.Sprintf("\"%s\";\n", nodeStr), nil
-	}
+	dotCode := fmt.Sprintf(
+		"\"%s\" [label=\"%s\"];\n",
+		vertexId,
+		vertexLabel,
+	)
+	return dotCode, nil
 }
 
 /* FIXME: Stubs*/
@@ -109,6 +104,22 @@ func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
 }
 
 func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
+	return "", nil
+}
+
+func (p *GraphvizPrinter) StartNodeSection(*graph.Graph) (string, error) {
+	return "", nil
+}
+
+func (p *GraphvizPrinter) FinishNodeSection(*graph.Graph) (string, error) {
+	return "", nil
+}
+
+func (p *GraphvizPrinter) StartEdgeSection(*graph.Graph) (string, error) {
+	return "", nil
+}
+
+func (p *GraphvizPrinter) FinishEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
@@ -136,13 +147,4 @@ var defaultOptions GraphvizOptions = map[string]string{
 
 func DefaultOptions() GraphvizOptions {
 	return defaultOptions
-}
-
-func DefaultVertexId(val interface{}) (string, error) {
-	nodeStr := fmt.Sprintf("%x", val)
-	return nodeStr, nil
-}
-
-func DefaultMarker(val interface{}) SubgraphMarkerKey {
-	return SubgraphMarkerNop
 }
