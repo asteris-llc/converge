@@ -23,11 +23,11 @@ import (
 )
 
 var (
-	//BadOptionsError is returned when a GraphvizOptionMap contains invalid keys
-	//or values, or is missing required values.
+	// BadOptionsError is returned when a GraphvizOptionMap contains invalid keys
+	// or values, or is missing required values.
 	BadOptionsError = errors.New("Invalid configuration option")
 
-	//BadGraphError is returned when a provided graph.Graph is not valid
+	// BadGraphError is returned when a provided graph.Graph is not valid
 	BadGraphError = errors.New("Provided graph was invalid, or missing ID")
 )
 
@@ -37,11 +37,11 @@ type PropertySet map[string]string
 const (
 	SubgraphMarkerStart SubgraphMarkerKey = iota
 	SubgraphMarkerEnd
-	SubgraphMarkerNop
+	SubgraphMarkerNOP
 )
 
 type GraphvizPrintProvider interface {
-	VertexGetId(interface{}) (string, error)
+	VertexGetID(interface{}) (string, error)
 	VertexGetLabel(interface{}) (string, error)
 	VertexGetProperties(interface{}) PropertySet
 	EdgeGetLabel(interface{}, interface{}) (string, error)
@@ -49,25 +49,34 @@ type GraphvizPrintProvider interface {
 	SubgraphMarker(interface{}) SubgraphMarkerKey
 }
 
-type GraphvizOptions map[string]string
+type Options struct {
+	Splines string
+	Rankdir string
+}
 
-type GraphvizPrinter struct {
+func DefaultOptions() Options {
+	return Options{
+		Splines: "curved",
+		Rankdir: "LR",
+	}
+}
+
+type Printer struct {
 	prettyprinters.DigraphPrettyPrinter
-	optsMap       GraphvizOptions
+	options       Options
 	printProvider GraphvizPrintProvider
 }
 
-func NewPrinter(opts GraphvizOptions, provider GraphvizPrintProvider) *GraphvizPrinter {
-	opts = mergeDefaultOptions(opts)
-	return &GraphvizPrinter{
-		optsMap:       opts,
+func New(opts Options, provider GraphvizPrintProvider) *Printer {
+	return &Printer{
+		options:       opts,
 		printProvider: provider,
 	}
 }
 
-func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
+func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
 	graphValue := g.Get(id)
-	vertexId, err := p.printProvider.VertexGetId(graphValue)
+	vertexID, err := p.printProvider.VertexGetID(graphValue)
 	if err != nil {
 		return "", err
 	}
@@ -85,16 +94,16 @@ func (p *GraphvizPrinter) DrawNode(g *graph.Graph, id string, sgMarker func(stri
 
 	attributes["label"] = vertexLabel
 
-	dotCode := fmt.Sprintf("\"%s\" %s;\n", vertexId, buildAttributeString(attributes))
+	dotCode := fmt.Sprintf("\"%s\" %s;\n", vertexID, buildAttributeString(attributes))
 	return dotCode, nil
 }
 
-func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
-	sourceVertex, err := p.printProvider.VertexGetId(g.Get(id1))
+func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
+	sourceVertex, err := p.printProvider.VertexGetID(g.Get(id1))
 	if err != nil {
 		return "", err
 	}
-	destVertex, err := p.printProvider.VertexGetId(g.Get(id2))
+	destVertex, err := p.printProvider.VertexGetID(g.Get(id2))
 	if err != nil {
 		return "", err
 	}
@@ -108,35 +117,35 @@ func (p *GraphvizPrinter) DrawEdge(g *graph.Graph, id1, id2 string) (string, err
 }
 
 /* FIXME: Stubs*/
-func (*GraphvizPrinter) StartPP(*graph.Graph) (string, error) {
+func (*Printer) StartPP(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (*GraphvizPrinter) FinishPP(*graph.Graph) (string, error) {
+func (*Printer) FinishPP(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (*GraphvizPrinter) StartSubgraph(*graph.Graph) (string, error) {
+func (*Printer) StartSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (*GraphvizPrinter) FinishSubgraph(*graph.Graph) (string, error) {
+func (*Printer) FinishSubgraph(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) StartNodeSection(*graph.Graph) (string, error) {
+func (p *Printer) StartNodeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) FinishNodeSection(*graph.Graph) (string, error) {
+func (p *Printer) FinishNodeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) StartEdgeSection(*graph.Graph) (string, error) {
+func (p *Printer) StartEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (p *GraphvizPrinter) FinishEdgeSection(*graph.Graph) (string, error) {
+func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
@@ -149,28 +158,4 @@ func buildAttributeString(p PropertySet) string {
 	}
 	accumulator = accumulator[0 : len(accumulator)-1]
 	return fmt.Sprintf("%s]", accumulator)
-}
-
-//mergeDefaultOptions iterates over an option map and copies the defaults for
-//any missing entries.
-func mergeDefaultOptions(opts GraphvizOptions) GraphvizOptions {
-	for k, v := range DefaultOptions() {
-		if _, ok := opts[k]; !ok {
-			opts[k] = v
-		}
-	}
-	return opts
-}
-
-func (g *GraphvizPrinter) Options() GraphvizOptions {
-	return g.optsMap
-}
-
-var defaultOptions GraphvizOptions = map[string]string{
-	"splines": "curved",
-	"rankdir": "LR",
-}
-
-func DefaultOptions() GraphvizOptions {
-	return defaultOptions
 }
