@@ -17,55 +17,66 @@ package shell_test
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPreparerInterface(t *testing.T) {
+func TestShellInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Resource)(nil), new(shell.Preparer))
+	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
 }
 
-func TestPreparerValidateValid(t *testing.T) {
+func TestShellTaskCheckNeedsChange(t *testing.T) {
 	t.Parallel()
 
-	sp := &shell.Preparer{
-		Check: "echo test",
-		Apply: "echo test",
+	s := shell.Shell{
+		CheckStmt: "echo test && exit 1",
 	}
 
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
-
-	assert.NoError(t, err)
+	current, change, err := s.Check()
+	assert.Equal(t, "test\n", current)
+	assert.True(t, change)
+	assert.Nil(t, err)
 }
 
-func TestPreparerValidateInvalidCheck(t *testing.T) {
+func TestShellCheckNoChange(t *testing.T) {
 	t.Parallel()
 
-	sp := &shell.Preparer{
-		Check: "if do then; esac",
+	s := shell.Shell{
+		CheckStmt: "echo test",
 	}
 
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+	current, change, err := s.Check()
+	assert.Equal(t, "test\n", current)
+	assert.False(t, change)
+	assert.Nil(t, err)
+}
 
+func TestShellApplySuccess(t *testing.T) {
+	t.Parallel()
+
+	s := shell.Shell{
+		ApplyStmt: "echo test",
+	}
+
+	assert.NoError(t, s.Apply())
+}
+
+func TestShellTaskApplyError(t *testing.T) {
+	t.Parallel()
+
+	s := shell.Shell{
+		ApplyStmt: "echo bad && exit 1",
+	}
+
+	err := s.Apply()
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "exit status 2")
-	}
-}
-
-func TestPreparerValidateInvalidApply(t *testing.T) {
-	t.Parallel()
-
-	sp := &shell.Preparer{
-		Apply: "if do then; esac",
-	}
-
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
-
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "exit status 2")
+		assert.EqualError(
+			t,
+			err,
+			`exit code 256, output: "bad\n"`,
+		)
 	}
 }
