@@ -23,16 +23,20 @@ import (
 	"github.com/asteris-llc/converge/graph"
 )
 
+// Renderer to be passed to preparers, which will render strings
 type Renderer struct {
-	Graph    *graph.Graph
-	ID       string
-	DotValue *string
+	Graph           *graph.Graph
+	ID              string
+	DotValue        string
+	DotValuePresent bool
 }
 
-func (r *Renderer) Value() *string {
-	return r.DotValue
+// Value of this renderer
+func (r *Renderer) Value() (value string, present bool) {
+	return r.DotValue, r.DotValuePresent
 }
 
+// Render a string with text/template
 func (r *Renderer) Render(name, src string) (string, error) {
 	tmpl, err := template.New(name).Funcs(r.funcs()).Parse(src)
 	if err != nil {
