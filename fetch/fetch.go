@@ -16,12 +16,13 @@ package fetch
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 )
 
 // Any fetches a path based on a
 func Any(loc string) ([]byte, error) {
-	url, err := parse(loc)
+	url, err := url.Parse(loc)
 	if err != nil {
 		return nil, err
 	}
