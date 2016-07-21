@@ -17,6 +17,7 @@ package shell_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
@@ -26,4 +27,45 @@ func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(shell.Preparer))
+}
+
+func TestShellValidateValid(t *testing.T) {
+	t.Parallel()
+
+	sp := &shell.Preparer{
+		Check: "echo test",
+		Apply: "echo test",
+	}
+
+	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+
+	assert.NoError(t, err)
+}
+
+func TestShellValidateInvalidCheck(t *testing.T) {
+	t.Parallel()
+
+	sp := &shell.Preparer{
+		Check: "if do then; esac",
+	}
+
+	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "exit status 2")
+	}
+}
+
+func TestShellValidateInvalidApply(t *testing.T) {
+	t.Parallel()
+
+	sp := &shell.Preparer{
+		Apply: "if do then; esac",
+	}
+
+	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "exit status 2")
+	}
 }
