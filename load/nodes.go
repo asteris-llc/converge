@@ -15,7 +15,6 @@
 package load
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/pkg/errors"
 )
 
 type source struct {
@@ -60,14 +60,14 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 		log.Printf("[DEBUG] fetching %s\n", url)
 		content, err := fetch.Any(url)
 		if err != nil {
-			return nil, err // TODO: this should include the URL for context
+			return nil, errors.Wrap(err, url)
 		}
 
 		// TODO: signing and verification? Here or elsewhere?
 
 		resources, err := parse.Parse(content)
 		if err != nil {
-			return nil, err // TODO: this should include the URL for context
+			return nil, errors.Wrap(err, url)
 		}
 
 		for _, resource := range resources {
