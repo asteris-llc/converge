@@ -35,7 +35,7 @@ samples/%.png: samples/% converge
 
 vendor: ${NONVENDOR}
 	glide install --strip-vcs --strip-vendor --update-vendored
-	find vendor -not -name '*.go' -not -name LICENSE -type f -delete
+	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -type f -delete
 
 vendor-update: ${NOVENDOR}
 	glide update --strip-vcs --strip-vendor --update-vendored
