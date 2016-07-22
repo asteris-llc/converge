@@ -17,6 +17,8 @@ package load
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
@@ -28,8 +30,14 @@ import (
 )
 
 // SetResources loads the resources for each graph node
-func SetResources(g *graph.Graph) (*graph.Graph, error) {
+func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	return g.Transform(func(id string, out *graph.Graph) error {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("interrupted at %q", id)
+		default:
+		}
+
 		if id == "root" { // root
 			return nil
 		}

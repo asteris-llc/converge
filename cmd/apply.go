@@ -54,7 +54,7 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}

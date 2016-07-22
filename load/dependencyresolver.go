@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 )
@@ -26,8 +28,14 @@ var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
-func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
+func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	return g.Transform(func(id string, out *graph.Graph) error {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("interrupted at %q", id)
+		default:
+		}
+
 		if id == "root" { // root
 			return nil
 		}
