@@ -1,0 +1,85 @@
+hash: 53232a90f76fbeaeab857019c7d9b519f261941eedd7783dfd304d8f522724c4
+updated: 2016-07-22T00:23:48.673819229-05:00
+imports:
+- name: github.com/acmacalister/skittles
+  version: 8f7bde0f0de4cb42c1e8db861e67627558e97019
+- name: github.com/braintree/manners
+  version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
+  subpackages:
+  - test_helpers
+- name: github.com/BurntSushi/toml
+  version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/fsnotify/fsnotify
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+- name: github.com/hashicorp/errwrap
+  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
+- name: github.com/hashicorp/go-multierror
+  version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
+- name: github.com/hashicorp/hcl
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/printer
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/hashicorp/logutils
+  version: 0dc08b1671f34c4250ce212759ebd880f743d883
+- name: github.com/hashicorp/terraform
+  version: dce175459a9b0bc1f42b1b0f919aae294a73a138
+  subpackages:
+  - dag
+  - vendor/github.com/hashicorp/go-multierror
+  - vendor/github.com/hashicorp/errwrap
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/kardianos/osext
+  version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
+- name: github.com/magiconair/properties
+  version: c265cfa48dda6474e208715ca93e987829f572f8
+- name: github.com/mattn/go-isatty
+  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
+- name: github.com/mitchellh/mapstructure
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/pkg/errors
+  version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/spf13/cast
+  version: 27b586b42e29bec072fe7379259cc719e1289da6
+- name: github.com/spf13/cobra
+  version: f368244301305f414206f889b1735a54cfc8bde8
+- name: github.com/spf13/jwalterweatherman
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+- name: github.com/spf13/pflag
+  version: cb88ea77998c3f024757528e3305022ab50b43be
+- name: github.com/spf13/viper
+  version: d8a428b8a30606e1d0b355d91edf282609ade1a6
+- name: github.com/stretchr/testify
+  version: c5d7a69bf8a2c9c374798160849c071093e41dd1
+  subpackages:
+  - assert
+  - require
+  - vendor/github.com/davecgh/go-spew/spew
+  - vendor/github.com/pmezard/go-difflib/difflib
+- name: golang.org/x/net
+  version: 4876518f9e71663000c348837735820161a42df7
+  subpackages:
+  - context
+- name: golang.org/x/sys
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
+testImports: []
