@@ -210,14 +210,27 @@ func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 	assert.Equal(t, "B", destVertex)
 }
 
-func Test_DrawEdge_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
+func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", err)
+	provider.On("VertexGetID", "A").Return("", err)
+	provider.On("VertexGetID", mock.Anything).Return("", nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	_, actualErr := printer.DrawEdge(edgeTestGraph(), "test1", "test2")
+	_, actualErr := printer.DrawEdge(edgeTestGraph(), "A", "B")
+	assert.Equal(t, actualErr, err)
+}
+
+func Test_DrawEdge_WhenSecondVertexIDReturnsError_ReturnsError(t *testing.T) {
+	err := errors.New("test error")
+	provider := new(MockPrintProvider)
+	provider.On("VertexGetID", "A").Return("", nil)
+	provider.On("VertexGetID", "B").Return("", err)
+	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	_, actualErr := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	assert.Equal(t, actualErr, err)
 }
 
@@ -269,7 +282,7 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 func Test_StartPP_ReturnsGraphvizStart(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	expected := "digraph {"
+	expected := "digraph {\n"
 	actual, err := printer.StartPP(emptyGraph)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
@@ -323,10 +336,24 @@ func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
 }
 
 func Test_StartSubgraph_IncrementsClusterIDEachRun(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	for expectedClusterID := 0; expectedClusterID < 5; expectedClusterID++ {
+		dotOutput, _ := printer.StartSubgraph(emptyGraph, "")
+		fmt.Println(dotOutput)
+		actualClusterID := getClusterIndex(dotOutput)
+		assert.Equal(t, expectedClusterID, actualClusterID)
+	}
 }
 
-/////////////////////////////////
-// Stubs / Utility Functions
+func Test_FinishSubgraph_ReturnsClosingBrace(t *testing.T) {
+	provider := defaultMockProvider()
+	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := "}\n"
+	actual, err := printer.FinishSubgraph(emptyGraph, "")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
 
 type MockPrintProvider struct {
 	mock.Mock
@@ -468,7 +495,7 @@ func parseDotEdge(e string) (string, string) {
 
 func getClusterIndex(s string) int {
 	var clusterIndex int
-	fmt.Sscanf("subgraph cluster_%d {", s, &clusterIndex)
+	fmt.Sscanf(s, "subgraph cluster_%d {", &clusterIndex)
 	return clusterIndex
 }
 
