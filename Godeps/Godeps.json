@@ -44,43 +44,43 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/ast",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/parser",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/printer",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/scanner",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/strconv",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/hcl/token",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/parser",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/scanner",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/hcl/json/token",
-			"Rev": "5b7dbf7eefffea49afb3c9655d6582c72fae5fd1"
+			"Rev": "d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/logutils",
@@ -88,8 +88,8 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/dag",
-			"Comment": "v0.7.0-rc1",
-			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
+			"Comment": "v0.7.0-rc3-92-gdce1754",
+			"Rev": "dce175459a9b0bc1f42b1b0f919aae294a73a138"
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/mousetrap",
@@ -111,6 +111,11 @@
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
 			"Rev": "d2dd0262208475919e1a362f675cfc0e7c10e905"
+		},
+		{
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.7.0-6-gcc5fbb7",
+			"Rev": "cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
@@ -160,13 +165,13 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/vendor/github.com/hashicorp/go-multierror",
-			"Comment": "v0.7.0-rc1",
-			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
+			"Comment": "v0.7.0-rc3-92-gdce1754",
+			"Rev": "dce175459a9b0bc1f42b1b0f919aae294a73a138"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/terraform/vendor/github.com/hashicorp/errwrap",
-			"Comment": "v0.7.0-rc1",
-			"Rev": "301da85f30239e87b30db254a25706a6d41c2522"
+			"Comment": "v0.7.0-rc3-92-gdce1754",
+			"Rev": "dce175459a9b0bc1f42b1b0f919aae294a73a138"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
