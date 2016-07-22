@@ -23,8 +23,9 @@ import (
 
 // Shell task
 type Shell struct {
-	CheckStmt string
-	ApplyStmt string
+	Interpreter string
+	CheckStmt   string
+	ApplyStmt   string
 }
 
 func (s *Shell) Check() (status string, willChange bool, err error) {
@@ -37,11 +38,12 @@ func (s *Shell) Apply() (err error) {
 	if code != 0 {
 		return fmt.Errorf("exit code %d, output: %q", code, out)
 	}
+
 	return err
 }
 
 func (s *Shell) exec(script string) (out string, code uint32, err error) {
-	command := exec.Command("sh")
+	command := exec.Command(s.Interpreter)
 	stdin, err := command.StdinPipe()
 	if err != nil {
 		return "", 0, err

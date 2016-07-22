@@ -22,8 +22,9 @@ import (
 
 // Preparer for Shell tasks
 type Preparer struct {
-	Check string `hcl:"check"`
-	Apply string `hcl:"apply"`
+	Interpreter string `hcl:"interpreter"`
+	Check       string `hcl:"check"`
+	Apply       string `hcl:"apply"`
 }
 
 // Prepare a new task
@@ -46,7 +47,16 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	return &Shell{check, apply}, nil
+	interpreter, err := render.Render("interpreter", p.Interpreter)
+	if err != nil {
+		return nil, err
+	}
+
+	if interpreter == "" {
+		interpreter = "sh" // TODO: make this work on Windows?
+	}
+
+	return &Shell{interpreter, check, apply}, nil
 }
 
 func (p *Preparer) validateScriptSyntax(script string) error {
