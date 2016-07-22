@@ -30,6 +30,8 @@ import (
 var (
 	emptyGraph = graph.New()
 	stubID     = "stub"
+	entityA    = graphviz.GraphEntity{Name: "A", Value: "A"}
+	entityB    = graphviz.GraphEntity{Name: "B", Value: "B"}
 )
 
 // TODO: Create a mock factory or something to reduce some of the boilerplate
@@ -193,14 +195,14 @@ func Test_DrawEdge_GetsIDForEachNode(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	printer.DrawEdge(edgeTestGraph(), "A", "B")
-	provider.AssertCalled(t, "VertexGetID", "A")
-	provider.AssertCalled(t, "VertexGetID", "B")
+	provider.AssertCalled(t, "VertexGetID", entityA)
+	provider.AssertCalled(t, "VertexGetID", entityB)
 }
 
 func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", "A").Return("A", nil)
-	provider.On("VertexGetID", "B").Return("B", nil)
+	provider.On("VertexGetID", entityA).Return("A", nil)
+	provider.On("VertexGetID", entityB).Return("B", nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
@@ -213,7 +215,7 @@ func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", "A").Return("", err)
+	provider.On("VertexGetID", entityA).Return("", err)
 	provider.On("VertexGetID", mock.Anything).Return("", nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
@@ -225,8 +227,8 @@ func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
 func Test_DrawEdge_WhenSecondVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", "A").Return("", nil)
-	provider.On("VertexGetID", "B").Return("", err)
+	provider.On("VertexGetID", entityA).Return("", nil)
+	provider.On("VertexGetID", entityB).Return("", err)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
@@ -359,32 +361,32 @@ type MockPrintProvider struct {
 	mock.Mock
 }
 
-func (m *MockPrintProvider) VertexGetID(i interface{}) (string, error) {
+func (m *MockPrintProvider) VertexGetID(i graphviz.GraphEntity) (string, error) {
 	args := m.Called(i)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockPrintProvider) VertexGetLabel(i interface{}) (string, error) {
+func (m *MockPrintProvider) VertexGetLabel(i graphviz.GraphEntity) (string, error) {
 	args := m.Called(i)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockPrintProvider) VertexGetProperties(i interface{}) graphviz.PropertySet {
+func (m *MockPrintProvider) VertexGetProperties(i graphviz.GraphEntity) graphviz.PropertySet {
 	args := m.Called(i)
 	return args.Get(0).(graphviz.PropertySet)
 }
 
-func (m *MockPrintProvider) SubgraphMarker(i interface{}) graphviz.SubgraphMarkerKey {
+func (m *MockPrintProvider) SubgraphMarker(i graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	args := m.Called(i)
 	return args.Get(0).(graphviz.SubgraphMarkerKey)
 }
 
-func (m *MockPrintProvider) EdgeGetLabel(i, j interface{}) (string, error) {
+func (m *MockPrintProvider) EdgeGetLabel(i, j graphviz.GraphEntity) (string, error) {
 	args := m.Called(i, j)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockPrintProvider) EdgeGetProperties(i, j interface{}) graphviz.PropertySet {
+func (m *MockPrintProvider) EdgeGetProperties(i, j graphviz.GraphEntity) graphviz.PropertySet {
 	args := m.Called(i, j)
 	return args.Get(0).(graphviz.PropertySet)
 }

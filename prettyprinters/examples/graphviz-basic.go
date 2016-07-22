@@ -34,10 +34,23 @@ func makeGraph() *graph.Graph {
 	return g
 }
 
+func showGraphWithValues(g *graph.Graph) {
+	valuePrinter := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
+	valueDotCode, _ := valuePrinter.Show()
+	fmt.Println("With default value provider")
+	fmt.Println(valueDotCode)
+}
+
+func showGraphWithIDs(g *graph.Graph) {
+	namePrinter := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
+	nameDotCode, _ := namePrinter.Show()
+	fmt.Println("With default ID provider")
+	fmt.Println(nameDotCode)
+}
+
 func main() {
 	log.SetOutput(ioutil.Discard)
 	g := makeGraph()
-	printer := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
-	dotCode, _ := printer.Show()
-	fmt.Println(dotCode)
+	showGraphWithValues(g)
+	showGraphWithIDs(g)
 }

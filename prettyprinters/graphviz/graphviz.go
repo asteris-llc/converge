@@ -39,15 +39,20 @@ const (
 
 type PropertySet map[string]string
 
+type GraphEntity struct {
+	Name  string
+	Value interface{}
+}
+
 // The GraphvizPrinterProvider interface allows specific serializable types to
 // be rendered as a Graphviz document.
 type GraphvizPrintProvider interface {
-	VertexGetID(interface{}) (string, error)
-	VertexGetLabel(interface{}) (string, error)
-	VertexGetProperties(interface{}) PropertySet
-	EdgeGetLabel(interface{}, interface{}) (string, error)
-	EdgeGetProperties(interface{}, interface{}) PropertySet
-	SubgraphMarker(interface{}) SubgraphMarkerKey
+	VertexGetID(GraphEntity) (string, error)
+	VertexGetLabel(GraphEntity) (string, error)
+	VertexGetProperties(GraphEntity) PropertySet
+	EdgeGetLabel(GraphEntity, GraphEntity) (string, error)
+	EdgeGetProperties(GraphEntity, GraphEntity) PropertySet
+	SubgraphMarker(GraphEntity) SubgraphMarkerKey
 }
 
 type Options struct {
@@ -79,16 +84,17 @@ func New(opts Options, provider GraphvizPrintProvider) *Printer {
 
 func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
 	graphValue := g.Get(id)
-	vertexID, err := p.printProvider.VertexGetID(graphValue)
+	graphEntity := GraphEntity{id, graphValue}
+	vertexID, err := p.printProvider.VertexGetID(graphEntity)
 	if err != nil {
 		return "", err
 	}
-	vertexLabel, err := p.printProvider.VertexGetLabel(graphValue)
+	vertexLabel, err := p.printProvider.VertexGetLabel(graphEntity)
 	if err != nil {
 		return "", err
 	}
-	attributes := p.printProvider.VertexGetProperties(g.Get(id))
-	switch p.printProvider.SubgraphMarker(g.Get(id)) {
+	attributes := p.printProvider.VertexGetProperties(graphEntity)
+	switch p.printProvider.SubgraphMarker(graphEntity) {
 	case SubgraphMarkerStart:
 		sgMarker(id, true)
 	case SubgraphMarkerEnd:
@@ -102,19 +108,21 @@ func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool
 }
 
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
-	sourceVertex, err := p.printProvider.VertexGetID(g.Get(id1))
+	sourceEntity := GraphEntity{id1, g.Get(id1)}
+	destEntity := GraphEntity{id2, g.Get(id2)}
+	sourceVertex, err := p.printProvider.VertexGetID(sourceEntity)
 	if err != nil {
 		return "", err
 	}
-	destVertex, err := p.printProvider.VertexGetID(g.Get(id2))
+	destVertex, err := p.printProvider.VertexGetID(destEntity)
 	if err != nil {
 		return "", err
 	}
-	label, err := p.printProvider.EdgeGetLabel(id1, id2)
+	label, err := p.printProvider.EdgeGetLabel(sourceEntity, destEntity)
 	if err != nil {
 		return "", err
 	}
-	attributes := p.printProvider.EdgeGetProperties(g.Get(id1), g.Get(id2))
+	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	attributes["label"] = escapeNewline(label)
 	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
 		escapeNewline(sourceVertex),
@@ -170,32 +178,62 @@ func DefaultProvider() GraphvizPrintProvider {
 	return BasicProvider{}
 }
 
+type GraphIDProvider struct{}
+
+func IDProvider() GraphvizPrintProvider {
+	return GraphIDProvider{}
+}
+
 type BasicProvider struct{}
 
-func (p BasicProvider) VertexGetID(i interface{}) (string, error) {
-	return fmt.Sprintf("%v", i), nil
+func (p BasicProvider) VertexGetID(e GraphEntity) (string, error) {
+	return fmt.Sprintf("%v", e.Value), nil
 }
 
-func (p BasicProvider) VertexGetLabel(i interface{}) (string, error) {
-	return fmt.Sprintf("%v", i), nil
+func (p BasicProvider) VertexGetLabel(e GraphEntity) (string, error) {
+	return fmt.Sprintf("%v", e.Value), nil
 }
 
-func (p BasicProvider) VertexGetProperties(interface{}) PropertySet {
+func (p BasicProvider) VertexGetProperties(GraphEntity) PropertySet {
 	return make(map[string]string)
 }
 
-func (p BasicProvider) EdgeGetLabel(interface{}, interface{}) (string, error) {
+func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (string, error) {
 	return "", nil
 }
 
-func (p BasicProvider) EdgeGetProperties(interface{}, interface{}) PropertySet {
+func (p BasicProvider) EdgeGetProperties(GraphEntity, GraphEntity) PropertySet {
 	return make(map[string]string)
 }
 
-func (p BasicProvider) SubgraphMarker(interface{}) SubgraphMarkerKey {
+func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 	return SubgraphMarkerNOP
 }
 
 func escapeNewline(s string) string {
 	return strings.Replace(s, "\n", "\\n", -1)
+}
+
+func (p GraphIDProvider) VertexGetID(e GraphEntity) (string, error) {
+	return fmt.Sprintf("%v", e.Name), nil
+}
+
+func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (string, error) {
+	return fmt.Sprintf("%v", e.Name), nil
+}
+
+func (p GraphIDProvider) VertexGetProperties(GraphEntity) PropertySet {
+	return make(map[string]string)
+}
+
+func (p GraphIDProvider) EdgeGetLabel(GraphEntity, GraphEntity) (string, error) {
+	return "", nil
+}
+
+func (p GraphIDProvider) EdgeGetProperties(GraphEntity, GraphEntity) PropertySet {
+	return make(map[string]string)
+}
+
+func (p GraphIDProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
+	return SubgraphMarkerNOP
 }
