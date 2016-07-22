@@ -19,15 +19,25 @@ import (
 	"log"
 	"strings"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 )
 
+// Values for rendering
 type Values map[string]interface{}
 
-func Render(g *graph.Graph, top Values) (*graph.Graph, error) {
+// Render a graph with the provided values
+func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
 	return g.RootFirstTransform(func(id string, out *graph.Graph) error {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("rendering interrupted at %q", id)
+		default:
+		}
+
 		if id == "root" {
 			log.Println("[DEBUG] render: wrapping root")
 			out.Add(id, module.NewPreparer(top))

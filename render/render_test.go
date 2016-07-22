@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/render"
@@ -33,7 +35,7 @@ func TestRenderSingleNode(t *testing.T) {
 	g := graph.New()
 	g.Add("root/template.x", &template.Preparer{Destination: "{{1}}", Content: "{{2}}"})
 
-	rendered, err := render.Render(g, render.Values{})
+	rendered, err := render.Render(context.Background(), g, render.Values{})
 	assert.NoError(t, err)
 
 	node := rendered.Get("root/template.x")
@@ -57,7 +59,7 @@ func TestRenderParam(t *testing.T) {
 	g.Connect("root", "root/param.destination")
 	g.Connect("root/template.x", "root/param.destination")
 
-	rendered, err := render.Render(g, render.Values{})
+	rendered, err := render.Render(context.Background(), g, render.Values{})
 	require.NoError(t, err)
 
 	node := rendered.Get("root/template.x")
@@ -80,7 +82,7 @@ func TestRenderValues(t *testing.T) {
 	g.Connect("root", "root/param.destination")
 	g.Connect("root/template.x", "root/param.destination")
 
-	rendered, err := render.Render(g, render.Values{"destination": 2})
+	rendered, err := render.Render(context.Background(), g, render.Values{"destination": 2})
 	require.NoError(t, err)
 
 	node := rendered.Get("root/template.x")

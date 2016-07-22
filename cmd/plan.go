@@ -61,7 +61,7 @@ can be done separately to see what needs to be changed before execution.`,
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(graph, params)
+			rendered, err := render.Render(ctx, graph, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
