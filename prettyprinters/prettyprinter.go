@@ -19,7 +19,12 @@
 //generators so that resource graph data can be used in other applications.
 package prettyprinters
 
-import "github.com/asteris-llc/converge/graph"
+import (
+	"bytes"
+	"fmt"
+
+	"github.com/asteris-llc/converge/graph"
+)
 
 //DigraphPrettyPrinter interface defines the minimal set of required functions
 //for defining a pretty printer.
@@ -47,4 +52,124 @@ type DigraphPrettyPrinter interface {
 	StartEdgeSection(*graph.Graph) (string, error)
 	FinishEdgeSection(*graph.Graph) (string, error)
 	DrawEdge(*graph.Graph, string, string) (string, error)
+}
+
+type Printer struct {
+	pp DigraphPrettyPrinter
+	gr *graph.Graph
+}
+
+func New(g *graph.Graph, p DigraphPrettyPrinter) Printer {
+	return Printer{
+		pp: p,
+		gr: g,
+	}
+}
+
+func (printer Printer) Show() (string, error) {
+	var buffer bytes.Buffer
+	subgraphs := make(map[string]bool)
+
+	subgraphCB := func(id string, toggle bool) {
+		subgraphs[id] = toggle
+	}
+	nodeStringGraph, graphTransformError := printer.gr.Transform(func(id string, gr *graph.Graph) error {
+		printedNode, err := printer.pp.DrawNode(printer.gr, id, subgraphCB)
+		if err == nil {
+			gr.Add(id, printedNode)
+		}
+		return err
+	})
+	if graphTransformError != nil {
+		return "", graphTransformError
+	}
+
+	if str, err := printer.pp.StartPP(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	if str, err := printer.pp.StartNodeSection(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	if graphTransformError != nil {
+		fmt.Printf("graphTransformError: %s\n", graphTransformError)
+		return "", graphTransformError
+	}
+
+	printer.gr.RootFirstWalk(func(id string, val interface{}) error {
+		isSubgraphStart, ok := subgraphs[id]
+		str := nodeStringGraph.Get(id).(string)
+		fmt.Printf("str := %s\n", str)
+		var subgraphErr error = nil
+		var subgraphStr string
+		if !ok {
+			buffer.WriteString(str)
+			return nil
+		}
+		if isSubgraphStart {
+			subgraphStr, subgraphErr = printer.pp.StartSubgraph(printer.gr, id)
+		} else {
+			subgraphStr, subgraphErr = printer.pp.FinishSubgraph(printer.gr, id)
+		}
+		if subgraphErr != nil {
+			return subgraphErr
+		}
+		if isSubgraphStart {
+			buffer.WriteString(subgraphStr)
+			buffer.WriteString(str)
+		} else {
+			buffer.WriteString(str)
+			buffer.WriteString(subgraphStr)
+		}
+		return nil
+	})
+
+	if str, err := printer.pp.FinishNodeSection(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	if str, err := printer.pp.StartEdgeSection(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	printer.gr.RootFirstWalk(func(id string, _ interface{}) error {
+		edgeIDs := printer.gr.DownEdges(id)
+		for idx := range edgeIDs {
+			if str, err := printer.pp.DrawEdge(printer.gr, id, edgeIDs[idx]); err == nil {
+				buffer.WriteString(str)
+			} else {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if str, err := printer.pp.FinishEdgeSection(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+	if str, err := printer.pp.FinishPP(printer.gr); err == nil {
+		buffer.WriteString(str)
+	} else {
+		return "", err
+	}
+	return buffer.String(), nil
+}
+
+func maybeAppend(b *bytes.Buffer, f func() (string, error)) error {
+	str, err := f()
+	if err != nil {
+		b.WriteString(str)
+	}
+	return err
 }
