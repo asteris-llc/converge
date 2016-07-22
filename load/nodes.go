@@ -27,8 +27,9 @@ import (
 )
 
 type source struct {
-	Parent string
-	Source string
+	Parent       string
+	ParentSource string
+	Source       string
 }
 
 func (s *source) String() string {
@@ -37,7 +38,7 @@ func (s *source) String() string {
 
 // Nodes loads and parses all resources referred to by the provided url
 func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
-	toLoad := []*source{{"root", root}}
+	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
 	out.Add("root", nil)
@@ -52,7 +53,7 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 		current := toLoad[0]
 		toLoad = toLoad[1:]
 
-		url, err := fetch.ResolveInContext(current.Source, root)
+		url, err := fetch.ResolveInContext(current.Source, current.ParentSource)
 		if err != nil {
 			return nil, err
 		}
@@ -79,8 +80,9 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 				toLoad = append(
 					toLoad,
 					&source{
-						Parent: newID,
-						Source: resource.Source(),
+						Parent:       newID,
+						ParentSource: url,
+						Source:       resource.Source(),
 					},
 				)
 			}
