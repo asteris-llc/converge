@@ -14,23 +14,27 @@
 
 package load
 
-import "github.com/asteris-llc/converge/graph"
+import (
+	"github.com/asteris-llc/converge/graph"
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+)
 
 // Load produces a fully-formed graph from the given root
-func Load(root string) (*graph.Graph, error) {
-	base, err := Nodes(root)
+func Load(ctx context.Context, root string) (*graph.Graph, error) {
+	base, err := Nodes(ctx, root)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "loading failed")
 	}
 
-	resolved, err := ResolveDependencies(base)
+	resolved, err := ResolveDependencies(ctx, base)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not resolve dependencies")
 	}
 
-	resourced, err := SetResources(resolved)
+	resourced, err := SetResources(ctx, resolved)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not resolve resources")
 	}
 
 	return resourced, nil
