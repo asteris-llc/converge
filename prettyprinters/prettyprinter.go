@@ -104,7 +104,6 @@ func (printer Printer) Show() (string, error) {
 	printer.gr.RootFirstWalk(func(id string, val interface{}) error {
 		isSubgraphStart, ok := subgraphs[id]
 		str := nodeStringGraph.Get(id).(string)
-		fmt.Printf("str := %s\n", str)
 		var subgraphErr error = nil
 		var subgraphStr string
 		if !ok {
