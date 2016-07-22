@@ -15,8 +15,11 @@
 package load
 
 import (
+	"errors"
 	"fmt"
 	"log"
+
+	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
@@ -33,13 +36,19 @@ func (s *source) String() string {
 }
 
 // Nodes loads and parses all resources referred to by the provided url
-func Nodes(root string) (*graph.Graph, error) {
+func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 	toLoad := []*source{{"root", root}}
 
 	out := graph.New()
 	out.Add("root", nil)
 
 	for len(toLoad) > 0 {
+		select {
+		case <-ctx.Done():
+			return nil, errors.New("interrupted")
+		default:
+		}
+
 		current := toLoad[0]
 		toLoad = toLoad[1:]
 

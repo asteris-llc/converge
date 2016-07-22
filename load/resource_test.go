@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
@@ -137,5 +139,5 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	}
 	require.NoError(t, g.Validate())
 
-	return load.SetResources(g)
+	return load.SetResources(context.Background(), g)
 }

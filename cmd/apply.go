@@ -54,12 +54,12 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(graph, params)
+			rendered, err := render.Render(ctx, graph, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
