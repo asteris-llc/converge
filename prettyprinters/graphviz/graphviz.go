@@ -168,7 +168,7 @@ func DefaultProvider() GraphvizPrintProvider {
 type BasicProvider struct{}
 
 func (p BasicProvider) VertexGetID(i interface{}) (string, error) {
-	return fmt.Sprintf("%p", &i), nil
+	return fmt.Sprintf("%v", i), nil
 }
 
 func (p BasicProvider) VertexGetLabel(i interface{}) (string, error) {
