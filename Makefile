@@ -34,7 +34,12 @@ samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 vendor: ${NONVENDOR}
-	godep save -t ./...
+	glide install --strip-vcs --strip-vendor --update-vendored
+	find vendor -not -name *.go -not -name LICENSE -type f -delete
+
+vendor-update: ${NOVENDOR}
+	glide update --strip-vcs --strip-vendor --update-vendored
+	find vendor -not -name *.go -not -name LICENSE -type f -delete
 
 xcompile: test
 	@rm -rf build/
@@ -54,4 +59,4 @@ package: xcompile
     echo $$f; \
   done
 
-.PHONY: test gotest xcompile package samples/errors/*.hcl blackbox/*.sh
+.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh
