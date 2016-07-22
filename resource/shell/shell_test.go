@@ -32,7 +32,8 @@ func TestShellTaskCheckNeedsChange(t *testing.T) {
 	t.Parallel()
 
 	s := shell.Shell{
-		CheckStmt: "echo test && exit 1",
+		Interpreter: "sh",
+		CheckStmt:   "echo test && exit 1",
 	}
 
 	current, change, err := s.Check()
@@ -45,7 +46,8 @@ func TestShellCheckNoChange(t *testing.T) {
 	t.Parallel()
 
 	s := shell.Shell{
-		CheckStmt: "echo test",
+		Interpreter: "sh",
+		CheckStmt:   "echo test",
 	}
 
 	current, change, err := s.Check()
@@ -58,7 +60,8 @@ func TestShellApplySuccess(t *testing.T) {
 	t.Parallel()
 
 	s := shell.Shell{
-		ApplyStmt: "echo test",
+		Interpreter: "sh",
+		ApplyStmt:   "echo test",
 	}
 
 	assert.NoError(t, s.Apply())
@@ -68,7 +71,8 @@ func TestShellTaskApplyError(t *testing.T) {
 	t.Parallel()
 
 	s := shell.Shell{
-		ApplyStmt: "echo bad && exit 1",
+		Interpreter: "sh",
+		ApplyStmt:   "echo bad && exit 1",
 	}
 
 	err := s.Apply()
