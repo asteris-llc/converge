@@ -16,6 +16,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/asteris-llc/converge/load"
@@ -24,14 +26,15 @@ import (
 )
 
 func main() {
-	g, err := load.Load(os.Args[0])
+	log.SetOutput(ioutil.Discard)
+	g, err := load.Load(os.Args[1])
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	printer := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
-	dotCode, err := printer.Show(g)
+	dotCode, err := printer.Show()
 	if err != nil {
 		fmt.Println(err)
 		return
