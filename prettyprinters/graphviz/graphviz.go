@@ -16,6 +16,7 @@ package graphviz
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters"
@@ -94,9 +95,9 @@ func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool
 		sgMarker(id, false)
 	}
 
-	attributes["label"] = vertexLabel
+	attributes["label"] = escapeNewline(vertexLabel)
 
-	dotCode := fmt.Sprintf("\"%s\" %s;\n", vertexID, buildAttributeString(attributes))
+	dotCode := fmt.Sprintf("\"%s\" %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
 	return dotCode, nil
 }
 
@@ -114,8 +115,12 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 		return "", err
 	}
 	attributes := p.printProvider.EdgeGetProperties(g.Get(id1), g.Get(id2))
-	attributes["label"] = label
-	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
+	attributes["label"] = escapeNewline(label)
+	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
+		escapeNewline(sourceVertex),
+		escapeNewline(destVertex),
+		buildAttributeString(attributes),
+	), nil
 }
 
 func (p *Printer) StartSubgraph(*graph.Graph, string) (string, error) {
@@ -189,4 +194,8 @@ func (p BasicProvider) EdgeGetProperties(interface{}, interface{}) PropertySet {
 
 func (p BasicProvider) SubgraphMarker(interface{}) SubgraphMarkerKey {
 	return SubgraphMarkerNOP
+}
+
+func escapeNewline(s string) string {
+	return strings.Replace(s, "\n", "\\n", -1)
 }
