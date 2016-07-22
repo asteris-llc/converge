@@ -15,24 +15,20 @@
 package graphviz
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters"
 )
 
-var (
-	// BadOptionsError is returned when a GraphvizOptionMap contains invalid keys
-	// or values, or is missing required values.
-	BadOptionsError = errors.New("Invalid configuration option")
-
-	// BadGraphError is returned when a provided graph.Graph is not valid
-	BadGraphError = errors.New("Provided graph was invalid, or missing ID")
-)
-
+// SubgraphMarkerKey is a type alias for an integer and represents the state
+// values for subgraph tracking.
+//
+//   SubgraphMarkerStart
+//   SubgraphMarkerEnd
+//   SubgraphMarkerNOP
+//
 type SubgraphMarkerKey int
-type PropertySet map[string]string
 
 const (
 	SubgraphMarkerStart SubgraphMarkerKey = iota
@@ -40,6 +36,10 @@ const (
 	SubgraphMarkerNOP
 )
 
+type PropertySet map[string]string
+
+// The GraphvizPrinterProvider interface allows specific serializable types to
+// be rendered as a Graphviz document.
 type GraphvizPrintProvider interface {
 	VertexGetID(interface{}) (string, error)
 	VertexGetLabel(interface{}) (string, error)
@@ -115,17 +115,17 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	}
 	attributes := p.printProvider.EdgeGetProperties(g.Get(id1), g.Get(id2))
 	attributes["label"] = label
-	return fmt.Sprintf("%s -> %s %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
+	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n", sourceVertex, destVertex, buildAttributeString(attributes)), nil
 }
 
-/* FIXME: Stubs*/
-func (*Printer) StartSubgraph(*graph.Graph, string) (string, error) {
-
-	return "", nil
+func (p *Printer) StartSubgraph(*graph.Graph, string) (string, error) {
+	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", p.clusterIndex)
+	p.clusterIndex++
+	return clusterStart, nil
 }
 
 func (*Printer) FinishSubgraph(*graph.Graph, string) (string, error) {
-	return "", nil
+	return "}\n", nil
 }
 
 func (p *Printer) StartNodeSection(*graph.Graph) (string, error) {
@@ -145,20 +145,48 @@ func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
 }
 
 func (*Printer) StartPP(*graph.Graph) (string, error) {
-	return "digraph {", nil
+	return "digraph {\n", nil
 }
 
 func (*Printer) FinishPP(*graph.Graph) (string, error) {
 	return "}", nil
 }
 
-// Utility Functions
-
 func buildAttributeString(p PropertySet) string {
 	accumulator := "["
 	for k, v := range p {
-		accumulator = fmt.Sprintf("%s %s='%s',", accumulator, k, v)
+		accumulator = fmt.Sprintf("%s %s=\"%s\",", accumulator, k, v)
 	}
 	accumulator = accumulator[0 : len(accumulator)-1]
 	return fmt.Sprintf("%s]", accumulator)
+}
+
+func DefaultProvider() GraphvizPrintProvider {
+	return BasicProvider{}
+}
+
+type BasicProvider struct{}
+
+func (p BasicProvider) VertexGetID(i interface{}) (string, error) {
+	return fmt.Sprintf("%p", &i), nil
+}
+
+func (p BasicProvider) VertexGetLabel(i interface{}) (string, error) {
+	return fmt.Sprintf("%v", i), nil
+}
+
+func (p BasicProvider) VertexGetProperties(interface{}) PropertySet {
+	return make(map[string]string)
+}
+
+func (p BasicProvider) EdgeGetLabel(interface{}, interface{}) (string, error) {
+	return "", nil
+}
+
+func (p BasicProvider) EdgeGetProperties(interface{}, interface{}) PropertySet {
+	return make(map[string]string)
+}
+
+func (p BasicProvider) SubgraphMarker(interface{}) SubgraphMarkerKey {
+	return SubgraphMarkerNOP
 }
