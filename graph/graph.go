@@ -23,6 +23,11 @@ import (
 	"github.com/hashicorp/terraform/dag"
 )
 
+type Edge struct {
+	Source string
+	Dest   string
+}
+
 // Graph is a generic graph structure that uses IDs to connect the graph
 type Graph struct {
 	inner  *dag.AcyclicGraph
@@ -235,6 +240,27 @@ func (g *Graph) Validate() error {
 	}
 
 	return nil
+}
+
+func (g *Graph) Vertices() []string {
+	graphVertices := g.inner.Vertices()
+	vertices := make([]string, len(graphVertices))
+	for v := range graphVertices {
+		vertices[v] = graphVertices[v].(string)
+	}
+	return vertices
+}
+
+func (g *Graph) Edges() []Edge {
+	graphEdges := g.inner.Edges()
+	edges := make([]Edge, len(graphEdges))
+	for i := range graphEdges {
+		src := graphEdges[i].Source()
+		dst := graphEdges[i].Target()
+		edge := Edge{Source: src.(string), Dest: dst.(string)}
+		edges[i] = edge
+	}
+	return edges
 }
 
 func (g *Graph) String() string {
