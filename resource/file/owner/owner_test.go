@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package user_test
+package owner_test
 
 import (
 	"fmt"
@@ -21,17 +21,14 @@ import (
 	osuser "os/user"
 	"testing"
 
-	"golang.org/x/net/context"
-
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/builtin/file/user"
+	"github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,10 +36,10 @@ import (
 func TestTemplateInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Task)(nil), new(user.User))
+	assert.Implements(t, (*resource.Task)(nil), new(owner.Owner))
 }
 
-func TestFunctionality(t *testing.T) {
+func TestParsing(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	tmpfile, err := ioutil.TempFile("", "user_test")
@@ -50,81 +47,65 @@ func TestFunctionality(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	module := fmt.Sprintf(
-		`file.user "x" {
+		`file.owner "x" {
     destination = %q
     user = "nobody"
   }`, tmpfile.Name())
 	resourced, err := getResourcesGraph(t, []byte(module))
 	assert.NoError(t, err)
-	item := resourced.Get("root/file.user.x")
-	preparer, ok := item.(*user.Preparer)
+	item := resourced.Get("root/file.owner.x")
+	preparer, ok := item.(*owner.Preparer)
 
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not *user.Preparer"), item)
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not *owner.Preparer"), item)
 	assert.Equal(t, tmpfile.Name(), preparer.Destination)
 	assert.Equal(t, "nobody", preparer.User)
 }
 
-func TestPlan(t *testing.T) {
+func TestCheck(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	tmpfile, err := ioutil.TempFile("", "mode_test")
+	tmpfile, err := ioutil.TempFile("", "owner_test")
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
-	module := fmt.Sprintf(
-		`file.user "x" {
-    destination = %q
-    user = "nobody"
-  }`, tmpfile.Name())
-
-	tmpfile.Write([]byte(module))
-
-	graph, err := load.Load(tmpfile.Name())
-	assert.NoError(t, err)
-	rendered, err := render.Render(graph, nil)
-	assert.NoError(t, err)
-	planned, err := plan.Plan(context.Background(), rendered)
-	assert.NoError(t, err)
-
-	result := getResult(t, planned, "root/file.user.x")
 	u, err := osuser.Current()
 	assert.NoError(t, err)
-	assert.Equal(t, u.Username, result.Status)
-	assert.Equal(t, true, result.WillChange)
+
+	o := owner.Owner{
+		Username:    "nobody",
+		Destination: tmpfile.Name(),
+	}
+
+	status, willChange, err := o.Check()
+	assert.NoError(t, err)
+	assert.Equal(t, u.Username, status)
+	assert.True(t, willChange)
 }
 
 func TestApply(t *testing.T) {
-	// Don't run if not root
-	u, err := osuser.Current()
-	if err != nil || u.Uid != "0" {
-		return
-	}
 	defer helpers.HideLogs(t)()
 
-	tmpfile, err := ioutil.TempFile("", "mode_test")
+	tmpfile, err := ioutil.TempFile("", "owner_test")
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
-	module := fmt.Sprintf(
-		`file.user "x" {
-    destination = %q
-    user = "nobody"
-  }`, tmpfile.Name())
-
-	tmpfile.Write([]byte(module))
-
-	graph, err := load.Load(tmpfile.Name())
-	assert.NoError(t, err)
-	rendered, err := render.Render(graph, nil)
-	assert.NoError(t, err)
-	planned, err := plan.Plan(context.Background(), rendered)
-	assert.NoError(t, err)
-	applied, err := apply.Apply(context.Background(), planned)
+	u, err := osuser.Current()
 	assert.NoError(t, err)
 
-	result := getResultApply(t, applied, "root/file.user.x")
-	assert.Equal(t, "nobody", result.Status)
-	assert.True(t, result.Ran)
+	if u.Uid != "0" {
+		return
+	}
+
+	o := owner.Owner{
+		Username:    "nobody",
+		Destination: tmpfile.Name(),
+	}
+	err = o.Apply()
+	assert.NoError(t, err)
+	status, willChange, err := o.Check()
+	assert.NoError(t, err)
+	assert.Equal(t, "nobody", status)
+	assert.False(t, willChange)
 }
 
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {

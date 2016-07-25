@@ -20,17 +20,14 @@ import (
 	"os"
 	"testing"
 
-	"golang.org/x/net/context"
-
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/builtin/file/mode"
+	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,31 +61,18 @@ func TestParsing(t *testing.T) {
 	assert.Equal(t, "777", preparer.Mode)
 }
 
-func TestPlan(t *testing.T) {
+func TestCheck(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	tmpfile, err := ioutil.TempFile("", "mode_test")
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
-	module := fmt.Sprintf(
-		`file.mode "x" {
-		destination = %q
-		mode = 777
-	}`, tmpfile.Name())
-
-	tmpfile.Write([]byte(module))
-
-	graph, err := load.Load(tmpfile.Name())
+	mode := mode.Mode{Destination: tmpfile.Name(), Mode: 777}
+	status, willChange, err := mode.Check()
 	assert.NoError(t, err)
-	rendered, err := render.Render(graph, nil)
-	assert.NoError(t, err)
-	planned, err := plan.Plan(context.Background(), rendered)
-	assert.NoError(t, err)
-
-	result := getResult(t, planned, "root/file.mode.x")
-	assert.Equal(t, "600", result.Status)
-	assert.Equal(t, true, result.WillChange)
+	assert.Equal(t, "600", status)
+	assert.True(t, willChange)
 }
 
 func TestApply(t *testing.T) {
@@ -98,26 +82,13 @@ func TestApply(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
-	module := fmt.Sprintf(
-		`file.mode "x" {
-		destination = %q
-		mode = 777
-	}`, tmpfile.Name())
-
-	tmpfile.Write([]byte(module))
-
-	graph, err := load.Load(tmpfile.Name())
+	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
+	err = mode.Apply()
 	assert.NoError(t, err)
-	rendered, err := render.Render(graph, nil)
+	status, willChange, err := mode.Check()
 	assert.NoError(t, err)
-	planned, err := plan.Plan(context.Background(), rendered)
-	assert.NoError(t, err)
-	applied, err := apply.Apply(context.Background(), planned)
-	assert.NoError(t, err)
-
-	result := getResultApply(t, applied, "root/file.mode.x")
-	assert.Equal(t, "777", result.Status)
-	assert.True(t, result.Ran)
+	assert.Equal(t, "777", status)
+	assert.False(t, willChange)
 }
 
 func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {

@@ -19,25 +19,24 @@ import (
 	"strconv"
 )
 
-// Mode monitors the file mode of a file
+// Mode monitors the file Mode of a file
 type Mode struct {
-	destination string
-	mode        os.FileMode
+	Destination string
+	Mode        os.FileMode
 }
 
-// Check whether the destination has the right mode
+// Check whether the Destination has the right Mode
 func (m *Mode) Check() (status string, willChange bool, err error) {
-	stat, err := os.Stat(m.destination)
+	stat, err := os.Stat(m.Destination)
 	if err != nil {
 		return
 	}
 
 	mode := stat.Mode().Perm()
-
-	return strconv.FormatUint(uint64(mode), 8), m.mode.Perm() != mode, nil
+	return strconv.FormatUint(uint64(mode), 8), m.Mode.Perm() != mode, nil
 }
 
-// Apply the changes the mode
+// Apply the changes the Mode
 func (m *Mode) Apply() error {
-	return os.Chmod(m.destination, m.mode)
+	return os.Chmod(m.Destination, m.Mode.Perm())
 }

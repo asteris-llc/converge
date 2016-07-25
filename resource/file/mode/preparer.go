@@ -12,37 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package user
+package mode
 
 import (
-	"os/user"
+	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
-// Preparer for file mode
+// Preparer for file Mode
 type Preparer struct {
 	Destination string `hcl:"destination"`
-	User        string `hcl:"user"`
+	Mode        string `hcl:"mode"`
 }
 
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	// render destination
-	destination, err := render.Render("destination", p.Destination)
+	// render Destination
+	Destination, err := render.Render("Destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
-	username, err := render.Render("user", p.User)
+	if Destination == "" {
+		return nil, fmt.Errorf("file.mode requires a destination parameter.\n%s", PrintExample())
+	}
+	// render Mode
+	sMode, err := render.Render("mode", p.Mode)
 	if err != nil {
 		return nil, err
 	}
-	actualUser, err := user.Lookup(username)
-	if err != nil {
-		return nil, err
+	if sMode == "" {
+		return nil, fmt.Errorf("file.mode requires a mode parameter.\n%s", PrintExample())
 	}
-	uid := actualUser.Uid
-	gid := actualUser.Gid
+	iMode, err := strconv.ParseUint(sMode, 8, 32)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("%q is not a valid file Mode.", sMode))
+	}
+	mode := os.FileMode(iMode)
 
-	return &User{username: username, uid: uid, gid: gid, destination: destination}, nil
+	return &Mode{Destination: Destination, Mode: mode}, nil
+}
+
+func PrintExample() string {
+	return fmt.Sprintln(
+		`	Example
+		--------------------
+		file.mode "makepublic" {
+		    destination = "/path/to/file.txt"
+		    mode = 777
+		}
+		`)
 }

@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package user_test
+package mode_test
 
 import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/builtin/file/user"
+	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Resource)(nil), new(user.Preparer))
+	assert.Implements(t, (*resource.Resource)(nil), new(mode.Preparer))
 }

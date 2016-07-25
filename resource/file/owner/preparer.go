@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mode
+package owner
 
 import (
 	"fmt"
-	"os"
+	"os/user"
 	"strconv"
 
 	"github.com/asteris-llc/converge/resource"
@@ -24,29 +24,44 @@ import (
 
 // Preparer for file mode
 type Preparer struct {
-	Destination string `hcl:"destination"`
-	Mode        string `hcl:"mode"`
+	Destination string `hcl:"Destination"`
+	User        string `hcl:"user"`
 }
 
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	// render destination
-	destination, err := render.Render("destination", p.Destination)
+	// render Destination
+	Destination, err := render.Render("Destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
-
-	// render mode
-	smode, err := render.Render("mode", p.Mode)
+	if Destination == "" {
+		return nil, fmt.Errorf("file.owner requires a destination parameter.\n%s", PrintExample())
+	}
+	Username, err := render.Render("user", p.User)
 	if err != nil {
 		return nil, err
 	}
-
-	imode, err := strconv.ParseUint(smode, 8, 32)
-	if err != nil {
-		return nil, fmt.Errorf("%q is not a valid file mode.", smode)
+	if Username == "" {
+		return nil, fmt.Errorf("file.owner requires a user parameter.\n%s", PrintExample())
 	}
-	mode := os.FileMode(imode)
+	actualUser, err := user.Lookup(Username)
+	if err != nil {
+		return nil, err
+	}
+	Uid, _ := strconv.Atoi(actualUser.Uid)
+	Gid, _ := strconv.Atoi(actualUser.Gid)
 
-	return &Mode{destination: destination, mode: mode}, nil
+	return &Owner{Username: Username, Uid: Uid, Gid: Gid, Destination: Destination}, nil
+}
+
+func PrintExample() string {
+	return fmt.Sprintln(
+		`	Example
+		--------------------
+		file.owner "makenobody's" {
+		    destination = "/path/to/file.txt"
+		    owner = nobody
+		}
+		`)
 }

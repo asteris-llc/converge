@@ -20,8 +20,8 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/builtin/file/mode"
-	"github.com/asteris-llc/converge/resource/builtin/file/user"
+	"github.com/asteris-llc/converge/resource/file/mode"
+	"github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
@@ -58,8 +58,8 @@ func SetResources(g *graph.Graph) (*graph.Graph, error) {
 		case "file.mode":
 			dest = new(mode.Preparer)
 
-		case "file.user":
-			dest = new(user.Preparer)
+		case "file.owner":
+			dest = new(owner.Preparer)
 
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)

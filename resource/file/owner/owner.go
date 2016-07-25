@@ -12,49 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package user
+package owner
 
 import (
 	"fmt"
 	"os"
 	"os/user"
-	"strconv"
 	"syscall"
 )
 
 // Mode monitors the file mode of a file
-type User struct {
-	username    string
-	uid         string
-	gid         string
-	destination string
+type Owner struct {
+	Username    string
+	Uid         int
+	Gid         int
+	Destination string
 }
 
-// Check whether the destination has the right mode
-func (u *User) Check() (status string, willChange bool, err error) {
-	stat, err := os.Stat(u.destination)
+// Check whether the Destination has the right mode
+func (o *Owner) Check() (status string, willChange bool, err error) {
+	stat, err := os.Stat(o.Destination)
 	if err != nil {
 		return "", false, err
 	}
 
 	statT, ok := stat.Sys().(*syscall.Stat_t)
 	if !ok {
-		err = fmt.Errorf("file.owner does not currently work on non linux systems\n")
-		return "", false, err
+		return "", false, fmt.Errorf("file.owner does not currently work on non linux systems\n")
 	}
 
-	uid := statT.Uid
-	actualUser, err := user.LookupId(fmt.Sprintf("%v", uid))
+	Uid := statT.Uid
+	actualUser, err := user.LookupId(fmt.Sprintf("%v", Uid))
 	if err != nil {
 		return "", false, err
 	}
 
-	return actualUser.Username, actualUser.Username != u.username, nil
+	return actualUser.Username, actualUser.Username != o.Username, nil
 }
 
 // Apply the changes in mode
-func (u *User) Apply() error {
-	uid, _ := strconv.Atoi(u.uid)
-	gid, _ := strconv.Atoi(u.gid)
-	return os.Chown(u.destination, uid, gid)
+func (o *Owner) Apply() error {
+	return os.Chown(o.Destination, o.Uid, o.Gid)
 }
