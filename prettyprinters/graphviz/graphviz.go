@@ -12,9 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// graphviz provides a concrete prettyprinters.DigraphPrettyPrinter
+// implementation for rendering directed graphs as Graphviz-compatible dot
+// source files.  It exports an interface, graphviz.GraphvizPrintProvider, that
+// allows users to provide general methods for rendering graphed data types into
+// graphviz documents.
 package graphviz
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -24,34 +30,67 @@ import (
 
 // SubgraphMarkerKey is a type alias for an integer and represents the state
 // values for subgraph tracking.
-//
-//   SubgraphMarkerStart
-//   SubgraphMarkerEnd
-//   SubgraphMarkerNOP
-//
 type SubgraphMarkerKey int
 
 const (
+	// Specifies that the current node is the beginning of a subgraph.
 	SubgraphMarkerStart SubgraphMarkerKey = iota
+
+	// Specifies that the current node is the end of a subgraph.
 	SubgraphMarkerEnd
+
+	// Specifies that the current node should not change the subgraph state.
 	SubgraphMarkerNOP
 )
 
+// PropertySet is a map of graphviz compatible node or edge options and their
+// values.  See http://www.graphviz.org/doc/info/attrs.html for a list of
+// supported attributes.  Node that graph and subgraph attributes are not
+// currently supported.
 type PropertySet map[string]string
 
+// GraphEntity defines the value at a given vertex, providing both it's
+// canonical name and the untyped value associated with the vertex.
 type GraphEntity struct {
-	Name  string
-	Value interface{}
+	Name  string      // The canonical node ID
+	Value interface{} // The value at the node
 }
 
 // The GraphvizPrinterProvider interface allows specific serializable types to
 // be rendered as a Graphviz document.
 type GraphvizPrintProvider interface {
+
+	// Given a graph entity, this function shall return a unique ID that will be
+	// used for the vertex.  Note that this is not used for display, see
+	// VertexGetLabel() for information on vertex displays.
 	VertexGetID(GraphEntity) (string, error)
+
+	// Defines the label associated with the vertex.  This will be the name
+	// applied to the vertex when it is drawn.  Labels are stored in the vertex
+	// attribute list automatically.  The 'label' parameter should therefore not
+	// be returned as part of VertexGetProperties().
 	VertexGetLabel(GraphEntity) (string, error)
+
+	// VertexGetProperties allows the GraphvizPrintProvider to provide additional
+	// attributes to a given vertex.  Note that the 'label' attribute is special
+	// and should not be returned as part of this call.
 	VertexGetProperties(GraphEntity) PropertySet
+
+	// Defines the label associated with the edge formed between two graph
+	// entities.  This will be the name applied to the edge when it is drawn.
 	EdgeGetLabel(GraphEntity, GraphEntity) (string, error)
+
+	// EdgeGetProperties allows the GraphvizPrintProvider to provide additional
+	// attributes to a given edge.  Note that the 'label' attribute is special
+	// and should not be returned as part of this call.
 	EdgeGetProperties(GraphEntity, GraphEntity) PropertySet
+
+	// Allows the underlying provider to identify vertices that are the beginning
+	// of a subgraph.  The function should return one of:
+	//   SubgraphMarkerStart
+	//   SubgraphMarkerEnd
+	//   SubgraphMarkerNOP
+	// in order to specify the vertexs' relation to subgraphs.
 	SubgraphMarker(GraphEntity) SubgraphMarkerKey
 }
 
@@ -62,7 +101,7 @@ type Options struct {
 
 func DefaultOptions() Options {
 	return Options{
-		Splines: "curved",
+		Splines: "spline",
 		Rankdir: "LR",
 	}
 }
@@ -163,15 +202,27 @@ func (p *Printer) FinishNodeSection(*graph.Graph) (string, error) {
 }
 
 func (p *Printer) StartEdgeSection(*graph.Graph) (string, error) {
-	return "", nil
+	return "### Beginning of Edge Section\n", nil
 }
 
 func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
-func (*Printer) StartPP(*graph.Graph) (string, error) {
-	return "digraph {\n", nil
+func (p *Printer) StartPP(*graph.Graph) (string, error) {
+	attrs := p.GraphAttributes()
+	return fmt.Sprintf("digraph {\n%s\n", attrs), nil
+}
+
+func (p *Printer) GraphAttributes() string {
+	opts := make(map[string]string)
+	var buffer bytes.Buffer
+	opts["splines"] = p.options.Splines
+	opts["rankdir"] = p.options.Rankdir
+	for k, v := range opts {
+		buffer.WriteString(fmt.Sprintf("%s = \"%s\";\n", k, v))
+	}
+	return buffer.String()
 }
 
 func (*Printer) FinishPP(*graph.Graph) (string, error) {
