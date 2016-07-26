@@ -12,53 +12,77 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package printers
+package printproviders
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
-	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/template"
 )
 
-type ResourceProvider struct{}
+type ResourceProvider struct {
+	graphviz.GraphIDProvider
+}
 
-func getResourceName(res resource.Resource) (string, error) {
-	switch res.(type) {
-	case *module.Preparer:
-	case *param.Preparer:
-	case *shell.Preparer:
-	case *template.Preparer:
-	default:
-		return fmt.Sprintf("%T", res), nil
+func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (string, error) {
+	var name string
+
+	if e.Name == "root" {
+		name = "/"
+	} else {
+		name = strings.Split(e.Name, "root/")[1]
 	}
-	return "", nil
+
+	switch e.Value.(type) {
+	case *template.Preparer:
+		v := e.Value.(*template.Preparer)
+		return fmt.Sprintf("Template: %s", v.Destination), nil
+	case *module.Preparer:
+		return fmt.Sprintf("Module: %s", name), nil
+	case *param.Preparer:
+		v := e.Value.(*param.Preparer)
+		return fmt.Sprintf("%s = \\\"%s\\\"", name, v.Default), nil
+	default:
+		return name, nil
+	}
 }
 
-func (p ResourceProvider) VertexGetID(res interface{}) (string, error) {
-	return "", nil
+func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
+	properties := make(map[string]string)
+	if e.Name == "root" {
+		properties["style"] = "invis"
+	}
+	switch e.Value.(type) {
+	case *shell.Preparer:
+		properties["shape"] = "component"
+	case *template.Preparer:
+		properties["shape"] = "tab"
+	}
+	return properties
 }
 
-func (p ResourceProvider) VertexGetLabel(res interface{}) (string, error) {
-	return "", nil
+func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
+	properties := make(map[string]string)
+	if src.Name == "root" {
+		properties["style"] = "invis"
+	}
+	return properties
 }
 
-func (p ResourceProvider) VertexGetProperties(res interface{}) graphviz.PropertySet {
-	return make(graphviz.PropertySet)
+func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
+	switch e.Value.(type) {
+	case *module.Preparer:
+		return graphviz.SubgraphMarkerStart
+	default:
+		return graphviz.SubgraphMarkerNOP
+	}
 }
 
-func (p ResourceProvider) EdgeGetLabel(srcRes interface{}, destRes interface{}) (string, error) {
-	return "", nil
-}
-
-func (p ResourceProvider) EdgeGetProperties(srcRes interface{}, destRes interface{}) graphviz.PropertySet {
-	return make(graphviz.PropertySet)
-}
-
-func (p ResourceProvider) SubgraphMarker(res interface{}) graphviz.SubgraphMarkerKey {
-	return graphviz.SubgraphMarkerNOP
+func ResourcePreparer() graphviz.GraphvizPrintProvider {
+	return ResourceProvider{}
 }
