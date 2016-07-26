@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package fetch_test
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+import (
+	"path"
+	"testing"
+
+	"github.com/asteris-llc/converge/fetch"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestFile(t *testing.T) {
+	t.Parallel()
+
+	_, err := fetch.File(path.Join("..", "samples", "basic.hcl"))
+	assert.NoError(t, err)
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+func TestFileBad(t *testing.T) {
+	t.Parallel()
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+	_, err := fetch.File(path.Join("..", "samples", "doesNotExist.hcl"))
+	assert.Error(t, err)
 }

@@ -5,6 +5,10 @@ ROOT=$(pwd)
 
 $ROOT/converge server --root $ROOT/samples --self-serve &
 PID=$!
+function finish {
+    kill -2 $PID
+}
+trap finish EXIT
 
 sleep 0.5
 
@@ -17,5 +21,3 @@ else
     echo "Sums did not match! $REMOTE_SUM != $LOCAL_SUM"
     exit 1
 fi
-
-kill -2 $PID

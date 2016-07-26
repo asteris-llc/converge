@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package fetch_test
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+import (
+	"testing"
+
+	"github.com/asteris-llc/converge/fetch"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestAnyBadURL(t *testing.T) {
+	t.Parallel()
+
+	_, err := fetch.Any(":://asdf")
+	assert.Error(t, err)
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+func TestAnyUnimplementedProtocol(t *testing.T) {
+	t.Parallel()
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+	_, err := fetch.Any("nope://")
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, `protocol "nope" is not implemented`)
+	}
 }

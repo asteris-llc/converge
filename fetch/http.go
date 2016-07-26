@@ -12,22 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package fetch
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
-}
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+// HTTP fetches content over HTTP
+func HTTP(loc string) ([]byte, error) {
+	response, err := http.Get(loc)
+	if err != nil {
+		return nil, err
+	}
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+	content, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 300 {
+		return nil, fmt.Errorf("Fetching %s failed: %s", loc, response.Status)
+	}
+
+	return content, err
 }

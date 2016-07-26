@@ -12,22 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package plan
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
-}
+import "github.com/asteris-llc/converge/resource"
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
-
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+// Result is the result of planning execution
+type Result struct {
+	Task       resource.Task
+	Status     string
+	WillChange bool
 }

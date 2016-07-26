@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package fetch
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
-}
+import (
+	"fmt"
+	"net/url"
+	"path"
+)
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+// Any fetches a path based on a
+func Any(loc string) ([]byte, error) {
+	url, err := url.Parse(loc)
+	if err != nil {
+		return nil, err
+	}
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+	switch url.Scheme {
+	case "file":
+		return File(path.Join(url.Host, url.Path))
+	case "http", "https":
+		return HTTP(loc)
+	default:
+		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
+	}
 }

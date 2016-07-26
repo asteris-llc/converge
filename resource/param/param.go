@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package param
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+// Param controls parameter flow inside execution
+type Param struct {
+	Value string
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
+// Check just returns the current value of the parameter. It should never have to change.
+func (p *Param) Check() (string, bool, error) {
+	return p.String(), false, nil
 }
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+// Apply doesn't do anything since params are final values
+func (*Param) Apply() error {
+	return nil
+}
+
+// String is the final value of thie Param
+func (p *Param) String() string {
+	return p.Value
 }

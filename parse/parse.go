@@ -12,30 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package load
+package parse
 
 import (
-	"github.com/asteris-llc/converge/graph"
-	"github.com/pkg/errors"
-	"golang.org/x/net/context"
+	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/hcl"
+	"github.com/hashicorp/hcl/hcl/ast"
 )
 
-// Load produces a fully-formed graph from the given root
-func Load(ctx context.Context, root string) (*graph.Graph, error) {
-	base, err := Nodes(ctx, root)
+// Parse content into a bunch of nodes
+func Parse(content []byte) (resources []*Node, err error) {
+	obj, err := hcl.ParseBytes(content)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading failed")
+		return resources, err
 	}
 
-	resolved, err := ResolveDependencies(ctx, base)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not resolve dependencies")
-	}
+	ast.Walk(obj.Node, func(n ast.Node) (ast.Node, bool) {
+		baseItem, ok := n.(*ast.ObjectItem)
+		if !ok {
+			return n, true
+		}
 
-	resourced, err := SetResources(ctx, resolved)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not resolve resources")
-	}
+		item := NewNode(baseItem)
 
-	return resourced, nil
+		if itemErr := item.Validate(); itemErr != nil {
+			err = multierror.Append(err, itemErr)
+			return n, false
+		}
+
+		resources = append(resources, item)
+
+		return n, false
+	})
+
+	return resources, err
 }

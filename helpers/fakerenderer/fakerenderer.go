@@ -12,22 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package fakerenderer
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+type FakeRenderer struct {
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
+func (fr *FakeRenderer) Value() (string, bool) {
+	return "", true
 }
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+func (fr *FakeRenderer) Render(name, content string) (string, error) {
+	return content, nil
 }

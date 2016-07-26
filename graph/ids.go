@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package graph
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+import "path"
+
+// ID for a node in the graph
+func ID(parts ...string) string {
+	return path.Join(parts...)
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
+// ParentID for a node in the graph
+func ParentID(id string) string {
+	return path.Dir(id)
 }
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+// SiblingID for a node in the graph
+func SiblingID(id, sibling string) string {
+	return ID(ParentID(id), sibling)
+}
+
+// AreSiblingIDs checks if two IDs are siblings
+func AreSiblingIDs(a, b string) bool {
+	return ParentID(a) == ParentID(b)
+}
+
+// BaseID is the end of the ID, so "just" the original part
+func BaseID(id string) string {
+	return path.Base(id)
 }

@@ -12,22 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package param_test
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
-}
+import (
+	"testing"
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/param"
+	"github.com/stretchr/testify/assert"
+)
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+func TestPreparerInterface(t *testing.T) {
+	t.Parallel()
+
+	assert.Implements(t, (*resource.Resource)(nil), new(param.Preparer))
 }

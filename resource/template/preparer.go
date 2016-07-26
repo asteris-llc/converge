@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package template
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
-type Task interface {
-	Check() (status string, willChange bool, err error)
-	Apply() error
+import "github.com/asteris-llc/converge/resource"
+
+// Preparer for Templates
+type Preparer struct {
+	Content     string `hcl:"content"`
+	Destination string `hcl:"destination"`
 }
 
-// Resource adds metadata about the executed tasks
-type Resource interface {
-	Prepare(Renderer) (Task, error)
-}
+// Prepare a new task
+func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	content, err := render.Render("destination", p.Content)
+	if err != nil {
+		return nil, err
+	}
 
-// Renderer is passed to resources
-type Renderer interface {
-	Value() (value string, present bool)
-	Render(name, content string) (string, error)
+	destination, err := render.Render("content", p.Destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Template{content, destination}, nil
 }
