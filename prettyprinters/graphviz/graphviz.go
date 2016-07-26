@@ -82,7 +82,29 @@ func New(opts Options, provider GraphvizPrintProvider) *Printer {
 	}
 }
 
-func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool)) (string, error) {
+func (p *Printer) MarkNode(g *graph.Graph, id string) *prettyprinters.SubgraphMarker {
+	entity := GraphEntity{Name: id, Value: g.Get(id)}
+	sgState := p.printProvider.SubgraphMarker(entity)
+	subgraphID := p.clusterIndex
+	switch sgState {
+	case SubgraphMarkerStart:
+		p.clusterIndex++
+		return &prettyprinters.SubgraphMarker{
+			SubgraphID: subgraphID,
+			Start:      true,
+		}
+	case SubgraphMarkerEnd:
+		return &prettyprinters.SubgraphMarker{
+			SubgraphID: subgraphID,
+			Start:      false,
+		}
+	case SubgraphMarkerNOP:
+		return nil
+	}
+	return nil
+}
+
+func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	graphValue := g.Get(id)
 	graphEntity := GraphEntity{id, graphValue}
 	vertexID, err := p.printProvider.VertexGetID(graphEntity)
@@ -94,15 +116,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string, sgMarker func(string, bool
 		return "", err
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
-	switch p.printProvider.SubgraphMarker(graphEntity) {
-	case SubgraphMarkerStart:
-		sgMarker(id, true)
-	case SubgraphMarkerEnd:
-		sgMarker(id, false)
-	}
-
 	attributes["label"] = escapeNewline(vertexLabel)
-
 	dotCode := fmt.Sprintf("\"%s\" %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
 	return dotCode, nil
 }
@@ -131,13 +145,12 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	), nil
 }
 
-func (p *Printer) StartSubgraph(*graph.Graph, string) (string, error) {
-	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", p.clusterIndex)
-	p.clusterIndex++
+func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID prettyprinters.SubgraphID) (string, error) {
+	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", subgraphID.(int))
 	return clusterStart, nil
 }
 
-func (*Printer) FinishSubgraph(*graph.Graph, string) (string, error) {
+func (*Printer) FinishSubgraph(*graph.Graph, prettyprinters.SubgraphID) (string, error) {
 	return "}\n", nil
 }
 
