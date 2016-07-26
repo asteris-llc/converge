@@ -26,7 +26,10 @@ import (
 // WalkFunc is taken by the walking functions
 type WalkFunc func(string, interface{}) error
 
-type walkerFunc func(WalkFunc) error
+// TransformFunc is taken by the transformation functions
+type TransformFunc func(string, *Graph) error
+
+type walkerFunc func(*Graph, WalkFunc) error
 
 // Graph is a generic graph structure that uses IDs to connect the graph
 type Graph struct {
@@ -101,6 +104,11 @@ func (g *Graph) DownEdges(id string) (out []string) {
 
 // Walk the graph leaf-to-root
 func (g *Graph) Walk(cb WalkFunc) error {
+	return walk(g, cb)
+}
+
+// walk is spearate for interal use in the transformations
+func walk(g *Graph, cb WalkFunc) error {
 	return g.inner.Walk(func(v dag.Vertex) error {
 		id, ok := v.(string)
 		if !ok {
@@ -115,6 +123,11 @@ func (g *Graph) Walk(cb WalkFunc) error {
 // RootFirstWalk walks the graph root-to-leaf, checking sibling dependencies
 // before descending.
 func (g *Graph) RootFirstWalk(cb WalkFunc) error {
+	return rootFirstWalk(g, cb)
+}
+
+// rootFirstWalk is separate for internal use in the transformations
+func rootFirstWalk(g *Graph, cb WalkFunc) error {
 	root, err := g.inner.Root()
 	if err != nil {
 		return err
@@ -166,17 +179,13 @@ func (g *Graph) RootFirstWalk(cb WalkFunc) error {
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
-func (g *Graph) Transform(cb func(string, *Graph) error) (*Graph, error) {
-	t := g.Copy()
-
-	return transform(t, t.Walk, func(id string, _ interface{}) error { return cb(id, t) })
+func (g *Graph) Transform(cb TransformFunc) (*Graph, error) {
+	return transform(g, walk, cb)
 }
 
 // RootFirstTransform does Transform, but starting at the root
-func (g *Graph) RootFirstTransform(cb func(string, *Graph) error) (*Graph, error) {
-	t := g.Copy()
-
-	return transform(t, t.RootFirstWalk, func(id string, _ interface{}) error { return cb(id, t) })
+func (g *Graph) RootFirstTransform(cb TransformFunc) (*Graph, error) {
+	return transform(g, rootFirstWalk, cb)
 }
 
 // Copy the graph for further modification
@@ -235,10 +244,15 @@ func (g *Graph) String() string {
 	return strings.Trim(g.inner.String(), "\n")
 }
 
-func transform(target *Graph, walker walkerFunc, cb WalkFunc) (*Graph, error) {
-	if err := walker(cb); err != nil {
-		return target, err
+func transform(source *Graph, walker walkerFunc, cb TransformFunc) (*Graph, error) {
+	dest := source.Copy()
+
+	err := walker(dest, func(id string, _ interface{}) error {
+		return cb(id, dest)
+	})
+	if err != nil {
+		return dest, err
 	}
 
-	return target, target.Validate()
+	return dest, dest.Validate()
 }
