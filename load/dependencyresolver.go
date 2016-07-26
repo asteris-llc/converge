@@ -29,13 +29,7 @@ var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
 func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
-	return g.Transform(func(id string, out *graph.Graph) error {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("interrupted at %q", id)
-		default:
-		}
-
+	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // skip root
 			return nil
 		}

@@ -26,13 +26,7 @@ import (
 
 // Plan the execution of a Graph of resource.Tasks
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
-	return in.Transform(func(id string, out *graph.Graph) error {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-		}
-
+	return in.Transform(ctx, func(id string, out *graph.Graph) error {
 		val := out.Get(id)
 		task, ok := val.(resource.Task)
 		if !ok {
