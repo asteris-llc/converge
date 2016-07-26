@@ -183,7 +183,7 @@ func (g *Graph) RootFirstTransform(cb func(string, *Graph) error) (*Graph, error
 func (g *Graph) Copy() *Graph {
 	out := New()
 
-	g.Walk(func(id string, val interface{}) error {
+	err := g.Walk(func(id string, val interface{}) error {
 		out.Add(id, val)
 		for _, dest := range g.DownEdges(id) {
 			out.Connect(id, dest)
@@ -191,6 +191,9 @@ func (g *Graph) Copy() *Graph {
 
 		return nil
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	return out
 }
