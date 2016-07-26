@@ -34,7 +34,7 @@ samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 lint:
-	gometalinter --deadline=10m --vendor --tests ./...
+	gometalinter --deadline=10m --vendor --tests --disable=dupl ./...
 
 vendor: ${NONVENDOR}
 	glide install --strip-vcs --strip-vendor --update-vendored
