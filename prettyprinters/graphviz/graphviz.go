@@ -219,7 +219,7 @@ func (p *Printer) FinishNodeSection(*graph.Graph) (string, error) {
 }
 
 func (p *Printer) StartEdgeSection(*graph.Graph) (string, error) {
-	return "### Beginning of Edge Section\n", nil
+	return "", nil
 }
 
 func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
@@ -232,13 +232,9 @@ func (p *Printer) StartPP(*graph.Graph) (string, error) {
 }
 
 func (p *Printer) GraphAttributes() string {
-	opts := make(map[string]string)
 	var buffer bytes.Buffer
-	opts["splines"] = p.options.Splines
-	opts["rankdir"] = p.options.Rankdir
-	for k, v := range opts {
-		buffer.WriteString(fmt.Sprintf("%s = \"%s\";\n", k, v))
-	}
+	buffer.WriteString(fmt.Sprintf("splines = \"%s\";\n", p.options.Splines))
+	buffer.WriteString(fmt.Sprintf("rankdir = \"%s\";\n", p.options.Rankdir))
 	return buffer.String()
 }
 
