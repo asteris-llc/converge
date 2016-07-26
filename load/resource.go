@@ -31,13 +31,7 @@ import (
 
 // SetResources loads the resources for each graph node
 func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
-	return g.Transform(func(id string, out *graph.Graph) error {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("interrupted at %q", id)
-		default:
-		}
-
+	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // root
 			return nil
 		}

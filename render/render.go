@@ -31,13 +31,7 @@ type Values map[string]interface{}
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
-	return g.RootFirstTransform(func(id string, out *graph.Graph) error {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("rendering interrupted at %q", id)
-		default:
-		}
-
+	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" {
 			log.Println("[DEBUG] render: wrapping root")
 			out.Add(id, module.NewPreparer(top))

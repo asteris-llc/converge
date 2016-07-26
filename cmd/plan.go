@@ -80,7 +80,7 @@ can be done separately to see what needs to be changed before execution.`,
 
 			fmt.Print("\n")
 
-			err = results.Walk(func(id string, val interface{}) error {
+			err = results.Walk(ctx, func(id string, val interface{}) error {
 				result, ok := val.(*plan.Result)
 				if !ok {
 					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)

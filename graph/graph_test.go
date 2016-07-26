@@ -18,6 +18,8 @@ import (
 	"sync"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/stretchr/testify/assert"
@@ -160,6 +162,7 @@ func TestTransform(t *testing.T) {
 	g.Add("int", 1)
 
 	transformed, err := g.Transform(
+		context.Background(),
 		func(id string, dest *graph.Graph) error {
 			dest.Add(id, 2)
 
@@ -199,10 +202,13 @@ func TestRootFirstWalk(t *testing.T) {
 	var out []string
 	assert.NoError(
 		t,
-		g.RootFirstWalk(func(id string, _ interface{}) error {
-			out = append(out, id)
-			return nil
-		}),
+		g.RootFirstWalk(
+			context.Background(),
+			func(id string, _ interface{}) error {
+				out = append(out, id)
+				return nil
+			},
+		),
 	)
 
 	assert.Equal(t, []string{"root", "root/child"}, out)
@@ -224,10 +230,13 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 	var out []string
 	assert.NoError(
 		t,
-		g.RootFirstWalk(func(id string, _ interface{}) error {
-			out = append(out, id)
-			return nil
-		}),
+		g.RootFirstWalk(
+			context.Background(),
+			func(id string, _ interface{}) error {
+				out = append(out, id)
+				return nil
+			},
+		),
 	)
 
 	assert.Equal(
@@ -245,6 +254,7 @@ func TestRootFirstTransform(t *testing.T) {
 	g.Add("int", 1)
 
 	transformed, err := g.RootFirstTransform(
+		context.Background(),
 		func(id string, dest *graph.Graph) error {
 			dest.Add(id, 2)
 
@@ -260,14 +270,17 @@ func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 	lock := new(sync.Mutex)
 	out := []string{}
 
-	err := g.Walk(func(id string, _ interface{}) error {
-		lock.Lock()
-		defer lock.Unlock()
+	err := g.Walk(
+		context.Background(),
+		func(id string, _ interface{}) error {
+			lock.Lock()
+			defer lock.Unlock()
 
-		out = append(out, id)
+			out = append(out, id)
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return out, err
 }

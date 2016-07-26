@@ -84,7 +84,7 @@ real happens.`,
 				}
 			)
 
-			err = results.Walk(func(id string, val interface{}) error {
+			err = results.Walk(ctx, func(id string, val interface{}) error {
 				result, ok := val.(*apply.Result)
 				if !ok {
 					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)
