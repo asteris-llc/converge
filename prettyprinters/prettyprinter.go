@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//Package prettyprinters provides a general interface and concrete
-//implementations for implementing prettyprinters.  This package was originally
-//created to facilitate the development of graphviz visualizations for resource
-//graphs, however it is intended to be useful for creating arbitrary output
-//generators so that resource graph data can be used in other applications.
+// Package prettyprinters provides a general interface and concrete
+// implementations for implementing prettyprinters.  This package was originally
+// created to facilitate the development of graphviz visualizations for resource
+// graphs, however it is intended to be useful for creating arbitrary output
+// generators so that resource graph data can be used in other applications.
 package prettyprinters
 
 import (
@@ -26,33 +26,65 @@ import (
 	"github.com/asteris-llc/converge/graph"
 )
 
-//DigraphPrettyPrinter interface defines the minimal set of required functions
-//for defining a pretty printer.
+// DigraphPrettyPrinter interface defines the minimal set of required functions
+// for defining a pretty printer.
 type DigraphPrettyPrinter interface {
 
-	//StartPP will be given as it's argument a pointer to the root node of the
-	//graph structure.  It should do any necessary work to create the beginning of
-	//the document and do any first-pass walks of the graph that may be necessary
-	//for rendering output.
+	// StartPP should take a graph and shall return a string used to start the
+	// graph output, or an error which will be returned to the user.
 	StartPP(*graph.Graph) (string, error)
 
-	//FinishPP will be given as it's argument a pointer to the root node of the
-	//graph structure.  It should do any necessary work to finish the generation
-	//of the prettyprinted output.
+	// FinishPP will be given a graph and shall return a string used to finalize
+	// graph output, or an error which will be returned to the user.
 	FinishPP(*graph.Graph) (string, error)
 
-	//When DrawNode() calls the provided node mark function,
-	StartSubgraph(*graph.Graph, string, SubgraphID) (string, error)
-	FinishSubgraph(*graph.Graph, SubgraphID) (string, error)
-
-	StartNodeSection(*graph.Graph) (string, error)
-	FinishNodeSection(*graph.Graph) (string, error)
-	DrawNode(*graph.Graph, string) (string, error)
-
+	// MarkNode() is a function used to identify the boundaries of subgraphs
+	// within the larger graph.  MarkNode() is called with a graph and the id of a
+	// node within the graph, and should return a *SubgraphMarker with the
+	// SubgraphID and Start fields set to indicate the beginning or end of a
+	// subgraph.  If nil is returned the node will be included in the subgraph of
+	// it's parent (or ⊥ if it is not part of any subgraph)
 	MarkNode(*graph.Graph, string) *SubgraphMarker
 
+	// StartSubgraph will be given a graph, the ID of the root node of the
+	// subgraph, and the SubgraphID returned as part of MarkNode().  It should
+	// return the string used to start the subgraph or an error that will be
+	// returned to the user.
+	StartSubgraph(*graph.Graph, string, SubgraphID) (string, error)
+
+	// FinishSubgraph will be given a graph and a SubgraphID returned by MarkNode
+	// and should return a string used to end a subgraph, or an error that will be
+	// returned to the user.
+	FinishSubgraph(*graph.Graph, SubgraphID) (string, error)
+
+	// StartNodeSection will be given a graph and should return a string used to
+	// start the node section, or an error that will be returned to the user.
+	StartNodeSection(*graph.Graph) (string, error)
+
+	// FinishNodeSection will be given a graph and should return a string used to
+	// finish the node section in the final output, or an error that will be
+	// returned to the user.
+	FinishNodeSection(*graph.Graph) (string, error)
+
+	// DrawNode will be called once for each node in the graph.  The function will
+	// be given a graph and a string ID for the current node in the graph, and
+	// should return a string representing the node in the final output, or an
+	// error that will be returned to the user.
+	DrawNode(*graph.Graph, string) (string, error)
+
+	// StartEdgeSection will be given a graph and should return a string used to
+	// start the edge section, or an error that will be returned to the user.
 	StartEdgeSection(*graph.Graph) (string, error)
+
+	// FinishEdgeSection will be given a graph and should return a string used to
+	// finish the edge section in the final output, or an error that will be
+	// returned to the user.
 	FinishEdgeSection(*graph.Graph) (string, error)
+
+	// DrawEdge will be called once for each edge in the graph.  It is called with
+	// a graph, the ID of the source vertex, and the ID of the target vertex.  It
+	// should return a string representing the edge in the final output, or an
+	// error that will be returned to the user.
 	DrawEdge(*graph.Graph, string, string) (string, error)
 }
 
@@ -60,14 +92,18 @@ type Printer struct {
 	pp DigraphPrettyPrinter
 }
 
+type SubgraphMap map[SubgraphID]Subgraph
+
 // Subgraphs are treated as a semi-lattice with the root graph as the ⊥ (join)
 // element.  Subgraphs are partially ordered based on the rank of their root
 // element in the graph.
 type SubgraphID interface{}
+
 type SubgraphMarker struct {
 	SubgraphID SubgraphID
 	Start      bool
 }
+
 type Subgraph struct {
 	StartNode *string
 	EndNodes  []string
@@ -80,14 +116,14 @@ var (
 		StartNode: nil,
 		Nodes:     make([]string, 0),
 	}
-	subgraphBottomID SubgraphID = "bottom"
+	subgraphBottomID SubgraphID = "⊥"
 )
 
 // makeSubgraphMap creates a new map to hold subgraph data and includes a ⊥
 // element.  Returns a tuple of the subgraph map and the identifier for the join
 // element.
-func makeSubgraphMap() (map[SubgraphID]Subgraph, SubgraphID) {
-	subgraph := make(map[SubgraphID]Subgraph)
+func makeSubgraphMap() (SubgraphMap, SubgraphID) {
+	subgraph := make(SubgraphMap)
 	subgraph[subgraphBottomID] = subgraphBottom
 	return subgraph, subgraphBottomID
 }
@@ -100,7 +136,7 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	var outputBuffer bytes.Buffer
 	edges := g.Edges()
 	subgraphs, subgraphJoinID := makeSubgraphMap()
-	p.loadSubgraphs(g, subgraphBottomID, subgraphs)
+	p.loadSubgraphs(g, subgraphs)
 	rootNodes := subgraphs[subgraphJoinID].Nodes
 	if str, err := p.pp.StartPP(g); err == nil {
 		outputBuffer.WriteString(str)
@@ -134,7 +170,9 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	}
 
 	for idx := range edges {
-		if str, err := p.pp.DrawEdge(g, edges[idx].Source, edges[idx].Dest); err == nil {
+		src := edges[idx].Source
+		dst := edges[idx].Dest
+		if str, err := p.pp.DrawEdge(g, src, dst); err == nil {
 			outputBuffer.WriteString(str)
 		} else {
 			return "", err
@@ -156,23 +194,24 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	return outputBuffer.String(), nil
 }
 
-func (p Printer) loadSubgraphs(g *graph.Graph, bottom SubgraphID, subgraphs map[SubgraphID]Subgraph) {
+func (p Printer) loadSubgraphs(g *graph.Graph, subgraphs SubgraphMap) {
 	g.RootFirstWalk(func(id string, val interface{}) error {
 		if sgMarker := p.pp.MarkNode(g, id); sgMarker != nil {
 			if sgMarker.Start {
 				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
 			} else {
-				thisSubgraph := getSubgraphByID(g, subgraphs, graph.ParentID(id))
+				thisSubgraph := getSubgraphByID(subgraphs, graph.ParentID(id))
 				setSubgraphEndNode(subgraphs, thisSubgraph, id)
 			}
 		} else {
-			defer addNodeToSubgraph(subgraphs, getSubgraphByID(g, subgraphs, graph.ParentID(id)), id)
+			subgraphID := getSubgraphByID(subgraphs, graph.ParentID(id))
+			addNodeToSubgraph(subgraphs, subgraphID, id)
 		}
 		return nil
 	})
 }
 
-func getParentSubgraph(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, thisSubgraph SubgraphID, id string) SubgraphID {
+func getParentSubgraph(subgraphs SubgraphMap, thisSubgraph SubgraphID, id string) SubgraphID {
 	parent := graph.ParentID(id)
 	if thisSubgraph == subgraphBottomID {
 		return subgraphBottomID
@@ -184,17 +223,17 @@ func getParentSubgraph(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, thisSu
 		for nodeIdx := range subgraph.Nodes {
 			if id == subgraph.Nodes[nodeIdx] {
 				if subgraphID == thisSubgraph {
-					return getParentSubgraph(g, subgraphs, thisSubgraph, graph.ParentID(id))
+					return getParentSubgraph(subgraphs, thisSubgraph, graph.ParentID(id))
 				} else {
 					return subgraphID
 				}
 			}
 		}
 	}
-	return getParentSubgraph(g, subgraphs, thisSubgraph, graph.ParentID(id))
+	return getParentSubgraph(subgraphs, thisSubgraph, graph.ParentID(id))
 }
 
-func setSubgraphEndNode(subgraphs map[SubgraphID]Subgraph, subgraphID SubgraphID, node string) {
+func setSubgraphEndNode(subgraphs SubgraphMap, subgraphID SubgraphID, node string) {
 	if subgraphID == subgraphBottomID {
 		return
 	}
@@ -205,7 +244,7 @@ func setSubgraphEndNode(subgraphs map[SubgraphID]Subgraph, subgraphID SubgraphID
 	subgraphs[subgraphID] = sg
 }
 
-func isSubgraphEnd(subgraphs map[SubgraphID]Subgraph, id SubgraphID, node string) bool {
+func isSubgraphEnd(subgraphs SubgraphMap, id SubgraphID, node string) bool {
 	sg, found := subgraphs[id]
 	if !found {
 		return false
@@ -218,13 +257,13 @@ func isSubgraphEnd(subgraphs map[SubgraphID]Subgraph, id SubgraphID, node string
 	return false
 }
 
-func getSubgraphByID(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, id string) SubgraphID {
+func getSubgraphByID(subgraphs SubgraphMap, id string) SubgraphID {
 	if id == "." {
 		return subgraphBottomID
 	}
 	for subgraphID, subgraph := range subgraphs {
 		if isSubgraphEnd(subgraphs, subgraphID, id) {
-			return getParentSubgraph(g, subgraphs, subgraphID, id)
+			return getParentSubgraph(subgraphs, subgraphID, id)
 		}
 		for nodeIdx := range subgraph.Nodes {
 			if id == subgraph.Nodes[nodeIdx] {
@@ -232,10 +271,10 @@ func getSubgraphByID(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, id strin
 			}
 		}
 	}
-	return getSubgraphByID(g, subgraphs, graph.ParentID(id))
+	return getSubgraphByID(subgraphs, graph.ParentID(id))
 }
 
-func addNodeToSubgraph(subgraphs map[SubgraphID]Subgraph, subgraphID SubgraphID, vertexID string) {
+func addNodeToSubgraph(subgraphs SubgraphMap, subgraphID SubgraphID, vertexID string) {
 	oldGraph, found := subgraphs[subgraphID]
 	if !found {
 		oldGraph.StartNode = &vertexID
