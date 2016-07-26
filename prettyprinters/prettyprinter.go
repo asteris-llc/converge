@@ -70,6 +70,7 @@ type SubgraphMarker struct {
 }
 type Subgraph struct {
 	StartNode *string
+	EndNodes  []string
 	ID        SubgraphID
 	Nodes     []string
 }
@@ -156,20 +157,82 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 }
 
 func (p Printer) loadSubgraphs(g *graph.Graph, bottom SubgraphID, subgraphs map[SubgraphID]Subgraph) {
-	var currentSubgraph SubgraphID = bottom
 	g.RootFirstWalk(func(id string, val interface{}) error {
 		if sgMarker := p.pp.MarkNode(g, id); sgMarker != nil {
-			addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
 			if sgMarker.Start {
-				currentSubgraph = sgMarker.SubgraphID
+				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
 			} else {
-				currentSubgraph = bottom
+				thisSubgraph := getSubgraphByID(g, subgraphs, graph.ParentID(id))
+				setSubgraphEndNode(subgraphs, thisSubgraph, id)
 			}
 		} else {
-			addNodeToSubgraph(subgraphs, currentSubgraph, id)
+			defer addNodeToSubgraph(subgraphs, getSubgraphByID(g, subgraphs, graph.ParentID(id)), id)
 		}
 		return nil
 	})
+}
+
+func getParentSubgraph(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, thisSubgraph SubgraphID, id string) SubgraphID {
+	parent := graph.ParentID(id)
+	if thisSubgraph == subgraphBottomID {
+		return subgraphBottomID
+	}
+	if id == "." || parent == "." {
+		return subgraphBottomID
+	}
+	for subgraphID, subgraph := range subgraphs {
+		for nodeIdx := range subgraph.Nodes {
+			if id == subgraph.Nodes[nodeIdx] {
+				if subgraphID == thisSubgraph {
+					return getParentSubgraph(g, subgraphs, thisSubgraph, graph.ParentID(id))
+				} else {
+					return subgraphID
+				}
+			}
+		}
+	}
+	return getParentSubgraph(g, subgraphs, thisSubgraph, graph.ParentID(id))
+}
+
+func setSubgraphEndNode(subgraphs map[SubgraphID]Subgraph, subgraphID SubgraphID, node string) {
+	if subgraphID == subgraphBottomID {
+		return
+	}
+
+	sg := subgraphs[subgraphID]
+	sg.EndNodes = append(sg.EndNodes, node)
+	sg.Nodes = append(sg.Nodes, node)
+	subgraphs[subgraphID] = sg
+}
+
+func isSubgraphEnd(subgraphs map[SubgraphID]Subgraph, id SubgraphID, node string) bool {
+	sg, found := subgraphs[id]
+	if !found {
+		return false
+	}
+	for endNodeIdx := range sg.EndNodes {
+		if node == sg.EndNodes[endNodeIdx] {
+			return true
+		}
+	}
+	return false
+}
+
+func getSubgraphByID(g *graph.Graph, subgraphs map[SubgraphID]Subgraph, id string) SubgraphID {
+	if id == "." {
+		return subgraphBottomID
+	}
+	for subgraphID, subgraph := range subgraphs {
+		if isSubgraphEnd(subgraphs, subgraphID, id) {
+			return getParentSubgraph(g, subgraphs, subgraphID, id)
+		}
+		for nodeIdx := range subgraph.Nodes {
+			if id == subgraph.Nodes[nodeIdx] {
+				return subgraphID
+			}
+		}
+	}
+	return getSubgraphByID(g, subgraphs, graph.ParentID(id))
 }
 
 func addNodeToSubgraph(subgraphs map[SubgraphID]Subgraph, subgraphID SubgraphID, vertexID string) {
