@@ -170,9 +170,7 @@ func rootFirstWalk(g *Graph, cb WalkFunc) error {
 
 		// mark this ID as done and do the children
 		done[id] = struct{}{}
-		for _, edge := range g.DownEdges(id) {
-			todo = append(todo, edge)
-		}
+		todo = append(todo, g.DownEdges(id)...)
 	}
 
 	return nil
