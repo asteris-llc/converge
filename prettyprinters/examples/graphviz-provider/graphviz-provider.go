@@ -28,31 +28,15 @@ type NumberProvider struct {
 	graphviz.BasicProvider
 }
 
-/*func (p NumberProvider) VertexGetID(e graphviz.GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Name), nil
-}
-
-func (p NumberProvider) VertexGetLabel(e graphviz.GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Name), nil
-}
-
-func (p NumberProvider) VertexGetProperties(graphviz.GraphEntity) graphviz.PropertySet {
-	return make(map[string]string)
-}
-
-func (p NumberProvider) EdgeGetLabel(graphviz.GraphEntity, graphviz.GraphEntity) (string, error) {
-	return "", nil
-}
-
-func (p NumberProvider) EdgeGetProperties(graphviz.GraphEntity, graphviz.GraphEntity) graphviz.PropertySet {
-	return make(map[string]string)
-}*/
-
 func (p NumberProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	val := e.Value.(int)
 
 	if val == 2 || val == 3 {
 		return graphviz.SubgraphMarkerStart
+	}
+
+	if val == 4 || val == 5 || val == 6 || val == 7 {
+		return graphviz.SubgraphMarkerEnd
 	}
 	return graphviz.SubgraphMarkerNOP
 }
