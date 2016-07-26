@@ -94,11 +94,20 @@ type GraphvizPrintProvider interface {
 	SubgraphMarker(GraphEntity) SubgraphMarkerKey
 }
 
+// Options specifies global graph options that can be configured for output.
+// Arbitrary graphviz options are not supported.
 type Options struct {
+	// Specifies the way that connections between verices are drawn.  The default
+	// is 'spline', other options include: 'line', 'orth', and 'none'.  See
+	// http://www.graphviz.org/doc/info/attrs.html#d:splines
 	Splines string
+
+	// Specifies the direction of the graph.  See
+	// http://www.graphviz.org/doc/info/attrs.html#d:rankdir for more information.
 	Rankdir string
 }
 
+// DefaultOptions() returns an Options struct with default values set.
 func DefaultOptions() Options {
 	return Options{
 		Splines: "spline",
@@ -106,6 +115,8 @@ func DefaultOptions() Options {
 	}
 }
 
+// A graphviz.Printer is a DigraphPrettyPrinter implementation for drawing
+// graphviz compatible DOT source code from a digraph.
 type Printer struct {
 	prettyprinters.DigraphPrettyPrinter
 	options       Options
@@ -113,6 +124,7 @@ type Printer struct {
 	clusterIndex  int
 }
 
+// Create a new graphviz.Printer with the options and print provider specified.
 func New(opts Options, provider GraphvizPrintProvider) *Printer {
 	return &Printer{
 		options:       opts,
@@ -121,6 +133,8 @@ func New(opts Options, provider GraphvizPrintProvider) *Printer {
 	}
 }
 
+// MarkNode will call SubgraphMarker() on the print provider to determine
+// whether the current node is the beginning of a subgraph.
 func (p *Printer) MarkNode(g *graph.Graph, id string) *prettyprinters.SubgraphMarker {
 	entity := GraphEntity{Name: id, Value: g.Get(id)}
 	sgState := p.printProvider.SubgraphMarker(entity)
@@ -143,6 +157,8 @@ func (p *Printer) MarkNode(g *graph.Graph, id string) *prettyprinters.SubgraphMa
 	return nil
 }
 
+// DrawNode prints node data by calling VertexGetID(), VertexGetLabel() and
+// VertexGetProperties() on the associated print provider.
 func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	graphValue := g.Get(id)
 	graphEntity := GraphEntity{id, graphValue}
@@ -160,6 +176,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	return dotCode, nil
 }
 
+// As with DrawNode() but for edges.
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	sourceEntity := GraphEntity{id1, g.Get(id1)}
 	destEntity := GraphEntity{id2, g.Get(id2)}
@@ -242,12 +259,16 @@ func DefaultProvider() GraphvizPrintProvider {
 	return BasicProvider{}
 }
 
+// A GraphIDProvider is a basic PrintProvider for Graphviz that uses the Node ID
+// from the digraph as the Vertex ID and label.
 type GraphIDProvider struct{}
 
 func IDProvider() GraphvizPrintProvider {
 	return GraphIDProvider{}
 }
 
+// A BasicProvider is a basic PrintProvider for Graphviz that uses the value
+// in the default format (%v) as the node label and id.
 type BasicProvider struct{}
 
 func (p BasicProvider) VertexGetID(e GraphEntity) (string, error) {
@@ -274,10 +295,6 @@ func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 	return SubgraphMarkerNOP
 }
 
-func escapeNewline(s string) string {
-	return strings.Replace(s, "\n", "\\n", -1)
-}
-
 func (p GraphIDProvider) VertexGetID(e GraphEntity) (string, error) {
 	return fmt.Sprintf("%v", e.Name), nil
 }
@@ -300,4 +317,8 @@ func (p GraphIDProvider) EdgeGetProperties(GraphEntity, GraphEntity) PropertySet
 
 func (p GraphIDProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 	return SubgraphMarkerNOP
+}
+
+func escapeNewline(s string) string {
+	return strings.Replace(s, "\n", "\\n", -1)
 }
