@@ -28,11 +28,13 @@ type Shell struct {
 	ApplyStmt   string
 }
 
+// Check system using CheckStmt
 func (s *Shell) Check() (status string, willChange bool, err error) {
 	out, code, err := s.exec(s.CheckStmt)
 	return out, code != 0, err
 }
 
+// Apply ApplyStmt stanza to system
 func (s *Shell) Apply() (err error) {
 	out, code, err := s.exec(s.ApplyStmt)
 	if code != 0 {
