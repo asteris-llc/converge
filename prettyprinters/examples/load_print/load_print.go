@@ -23,7 +23,7 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
-	"github.com/asteris-llc/converge/prettyprinters/graphviz/printproviders"
+	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 		return
 	}
 
-	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), printproviders.ResourcePreparer()))
+	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.ResourcePreparer()))
 	dotCode, err := printer.Show(g)
 	if err != nil {
 		fmt.Println(err)
