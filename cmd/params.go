@@ -20,7 +20,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/pflag"
 )
 
@@ -47,22 +47,22 @@ func parseKVPair(raw string) (string, string, error) {
 
 // insert either puts a key and value into a map, or returns an error if there
 // is a duplicate key.
-func insert(values resource.Values, key string, value resource.Value) error {
+func insert(values render.Values, key string, value interface{}) error {
 	if _, duplicate := values[key]; duplicate {
 		return fmt.Errorf("duplicate entry: found %v=%v and %v=%v", key, values[key], key, value)
 	}
-	values[key] = resource.Value(value)
+	values[key] = value
 	return nil
 }
 
 // parseKVPairs parses a list of key=value pairs into a map[string]Value.
-func parseKVPairs(pairs []string) (values resource.Values, errors []error) {
-	values = make(resource.Values)
+func parseKVPairs(pairs []string) (values render.Values, errors []error) {
+	values = make(render.Values)
 	for _, raw := range pairs {
 		if key, value, err := parseKVPair(raw); err != nil {
 			errors = append(errors, err)
 		} else {
-			if err = insert(values, key, resource.Value(value)); err != nil {
+			if err = insert(values, key, value); err != nil {
 				errors = append(errors, err)
 			}
 		}
@@ -70,12 +70,12 @@ func parseKVPairs(pairs []string) (values resource.Values, errors []error) {
 	return values, errors
 }
 
-func getParamsFromFlags(flags *pflag.FlagSet) (vals resource.Values, errors []error) {
+func getParamsFromFlags(flags *pflag.FlagSet) (vals render.Values, errors []error) {
 	// get parameters passed to the --params flag
 	vals, errors = parseKVPairs(params)
 
 	// get parameters passed to the --paramsJSON flag
-	jsonParams := resource.Values{}
+	jsonParams := render.Values{}
 	if len(paramsJSON) > 0 {
 		log.Println("[DEBUG] parsing --paramsJSON")
 

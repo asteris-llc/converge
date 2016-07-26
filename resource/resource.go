@@ -14,35 +14,20 @@
 
 package resource
 
-import "fmt"
-
-// Monitor checks if a resource is correct.
-type Monitor interface {
-	Check() (string, bool, error)
-}
-
 // Task does checking as Monitor does, but it can also make changes to make the
 // checks pass.
 type Task interface {
-	Monitor
+	Check() (status string, willChange bool, err error)
 	Apply() error
 }
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
-	fmt.Stringer
-
-	Prepare(*Module) error
-
-	Depends() []string
-	SetDepends([]string)
-	HasBaseDependencies() bool
-
-	SetName(string)
+	Prepare(Renderer) (Task, error)
 }
 
-// Parent expresses a resource that has sub-resources instead of being
-// executable
-type Parent interface {
-	Children() []Resource
+// Renderer is passed to resources
+type Renderer interface {
+	Value() (value string, present bool)
+	Render(name, content string) (string, error)
 }

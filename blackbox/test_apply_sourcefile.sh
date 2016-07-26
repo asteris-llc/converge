@@ -21,7 +21,7 @@ fi
 
 if [[ "$(cat test.txt)" != "x" ]]; then
     echo "test.txt doesn't have the right content"
-    echo "has '$(at test.txt)', want 'x'"
+    echo "has '$(cat test.txt)', want 'x'"
     exit 1
 fi
 

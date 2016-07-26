@@ -18,13 +18,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
+	"strings"
+	"sync"
 
 	"golang.org/x/net/context"
 
 	"github.com/acmacalister/skittles"
-	"github.com/asteris-llc/converge/exec"
+	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
 
@@ -51,55 +54,70 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			graph, err := load.Load(fname, params)
+			graph, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			plan, err := exec.Plan(ctx, graph)
+			rendered, err := render.Render(ctx, graph, params)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+			}
+
+			planned, err := plan.Plan(ctx, rendered)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			results, err := exec.Apply(ctx, graph, plan)
+			results, err := apply.Apply(ctx, planned)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}
 
+			fmt.Print("\n")
+
 			// count successes and failures to print summary
-			var counts struct {
-				results, success, failures int
-			}
+			var (
+				cLock  = new(sync.Mutex)
+				counts struct {
+					results, ran int
+				}
+			)
 
-			for _, result := range results {
+			err = results.Walk(func(id string, val interface{}) error {
+				result, ok := val.(*apply.Result)
+				if !ok {
+					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)
+				}
+
+				cLock.Lock()
+				defer cLock.Unlock()
+
 				counts.results++
-				if result.Success {
-					counts.success++
-				} else {
-					counts.failures++
+				if result.Ran {
+					counts.ran++
 				}
 
-				if UseColor() {
-					fmt.Println(result.Pretty())
-				} else {
-					fmt.Println(result)
-				}
+				fmt.Printf(
+					"%s:\n\tRan: %t\n\tOld Status:\n\t\t%s\n\tNew Status:\n\t\t%s\n\n",
+					id,
+					result.Ran,
+					strings.Replace(result.Plan.Status, "\n", "\n\t\t", -1),
+					strings.Replace(result.Status, "\n", "\n\t\t", -1),
+				)
+
+				return nil
+			})
+			if err != nil {
+				log.Fatalf("[FATAL] %s: printing failed: %s\n", fname, err)
 			}
 
 			// summarize the changes for the user
-			summary := fmt.Sprintf("\nApply complete. %d changes, %d successful, %d failed\n", counts.results, counts.success, counts.failures)
+			summary := fmt.Sprintf("Apply complete. %d resources, %d applied\n", counts.results, counts.ran)
 			if UseColor() {
-				if counts.failures > 0 {
-					summary = skittles.Red(summary)
-				} else {
-					summary = skittles.Green(summary)
-				}
+				summary = skittles.Green(summary)
 			}
 			fmt.Print(summary)
-
-			if counts.failures > 0 {
-				os.Exit(1)
-			}
 		}
 	},
 }
