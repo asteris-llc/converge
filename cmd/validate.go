@@ -21,6 +21,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/prettyprinters/graphviz"
+	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
 	"github.com/spf13/cobra"
 )
 
