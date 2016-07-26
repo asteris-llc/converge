@@ -263,6 +263,11 @@ func (g *Graph) Edges() []Edge {
 	return edges
 }
 
+func (g *Graph) Root() string {
+	r, _ := g.inner.Root()
+	return r.(string)
+}
+
 func (g *Graph) String() string {
 	return strings.Trim(g.inner.String(), "\n")
 }
