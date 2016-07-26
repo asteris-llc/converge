@@ -7,7 +7,7 @@ NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 converge: $(shell find . -name '*.go')
 	go build .
 
-test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh ${PNGS}
+test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 	@echo
 	@echo === check validity of all samples ===
 	./converge validate samples/*.hcl
