@@ -33,8 +33,8 @@ func main() {
 		return
 	}
 
-	printer := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
-	dotCode, err := printer.Show()
+	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
+	dotCode, err := printer.Show(g)
 	if err != nil {
 		fmt.Println(err)
 		return
