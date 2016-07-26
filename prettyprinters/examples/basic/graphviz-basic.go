@@ -35,15 +35,15 @@ func makeGraph() *graph.Graph {
 }
 
 func showGraphWithValues(g *graph.Graph) {
-	valuePrinter := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
-	valueDotCode, _ := valuePrinter.Show()
+	valuePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
+	valueDotCode, _ := valuePrinter.Show(g)
 	fmt.Println("With default value provider")
 	fmt.Println(valueDotCode)
 }
 
 func showGraphWithIDs(g *graph.Graph) {
-	namePrinter := prettyprinters.New(g, graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
-	nameDotCode, _ := namePrinter.Show()
+	namePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
+	nameDotCode, _ := namePrinter.Show(g)
 	fmt.Println("With default ID provider")
 	fmt.Println(nameDotCode)
 }
