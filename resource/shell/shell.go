@@ -56,15 +56,15 @@ func (s *Shell) exec(script string) (out string, code uint32, err error) {
 	command.Stdout = &sink
 	command.Stderr = &sink
 
-	if err := command.Start(); err != nil {
+	if err = command.Start(); err != nil {
 		return "", 0, err
 	}
 
-	if _, err := stdin.Write([]byte(script)); err != nil {
+	if _, err = stdin.Write([]byte(script)); err != nil {
 		return "", 0, err
 	}
 
-	if err := stdin.Close(); err != nil {
+	if err = stdin.Close(); err != nil {
 		return "", 0, err
 	}
 
