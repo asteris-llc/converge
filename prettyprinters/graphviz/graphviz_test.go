@@ -44,70 +44,8 @@ var (
 func Test_DrawNode_WhenRenderFunction_CallsRenderFunction(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	printer.DrawNode(emptyGraph, stubID, stubFlagFunc)
+	printer.DrawNode(emptyGraph, stubID)
 	provider.AssertCalled(t, "VertexGetID", mock.Anything)
-}
-
-func Test_DrawNode_CallsShouldMark(t *testing.T) {
-	provider := defaultMockProvider()
-	g := testGraph()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	printer.DrawNode(g, stubID, stubFlagFunc)
-	provider.AssertCalled(t, "SubgraphMarker", mock.Anything)
-}
-
-func Test_DrawNode_WhenMarkerReturnsStart_CallsSubgraphMarkTrue(t *testing.T) {
-	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
-	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerStart)
-	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
-	calledFlag := false
-	calledWith := false
-	subgraphMarker := func(_ string, c bool) {
-		calledFlag = true
-		calledWith = c
-	}
-	g := testGraph()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	printer.DrawNode(g, stubID, subgraphMarker)
-	assert.True(t, calledFlag)
-	assert.True(t, calledWith)
-}
-
-func Test_DrawNode_WhenMarkerReturnsEnd_CallSubgraphMarkFalse(t *testing.T) {
-	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
-	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerEnd)
-	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
-	calledFlag := false
-	calledWith := true
-	subgraphMarker := func(_ string, c bool) {
-		calledFlag = true
-		calledWith = c
-	}
-	g := testGraph()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	printer.DrawNode(g, stubID, subgraphMarker)
-	assert.True(t, calledFlag)
-	assert.False(t, calledWith)
-}
-
-func Test_DrawNode_WhenMarkerReturnsNOP_DoesNotCallSubgraphMark(t *testing.T) {
-	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
-	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
-	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
-	calledFlag := false
-	subgraphMarker := func(_ string, c bool) {
-		calledFlag = true
-	}
-	g := testGraph()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	printer.DrawNode(g, stubID, subgraphMarker)
-	assert.False(t, calledFlag)
 }
 
 func Test_DrawNode_SetsNodeNameToVertexID(t *testing.T) {
@@ -120,7 +58,7 @@ func Test_DrawNode_SetsNodeNameToVertexID(t *testing.T) {
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	dotCode, _ := printer.DrawNode(g, "test")
 	actual := getDotNodeID(dotCode)
 	assert.Equal(t, vertexID, actual)
 }
@@ -135,7 +73,7 @@ func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
+	_, actualErr := printer.DrawNode(g, "test")
 	assert.Equal(t, err, actualErr)
 }
 
@@ -149,7 +87,7 @@ func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	dotCode, _ := printer.DrawNode(g, "test")
 	actual := getDotNodeLabel(dotCode)
 	assert.Equal(t, vertexLabel, actual)
 }
@@ -164,7 +102,7 @@ func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	_, actualErr := printer.DrawNode(g, "test", stubFlagFunc)
+	_, actualErr := printer.DrawNode(g, "test")
 	assert.Equal(t, err, actualErr)
 }
 
@@ -181,7 +119,7 @@ func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
 	g := graph.New()
 	g.Add("test", nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	dotCode, _ := printer.DrawNode(g, "test", stubFlagFunc)
+	dotCode, _ := printer.DrawNode(g, "test")
 	actualAttrs := getDotAttributes(dotCode)
 	// NB: compareAttrMap does not commute.  As written this will only assert that
 	// the found attr map contains at a minimum the expected attributes. This is
@@ -337,17 +275,6 @@ func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func Test_StartSubgraph_IncrementsClusterIDEachRun(t *testing.T) {
-	provider := defaultMockProvider()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	for expectedClusterID := 0; expectedClusterID < 5; expectedClusterID++ {
-		dotOutput, _ := printer.StartSubgraph(emptyGraph, "")
-		fmt.Println(dotOutput)
-		actualClusterID := getClusterIndex(dotOutput)
-		assert.Equal(t, expectedClusterID, actualClusterID)
-	}
-}
-
 func Test_FinishSubgraph_ReturnsClosingBrace(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
@@ -400,9 +327,6 @@ func defaultMockProvider() *MockPrintProvider {
 	m.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	m.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	return m
-}
-
-func stubFlagFunc(_ string, _ bool) {
 }
 
 func stubPrinter(interface{}) (string, error) {
