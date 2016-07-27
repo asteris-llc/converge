@@ -14,13 +14,16 @@
 
 package fakerenderer
 
+// FakeRenderer is a pass-through renderer for testing resources
 type FakeRenderer struct {
 }
 
+// Value returns a blank string
 func (fr *FakeRenderer) Value() (string, bool) {
 	return "", true
 }
 
+// Render returns whatever content is passed in
 func (fr *FakeRenderer) Render(name, content string) (string, error) {
 	return content, nil
 }

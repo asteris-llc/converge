@@ -20,8 +20,18 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	"github.com/hashicorp/terraform/dag"
 )
+
+// WalkFunc is taken by the walking functions
+type WalkFunc func(string, interface{}) error
+
+// TransformFunc is taken by the transformation functions
+type TransformFunc func(string, *Graph) error
+
+type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
 // Graph is a generic graph structure that uses IDs to connect the graph
 type Graph struct {
@@ -95,8 +105,19 @@ func (g *Graph) DownEdges(id string) (out []string) {
 }
 
 // Walk the graph leaf-to-root
-func (g *Graph) Walk(cb func(string, interface{}) error) error {
+func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
+	return walk(ctx, g, cb)
+}
+
+// walk is spearate for interal use in the transformations
+func walk(ctx context.Context, g *Graph, cb WalkFunc) error {
 	return g.inner.Walk(func(v dag.Vertex) error {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("interrupted at %q", v.(string))
+		default:
+		}
+
 		id, ok := v.(string)
 		if !ok {
 			// something has gone horribly wrong
@@ -109,7 +130,12 @@ func (g *Graph) Walk(cb func(string, interface{}) error) error {
 
 // RootFirstWalk walks the graph root-to-leaf, checking sibling dependencies
 // before descending.
-func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
+func (g *Graph) RootFirstWalk(ctx context.Context, cb WalkFunc) error {
+	return rootFirstWalk(ctx, g, cb)
+}
+
+// rootFirstWalk is separate for internal use in the transformations
+func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 	root, err := g.inner.Root()
 	if err != nil {
 		return err
@@ -123,6 +149,12 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 	for len(todo) > 0 {
 		id := todo[0]
 		todo = todo[1:]
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("interrupted at %q", id)
+		default:
+		}
 
 		// first check if we've already done this ID. We check multiple times as a
 		// signal to re-check after finding a dependency needs waiting for.
@@ -145,61 +177,46 @@ func (g *Graph) RootFirstWalk(cb func(string, interface{}) error) error {
 
 		log.Printf("[DEBUG] walk(rootfirst): walking %s\n", id)
 
-		err := cb(id, g.Get(id))
-		if err != nil {
+		if err := cb(id, g.Get(id)); err != nil {
 			return err
 		}
 
 		// mark this ID as done and do the children
 		done[id] = struct{}{}
-		for _, edge := range g.DownEdges(id) {
-			todo = append(todo, edge)
-		}
+		todo = append(todo, g.DownEdges(id)...)
 	}
 
 	return nil
 }
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
-func (g *Graph) Transform(cb func(string, *Graph) error) (transformed *Graph, err error) {
-	transformed = g.Copy()
-
-	err = transformed.Walk(func(id string, _ interface{}) error {
-		return cb(id, transformed)
-	})
-	if err != nil {
-		return transformed, err
-	}
-
-	return transformed, transformed.Validate()
+func (g *Graph) Transform(ctx context.Context, cb TransformFunc) (*Graph, error) {
+	return transform(ctx, g, walk, cb)
 }
 
 // RootFirstTransform does Transform, but starting at the root
-func (g *Graph) RootFirstTransform(cb func(string, *Graph) error) (transformed *Graph, err error) {
-	transformed = g.Copy()
-
-	err = transformed.RootFirstWalk(func(id string, _ interface{}) error {
-		return cb(id, transformed)
-	})
-	if err != nil {
-		return transformed, err
-	}
-
-	return transformed, transformed.Validate()
+func (g *Graph) RootFirstTransform(ctx context.Context, cb TransformFunc) (*Graph, error) {
+	return transform(ctx, g, rootFirstWalk, cb)
 }
 
 // Copy the graph for further modification
 func (g *Graph) Copy() *Graph {
 	out := New()
 
-	g.Walk(func(id string, val interface{}) error {
-		out.Add(id, val)
-		for _, dest := range g.DownEdges(id) {
-			out.Connect(id, dest)
-		}
+	err := g.Walk(
+		context.Background(),
+		func(id string, val interface{}) error {
+			out.Add(id, val)
+			for _, dest := range g.DownEdges(id) {
+				out.Connect(id, dest)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	return out
 }
@@ -239,4 +256,17 @@ func (g *Graph) Validate() error {
 
 func (g *Graph) String() string {
 	return strings.Trim(g.inner.String(), "\n")
+}
+
+func transform(ctx context.Context, source *Graph, walker walkerFunc, cb TransformFunc) (*Graph, error) {
+	dest := source.Copy()
+
+	err := walker(ctx, dest, func(id string, _ interface{}) error {
+		return cb(id, dest)
+	})
+	if err != nil {
+		return dest, err
+	}
+
+	return dest, dest.Validate()
 }
