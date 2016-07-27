@@ -60,6 +60,10 @@ type SubgraphMarker struct {
 	Start      bool       // True if this is the start of a new subgraph
 }
 
+// The SubgraphID for the bottom subgraph.  "⊥" is a reserved SubgraphID and
+// shouldn't be returned as the SubgraphID by any calls to MakeNode().
+const SubgraphBottomID string = "⊥"
+
 var (
 	// This is the join element that contains all other subgraphs.  subgraphBottom
 	// is the parent of all top-level subgraphs.
@@ -67,10 +71,6 @@ var (
 		StartNode: nil,
 		Nodes:     make([]string, 0),
 	}
-
-	// The SubgraphID for the bottom subgraph.  "⊥" is a reserved SubgraphID and
-	// shouldn't be returned as the SubgraphID by any calls to MakeNode().
-	subgraphBottomID SubgraphID = "⊥"
 )
 
 // makeSubgraphMap creates a new map to hold subgraph data and includes a ⊥
@@ -78,8 +78,8 @@ var (
 // element.
 func makeSubgraphMap() (SubgraphMap, SubgraphID) {
 	subgraph := make(SubgraphMap)
-	subgraph[subgraphBottomID] = subgraphBottom
-	return subgraph, subgraphBottomID
+	subgraph[SubgraphBottomID] = subgraphBottom
+	return subgraph, SubgraphBottomID
 }
 
 // loadSubgraphs takes a graph and a subgraph map and traverses the graph,
@@ -107,11 +107,11 @@ func (p Printer) loadSubgraphs(g *graph.Graph, subgraphs SubgraphMap) {
 // found.
 func getParentSubgraph(subgraphs SubgraphMap, thisSubgraph SubgraphID, id string) SubgraphID {
 	parent := graph.ParentID(id)
-	if thisSubgraph == subgraphBottomID {
-		return subgraphBottomID
+	if thisSubgraph == SubgraphBottomID {
+		return SubgraphBottomID
 	}
 	if id == "." || parent == "." {
-		return subgraphBottomID
+		return SubgraphBottomID
 	}
 	for subgraphID, subgraph := range subgraphs {
 		for nodeIdx := range subgraph.Nodes {
@@ -130,7 +130,7 @@ func getParentSubgraph(subgraphs SubgraphMap, thisSubgraph SubgraphID, id string
 // setSubgraphEndNode appends the given node to the nodes and end nodes lists
 // for the specified subgraph.
 func setSubgraphEndNode(subgraphs SubgraphMap, subgraphID SubgraphID, node string) {
-	if subgraphID == subgraphBottomID {
+	if subgraphID == SubgraphBottomID {
 		return
 	}
 
@@ -160,7 +160,7 @@ func isSubgraphEnd(subgraphs SubgraphMap, id SubgraphID, node string) bool {
 // element, and ⊥ otherwise.
 func getSubgraphByID(subgraphs SubgraphMap, id string) SubgraphID {
 	if id == "." {
-		return subgraphBottomID
+		return SubgraphBottomID
 	}
 	for subgraphID, subgraph := range subgraphs {
 		if isSubgraphEnd(subgraphs, subgraphID, id) {
