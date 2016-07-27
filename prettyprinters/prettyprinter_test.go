@@ -35,7 +35,7 @@ func ExampleShowGraphWithDefaultProvider() {
 
 	// Output:
 	// digraph {
-	//
+
 	// "1" [ label="1" ];
 	// "2" [ label="2" ];
 	// "3" [ label="3" ];
