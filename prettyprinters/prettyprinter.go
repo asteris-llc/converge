@@ -32,17 +32,18 @@ func New(p DigraphPrettyPrinter) Printer {
 // unmodified to the user.
 func (p Printer) Show(g *graph.Graph) (string, error) {
 	var outputBuffer bytes.Buffer
-	edges := g.Edges()
-	subgraphs, subgraphJoinID := makeSubgraphMap()
+
+	subgraphs := makeSubgraphMap()
 	p.loadSubgraphs(g, subgraphs)
-	rootNodes := subgraphs[subgraphJoinID].Nodes
+	rootNodes := subgraphs[SubgraphBottomID].Nodes
 	if str, err := p.pp.StartPP(g); err == nil {
 		outputBuffer.WriteString(str)
 	} else {
 		return "", err
 	}
-	for idx := range rootNodes {
-		if str, err := p.pp.DrawNode(g, rootNodes[idx]); err == nil {
+
+	for _, node := range rootNodes {
+		if str, err := p.pp.DrawNode(g, node); err == nil {
 			outputBuffer.WriteString(str)
 		} else {
 			return "", err
@@ -50,7 +51,7 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	}
 
 	for graphID, graph := range subgraphs {
-		if graphID == subgraphJoinID {
+		if graphID == SubgraphBottomID {
 			continue
 		}
 
@@ -61,6 +62,24 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 		}
 	}
 
+	if str, err := p.drawEdges(g); err == nil {
+		outputBuffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	if str, err := p.pp.FinishPP(g); err == nil {
+		outputBuffer.WriteString(str)
+	} else {
+		return "", err
+	}
+
+	return outputBuffer.String(), nil
+}
+
+func (p Printer) drawEdges(g *graph.Graph) (string, error) {
+	var outputBuffer bytes.Buffer
+	edges := g.Edges()
 	if str, err := p.pp.StartEdgeSection(g); err == nil {
 		outputBuffer.WriteString(str)
 	} else {
@@ -80,13 +99,6 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	} else {
 		return "", err
 	}
-
-	if str, err := p.pp.FinishPP(g); err == nil {
-		outputBuffer.WriteString(str)
-	} else {
-		return "", err
-	}
-
 	return outputBuffer.String(), nil
 }
 
