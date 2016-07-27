@@ -65,23 +65,23 @@ func (p *Preparer) validateScriptSyntax(script string) error {
 
 	in, err := command.StdinPipe()
 	if err != nil {
-		return errors.Wrap(err, "Unable to Create Pipe")
+		return errors.Wrap(err, "unable to create pipe")
 	}
 
 	if err := command.Start(); err != nil {
-		return errors.Wrap(err, "Failed to start interpreter")
+		return errors.Wrap(err, "failed to start interpreter")
 	}
 
 	if _, err := in.Write([]byte(script)); err != nil {
-		return errors.Wrap(err, "Unable to write to interpreter")
+		return errors.Wrap(err, "unable to write to interpreter")
 	}
 
 	if err := in.Close(); err != nil {
-		return errors.Wrap(err, "Failed to close pipe")
+		return errors.Wrap(err, "failed to close pipe")
 	}
 
 	if err := command.Wait(); err != nil {
-		return errors.Wrap(err, "Syntax Error")
+		return errors.Wrap(err, "syntax error")
 	}
 
 	return nil
