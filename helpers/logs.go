@@ -21,6 +21,8 @@ import (
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // HideLogs hides logs during test execution
@@ -31,7 +33,7 @@ func HideLogs(t *testing.T) func() {
 
 	return func() {
 		if t.Failed() {
-			writer.Flush()
+			assert.NoError(t, writer.Flush())
 			fmt.Print(b.String())
 		}
 

@@ -34,7 +34,11 @@ func setupFlags(params, paramsJSON string) *pflag.FlagSet {
 	if paramsJSON != "" {
 		cmdline = append(cmdline, "--paramsJSON", paramsJSON)
 	}
-	flagSet.Parse(append(cmdline, "samples/test.hcl"))
+
+	if err := flagSet.Parse(append(cmdline, "samples/test.hcl")); err != nil {
+		panic(err)
+	}
+
 	return flagSet
 }
 
