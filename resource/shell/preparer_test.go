@@ -52,7 +52,7 @@ func TestPreparerValidateInvalidCheck(t *testing.T) {
 	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
 
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "Syntax Error: exit status 2")
+		assert.EqualError(t, err, "syntax error: exit status 2")
 	}
 }
 
@@ -66,6 +66,6 @@ func TestPreparerValidateInvalidApply(t *testing.T) {
 	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
 
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "Syntax Error: exit status 2")
+		assert.EqualError(t, err, "syntax error: exit status 2")
 	}
 }
