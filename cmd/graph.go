@@ -48,7 +48,7 @@ You can pipe the output directly to the 'dot' command, for example:
 	Run: func(cmd *cobra.Command, args []string) {
 		fname := args[0]
 
-		graph, err := load.Load(context.TODO(), fname)
+		graph, err := load.Load(context.Background(), fname)
 		if err != nil {
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
