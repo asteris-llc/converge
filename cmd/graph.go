@@ -48,13 +48,16 @@ You can pipe the output directly to the 'dot' command, for example:
 	Run: func(cmd *cobra.Command, args []string) {
 		fname := args[0]
 
-		graph, err := load.Load(context.Background(), fname)
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
+		graph, err := load.Load(ctx, fname)
 		if err != nil {
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
 		printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.ResourcePreparer()))
-		dotCode, err := printer.Show(graph)
+		dotCode, err := printer.Show(ctx, graph)
 		if err != nil {
 			fmt.Println(err)
 			return
