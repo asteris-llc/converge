@@ -30,7 +30,7 @@ import (
 func ExampleShowGraphWithDefaultProvider() {
 	g := createTestGraph()
 	valuePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
-	valueDotCode, _ := valuePrinter.Show(g)
+	valueDotCode, _ := valuePrinter.Show(context.Background(), g)
 	fmt.Println(valueDotCode)
 
 	// Output:
@@ -48,7 +48,7 @@ func ExampleShowGraphWithIDProvider() {
 	g := createTestGraph()
 
 	namePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
-	nameDotCode, _ := namePrinter.Show(g)
+	nameDotCode, _ := namePrinter.Show(context.Background(), g)
 	fmt.Println(nameDotCode)
 
 	// Output:
@@ -71,7 +71,7 @@ func ExampleLoadAndPrint() {
 		return
 	}
 	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.ResourcePreparer()))
-	dotCode, err := printer.Show(g)
+	dotCode, err := printer.Show(context.Background(), g)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -130,7 +130,7 @@ func ExampleCustomProvider() {
 	g.Connect(graph.ID("a", "b", "g"), graph.ID("a", "b", "g", "s"))
 
 	numberPrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), NumberProvider{}))
-	dotCode, _ := numberPrinter.Show(g)
+	dotCode, _ := numberPrinter.Show(context.Background(), g)
 	fmt.Println(dotCode)
 
 	// Output:

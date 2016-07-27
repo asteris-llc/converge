@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"errors"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 )
 
@@ -80,8 +82,8 @@ func makeSubgraphMap() SubgraphMap {
 // loadSubgraphs takes a graph and a subgraph map and traverses the graph,
 // calling MarkNode() on each node, creating and updating subgraphs as
 // necessary.
-func (p Printer) loadSubgraphs(g *graph.Graph, subgraphs SubgraphMap) {
-	g.RootFirstWalk(func(id string, val interface{}) error {
+func (p Printer) loadSubgraphs(ctx context.Context, g *graph.Graph, subgraphs SubgraphMap) {
+	g.RootFirstWalk(ctx, func(id string, val interface{}) error {
 		if sgMarker := p.pp.MarkNode(g, id); sgMarker != nil {
 			if sgMarker.Start {
 				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
