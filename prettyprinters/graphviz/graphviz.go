@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// graphviz provides a concrete prettyprinters.DigraphPrettyPrinter
-// implementation for rendering directed graphs as Graphviz-compatible dot
-// source files.  It exports an interface, graphviz.GraphvizPrintProvider, that
-// allows users to provide general methods for rendering graphed data types into
-// graphviz documents.
 package graphviz
 
 import (
@@ -170,7 +165,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
 	attributes["label"] = escapeNewline(vertexLabel)
-	dotCode := fmt.Sprintf("%q %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
+	dotCode := fmt.Sprintf("%s %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
 	return dotCode, nil
 }
 
@@ -192,7 +187,7 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	}
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	attributes["label"] = escapeNewline(label)
-	return fmt.Sprintf("%q -> %q %s;\n",
+	return fmt.Sprintf("%s -> %s %s;\n",
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
 		buildAttributeString(attributes),
@@ -246,10 +241,10 @@ func (p *Printer) StartPP(*graph.Graph) (string, error) {
 func (p *Printer) GraphAttributes() string {
 	var buffer bytes.Buffer
 	if p.options.Splines != "" {
-		buffer.WriteString(fmt.Sprintf("splines = %q;\n", p.options.Splines))
+		buffer.WriteString(fmt.Sprintf("splines = \"%s\";\n", p.options.Splines))
 	}
 	if p.options.Rankdir != "" {
-		buffer.WriteString(fmt.Sprintf("rankdir = %q;\n", p.options.Rankdir))
+		buffer.WriteString(fmt.Sprintf("rankdir = \"%s\";\n", p.options.Rankdir))
 	}
 	return buffer.String()
 }
@@ -264,7 +259,7 @@ func (*Printer) FinishPP(*graph.Graph) (string, error) {
 func buildAttributeString(p PropertySet) string {
 	var attrs []string
 	for k, v := range p {
-		attribute := fmt.Sprintf(" %s=%q ", k, escapeNewline(v))
+		attribute := fmt.Sprintf(` %s="%s" `, k, escapeNewline(v))
 		attrs = append(attrs, attribute)
 	}
 	return fmt.Sprintf("[%s]", strings.Join(attrs, ","))
@@ -327,13 +322,13 @@ func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 // VertexGetID provides a basic implementation that uses the ID from the graph
 // to generate the VertexID.
 func (p GraphIDProvider) VertexGetID(e GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Name), nil
+	return e.Name, nil
 }
 
 // VertexGetLabel provides a basic implementation that uses the ID from the
 // graph to generate the Vertex Label.
 func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Name), nil
+	return e.Name, nil
 }
 
 // Replace embedded newlines with their escaped form.
