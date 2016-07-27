@@ -18,6 +18,7 @@ import (
 	"os/exec"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 // Preparer for Shell tasks
@@ -64,23 +65,23 @@ func (p *Preparer) validateScriptSyntax(script string) error {
 
 	in, err := command.StdinPipe()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to create pipe")
 	}
 
 	if err := command.Start(); err != nil {
-		return err
+		return errors.Wrap(err, "failed to start interpreter")
 	}
 
 	if _, err := in.Write([]byte(script)); err != nil {
-		return err
+		return errors.Wrap(err, "unable to write to interpreter")
 	}
 
 	if err := in.Close(); err != nil {
-		return err
+		return errors.Wrap(err, "failed to close pipe")
 	}
 
 	if err := command.Wait(); err != nil {
-		return err
+		return errors.Wrap(err, "syntax error")
 	}
 
 	return nil
