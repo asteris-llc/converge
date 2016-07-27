@@ -71,10 +71,10 @@ var (
 // makeSubgraphMap creates a new map to hold subgraph data and includes a ⊥
 // element.  Returns a tuple of the subgraph map and the identifier for the join
 // element.
-func makeSubgraphMap() (SubgraphMap, SubgraphID) {
+func makeSubgraphMap() SubgraphMap {
 	subgraph := make(SubgraphMap)
 	subgraph[SubgraphBottomID] = subgraphBottom
-	return subgraph, SubgraphBottomID
+	return subgraph
 }
 
 // loadSubgraphs takes a graph and a subgraph map and traverses the graph,
