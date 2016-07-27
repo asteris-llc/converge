@@ -90,6 +90,7 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 	return outputBuffer.String(), nil
 }
 
+// Printer is the top-level structure for a pretty printer.
 type Printer struct {
 	pp DigraphPrettyPrinter
 }
