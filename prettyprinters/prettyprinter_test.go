@@ -91,3 +91,124 @@ func ExampleLoadAndPrint() {
 	}
 	fmt.Println(dotCode)
 }
+
+func ExampleCustomProvider() {
+
+	g := graph.New()
+	g.Add(graph.ID("a"), 1)
+	g.Add(graph.ID("a", "b"), 2)
+	g.Add(graph.ID("a", "c"), 3)
+	g.Add(graph.ID("a", "c", "d"), 4)
+	g.Add(graph.ID("a", "c", "e"), 5)
+	g.Add(graph.ID("a", "b", "f"), 6)
+	g.Add(graph.ID("a", "b", "g"), 7)
+
+	g.Add(graph.ID("a", "c", "d", "h"), 8)
+	g.Add(graph.ID("a", "c", "d", "i"), 9)
+	g.Add(graph.ID("a", "c", "d", "j"), 10)
+
+	g.Add(graph.ID("a", "c", "e", "k"), 11)
+	g.Add(graph.ID("a", "c", "e", "l"), 12)
+	g.Add(graph.ID("a", "c", "e", "m"), 13)
+
+	g.Add(graph.ID("a", "b", "f", "n"), 14)
+	g.Add(graph.ID("a", "b", "f", "o"), 15)
+	g.Add(graph.ID("a", "b", "f", "p"), 16)
+
+	g.Add(graph.ID("a", "b", "g", "q"), 17)
+	g.Add(graph.ID("a", "b", "g", "r"), 18)
+	g.Add(graph.ID("a", "b", "g", "s"), 19)
+
+	g.Connect(graph.ID("a"), graph.ID("a", "b"))
+	g.Connect(graph.ID("a"), graph.ID("a", "c"))
+	g.Connect(graph.ID("a", "c"), graph.ID("a", "c", "d"))
+	g.Connect(graph.ID("a", "c"), graph.ID("a", "c", "e"))
+	g.Connect(graph.ID("a", "b"), graph.ID("a", "b", "f"))
+	g.Connect(graph.ID("a", "b"), graph.ID("a", "b", "g"))
+
+	g.Connect(graph.ID("a", "c", "d"), graph.ID("a", "c", "d", "h"))
+	g.Connect(graph.ID("a", "c", "d"), graph.ID("a", "c", "d", "i"))
+	g.Connect(graph.ID("a", "c", "d"), graph.ID("a", "c", "d", "j"))
+
+	g.Connect(graph.ID("a", "c", "e"), graph.ID("a", "c", "e", "k"))
+	g.Connect(graph.ID("a", "c", "e"), graph.ID("a", "c", "e", "l"))
+	g.Connect(graph.ID("a", "c", "e"), graph.ID("a", "c", "e", "m"))
+
+	g.Connect(graph.ID("a", "b", "f"), graph.ID("a", "b", "f", "n"))
+	g.Connect(graph.ID("a", "b", "f"), graph.ID("a", "b", "f", "o"))
+	g.Connect(graph.ID("a", "b", "f"), graph.ID("a", "b", "f", "p"))
+
+	g.Connect(graph.ID("a", "b", "g"), graph.ID("a", "b", "g", "q"))
+	g.Connect(graph.ID("a", "b", "g"), graph.ID("a", "b", "g", "r"))
+	g.Connect(graph.ID("a", "b", "g"), graph.ID("a", "b", "g", "s"))
+
+	numberPrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), NumberProvider{}))
+	dotCode, _ := numberPrinter.Show(g)
+	fmt.Println(dotCode)
+
+	// Output:
+	// digraph {
+	// splines = "spline";
+	// rankdir = "LR";
+
+	// "1" [ label="1"];
+	// "14" [ label="14"];
+	// "15" [ label="15"];
+	// "16" [ label="16"];
+	// "17" [ label="17"];
+	// "18" [ label="18"];
+	// "19" [ label="19"];
+	// "8" [ label="8"];
+	// "9" [ label="9"];
+	// "10" [ label="10"];
+	// "11" [ label="11"];
+	// "12" [ label="12"];
+	// "13" [ label="13"];
+	// subgraph cluster_0 {
+	// "2" [ label="2"];
+	// "6" [ label="6"];
+	// "7" [ label="7"];
+	// }
+	// subgraph cluster_1 {
+	// "3" [ label="3"];
+	// "4" [ label="4"];
+	// "5" [ label="5"];
+	// }
+	// "7" -> "17" [ label=""];
+	// "1" -> "2" [ label=""];
+	// "4" -> "9" [ label=""];
+	// "4" -> "10" [ label=""];
+	// "6" -> "16" [ label=""];
+	// "7" -> "18" [ label=""];
+	// "1" -> "3" [ label=""];
+	// "5" -> "11" [ label=""];
+	// "5" -> "12" [ label=""];
+	// "6" -> "15" [ label=""];
+	// "2" -> "6" [ label=""];
+	// "4" -> "8" [ label=""];
+	// "5" -> "13" [ label=""];
+	// "7" -> "19" [ label=""];
+	// "3" -> "4" [ label=""];
+	// "3" -> "5" [ label=""];
+	// "2" -> "7" [ label=""];
+	// "6" -> "14" [ label=""];
+	// }
+
+}
+
+type NumberProvider struct {
+	graphviz.BasicProvider
+}
+
+func (p NumberProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
+	val := e.Value.(int)
+
+	if val == 2 || val == 3 {
+		return graphviz.SubgraphMarkerStart
+	}
+
+	if val == 4 || val == 5 || val == 6 || val == 7 {
+		return graphviz.SubgraphMarkerEnd
+	}
+	return graphviz.SubgraphMarkerNOP
+}
