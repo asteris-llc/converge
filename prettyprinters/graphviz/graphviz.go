@@ -165,7 +165,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
 	attributes["label"] = escapeNewline(vertexLabel)
-	dotCode := fmt.Sprintf("%s %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
+	dotCode := fmt.Sprintf("\"%s\" %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
 	return dotCode, nil
 }
 
@@ -187,7 +187,7 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	}
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	attributes["label"] = escapeNewline(label)
-	return fmt.Sprintf("%s -> %s %s;\n",
+	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
 		buildAttributeString(attributes),
