@@ -28,13 +28,7 @@ import (
 )
 
 func ExampleShowGraphWithDefaultProvider() {
-	g := graph.New()
-	g.Add(graph.ID("a"), 1)
-	g.Add(graph.ID("a", "b"), 2)
-	g.Add(graph.ID("a", "c"), 3)
-	g.Connect(graph.ID("a"), graph.ID("a", "b"))
-	g.Connect(graph.ID("a"), graph.ID("a", "c"))
-
+	g := createTestGraph()
 	valuePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
 	valueDotCode, _ := valuePrinter.Show(g)
 	fmt.Println(valueDotCode)
@@ -51,12 +45,7 @@ func ExampleShowGraphWithDefaultProvider() {
 }
 
 func ExampleShowGraphWithIDProvider() {
-	g := graph.New()
-	g.Add(graph.ID("a"), 1)
-	g.Add(graph.ID("a", "b"), 2)
-	g.Add(graph.ID("a", "c"), 3)
-	g.Connect(graph.ID("a"), graph.ID("a", "b"))
-	g.Connect(graph.ID("a"), graph.ID("a", "c"))
+	g := createTestGraph()
 
 	namePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
 	nameDotCode, _ := namePrinter.Show(g)
@@ -209,4 +198,14 @@ func (p NumberProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.Subgraph
 		return graphviz.SubgraphMarkerEnd
 	}
 	return graphviz.SubgraphMarkerNOP
+}
+
+func createTestGraph() *graph.Graph {
+	g := graph.New()
+	g.Add(graph.ID("a"), 1)
+	g.Add(graph.ID("a", "b"), 2)
+	g.Add(graph.ID("a", "c"), 3)
+	g.Connect(graph.ID("a"), graph.ID("a", "b"))
+	g.Connect(graph.ID("a"), graph.ID("a", "c"))
+	return g
 }
