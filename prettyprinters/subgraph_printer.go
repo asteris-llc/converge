@@ -12,15 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package prettyprinters provides a general interface and concrete
-// implementations for implementing prettyprinters.  This package was originally
-// created to facilitate the development of graphviz visualizations for resource
-// graphs, however it is intended to be useful for creating arbitrary output
-// generators so that resource graph data can be used in other applications.
-//
-// See the 'examples' directory for examples of using the prettyprinter, and see
-// the 'graphviz' package for an example of a concrete implementation of
-// DigraphPrettyPrinter.
 package prettyprinters
 
 import (
@@ -30,9 +21,12 @@ import (
 	"github.com/asteris-llc/converge/graph"
 )
 
-// Subgraphs are treated as a semi-lattice with the root graph as the ⊥ (join)
+// Subgraph are treated as a semi-lattice with the root graph as the ⊥ (join)
 // element.  Subgraphs are partially ordered based on the rank of their root
 // element in the graph.
+
+// Subgraph is a type that represents a subgraph containing it's ID, it's root
+// node, a list of it's terminal nodes, and any other included nodes.
 type Subgraph struct {
 	StartNode *string
 	EndNodes  []string
@@ -60,14 +54,15 @@ type SubgraphMarker struct {
 	Start      bool       // True if this is the start of a new subgraph
 }
 
-// The SubgraphID for the bottom subgraph.  "⊥" is a reserved SubgraphID and
-// shouldn't be returned as the SubgraphID by any calls to MakeNode().
+// SubgraphBottomID defines the SubgraphID for the bottom subgraph.  "⊥" is a
+// reserved SubgraphID and shouldn't be returned as the SubgraphID by any calls
+// to MakeNode.
 const SubgraphBottomID string = "⊥"
 
 var (
 	// This is the join element that contains all other subgraphs.  subgraphBottom
 	// is the parent of all top-level subgraphs.
-	subgraphBottom Subgraph = Subgraph{
+	subgraphBottom = Subgraph{
 		StartNode: nil,
 		Nodes:     make([]string, 0),
 	}
@@ -118,9 +113,8 @@ func getParentSubgraph(subgraphs SubgraphMap, thisSubgraph SubgraphID, id string
 			if id == subgraph.Nodes[nodeIdx] {
 				if subgraphID == thisSubgraph {
 					return getParentSubgraph(subgraphs, thisSubgraph, graph.ParentID(id))
-				} else {
-					return subgraphID
 				}
+				return subgraphID
 			}
 		}
 	}
@@ -134,7 +128,7 @@ func setSubgraphEndNode(subgraphs SubgraphMap, subgraphID SubgraphID, node strin
 		return
 	}
 
-	if sg, found := subgraphs[subgraphID]; found == true {
+	if sg, found := subgraphs[subgraphID]; found {
 		sg.EndNodes = append(sg.EndNodes, node)
 		sg.Nodes = append(sg.Nodes, node)
 		subgraphs[subgraphID] = sg
