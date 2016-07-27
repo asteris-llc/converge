@@ -28,13 +28,15 @@ import (
 type SubgraphMarkerKey int
 
 const (
-	// Specifies that the current node is the beginning of a subgraph.
+	// SubgraphMarkerStart specifies that the current node is the beginning of a
+	// subgraph.
 	SubgraphMarkerStart SubgraphMarkerKey = iota
 
-	// Specifies that the current node is the end of a subgraph.
+	// SubgraphMarkerEnd pecifies that the current node is the end of a subgraph.
 	SubgraphMarkerEnd
 
-	// Specifies that the current node should not change the subgraph state.
+	// SubgraphMarkerNOP pecifies that the current node should not change the
+	// subgraph state.
 	SubgraphMarkerNOP
 )
 
@@ -51,9 +53,9 @@ type GraphEntity struct {
 	Value interface{} // The value at the node
 }
 
-// The GraphvizPrinterProvider interface allows specific serializable types to
-// be rendered as a Graphviz document.
-type GraphvizPrintProvider interface {
+// PrintProvider allows specific serializable types to be rendered as a
+// Graphviz document.
+type PrintProvider interface {
 
 	// Given a graph entity, this function shall return a unique ID that will be
 	// used for the vertex.  Note that this is not used for display, see
@@ -66,7 +68,7 @@ type GraphvizPrintProvider interface {
 	// be returned as part of VertexGetProperties().
 	VertexGetLabel(GraphEntity) (string, error)
 
-	// VertexGetProperties allows the GraphvizPrintProvider to provide additional
+	// VertexGetProperties allows the PrintProvider to provide additional
 	// attributes to a given vertex.  Note that the 'label' attribute is special
 	// and should not be returned as part of this call.
 	VertexGetProperties(GraphEntity) PropertySet
@@ -75,7 +77,7 @@ type GraphvizPrintProvider interface {
 	// entities.  This will be the name applied to the edge when it is drawn.
 	EdgeGetLabel(GraphEntity, GraphEntity) (string, error)
 
-	// EdgeGetProperties allows the GraphvizPrintProvider to provide additional
+	// EdgeGetProperties allows the PrintProvider to provide additional
 	// attributes to a given edge.  Note that the 'label' attribute is special
 	// and should not be returned as part of this call.
 	EdgeGetProperties(GraphEntity, GraphEntity) PropertySet
@@ -112,13 +114,13 @@ func DefaultOptions() Options {
 type Printer struct {
 	prettyprinters.DigraphPrettyPrinter
 	options       Options
-	printProvider GraphvizPrintProvider
+	printProvider PrintProvider
 	clusterIndex  int
 }
 
 // New will create a new graphviz.Printer with the options and print provider
 // specified.
-func New(opts Options, provider GraphvizPrintProvider) *Printer {
+func New(opts Options, provider PrintProvider) *Printer {
 	return &Printer{
 		options:       opts,
 		printProvider: provider,
@@ -266,7 +268,7 @@ func buildAttributeString(p PropertySet) string {
 }
 
 // DefaultProvider returns an empty BasicProvider as a convenience
-func DefaultProvider() GraphvizPrintProvider {
+func DefaultProvider() PrintProvider {
 	return BasicProvider{}
 }
 
@@ -277,7 +279,7 @@ type GraphIDProvider struct {
 }
 
 // IDProvider is a convenience function to generate a GraphIDProvider.
-func IDProvider() GraphvizPrintProvider {
+func IDProvider() PrintProvider {
 	return GraphIDProvider{}
 }
 
