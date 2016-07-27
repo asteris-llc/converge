@@ -177,8 +177,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 
 		log.Printf("[DEBUG] walk(rootfirst): walking %s\n", id)
 
-		err := cb(id, g.Get(id))
-		if err != nil {
+		if err := cb(id, g.Get(id)); err != nil {
 			return err
 		}
 
