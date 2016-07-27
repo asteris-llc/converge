@@ -41,14 +41,12 @@ func ExampleShowGraphWithDefaultProvider() {
 
 	// Output:
 	// digraph {
-	// splines = "spline";
-	// rankdir = "LR";
 	//
-	// "1" [ label="1"];
-	// "2" [ label="2"];
-	// "3" [ label="3"];
-	// "1" -> "2" [ label=""];
-	// "1" -> "3" [ label=""];
+	// "1" [ label="1" ];
+	// "2" [ label="2" ];
+	// "3" [ label="3" ];
+	// "1" -> "2" [ label="" ];
+	// "1" -> "3" [ label="" ];
 	// }
 }
 
