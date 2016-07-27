@@ -12,45 +12,62 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package prettyprinters_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 )
 
-func makeGraph() *graph.Graph {
+func ExampleShowGraphWithDefaultProvider() {
 	g := graph.New()
 	g.Add(graph.ID("a"), 1)
 	g.Add(graph.ID("a", "b"), 2)
 	g.Add(graph.ID("a", "c"), 3)
 	g.Connect(graph.ID("a"), graph.ID("a", "b"))
 	g.Connect(graph.ID("a"), graph.ID("a", "c"))
-	return g
-}
 
-func showGraphWithValues(g *graph.Graph) {
 	valuePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
 	valueDotCode, _ := valuePrinter.Show(g)
-	fmt.Println("With default value provider")
 	fmt.Println(valueDotCode)
+
+	// Output:
+	// digraph {
+	// splines = "spline";
+	// rankdir = "LR";
+	//
+	// "1" [ label="1"];
+	// "2" [ label="2"];
+	// "3" [ label="3"];
+	// "1" -> "2" [ label=""];
+	// "1" -> "3" [ label=""];
+	// }
 }
 
-func showGraphWithIDs(g *graph.Graph) {
+func ExampleShowGraphWithIDProvider() {
+	g := graph.New()
+	g.Add(graph.ID("a"), 1)
+	g.Add(graph.ID("a", "b"), 2)
+	g.Add(graph.ID("a", "c"), 3)
+	g.Connect(graph.ID("a"), graph.ID("a", "b"))
+	g.Connect(graph.ID("a"), graph.ID("a", "c"))
+
 	namePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
 	nameDotCode, _ := namePrinter.Show(g)
-	fmt.Println("With default ID provider")
 	fmt.Println(nameDotCode)
-}
 
-func main() {
-	log.SetOutput(ioutil.Discard)
-	g := makeGraph()
-	showGraphWithValues(g)
-	showGraphWithIDs(g)
+	// Output:
+	// digraph {
+	// splines = "spline";
+	// rankdir = "LR";
+
+	// "a" [ label="a"];
+	// "a/b" [ label="a/b"];
+	// "a/c" [ label="a/c"];
+	// "a" -> "a/b" [ label=""];
+	// "a" -> "a/c" [ label=""];
+	// }
 }
