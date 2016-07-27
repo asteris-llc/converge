@@ -254,7 +254,8 @@ func (g *Graph) Validate() error {
 	return nil
 }
 
-// Get a list of the IDs for every vertex in the graph, cast to a string.
+// Vertices will det a list of the IDs for every vertex in the graph, cast to a
+// string.
 func (g *Graph) Vertices() []string {
 	graphVertices := g.inner.Vertices()
 	vertices := make([]string, len(graphVertices))
@@ -264,7 +265,7 @@ func (g *Graph) Vertices() []string {
 	return vertices
 }
 
-// Get a list of all of the edges in the graph.
+// Edges will get a list of all of the edges in the graph.
 func (g *Graph) Edges() []Edge {
 	graphEdges := g.inner.Edges()
 	edges := make([]Edge, len(graphEdges))
@@ -275,13 +276,13 @@ func (g *Graph) Edges() []Edge {
 	return edges
 }
 
-// Get the root element of the graph
+// Root will get the root element of the graph
 func (g *Graph) Root() (string, error) {
-	if r, err := g.inner.Root(); err == nil {
-		return r.(string), nil
-	} else {
+	r, err := g.inner.Root()
+	if err != nil {
 		return "", err
 	}
+	return r.(string), nil
 }
 
 func (g *Graph) String() string {
