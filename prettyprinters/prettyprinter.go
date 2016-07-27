@@ -17,6 +17,8 @@ package prettyprinters
 import (
 	"bytes"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 )
 
@@ -30,11 +32,11 @@ func New(p DigraphPrettyPrinter) Printer {
 // output of the graph according to the associated prettyprinter.  If an error
 // is returned at any stage of the prettyprinting process it is returned
 // unmodified to the user.
-func (p Printer) Show(g *graph.Graph) (string, error) {
+func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	subgraphs := makeSubgraphMap()
-	p.loadSubgraphs(g, subgraphs)
+	p.loadSubgraphs(ctx, g, subgraphs)
 	rootNodes := subgraphs[SubgraphBottomID].Nodes
 	if str, err := p.pp.StartPP(g); err == nil {
 		outputBuffer.WriteString(str)
