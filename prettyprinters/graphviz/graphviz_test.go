@@ -222,6 +222,19 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 func Test_StartPP_ReturnsGraphvizStart(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
+	expected := "digraph {\n\n"
+	actual, err := printer.StartPP(emptyGraph)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_StartPP_SetsGraphAttributes_WhenOptionsAreProvided(t *testing.T) {
+	provider := defaultMockProvider()
+	opts := graphviz.Options{
+		Splines: "spline",
+		Rankdir: "LR",
+	}
+	printer := graphviz.New(opts, provider)
 	expected := "digraph {\nsplines = \"spline\";\nrankdir = \"LR\";\n\n"
 	actual, err := printer.StartPP(emptyGraph)
 	assert.NoError(t, err)

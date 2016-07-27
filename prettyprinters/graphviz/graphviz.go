@@ -107,16 +107,13 @@ type Options struct {
 	Rankdir string
 }
 
-// DefaultOptions() returns an Options struct with default values set.
+// DefaultOptions returns an Options struct with default values set.
 func DefaultOptions() Options {
-	return Options{
-		Splines: "spline",
-		Rankdir: "LR",
-	}
+	return Options{}
 }
 
-// A graphviz.Printer is a DigraphPrettyPrinter implementation for drawing
-// graphviz compatible DOT source code from a digraph.
+// Printer is a DigraphPrettyPrinter implementation for drawing graphviz
+// compatible DOT source code from a digraph.
 type Printer struct {
 	prettyprinters.DigraphPrettyPrinter
 	options       Options
@@ -124,7 +121,8 @@ type Printer struct {
 	clusterIndex  int
 }
 
-// Create a new graphviz.Printer with the options and print provider specified.
+// New will create a new graphviz.Printer with the options and print provider
+// specified.
 func New(opts Options, provider GraphvizPrintProvider) *Printer {
 	return &Printer{
 		options:       opts,
@@ -172,11 +170,11 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
 	attributes["label"] = escapeNewline(vertexLabel)
-	dotCode := fmt.Sprintf("\"%s\" %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
+	dotCode := fmt.Sprintf("%q %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
 	return dotCode, nil
 }
 
-// As with DrawNode() but for edges.
+// DrawEdge prints edge data in a fashion similar to DrawNode, bu.
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	sourceEntity := GraphEntity{id1, g.Get(id1)}
 	destEntity := GraphEntity{id2, g.Get(id2)}
@@ -194,50 +192,69 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 	}
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	attributes["label"] = escapeNewline(label)
-	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
+	return fmt.Sprintf("%q -> %q %s;\n",
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
 		buildAttributeString(attributes),
 	), nil
 }
 
+// StartSubgraph returns a string with the beginning of the subgraph cluster
 func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID prettyprinters.SubgraphID) (string, error) {
 	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", subgraphID.(int))
 	return clusterStart, nil
 }
 
+// FinishSubgraph provides the closing '}' for a subgraph
 func (*Printer) FinishSubgraph(*graph.Graph, prettyprinters.SubgraphID) (string, error) {
 	return "}\n", nil
 }
 
+// StartNodeSection would begin the node section of the output; DOT does not
+// require any special formatting for a node section so we return "".
 func (p *Printer) StartNodeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
+// FinishNodeSection would finish the section started by StartNodeSection.
+// Since DOT has no special formatting for starting/ending node sections we
+// return "".
 func (p *Printer) FinishNodeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
+// StartEdgeSection returns "" because DOT doesn't require anything special for
+// an edge section.
 func (p *Printer) StartEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
+// FinishEdgeSection returns "" because DOT doesnt' require anything special for
+// an edge section.
 func (p *Printer) FinishEdgeSection(*graph.Graph) (string, error) {
 	return "", nil
 }
 
+// StartPP begins the DOT output as an unnamed digraph.
 func (p *Printer) StartPP(*graph.Graph) (string, error) {
 	attrs := p.GraphAttributes()
 	return fmt.Sprintf("digraph {\n%s\n", attrs), nil
 }
 
+// GraphAttributes returns a string containing all of the global graph
+// attributes specified in Options.
 func (p *Printer) GraphAttributes() string {
 	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("splines = \"%s\";\n", p.options.Splines))
-	buffer.WriteString(fmt.Sprintf("rankdir = \"%s\";\n", p.options.Rankdir))
+	if p.options.Splines != "" {
+		buffer.WriteString(fmt.Sprintf("splines = %q;\n", p.options.Splines))
+	}
+	if p.options.Rankdir != "" {
+		buffer.WriteString(fmt.Sprintf("rankdir = %q;\n", p.options.Rankdir))
+	}
 	return buffer.String()
 }
 
+// FinishPP returns the closing '}' to end the DOT file.
 func (*Printer) FinishPP(*graph.Graph) (string, error) {
 	return "}", nil
 }
@@ -245,7 +262,7 @@ func (*Printer) FinishPP(*graph.Graph) (string, error) {
 func buildAttributeString(p PropertySet) string {
 	accumulator := "["
 	for k, v := range p {
-		accumulator = fmt.Sprintf("%s %s=\"%s\",", accumulator, k, v)
+		accumulator = fmt.Sprintf("%s %s=%q,", accumulator, k, v)
 	}
 	accumulator = accumulator[0 : len(accumulator)-1]
 	return fmt.Sprintf("%s]", accumulator)
