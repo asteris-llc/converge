@@ -16,10 +16,15 @@ package prettyprinters_test
 
 import (
 	"fmt"
+	"os"
+
+	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
+	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
 )
 
 func ExampleShowGraphWithDefaultProvider() {
@@ -70,4 +75,19 @@ func ExampleShowGraphWithIDProvider() {
 	// "a" -> "a/b" [ label=""];
 	// "a" -> "a/c" [ label=""];
 	// }
+}
+
+func ExampleLoadAndPrint() {
+	g, err := load.Load(context.Background(), os.Args[1])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.ResourcePreparer()))
+	dotCode, err := printer.Show(g)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(dotCode)
 }
