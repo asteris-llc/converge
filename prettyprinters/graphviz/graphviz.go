@@ -259,23 +259,29 @@ func (*Printer) FinishPP(*graph.Graph) (string, error) {
 	return "}", nil
 }
 
+// buildAttributeString takes a set of attribute keys and values and generates a
+// DOT format attribute set in the form of [key1="value1",key2="value2"...]
 func buildAttributeString(p PropertySet) string {
-	accumulator := "["
+	var attrs []string
 	for k, v := range p {
-		accumulator = fmt.Sprintf("%s %s=%q,", accumulator, k, v)
+		attribute := fmt.Sprintf(" %s=%q ", k, escapeNewline(v))
+		attrs = append(attrs, attribute)
 	}
-	accumulator = accumulator[0 : len(accumulator)-1]
-	return fmt.Sprintf("%s]", accumulator)
+	return fmt.Sprintf("[%s]", strings.Join(attrs, ","))
 }
 
+// DefaultProvider returns an empty BasicProvider as a convenience
 func DefaultProvider() GraphvizPrintProvider {
 	return BasicProvider{}
 }
 
 // A GraphIDProvider is a basic PrintProvider for Graphviz that uses the Node ID
 // from the digraph as the Vertex ID and label.
-type GraphIDProvider struct{}
+type GraphIDProvider struct {
+	BasicProvider
+}
 
+// IDProvider is a convenience function to generate a GraphIDProvider.
 func IDProvider() GraphvizPrintProvider {
 	return GraphIDProvider{}
 }
@@ -284,54 +290,53 @@ func IDProvider() GraphvizPrintProvider {
 // in the default format (%v) as the node label and id.
 type BasicProvider struct{}
 
+// VertexGetID provides a basic implementation that returns the %v quoted value
+// of the node.
 func (p BasicProvider) VertexGetID(e GraphEntity) (string, error) {
 	return fmt.Sprintf("%v", e.Value), nil
 }
 
+// VertexGetLabel provides a basic implementation that returns the %v quoted
+// value of the node (as with VertexGetID).
 func (p BasicProvider) VertexGetLabel(e GraphEntity) (string, error) {
 	return fmt.Sprintf("%v", e.Value), nil
 }
 
+// VertexGetProperties provides a basic implementation that returns an empty
+// property set.
 func (p BasicProvider) VertexGetProperties(GraphEntity) PropertySet {
-	return make(map[string]string)
+	return PropertySet{}
 }
 
+// EdgeGetLabel provides a basic implementation leaves the edge unlabeled.
 func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (string, error) {
 	return "", nil
 }
 
+// EdgeGetProperties provides a basic implementation that returns an empty
+// property set.
 func (p BasicProvider) EdgeGetProperties(GraphEntity, GraphEntity) PropertySet {
-	return make(map[string]string)
+	return PropertySet{}
 }
 
+// SubgraphMarker provides a basic implementation that returns a NOP.
 func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 	return SubgraphMarkerNOP
 }
 
+// VertexGetID provides a basic implementation that uses the ID from the graph
+// to generate the VertexID.
 func (p GraphIDProvider) VertexGetID(e GraphEntity) (string, error) {
 	return fmt.Sprintf("%v", e.Name), nil
 }
 
+// VertexGetLabel provides a basic implementation that uses the ID from the
+// graph to generate the Vertex Label.
 func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (string, error) {
 	return fmt.Sprintf("%v", e.Name), nil
 }
 
-func (p GraphIDProvider) VertexGetProperties(GraphEntity) PropertySet {
-	return make(map[string]string)
-}
-
-func (p GraphIDProvider) EdgeGetLabel(GraphEntity, GraphEntity) (string, error) {
-	return "", nil
-}
-
-func (p GraphIDProvider) EdgeGetProperties(GraphEntity, GraphEntity) PropertySet {
-	return make(map[string]string)
-}
-
-func (p GraphIDProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
-	return SubgraphMarkerNOP
-}
-
+// Replace embedded newlines with their escaped form.
 func escapeNewline(s string) string {
 	return strings.Replace(s, "\n", "\\n", -1)
 }
