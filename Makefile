@@ -1,5 +1,6 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
+DIRS = $(shell find . -name '*.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
@@ -34,7 +35,7 @@ samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 lint:
-	gometalinter --deadline=10m --vendor --tests --disable=dupl ./...
+	gometalinter --deadline=10m --vendor --tests --disable=dupl --disable=gotype ${DIRS}
 
 vendor: ${NONVENDOR}
 	glide install --strip-vcs --strip-vendor --update-vendored
