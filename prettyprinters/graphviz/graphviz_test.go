@@ -421,7 +421,7 @@ func parseDotEdge(e string) (string, string) {
 	destRaw := strings.TrimSpace(ef[1])
 	quoteWrapper := destRaw[0]
 	if quoteWrapper == '"' || quoteWrapper == '\'' {
-		destRaw = destRaw[1:len(destRaw)]
+		destRaw = destRaw[1:]
 		idx := strings.IndexByte(destRaw, quoteWrapper)
 		dest = destRaw[0:idx]
 	} else {
