@@ -20,13 +20,13 @@ import (
 	"github.com/asteris-llc/converge/graph"
 )
 
-// New() creates a new prettyprinter instance from the specified
+// New creates a new prettyprinter instance from the specified
 // DigraphPrettyPrinter instance.
 func New(p DigraphPrettyPrinter) Printer {
 	return Printer{pp: p}
 }
 
-// Show() will take the given graph and return a string representing the text
+// Show will take the given graph and return a string representing the text
 // output of the graph according to the associated prettyprinter.  If an error
 // is returned at any stage of the prettyprinting process it is returned
 // unmodified to the user.
@@ -67,10 +67,8 @@ func (p Printer) Show(g *graph.Graph) (string, error) {
 		return "", err
 	}
 
-	for idx := range edges {
-		src := edges[idx].Source
-		dst := edges[idx].Dest
-		if str, err := p.pp.DrawEdge(g, src, dst); err == nil {
+	for _, edge := range edges {
+		if str, err := p.pp.DrawEdge(g, edge.Source, edge.Dest); err == nil {
 			outputBuffer.WriteString(str)
 		} else {
 			return "", err
