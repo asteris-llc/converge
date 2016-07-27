@@ -46,7 +46,7 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (string, error)
 		return fmt.Sprintf("Module: %s", name), nil
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
-		return fmt.Sprintf("%s = \\\"%s\\\"", name, v.Default), nil
+		return fmt.Sprintf(`%s = \"%s\"`, name, v.Default), nil
 	default:
 		return name, nil
 	}
