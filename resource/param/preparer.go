@@ -23,8 +23,8 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	if val := render.Value(); val != nil {
-		return &Param{Value: *val}, nil
+	if val, present := render.Value(); present {
+		return &Param{Value: val}, nil
 	}
 
 	def, err := render.Render("default", p.Default)

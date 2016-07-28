@@ -18,6 +18,8 @@ import (
 	"errors"
 	"log"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -33,8 +35,12 @@ var validateCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		// set up execution context
+		ctx, cancel := context.WithCancel(context.Background())
+		GracefulExit(cancel)
+
 		for _, fname := range args {
-			_, err := load.Load(fname)
+			_, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}

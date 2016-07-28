@@ -17,6 +17,8 @@ package load_test
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
@@ -26,10 +28,10 @@ import (
 func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes("../samples/basicDependencies.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
 	require.NoError(t, err)
 
-	resolved, err := load.ResolveDependencies(nodes)
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
 	assert.NoError(t, err)
 	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/task.directory")
 }
@@ -37,10 +39,10 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 func TestDependencyResolverBadDependency(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes("../samples/errors/bad_requirement.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/errors/bad_requirement.hcl")
 	require.NoError(t, err)
 
-	_, err = load.ResolveDependencies(nodes)
+	_, err = load.ResolveDependencies(context.Background(), nodes)
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "nonexistent vertices in edges: root/task.nonexistent")
 	}
@@ -49,10 +51,10 @@ func TestDependencyResolverBadDependency(t *testing.T) {
 func TestDependencyResolverResolvesParam(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes("../samples/basicDependencies.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
 	require.NoError(t, err)
 
-	resolved, err := load.ResolveDependencies(nodes)
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
 	assert.NoError(t, err)
 
 	assert.Contains(t, resolved.DownEdges("root/task.directory"), "root/param.filename")

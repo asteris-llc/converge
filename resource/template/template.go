@@ -58,10 +58,5 @@ func (t *Template) Apply() error {
 		perm = stat.Mode()
 	}
 
-	err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
 }

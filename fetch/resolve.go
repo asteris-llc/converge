@@ -15,48 +15,37 @@
 package fetch
 
 import (
-	"net/url"
+	"log"
 	"path"
+	"strings"
 )
 
 // ResolveInContext resolves a path relative to another
-func ResolveInContext(loc, context string) (string, error) {
-	if loc == context {
-		return loc, nil
+func ResolveInContext(loc, ctx string) (string, error) {
+	log.Printf("[DEBUG] resolving URL %q in context of URL %q\n", loc, ctx)
+
+	var (
+		locScheme, locPath = parse(loc)
+		ctxScheme, ctxPath = parse(ctx)
+	)
+
+	if ctx != "" && loc != ctx && !path.IsAbs(locPath) && (locScheme == "" || locScheme == ctxScheme) {
+		locPath = path.Join(path.Dir(ctxPath), locPath)
+		locScheme = ctxScheme
 	}
 
-	url, err := parse(loc)
-	if err != nil {
-		return "", err
+	if locScheme == "" {
+		locScheme = "file"
 	}
 
-	if context == "" {
-		return url.String(), err
-	}
-
-	base, err := parse(context)
-	if err != nil {
-		return "", err
-	}
-
-	if !path.IsAbs(url.Path) && (url.Scheme == "" || url.Scheme == base.Scheme) {
-		newPath := path.Join(path.Dir(base.Path), url.Path)
-		*url = *base // shallow copy of the rest of the fields
-		url.Path = newPath
-	}
-
-	return url.String(), nil
+	return locScheme + "://" + locPath, nil
 }
 
-func parse(source string) (*url.URL, error) {
-	url, err := url.Parse(source)
-	if err != nil {
-		return url, err
+func parse(loc string) (scheme, path string) {
+	if strings.Contains(loc, "://") {
+		parts := strings.SplitN(loc, "://", 2)
+		return parts[0], parts[1]
 	}
 
-	if url.Scheme == "" {
-		url.Scheme = "file"
-	}
-
-	return url, nil
+	return "", loc
 }

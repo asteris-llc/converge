@@ -18,14 +18,18 @@ import (
 	"fmt"
 	"log"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/pkg/errors"
 )
 
 type source struct {
-	Parent string
-	Source string
+	Parent       string
+	ParentSource string
+	Source       string
 }
 
 func (s *source) String() string {
@@ -33,17 +37,23 @@ func (s *source) String() string {
 }
 
 // Nodes loads and parses all resources referred to by the provided url
-func Nodes(root string) (*graph.Graph, error) {
-	toLoad := []*source{{"root", root}}
+func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
+	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
 	out.Add("root", nil)
 
 	for len(toLoad) > 0 {
+		select {
+		case <-ctx.Done():
+			return nil, errors.New("interrupted")
+		default:
+		}
+
 		current := toLoad[0]
 		toLoad = toLoad[1:]
 
-		url, err := fetch.ResolveInContext(current.Source, root)
+		url, err := fetch.ResolveInContext(current.Source, current.ParentSource)
 		if err != nil {
 			return nil, err
 		}
@@ -51,14 +61,14 @@ func Nodes(root string) (*graph.Graph, error) {
 		log.Printf("[DEBUG] fetching %s\n", url)
 		content, err := fetch.Any(url)
 		if err != nil {
-			return nil, err // TODO: this should include the URL for context
+			return nil, errors.Wrap(err, url)
 		}
 
 		// TODO: signing and verification? Here or elsewhere?
 
 		resources, err := parse.Parse(content)
 		if err != nil {
-			return nil, err // TODO: this should include the URL for context
+			return nil, errors.Wrap(err, url)
 		}
 
 		for _, resource := range resources {
@@ -70,8 +80,9 @@ func Nodes(root string) (*graph.Graph, error) {
 				toLoad = append(
 					toLoad,
 					&source{
-						Parent: newID,
-						Source: resource.Source(),
+						Parent:       newID,
+						ParentSource: url,
+						Source:       resource.Source(),
 					},
 				)
 			}

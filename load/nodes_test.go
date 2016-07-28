@@ -18,23 +18,26 @@ import (
 	"sort"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNodesBasic(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	_, err := load.Nodes("../samples/basic.hcl")
+	_, err := load.Nodes(context.Background(), "../samples/basic.hcl")
 	assert.NoError(t, err)
 }
 
 func TestNodesSourceFile(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	graph, err := load.Nodes("../samples/sourceFile.hcl")
-	assert.NoError(t, err)
+	graph, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl")
+	require.NoError(t, err)
 
 	assert.NotNil(t, graph.Get("root/param.message"))
 	assert.NotNil(t, graph.Get("root/module.basic"))

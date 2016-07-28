@@ -1,12 +1,14 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
+DIRS = $(shell find . -name '*.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
+NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 
-converge: main.go cmd/* load/* resource/* vendor/**/*
+converge: $(shell find . -name '*.go')
 	go build .
 
-test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh ${PNGS}
+test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 	@echo
 	@echo === check validity of all samples ===
 	./converge validate samples/*.hcl
@@ -32,8 +34,16 @@ samples/%.png: samples/% converge
 	@echo === rendering $@ ===
 	./converge graph $< | dot -Tpng -o$@
 
-vendor: main.go cmd/* load/* resource/* exec/*
-	godep save -t ./...
+lint:
+	gometalinter --deadline=10m --vendor --tests --disable=dupl --disable=gotype ${DIRS}
+
+vendor: ${NONVENDOR}
+	glide install --strip-vcs --strip-vendor --update-vendored
+	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -type f -delete
+
+vendor-update: ${NOVENDOR}
+	glide update --strip-vcs --strip-vendor --update-vendored
+	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -type f -delete
 
 xcompile: test
 	@rm -rf build/
@@ -53,4 +63,4 @@ package: xcompile
     echo $$f; \
   done
 
-.PHONY: test gotest xcompile package samples/errors/*.hcl blackbox/*.sh
+.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint

@@ -54,12 +54,12 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			graph, err := load.Load(fname)
+			graph, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(graph, params)
+			rendered, err := render.Render(ctx, graph, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
@@ -84,7 +84,7 @@ real happens.`,
 				}
 			)
 
-			err = results.Walk(func(id string, val interface{}) error {
+			err = results.Walk(ctx, func(id string, val interface{}) error {
 				result, ok := val.(*apply.Result)
 				if !ok {
 					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)

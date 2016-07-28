@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 )
@@ -26,9 +28,9 @@ var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
-func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
-	return g.Transform(func(id string, out *graph.Graph) error {
-		if id == "root" { // root
+func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
+	return g.Transform(ctx, func(id string, out *graph.Graph) error {
+		if id == "root" { // skip root
 			return nil
 		}
 
@@ -37,35 +39,57 @@ func ResolveDependencies(g *graph.Graph) (*graph.Graph, error) {
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
-		deps, err := node.GetStringSlice("depends")
-		if err == nil {
+		// we have dependencies from various sources, but they're always IDs, so we
+		// can connect them pretty easily
+		for _, source := range []func(node *parse.Node) ([]string, error){getDepends, getParams} {
+			deps, err := source(node)
+			if err != nil {
+				return err
+			}
 			for _, dep := range deps {
 				out.Connect(id, graph.SiblingID(id, dep))
-			}
-		} else if err != parse.ErrNotFound {
-			return err
-		}
-
-		// get sibling dependencies. In this case, we need to look for template
-		// calls to `param`. Note that I am not proud of this approach. If you,
-		// future reader, have a better idea of what to do here: do it!
-		//
-		// But before you think "oh, I'll just render using a fake param function",
-		// remember that every time we add another function in render we'd have to
-		// add it here too. If you're reading this, let's have a discussion about
-		// what we should do to deduplicate. I'm not sure.
-		strings, err := node.GetStrings()
-		if err != nil {
-			return err
-		}
-
-		for _, s := range strings {
-			for _, match := range paramSeekerRe.FindAllString(s, -1) {
-				name := paramSeekerRe.FindStringSubmatch(match)[1]
-				out.Connect(id, graph.SiblingID(id, "param."+name))
 			}
 		}
 
 		return nil
 	})
+}
+
+func getDepends(node *parse.Node) ([]string, error) {
+	deps, err := node.GetStringSlice("depends")
+
+	switch err {
+	case parse.ErrNotFound:
+		return []string{}, nil
+
+	case nil:
+		return deps, nil
+
+	default:
+		return nil, err
+	}
+}
+
+func getParams(node *parse.Node) (out []string, err error) {
+	// get sibling dependencies. In this case, we need to look for template
+	// calls to `param`. Note that I am not proud of this approach. If you,
+	// future reader, have a better idea of what to do here: do it!
+	//
+	// But before you think "oh, I'll just render using a fake param function",
+	// remember that every time we add another function in render we'd have to
+	// add it here too. If you're reading this, let's have a discussion about
+	// what we should do to deduplicate. I'm not sure.
+	var strings []string
+	strings, err = node.GetStrings()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, s := range strings {
+		for _, match := range paramSeekerRe.FindAllString(s, -1) {
+			out = append(out, "param."+paramSeekerRe.FindStringSubmatch(match)[1])
+		}
+	}
+
+	return out, err
 }
