@@ -21,6 +21,8 @@ import (
 	osuser "os/user"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
@@ -121,7 +123,7 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	}
 	require.NoError(t, g.Validate())
 
-	return load.SetResources(g)
+	return load.SetResources(context.TODO(), g)
 }
 
 func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
