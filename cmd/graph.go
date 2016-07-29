@@ -26,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // graphCmd represents the graph command
@@ -56,7 +57,10 @@ You can pipe the output directly to the 'dot' command, for example:
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
-		printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.ResourcePreparer()))
+		provider := providers.ResourceProvider{}
+		provider.ShowParams = viper.GetBool("show-params")
+		dotPrinter := graphviz.New(graphviz.DefaultOptions(), provider)
+		printer := prettyprinters.New(dotPrinter)
 		dotCode, err := printer.Show(ctx, graph)
 		if err != nil {
 			fmt.Println(err)
@@ -68,5 +72,8 @@ You can pipe the output directly to the 'dot' command, for example:
 }
 
 func init() {
+	graphCmd.Flags().Bool("show-params", false, "also graph param dependencies")
+	viperBindPFlags(graphCmd.Flags())
+
 	RootCmd.AddCommand(graphCmd)
 }
