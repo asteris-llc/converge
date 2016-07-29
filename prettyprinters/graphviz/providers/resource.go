@@ -32,6 +32,18 @@ const preparerRootNode = "root"
 // ResourceProvider is the PrintProvider type for Preparer resources
 type ResourceProvider struct {
 	graphviz.GraphIDProvider
+	ShowParams bool
+}
+
+// VertexGetID returns a the Graph ID as the VertexID, possibly masking it
+// depending on the vertex type and configuration
+func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
+	switch e.Value.(type) {
+	case *param.Preparer:
+		return pp.ToggleVisible(pp.HiddenString(e.Name), p.ShowParams), nil
+	default:
+		return pp.VisibleString(e.Name), nil
+	}
 }
 
 // VertexGetLabel returns a vertex label based on the type of the preparer. The
@@ -57,7 +69,8 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
-		return pp.VisibleString(fmt.Sprintf(`%s = \"%s\"`, name, v.Default)), nil
+		paramStr := fmt.Sprintf(`%s = \"%s\"`, name, v.Default)
+		return pp.ToggleVisible(pp.VisibleString(paramStr), p.ShowParams), nil
 	default:
 		return pp.VisibleString(name), nil
 	}
@@ -68,9 +81,6 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 // and 'tab' for templates, and we set the entire root node to be invisible.
 func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
-	if e.Name == preparerRootNode {
-		properties["style"] = "invis"
-	}
 	switch e.Value.(type) {
 	case *shell.Preparer:
 		properties["shape"] = "component"
@@ -84,9 +94,6 @@ func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.P
 // originating from the Root node invisible.
 func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
-	if src.Name == preparerRootNode {
-		properties["style"] = "invis"
-	}
 	return properties
 }
 

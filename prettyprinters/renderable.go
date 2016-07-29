@@ -159,8 +159,8 @@ func SprintfHidden(fmtStr string, args ...interface{}) Renderable {
 
 // writeRenderable acts like bytes.Buffer.WriteString() but appends the
 // renderable string only if it's visible.
-func writeRenderable(b bytes.Buffer, r Renderable) {
-	if r.Visible() {
+func writeRenderable(b *bytes.Buffer, r Renderable) {
+	if !r.Visible() {
 		return
 	}
 	_, _ = b.WriteString(r.String())
