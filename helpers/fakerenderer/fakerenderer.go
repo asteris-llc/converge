@@ -16,14 +16,30 @@ package fakerenderer
 
 // FakeRenderer is a pass-through renderer for testing resources
 type FakeRenderer struct {
+	DotValue     string
+	ValuePresent bool
 }
 
 // Value returns a blank string
 func (fr *FakeRenderer) Value() (string, bool) {
-	return "", true
+	return fr.DotValue, fr.ValuePresent
 }
 
 // Render returns whatever content is passed in
 func (fr *FakeRenderer) Render(name, content string) (string, error) {
 	return content, nil
+}
+
+// New gets a default FakeRenderer
+func New() *FakeRenderer {
+	return new(FakeRenderer)
+}
+
+// NewWithValue gets a FakeRenderer with the appropriate value set
+func NewWithValue(val string) *FakeRenderer {
+	fr := New()
+	fr.DotValue = val
+	fr.ValuePresent = true
+
+	return fr
 }
