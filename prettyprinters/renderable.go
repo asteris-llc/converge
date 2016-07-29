@@ -7,8 +7,18 @@ import (
 
 // Renderable provides an interface for printable objects
 type Renderable interface {
+	// The Renderable interface should provide an instance of String() to render
+	// the object.  String() shall return the string-ified version of the object
+	// regardless of the current visibility of the Renderable.
 	fmt.Stringer
+
+	// Visible returns true if the object should be rendered, and false
+	// otherwise.  If a consumer chooses to ignore this value, the instance should
+	// still provide a valid string value.
 	Visible() bool
+
+	Hide()
+	Unhide()
 }
 
 // StringRenderable provides a Renderable wrapper around strings.
@@ -22,13 +32,17 @@ func (r *StringRenderable) Visible() bool {
 	return !r.Hidden
 }
 
-// GoStringer returns the contents of the string; if the value is hidden then
-// return an empty string (although this should not happen)
+// String returns the contents of the string
 func (r *StringRenderable) String() string {
-	if r.Hidden {
-		return ""
-	}
 	return r.Contents
+}
+
+func (r *StringRenderable) Hide() {
+	r.Hidden = true
+}
+
+func (r *StringRenderable) Unhide() {
+	r.Hidden = false
 }
 
 // VisibleString creates a new StringRenderable that is visible
@@ -45,6 +59,13 @@ func HiddenString(s string) *StringRenderable {
 		Hidden:   true,
 		Contents: s,
 	}
+}
+
+func RenderableString(s string, visible bool) *StringRenderable {
+	if visible {
+		return VisibleString(s)
+	}
+	return HiddenString(s)
 }
 
 // WrappedRenderable wraps a functor-like interface around Renderable, allowing
@@ -66,6 +87,14 @@ func (w *WrappedRenderable) String() string {
 	return w.show()
 }
 
+func (w *WrappedRenderable) Hide() {
+	w.baseValue.Hide()
+}
+
+func (w *WrappedRenderable) Unhide() {
+	w.baseValue.Unhide()
+}
+
 // ApplyRenderable allows you to apply an arbitrary string transformation
 func ApplyRenderable(r Renderable, f func(string) string) *WrappedRenderable {
 	return &WrappedRenderable{
@@ -73,60 +102,6 @@ func ApplyRenderable(r Renderable, f func(string) string) *WrappedRenderable {
 		show: func() string {
 			return f(r.String())
 		},
-	}
-}
-
-// VisibilityWrapper allows you to easily toggle visibility of a Renderer on or
-// off. Using this to enable visibility on a Renderable that is invisible may
-// result in undefined behavior if String() is undefined on the underlying
-// Renderable when it is not visible.
-type VisibilityWrapper struct {
-	baseValue        Renderable
-	visibilityToggle *bool
-}
-
-// Visible will return True or False depending on the wrappers configured
-// setting, or if none is provided, will default to the underlying Renderable's
-// visibility settings.
-func (v *VisibilityWrapper) Visible() bool {
-	if v.visibilityToggle == nil {
-		return v.baseValue.Visible()
-	}
-	return *v.visibilityToggle
-}
-
-// String will return the underlying Renderable's string value.  This may not be
-// defined if the underlying Renderable string is not defined (e.g. when using
-// the wrapper to force visibility)
-func (v *VisibilityWrapper) String() string {
-	return v.baseValue.String()
-}
-
-// ToggleVisible toggles the visibility settings for a Renderable.
-func ToggleVisible(r Renderable, visible bool) *VisibilityWrapper {
-	return &VisibilityWrapper{
-		baseValue:        r,
-		visibilityToggle: &visible,
-	}
-}
-
-// Hide sets the Renderable to invisible
-func Hide(r Renderable) *VisibilityWrapper {
-	return ToggleVisible(r, false)
-}
-
-// Unhide sets the renderable to visible
-func Unhide(r Renderable) *VisibilityWrapper {
-	return ToggleVisible(r, true)
-}
-
-// Untoggle removes all layers of toggling and returns the underlying renderable.
-func Untoggle(r Renderable) Renderable {
-	switch r.(type) {
-	case *VisibilityWrapper:
-		return Untoggle(r.(*VisibilityWrapper).baseValue)
-	default:
-		return r
 	}
 }
 
@@ -164,4 +139,13 @@ func writeRenderable(b *bytes.Buffer, r Renderable) {
 		return
 	}
 	_, _ = b.WriteString(r.String())
+}
+
+func SetVisibility(r Renderable, visible bool) Renderable {
+	if visible {
+		r.Unhide()
+	} else {
+		r.Hide()
+	}
+	return r
 }
