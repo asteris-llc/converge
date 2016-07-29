@@ -37,7 +37,7 @@ func TestPreparerValidateValid(t *testing.T) {
 		Apply: "echo test",
 	}
 
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+	_, err := sp.Prepare(fakerenderer.New())
 
 	assert.NoError(t, err)
 }
@@ -49,7 +49,7 @@ func TestPreparerValidateInvalidCheck(t *testing.T) {
 		Check: "if do then; esac",
 	}
 
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+	_, err := sp.Prepare(fakerenderer.New())
 
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "syntax error: exit status 2")
@@ -63,7 +63,7 @@ func TestPreparerValidateInvalidApply(t *testing.T) {
 		Apply: "if do then; esac",
 	}
 
-	_, err := sp.Prepare(&fakerenderer.FakeRenderer{})
+	_, err := sp.Prepare(fakerenderer.New())
 
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "syntax error: exit status 2")
