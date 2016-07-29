@@ -24,6 +24,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/acmacalister/skittles"
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
@@ -56,17 +57,22 @@ can be done separately to see what needs to be changed before execution.`,
 		for _, fname := range args {
 			log.Printf("[INFO] planning %s\n", fname)
 
-			graph, err := load.Load(ctx, fname)
+			loaded, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, graph, params)
+			rendered, err := render.Render(ctx, loaded, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
 
-			results, err := plan.Plan(ctx, rendered)
+			trimmed, err := graph.TrimSubtrees(ctx, rendered)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not trim subtrees: %s\n", fname, err)
+			}
+
+			results, err := plan.Plan(ctx, trimmed)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
