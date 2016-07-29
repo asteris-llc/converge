@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
+	"github.com/pkg/errors"
 )
 
 // Values for rendering
@@ -62,7 +63,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 
 		rendered, err := res.Prepare(renderer)
 		if err != nil {
-			return err
+			return errors.Wrap(err, id)
 		}
 
 		out.Add(id, rendered)

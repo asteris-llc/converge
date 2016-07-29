@@ -53,7 +53,7 @@ func TestRenderParam(t *testing.T) {
 	g := graph.New()
 	g.Add("root", nil)
 	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
-	g.Add("root/param.destination", &param.Preparer{Default: "1"})
+	g.Add("root/param.destination", &param.Preparer{Default: newDefault("1")})
 
 	g.Connect("root", "root/file.content.x")
 	g.Connect("root", "root/param.destination")
@@ -76,7 +76,7 @@ func TestRenderValues(t *testing.T) {
 	g := graph.New()
 	g.Add("root", nil)
 	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
-	g.Add("root/param.destination", &param.Preparer{Default: "1"})
+	g.Add("root/param.destination", &param.Preparer{Default: newDefault("1")})
 
 	g.Connect("root", "root/file.content.x")
 	g.Connect("root", "root/param.destination")
@@ -91,4 +91,8 @@ func TestRenderValues(t *testing.T) {
 	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, node))
 
 	assert.Equal(t, "2", content.Destination)
+}
+
+func newDefault(x string) *string {
+	return &x
 }
