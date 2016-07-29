@@ -40,7 +40,7 @@ type ResourceProvider struct {
 func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
 	switch e.Value.(type) {
 	case *param.Preparer:
-		return pp.ToggleVisible(pp.VisibleString(e.Name), p.ShowParams), nil
+		return pp.RenderableString(e.Name, p.ShowParams), nil
 	default:
 		return pp.VisibleString(e.Name), nil
 	}
@@ -70,7 +70,7 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
 		paramStr := fmt.Sprintf(`%s = \"%s\"`, name, *v.Default)
-		return pp.ToggleVisible(pp.VisibleString(paramStr), p.ShowParams), nil
+		return pp.RenderableString(paramStr, p.ShowParams), nil
 	default:
 		return pp.VisibleString(name), nil
 	}

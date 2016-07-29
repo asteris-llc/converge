@@ -37,13 +37,13 @@ func Test_VisibleString_SetsString(t *testing.T) {
 
 func Test_HiddenString_SetsHiddenToTrue(t *testing.T) {
 	r := pp.HiddenString("test string")
-	assert.True(t, r.Hidden)
+	assert.False(t, r.Visible())
 }
 
 func Test_HiddenString_SetsString(t *testing.T) {
 	expected := "Test string"
 	r := pp.HiddenString(expected)
-	assert.Equal(t, expected, r.Contents)
+	assert.Equal(t, expected, r.String())
 }
 
 func TestStringRenderable_VisibleReturnsFalseWhenHidden(t *testing.T) {
@@ -63,8 +63,8 @@ func TestStringRenderable_String_ReturnsStringWhenVisible(t *testing.T) {
 }
 
 func TestStringRenderable_String_ReturnsStringWhenHidden(t *testing.T) {
-	expected := ""
-	r := pp.HiddenString("Test string")
+	expected := "Test String"
+	r := pp.HiddenString(expected)
 	assert.Equal(t, expected, r.String())
 }
 
@@ -126,45 +126,12 @@ func TestWrappedRenderable_PushesCallsOntoAStack(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(expected, calls))
 }
 
-func TestVisibilityWrapper_ReturnsBaseVisibilityWhenNilToggle(t *testing.T) {
-	assert.True(t, pp.Untoggle(pp.VisibleString("test string")).Visible())
-	assert.False(t, pp.Untoggle(pp.HiddenString("test string")).Visible())
-}
-
-func TestVisibilityWrapper_ReturnsVisibleWhenVisibilityToggledOn(t *testing.T) {
-	assert.True(t, pp.Unhide(pp.HiddenString("test string")).Visible())
-}
-
-func TestVisibilityWrapper_ReturnsHiddenWhenVisibilityToggledOn(t *testing.T) {
-	assert.False(t, pp.Hide(pp.VisibleString("test string")).Visible())
-}
-
-func TestVisibilityWrapper_WorksWithNestedValues(t *testing.T) {
-	wrapped := pp.VisibleString("test string")
-	wrapper := pp.Untoggle(wrapped)
-	assert.True(t, wrapper.Visible())
-	wrapper = pp.Hide(wrapper)
-	assert.False(t, wrapper.Visible())
-	wrapper = pp.Unhide(wrapper)
-	assert.True(t, wrapper.Visible())
-	wrapper = pp.Hide(wrapper)
-	assert.False(t, wrapper.Visible())
-}
-
-func TestVisibilityWrapper_UntoggleStripsLayersOfWrapping(t *testing.T) {
-	wrapper := pp.Untoggle(pp.VisibleString("test string"))
-	for i := 0; i < 100; i++ {
-		wrapper = pp.Hide(wrapper)
-	}
-	assert.True(t, pp.Untoggle(wrapper).Visible())
-}
-
 func ExampleApplyRenderable() {
 	o := pp.HiddenString(" foo ")
 	t := pp.ApplyRenderable(pp.ApplyRenderable(o, strings.ToUpper), strings.TrimSpace)
 	fmt.Println("Before making o visible:")
 	fmt.Println(t)
-	o.Hidden = false
+	o.Unhide()
 	fmt.Println("After making o visible:")
 	fmt.Println(t)
 

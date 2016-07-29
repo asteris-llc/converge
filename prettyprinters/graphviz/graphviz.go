@@ -201,7 +201,7 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 		buildAttributeString(attributes)),
 	)
 	visible := sourceVertex.Visible() && destVertex.Visible()
-	return pp.ToggleVisible(edgeStr, visible), nil
+	return pp.SetVisibility(edgeStr, visible), nil
 }
 
 // StartSubgraph returns a string with the beginning of the subgraph cluster
