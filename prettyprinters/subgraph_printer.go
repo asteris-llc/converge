@@ -188,29 +188,29 @@ func addNodeToSubgraph(subgraphs SubgraphMap, subgraphID SubgraphID, vertexID st
 // calling StartSubgraph() and FinishSubgraph before and after to ensure that
 // the returned string contains any prefix/postfix additions defined by the
 // printer.
-func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (string, error) {
+func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (*StringRenderable, error) {
 	var buffer bytes.Buffer
 	subgraphNodes := subgraph.Nodes
 	if nil == subgraph.StartNode {
-		return "", errors.New("Cannot draw subgraph starting at nil vertex")
+		return nil, errors.New("Cannot draw subgraph starting at nil vertex")
 	}
 	if str, err := p.pp.StartSubgraph(g, *subgraph.StartNode, subgraph.ID); err == nil {
-		buffer.WriteString(str)
+		writeRenderable(buffer, str)
 	} else {
-		return "", err
+		return nil, err
 	}
 
 	for idx := range subgraphNodes {
 		if str, err := p.pp.DrawNode(g, subgraphNodes[idx]); err == nil {
-			buffer.WriteString(str)
+			writeRenderable(buffer, str)
 		} else {
-			return "", err
+			return nil, err
 		}
 	}
 
 	if str, err := p.pp.FinishSubgraph(g, id); err == nil {
-		buffer.WriteString(str)
+		writeRenderable(buffer, str)
 	}
 
-	return buffer.String(), nil
+	return VisibleString(buffer.String()), nil
 }

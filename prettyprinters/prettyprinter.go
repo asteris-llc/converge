@@ -39,14 +39,14 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	p.loadSubgraphs(ctx, g, subgraphs)
 	rootNodes := subgraphs[SubgraphBottomID].Nodes
 	if str, err := p.pp.StartPP(g); err == nil {
-		outputBuffer.WriteString(str)
+		writeRenderable(outputBuffer, str)
 	} else {
 		return "", err
 	}
 
 	for _, node := range rootNodes {
 		if str, err := p.pp.DrawNode(g, node); err == nil {
-			outputBuffer.WriteString(str)
+			writeRenderable(outputBuffer, str)
 		} else {
 			return "", err
 		}
@@ -58,20 +58,20 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 		}
 
 		if str, err := p.drawSubgraph(g, graphID, graph); err == nil {
-			outputBuffer.WriteString(str)
+			writeRenderable(outputBuffer, str)
 		} else {
 			return "", err
 		}
 	}
 
 	if str, err := p.drawEdges(g); err == nil {
-		outputBuffer.WriteString(str)
+		writeRenderable(outputBuffer, str)
 	} else {
 		return "", err
 	}
 
 	if str, err := p.pp.FinishPP(g); err == nil {
-		outputBuffer.WriteString(str)
+		writeRenderable(outputBuffer, str)
 	} else {
 		return "", err
 	}
@@ -79,29 +79,29 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	return outputBuffer.String(), nil
 }
 
-func (p Printer) drawEdges(g *graph.Graph) (string, error) {
+func (p Printer) drawEdges(g *graph.Graph) (*StringRenderable, error) {
 	var outputBuffer bytes.Buffer
 	edges := g.Edges()
 	if str, err := p.pp.StartEdgeSection(g); err == nil {
-		outputBuffer.WriteString(str)
+		writeRenderable(outputBuffer, str)
 	} else {
-		return "", err
+		return nil, err
 	}
 
 	for _, edge := range edges {
 		if str, err := p.pp.DrawEdge(g, edge.Source, edge.Dest); err == nil {
-			outputBuffer.WriteString(str)
+			writeRenderable(outputBuffer, str)
 		} else {
-			return "", err
+			return nil, err
 		}
 	}
 
 	if str, err := p.pp.FinishEdgeSection(g); err == nil {
-		outputBuffer.WriteString(str)
+		writeRenderable(outputBuffer, str)
 	} else {
-		return "", err
+		return nil, err
 	}
-	return outputBuffer.String(), nil
+	return VisibleString(outputBuffer.String()), nil
 }
 
 // Printer is the top-level structure for a pretty printer.
