@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template_test
+package content_test
 
 import (
 	"fmt"
@@ -21,23 +21,23 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/template"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestTemplateInterface(t *testing.T) {
+func TestContentInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Task)(nil), new(template.Template))
+	assert.Implements(t, (*resource.Task)(nil), new(content.Content))
 }
 
-func TestTemplateCheckEmptyFile(t *testing.T) {
+func TestContentCheckEmptyFile(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpfile.Name(),
 		Content:     "this is a test",
 	}
@@ -48,12 +48,12 @@ func TestTemplateCheckEmptyFile(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestTemplateCheckEmptyDir(t *testing.T) {
+func TestContentCheckEmptyDir(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "test-check-empty-dir")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpdir,
 		Content:     "this is a test",
 	}
@@ -65,12 +65,12 @@ func TestTemplateCheckEmptyDir(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			fmt.Sprintf("cannot template %q, is a directory", tmpdir),
+			fmt.Sprintf("cannot content %q, is a directory", tmpdir),
 		)
 	}
 }
 
-func TestTemplateCheckContentGood(t *testing.T) {
+func TestContentCheckContentGood(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-content-good")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
@@ -79,7 +79,7 @@ func TestTemplateCheckContentGood(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, tmpfile.Sync())
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpfile.Name(),
 		Content:     "this is a test",
 	}
@@ -90,12 +90,12 @@ func TestTemplateCheckContentGood(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestTemplateApply(t *testing.T) {
+func TestContentApply(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpfile.Name(),
 		Content:     "1",
 	}
@@ -108,12 +108,12 @@ func TestTemplateApply(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestTemplateApplyPermissionDefault(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "test-template-apply-permission")
+func TestContentApplyPermissionDefault(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "test-content-apply-permission")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpfile.Name(),
 		Content:     "1",
 	}
@@ -128,15 +128,15 @@ func TestTemplateApplyPermissionDefault(t *testing.T) {
 	assert.Equal(t, os.FileMode(0600), perm)
 }
 
-func TestTemplateApplyKeepPermission(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "test-template-keep-permission")
+func TestContentApplyKeepPermission(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "test-content-keep-permission")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
 
 	var perm os.FileMode = 0777
 	require.NoError(t, os.Chmod(tmpfile.Name(), perm))
 
-	tmpl := template.Template{
+	tmpl := content.Content{
 		Destination: tmpfile.Name(),
 		Content:     "1",
 	}
