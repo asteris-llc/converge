@@ -92,7 +92,7 @@ param x {
 	preparer, ok := item.(*param.Preparer)
 
 	require.True(t, ok, fmt.Sprintf("preparer was %T, not *param.Preparer", item))
-	assert.Equal(t, "default", preparer.Default)
+	assert.Equal(t, "default", *preparer.Default)
 }
 
 func TestSetResourcesModules(t *testing.T) {
