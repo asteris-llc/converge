@@ -23,8 +23,8 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/param"
-	"github.com/asteris-llc/converge/resource/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,18 +33,18 @@ func TestRenderSingleNode(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root/template.x", &template.Preparer{Destination: "{{1}}", Content: "{{2}}"})
+	g.Add("root/file.content.x", &content.Preparer{Destination: "{{1}}", Content: "{{2}}"})
 
 	rendered, err := render.Render(context.Background(), g, render.Values{})
 	assert.NoError(t, err)
 
-	node := rendered.Get("root/template.x")
+	node := rendered.Get("root/file.content.x")
 
-	tmpl, ok := node.(*template.Template)
-	require.True(t, ok, fmt.Sprintf("expected root to be a *template.Template, but it was %T", node))
+	content, ok := node.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", content, node))
 
-	assert.Equal(t, "1", tmpl.Destination)
-	assert.Equal(t, "2", tmpl.Content)
+	assert.Equal(t, "1", content.Destination)
+	assert.Equal(t, "2", content.Content)
 }
 
 func TestRenderParam(t *testing.T) {
@@ -52,22 +52,22 @@ func TestRenderParam(t *testing.T) {
 
 	g := graph.New()
 	g.Add("root", nil)
-	g.Add("root/template.x", &template.Preparer{Destination: "{{param `destination`}}"})
+	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
 	g.Add("root/param.destination", &param.Preparer{Default: "1"})
 
-	g.Connect("root", "root/template.x")
+	g.Connect("root", "root/file.content.x")
 	g.Connect("root", "root/param.destination")
-	g.Connect("root/template.x", "root/param.destination")
+	g.Connect("root/file.content.x", "root/param.destination")
 
 	rendered, err := render.Render(context.Background(), g, render.Values{})
 	require.NoError(t, err)
 
-	node := rendered.Get("root/template.x")
+	node := rendered.Get("root/file.content.x")
 
-	tmpl, ok := node.(*template.Template)
-	require.True(t, ok, fmt.Sprintf("expected root to be a *template.Template, but it was %T", node))
+	content, ok := node.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", content, node))
 
-	assert.Equal(t, "1", tmpl.Destination)
+	assert.Equal(t, "1", content.Destination)
 }
 
 func TestRenderValues(t *testing.T) {
@@ -75,20 +75,20 @@ func TestRenderValues(t *testing.T) {
 
 	g := graph.New()
 	g.Add("root", nil)
-	g.Add("root/template.x", &template.Preparer{Destination: "{{param `destination`}}"})
+	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
 	g.Add("root/param.destination", &param.Preparer{Default: "1"})
 
-	g.Connect("root", "root/template.x")
+	g.Connect("root", "root/file.content.x")
 	g.Connect("root", "root/param.destination")
-	g.Connect("root/template.x", "root/param.destination")
+	g.Connect("root/file.content.x", "root/param.destination")
 
 	rendered, err := render.Render(context.Background(), g, render.Values{"destination": 2})
 	require.NoError(t, err)
 
-	node := rendered.Get("root/template.x")
+	node := rendered.Get("root/file.content.x")
 
-	tmpl, ok := node.(*template.Template)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", tmpl, node))
+	content, ok := node.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, node))
 
-	assert.Equal(t, "2", tmpl.Destination)
+	assert.Equal(t, "2", content.Destination)
 }
