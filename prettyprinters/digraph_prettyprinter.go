@@ -31,11 +31,11 @@ type DigraphPrettyPrinter interface {
 
 	// StartPP should take a graph and shall return a string used to start the
 	// graph output, or an error which will be returned to the user.
-	StartPP(graph *graph.Graph) (string, error)
+	StartPP(graph *graph.Graph) (Renderable, error)
 
 	// FinishPP will be given a graph and shall return a string used to finalize
 	// graph output, or an error which will be returned to the user.
-	FinishPP(graph *graph.Graph) (string, error)
+	FinishPP(graph *graph.Graph) (Renderable, error)
 
 	// MarkNode() is a function used to identify the boundaries of subgraphs
 	// within the larger graph.  MarkNode() is called with a graph and the id of a
@@ -51,40 +51,40 @@ type DigraphPrettyPrinter interface {
 	// subgraph, and the SubgraphID returned as part of MarkNode().  It should
 	// return the string used to start the subgraph or an error that will be
 	// returned to the user.
-	StartSubgraph(graph *graph.Graph, nodeID string, subgraphID SubgraphID) (string, error)
+	StartSubgraph(graph *graph.Graph, nodeID string, subgraphID SubgraphID) (Renderable, error)
 
 	// FinishSubgraph will be given a graph and a SubgraphID returned by MarkNode
 	// and should return a string used to end a subgraph, or an error that will be
 	// returned to the user.
-	FinishSubgraph(graph *graph.Graph, subgraphID SubgraphID) (string, error)
+	FinishSubgraph(graph *graph.Graph, subgraphID SubgraphID) (Renderable, error)
 
 	// StartNodeSection will be given a graph and should return a string used to
 	// start the node section, or an error that will be returned to the user.
-	StartNodeSection(graph *graph.Graph) (string, error)
+	StartNodeSection(graph *graph.Graph) (Renderable, error)
 
 	// FinishNodeSection will be given a graph and should return a string used to
 	// finish the node section in the final output, or an error that will be
 	// returned to the user.
-	FinishNodeSection(graph *graph.Graph) (string, error)
+	FinishNodeSection(graph *graph.Graph) (Renderable, error)
 
 	// DrawNode will be called once for each node in the graph.  The function will
 	// be given a graph and a string ID for the current node in the graph, and
 	// should return a string representing the node in the final output, or an
 	// error that will be returned to the user.
-	DrawNode(graph *graph.Graph, nodeID string) (string, error)
+	DrawNode(graph *graph.Graph, nodeID string) (Renderable, error)
 
 	// StartEdgeSection will be given a graph and should return a string used to
 	// start the edge section, or an error that will be returned to the user.
-	StartEdgeSection(graph *graph.Graph) (string, error)
+	StartEdgeSection(graph *graph.Graph) (Renderable, error)
 
 	// FinishEdgeSection will be given a graph and should return a string used to
 	// finish the edge section in the final output, or an error that will be
 	// returned to the user.
-	FinishEdgeSection(graph *graph.Graph) (string, error)
+	FinishEdgeSection(graph *graph.Graph) (Renderable, error)
 
 	// DrawEdge will be called once for each edge in the graph.  It is called with
 	// a graph, the ID of the source vertex, and the ID of the target vertex.  It
 	// should return a string representing the edge in the final output, or an
 	// error that will be returned to the user.
-	DrawEdge(graph *graph.Graph, srcNodeID string, dstNodeID string) (string, error)
+	DrawEdge(graph *graph.Graph, srcNodeID string, dstNodeID string) (Renderable, error)
 }

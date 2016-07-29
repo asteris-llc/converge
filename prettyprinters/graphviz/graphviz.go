@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/prettyprinters"
+	pp "github.com/asteris-llc/converge/prettyprinters"
 )
 
 // SubgraphMarkerKey is a type alias for an integer and represents the state
@@ -60,13 +60,13 @@ type PrintProvider interface {
 	// Given a graph entity, this function shall return a unique ID that will be
 	// used for the vertex.  Note that this is not used for display, see
 	// VertexGetLabel() for information on vertex displays.
-	VertexGetID(GraphEntity) (string, error)
+	VertexGetID(GraphEntity) (pp.Renderable, error)
 
 	// Defines the label associated with the vertex.  This will be the name
 	// applied to the vertex when it is drawn.  Labels are stored in the vertex
 	// attribute list automatically.  The 'label' parameter should therefore not
 	// be returned as part of VertexGetProperties().
-	VertexGetLabel(GraphEntity) (string, error)
+	VertexGetLabel(GraphEntity) (pp.Renderable, error)
 
 	// VertexGetProperties allows the PrintProvider to provide additional
 	// attributes to a given vertex.  Note that the 'label' attribute is special
@@ -75,7 +75,7 @@ type PrintProvider interface {
 
 	// Defines the label associated with the edge formed between two graph
 	// entities.  This will be the name applied to the edge when it is drawn.
-	EdgeGetLabel(GraphEntity, GraphEntity) (string, error)
+	EdgeGetLabel(GraphEntity, GraphEntity) (pp.Renderable, error)
 
 	// EdgeGetProperties allows the PrintProvider to provide additional
 	// attributes to a given edge.  Note that the 'label' attribute is special
@@ -112,7 +112,7 @@ func DefaultOptions() Options {
 // Printer is a DigraphPrettyPrinter implementation for drawing graphviz
 // compatible DOT source code from a digraph.
 type Printer struct {
-	prettyprinters.DigraphPrettyPrinter
+	pp.DigraphPrettyPrinter
 	options       Options
 	printProvider PrintProvider
 	clusterIndex  int
@@ -130,19 +130,19 @@ func New(opts Options, provider PrintProvider) *Printer {
 
 // MarkNode will call SubgraphMarker() on the print provider to determine
 // whether the current node is the beginning of a subgraph.
-func (p *Printer) MarkNode(g *graph.Graph, id string) *prettyprinters.SubgraphMarker {
+func (p *Printer) MarkNode(g *graph.Graph, id string) *pp.SubgraphMarker {
 	entity := GraphEntity{Name: id, Value: g.Get(id)}
 	sgState := p.printProvider.SubgraphMarker(entity)
 	subgraphID := p.clusterIndex
 	switch sgState {
 	case SubgraphMarkerStart:
 		p.clusterIndex++
-		return &prettyprinters.SubgraphMarker{
+		return &pp.SubgraphMarker{
 			SubgraphID: subgraphID,
 			Start:      true,
 		}
 	case SubgraphMarkerEnd:
-		return &prettyprinters.SubgraphMarker{
+		return &pp.SubgraphMarker{
 			SubgraphID: subgraphID,
 			Start:      false,
 		}
@@ -154,21 +154,21 @@ func (p *Printer) MarkNode(g *graph.Graph, id string) *prettyprinters.SubgraphMa
 
 // DrawNode prints node data by calling VertexGetID(), VertexGetLabel() and
 // VertexGetProperties() on the associated print provider.
-func (p *Printer) DrawNode(g *graph.Graph, id string) (string, error) {
+func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	graphValue := g.Get(id)
 	graphEntity := GraphEntity{id, graphValue}
 	vertexID, err := p.printProvider.VertexGetID(graphEntity)
 	if err != nil {
-		return "", err
+		return pp.HiddenString(""), err
 	}
 	vertexLabel, err := p.printProvider.VertexGetLabel(graphEntity)
 	if err != nil {
-		return "", err
+		return pp.HiddenString(""), err
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
-	attributes["label"] = escapeNewline(vertexLabel)
+	maybeSetProperty(attributes, "label", escapeNewline(vertexLabel))
 	dotCode := fmt.Sprintf("\"%s\" %s;\n", escapeNewline(vertexID), buildAttributeString(attributes))
-	return dotCode, nil
+	return pp.VisibleString(dotCode), nil
 }
 
 // DrawEdge prints edge data in a fashion similar to DrawNode, bu.
@@ -188,7 +188,7 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 		return "", err
 	}
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
-	attributes["label"] = escapeNewline(label)
+	maybeSetProperty(attributes, "label", escapeNewline(label))
 	return fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
@@ -197,13 +197,13 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (string, error) {
 }
 
 // StartSubgraph returns a string with the beginning of the subgraph cluster
-func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID prettyprinters.SubgraphID) (string, error) {
+func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID pp.SubgraphID) (string, error) {
 	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", subgraphID.(int))
 	return clusterStart, nil
 }
 
 // FinishSubgraph provides the closing '}' for a subgraph
-func (*Printer) FinishSubgraph(*graph.Graph, prettyprinters.SubgraphID) (string, error) {
+func (*Printer) FinishSubgraph(*graph.Graph, pp.SubgraphID) (string, error) {
 	return "}\n", nil
 }
 
@@ -289,14 +289,14 @@ type BasicProvider struct{}
 
 // VertexGetID provides a basic implementation that returns the %v quoted value
 // of the node.
-func (p BasicProvider) VertexGetID(e GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Value), nil
+func (p BasicProvider) VertexGetID(e GraphEntity) (*pp.StringRenderable, error) {
+	return pp.VisibleString(fmt.Sprintf("%v", e.Value)), nil
 }
 
 // VertexGetLabel provides a basic implementation that returns the %v quoted
 // value of the node (as with VertexGetID).
-func (p BasicProvider) VertexGetLabel(e GraphEntity) (string, error) {
-	return fmt.Sprintf("%v", e.Value), nil
+func (p BasicProvider) VertexGetLabel(e GraphEntity) (*pp.StringRenderable, error) {
+	return pp.VisibleString(fmt.Sprintf("%v", e.Value)), nil
 }
 
 // VertexGetProperties provides a basic implementation that returns an empty
@@ -306,8 +306,8 @@ func (p BasicProvider) VertexGetProperties(GraphEntity) PropertySet {
 }
 
 // EdgeGetLabel provides a basic implementation leaves the edge unlabeled.
-func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (string, error) {
-	return "", nil
+func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (*pp.StringRenderable, error) {
+	return pp.HiddenString(""), nil
 }
 
 // EdgeGetProperties provides a basic implementation that returns an empty
@@ -323,17 +323,26 @@ func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 
 // VertexGetID provides a basic implementation that uses the ID from the graph
 // to generate the VertexID.
-func (p GraphIDProvider) VertexGetID(e GraphEntity) (string, error) {
-	return e.Name, nil
+func (p GraphIDProvider) VertexGetID(e GraphEntity) (*pp.StringRenderable, error) {
+	return pp.VisibleString(e.Name), nil
 }
 
 // VertexGetLabel provides a basic implementation that uses the ID from the
 // graph to generate the Vertex Label.
-func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (string, error) {
-	return e.Name, nil
+func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (*pp.StringRenderable, error) {
+	return pp.VisibleString(e.Name), nil
 }
 
 // Replace embedded newlines with their escaped form.
-func escapeNewline(s string) string {
-	return strings.Replace(s, "\n", "\\n", -1)
+func escapeNewline(r pp.Renderable) pp.Renderable {
+	return pp.ApplyRenderable(r, func(s string) string {
+		return strings.Replace(s, "\n", "\\n", -1)
+	})
+}
+
+func maybeSetProperty(p PropertySet, key string, r pp.Renderable) PropertySet {
+	if r.Visible() {
+		p[key] = r.String()
+	}
+	return p
 }
