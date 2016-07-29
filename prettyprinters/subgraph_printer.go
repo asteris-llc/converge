@@ -189,7 +189,7 @@ func addNodeToSubgraph(subgraphs SubgraphMap, subgraphID SubgraphID, vertexID st
 // the returned string contains any prefix/postfix additions defined by the
 // printer.
 func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (*StringRenderable, error) {
-	var buffer bytes.Buffer
+	buffer := new(bytes.Buffer)
 	subgraphNodes := subgraph.Nodes
 	if nil == subgraph.StartNode {
 		return nil, errors.New("Cannot draw subgraph starting at nil vertex")

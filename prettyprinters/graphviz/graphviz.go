@@ -251,10 +251,10 @@ func (p *Printer) StartPP(*graph.Graph) (pp.Renderable, error) {
 func (p *Printer) GraphAttributes() string {
 	var buffer bytes.Buffer
 	if p.options.Splines != "" {
-		buffer.WriteString(fmt.Sprintf("splines = \"%s\";\n", p.options.Splines))
+		_, _ = buffer.WriteString(fmt.Sprintf("splines = \"%s\";\n", p.options.Splines))
 	}
 	if p.options.Rankdir != "" {
-		buffer.WriteString(fmt.Sprintf("rankdir = \"%s\";\n", p.options.Rankdir))
+		_, _ = buffer.WriteString(fmt.Sprintf("rankdir = \"%s\";\n", p.options.Rankdir))
 	}
 	return buffer.String()
 }
@@ -268,6 +268,9 @@ func (*Printer) FinishPP(*graph.Graph) (pp.Renderable, error) {
 // DOT format attribute set in the form of [key1="value1",key2="value2"...]
 func buildAttributeString(p PropertySet) string {
 	var attrs []string
+	if len(p) == 0 {
+		return ""
+	}
 	for k, v := range p {
 		attribute := fmt.Sprintf(` %s="%s" `, k, escapeNewline(pp.VisibleString(v)))
 		attrs = append(attrs, attribute)

@@ -33,7 +33,7 @@ func New(p DigraphPrettyPrinter) Printer {
 // is returned at any stage of the prettyprinting process it is returned
 // unmodified to the user.
 func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
-	var outputBuffer bytes.Buffer
+	outputBuffer := new(bytes.Buffer)
 
 	subgraphs := makeSubgraphMap()
 	p.loadSubgraphs(ctx, g, subgraphs)
@@ -80,7 +80,7 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 }
 
 func (p Printer) drawEdges(g *graph.Graph) (*StringRenderable, error) {
-	var outputBuffer bytes.Buffer
+	outputBuffer := new(bytes.Buffer)
 	edges := g.Edges()
 	if str, err := p.pp.StartEdgeSection(g); err == nil {
 		writeRenderable(outputBuffer, str)
