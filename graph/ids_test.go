@@ -56,3 +56,15 @@ func TestBaseID(t *testing.T) {
 
 	assert.Equal(t, "b", graph.BaseID("a/b"))
 }
+
+func TestIsDescendentID(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, graph.IsDescendentID("a", "a/b"))
+}
+
+func TestIsDescendentIDNot(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, graph.IsDescendentID("a/b", "a/c"))
+}
