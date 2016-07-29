@@ -32,12 +32,12 @@ type Preparer struct {
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	// render Destination
-	Destination, err := render.Render("Destination", p.Destination)
+	Destination, err := render.Render("destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
 	if Destination == "" {
-		return nil, fmt.Errorf("file.mode requires a destination parameter.\n%s", PrintExample())
+		return nil, fmt.Errorf("file.mode requires a destination parameter\n%s", PrintExample())
 	}
 	// render Mode
 	sMode, err := render.Render("mode", p.Mode)
@@ -45,11 +45,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 	if sMode == "" {
-		return nil, fmt.Errorf("file.mode requires a mode parameter.\n%s", PrintExample())
+		return nil, fmt.Errorf("file.mode requires a mode parameter\n%s", PrintExample())
 	}
 	iMode, err := strconv.ParseUint(sMode, 8, 32)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("%q is not a valid file Mode.", sMode))
+		return nil, errors.Wrap(err, fmt.Sprintf("%q is not a valid file mode", sMode))
 	}
 	mode := os.FileMode(iMode)
 

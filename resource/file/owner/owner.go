@@ -18,39 +18,44 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strconv"
 	"syscall"
+
+	"github.com/asteris-llc/converge/resource/file"
 )
 
 // Mode monitors the file mode of a file
 type Owner struct {
 	Username    string
-	Uid         int
-	Gid         int
+	UID         int
+	GID         int
 	Destination string
 }
 
 // Check whether the Destination has the right mode
 func (o *Owner) Check() (status string, willChange bool, err error) {
-	stat, err := os.Stat(o.Destination)
+	stat, err := file.ValidatePath(o.Destination)
 	if err != nil {
-		return "", false, err
+		return err.Error(), true, nil
 	}
 
-	statT, ok := stat.Sys().(*syscall.Stat_t)
+	statT, ok := stat.Stat.Sys().(*syscall.Stat_t)
 	if !ok {
-		return "", false, fmt.Errorf("file.owner does not currently work on non linux systems\n")
+		return "", false, fmt.Errorf("file.owner does not currently work on non linux systems")
 	}
 
-	Uid := statT.Uid
-	actualUser, err := user.LookupId(fmt.Sprintf("%v", Uid))
+	uid := statT.Uid
+	actualUser, err := user.LookupId(fmt.Sprintf("%v", uid))
 	if err != nil {
 		return "", false, err
 	}
 
-	return actualUser.Username, actualUser.Username != o.Username, nil
+	return actualUser.Username,
+		(actualUser.Username != o.Username) && (actualUser.Gid == strconv.Itoa(o.GID)),
+		nil
 }
 
 // Apply the changes in mode
 func (o *Owner) Apply() error {
-	return os.Chown(o.Destination, o.Uid, o.Gid)
+	return os.Chown(o.Destination, o.UID, o.GID)
 }

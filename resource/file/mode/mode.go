@@ -17,6 +17,8 @@ package mode
 import (
 	"os"
 	"strconv"
+
+	"github.com/asteris-llc/converge/resource/file"
 )
 
 // Mode monitors the file Mode of a file
@@ -27,12 +29,12 @@ type Mode struct {
 
 // Check whether the Destination has the right Mode
 func (m *Mode) Check() (status string, willChange bool, err error) {
-	stat, err := os.Stat(m.Destination)
+	stat, err := file.ValidatePath(m.Destination)
 	if err != nil {
-		return
+		return err.Error(), true, nil
 	}
 
-	mode := stat.Mode().Perm()
+	mode := stat.Stat.Mode().Perm()
 	return strconv.FormatUint(uint64(mode), 8), m.Mode.Perm() != mode, nil
 }
 

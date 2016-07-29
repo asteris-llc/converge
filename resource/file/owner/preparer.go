@@ -31,28 +31,28 @@ type Preparer struct {
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	// render Destination
-	Destination, err := render.Render("Destination", p.Destination)
+	destination, err := render.Render("Destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
-	if Destination == "" {
-		return nil, fmt.Errorf("file.owner requires a destination parameter.\n%s", PrintExample())
+	if destination == "" {
+		return nil, fmt.Errorf("file.owner requires a destination parameter.\ns", PrintExample())
 	}
-	Username, err := render.Render("user", p.User)
+	username, err := render.Render("user", p.User)
 	if err != nil {
 		return nil, err
 	}
-	if Username == "" {
+	if username == "" {
 		return nil, fmt.Errorf("file.owner requires a user parameter.\n%s", PrintExample())
 	}
-	actualUser, err := user.Lookup(Username)
+	actualUser, err := user.Lookup(username)
 	if err != nil {
 		return nil, err
 	}
-	Uid, _ := strconv.Atoi(actualUser.Uid)
-	Gid, _ := strconv.Atoi(actualUser.Gid)
+	uid, _ := strconv.Atoi(actualUser.Uid)
+	gid, _ := strconv.Atoi(actualUser.Gid)
 
-	return &Owner{Username: Username, Uid: Uid, Gid: Gid, Destination: Destination}, nil
+	return &Owner{Username: username, UID: uid, GID: gid, Destination: destination}, nil
 }
 
 func PrintExample() string {

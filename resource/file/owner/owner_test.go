@@ -15,52 +15,21 @@
 package owner_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	osuser "os/user"
 	"testing"
 
-	"golang.org/x/net/context"
-
-	"github.com/asteris-llc/converge/apply"
-	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
-	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Task)(nil), new(owner.Owner))
-}
-
-func TestParsing(t *testing.T) {
-	defer helpers.HideLogs(t)()
-
-	tmpfile, err := ioutil.TempFile("", "user_test")
-	assert.NoError(t, err)
-	defer os.Remove(tmpfile.Name())
-
-	module := fmt.Sprintf(
-		`file.owner "x" {
-    destination = %q
-    user = "nobody"
-  }`, tmpfile.Name())
-	resourced, err := getResourcesGraph(t, []byte(module))
-	assert.NoError(t, err)
-	item := resourced.Get("root/file.owner.x")
-	preparer, ok := item.(*owner.Preparer)
-
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not *owner.Preparer"), item)
-	assert.Equal(t, tmpfile.Name(), preparer.Destination)
-	assert.Equal(t, "nobody", preparer.User)
 }
 
 func TestCheck(t *testing.T) {
@@ -108,42 +77,4 @@ func TestApply(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "nobody", status)
 	assert.False(t, willChange)
-}
-
-func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
-	resources, err := parse.Parse(content)
-	require.NoError(t, err)
-
-	g := graph.New()
-	g.Add("root", nil)
-	for _, resource := range resources {
-		id := graph.ID("root", resource.String())
-		g.Add(id, resource)
-		g.Connect("root", id)
-	}
-	require.NoError(t, g.Validate())
-
-	return load.SetResources(context.TODO(), g)
-}
-
-func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
-	val := src.Get(key)
-	result, ok := val.(*plan.Result)
-	if !ok {
-		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
-		t.FailNow()
-	}
-
-	return result
-}
-
-func getResultApply(t *testing.T, src *graph.Graph, key string) *apply.Result {
-	val := src.Get(key)
-	result, ok := val.(*apply.Result)
-	if !ok {
-		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
-		t.FailNow()
-	}
-
-	return result
 }
