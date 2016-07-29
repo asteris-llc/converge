@@ -15,6 +15,7 @@
 package mode_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -42,21 +43,21 @@ func TestInVaildPreparer(t *testing.T) {
 	fr := fakerenderer.FakeRenderer{}
 	prep := mode.Preparer{Destination: "path/to/file", Mode: "aaa"}
 	_, err := prep.Prepare(&fr)
-	assert.NoError(t, err)
+	assert.EqualError(t, err, "\"aaa\" is not a valid file mode: strconv.ParseUint: parsing \"aaa\": invalid syntax")
 }
 
 func TestInVaildPreparerNoDestination(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
-	prep := mode.Preparer{Destination: "path/to/file"}
+	prep := mode.Preparer{Mode: "0777"}
 	_, err := prep.Prepare(&fr)
-	assert.NoError(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("file.mode requires a destination parameter\n%s", mode.PrintExample()))
 }
 
-func TestInVaildPreparerNoUser(t *testing.T) {
+func TestInVaildPreparerNoMode(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 	prep := mode.Preparer{Destination: "path/to/file"}
 	_, err := prep.Prepare(&fr)
-	assert.NoError(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("file.mode requires a mode parameter\n%s", mode.PrintExample()))
 }

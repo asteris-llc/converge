@@ -1,6 +1,6 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
-DIRS = $(shell find . -name '*.go' -exec dirname \{\} \; | grep -v vendor | uniq)
+TOLINT = $(shell find . -name '*.go' -exec dirname \{\} \; | grep -v vendor | grep -v -e '^\.$$' | uniq)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
@@ -35,7 +35,14 @@ samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 lint:
-	gometalinter --deadline=10m --vendor --tests --disable=dupl --disable=gotype ${DIRS}
+	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/golint
+	@go tool vet -all -shadow ${TOLINT} # built in
+	@gosimple ${TOLINT} # github.com/dominikh/go-simple/cmd/gosimple
+	@unconvert ${TOLINT} # github.com/mdempsky/unconvert
+	@structcheck ${TOLINT} # github.com/opennota/check/cmd/structcheck
+	@varcheck ${TOLINT} # github.com/opennota/check/cmd/varcheck
+	@aligncheck ${TOLINT} # github.com/opennota/check/cmd/aligncheck
+	@gas ${TOLINT} # github.com/HewlettPackard/gas
 
 vendor: ${NONVENDOR}
 	glide install --strip-vcs --strip-vendor --update-vendored

@@ -31,7 +31,7 @@ type Mode struct {
 func (m *Mode) Check() (status string, willChange bool, err error) {
 	stat, err := file.ValidatePath(m.Destination)
 	if err != nil {
-		return err.Error(), true, nil
+		return err.Error(), false, nil
 	}
 
 	mode := stat.Stat.Mode().Perm()

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package template
+package content
 
 import "github.com/asteris-llc/converge/resource"
 
-// Preparer for Templates
+// Preparer for Content
 type Preparer struct {
 	Content     string `hcl:"content"`
 	Destination string `hcl:"destination"`
@@ -24,15 +24,18 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	content, err := render.Render("destination", p.Content)
+	content, err := render.Render("content", p.Content)
 	if err != nil {
 		return nil, err
 	}
 
-	destination, err := render.Render("content", p.Destination)
+	destination, err := render.Render("destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Template{content, destination}, nil
+	return &Content{
+		Destination: destination,
+		Content:     content,
+	}, nil
 }

@@ -6,7 +6,7 @@ param "filename" {
   default = "test.txt"
 }
 
-template "render" {
+file.content "render" {
   destination = "{{param `filename`}}"
   content     = "{{param `message`}}"
 }

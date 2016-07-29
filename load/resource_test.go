@@ -24,10 +24,10 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
-	"github.com/asteris-llc/converge/resource/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,13 +53,13 @@ task x {
 	assert.Equal(t, "apply", preparer.Apply)
 }
 
-func TestSetResourcesTemplate(t *testing.T) {
+func TestSetResourcesContent(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	resourced, err := getResourcesGraph(
 		t,
 		[]byte(`
-template x {
+file.content x {
   destination = "destination"
   content = "content"
 }
@@ -67,10 +67,10 @@ template x {
 	)
 	assert.NoError(t, err)
 
-	item := resourced.Get("root/template.x")
-	preparer, ok := item.(*template.Preparer)
+	item := resourced.Get("root/file.content.x")
+	preparer, ok := item.(*content.Preparer)
 
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not *template.Preparer", item))
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", item, preparer))
 	assert.Equal(t, "destination", preparer.Destination)
 	assert.Equal(t, "content", preparer.Content)
 }

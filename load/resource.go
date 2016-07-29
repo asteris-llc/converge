@@ -22,13 +22,12 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/content"
 	fileMode "github.com/asteris-llc/converge/resource/file/mode"
 	fileOwner "github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
-	"github.com/asteris-llc/converge/resource/template"
-
 	"github.com/hashicorp/hcl"
 )
 
@@ -49,14 +48,14 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 		case "param":
 			dest = new(param.Preparer)
 
+		case "module":
+			dest = new(module.Preparer)
+
 		case "task":
 			dest = new(shell.Preparer)
 
-		case "template":
-			dest = new(template.Preparer)
-
-		case "module":
-			dest = new(module.Preparer)
+		case "file.content":
+			dest = new(content.Preparer)
 
 		case "file.mode":
 			dest = new(fileMode.Preparer)

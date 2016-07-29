@@ -36,7 +36,7 @@ type Owner struct {
 func (o *Owner) Check() (status string, willChange bool, err error) {
 	stat, err := file.ValidatePath(o.Destination)
 	if err != nil {
-		return err.Error(), true, nil
+		return err.Error(), false, nil
 	}
 
 	statT, ok := stat.Stat.Sys().(*syscall.Stat_t)
@@ -47,11 +47,10 @@ func (o *Owner) Check() (status string, willChange bool, err error) {
 	uid := statT.Uid
 	actualUser, err := user.LookupId(fmt.Sprintf("%v", uid))
 	if err != nil {
-		return "", false, err
+		return fmt.Sprintf("could not find user: %q", o.Username), false, err
 	}
-
 	return actualUser.Username,
-		(actualUser.Username != o.Username) && (actualUser.Gid == strconv.Itoa(o.GID)),
+		(actualUser.Username != o.Username) && (actualUser.Gid != strconv.Itoa(o.GID)),
 		nil
 }
 

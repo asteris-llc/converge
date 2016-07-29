@@ -15,6 +15,7 @@
 package owner_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -42,7 +43,7 @@ func TestInValidPreparerNoDestination(t *testing.T) {
 	fr := fakerenderer.FakeRenderer{}
 	prep := owner.Preparer{User: "nobody"}
 	_, err := prep.Prepare(&fr)
-	assert.NoError(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("file.owner requires a destination parameter.\ns", owner.PrintExample()))
 }
 
 func TestInValidPreparerNoUser(t *testing.T) {
@@ -50,5 +51,5 @@ func TestInValidPreparerNoUser(t *testing.T) {
 	fr := fakerenderer.FakeRenderer{}
 	prep := owner.Preparer{Destination: "path/to/file"}
 	_, err := prep.Prepare(&fr)
-	assert.NoError(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("file.owner requires a user parameter.\n%s", owner.PrintExample()))
 }

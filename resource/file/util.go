@@ -31,7 +31,7 @@ type statResult struct {
 func ValidatePath(path string) (statResult, error) {
 	info, err := os.Stat(path)
 	result := statResult{info, err}
-	return result, every(path, []FileOp{
+	return result, every(result, []FileOp{
 		stat2interface(FileExist),
 		stat2interface(ValidStat),
 	}, true)
@@ -72,7 +72,7 @@ func stat2interface(Func func(result statResult) error) func(thing interface{}) 
 	return func(thing interface{}) error {
 		result, ok := thing.(statResult)
 		if !ok {
-			return fmt.Errorf("cannot check: %+v with function: %+v. Expected \"string\" found %T",
+			return fmt.Errorf("cannot check: %+v with function: %+v. Expected \"stat\" found %T",
 				thing,
 				Func,
 				thing,

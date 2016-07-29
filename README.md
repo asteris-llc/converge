@@ -102,7 +102,7 @@ param "description" {
   default = "{{param `name`}}"
 }
 
-template "unit" {
+file.content "unit" {
   destination = "/etc/systemd/system/{{param `name`}}.service"
 
   content = <<EOF
@@ -124,7 +124,7 @@ EOF
 task "reload-daemon" {
   check    = "systemd-delta --type=overridden {{param `name`}}"
   apply    = "systemctl daemon-reload"
-  requires = ["template.unit"]
+  requires = ["file.content.unit"]
 }
 ```
 
@@ -132,7 +132,7 @@ This module creates a systemd unit file and registers it with the system. Note
 that both resource blocks have a name, and that "daemon-reload" depends on
 "unit". Converge uses these dependencies to determine execution order.
 
-The arguments for the template resource:
+The arguments for the `file.content` resource:
 
 - `destination`: where to render the template. If you don't want to render to
   disk, omit this stanza. In that case, you can access the rendered template
@@ -141,10 +141,6 @@ The arguments for the template resource:
   or any template function that returns a string. Converge intelligently renders
   the template until there are no more blocks, so sourcing a template from a
   template is fine.
-
-The `task` and `template` blocks are the only ones currently specified. There
-may be more low-level resources in the future as we write more modules and find
-out where they're needed.
 
 ### Built-in Modules
 
