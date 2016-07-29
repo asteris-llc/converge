@@ -18,11 +18,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/asteris-llc/converge-bak/resource/template"
+	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
-	"github.com/asteris-llc/converge/resource/template"
 )
 
 const preparerRootNode = "root"
@@ -38,7 +40,7 @@ type ResourceProvider struct {
 //   Modules: Return 'Module' and the module name
 //   Params:  Return 'name -> "value"'
 //   otherwise: Return 'name'
-func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (string, error) {
+func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
 	var name string
 
 	if e.Name == preparerRootNode {
@@ -48,16 +50,16 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (string, error)
 	}
 
 	switch e.Value.(type) {
-	case *template.Preparer:
-		v := e.Value.(*template.Preparer)
-		return fmt.Sprintf("Template: %s", v.Destination), nil
+	case *content.Preparer:
+		v := e.Value.(*content.Preparer)
+		return pp.VisibleString(fmt.Sprintf("File: %s", v.Destination)), nil
 	case *module.Preparer:
-		return fmt.Sprintf("Module: %s", name), nil
+		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
-		return fmt.Sprintf(`%s = \"%s\"`, name, v.Default), nil
+		return pp.VisibleString(fmt.Sprintf(`%s = \"%s\"`, name, v.Default)), nil
 	default:
-		return name, nil
+		return pp.VisibleString(name), nil
 	}
 }
 

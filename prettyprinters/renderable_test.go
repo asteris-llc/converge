@@ -16,6 +16,7 @@ package prettyprinters_test
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -45,13 +46,23 @@ func Test_HiddenString_SetsString(t *testing.T) {
 	assert.Equal(t, expected, r.Contents)
 }
 
-func Test_GoStringer_ReturnsStringWhenVisible(t *testing.T) {
+func TestStringRenderable_VisibleReturnsFalseWhenHidden(t *testing.T) {
+	str := pp.HiddenString("test string")
+	assert.False(t, str.Visible())
+}
+
+func TestStringRenderable_VisibleReturnsTrueWhenNotHidden(t *testing.T) {
+	str := pp.VisibleString("test string")
+	assert.True(t, str.Visible())
+}
+
+func TestStringRenderable_String_ReturnsStringWhenVisible(t *testing.T) {
 	expected := "Test string"
 	r := pp.VisibleString(expected)
 	assert.Equal(t, expected, r.String())
 }
 
-func Test_GoStringer_ReturnsStringWhenHidden(t *testing.T) {
+func TestStringRenderable_String_ReturnsStringWhenHidden(t *testing.T) {
 	expected := ""
 	r := pp.HiddenString("Test string")
 	assert.Equal(t, expected, r.String())
@@ -61,6 +72,91 @@ func Test_Renderable_ShowsUpAsStringWhenVisibleAndPrinted(t *testing.T) {
 	expected := "Test string"
 	r := pp.VisibleString(expected)
 	assert.Equal(t, expected, fmt.Sprintf("%v", r))
+}
+
+func TestWrappedRenderable_VisibleReturnsTrueWhenBaseValueVisible(t *testing.T) {
+	base := pp.VisibleString("test string")
+	wrapped := pp.ApplyRenderable(base, stringIdentity)
+	assert.True(t, wrapped.Visible())
+}
+
+func TestWrappedRenderable_VisibleReturnsFalseWhenBaseValueHidden(t *testing.T) {
+	base := pp.HiddenString("test string")
+	wrapped := pp.ApplyRenderable(base, stringIdentity)
+	assert.False(t, wrapped.Visible())
+}
+
+func TestWrappedRenderable_StringCallsWrappedFunction(t *testing.T) {
+	called := false
+	f := func(s string) string {
+		called = true
+		return s
+	}
+	wrapped := pp.ApplyRenderable(pp.VisibleString("test string"), f)
+	wrapped.String()
+	assert.True(t, called)
+}
+
+func TestWrappedRenderable_WrappedFunctionLazilyEvaluated(t *testing.T) {
+	called := false
+	f := func(s string) string {
+		called = true
+		return s
+	}
+	wrapped := pp.ApplyRenderable(pp.VisibleString("test string"), f)
+	assert.False(t, called)
+	wrapped.String()
+	assert.True(t, called)
+}
+
+func TestWrappedRenderable_PushesCallsOntoAStack(t *testing.T) {
+	expected := []string{"f2", "f1"}
+	var calls []string
+	f1 := func(s string) string {
+		calls = append(calls, "f2")
+		return s
+	}
+	f2 := func(s string) string {
+		calls = append(calls, "f1")
+		return s
+	}
+	wrapped := pp.ApplyRenderable(pp.VisibleString("test string"), f1)
+	wrapped = pp.ApplyRenderable(wrapped, f2)
+	wrapped.String()
+	assert.True(t, reflect.DeepEqual(expected, calls))
+}
+
+func TestVisibilityWrapper_ReturnsBaseVisibilityWhenNilToggle(t *testing.T) {
+	assert.True(t, pp.Untoggle(pp.VisibleString("test string")).Visible())
+	assert.False(t, pp.Untoggle(pp.HiddenString("test string")).Visible())
+}
+
+func TestVisibilityWrapper_ReturnsVisibleWhenVisibilityToggledOn(t *testing.T) {
+	assert.True(t, pp.Unhide(pp.HiddenString("test string")).Visible())
+}
+
+func TestVisibilityWrapper_ReturnsHiddenWhenVisibilityToggledOn(t *testing.T) {
+	assert.False(t, pp.Hide(pp.VisibleString("test string")).Visible())
+}
+
+func TestVisibilityWrapper_WorksWithNestedValues(t *testing.T) {
+	wrapped := pp.VisibleString("test string")
+	wrapper := pp.Untoggle(wrapped)
+	assert.True(t, wrapper.Visible())
+	wrapper = pp.Hide(wrapper)
+	assert.False(t, wrapper.Visible())
+	wrapper = pp.Unhide(wrapper)
+	assert.True(t, wrapper.Visible())
+	wrapper = pp.Hide(wrapper)
+	assert.False(t, wrapper.Visible())
+}
+
+func TestVisibilityWrapper_UntoggleStripsLayersOfWrapping(t *testing.T) {
+	wrapper := pp.Untoggle(pp.VisibleString("test string"))
+	for i := 0; i < 100; i++ {
+		wrapper = pp.Hide(wrapper)
+	}
+	assert.True(t, pp.Untoggle(wrapper).Visible())
 }
 
 func ExampleApplyRenderable() {
@@ -77,4 +173,10 @@ func ExampleApplyRenderable() {
 
 	// After making o visible:
 	// FOO
+}
+
+/// Utility Functions
+
+func stringIdentity(i string) string {
+	return i
 }

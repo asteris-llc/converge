@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 
 	"github.com/stretchr/testify/assert"
@@ -51,8 +52,8 @@ func Test_DrawNode_WhenRenderFunction_CallsRenderFunction(t *testing.T) {
 func Test_DrawNode_SetsNodeNameToVertexID(t *testing.T) {
 	vertexID := "testID"
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return(vertexID, nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(vertexID), nil)
+	provider.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString(""), nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
@@ -66,8 +67,8 @@ func Test_DrawNode_SetsNodeNameToVertexID(t *testing.T) {
 func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", err)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), err)
+	provider.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString(""), nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
@@ -80,8 +81,8 @@ func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 	vertexLabel := "test label"
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return(vertexLabel, nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
+	provider.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString(vertexLabel), nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
@@ -95,8 +96,8 @@ func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", err)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
+	provider.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString(""), err)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
@@ -112,8 +113,8 @@ func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
 		"key2": "val2",
 	}
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("VertexGetLabel", mock.Anything).Return("", nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
+	provider.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString(""), nil)
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(expectedAttrs)
 	g := graph.New()
@@ -139,10 +140,10 @@ func Test_DrawEdge_GetsIDForEachNode(t *testing.T) {
 
 func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", entityA).Return("A", nil)
-	provider.On("VertexGetID", entityB).Return("B", nil)
+	provider.On("VertexGetID", entityA).Return(pp.VisibleString("A"), nil)
+	provider.On("VertexGetID", entityB).Return(pp.VisibleString("B"), nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(""), nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotSource, _ := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	sourceVertex, destVertex := parseDotEdge(dotSource)
@@ -153,10 +154,10 @@ func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", entityA).Return("", err)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
+	provider.On("VertexGetID", entityA).Return(pp.VisibleString(""), err)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(""), nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	assert.Equal(t, actualErr, err)
@@ -165,10 +166,10 @@ func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
 func Test_DrawEdge_WhenSecondVertexIDReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", entityA).Return("", nil)
-	provider.On("VertexGetID", entityB).Return("", err)
+	provider.On("VertexGetID", entityA).Return(pp.VisibleString(""), nil)
+	provider.On("VertexGetID", entityB).Return(pp.VisibleString(""), err)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(""), nil)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	assert.Equal(t, actualErr, err)
@@ -177,8 +178,8 @@ func Test_DrawEdge_WhenSecondVertexIDReturnsError_ReturnsError(t *testing.T) {
 func Test_DrawEdge_SetsLabelToEdgeLabel(t *testing.T) {
 	edgeLabel := "test label"
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("test", nil)
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(edgeLabel, nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString("test"), nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(edgeLabel), nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
@@ -189,8 +190,8 @@ func Test_DrawEdge_SetsLabelToEdgeLabel(t *testing.T) {
 func Test_DrawEdge_WhenEdgeLabelReturnsError_ReturnsError(t *testing.T) {
 	err := errors.New("test error")
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", err)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(""), err)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawEdge(edgeTestGraph(), "test", "test")
@@ -203,8 +204,8 @@ func Test_DrawEdge_WhenAdditionalAttributes_AddsAttributesToEdge(t *testing.T) {
 		"key2": "val2",
 	}
 	provider := new(MockPrintProvider)
-	provider.On("VertexGetID", mock.Anything).Return("", nil)
-	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("", nil)
+	provider.On("VertexGetID", mock.Anything).Return(pp.VisibleString(""), nil)
+	provider.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString(""), nil)
 	provider.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(expectedAttrs)
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawEdge(edgeTestGraph(), "test", "test")
@@ -225,7 +226,7 @@ func Test_StartPP_ReturnsGraphvizStart(t *testing.T) {
 	expected := "digraph {\n\n"
 	actual, err := printer.StartPP(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_StartPP_SetsGraphAttributes_WhenOptionsAreProvided(t *testing.T) {
@@ -238,7 +239,7 @@ func Test_StartPP_SetsGraphAttributes_WhenOptionsAreProvided(t *testing.T) {
 	expected := "digraph {\nsplines = \"spline\";\nrankdir = \"LR\";\n\n"
 	actual, err := printer.StartPP(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_FinishPP_ReturnsGraphvizStart(t *testing.T) {
@@ -247,7 +248,7 @@ func Test_FinishPP_ReturnsGraphvizStart(t *testing.T) {
 	expected := "}"
 	actual, err := printer.FinishPP(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 // NB: The node and edge section callbacks are unnecessary for graphviz output
@@ -258,7 +259,7 @@ func Test_StartNodeSection_ReturnsEmptyString(t *testing.T) {
 	expected := ""
 	actual, err := printer.StartNodeSection(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_FinishNodeSection_ReturnsEmptyString(t *testing.T) {
@@ -267,7 +268,7 @@ func Test_FinishNodeSection_ReturnsEmptyString(t *testing.T) {
 	expected := ""
 	actual, err := printer.FinishNodeSection(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_StartEdgeSection_ReturnsEmptyString(t *testing.T) {
@@ -276,7 +277,7 @@ func Test_StartEdgeSection_ReturnsEmptyString(t *testing.T) {
 	expected := ""
 	actual, err := printer.StartEdgeSection(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
@@ -285,7 +286,7 @@ func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
 	expected := ""
 	actual, err := printer.FinishEdgeSection(emptyGraph)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 func Test_FinishSubgraph_ReturnsClosingBrace(t *testing.T) {
@@ -294,21 +295,21 @@ func Test_FinishSubgraph_ReturnsClosingBrace(t *testing.T) {
 	expected := "}\n"
 	actual, err := printer.FinishSubgraph(emptyGraph, "")
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, expected, actual.String())
 }
 
 type MockPrintProvider struct {
 	mock.Mock
 }
 
-func (m *MockPrintProvider) VertexGetID(i graphviz.GraphEntity) (string, error) {
+func (m *MockPrintProvider) VertexGetID(i graphviz.GraphEntity) (pp.Renderable, error) {
 	args := m.Called(i)
-	return args.String(0), args.Error(1)
+	return args.Get(0).(pp.Renderable), args.Error(1)
 }
 
-func (m *MockPrintProvider) VertexGetLabel(i graphviz.GraphEntity) (string, error) {
+func (m *MockPrintProvider) VertexGetLabel(i graphviz.GraphEntity) (pp.Renderable, error) {
 	args := m.Called(i)
-	return args.String(0), args.Error(1)
+	return args.Get(0).(pp.Renderable), args.Error(1)
 }
 
 func (m *MockPrintProvider) VertexGetProperties(i graphviz.GraphEntity) graphviz.PropertySet {
@@ -321,9 +322,9 @@ func (m *MockPrintProvider) SubgraphMarker(i graphviz.GraphEntity) graphviz.Subg
 	return args.Get(0).(graphviz.SubgraphMarkerKey)
 }
 
-func (m *MockPrintProvider) EdgeGetLabel(i, j graphviz.GraphEntity) (string, error) {
+func (m *MockPrintProvider) EdgeGetLabel(i, j graphviz.GraphEntity) (pp.Renderable, error) {
 	args := m.Called(i, j)
-	return args.String(0), args.Error(1)
+	return args.Get(0).(pp.Renderable), args.Error(1)
 }
 
 func (m *MockPrintProvider) EdgeGetProperties(i, j graphviz.GraphEntity) graphviz.PropertySet {
@@ -333,10 +334,10 @@ func (m *MockPrintProvider) EdgeGetProperties(i, j graphviz.GraphEntity) graphvi
 
 func defaultMockProvider() *MockPrintProvider {
 	m := new(MockPrintProvider)
-	m.On("VertexGetID", mock.Anything).Return("id1", nil)
-	m.On("VertexGetLabel", mock.Anything).Return("label1", nil)
+	m.On("VertexGetID", mock.Anything).Return(pp.VisibleString("id1"), nil)
+	m.On("VertexGetLabel", mock.Anything).Return(pp.VisibleString("label1"), nil)
 	m.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
-	m.On("EdgeGetLabel", mock.Anything, mock.Anything).Return("label1", nil)
+	m.On("EdgeGetLabel", mock.Anything, mock.Anything).Return(pp.VisibleString("label1"), nil)
 	m.On("EdgeGetProperties", mock.Anything, mock.Anything).Return(make(graphviz.PropertySet))
 	m.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	return m
@@ -350,7 +351,8 @@ func stubMarker(_ interface{}) graphviz.SubgraphMarkerKey {
 	return graphviz.SubgraphMarkerNOP
 }
 
-func getDotNodeID(s string) string {
+func getDotNodeID(r pp.Renderable) string {
+	s, _ := pp.Render(r)
 	trimmed := strings.TrimSpace(s)
 	firstChar := trimmed[0]
 	if firstChar == '\'' || firstChar == '"' {
@@ -360,7 +362,8 @@ func getDotNodeID(s string) string {
 	return strings.Split(trimmed, " ")[0]
 }
 
-func getDotNodeLabel(s string) string {
+func getDotNodeLabel(r pp.Renderable) string {
+	s, _ := pp.Render(r)
 	labelSplit := strings.Split(s, "label=")
 	if len(labelSplit) < 2 {
 		return ""
@@ -397,7 +400,8 @@ func get_kv(attr string) (string, string) {
 	return key, val
 }
 
-func getDotAttributes(s string) map[string]string {
+func getDotAttributes(r pp.Renderable) map[string]string {
+	s, _ := pp.Render(r)
 	results := make(map[string]string)
 	attributes, found := getAttributeSubstr(s)
 
@@ -414,7 +418,8 @@ func getDotAttributes(s string) map[string]string {
 	return results
 }
 
-func parseDotEdge(e string) (string, string) {
+func parseDotEdge(r pp.Renderable) (string, string) {
+	e, _ := pp.Render(r)
 	var dest string
 	ef := strings.Split(strings.TrimSpace(e), "->")
 	source := stripQuotes(strings.TrimSpace(ef[0]))
