@@ -15,9 +15,11 @@
 package owner_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	osuser "os/user"
+	"strconv"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers"
@@ -67,14 +69,24 @@ func TestApply(t *testing.T) {
 		return
 	}
 
+	nobody, err := osuser.Lookup("nobody")
+	if err != nil {
+		return
+	}
+
+	uid, _ := strconv.Atoi(nobody.Uid)
+	gid, _ := strconv.Atoi(nobody.Gid)
 	o := owner.Owner{
-		Username:    "nobody",
+		Username:    nobody.Username,
+		UID:         uid,
+		GID:         gid,
 		Destination: tmpfile.Name(),
 	}
 	err = o.Apply()
 	assert.NoError(t, err)
 	status, willChange, err := o.Check()
+	fmt.Println(status, willChange, err)
 	assert.NoError(t, err)
-	assert.Equal(t, "nobody", status)
+	assert.Equal(t, nobody.Username, status)
 	assert.False(t, willChange)
 }

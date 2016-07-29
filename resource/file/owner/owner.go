@@ -38,7 +38,6 @@ func (o *Owner) Check() (status string, willChange bool, err error) {
 	if err != nil {
 		return err.Error(), false, nil
 	}
-
 	statT, ok := stat.Stat.Sys().(*syscall.Stat_t)
 	if !ok {
 		return "", false, fmt.Errorf("file.owner does not currently work on non linux systems")
@@ -47,10 +46,10 @@ func (o *Owner) Check() (status string, willChange bool, err error) {
 	uid := statT.Uid
 	actualUser, err := user.LookupId(fmt.Sprintf("%v", uid))
 	if err != nil {
-		return fmt.Sprintf("could not find user: %q", o.Username), false, err
+		return fmt.Sprintf("owner of file %q: %q does not exist", o.Destination, o.Username), false, err
 	}
 	return actualUser.Username,
-		(actualUser.Username != o.Username) && (actualUser.Gid != strconv.Itoa(o.GID)),
+		!((actualUser.Username == o.Username) && (actualUser.Uid == strconv.Itoa(o.UID)) && (actualUser.Gid == strconv.Itoa(o.GID))),
 		nil
 }
 
