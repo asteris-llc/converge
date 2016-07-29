@@ -46,5 +46,5 @@ func BaseID(id string) string {
 
 // IsDescendentID checks if a child is the descendent of a given parent
 func IsDescendentID(parent, child string) bool {
-	return strings.HasPrefix(child, parent)
+	return parent != child && strings.HasPrefix(child, parent)
 }

@@ -66,6 +66,18 @@ func (g *Graph) Add(id string, value interface{}) {
 	g.values.Set(id, value)
 }
 
+// Remove an existing value by ID
+func (g *Graph) Remove(id string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.valuesLock.Lock()
+	defer g.valuesLock.Unlock()
+
+	g.inner.Remove(id)
+	delete(g.values, id)
+}
+
 // Get a value by ID
 func (g *Graph) Get(id string) interface{} {
 	val, _ := g.values.Get(id) // TODO: return presence as well
@@ -92,6 +104,26 @@ func (g *Graph) Connect(from, to string) {
 	g.inner.Connect(dag.BasicEdge(from, to))
 }
 
+// Disconnect two vertices by IDs
+func (g *Graph) Disconnect(from, to string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+}
+
+// UpEdges returns inweard-facing edges of the specified vertex
+func (g *Graph) UpEdges(id string) (out []string) {
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+
+	for _, edge := range g.inner.UpEdges(id).List() {
+		out = append(out, edge.(string))
+	}
+
+	return out
+}
+
 // DownEdges returns outward-facing edges of the specified vertex
 func (g *Graph) DownEdges(id string) (out []string) {
 	g.innerLock.RLock()
@@ -99,6 +131,22 @@ func (g *Graph) DownEdges(id string) (out []string) {
 
 	for _, edge := range g.inner.DownEdges(id).List() {
 		out = append(out, edge.(string))
+	}
+
+	return out
+}
+
+// Descendents gets a list of all descendents (not just children, everything)
+// This only works if you're using the hierarchical ID functions from this
+// module.
+func (g *Graph) Descendents(id string) (out []string) {
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+
+	for _, node := range g.inner.Vertices() {
+		if IsDescendentID(id, node.(string)) {
+			out = append(out, node.(string))
+		}
 	}
 
 	return out
