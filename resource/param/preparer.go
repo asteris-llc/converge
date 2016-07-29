@@ -14,11 +14,15 @@
 
 package param
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"errors"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for params
 type Preparer struct {
-	Default string `hcl:"default"`
+	Default *string `hcl:"default"`
 }
 
 // Prepare a new task
@@ -27,7 +31,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return &Param{Value: val}, nil
 	}
 
-	def, err := render.Render("default", p.Default)
+	if p.Default == nil {
+		return nil, errors.New("param is required")
+	}
+
+	def, err := render.Render("default", *p.Default)
 	if err != nil {
 		return nil, err
 	}
