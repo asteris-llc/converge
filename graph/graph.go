@@ -23,6 +23,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/hashicorp/terraform/dag"
+	cmap "github.com/streamrail/concurrent-map"
 )
 
 // WalkFunc is taken by the walking functions
@@ -36,19 +37,17 @@ type walkerFunc func(context.Context, *Graph, WalkFunc) error
 // Graph is a generic graph structure that uses IDs to connect the graph
 type Graph struct {
 	inner  *dag.AcyclicGraph
-	values map[string]interface{}
+	values cmap.ConcurrentMap
 
-	innerLock  *sync.RWMutex
-	valuesLock *sync.RWMutex
+	innerLock *sync.RWMutex
 }
 
 // New constructs and returns a new Graph
 func New() *Graph {
 	return &Graph{
-		inner:      new(dag.AcyclicGraph),
-		values:     map[string]interface{}{},
-		innerLock:  new(sync.RWMutex),
-		valuesLock: new(sync.RWMutex),
+		inner:     new(dag.AcyclicGraph),
+		values:    cmap.New(),
+		innerLock: new(sync.RWMutex),
 	}
 }
 
@@ -57,19 +56,14 @@ func (g *Graph) Add(id string, value interface{}) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
-	g.valuesLock.Lock()
-	defer g.valuesLock.Unlock()
-
 	g.inner.Add(id)
-	g.values[id] = value
+	g.values.Set(id, value)
 }
 
 // Get a value by ID
 func (g *Graph) Get(id string) interface{} {
-	g.valuesLock.RLock()
-	defer g.valuesLock.RUnlock()
-
-	return g.values[id]
+	val, _ := g.values.Get(id) // TODO: return presence as well
+	return val
 }
 
 // GetParent returns the direct parent vertex of the current node. This only
@@ -124,7 +118,7 @@ func walk(ctx context.Context, g *Graph, cb WalkFunc) error {
 			return fmt.Errorf(`ID "%v" was not a string`, v)
 		}
 
-		return cb(id, g.values[id])
+		return cb(id, g.Get(id))
 	})
 }
 
