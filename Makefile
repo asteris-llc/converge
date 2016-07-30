@@ -5,6 +5,9 @@ TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vend
 PNGS = $(shell find samples -name '*.hcl' | grep -v errors | awk '{ print $$1".png" }')
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 
+BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
+BENCH = .
+
 converge: $(shell find . -name '*.go')
 	go build .
 
@@ -18,6 +21,9 @@ test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 
 gotest:
 	go test -v ${TESTDIRS}
+
+bench:
+	go test -run='^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 
 samples/errors/*.hcl: converge
 	@echo
@@ -70,4 +76,4 @@ package: xcompile
     echo $$f; \
   done
 
-.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint
+.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint bench
