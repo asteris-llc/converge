@@ -63,8 +63,7 @@ You can pipe the output directly to the 'dot' command, for example:
 		printer := prettyprinters.New(dotPrinter)
 		dotCode, err := printer.Show(ctx, graph)
 		if err != nil {
-			fmt.Println(err)
-			return
+			log.Fatalf("[FATAL] %s: could not generate dot output: %s", fname, err)
 		}
 		fmt.Println(dotCode)
 
