@@ -84,3 +84,4 @@ import:
   version: a83829b6f1293c91addabc89d0571c246397bbf4
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/objx
+- package: github.com/mitchellh/hashstructure

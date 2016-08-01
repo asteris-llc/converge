@@ -16,6 +16,7 @@ package load
 
 import (
 	"fmt"
+	"log"
 
 	"golang.org/x/net/context"
 
@@ -31,6 +32,8 @@ import (
 
 // SetResources loads the resources for each graph node
 func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
+	log.Println("[INFO] loading resources")
+
 	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // root
 			return nil

@@ -25,6 +25,7 @@ import (
 
 	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/apply"
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
@@ -54,17 +55,22 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			graph, err := load.Load(ctx, fname)
+			loaded, err := load.Load(ctx, fname)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, graph, params)
+			rendered, err := render.Render(ctx, loaded, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
 
-			planned, err := plan.Plan(ctx, rendered)
+			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
+			}
+
+			planned, err := plan.Plan(ctx, merged)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
