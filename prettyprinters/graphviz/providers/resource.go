@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/asteris-llc/converge-bak/resource/template"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/resource/file/content"
@@ -84,7 +83,7 @@ func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.P
 	switch e.Value.(type) {
 	case *shell.Preparer:
 		properties["shape"] = "component"
-	case *template.Preparer:
+	case *content.Preparer:
 		properties["shape"] = "tab"
 	}
 	return properties
