@@ -185,8 +185,11 @@ func (n *Node) GetStrings() (vals []string, err error) {
 				toConsider = append(toConsider, value)
 			}
 
+		case []interface{}:
+			toConsider = append(toConsider, val.([]interface{})...)
+
 		default:
-			log.Printf("[DEBUG] Node.GetStrings: unknown value: %T (%v)\n", val, val)
+			log.Printf("[WARNING] Node.GetStrings: unknown value: %T (%v)\n", val, val)
 		}
 	}
 
