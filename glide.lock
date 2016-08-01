@@ -1,5 +1,5 @@
-hash: 53232a90f76fbeaeab857019c7d9b519f261941eedd7783dfd304d8f522724c4
-updated: 2016-07-22T00:23:48.673819229-05:00
+hash: 90f1547cfe5d569668f4372a5822feb5dfa8663c66ff0e73f186670849f75d56
+updated: 2016-07-30T15:09:52.246363071-05:00
 imports:
 - name: github.com/acmacalister/skittles
   version: 8f7bde0f0de4cb42c1e8db861e67627558e97019
@@ -65,6 +65,8 @@ imports:
   version: cb88ea77998c3f024757528e3305022ab50b43be
 - name: github.com/spf13/viper
   version: d8a428b8a30606e1d0b355d91edf282609ade1a6
+- name: github.com/streamrail/concurrent-map
+  version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
 - name: github.com/stretchr/testify
   version: c5d7a69bf8a2c9c374798160849c071093e41dd1
   subpackages:
