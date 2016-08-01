@@ -31,7 +31,7 @@ func TestTrimSubtreesRemovesDuplicates(t *testing.T) {
 
 	g := baseDupGraph()
 
-	transformed, err := graph.TrimSubtrees(context.Background(), g)
+	transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
 
 	require.NoError(t, err)
 
@@ -55,7 +55,7 @@ func TestTrimSubtreesMigratesDependencies(t *testing.T) {
 	g.Connect("root/two", "root/first")
 
 	for i := 1; i <= 5; i++ {
-		transformed, err := graph.TrimSubtrees(context.Background(), g)
+		transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
 
 		// we need to get a result where root/first is removed so we can test
 		// dependency migration. So if root/first still exists, we need to skip
@@ -83,7 +83,7 @@ func TestTrimSubtreesRemovesChildren(t *testing.T) {
 		g.Connect(node, graph.ID(node, "x"))
 	}
 
-	transformed, err := graph.TrimSubtrees(context.Background(), g)
+	transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
 	require.NoError(t, err)
 
 	var removed string
@@ -108,4 +108,8 @@ func baseDupGraph() *graph.Graph {
 	g.Connect("root", "root/first")
 
 	return g
+}
+
+func neverSkip(string) bool {
+	return false
 }
