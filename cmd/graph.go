@@ -57,7 +57,7 @@ You can pipe the output directly to the 'dot' command, for example:
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
-		provider := providers.ResourceProvider{}
+		provider := providers.PreparerProvider{}
 		provider.ShowParams = viper.GetBool("show-params")
 		dotPrinter := graphviz.New(graphviz.DefaultOptions(), provider)
 		printer := prettyprinters.New(dotPrinter)
