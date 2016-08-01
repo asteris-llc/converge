@@ -71,11 +71,8 @@ func (g *Graph) Remove(id string) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
-	g.valuesLock.Lock()
-	defer g.valuesLock.Unlock()
-
 	g.inner.Remove(id)
-	delete(g.values, id)
+	g.values.Remove(id)
 }
 
 // Get a value by ID
