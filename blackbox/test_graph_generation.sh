@@ -24,11 +24,6 @@ for i in ${ROOT}/samples/*.hcl; do
         echo "dot failed on output from ${b}"
         exit 1
     fi
-    fileType=$(file ${pngOutput} | awk '{print $2}')
-    if [[ ! "PNG" == ${fileType} ]]; then
-        echo "png file generation failed from ${b}"
-        exit 1
-    fi
     echo "success: generated graph for ${b}"
 done
 
