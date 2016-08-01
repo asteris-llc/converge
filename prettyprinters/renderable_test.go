@@ -126,7 +126,7 @@ func TestWrappedRenderable_PushesCallsOntoAStack(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(expected, calls))
 }
 
-func ExampleApplyRenderable() {
+func Example_usingApplyRenderable() {
 	o := pp.HiddenString(" foo ")
 	t := pp.ApplyRenderable(pp.ApplyRenderable(o, strings.ToUpper), strings.TrimSpace)
 	fmt.Println("Before making o visible:")

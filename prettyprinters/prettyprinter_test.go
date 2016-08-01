@@ -27,7 +27,7 @@ import (
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
 )
 
-func ExamplePrinter_Show_withDefaultProvider() {
+func Example_usingADefaultProvider() {
 	g := createTestGraph()
 	valuePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.DefaultProvider()))
 	valueDotCode, _ := valuePrinter.Show(context.Background(), g)
@@ -44,7 +44,7 @@ func ExamplePrinter_Show_withDefaultProvider() {
 	// }
 }
 
-func ExamplePrinter_Show_withIDProvider() {
+func Example_usingTheIDProvider() {
 	g := createTestGraph()
 
 	namePrinter := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), graphviz.IDProvider()))
@@ -64,7 +64,7 @@ func ExamplePrinter_Show_withIDProvider() {
 	// }
 }
 
-func ExamplePrinter_Show_loadAndPrint() {
+func Example_generateAGraphFromAFileOnDisk() {
 	g, err := load.Load(context.Background(), os.Args[1])
 	if err != nil {
 		fmt.Println(err)
@@ -79,8 +79,7 @@ func ExamplePrinter_Show_loadAndPrint() {
 	fmt.Println(dotCode)
 }
 
-func ExamplePrinter_Show_withCustomProvider() {
-
+func Example_createACustomPrintProvider() {
 	g := graph.New()
 	g.Add(graph.ID("a"), 1)
 	g.Add(graph.ID("a", "b"), 2)
