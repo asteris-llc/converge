@@ -17,8 +17,13 @@ type Renderable interface {
 	// still provide a valid string value.
 	Visible() bool
 
-	Hide()
-	Unhide()
+	// Hide should set visibility of the Renderable.  It may mutate state or
+	// return an updated copy.
+	Hide() Renderable
+
+	// Unhide should set the visibility of the Renderable.  It may mutate state or
+	// return an updated copy.
+	Unhide() Renderable
 }
 
 // StringRenderable provides a Renderable wrapper around strings.
@@ -37,35 +42,35 @@ func (r *StringRenderable) String() string {
 	return r.Contents
 }
 
-func (r *StringRenderable) Hide() {
+// Hide makes the StringRenderable invisible.  It mutates the object.
+func (r *StringRenderable) Hide() Renderable {
 	r.Hidden = true
+	return r
 }
 
-func (r *StringRenderable) Unhide() {
+// Unhide makes the StringRenderable visible.  It mutates the object.
+func (r *StringRenderable) Unhide() Renderable {
 	r.Hidden = false
+	return r
 }
 
 // VisibleString creates a new StringRenderable that is visible
 func VisibleString(s string) *StringRenderable {
-	return &StringRenderable{
-		Hidden:   false,
-		Contents: s,
-	}
+	return RenderableString(s, true)
 }
 
 // HiddenString creates a non-renderable string
 func HiddenString(s string) *StringRenderable {
-	return &StringRenderable{
-		Hidden:   true,
-		Contents: s,
-	}
+	return RenderableString(s, false)
 }
 
+// RenderableString creates a RenderableString with visibility on or off
+// depending on the value of a boolean parameter.
 func RenderableString(s string, visible bool) *StringRenderable {
-	if visible {
-		return VisibleString(s)
+	return &StringRenderable{
+		Hidden:   !visible,
+		Contents: s,
 	}
-	return HiddenString(s)
 }
 
 // WrappedRenderable wraps a functor-like interface around Renderable, allowing
@@ -87,12 +92,16 @@ func (w *WrappedRenderable) String() string {
 	return w.show()
 }
 
-func (w *WrappedRenderable) Hide() {
+// Hide calls Hide on the underlying baseValue
+func (w *WrappedRenderable) Hide() Renderable {
 	w.baseValue.Hide()
+	return w
 }
 
-func (w *WrappedRenderable) Unhide() {
+// Unhide calls Unhide on the underlying baseValue
+func (w *WrappedRenderable) Unhide() Renderable {
 	w.baseValue.Unhide()
+	return w
 }
 
 // ApplyRenderable allows you to apply an arbitrary string transformation
@@ -141,11 +150,11 @@ func writeRenderable(b *bytes.Buffer, r Renderable) {
 	_, _ = b.WriteString(r.String())
 }
 
+// SetVisibility is a utility function to call Hide or Unhide based on a boolean
+// parameter
 func SetVisibility(r Renderable, visible bool) Renderable {
 	if visible {
-		r.Unhide()
-	} else {
-		r.Hide()
+		return r.Unhide()
 	}
-	return r
+	return r.Hide()
 }
