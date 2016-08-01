@@ -68,7 +68,12 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
-		paramStr := fmt.Sprintf(`%s = \"%s\"`, name, *v.Default)
+		var paramStr string
+		if v.Default == nil {
+			paramStr = fmt.Sprintf(`%s = <required param>`, name)
+		} else {
+			paramStr = fmt.Sprintf(`%s = \"%s\"`, name, *v.Default)
+		}
 		return pp.RenderableString(paramStr, p.ShowParams), nil
 	default:
 		return pp.VisibleString(name), nil
@@ -85,6 +90,11 @@ func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.P
 		properties["shape"] = "component"
 	case *content.Preparer:
 		properties["shape"] = "tab"
+	case *param.Preparer:
+		v := e.Value.(*param.Preparer)
+		if v.Default == nil {
+			properties["style"] = "dotted"
+		}
 	}
 	return properties
 }
