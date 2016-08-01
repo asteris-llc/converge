@@ -17,8 +17,4 @@
 // created to facilitate the development of graphviz visualizations for resource
 // graphs, however it is intended to be useful for creating arbitrary output
 // generators so that resource graph data can be used in other applications.
-//
-// See the 'examples' directory for examples of using the prettyprinter, and see
-// the 'graphviz' package for an example of a concrete implementation of
-// DigraphPrettyPrinter.
 package prettyprinters
