@@ -65,7 +65,7 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
 
-			trimmed, err := graph.TrimSubtrees(ctx, rendered)
+			trimmed, err := graph.TrimSubtrees(ctx, rendered, graph.SkipModuleAndParams)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not trim subtrees: %s\n", fname, err)
 			}

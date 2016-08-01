@@ -16,6 +16,7 @@ package graph
 
 import (
 	"log"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -23,13 +24,21 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
+// SkipTrimFunc will be used to determine whether or not to trim a node
+type SkipTrimFunc func(string) bool
+
 // TrimSubtrees removes duplicates in the graph
-func TrimSubtrees(ctx context.Context, g *Graph) (*Graph, error) {
+func TrimSubtrees(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, error) {
 	lock := new(sync.Mutex)
 	values := map[uint64]string{}
 
 	return g.RootFirstTransform(ctx, func(id string, out *Graph) error {
 		if id == "root" { // root
+			return nil
+		}
+
+		if skip(id) {
+			log.Printf("[TRACE] trim subtrees: skipping %q by request\n", id)
 			return nil
 		}
 
@@ -45,7 +54,7 @@ func TrimSubtrees(ctx context.Context, g *Graph) (*Graph, error) {
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-			log.Printf("[DEBUG] trim subtrees: registering %q as original\n", id)
+			log.Printf("[TRACE] trim subtrees: registering %q as original\n", id)
 			values[hash] = id
 
 			return nil
@@ -55,14 +64,14 @@ func TrimSubtrees(ctx context.Context, g *Graph) (*Graph, error) {
 
 		// Point all inbound links to value to target instead
 		for _, src := range g.UpEdges(id) {
-			log.Printf("[DEBUG] trim subtrees: re-pointing %q from %q to %q\n", src, id, target)
+			log.Printf("[TRACE] trim subtrees: re-pointing %q from %q to %q\n", src, id, target)
 			out.Disconnect(src, id)
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
 		for _, child := range g.Descendents(id) {
-			log.Printf("[DEBUG] trim subtrees: removing child %q\n", child)
+			log.Printf("[TRACE] trim subtrees: removing child %q\n", child)
 			out.Remove(child)
 		}
 
@@ -71,4 +80,13 @@ func TrimSubtrees(ctx context.Context, g *Graph) (*Graph, error) {
 
 		return nil
 	})
+}
+
+// helper functions for various things we need to trim.
+// TODO: find a better home
+
+// SkipModuleAndParams skips trimming modules and params
+func SkipModuleAndParams(id string) bool {
+	base := BaseID(id)
+	return strings.HasPrefix(base, "module") || strings.HasPrefix(base, "param")
 }
