@@ -67,6 +67,8 @@ imports:
   version: d8a428b8a30606e1d0b355d91edf282609ade1a6
 - name: github.com/streamrail/concurrent-map
   version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
+- name: github.com/stretchr/objx
+  version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 - name: github.com/stretchr/testify
   version: c5d7a69bf8a2c9c374798160849c071093e41dd1
   subpackages:
@@ -74,6 +76,7 @@ imports:
   - require
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
+  - mock
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:

@@ -297,3 +297,9 @@ func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 
 	return out, err
 }
+
+func invalidGraph() *graph.Graph {
+	g := graph.New()
+	g.Connect("Bad", "Nodes")
+	return g
+}
