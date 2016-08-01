@@ -62,6 +62,7 @@ func TestRemove(t *testing.T) {
 	// Remove should remove a vertex
 	t.Parallel()
 
+	g := graph.New()
 	g.Add("one", 1)
 	g.Remove("one")
 
