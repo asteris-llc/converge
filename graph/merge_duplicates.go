@@ -24,11 +24,11 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
-// SkipTrimFunc will be used to determine whether or not to trim a node
-type SkipTrimFunc func(string) bool
+// SkipMergeFunc will be used to determine whether or not to merge a node
+type SkipMergeFunc func(string) bool
 
-// TrimDuplicates removes duplicates in the graph
-func TrimDuplicates(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, error) {
+// MergeDuplicates removes duplicates in the graph
+func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph, error) {
 	lock := new(sync.Mutex)
 	values := map[uint64]string{}
 
@@ -38,7 +38,7 @@ func TrimDuplicates(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, e
 		}
 
 		if skip(id) {
-			log.Printf("[TRACE] trim duplicates: skipping %q by request\n", id)
+			log.Printf("[TRACE] merge duplicates: skipping %q by request\n", id)
 			return nil
 		}
 
@@ -54,24 +54,24 @@ func TrimDuplicates(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, e
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-			log.Printf("[TRACE] trim duplicates: registering %q as original\n", id)
+			log.Printf("[TRACE] merge duplicates: registering %q as original\n", id)
 			values[hash] = id
 
 			return nil
 		}
 
-		log.Printf("[DEBUG] trim duplicates: found duplicate: %q and %q\n", target, id)
+		log.Printf("[DEBUG] merge duplicates: found duplicate: %q and %q\n", target, id)
 
 		// Point all inbound links to value to target instead
 		for _, src := range g.UpEdges(id) {
-			log.Printf("[TRACE] trim duplicates: re-pointing %q from %q to %q\n", src, id, target)
+			log.Printf("[TRACE] merge duplicates: re-pointing %q from %q to %q\n", src, id, target)
 			out.Disconnect(src, id)
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
 		for _, child := range g.Descendents(id) {
-			log.Printf("[TRACE] trim duplicates: removing child %q\n", child)
+			log.Printf("[TRACE] merge duplicates: removing child %q\n", child)
 			out.Remove(child)
 		}
 
@@ -82,7 +82,7 @@ func TrimDuplicates(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, e
 	})
 }
 
-// helper functions for various things we need to trim.
+// helper functions for various things we need to merge.
 // TODO: find a better home
 
 // SkipModuleAndParams skips trimming modules and params
