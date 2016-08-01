@@ -15,6 +15,8 @@
 package graph_test
 
 import (
+	"math/rand"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -43,6 +45,17 @@ func TestGetNothing(t *testing.T) {
 	g := graph.New()
 
 	assert.Nil(t, g.Get("nothing"))
+}
+
+func BenchmarkAddThenGet(b *testing.B) {
+	g := graph.New()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			id := rand.Int()
+			g.Add(strconv.Itoa(id), id)
+			g.Get(strconv.Itoa(id))
+		}
+	})
 }
 
 func TestDownEdges(t *testing.T) {
