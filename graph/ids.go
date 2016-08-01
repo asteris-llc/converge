@@ -14,7 +14,10 @@
 
 package graph
 
-import "path"
+import (
+	"path"
+	"strings"
+)
 
 // ID for a node in the graph
 func ID(parts ...string) string {
@@ -39,4 +42,9 @@ func AreSiblingIDs(a, b string) bool {
 // BaseID is the end of the ID, so "just" the original part
 func BaseID(id string) string {
 	return path.Base(id)
+}
+
+// IsDescendentID checks if a child is the descendent of a given parent
+func IsDescendentID(parent, child string) bool {
+	return parent != child && strings.HasPrefix(child, parent)
 }

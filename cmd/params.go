@@ -77,7 +77,7 @@ func getParamsFromFlags(flags *pflag.FlagSet) (vals render.Values, errors []erro
 	// get parameters passed to the --paramsJSON flag
 	jsonParams := render.Values{}
 	if len(paramsJSON) > 0 {
-		log.Println("[DEBUG] parsing --paramsJSON")
+		log.Println("[TRACE] parsing --paramsJSON")
 
 		err := json.Unmarshal([]byte(paramsJSON), &jsonParams)
 		// accumulate errors

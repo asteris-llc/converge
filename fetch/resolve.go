@@ -22,7 +22,7 @@ import (
 
 // ResolveInContext resolves a path relative to another
 func ResolveInContext(loc, ctx string) (string, error) {
-	log.Printf("[DEBUG] resolving URL %q in context of URL %q\n", loc, ctx)
+	log.Printf("[TRACE] resolving URL %q in context of URL %q\n", loc, ctx)
 
 	var (
 		locScheme, locPath = parse(loc)

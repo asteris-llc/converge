@@ -66,6 +66,15 @@ func (g *Graph) Add(id string, value interface{}) {
 	g.values.Set(id, value)
 }
 
+// Remove an existing value by ID
+func (g *Graph) Remove(id string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.Remove(id)
+	g.values.Remove(id)
+}
+
 // Get a value by ID
 func (g *Graph) Get(id string) interface{} {
 	val, _ := g.values.Get(id) // TODO: return presence as well
@@ -92,6 +101,26 @@ func (g *Graph) Connect(from, to string) {
 	g.inner.Connect(dag.BasicEdge(from, to))
 }
 
+// Disconnect two vertices by IDs
+func (g *Graph) Disconnect(from, to string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+}
+
+// UpEdges returns inweard-facing edges of the specified vertex
+func (g *Graph) UpEdges(id string) (out []string) {
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+
+	for _, edge := range g.inner.UpEdges(id).List() {
+		out = append(out, edge.(string))
+	}
+
+	return out
+}
+
 // DownEdges returns outward-facing edges of the specified vertex
 func (g *Graph) DownEdges(id string) (out []string) {
 	g.innerLock.RLock()
@@ -104,12 +133,28 @@ func (g *Graph) DownEdges(id string) (out []string) {
 	return out
 }
 
+// Descendents gets a list of all descendents (not just children, everything)
+// This only works if you're using the hierarchical ID functions from this
+// module.
+func (g *Graph) Descendents(id string) (out []string) {
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+
+	for _, node := range g.inner.Vertices() {
+		if IsDescendentID(id, node.(string)) {
+			out = append(out, node.(string))
+		}
+	}
+
+	return out
+}
+
 // Walk the graph leaf-to-root
 func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
 	return walk(ctx, g, cb)
 }
 
-// walk is spearate for interal use in the transformations
+// walk is separate for interal use in the transformations
 func walk(ctx context.Context, g *Graph, cb WalkFunc) error {
 	return g.inner.Walk(func(v dag.Vertex) error {
 		select {
@@ -166,7 +211,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
 			if _, ok := done[edge]; AreSiblingIDs(id, edge) && !ok {
-				log.Printf("[DEBUG] walk(rootfirst): %q still waiting for sibling %q", id, edge)
+				log.Printf("[TRACE] walk(rootfirst): %q still waiting for sibling %q", id, edge)
 				todo = append(todo, id)
 				skip = true
 			}

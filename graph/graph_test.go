@@ -58,6 +58,17 @@ func BenchmarkAddThenGet(b *testing.B) {
 	})
 }
 
+func TestRemove(t *testing.T) {
+	// Remove should remove a vertex
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("one", 1)
+	g.Remove("one")
+
+	assert.Nil(t, g.Get("one"))
+}
+
 func TestDownEdges(t *testing.T) {
 	// DownEdges should return string IDs for the downward edges of a given node
 	t.Parallel()
@@ -69,6 +80,42 @@ func TestDownEdges(t *testing.T) {
 
 	assert.Equal(t, []string{"two"}, g.DownEdges("one"))
 	assert.Equal(t, 0, len(g.DownEdges("two")))
+}
+
+func TestUpEdges(t *testing.T) {
+	// UpEdges should return string IDs for the upward edges of a given node
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("one", 1)
+	g.Add("two", 2)
+	g.Connect("one", "two")
+
+	assert.Equal(t, []string{"one"}, g.UpEdges("two"))
+	assert.Equal(t, 0, len(g.UpEdges("one")))
+}
+
+func TestDisconnect(t *testing.T) {
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("one", 1)
+	g.Add("two", 2)
+	g.Connect("one", "two")
+	g.Disconnect("one", "two")
+
+	assert.NotContains(t, g.DownEdges("one"), "two")
+}
+
+func TestDescendents(t *testing.T) {
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("one", 1)
+	g.Add("one/two", 2)
+	g.Connect("one", "one/two")
+
+	assert.Equal(t, []string{"one/two"}, g.Descendents("one"))
 }
 
 func TestWalkOrder(t *testing.T) {
