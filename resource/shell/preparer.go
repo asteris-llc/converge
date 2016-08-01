@@ -24,10 +24,10 @@ import (
 
 // Preparer for Shell tasks
 type Preparer struct {
-	Interpreter string  `hcl:"interpreter"`
-	SyntaxCheck *string `hcl:"syntaxcheck"`
-	Check       string  `hcl:"check"`
-	Apply       string  `hcl:"apply"`
+	Interpreter   string  `hcl:"interpreter"`
+	SyntaxChecker *string `hcl:"syntaxchecker"`
+	Check         string  `hcl:"check"`
+	Apply         string  `hcl:"apply"`
 }
 
 // Prepare a new task
@@ -97,7 +97,7 @@ func (p *Preparer) validateScriptSyntax(script string) error {
 
 func (p *Preparer) getValidatorCommand() (*exec.Cmd, error) {
 	interpreter := p.Interpreter
-	checkFlag := p.SyntaxCheck
+	checkFlag := p.SyntaxChecker
 	if interpreter != "" && checkFlag != nil {
 		return exec.Command(interpreter, *checkFlag), nil
 	}
