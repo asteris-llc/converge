@@ -15,6 +15,7 @@
 package shell
 
 import (
+	"log"
 	"os/exec"
 
 	"github.com/asteris-llc/converge/resource"
@@ -23,9 +24,10 @@ import (
 
 // Preparer for Shell tasks
 type Preparer struct {
-	Interpreter string `hcl:"interpreter"`
-	Check       string `hcl:"check"`
-	Apply       string `hcl:"apply"`
+	Interpreter   string  `hcl:"interpreter"`
+	SyntaxChecker *string `hcl:"syntaxchecker"`
+	Check         string  `hcl:"check"`
+	Apply         string  `hcl:"apply"`
 }
 
 // Prepare a new task
@@ -61,7 +63,13 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func (p *Preparer) validateScriptSyntax(script string) error {
-	command := exec.Command("sh", "-n")
+
+	command, cmdError := p.getValidatorCommand()
+
+	if cmdError != nil {
+		log.Printf("[WARN] script validator returned '%s', will not attempt to validate script syntax\n", cmdError)
+		return nil
+	}
 
 	in, err := command.StdinPipe()
 	if err != nil {
@@ -85,4 +93,19 @@ func (p *Preparer) validateScriptSyntax(script string) error {
 	}
 
 	return nil
+}
+
+func (p *Preparer) getValidatorCommand() (*exec.Cmd, error) {
+	interpreter := p.Interpreter
+	checkFlag := p.SyntaxChecker
+	if interpreter != "" && checkFlag != nil {
+		return exec.Command(interpreter, *checkFlag), nil
+	}
+	if interpreter == "" && checkFlag == nil {
+		return exec.Command("sh", "-n"), nil
+	}
+	if interpreter == "" {
+		return nil, errors.New("syntaxcheck was set without a user-specified interpreter")
+	}
+	return nil, errors.New("custom interpreter defined without syntaxcheck flag")
 }
