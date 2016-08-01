@@ -32,6 +32,8 @@ type Values map[string]interface{}
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
+	log.Println("[INFO] rendering")
+
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" {
 			log.Println("[DEBUG] render: wrapping root")

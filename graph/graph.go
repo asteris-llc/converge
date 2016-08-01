@@ -154,7 +154,7 @@ func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
 	return walk(ctx, g, cb)
 }
 
-// walk is spearate for interal use in the transformations
+// walk is separate for interal use in the transformations
 func walk(ctx context.Context, g *Graph, cb WalkFunc) error {
 	return g.inner.Walk(func(v dag.Vertex) error {
 		select {
@@ -211,7 +211,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
 			if _, ok := done[edge]; AreSiblingIDs(id, edge) && !ok {
-				log.Printf("[DEBUG] walk(rootfirst): %q still waiting for sibling %q", id, edge)
+				log.Printf("[TRACE] walk(rootfirst): %q still waiting for sibling %q", id, edge)
 				todo = append(todo, id)
 				skip = true
 			}
