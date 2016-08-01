@@ -26,8 +26,6 @@ import (
 	"github.com/asteris-llc/converge/resource/shell"
 )
 
-const preparerRootNode = "root"
-
 // PreparerProvider is the PrintProvider type for Preparer resources
 type PreparerProvider struct {
 	graphviz.GraphIDProvider
@@ -54,7 +52,7 @@ func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, er
 func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
 	var name string
 
-	if e.Name == preparerRootNode {
+	if e.Name == rootNodeID {
 		name = "/"
 	} else {
 		name = strings.Split(e.Name, "root/")[1]
