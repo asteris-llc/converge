@@ -34,6 +34,12 @@ type TransformFunc func(string, *Graph) error
 
 type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
+// An Edge is a generic pair of IDs indicating a directed edge in the graph
+type Edge struct {
+	Source string
+	Dest   string
+}
+
 // Graph is a generic graph structure that uses IDs to connect the graph
 type Graph struct {
 	inner  *dag.AcyclicGraph
@@ -246,6 +252,37 @@ func (g *Graph) Validate() error {
 	}
 
 	return nil
+}
+
+// Vertices will det a list of the IDs for every vertex in the graph, cast to a
+// string.
+func (g *Graph) Vertices() []string {
+	graphVertices := g.inner.Vertices()
+	vertices := make([]string, len(graphVertices))
+	for v := range graphVertices {
+		vertices[v] = graphVertices[v].(string)
+	}
+	return vertices
+}
+
+// Edges will get a list of all of the edges in the graph.
+func (g *Graph) Edges() []Edge {
+	graphEdges := g.inner.Edges()
+	edges := make([]Edge, len(graphEdges))
+	for idx, srcEdge := range graphEdges {
+		edge := Edge{Source: srcEdge.Source().(string), Dest: srcEdge.Target().(string)}
+		edges[idx] = edge
+	}
+	return edges
+}
+
+// Root will get the root element of the graph
+func (g *Graph) Root() (string, error) {
+	r, err := g.inner.Root()
+	if err != nil {
+		return "", err
+	}
+	return r.(string), nil
 }
 
 func (g *Graph) String() string {
