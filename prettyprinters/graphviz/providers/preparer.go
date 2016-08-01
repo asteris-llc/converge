@@ -28,15 +28,15 @@ import (
 
 const preparerRootNode = "root"
 
-// ResourceProvider is the PrintProvider type for Preparer resources
-type ResourceProvider struct {
+// PreparerProvider is the PrintProvider type for Preparer resources
+type PreparerProvider struct {
 	graphviz.GraphIDProvider
 	ShowParams bool
 }
 
 // VertexGetID returns a the Graph ID as the VertexID, possibly masking it
 // depending on the vertex type and configuration
-func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
 	switch e.Value.(type) {
 	case *param.Preparer:
 		return pp.RenderableString(e.Name, p.ShowParams), nil
@@ -51,7 +51,7 @@ func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, er
 //   Modules: Return 'Module' and the module name
 //   Params:  Return 'name -> "value"'
 //   otherwise: Return 'name'
-func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
 	var name string
 
 	if e.Name == preparerRootNode {
@@ -83,7 +83,7 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 // VertexGetProperties sets graphviz attributes based on the type of the
 // resource. Specifically, we set the shape to 'component' for Shell preparers
 // and 'tab' for templates, and we set the entire root node to be invisible.
-func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
+func (p PreparerProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 	switch e.Value.(type) {
 	case *shell.Preparer:
@@ -101,7 +101,7 @@ func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.P
 
 // EdgeGetProperties sets attributes for graph edges, specifically making edges
 // originating from the Root node invisible.
-func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
+func (p PreparerProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 	return properties
 }
@@ -109,7 +109,7 @@ func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphv
 // SubgraphMarker identifies the start of subgraphs for resources.
 // Specifically, it starts a new subgraph whenever a new 'Module' type resource
 // is encountered.
-func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
+func (p PreparerProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	switch e.Value.(type) {
 	case *module.Preparer:
 		return graphviz.SubgraphMarkerStart
@@ -118,7 +118,7 @@ func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.Subgra
 	}
 }
 
-// ResourcePreparer is a utility function to return a new ResourceProvider.
-func ResourcePreparer() graphviz.PrintProvider {
-	return ResourceProvider{}
+// NewPreparerProvider is a utility function to return a new PreparerProvider.
+func NewPreparerProvider() graphviz.PrintProvider {
+	return PreparerProvider{}
 }
