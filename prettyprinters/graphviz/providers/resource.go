@@ -26,82 +26,77 @@ import (
 	"github.com/asteris-llc/converge/resource/shell"
 )
 
-const preparerRootNode = "root"
-
-// PreparerProvider is the PrintProvider type for Preparer resources
-type PreparerProvider struct {
+// ResourceProvider is the PrintProvider type for Resources
+type ResourceProvider struct {
 	graphviz.GraphIDProvider
 	ShowParams bool
 }
 
-// VertexGetID returns a the Graph ID as the VertexID, possibly masking it
-// depending on the vertex type and configuration
-func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
+// VertexGetID returns the graph ID as the VertexID, possibly maksing it
+// depending on the vertext type and configuration.
+func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
 	switch e.Value.(type) {
-	case *param.Preparer:
+	case *param.Param:
 		return pp.RenderableString(e.Name, p.ShowParams), nil
+
 	default:
 		return pp.VisibleString(e.Name), nil
 	}
 }
 
-// VertexGetLabel returns a vertex label based on the type of the preparer. The
-// specific generated labels are:
-//   Templates: Return 'Template' and the file destination
-//   Modules: Return 'Module' and the module name
-//   Params:  Return 'name -> "value"'
-//   otherwise: Return 'name'
-func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
+// VertexGetLabel returns a vertext label based on the type of the resource. The
+// specific generated labels sare:
+//    Templates: Return 'Template' and the file destination
+//    Modules: Return 'Module' and the module name
+//    Params: Return 'name -> "value"'
+//    otherwise: Return 'name'
+func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
 	var name string
 
-	if e.Name == preparerRootNode {
+	if e.Name == rootNodeID {
 		name = "/"
 	} else {
 		name = strings.Split(e.Name, "root/")[1]
 	}
 
 	switch e.Value.(type) {
-	case *content.Preparer:
-		v := e.Value.(*content.Preparer)
+	case *content.Content:
+		v := e.Value.(*content.Content)
 		return pp.VisibleString(fmt.Sprintf("File: %s", v.Destination)), nil
-	case *module.Preparer:
+
+	case *module.Module:
 		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
-	case *param.Preparer:
-		v := e.Value.(*param.Preparer)
-		var paramStr string
-		if v.Default == nil {
-			paramStr = fmt.Sprintf(`%s = <required param>`, name)
-		} else {
-			paramStr = fmt.Sprintf(`%s = \"%s\"`, name, *v.Default)
-		}
-		return pp.RenderableString(paramStr, p.ShowParams), nil
+
+	case *param.Param:
+		v := e.Value.(*param.Param)
+		return pp.RenderableString(
+			fmt.Sprintf(`%s = \"%s\"`, name, v.Value),
+			p.ShowParams,
+		), nil
+
 	default:
 		return pp.VisibleString(name), nil
 	}
 }
 
 // VertexGetProperties sets graphviz attributes based on the type of the
-// preparer. Specifically, we set the shape to 'component' for Shell preparers
+// resource. Specifically, we set the shape to 'component' for Shell preparers
 // and 'tab' for templates, and we set the entire root node to be invisible.
-func (p PreparerProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
+func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 	switch e.Value.(type) {
-	case *shell.Preparer:
+	case *shell.Shell:
 		properties["shape"] = "component"
-	case *content.Preparer:
+
+	case *content.Content:
 		properties["shape"] = "tab"
-	case *param.Preparer:
-		v := e.Value.(*param.Preparer)
-		if v.Default == nil {
-			properties["style"] = "dotted"
-		}
 	}
 	return properties
 }
 
 // EdgeGetProperties sets attributes for graph edges, specifically making edges
 // originating from the Root node invisible.
-func (p PreparerProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
+func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 	return properties
 }
@@ -109,16 +104,16 @@ func (p PreparerProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphv
 // SubgraphMarker identifies the start of subgraphs for resources.
 // Specifically, it starts a new subgraph whenever a new 'Module' type resource
 // is encountered.
-func (p PreparerProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
+func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	switch e.Value.(type) {
-	case *module.Preparer:
+	case *module.Module:
 		return graphviz.SubgraphMarkerStart
 	default:
 		return graphviz.SubgraphMarkerNOP
 	}
 }
 
-// NewPreparerProvider is a utility function to return a new PreparerProvider.
-func NewPreparerProvider() graphviz.PrintProvider {
-	return PreparerProvider{}
+// NewResourceProvider is a utility function to return a new ResourceProvider
+func NewResourceProvider() graphviz.PrintProvider {
+	return ResourceProvider{}
 }
