@@ -40,13 +40,28 @@ samples/%.png: samples/% converge
 	./converge graph $< | dot -Tpng -o$@
 
 lint:
+	@echo '# golint'
 	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/golint
+
+	@echo '# go tool vet'
 	@go tool vet -all -shadow ${TOLINT} # built in
+
+	@echo '# gosimple'
 	@gosimple ${TOLINT} # github.com/dominikh/go-simple/cmd/gosimple
+
+	@echo '# unconvert'
 	@unconvert ${TOLINT} # github.com/mdempsky/unconvert
+
+	@echo '# structcheck'
 	@structcheck ${TOLINT} # github.com/opennota/check/cmd/structcheck
+
+	@echo '# varcheck'
 	@varcheck ${TOLINT} # github.com/opennota/check/cmd/varcheck
+
+	@echo '# aligncheck'
 	@aligncheck ${TOLINT} # github.com/opennota/check/cmd/aligncheck
+
+	@echo '# gas'
 	@gas ${TOLINT} # github.com/HewlettPackard/gas
 
 vendor: ${NONVENDOR}

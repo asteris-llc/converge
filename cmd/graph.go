@@ -21,10 +21,12 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
+	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,21 +49,45 @@ You can pipe the output directly to the 'dot' command, for example:
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		params := getParams(cmd)
+
 		fname := args[0]
 
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
-		graph, err := load.Load(ctx, fname)
+		out, err := load.Load(ctx, fname)
 		if err != nil {
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}
 
-		provider := providers.ResourceProvider{}
-		provider.ShowParams = viper.GetBool("show-params")
+		if viper.GetBool("merge-duplicates") {
+			var rendered *graph.Graph
+			rendered, err = render.Render(ctx, out, params)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+			}
+
+			out, err = graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
+			}
+		}
+
+		var provider graphviz.PrintProvider
+		if viper.GetBool("merge-duplicates") {
+			provider = providers.ResourceProvider{
+				ShowParams: viper.GetBool("show-params"),
+			}
+		} else {
+			provider = providers.PreparerProvider{
+				ShowParams: viper.GetBool("show-params"),
+			}
+		}
+
 		dotPrinter := graphviz.New(graphviz.DefaultOptions(), provider)
 		printer := prettyprinters.New(dotPrinter)
-		dotCode, err := printer.Show(ctx, graph)
+		dotCode, err := printer.Show(ctx, out)
 		if err != nil {
 			log.Fatalf("[FATAL] %s: could not generate dot output: %s", fname, err)
 		}
@@ -72,6 +98,8 @@ You can pipe the output directly to the 'dot' command, for example:
 
 func init() {
 	graphCmd.Flags().Bool("show-params", false, "also graph param dependencies")
+	graphCmd.Flags().Bool("merge-duplicates", false, "merge duplicates before rendering")
+	addParamsArguments(graphCmd.PersistentFlags())
 	viperBindPFlags(graphCmd.Flags())
 
 	RootCmd.AddCommand(graphCmd)
