@@ -27,8 +27,8 @@ import (
 // SkipTrimFunc will be used to determine whether or not to trim a node
 type SkipTrimFunc func(string) bool
 
-// TrimSubtrees removes duplicates in the graph
-func TrimSubtrees(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, error) {
+// TrimDuplicates removes duplicates in the graph
+func TrimDuplicates(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, error) {
 	lock := new(sync.Mutex)
 	values := map[uint64]string{}
 
@@ -38,7 +38,7 @@ func TrimSubtrees(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, err
 		}
 
 		if skip(id) {
-			log.Printf("[TRACE] trim subtrees: skipping %q by request\n", id)
+			log.Printf("[TRACE] trim duplicates: skipping %q by request\n", id)
 			return nil
 		}
 
@@ -54,24 +54,24 @@ func TrimSubtrees(ctx context.Context, g *Graph, skip SkipTrimFunc) (*Graph, err
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-			log.Printf("[TRACE] trim subtrees: registering %q as original\n", id)
+			log.Printf("[TRACE] trim duplicates: registering %q as original\n", id)
 			values[hash] = id
 
 			return nil
 		}
 
-		log.Printf("[DEBUG] trim subtrees: found duplicate: %q and %q\n", target, id)
+		log.Printf("[DEBUG] trim duplicates: found duplicate: %q and %q\n", target, id)
 
 		// Point all inbound links to value to target instead
 		for _, src := range g.UpEdges(id) {
-			log.Printf("[TRACE] trim subtrees: re-pointing %q from %q to %q\n", src, id, target)
+			log.Printf("[TRACE] trim duplicates: re-pointing %q from %q to %q\n", src, id, target)
 			out.Disconnect(src, id)
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
 		for _, child := range g.Descendents(id) {
-			log.Printf("[TRACE] trim subtrees: removing child %q\n", child)
+			log.Printf("[TRACE] trim duplicates: removing child %q\n", child)
 			out.Remove(child)
 		}
 

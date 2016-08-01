@@ -26,12 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTrimSubtreesRemovesDuplicates(t *testing.T) {
+func TestTrimDuplicatesRemovesDuplicates(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := baseDupGraph()
 
-	transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
+	transformed, err := graph.TrimDuplicates(context.Background(), g, neverSkip)
 
 	require.NoError(t, err)
 
@@ -46,7 +46,7 @@ func TestTrimSubtreesRemovesDuplicates(t *testing.T) {
 	assert.Equal(t, 1, nodesLeft, "only one of root/first or root/one should remain")
 }
 
-func TestTrimSubtreesMigratesDependencies(t *testing.T) {
+func TestTrimDuplicatesMigratesDependencies(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := baseDupGraph()
@@ -55,7 +55,7 @@ func TestTrimSubtreesMigratesDependencies(t *testing.T) {
 	g.Connect("root/two", "root/first")
 
 	for i := 1; i <= 5; i++ {
-		transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
+		transformed, err := graph.TrimDuplicates(context.Background(), g, neverSkip)
 
 		// we need to get a result where root/first is removed so we can test
 		// dependency migration. So if root/first still exists, we need to skip
@@ -73,7 +73,7 @@ func TestTrimSubtreesMigratesDependencies(t *testing.T) {
 	assert.FailNow(t, "didn't get a testable result in five tries")
 }
 
-func TestTrimSubtreesRemovesChildren(t *testing.T) {
+func TestTrimDuplicatesRemovesChildren(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := baseDupGraph()
@@ -83,7 +83,7 @@ func TestTrimSubtreesRemovesChildren(t *testing.T) {
 		g.Connect(node, graph.ID(node, "x"))
 	}
 
-	transformed, err := graph.TrimSubtrees(context.Background(), g, neverSkip)
+	transformed, err := graph.TrimDuplicates(context.Background(), g, neverSkip)
 	require.NoError(t, err)
 
 	var removed string
