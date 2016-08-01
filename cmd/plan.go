@@ -67,9 +67,9 @@ can be done separately to see what needs to be changed before execution.`,
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
 			}
 
-			trimmed, err := graph.TrimSubtrees(ctx, rendered, graph.SkipModuleAndParams)
+			trimmed, err := graph.TrimDuplicates(ctx, rendered, graph.SkipModuleAndParams)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not trim subtrees: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: could not trim duplicates: %s\n", fname, err)
 			}
 
 			results, err := plan.Plan(ctx, trimmed)
