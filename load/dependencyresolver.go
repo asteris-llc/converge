@@ -16,14 +16,19 @@ package load
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"regexp"
+	"text/template"
 
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
+	extensions "github.com/asteris-llc/converge/template-extensions"
 )
+
+type dependencyGenerator func(node *parse.Node) ([]string, error)
 
 var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 
@@ -42,18 +47,23 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
+		depGenerators := []dependencyGenerator{
+			getDepends,
+			getParams,
+		}
+
 		// we have dependencies from various sources, but they're always IDs, so we
 		// can connect them pretty easily
-		for _, source := range []func(node *parse.Node) ([]string, error){getDepends, getParams} {
+		for _, source := range depGenerators {
 			deps, err := source(node)
 			if err != nil {
 				return err
 			}
 			for _, dep := range deps {
+
 				out.Connect(id, graph.SiblingID(id, dep))
 			}
 		}
-
 		return nil
 	})
 }
@@ -74,6 +84,7 @@ func getDepends(node *parse.Node) ([]string, error) {
 }
 
 func getParams(node *parse.Node) (out []string, err error) {
+
 	// get sibling dependencies. In this case, we need to look for template
 	// calls to `param`. Note that I am not proud of this approach. If you,
 	// future reader, have a better idea of what to do here: do it!
@@ -87,12 +98,16 @@ func getParams(node *parse.Node) (out []string, err error) {
 	if err != nil {
 		return nil, err
 	}
-
+	type stub struct{}
+	funcs := extensions.GetDependencyFuncMap(&out)
 	for _, s := range strings {
-		for _, match := range paramSeekerRe.FindAllString(s, -1) {
-			out = append(out, "param."+paramSeekerRe.FindStringSubmatch(match)[1])
+		useless := stub{}
+		tmpl, err := template.New("DependencyTemplate").Funcs(funcs).Parse(s)
+		if err != nil {
+			return out, err
 		}
-	}
+		tmpl.Execute(ioutil.Discard, &useless)
 
+	}
 	return out, err
 }
