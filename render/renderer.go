@@ -18,9 +18,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
+	extensions "github.com/asteris-llc/converge/template-extensions"
 )
 
 // Renderer to be passed to preparers, which will render strings
@@ -50,9 +52,13 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) funcs() template.FuncMap {
-	return map[string]interface{}{
-		"param": r.param,
-	}
+	return extensions.GetApplicationFuncMap(map[string][]interface{}{
+		"param": {r.Graph, r.ID},
+	})
+}
+
+func splitString(sep, str string) ([]string, error) {
+	return strings.Split(str, sep), nil
 }
 
 func (r *Renderer) param(name string) (string, error) {
