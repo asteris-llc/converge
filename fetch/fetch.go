@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+
+	"golang.org/x/net/context"
 )
 
-// Any fetches a path based on a
-func Any(loc string) ([]byte, error) {
+// Any fetches a path based on the scheme of the location
+func Any(ctx context.Context, loc string) ([]byte, error) {
 	url, err := url.Parse(loc)
 	if err != nil {
 		return nil, err
@@ -31,7 +33,7 @@ func Any(loc string) ([]byte, error) {
 	case "file":
 		return File(path.Join(url.Host, url.Path))
 	case "http", "https":
-		return HTTP(loc)
+		return HTTP(ctx, loc)
 	default:
 		return nil, fmt.Errorf("protocol %q is not implemented", url.Scheme)
 	}
