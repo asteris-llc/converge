@@ -16,7 +16,6 @@ package load
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"text/template"
@@ -106,7 +105,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 		if err != nil {
 			return out, err
 		}
-		tmpl.Execute(ioutil.Discard, &useless)
+		tmpl.Execute(nil, &useless)
 
 	}
 	return out, err
