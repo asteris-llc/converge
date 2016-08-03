@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"fmt"
+	"log"
 	"text/template"
 )
 
@@ -27,9 +28,16 @@ func MakeLanguage() *LanguageExtension {
 	return &LanguageExtension{Funcs: funcs}
 }
 
+func DefaultLanguage() *LanguageExtension {
+	language := MakeLanguage()
+	language.On("split", DefaultSplit)
+	language.On("param", Unimplimented("param"))
+	language.Validate()
+	return language
+}
+
 func (l *LanguageExtension) On(keyword string, action interface{}) *LanguageExtension {
 	l.Funcs[keyword] = action
-	fmt.Printf("Added a function to %s\n", keyword)
 	return l
 }
 
@@ -49,6 +57,12 @@ func (l *LanguageExtension) Validate() ([]string, []string, bool) {
 			ok = false
 		}
 	}
+	if !ok {
+		log.Printf("[WARN] bad template DSL: extra keywords: %v, missing: %v\n",
+			extra,
+			missing,
+		)
+	}
 	return missing, extra, ok
 }
 
@@ -64,5 +78,11 @@ func RegisterExistance(list *[]string, nameIndex int) interface{} {
 		name := params[0]
 		*list = append(*list, "param."+name)
 		return name, nil
+	}
+}
+
+func Unimplimented(name string) interface{} {
+	return func(params ...string) (string, error) {
+		return "", fmt.Errorf("%s is unimplimented in the current template language", name)
 	}
 }
