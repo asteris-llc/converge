@@ -15,7 +15,9 @@
 package extensions
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"text/template"
 )
@@ -24,8 +26,8 @@ import (
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"params": {},
-	"spilt":  {},
+	"param": {},
+	"split": {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -75,13 +77,13 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 	ok := true
 	for key := range l.Funcs {
 		if _, found := languageKeywords[key]; !found {
-			missing = append(missing, key)
+			extra = append(extra, key)
 			ok = false
 		}
 	}
 	for key := range languageKeywords {
 		if _, found := l.Funcs[key]; !found {
-			extra = append(extra, key)
+			missing = append(missing, key)
 			ok = false
 		}
 	}
@@ -92,6 +94,36 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 		)
 	}
 	return missing, extra, ok
+}
+
+// Render provides a lightweight interface over template.New and
+// template.Execute, it creates a new template given the name and input string,
+// renders it with the currently defined language extensions, and writes the
+// output into the provided io.Writer.  If any error is returned at any point it
+// is passed on to the user.
+func (l *LanguageExtension) Render(dotValues interface{}, output io.Writer, name string, toRender string) error {
+	tmpl, err := template.New(name).Funcs(l.Funcs).Parse(toRender)
+	if err != nil {
+		return err
+	}
+	return tmpl.Execute(output, dotValues)
+}
+
+// SimpleRender provides a simple interface to render a template with language
+// extensions assuming that there are no dotValues and provides an empty stub
+// struct.
+func (l *LanguageExtension) SimpleRender(output io.Writer, name, toRender string) error {
+	stubObj := struct{}{}
+	return l.Render(&stubObj, output, name, toRender)
+}
+
+// SimpleRenderStr provides the lightest weight wrapper around template
+// rendering, assuming there are not struct values that need to be accessed and
+// rendering into an ephemeral byte buffer that is returned as a string.
+func (l *LanguageExtension) SimpleRenderStr(name, toRender string) (string, error) {
+	var buffer bytes.Buffer
+	err := l.SimpleRender(&buffer, name, toRender)
+	return buffer.String(), err
 }
 
 // DoNothing returns a function that stubs a template function, returning an
