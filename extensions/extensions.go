@@ -74,7 +74,7 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 	var extra []string
 	ok := true
 	for key := range l.Funcs {
-		if _, ok := languageKeywords[key]; !ok {
+		if _, found := languageKeywords[key]; !found {
 			missing = append(missing, key)
 			ok = false
 		}
@@ -98,7 +98,6 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 // empty string and no error.
 func DoNothing() interface{} {
 	return func(params ...string) (string, error) {
-		fmt.Println("Running do-nothing func")
 		return "", nil
 	}
 }
