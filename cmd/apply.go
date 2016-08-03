@@ -60,8 +60,6 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			fmt.Println(loaded)
-
 			rendered, err := render.Render(ctx, loaded, params)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
