@@ -16,15 +16,16 @@ package load
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"regexp"
 	"text/template"
 
 	"golang.org/x/net/context"
 
+	"github.com/asteris-llc/converge/extensions"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
-	extensions "github.com/asteris-llc/converge/template-extensions"
 )
 
 type dependencyGenerator func(node *parse.Node) ([]string, error)
@@ -97,15 +98,19 @@ func getParams(node *parse.Node) (out []string, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	type stub struct{}
-	funcs := extensions.GetDependencyFuncMap(&out)
+	language := extensions.MakeLanguage()
+	language.On("param", extensions.RegisterExistance(&out, 0))
+	language.On("split", extensions.DoNothing())
 	for _, s := range strings {
 		useless := stub{}
-		tmpl, err := template.New("DependencyTemplate").Funcs(funcs).Parse(s)
+		fmt.Printf("Parsing %s\n", s)
+		tmpl, err := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
 		if err != nil {
 			return out, err
 		}
-		tmpl.Execute(nil, &useless)
+		tmpl.Execute(ioutil.Discard, &useless)
 
 	}
 	return out, err
