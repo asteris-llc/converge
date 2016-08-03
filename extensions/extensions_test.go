@@ -63,7 +63,7 @@ func Test_Validate_ReturnsSlicesOfMissingWhenMissingL(t *testing.T) {
 func Test_Validate_ReturnsSlicesOfExtraWhenExtra(t *testing.T) {
 	expected := []string{"testkeyword"}
 	l := extensions.DefaultLanguage()
-	l.On("testkeyword", extensions.DoNothing())
+	l.On("testkeyword", extensions.StubTemplateFunc)
 	_, extra, ok := l.Validate()
 	assert.False(t, ok)
 	assert.Equal(t, expected, extra)

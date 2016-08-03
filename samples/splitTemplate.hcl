@@ -1,5 +1,5 @@
 param "test1" {
-  default = "a|b|c,"
+  default = "a|b|c"
 }
 
 param "test2" {

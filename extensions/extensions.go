@@ -17,7 +17,6 @@ package extensions
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"text/template"
 )
@@ -41,7 +40,7 @@ type LanguageExtension struct {
 func MakeLanguage() *LanguageExtension {
 	funcs := template.FuncMap{}
 	for keyword := range languageKeywords {
-		funcs[keyword] = DoNothing()
+		funcs[keyword] = StubTemplateFunc
 	}
 	return &LanguageExtension{Funcs: funcs}
 }
@@ -53,7 +52,7 @@ func MakeLanguage() *LanguageExtension {
 func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
 	language.On("split", DefaultSplit)
-	language.On("param", Unimplimented("param"))
+	language.On("param", Unimplemented("param"))
 	language.Validate()
 	return language
 }
@@ -101,44 +100,26 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 // renders it with the currently defined language extensions, and writes the
 // output into the provided io.Writer.  If any error is returned at any point it
 // is passed on to the user.
-func (l *LanguageExtension) Render(dotValues interface{}, output io.Writer, name string, toRender string) error {
+func (l *LanguageExtension) Render(dotValues interface{}, name, toRender string) (bytes.Buffer, error) {
+	var output bytes.Buffer
 	tmpl, err := template.New(name).Funcs(l.Funcs).Parse(toRender)
 	if err != nil {
-		return err
+		return output, err
 	}
-	return tmpl.Execute(output, dotValues)
+	err = tmpl.Execute(&output, dotValues)
+	return output, err
 }
 
-// SimpleRender provides a simple interface to render a template with language
-// extensions assuming that there are no dotValues and provides an empty stub
-// struct.
-func (l *LanguageExtension) SimpleRender(output io.Writer, name, toRender string) error {
-	stubObj := struct{}{}
-	return l.Render(&stubObj, output, name, toRender)
+// StubTemplateFunc is the NOP function for template parsing
+func StubTemplateFunc(...string) (string, error) {
+	return "", nil
 }
 
-// SimpleRenderStr provides the lightest weight wrapper around template
-// rendering, assuming there are not struct values that need to be accessed and
-// rendering into an ephemeral byte buffer that is returned as a string.
-func (l *LanguageExtension) SimpleRenderStr(name, toRender string) (string, error) {
-	var buffer bytes.Buffer
-	err := l.SimpleRender(&buffer, name, toRender)
-	return buffer.String(), err
-}
-
-// DoNothing returns a function that stubs a template function, returning an
-// empty string and no error.
-func DoNothing() interface{} {
-	return func(params ...string) (string, error) {
-		return "", nil
-	}
-}
-
-// RegisterExistence is a utility function to instert calls into a list.
-// RegisterExistence takes a pointer to a list of strings, and an argument
+// RememberCalls is a utility function to instert calls into a list.
+// RememberCalls takes a pointer to a list of strings, and an argument
 // index.  It returns a variadic function that when called from gotemplate will
 // take the indexed argument and append it to the provided list.
-func RegisterExistence(list *[]string, nameIndex int) interface{} {
+func RememberCalls(list *[]string, nameIndex int) interface{} {
 	return func(params ...string) (string, error) {
 		name := params[0]
 		*list = append(*list, "param."+name)
@@ -146,9 +127,9 @@ func RegisterExistence(list *[]string, nameIndex int) interface{} {
 	}
 }
 
-// Unimplimented returns a function that will raise an error with the fact that
+// Unimplemented returns a function that will raise an error with the fact that
 // the keyword is unimplemented.
-func Unimplimented(name string) interface{} {
+func Unimplemented(name string) interface{} {
 	return func(params ...string) (string, error) {
 		return "", fmt.Errorf("%s is unimplimented in the current template language", name)
 	}
