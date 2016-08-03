@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package extensions defines custom extensions to the go text templating
+// language.  This package serves primarily as a lightweight wrapper on top of
+// text/template to ensure a consistent set of extensions across the application
+// by providing some validate functions to ensure that a minimal set of keywords
+// are supported.
 package extensions
-
-import "strings"
-
-// DefaultSplit provides a default implementation for the split function in text
-// templates. It operates by simply reversing the arguments to split so that it
-// works in a reasonable manner when dealing with piped input.
-func DefaultSplit(sep, str string) []string {
-	return strings.Split(str, sep)
-}

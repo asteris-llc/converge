@@ -101,7 +101,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 
 	type stub struct{}
 	language := extensions.MakeLanguage()
-	language.On("param", extensions.RegisterExistance(&out, 0))
+	language.On("param", extensions.RegisterExistence(&out, 0))
 	language.On("split", extensions.DoNothing())
 	for _, s := range strings {
 		useless := stub{}
