@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/asteris-llc/converge/extensions"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/text/template/extensions"
 )
 
 // Renderer to be passed to preparers, which will render strings
