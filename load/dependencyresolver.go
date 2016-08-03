@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"regexp"
 	"text/template"
 
 	"golang.org/x/net/context"
@@ -29,8 +28,6 @@ import (
 )
 
 type dependencyGenerator func(node *parse.Node) ([]string, error)
-
-var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
@@ -84,7 +81,6 @@ func getDepends(node *parse.Node) ([]string, error) {
 }
 
 func getParams(node *parse.Node) (out []string, err error) {
-
 	// get sibling dependencies. In this case, we need to look for template
 	// calls to `param`. Note that I am not proud of this approach. If you,
 	// future reader, have a better idea of what to do here: do it!
@@ -105,9 +101,9 @@ func getParams(node *parse.Node) (out []string, err error) {
 	language.On("split", extensions.DoNothing())
 	for _, s := range strings {
 		useless := stub{}
-		tmpl, err := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
-		if err != nil {
-			return out, err
+		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
+		if tmplErr != nil {
+			return out, tmplErr
 		}
 		tmpl.Execute(ioutil.Discard, &useless)
 
