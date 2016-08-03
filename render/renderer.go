@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 	"text/template"
 
 	"github.com/asteris-llc/converge/extensions"
@@ -56,10 +55,6 @@ func (r *Renderer) funcs() template.FuncMap {
 	language.On("split", extensions.DefaultSplit)
 	language.On("param", r.param)
 	return language.Funcs
-}
-
-func splitString(sep, str string) ([]string, error) {
-	return strings.Split(str, sep), nil
 }
 
 func (r *Renderer) param(name string) (string, error) {
