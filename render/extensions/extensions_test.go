@@ -7,7 +7,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/asteris-llc/converge/text/template/extensions"
+	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/stretchr/testify/assert"
 )
 
