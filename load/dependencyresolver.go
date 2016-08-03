@@ -24,7 +24,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/text/template/extensions"
+	"github.com/asteris-llc/converge/render/extensions"
 )
 
 type dependencyGenerator func(node *parse.Node) ([]string, error)

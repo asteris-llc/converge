@@ -21,7 +21,7 @@ import (
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/text/template/extensions"
+	"github.com/asteris-llc/converge/render/extensions"
 )
 
 // Renderer to be passed to preparers, which will render strings
