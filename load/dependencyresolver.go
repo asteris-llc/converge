@@ -105,7 +105,6 @@ func getParams(node *parse.Node) (out []string, err error) {
 	language.On("split", extensions.DoNothing())
 	for _, s := range strings {
 		useless := stub{}
-		fmt.Printf("Parsing %s\n", s)
 		tmpl, err := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
 		if err != nil {
 			return out, err
