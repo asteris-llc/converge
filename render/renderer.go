@@ -21,6 +21,7 @@ import (
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/render/extensions"
 )
 
 // Renderer to be passed to preparers, which will render strings
@@ -50,9 +51,10 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) funcs() template.FuncMap {
-	return map[string]interface{}{
-		"param": r.param,
-	}
+	language := extensions.MakeLanguage()
+	language.On("split", extensions.DefaultSplit)
+	language.On("param", r.param)
+	return language.Funcs
 }
 
 func (r *Renderer) param(name string) (string, error) {

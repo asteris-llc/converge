@@ -16,16 +16,18 @@ package load
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
-	"regexp"
+	"text/template"
 
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/render/extensions"
 )
 
-var paramSeekerRe = regexp.MustCompile(`\{\{\s*param\s+.(\w+?).\s*\}\}`)
+type dependencyGenerator func(node *parse.Node) ([]string, error)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
@@ -42,18 +44,23 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
+		depGenerators := []dependencyGenerator{
+			getDepends,
+			getParams,
+		}
+
 		// we have dependencies from various sources, but they're always IDs, so we
 		// can connect them pretty easily
-		for _, source := range []func(node *parse.Node) ([]string, error){getDepends, getParams} {
+		for _, source := range depGenerators {
 			deps, err := source(node)
 			if err != nil {
 				return err
 			}
 			for _, dep := range deps {
+
 				out.Connect(id, graph.SiblingID(id, dep))
 			}
 		}
-
 		return nil
 	})
 }
@@ -88,11 +95,18 @@ func getParams(node *parse.Node) (out []string, err error) {
 		return nil, err
 	}
 
+	type stub struct{}
+	language := extensions.MakeLanguage()
+	language.On("param", extensions.RememberCalls(&out, 0))
+	language.On("split", extensions.StubTemplateFunc)
 	for _, s := range strings {
-		for _, match := range paramSeekerRe.FindAllString(s, -1) {
-			out = append(out, "param."+paramSeekerRe.FindStringSubmatch(match)[1])
+		useless := stub{}
+		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
+		if tmplErr != nil {
+			return out, tmplErr
 		}
-	}
+		tmpl.Execute(ioutil.Discard, &useless)
 
+	}
 	return out, err
 }

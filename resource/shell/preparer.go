@@ -37,7 +37,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	if err := p.validateScriptSyntax(check); err != nil {
+	if err = p.validateScriptSyntax(check); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	if err := p.validateScriptSyntax(apply); err != nil {
+	if err = p.validateScriptSyntax(apply); err != nil {
 		return nil, err
 	}
 
