@@ -30,6 +30,7 @@ import (
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // applyCmd represents the plan command
@@ -104,6 +105,14 @@ real happens.`,
 					counts.ran++
 				}
 
+				if !viper.GetBool("show-meta") && (strings.HasPrefix(graph.BaseID(id), "param") || strings.HasPrefix(graph.BaseID(id), "module")) {
+					return nil
+				}
+
+				if viper.GetBool("only-show-changes") && !result.Ran {
+					return nil
+				}
+
 				fmt.Printf(
 					"%s:\n\tRan: %t\n\tOld Status:\n\t\t%s\n\tNew Status:\n\t\t%s\n\n",
 					id,
@@ -129,6 +138,8 @@ real happens.`,
 }
 
 func init() {
+	applyCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
+	applyCmd.Flags().Bool("only-show-changes", false, "only show changes")
 	addParamsArguments(applyCmd.PersistentFlags())
 	viperBindPFlags(applyCmd.Flags())
 
