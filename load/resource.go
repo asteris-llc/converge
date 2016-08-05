@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/content"
+	"github.com/asteris-llc/converge/resource/file/file"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
@@ -54,6 +55,9 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		case "task":
 			dest = new(shell.Preparer)
+
+		case "file":
+			dest = new(file.Preparer)
 
 		case "file.content":
 			dest = new(content.Preparer)
