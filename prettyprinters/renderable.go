@@ -147,12 +147,12 @@ func SprintfRenderable(visible bool, fmtStr string, args ...interface{}) *String
 
 // SprintfVisible is a shorthand for fmt.Sprintf and creating a Visible String
 func SprintfVisible(fmtStr string, args ...interface{}) Renderable {
-	return SprintfRenderable(true, fmtStr, args)
+	return SprintfRenderable(false, fmtStr, args...)
 }
 
 // SprintfHidden is a shorthand for fmt.Sprintf and creating a Hidden String
 func SprintfHidden(fmtStr string, args ...interface{}) Renderable {
-	return SprintfRenderable(false, fmtStr, args)
+	return SprintfRenderable(true, fmtStr, args...)
 }
 
 // writeRenderable acts like bytes.Buffer.WriteString() but appends the

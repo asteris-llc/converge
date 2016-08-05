@@ -116,6 +116,8 @@ type Printer struct {
 	options       Options
 	printProvider PrintProvider
 	clusterIndex  int
+	nodeClusters  map[string]int
+	clusterEdges  map[int][]int
 }
 
 // New will create a new graphviz.Printer with the options and print provider
@@ -125,6 +127,8 @@ func New(opts Options, provider PrintProvider) *Printer {
 		options:       opts,
 		printProvider: provider,
 		clusterIndex:  0,
+		nodeClusters:  make(map[string]int),
+		clusterEdges:  make(map[int][]int),
 	}
 }
 
@@ -136,7 +140,9 @@ func (p *Printer) MarkNode(g *graph.Graph, id string) *pp.SubgraphMarker {
 	subgraphID := p.clusterIndex
 	switch sgState {
 	case SubgraphMarkerStart:
+		p.nodeClusters[id] = subgraphID
 		p.clusterIndex++
+		fmt.Printf("starting subgraph for %s\n", id)
 		return &pp.SubgraphMarker{
 			SubgraphID: subgraphID,
 			Start:      true,
@@ -181,33 +187,113 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, error) {
 	sourceEntity := GraphEntity{id1, g.Get(id1)}
 	destEntity := GraphEntity{id2, g.Get(id2)}
+	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
+
 	sourceVertex, err := p.printProvider.VertexGetID(sourceEntity)
+
 	if err != nil {
 		return pp.HiddenString(""), err
 	}
+
 	destVertex, err := p.printProvider.VertexGetID(destEntity)
 	if err != nil {
 		return pp.HiddenString(""), err
 	}
+
 	label, err := p.printProvider.EdgeGetLabel(sourceEntity, destEntity)
 	if err != nil {
 		return pp.HiddenString(""), err
 	}
-	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
+
 	maybeSetProperty(attributes, "label", escapeNewline(label))
-	edgeStr := pp.VisibleString(fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
+
+	if sourceVertex.Visible() && destVertex.Visible() {
+		return pp.VisibleString(fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
+			escapeNewline(sourceVertex),
+			escapeNewline(destVertex),
+			buildAttributeString(attributes))), nil
+	}
+
+	if isSame, err := p.sameCluster(g, id1, id2); err != nil || isSame {
+		return pp.HiddenString(""), err
+	}
+
+	if sourceVertex, err = p.maybeClusterizeVertex(g, true, &attributes, id1, sourceVertex); err != nil {
+		return pp.HiddenString(""), err
+	}
+	if destVertex, err = p.maybeClusterizeVertex(g, false, &attributes, id2, destVertex); err != nil {
+		return pp.HiddenString(""), err
+	}
+
+	srcID, fndsrc, _ := p.getCluster(g, id1)
+	dstID, fnddst, _ := p.getCluster(g, id2)
+
+	res := fmt.Sprintf("# %s (%v:%d) -> %s (%v:%d) \n", id1, fndsrc, srcID, id2, fnddst, dstID)
+
+	return pp.VisibleString(fmt.Sprintf("%s\"%s\" -> \"%s\" %s;\n",
+		res,
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
-		buildAttributeString(attributes)),
-	)
-	visible := sourceVertex.Visible() && destVertex.Visible()
-	return pp.SetVisibility(edgeStr, visible), nil
+		buildAttributeString(attributes))), nil
+}
+
+func (p *Printer) sameCluster(g *graph.Graph, id1, id2 string) (bool, error) {
+	same := false
+	cluster1, found1, err := p.getCluster(g, id1)
+	if err != nil {
+		return false, err
+	}
+	cluster2, found2, err := p.getCluster(g, id2)
+	if err != nil {
+		return false, err
+	}
+
+	if cluster1 == cluster2 {
+		same = true
+	}
+
+	if !found1 && !found2 {
+		same = false
+	}
+	return same, nil
+}
+
+func (p *Printer) getCluster(g *graph.Graph, id string) (int, bool, error) {
+	clusterID, found := p.nodeClusters[id]
+	if found {
+		return clusterID, true, nil
+	}
+	root, err := g.Root()
+	if err != nil {
+		return 0, false, err
+	}
+	if id == root {
+		return 0, true, nil
+	}
+	parent := graph.ParentID(id)
+	return p.getCluster(g, parent)
 }
 
 // StartSubgraph returns a string with the beginning of the subgraph cluster
 func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID pp.SubgraphID) (pp.Renderable, error) {
-	clusterStart := fmt.Sprintf("subgraph cluster_%d {\n", subgraphID.(int))
-	return pp.VisibleString(clusterStart), nil
+	fmt.Printf("startSubgraph on: %s (%d)\n", startNode, subgraphID)
+	var buffer bytes.Buffer
+	buffer.WriteString(fmt.Sprintf("subgraph cluster_%d {\n", subgraphID.(int)))
+	for attr, val := range p.getSubgraphAttributes(g, startNode, subgraphID) {
+		buffer.WriteString(fmt.Sprintf("%s = \"%s\";\n", attr, val))
+	}
+	buffer.WriteString(fmt.Sprintf("\"%s\" [style=\"invis\",fontsize=0.01,shape=none];\n", clusterMarkerNode(subgraphID)))
+	return pp.VisibleString(buffer.String()), nil
+}
+
+func (p *Printer) getSubgraphAttributes(g *graph.Graph, node string, subgraphID pp.SubgraphID) map[string]string {
+	fmt.Printf("# returning subgraph attributes for node %s\n", node)
+	attributes := make(map[string]string)
+	markerNode, err := p.printProvider.VertexGetID(GraphEntity{node, g.Get(node)})
+	if err != nil || !(markerNode.Visible()) {
+		attributes["label"] = node
+	}
+	return attributes
 }
 
 // FinishSubgraph provides the closing '}' for a subgraph
@@ -243,7 +329,7 @@ func (p *Printer) FinishEdgeSection(*graph.Graph) (pp.Renderable, error) {
 // StartPP begins the DOT output as an unnamed digraph.
 func (p *Printer) StartPP(*graph.Graph) (pp.Renderable, error) {
 	attrs := p.GraphAttributes()
-	return pp.VisibleString(fmt.Sprintf("digraph {\n%s\n", attrs)), nil
+	return pp.VisibleString(fmt.Sprintf("digraph {\ncompound=true;\n%s\n", attrs)), nil
 }
 
 // GraphAttributes returns a string containing all of the global graph
@@ -262,6 +348,19 @@ func (p *Printer) GraphAttributes() string {
 // FinishPP returns the closing '}' to end the DOT file.
 func (*Printer) FinishPP(*graph.Graph) (pp.Renderable, error) {
 	return pp.VisibleString("}"), nil
+}
+
+func (p *Printer) alreadyHasClusterEdge(src, dst int) bool {
+	dests, found := p.clusterEdges[src]
+	if !found {
+		return false
+	}
+	for _, knownDest := range dests {
+		if dst == knownDest {
+			return true
+		}
+	}
+	return false
 }
 
 // buildAttributeString takes a set of attribute keys and values and generates a
@@ -358,4 +457,28 @@ func maybeSetProperty(p PropertySet, key string, r pp.Renderable) PropertySet {
 		p[key] = r.String()
 	}
 	return p
+}
+
+func clusterMarkerNode(id pp.SubgraphID) string {
+	return fmt.Sprintf("__internal_cluser_%02d", id)
+}
+
+func (p *Printer) maybeClusterizeVertex(g *graph.Graph, src bool, attributes *PropertySet, id string, r pp.Renderable) (pp.Renderable, error) {
+	if r.Visible() {
+		return r, nil
+	}
+	clusterID, found, err := p.getCluster(g, id)
+	if (err != nil) || (!found) {
+		return r, err
+	}
+
+	var arrowEnd string
+	if src {
+		arrowEnd = "ltail"
+	} else {
+		arrowEnd = "lhead"
+	}
+
+	*attributes = maybeSetProperty(*attributes, arrowEnd, pp.VisibleString(fmt.Sprintf("cluster_%d", clusterID)))
+	return pp.VisibleString(clusterMarkerNode(clusterID)), nil
 }

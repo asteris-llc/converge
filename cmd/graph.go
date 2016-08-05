@@ -81,7 +81,9 @@ You can pipe the output directly to the 'dot' command, for example:
 			}
 		} else {
 			provider = providers.PreparerProvider{
-				ShowParams: viper.GetBool("show-params"),
+				ShowParams:  viper.GetBool("show-params"),
+				HideModules: viper.GetBool("hide-modules"),
+				UngroupRoot: viper.GetBool("free-nodes"),
 			}
 		}
 
@@ -98,6 +100,8 @@ You can pipe the output directly to the 'dot' command, for example:
 
 func init() {
 	graphCmd.Flags().Bool("show-params", false, "also graph param dependencies")
+	graphCmd.Flags().Bool("hide-modules", false, "hide module nodes")
+	graphCmd.Flags().Bool("free-nodes", false, "allow ungrouped nodes")
 	graphCmd.Flags().Bool("merge-duplicates", false, "merge duplicates before rendering")
 	addParamsArguments(graphCmd.PersistentFlags())
 	viperBindPFlags(graphCmd.Flags())

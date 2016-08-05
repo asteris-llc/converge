@@ -29,13 +29,17 @@ import (
 // PreparerProvider is the PrintProvider type for Preparer resources
 type PreparerProvider struct {
 	graphviz.GraphIDProvider
-	ShowParams bool
+	ShowParams  bool
+	HideModules bool
+	UngroupRoot bool
 }
 
 // VertexGetID returns a the Graph ID as the VertexID, possibly masking it
 // depending on the vertex type and configuration
 func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
 	switch e.Value.(type) {
+	case *module.Preparer:
+		return pp.RenderableString(e.Name, !p.HideModules), nil
 	case *param.Preparer:
 		return pp.RenderableString(e.Name, p.ShowParams), nil
 	default:
@@ -62,8 +66,8 @@ func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable,
 	case *content.Preparer:
 		v := e.Value.(*content.Preparer)
 		return pp.VisibleString(fmt.Sprintf("File: %s", v.Destination)), nil
-	case *module.Preparer:
-		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
+	case *module.Preparer, nil:
+		return pp.RenderableString(fmt.Sprintf("Module: %s", name), !p.HideModules), nil
 	case *param.Preparer:
 		v := e.Value.(*param.Preparer)
 		var paramStr string
@@ -109,6 +113,13 @@ func (p PreparerProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphv
 // is encountered.
 func (p PreparerProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	switch e.Value.(type) {
+	/*
+		case nil:
+			if p.UngroupRoot {
+				return graphviz.SubgraphMarkerNOP
+			}
+			return graphviz.SubgraphMarkerStart
+	*/
 	case *module.Preparer:
 		return graphviz.SubgraphMarkerStart
 	default:

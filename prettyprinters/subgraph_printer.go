@@ -194,6 +194,7 @@ func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) 
 	if nil == subgraph.StartNode {
 		return nil, errors.New("Cannot draw subgraph starting at nil vertex")
 	}
+
 	if str, err := p.pp.StartSubgraph(g, *subgraph.StartNode, subgraph.ID); err == nil {
 		writeRenderable(buffer, str)
 	} else {
