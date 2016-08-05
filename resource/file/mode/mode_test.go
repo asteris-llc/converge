@@ -15,6 +15,7 @@
 package mode_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -38,10 +39,10 @@ func TestCheck(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
-	mode := mode.Mode{Destination: tmpfile.Name(), Mode: 777}
+	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
 	status, willChange, err := mode.Check()
 	assert.NoError(t, err)
-	assert.Equal(t, "600", status)
+	assert.Equal(t, fmt.Sprintf("%q's mode is 600. should be 777", tmpfile.Name()), status)
 	assert.True(t, willChange)
 }
 
@@ -57,6 +58,6 @@ func TestApply(t *testing.T) {
 	assert.NoError(t, err)
 	status, willChange, err := mode.Check()
 	assert.NoError(t, err)
-	assert.Equal(t, "777", status)
+	assert.Equal(t, fmt.Sprintf("%q's mode is 777. should be 777", tmpfile.Name()), status)
 	assert.False(t, willChange)
 }

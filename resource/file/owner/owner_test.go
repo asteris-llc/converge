@@ -51,7 +51,7 @@ func TestCheck(t *testing.T) {
 
 	status, willChange, err := o.Check()
 	assert.NoError(t, err)
-	assert.Equal(t, u.Username, status)
+	assert.Equal(t, fmt.Sprintf("owner of file %q is %q should be %q", tmpfile.Name(), u.Username, o.Username), status)
 	assert.True(t, willChange)
 }
 
