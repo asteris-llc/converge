@@ -62,6 +62,9 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 		case "task":
 			dest = new(shell.Preparer)
 
+		case "file":
+			dest = new(file.Preparer)
+
 		case "file.content":
 			dest = new(content.Preparer)
 		case "file.file":
@@ -76,6 +79,12 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			dest = new(touch.Preparer)
 		case "file.mode":
 			dest = new(mode.Preparer)
+		case "file.owner":
+			dest = new(owner.Preparer)
+
+		case "file.mode":
+			dest = new(mode.Preparer)
+
 		case "file.owner":
 			dest = new(owner.Preparer)
 
