@@ -11,6 +11,8 @@ Converge is a configuration management tool.
         - [Writing Modules](#writing-modules)
         - [Built-in Modules](#built-in-modules)
             - [File Modules](#file-modules)
+                - [File (file)](#file)
+                - [Owner (fille.owner)](#owner-fileowner)
                 - [Mode (file.mode)](#mode-filemode)
         - [Server](#server)
             - [Module Hosting](#module-hosting)
@@ -148,9 +150,107 @@ tasks without having to write your own `task` declarations.
 
 #### File Modules
 
+The `file` module performs basic operations on files as well as setting attributes
+like mode and owner.
+It takes a variety of parameters
+| parameter | choices   | comments                                             |
+| ----------| :-------: | --------                                             |
+| state     | file, link, directory, hard, touch, absent| If `directory`, all immediate subdirectores will be created if they do not exist. If `file`, the file will NOT be created if it does not exist, instead the mode and owner of the file will be checked. If `link`, a symbolic link will be created. Use `hard` for hard links. If `absent`, directories will be recursively deleted. If `touch` an empty file will be created if not a file is not alread present.  |
+| destination |         | path to file being managed.                          |
+| source    |           | if state is `link` or `hard`, this is the source of the link |
+| recurse   |           | if state is `directory`, recursively set the file attributes|
+| mode      |           | the mode this file should have.                                |
+| user      |           | the username of the user this file should belong to.  |
+
+Sample:
+```hcl
+file "test" {
+  destination = "/tmp/test/converge"
+  mode = "777"
+  user = "david"
+  state = "directory"
+}
+
+file "linktest" {
+  source = "/tmp/test/converge"
+  destination = "/tmp/test/converge2"
+  state = "link"
+}
+
+file "hardLinkTest" {
+  source = "/tmp/test/converge"
+  destination = "/tmp/test/converge3"
+  state = "hard"
+}
+
+file "absentTest" {
+  destination = "/tmp/hello"
+  state = "absent"
+}
+
+
+file "touchTest1" {
+  destination = "/tmp/test/hello1"
+  state = "touch"
+}
+
+
+file "touchTest2" {
+  destination = "/tmp/test/hello2"
+  state = "touch"
+}
+file "touchTest3" {
+  destination = "/tmp/test/hello3"
+  state = "touch"
+}
+
+
+file "changeMode" {
+  destination = "/tmp/test"
+  mode = "0776"
+  recurse = "true"
+  state = "directory"
+}
+
+```
+
+
+##### File (file)
+
+The `file.owner` module takes two required parameters:
+
+- `destination`: the file whose permissions should be checked
+- `user`: the username of the user this file should belong to
+
+Sample:
+
+```hcl
+file.owner "test" {
+  destination = "test.txt"
+  user        = "david"
+}
+```
+
+##### Owner (file.owner)
+
+The `file.owner` module takes two required parameters:
+
+- `destination`: the file whose permissions should be checked
+- `user`: the username of the user this file should belong to
+
+Sample:
+
+```hcl
+file.owner "test" {
+  destination = "test.txt"
+  user        = "david"
+}
+```
+
+
 ##### Mode (file.mode)
 
-The `file.mode` module takes two required parameters: 
+The `file.mode` module takes two required parameters:
 
 - `destination`: the file whose permissions should be checked
 - `mode`: the octal mode of the file

@@ -15,6 +15,7 @@
 package file
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
@@ -85,15 +86,55 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		fileOwner = task.(*owner.Owner)
 	}
 
-	return &File{
+	fileModule := &File{
 		State:       FileState(state),
 		Source:      source,
 		Destination: destination,
 		Recurse:     recurse == "true",
 		Mode:        fileMode,
 		Owner:       fileOwner,
-	}, nil
+	}
+	return fileModule, ValidateFileModule(fileModule)
 
+}
+
+func ValidateFileModule(fileModule *File) error {
+	if fileModule.Destination == "" {
+		return errors.New("module 'file' requires a `destiination` parameter")
+	}
+	if fileModule.Recurse && fileModule.State != FSDirectory {
+		return fmt.Errorf("cannot use the `recurse` parameter when `state` is not set to %q", FSDirectory)
+	}
+	switch fileModule.State {
+	case FSAbsent:
+		if fileModule.Mode != nil || fileModule.Owner != nil {
+			return fmt.Errorf("cannot use `mode` or `owner` parameters when `state` is set to %q", FSAbsent)
+		}
+		return nil
+	case FSTouch:
+		return nil
+	case FSLink:
+		if fileModule.Source == "" {
+			return fmt.Errorf("module 'file' requires a `source` parameter when `state`=%q", FSLink)
+		}
+		return nil
+	case FSHard:
+		if fileModule.Source == "" {
+			return fmt.Errorf("module 'file' requires a `source` parameter when `state`=%q", FSHard)
+		}
+		return nil
+	case FSDirectory:
+		return nil
+	case FSFile:
+		fallthrough
+	case "":
+		if fileModule.Mode == nil && fileModule.Mode == nil {
+			return errors.New("useless file module")
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid value for 'state' parameter. found %q", fileModule.State)
+	}
 }
 
 func PrintExample() string {

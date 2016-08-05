@@ -20,10 +20,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/asteris-llc/converge/resource/file/helpers"
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/asteris-llc/converge/resource/file/owner"
-	"github.com/hashicorp/go-multierror"
 )
 
 type FileState string
@@ -60,7 +59,7 @@ func (f *File) Check() (status string, willChange bool, err error) {
 		case FSLink:
 			return f.checkFSLink()
 		case FSHard:
-			return f.checkFSLink()
+			return f.checkFSHard()
 		case FSDirectory:
 			return f.checkFSDirectory()
 		case FSFile:
@@ -136,7 +135,7 @@ func (f *File) Apply() (err error) {
 		case FSLink:
 			return f.applyFSLink()
 		case FSHard:
-			return f.applyFSLink()
+			return f.applyFSHard()
 		case FSDirectory:
 			return f.applyFSDirectory()
 		case FSFile:
@@ -226,10 +225,7 @@ func (f *File) applyFSTouch() (err error) {
 	if err != nil {
 		return err
 	}
-	err = f.applyMode()
-	if err == nil {
-		err = f.applyOwner()
-	}
+	f.applyFSFile()
 
 	return err
 }
@@ -255,18 +251,29 @@ func (f *File) checkFSLink() (status string, willChange bool, err error) {
 		} else {
 			return fmt.Sprintf("%q is not linked to %q. will be soft linked to %q", f.Destination, f.Source, f.Source), false, nil
 		}
+	} else if os.IsNotExist(err) {
+		return fmt.Sprintf("source %q will be soft linked to %q", f.Source, f.Destination), true, nil
+	} else {
+		return "", false, err
 	}
 
-	return fmt.Sprintf("source %q will be linked to %q", f.Source, f.Destination), true, nil
 }
 
 func (f *File) applyFSLink() (err error) {
 	os.Remove(f.Destination)
-	_, err = os.Stat(f.Destination)
-	if os.IsNotExist(err) {
-		return os.Symlink(f.Source, f.Destination)
+	if f.Mode != nil || f.Owner != nil {
+		filemodule := File{
+			Destination: f.Source,
+			Mode:        f.Mode,
+			Owner:       f.Owner,
+		}
+		err = filemodule.applyFSFile()
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+	return os.Symlink(f.Source, f.Destination)
+
 }
 
 func (f *File) checkFSHard() (status string, willChange bool, err error) {
@@ -282,26 +289,34 @@ func (f *File) checkFSHard() (status string, willChange bool, err error) {
 	}
 	dest, err := os.Lstat(f.Destination)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("%q does not exist. will be hard linked to %q", f.Destination, f.Source), true, nil
+		return fmt.Sprintf("source %q will be hard linked to %q", f.Source, f.Destination), true, nil
 	} else if err != nil {
 		return "", false, err
 	}
+
 	if os.SameFile(src, dest) {
-		return fmt.Sprintf("%q is hard linked to %q", f.Destination, f.Source), false, nil
+		return fmt.Sprintf("%q is hard linked to %q", f.Source, f.Destination), false, nil
 	} else {
-		return fmt.Sprintf("%q is not hard linked to %q. will be hard linked", f.Destination, f.Source), true, nil
+		return fmt.Sprintf("%q is not hard linked to %q. will be hard linked", f.Source, f.Destination), true, nil
 	}
 
 }
 
 func (f *File) applyFSHard() (err error) {
-	_, err = os.Stat(f.Source)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("%q does not exist. will not create hard link", f.Source)
-	} else if err != nil {
+	os.Remove(f.Destination)
+	if f.Mode != nil || f.Owner != nil {
+		filemodule := File{
+			Destination: f.Source,
+			Mode:        f.Mode,
+			Owner:       f.Owner,
+		}
+		err = filemodule.applyFSFile()
+	}
+	if err != nil {
 		return err
 	}
 	return os.Link(f.Source, f.Destination)
+
 }
 
 func (f *File) checkFSFile() (status string, willChange bool, err error) {
@@ -311,7 +326,7 @@ func (f *File) checkFSFile() (status string, willChange bool, err error) {
 }
 
 func (f *File) applyFSFile() (err error) {
-	return multierror.Append(f.applyMode(), f.applyOwner())
+	return helpers.MultiErrorAppend(f.applyMode(), f.applyOwner())
 }
 
 func (f *File) checkFSDirectory() (string, bool, error) {
