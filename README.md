@@ -11,7 +11,12 @@ Converge is a configuration management tool.
         - [Writing Modules](#writing-modules)
         - [Built-in Modules](#built-in-modules)
             - [File Modules](#file-modules)
-                - [File (file)](#file)
+                - [File (file.file)](#file)
+                - [Absent (fille.absent)](#absent-fileowner)
+                - [Contents (fille.contents)](#contents-fileowner)
+                - [Directory (fille.directory)](#directory-fileowner)
+                - [Link (fille.link)](#link-fileowner)
+                - [Touch (fille.touch)](#touch-fileowner)
                 - [Owner (fille.owner)](#owner-fileowner)
                 - [Mode (file.mode)](#mode-filemode)
         - [Server](#server)
@@ -150,86 +155,107 @@ tasks without having to write your own `task` declarations.
 
 #### File Modules
 
-The `file` module performs basic operations on files as well as setting attributes
-like mode and owner.
-It takes a variety of parameters
-| parameter | choices   | comments                                             |
-| ----------| :-------: | --------                                             |
-| state     | file, link, directory, hard, touch, absent| If `directory`, all immediate subdirectores will be created if they do not exist. If `file`, the file will NOT be created if it does not exist, instead the mode and owner of the file will be checked. If `link`, a symbolic link will be created. Use `hard` for hard links. If `absent`, directories will be recursively deleted. If `touch` an empty file will be created if not a file is not alread present.  |
-| destination |         | path to file being managed.                          |
-| source    |           | if state is `link` or `hard`, this is the source of the link |
-| recurse   |           | if state is `directory`, recursively set the file attributes|
-| mode      |           | the mode this file should have.                                |
-| user      |           | the username of the user this file should belong to.  |
+##### Absent (file.absent)
 
-Sample:
-```hcl
-file "test" {
-  destination = "/tmp/test/converge"
-  mode = "777"
-  user = "david"
-  state = "directory"
-}
+The `file.absent` module takes one required parameters:
 
-file "linktest" {
-  source = "/tmp/test/converge"
-  destination = "/tmp/test/converge2"
-  state = "link"
-}
-
-file "hardLinkTest" {
-  source = "/tmp/test/converge"
-  destination = "/tmp/test/converge3"
-  state = "hard"
-}
-
-file "absentTest" {
-  destination = "/tmp/hello"
-  state = "absent"
-}
-
-
-file "touchTest1" {
-  destination = "/tmp/test/hello1"
-  state = "touch"
-}
-
-
-file "touchTest2" {
-  destination = "/tmp/test/hello2"
-  state = "touch"
-}
-file "touchTest3" {
-  destination = "/tmp/test/hello3"
-  state = "touch"
-}
-
-
-file "changeMode" {
-  destination = "/tmp/test"
-  mode = "0776"
-  recurse = "true"
-  state = "directory"
-}
-
-```
-
-
-##### File (file)
-
-The `file.owner` module takes two required parameters:
-
-- `destination`: the file whose permissions should be checked
-- `user`: the username of the user this file should belong to
+- `destination`: the file to be deleted
 
 Sample:
 
 ```hcl
-file.owner "test" {
+file.absent "test" {
   destination = "test.txt"
-  user        = "david"
 }
 ```
+
+##### Contents (file.contents)
+
+The `file.contents` module takes two required parameters:
+
+- `destination`: the file to be modified
+- `content`: the content of the file
+
+
+Sample:
+
+```hcl
+file.content "test" {
+  destination = "test.txt"
+  content = "hello world"
+}
+```
+
+##### Directory (file.directory)
+
+The `file.directory` module takes one required parameters:
+
+- `destination`: the file to be linked
+- `recurse (optional)`: recursively apply owner and mode
+- `user (optional)`: owner of the folder
+- `mode (optional)`: mode of the folder
+
+Sample:
+
+```hcl
+file.directory "test" {
+  destination = "/path/to/dir"
+}
+```
+
+##### Link (file.link)
+
+The `file.link` module takes two required parameters:
+
+- `source`: the host file
+- `destination`: the file to be linked
+- `type (optional)`: soft or hard link (defaults to `soft`)
+
+Sample:
+
+```hcl
+file.link "test" {
+  source = "text.txt"
+  destination = "test.txt"
+  type = "soft"
+}
+```
+
+##### Touch (file.touch)
+
+The `file.touch` module takes one required parameters:
+
+- `destination`: the file to be created
+
+Sample:
+
+```hcl
+file.absent "test" {
+  destination = "test.txt"
+}
+```
+
+##### File (file.file)
+
+
+The `file.file` module combines file.directory and file.touch so that you can create the directory
+a file should be in before the file is created:
+
+- `directory`: the full path directory to create
+- `file`: the full path file to create
+- `recurse (optional)`: recursively apply owner and mode
+- `user (optional)`: owner of the folder
+- `mode (optional)`: mode of the folder
+
+Sample:
+
+```hcl
+file.directory "test" {
+  directory = "/path/to/dir"
+  file = "/path/to/dir/file.txt"
+}
+```
+
 
 ##### Owner (file.owner)
 
