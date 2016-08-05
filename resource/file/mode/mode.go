@@ -37,10 +37,14 @@ func (m *Mode) Check() (status string, willChange bool, err error) {
 	}
 
 	mode := stat.Mode().Perm()
-	return strconv.FormatUint(uint64(mode), 8), m.Mode.Perm() != mode, nil
+	return fmt.Sprintf("%q's mode is %s. should be %s", m.Destination, ModeString(mode), ModeString(m.Mode)), m.Mode.Perm() != mode, nil
 }
 
 // Apply the changes the Mode
 func (m *Mode) Apply() error {
 	return os.Chmod(m.Destination, m.Mode.Perm())
+}
+
+func ModeString(mode os.FileMode) string {
+	return strconv.FormatUint(uint64(mode), 8)
 }

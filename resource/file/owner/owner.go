@@ -49,7 +49,7 @@ func (o *Owner) Check() (status string, willChange bool, err error) {
 	if err != nil {
 		return fmt.Sprintf("owner of file %q: %q does not exist", o.Destination, o.Username), false, err
 	}
-	return actualUser.Username,
+	return fmt.Sprintf("owner of file %q is %q should be %q", o.Destination, actualUser.Username, o.Username),
 		!((actualUser.Username == o.Username) && (actualUser.Uid == strconv.Itoa(o.UID)) && (actualUser.Gid == strconv.Itoa(o.GID))),
 		nil
 }

@@ -5,24 +5,23 @@ file.directory "test" {
 }
 
 file.absent "absentTest2" {
-destination = "/tmp/test/converge2"
-
+  destination = "/tmp/test/converge2"
 }
-file.absent "absentTest3" {
-destination = "/tmp/test/converge3"
 
+file.absent "absentTest3" {
+  destination = "/tmp/test/converge3"
 }
 
 file.link "linktest" {
   source      = "/tmp/test/converge"
   destination = "/tmp/test/converge2"
-  type = "soft"
+  type        = "soft"
 }
 
 file.link "hardLinkTest" {
   source      = "/tmp/test/converge"
   destination = "/tmp/test/converge3"
-  type = "hard"
+  type        = "hard"
 }
 
 file.absent "absentTest" {
@@ -43,7 +42,7 @@ file.touch "touchTest3" {
 
 file.file "changeMode" {
   directory = "/tmp/test2"
-  file = "/tmp/test2/hello"
-  mode        = "0776"
-  recurse     = true
+  file      = "/tmp/test2/hello"
+  mode      = "0776"
+  recurse   = true
 }

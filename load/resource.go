@@ -82,12 +82,6 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 		case "file.owner":
 			dest = new(owner.Preparer)
 
-		case "file.mode":
-			dest = new(mode.Preparer)
-
-		case "file.owner":
-			dest = new(owner.Preparer)
-
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
 		}
