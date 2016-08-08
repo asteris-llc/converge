@@ -62,9 +62,6 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 		case "task":
 			dest = new(shell.Preparer)
 
-		case "file":
-			dest = new(file.Preparer)
-
 		case "file.content":
 			dest = new(content.Preparer)
 		case "file.file":
