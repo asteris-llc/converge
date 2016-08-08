@@ -14,16 +14,16 @@ func SquashCheck(status1 string, willChange1 bool, err1 error, status2 string, w
 	return s, c, e
 }
 
-type CheckValidator func(status string, willChange bool, err error, t *testing.T)
+type CheckValidator func(status string, willChange bool, err error, index int, t *testing.T)
 
 func CheckValidatorCreator(status string, willChange bool, err string) CheckValidator {
-	return func(s string, w bool, e error, t *testing.T) {
+	return func(s string, w bool, e error, i int, t *testing.T) {
 		assert.Equal(t, status, s)
 		assert.Equal(t, willChange, w)
 		if err == "" {
-			assert.NoError(t, e)
+			assert.NoError(t, e, fmt.Sprintf("Test Index: %d", i))
 		} else {
-			assert.EqualError(t, e, err)
+			assert.EqualError(t, e, err, fmt.Sprintf("Test Index: %d", i))
 		}
 	}
 }
@@ -33,6 +33,6 @@ func TaskCheckValidator(tasks []resource.Task, checks []CheckValidator, t *testi
 	for i := range tasks {
 		assert.NotNil(t, checks[i])
 		status, willChange, err := tasks[i].Check()
-		checks[i](status, willChange, err, t)
+		checks[i](status, willChange, err, i, t)
 	}
 }

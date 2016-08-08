@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -14,9 +15,9 @@ func PreparerValidator(t *testing.T, preparers []resource.Resource, errs []strin
 	for i := range preparers {
 		_, err := preparers[i].Prepare(&fr)
 		if errs[i] == "" {
-			assert.NoError(t, err)
+			assert.NoError(t, err, fmt.Sprintf("Test Index: %d", i))
 		} else {
-			assert.EqualError(t, err, errs[i])
+			assert.EqualError(t, err, errs[i], fmt.Sprintf("Test Index: %d", i))
 		}
 	}
 }

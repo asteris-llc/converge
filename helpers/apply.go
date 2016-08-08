@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"strconv"
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
@@ -13,9 +13,9 @@ func TaskApplyValidator(tasks []resource.Task, errs []string, t *testing.T) {
 	for i := range tasks {
 		err := tasks[i].Apply()
 		if errs[i] == "" {
-			assert.NoError(t, err, strconv.Itoa(i))
+			assert.NoError(t, err, fmt.Sprintf("Test Index: %d", i))
 		} else {
-			assert.EqualError(t, err, errs[i], strconv.Itoa(i))
+			assert.EqualError(t, err, errs[i], fmt.Sprintf("Test Index: %d", i))
 		}
 	}
 }

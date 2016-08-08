@@ -14,7 +14,11 @@
 
 package content
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"errors"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for Content
 type Preparer struct {
@@ -33,9 +37,16 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return &Content{
+	contentModule := &Content{
 		Destination: destination,
 		Content:     content,
-	}, nil
+	}
+	return contentModule, ValidateTask(contentModule)
+}
+
+func ValidateTask(contentModule *Content) error {
+	if contentModule.Destination == "" {
+		return errors.New("resource requires a `destination` parameter")
+	}
+	return nil
 }

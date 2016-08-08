@@ -57,7 +57,7 @@ func ValidateTask(l *Link) error {
 		return fmt.Errorf("resource paramter `ltype` can only be %q or %q", LTSoft, LTHard)
 	}
 	if l.Source == "" || l.Destination == "" {
-		return errors.New("file.source or file.destination were empty when attemting to create symbolic link")
+		return errors.New("resouce `source` or `destination` parameters were empty when attemting to create symbolic link")
 	}
 
 	return nil

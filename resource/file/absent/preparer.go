@@ -14,7 +14,11 @@
 
 package absent
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"errors"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for Content
 type Preparer struct {
@@ -27,8 +31,13 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	absentModule := &Absent{Destination: destination}
+	return absentModule, ValidateTask(absentModule)
+}
 
-	return &Absent{
-		Destination: destination,
-	}, nil
+func ValidateTask(absentModule *Absent) error {
+	if absentModule.Destination == "" {
+		return errors.New("resource requires a `destination` parameter")
+	}
+	return nil
 }

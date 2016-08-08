@@ -16,7 +16,6 @@ package touch
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/mode"
@@ -38,9 +37,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	destination, err := render.Render("destination", p.Destination)
 	if err != nil {
 		return nil, err
-	}
-	if destination == "" {
-		return nil, fmt.Errorf("resource requires a destination parameter\n%s")
 	}
 	// render Mode
 	sMode, err := render.Render("mode", p.Mode)
@@ -82,7 +78,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 func ValidateTask(d *Touch) error {
 	if d.Destination == "" {
-		return errors.New("resource requires a `destiination` parameter")
+		return errors.New("resource requires a `destination` parameter")
 	}
 	return nil
 }
