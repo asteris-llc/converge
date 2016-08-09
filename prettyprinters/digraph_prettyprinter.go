@@ -16,10 +16,15 @@ package prettyprinters
 
 import "github.com/asteris-llc/converge/graph"
 
-// A DigraphPrettyPrinter is a concrete implementation of some output format
-// that can be used to prettyprint a Directed Graph.
-type DigraphPrettyPrinter interface {
+// BasePrinter is an implementation of some output format that can be used to
+// prettyprint a Directed Graph. Printer is the zero value for these kinds of
+// printers. To get any functionality, printers should implement one or more of
+// the following interfaces.
+type BasePrinter interface{}
 
+// GraphPrinter should be implemented by printers that need to add a preamble or
+// addendum to the pretty printed output
+type GraphPrinter interface {
 	// StartPP should take a graph and shall return a string used to start the
 	// graph output, or an error which will be returned to the user.
 	StartPP(graph *graph.Graph) (Renderable, error)
@@ -27,7 +32,11 @@ type DigraphPrettyPrinter interface {
 	// FinishPP will be given a graph and shall return a string used to finalize
 	// graph output, or an error which will be returned to the user.
 	FinishPP(graph *graph.Graph) (Renderable, error)
+}
 
+// SubgraphPrinter should be implemented by printers that need to control
+// subgraph rendering (that is, grouping of nodes of any kind)
+type SubgraphPrinter interface {
 	// MarkNode() is a function used to identify the boundaries of subgraphs
 	// within the larger graph.  MarkNode() is called with a graph and the id of a
 	// node within the graph, and should return a *SubgraphMarker with the
@@ -48,22 +57,19 @@ type DigraphPrettyPrinter interface {
 	// and should return a string used to end a subgraph, or an error that will be
 	// returned to the user.
 	FinishSubgraph(graph *graph.Graph, subgraphID SubgraphID) (Renderable, error)
+}
 
-	// StartNodeSection will be given a graph and should return a string used to
-	// start the node section, or an error that will be returned to the user.
-	StartNodeSection(graph *graph.Graph) (Renderable, error)
-
-	// FinishNodeSection will be given a graph and should return a string used to
-	// finish the node section in the final output, or an error that will be
-	// returned to the user.
-	FinishNodeSection(graph *graph.Graph) (Renderable, error)
-
+// NodePrinter should be implemented by printers that want to render nodes
+type NodePrinter interface {
 	// DrawNode will be called once for each node in the graph.  The function will
 	// be given a graph and a string ID for the current node in the graph, and
 	// should return a string representing the node in the final output, or an
 	// error that will be returned to the user.
 	DrawNode(graph *graph.Graph, nodeID string) (Renderable, error)
+}
 
+// EdgeSectionPrinter should be implemented by printers that want to render edge sections (TODO: what are these?)
+type EdgeSectionPrinter interface {
 	// StartEdgeSection will be given a graph and should return a string used to
 	// start the edge section, or an error that will be returned to the user.
 	StartEdgeSection(graph *graph.Graph) (Renderable, error)
@@ -72,7 +78,10 @@ type DigraphPrettyPrinter interface {
 	// finish the edge section in the final output, or an error that will be
 	// returned to the user.
 	FinishEdgeSection(graph *graph.Graph) (Renderable, error)
+}
 
+// EdgePrinter should be implemented by printers that want to render Edges
+type EdgePrinter interface {
 	// DrawEdge will be called once for each edge in the graph.  It is called with
 	// a graph, the ID of the source vertex, and the ID of the target vertex.  It
 	// should return a string representing the edge in the final output, or an

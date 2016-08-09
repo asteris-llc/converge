@@ -27,7 +27,9 @@ import (
 func TestSatisfiesInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*pp.DigraphPrettyPrinter)(nil), new(jsonl.JSONPrinter))
+	assert.Implements(t, (*pp.BasePrinter)(nil), new(jsonl.JSONPrinter))
+	assert.Implements(t, (*pp.NodePrinter)(nil), new(jsonl.JSONPrinter))
+	assert.Implements(t, (*pp.EdgePrinter)(nil), new(jsonl.JSONPrinter))
 }
 
 func TestDrawNode(t *testing.T) {

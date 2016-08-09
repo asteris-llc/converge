@@ -31,48 +31,12 @@ type Edge struct {
 	Destination string `json:"destination"`
 }
 
-// JSONPrinter prints a graph in JSONl format
+// JSONPrinter prints a graph in JSONL format
 type JSONPrinter struct{}
-
-func (j *JSONPrinter) StartPP(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) FinishPP(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) MarkNode(graph *graph.Graph, nodeID string) *pp.SubgraphMarker {
-	return nil
-}
-
-func (j *JSONPrinter) StartSubgraph(graph *graph.Graph, nodeID string, subgraphID pp.SubgraphID) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) FinishSubgraph(graph *graph.Graph, subgraphID pp.SubgraphID) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) StartNodeSection(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) FinishNodeSection(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
 
 func (j *JSONPrinter) DrawNode(graph *graph.Graph, nodeID string) (pp.Renderable, error) {
 	out, err := json.Marshal(&Node{ID: nodeID, Value: graph.Get(nodeID)})
 	return pp.VisibleString(string(out) + "\n"), err
-}
-
-func (j *JSONPrinter) StartEdgeSection(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-func (j *JSONPrinter) FinishEdgeSection(graph *graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
 }
 
 func (j *JSONPrinter) DrawEdge(graph *graph.Graph, srcNodeID string, dstNodeID string) (pp.Renderable, error) {

@@ -83,8 +83,13 @@ func makeSubgraphMap() SubgraphMap {
 // calling MarkNode() on each node, creating and updating subgraphs as
 // necessary.
 func (p Printer) loadSubgraphs(ctx context.Context, g *graph.Graph, subgraphs SubgraphMap) {
+	printer, ok := p.pp.(SubgraphPrinter)
+	if !ok {
+		return
+	}
+
 	g.RootFirstWalk(ctx, func(id string, val interface{}) error {
-		if sgMarker := p.pp.MarkNode(g, id); sgMarker != nil {
+		if sgMarker := printer.MarkNode(g, id); sgMarker != nil {
 			if sgMarker.Start {
 				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
 			} else {
@@ -189,27 +194,41 @@ func addNodeToSubgraph(subgraphs SubgraphMap, subgraphID SubgraphID, vertexID st
 // the returned string contains any prefix/postfix additions defined by the
 // printer.
 func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (*StringRenderable, error) {
+	subgraphPrinter, spOK := p.pp.(SubgraphPrinter)
+	nodePrinter, npOK := p.pp.(NodePrinter)
+
+	if !spOK && !npOK {
+		return HiddenString(""), nil
+	}
+
 	buffer := new(bytes.Buffer)
 	subgraphNodes := subgraph.Nodes
 	if nil == subgraph.StartNode {
 		return nil, errors.New("Cannot draw subgraph starting at nil vertex")
 	}
-	if str, err := p.pp.StartSubgraph(g, *subgraph.StartNode, subgraph.ID); err == nil {
-		writeRenderable(buffer, str)
-	} else {
-		return nil, err
-	}
 
-	for idx := range subgraphNodes {
-		if str, err := p.pp.DrawNode(g, subgraphNodes[idx]); err == nil {
+	if spOK {
+		if str, err := subgraphPrinter.StartSubgraph(g, *subgraph.StartNode, subgraph.ID); err == nil {
 			writeRenderable(buffer, str)
 		} else {
 			return nil, err
 		}
 	}
 
-	if str, err := p.pp.FinishSubgraph(g, id); err == nil {
-		writeRenderable(buffer, str)
+	if npOK {
+		for idx := range subgraphNodes {
+			if str, err := nodePrinter.DrawNode(g, subgraphNodes[idx]); err == nil {
+				writeRenderable(buffer, str)
+			} else {
+				return nil, err
+			}
+		}
+	}
+
+	if spOK {
+		if str, err := subgraphPrinter.FinishSubgraph(g, id); err == nil {
+			writeRenderable(buffer, str)
+		}
 	}
 
 	return VisibleString(buffer.String()), nil
