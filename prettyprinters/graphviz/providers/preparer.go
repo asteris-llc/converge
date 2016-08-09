@@ -34,7 +34,7 @@ type PreparerProvider struct {
 
 // VertexGetID returns a the Graph ID as the VertexID, possibly masking it
 // depending on the vertex type and configuration
-func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	switch e.Value.(type) {
 	case *param.Preparer:
 		return pp.RenderableString(e.Name, p.ShowParams), nil
@@ -49,7 +49,7 @@ func (p PreparerProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, er
 //   Modules: Return 'Module' and the module name
 //   Params:  Return 'name -> "value"'
 //   otherwise: Return 'name'
-func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p PreparerProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	var name string
 
 	if e.Name == rootNodeID {

@@ -34,6 +34,7 @@ func New(p BasePrinter) Printer {
 // unmodified to the user.
 func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	outputBuffer := new(bytes.Buffer)
+	write := func(s Renderable) { outputBuffer.WriteString(s.String()) }
 
 	subgraphs := makeSubgraphMap()
 	p.loadSubgraphs(ctx, g, subgraphs)
@@ -42,7 +43,7 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	graphPrinter, gpOK := p.pp.(GraphPrinter)
 	if gpOK {
 		if str, err := graphPrinter.StartPP(g); err == nil {
-			writeRenderable(outputBuffer, str)
+			outputBuffer.WriteString(str.String())
 		} else {
 			return "", err
 		}
@@ -52,7 +53,7 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	if npOK {
 		for _, node := range rootNodes {
 			if str, err := nodePrinter.DrawNode(g, node); err == nil {
-				writeRenderable(outputBuffer, str)
+				write(str)
 			} else {
 				return "", err
 			}
@@ -65,21 +66,21 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 		}
 
 		if str, err := p.drawSubgraph(g, graphID, graph); err == nil {
-			writeRenderable(outputBuffer, str)
+			write(str)
 		} else {
 			return "", err
 		}
 	}
 
 	if str, err := p.drawEdges(g); err == nil {
-		writeRenderable(outputBuffer, str)
+		write(str)
 	} else {
 		return "", err
 	}
 
 	if gpOK {
 		if str, err := graphPrinter.FinishPP(g); err == nil {
-			writeRenderable(outputBuffer, str)
+			write(str)
 		} else {
 			return "", err
 		}
@@ -88,19 +89,21 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	return outputBuffer.String(), nil
 }
 
-func (p Printer) drawEdges(g *graph.Graph) (*StringRenderable, error) {
+func (p Printer) drawEdges(g *graph.Graph) (Renderable, error) {
 	edgePrinter, epOK := p.pp.(EdgePrinter)
 	edgeSectionPrinter, espOK := p.pp.(EdgeSectionPrinter)
 
 	if !epOK && !espOK {
-		return HiddenString(""), nil
+		return HiddenString(), nil
 	}
 
 	outputBuffer := new(bytes.Buffer)
+	write := func(s Renderable) { outputBuffer.WriteString(s.String()) }
+
 	edges := g.Edges()
 	if espOK {
 		if str, err := edgeSectionPrinter.StartEdgeSection(g); err == nil {
-			writeRenderable(outputBuffer, str)
+			write(str)
 		} else {
 			return nil, err
 		}
@@ -109,7 +112,7 @@ func (p Printer) drawEdges(g *graph.Graph) (*StringRenderable, error) {
 	if epOK {
 		for _, edge := range edges {
 			if str, err := edgePrinter.DrawEdge(g, edge.Source, edge.Dest); err == nil {
-				writeRenderable(outputBuffer, str)
+				write(str)
 			} else {
 				return nil, err
 			}
@@ -118,13 +121,13 @@ func (p Printer) drawEdges(g *graph.Graph) (*StringRenderable, error) {
 
 	if espOK {
 		if str, err := edgeSectionPrinter.FinishEdgeSection(g); err == nil {
-			writeRenderable(outputBuffer, str)
+			write(str)
 		} else {
 			return nil, err
 		}
 	}
 
-	return VisibleString(outputBuffer.String()), nil
+	return outputBuffer, nil
 }
 
 // Printer is the top-level structure for a pretty printer.

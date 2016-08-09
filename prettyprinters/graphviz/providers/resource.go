@@ -34,7 +34,7 @@ type ResourceProvider struct {
 
 // VertexGetID returns the graph ID as the VertexID, possibly maksing it
 // depending on the vertext type and configuration.
-func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	switch e.Value.(type) {
 	case *param.Param:
 		return pp.RenderableString(e.Name, p.ShowParams), nil
@@ -50,7 +50,7 @@ func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.Renderable, er
 //    Modules: Return 'Module' and the module name
 //    Params: Return 'name -> "value"'
 //    otherwise: Return 'name'
-func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.Renderable, error) {
+func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	var name string
 
 	if e.Name == rootNodeID {
