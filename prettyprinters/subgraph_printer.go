@@ -85,6 +85,10 @@ func makeSubgraphMap() SubgraphMap {
 func (p Printer) loadSubgraphs(ctx context.Context, g *graph.Graph, subgraphs SubgraphMap) {
 	printer, ok := p.pp.(SubgraphPrinter)
 	if !ok {
+		for _, node := range g.Vertices() {
+			addNodeToSubgraph(subgraphs, nil, node)
+		}
+
 		return
 	}
 
