@@ -60,13 +60,13 @@ type PrintProvider interface {
 	// Given a graph entity, this function shall return a unique ID that will be
 	// used for the vertex.  Note that this is not used for display, see
 	// VertexGetLabel() for information on vertex displays.
-	VertexGetID(GraphEntity) (pp.Renderable, error)
+	VertexGetID(GraphEntity) (pp.VisibleRenderable, error)
 
 	// Defines the label associated with the vertex.  This will be the name
 	// applied to the vertex when it is drawn.  Labels are stored in the vertex
 	// attribute list automatically.  The 'label' parameter should therefore not
 	// be returned as part of VertexGetProperties().
-	VertexGetLabel(GraphEntity) (pp.Renderable, error)
+	VertexGetLabel(GraphEntity) (pp.VisibleRenderable, error)
 
 	// VertexGetProperties allows the PrintProvider to provide additional
 	// attributes to a given vertex.  Note that the 'label' attribute is special
@@ -75,7 +75,7 @@ type PrintProvider interface {
 
 	// Defines the label associated with the edge formed between two graph
 	// entities.  This will be the name applied to the edge when it is drawn.
-	EdgeGetLabel(GraphEntity, GraphEntity) (pp.Renderable, error)
+	EdgeGetLabel(GraphEntity, GraphEntity) (pp.VisibleRenderable, error)
 
 	// EdgeGetProperties allows the PrintProvider to provide additional
 	// attributes to a given edge.  Note that the 'label' attribute is special
@@ -159,20 +159,18 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	graphEntity := GraphEntity{id, graphValue}
 	vertexID, err := p.printProvider.VertexGetID(graphEntity)
 	if err != nil {
-		return pp.HiddenString(""), err
+		return pp.HiddenString(), err
 	}
 	vertexLabel, err := p.printProvider.VertexGetLabel(graphEntity)
 	if err != nil {
-		return pp.HiddenString(""), err
+		return pp.HiddenString(), err
 	}
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
 	attributes = maybeSetProperty(attributes, "label", escapeNewline(vertexLabel))
 	attributeStr := buildAttributeString(attributes)
 	vertexID = escapeNewline(vertexID)
-	dotCode := pp.ApplyRenderable(vertexID, func(s string) string {
-		return fmt.Sprintf("\"%s\" %s;\n", s, attributeStr)
-	})
-	return dotCode, nil
+
+	return pp.SprintfVisible(fmt.Sprintf("\"%s\" %s;\n", vertexID, attributeStr)), nil
 }
 
 // DrawEdge prints edge data in a fashion similar to DrawNode.  It will return a
@@ -182,25 +180,27 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 	destEntity := GraphEntity{id2, g.Get(id2)}
 	sourceVertex, err := p.printProvider.VertexGetID(sourceEntity)
 	if err != nil {
-		return pp.HiddenString(""), err
+		return pp.HiddenString(), err
 	}
 	destVertex, err := p.printProvider.VertexGetID(destEntity)
 	if err != nil {
-		return pp.HiddenString(""), err
+		return pp.HiddenString(), err
 	}
 	label, err := p.printProvider.EdgeGetLabel(sourceEntity, destEntity)
 	if err != nil {
-		return pp.HiddenString(""), err
+		return pp.HiddenString(), err
 	}
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	maybeSetProperty(attributes, "label", escapeNewline(label))
-	edgeStr := pp.VisibleString(fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
+
+	edgeStr := fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
 		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
-		buildAttributeString(attributes)),
+		buildAttributeString(attributes),
 	)
 	visible := sourceVertex.Visible() && destVertex.Visible()
-	return pp.SetVisibility(edgeStr, visible), nil
+
+	return pp.RenderableString(edgeStr, visible), nil
 }
 
 // StartSubgraph returns a string with the beginning of the subgraph cluster
@@ -274,13 +274,13 @@ type BasicProvider struct{}
 
 // VertexGetID provides a basic implementation that returns the %v quoted value
 // of the node.
-func (p BasicProvider) VertexGetID(e GraphEntity) (pp.Renderable, error) {
+func (p BasicProvider) VertexGetID(e GraphEntity) (pp.VisibleRenderable, error) {
 	return pp.VisibleString(fmt.Sprintf("%v", e.Value)), nil
 }
 
 // VertexGetLabel provides a basic implementation that returns the %v quoted
 // value of the node (as with VertexGetID).
-func (p BasicProvider) VertexGetLabel(e GraphEntity) (pp.Renderable, error) {
+func (p BasicProvider) VertexGetLabel(e GraphEntity) (pp.VisibleRenderable, error) {
 	return pp.VisibleString(fmt.Sprintf("%v", e.Value)), nil
 }
 
@@ -291,8 +291,8 @@ func (p BasicProvider) VertexGetProperties(GraphEntity) PropertySet {
 }
 
 // EdgeGetLabel provides a basic implementation leaves the edge unlabeled.
-func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
+func (p BasicProvider) EdgeGetLabel(GraphEntity, GraphEntity) (pp.VisibleRenderable, error) {
+	return pp.HiddenString(), nil
 }
 
 // EdgeGetProperties provides a basic implementation that returns an empty
@@ -308,26 +308,24 @@ func (p BasicProvider) SubgraphMarker(GraphEntity) SubgraphMarkerKey {
 
 // VertexGetID provides a basic implementation that uses the ID from the graph
 // to generate the VertexID.
-func (p GraphIDProvider) VertexGetID(e GraphEntity) (pp.Renderable, error) {
+func (p GraphIDProvider) VertexGetID(e GraphEntity) (pp.VisibleRenderable, error) {
 	return pp.VisibleString(e.Name), nil
 }
 
 // VertexGetLabel provides a basic implementation that uses the ID from the
 // graph to generate the Vertex Label.
-func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (pp.Renderable, error) {
+func (p GraphIDProvider) VertexGetLabel(e GraphEntity) (pp.VisibleRenderable, error) {
 	return pp.VisibleString(e.Name), nil
 }
 
 // Replace embedded newlines with their escaped form.
-func escapeNewline(r pp.Renderable) pp.Renderable {
-	return pp.ApplyRenderable(r, func(s string) string {
-		return strings.Replace(s, "\n", "\\n", -1)
-	})
+func escapeNewline(r pp.Renderable) pp.VisibleRenderable {
+	return pp.VisibleString(strings.Replace(r.String(), "\n", "\\n", -1))
 }
 
 // maybeSetProperty will add an attribute to the property set iff the value is
 // renderable.
-func maybeSetProperty(p PropertySet, key string, r pp.Renderable) PropertySet {
+func maybeSetProperty(p PropertySet, key string, r pp.VisibleRenderable) PropertySet {
 	if r.Visible() {
 		p[key] = r.String()
 	}

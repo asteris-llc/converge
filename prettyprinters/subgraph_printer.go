@@ -193,15 +193,17 @@ func addNodeToSubgraph(subgraphs SubgraphMap, subgraphID SubgraphID, vertexID st
 // calling StartSubgraph() and FinishSubgraph before and after to ensure that
 // the returned string contains any prefix/postfix additions defined by the
 // printer.
-func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (*StringRenderable, error) {
+func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) (Renderable, error) {
 	subgraphPrinter, spOK := p.pp.(SubgraphPrinter)
 	nodePrinter, npOK := p.pp.(NodePrinter)
 
 	if !spOK && !npOK {
-		return HiddenString(""), nil
+		return HiddenString(), nil
 	}
 
 	buffer := new(bytes.Buffer)
+	write := func(s Renderable) { buffer.WriteString(s.String()) }
+
 	subgraphNodes := subgraph.Nodes
 	if nil == subgraph.StartNode {
 		return nil, errors.New("Cannot draw subgraph starting at nil vertex")
@@ -209,7 +211,7 @@ func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) 
 
 	if spOK {
 		if str, err := subgraphPrinter.StartSubgraph(g, *subgraph.StartNode, subgraph.ID); err == nil {
-			writeRenderable(buffer, str)
+			write(str)
 		} else {
 			return nil, err
 		}
@@ -218,7 +220,7 @@ func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) 
 	if npOK {
 		for idx := range subgraphNodes {
 			if str, err := nodePrinter.DrawNode(g, subgraphNodes[idx]); err == nil {
-				writeRenderable(buffer, str)
+				write(str)
 			} else {
 				return nil, err
 			}
@@ -227,9 +229,9 @@ func (p Printer) drawSubgraph(g *graph.Graph, id SubgraphID, subgraph Subgraph) 
 
 	if spOK {
 		if str, err := subgraphPrinter.FinishSubgraph(g, id); err == nil {
-			writeRenderable(buffer, str)
+			write(str)
 		}
 	}
 
-	return VisibleString(buffer.String()), nil
+	return buffer, nil
 }

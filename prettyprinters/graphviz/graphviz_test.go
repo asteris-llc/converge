@@ -264,14 +264,14 @@ type MockPrintProvider struct {
 	mock.Mock
 }
 
-func (m *MockPrintProvider) VertexGetID(i graphviz.GraphEntity) (pp.Renderable, error) {
+func (m *MockPrintProvider) VertexGetID(i graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	args := m.Called(i)
-	return args.Get(0).(pp.Renderable), args.Error(1)
+	return args.Get(0).(pp.VisibleRenderable), args.Error(1)
 }
 
-func (m *MockPrintProvider) VertexGetLabel(i graphviz.GraphEntity) (pp.Renderable, error) {
+func (m *MockPrintProvider) VertexGetLabel(i graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	args := m.Called(i)
-	return args.Get(0).(pp.Renderable), args.Error(1)
+	return args.Get(0).(pp.VisibleRenderable), args.Error(1)
 }
 
 func (m *MockPrintProvider) VertexGetProperties(i graphviz.GraphEntity) graphviz.PropertySet {
@@ -284,9 +284,9 @@ func (m *MockPrintProvider) SubgraphMarker(i graphviz.GraphEntity) graphviz.Subg
 	return args.Get(0).(graphviz.SubgraphMarkerKey)
 }
 
-func (m *MockPrintProvider) EdgeGetLabel(i, j graphviz.GraphEntity) (pp.Renderable, error) {
+func (m *MockPrintProvider) EdgeGetLabel(i, j graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	args := m.Called(i, j)
-	return args.Get(0).(pp.Renderable), args.Error(1)
+	return args.Get(0).(pp.VisibleRenderable), args.Error(1)
 }
 
 func (m *MockPrintProvider) EdgeGetProperties(i, j graphviz.GraphEntity) graphviz.PropertySet {
@@ -314,7 +314,7 @@ func stubMarker(_ interface{}) graphviz.SubgraphMarkerKey {
 }
 
 func getDotNodeID(r pp.Renderable) string {
-	s, _ := pp.Render(r)
+	s := r.String()
 	trimmed := strings.TrimSpace(s)
 	firstChar := trimmed[0]
 	if firstChar == '\'' || firstChar == '"' {
@@ -325,7 +325,7 @@ func getDotNodeID(r pp.Renderable) string {
 }
 
 func getDotNodeLabel(r pp.Renderable) string {
-	s, _ := pp.Render(r)
+	s := r.String()
 	labelSplit := strings.Split(s, "label=")
 	if len(labelSplit) < 2 {
 		return ""
@@ -363,7 +363,7 @@ func get_kv(attr string) (string, string) {
 }
 
 func getDotAttributes(r pp.Renderable) map[string]string {
-	s, _ := pp.Render(r)
+	s := r.String()
 	results := make(map[string]string)
 	attributes, found := getAttributeSubstr(s)
 
@@ -381,7 +381,7 @@ func getDotAttributes(r pp.Renderable) map[string]string {
 }
 
 func parseDotEdge(r pp.Renderable) (string, string) {
-	e, _ := pp.Render(r)
+	e := r.String()
 	var dest string
 	ef := strings.Split(strings.TrimSpace(e), "->")
 	source := stripQuotes(strings.TrimSpace(ef[0]))
