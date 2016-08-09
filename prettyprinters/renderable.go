@@ -58,8 +58,12 @@ func VisibleString(s string) VisibleRenderable {
 	return RenderableString(s, true)
 }
 
-// SprintfVisible creates a new visible Renderable from a Sprintf call
-func SprintfVisible(fmtStr string, args ...interface{}) VisibleRenderable {
+// SprintfRenderable creates a new visible Renderable from a Sprintf call
+func SprintfRenderable(visible bool, fmtStr string, args ...interface{}) VisibleRenderable {
+	if !visible {
+		return HiddenString()
+	}
+
 	return VisibleString(fmt.Sprintf(fmtStr, args...))
 }
 

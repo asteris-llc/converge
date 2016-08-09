@@ -158,19 +158,26 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	graphValue := g.Get(id)
 	graphEntity := GraphEntity{id, graphValue}
 	vertexID, err := p.printProvider.VertexGetID(graphEntity)
-	if err != nil {
+	if err != nil || !vertexID.Visible() {
 		return pp.HiddenString(), err
 	}
+
 	vertexLabel, err := p.printProvider.VertexGetLabel(graphEntity)
 	if err != nil {
 		return pp.HiddenString(), err
 	}
+
 	attributes := p.printProvider.VertexGetProperties(graphEntity)
 	attributes = maybeSetProperty(attributes, "label", escapeNewline(vertexLabel))
 	attributeStr := buildAttributeString(attributes)
 	vertexID = escapeNewline(vertexID)
 
-	return pp.SprintfVisible(fmt.Sprintf("\"%s\" %s;\n", vertexID, attributeStr)), nil
+	return pp.SprintfRenderable(
+		true,
+		"\"%s\" %s;\n",
+		vertexID,
+		attributeStr,
+	), nil
 }
 
 // DrawEdge prints edge data in a fashion similar to DrawNode.  It will return a
