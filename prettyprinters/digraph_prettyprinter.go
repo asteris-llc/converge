@@ -16,6 +16,11 @@ package prettyprinters
 
 import "github.com/asteris-llc/converge/graph"
 
+// Hey! Are you here to get output before any node but after all the nodes?
+// Well, that doesn't exist right now. If you need it, you should add it.
+// It used to be `StartNodeSection` and `FinishNodeSection`, so maybe call it
+// `NodeSectionPrinter` and add those methods.
+
 // BasePrinter is an implementation of some output format that can be used to
 // prettyprint a Directed Graph. Printer is the zero value for these kinds of
 // printers. To get any functionality, printers should implement one or more of
