@@ -112,7 +112,6 @@ func DefaultOptions() Options {
 // Printer is a DigraphPrettyPrinter implementation for drawing graphviz
 // compatible DOT source code from a digraph.
 type Printer struct {
-	pp.DigraphPrettyPrinter
 	options       Options
 	printProvider PrintProvider
 	clusterIndex  int
@@ -213,31 +212,6 @@ func (p *Printer) StartSubgraph(g *graph.Graph, startNode string, subgraphID pp.
 // FinishSubgraph provides the closing '}' for a subgraph
 func (*Printer) FinishSubgraph(*graph.Graph, pp.SubgraphID) (pp.Renderable, error) {
 	return pp.VisibleString("}\n"), nil
-}
-
-// StartNodeSection would begin the node section of the output; DOT does not
-// require any special formatting for a node section so we return "".
-func (p *Printer) StartNodeSection(*graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-// FinishNodeSection would finish the section started by StartNodeSection.
-// Since DOT has no special formatting for starting/ending node sections we
-// return "".
-func (p *Printer) FinishNodeSection(*graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-// StartEdgeSection returns "" because DOT doesn't require anything special for
-// an edge section.
-func (p *Printer) StartEdgeSection(*graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
-}
-
-// FinishEdgeSection returns "" because DOT doesnt' require anything special for
-// an edge section.
-func (p *Printer) FinishEdgeSection(*graph.Graph) (pp.Renderable, error) {
-	return pp.HiddenString(""), nil
 }
 
 // StartPP begins the DOT output as an unnamed digraph.

@@ -251,44 +251,6 @@ func Test_FinishPP_ReturnsGraphvizStart(t *testing.T) {
 	assert.Equal(t, expected, actual.String())
 }
 
-// NB: The node and edge section callbacks are unnecessary for graphviz output
-// so we just assert that they all return no errors and empty strings.
-func Test_StartNodeSection_ReturnsEmptyString(t *testing.T) {
-	provider := defaultMockProvider()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	expected := ""
-	actual, err := printer.StartNodeSection(emptyGraph)
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual.String())
-}
-
-func Test_FinishNodeSection_ReturnsEmptyString(t *testing.T) {
-	provider := defaultMockProvider()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	expected := ""
-	actual, err := printer.FinishNodeSection(emptyGraph)
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual.String())
-}
-
-func Test_StartEdgeSection_ReturnsEmptyString(t *testing.T) {
-	provider := defaultMockProvider()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	expected := ""
-	actual, err := printer.StartEdgeSection(emptyGraph)
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual.String())
-}
-
-func Test_FinishEdgeSection_ReturnsEmptyString(t *testing.T) {
-	provider := defaultMockProvider()
-	printer := graphviz.New(graphviz.DefaultOptions(), provider)
-	expected := ""
-	actual, err := printer.FinishEdgeSection(emptyGraph)
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual.String())
-}
-
 func Test_FinishSubgraph_ReturnsClosingBrace(t *testing.T) {
 	provider := defaultMockProvider()
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
