@@ -59,7 +59,7 @@ type SubgraphMarker struct {
 // SubgraphBottomID defines the SubgraphID for the bottom subgraph.  "⊥" is a
 // reserved SubgraphID and shouldn't be returned as the SubgraphID by any calls
 // to MakeNode.
-const SubgraphBottomID string = "⊥"
+var SubgraphBottomID interface{}
 
 var (
 	// This is the join element that contains all other subgraphs.  subgraphBottom
