@@ -27,28 +27,28 @@ import (
 func TestSatisfiesInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*pp.BasePrinter)(nil), new(jsonl.JSONPrinter))
-	assert.Implements(t, (*pp.NodePrinter)(nil), new(jsonl.JSONPrinter))
-	assert.Implements(t, (*pp.EdgePrinter)(nil), new(jsonl.JSONPrinter))
+	assert.Implements(t, (*pp.BasePrinter)(nil), new(jsonl.Printer))
+	assert.Implements(t, (*pp.NodePrinter)(nil), new(jsonl.Printer))
+	assert.Implements(t, (*pp.EdgePrinter)(nil), new(jsonl.Printer))
 }
 
 func TestDrawNode(t *testing.T) {
 	g := graph.New()
 	g.Add("x", 1)
 
-	printer := new(jsonl.JSONPrinter)
+	printer := new(jsonl.Printer)
 	out, err := printer.DrawNode(g, "x")
 
 	assert.NoError(t, err)
-	assert.Equal(t, `{"id":"x","value":1}`+"\n", fmt.Sprint(out))
+	assert.Equal(t, `{"kind":"node","id":"x","value":1}`+"\n", fmt.Sprint(out))
 }
 
 func TestDrawEdge(t *testing.T) {
 	g := graph.New()
 
-	printer := new(jsonl.JSONPrinter)
+	printer := new(jsonl.Printer)
 	out, err := printer.DrawEdge(g, "x", "x/y")
 
 	assert.NoError(t, err)
-	assert.Equal(t, `{"source":"x","destination":"x/y"}`+"\n", fmt.Sprint(out))
+	assert.Equal(t, `{"kind":"edge","source":"x","destination":"x/y"}`+"\n", fmt.Sprint(out))
 }

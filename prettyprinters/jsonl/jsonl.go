@@ -21,25 +21,31 @@ import (
 	pp "github.com/asteris-llc/converge/prettyprinters"
 )
 
+// Node is the serializable type for graph nodes
 type Node struct {
+	Kind  string      `json:"kind"`
 	ID    string      `json:"id"`
 	Value interface{} `json:"value"`
 }
 
+// Edge is the serializable type for graph edges
 type Edge struct {
+	Kind        string `json:"kind"`
 	Source      string `json:"source"`
 	Destination string `json:"destination"`
 }
 
-// JSONPrinter prints a graph in JSONL format
-type JSONPrinter struct{}
+// Printer prints a graph in JSONL format
+type Printer struct{}
 
-func (j *JSONPrinter) DrawNode(graph *graph.Graph, nodeID string) (pp.Renderable, error) {
-	out, err := json.Marshal(&Node{ID: nodeID, Value: graph.Get(nodeID)})
+// DrawNode prints a node in JSONL format
+func (j *Printer) DrawNode(graph *graph.Graph, nodeID string) (pp.Renderable, error) {
+	out, err := json.Marshal(&Node{Kind: "node", ID: nodeID, Value: graph.Get(nodeID)})
 	return pp.VisibleString(string(out) + "\n"), err
 }
 
-func (j *JSONPrinter) DrawEdge(graph *graph.Graph, srcNodeID string, dstNodeID string) (pp.Renderable, error) {
-	out, err := json.Marshal(&Edge{Source: srcNodeID, Destination: dstNodeID})
+// DrawEdge returns an edge in JSONL format
+func (j *Printer) DrawEdge(graph *graph.Graph, srcNodeID string, dstNodeID string) (pp.Renderable, error) {
+	out, err := json.Marshal(&Edge{Kind: "edge", Source: srcNodeID, Destination: dstNodeID})
 	return pp.VisibleString(string(out) + "\n"), err
 }
