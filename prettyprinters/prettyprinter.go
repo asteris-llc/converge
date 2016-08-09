@@ -38,7 +38,7 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 
 	subgraphs := makeSubgraphMap()
 	p.loadSubgraphs(ctx, g, subgraphs)
-	rootNodes := subgraphs[SubgraphBottomID].Nodes
+	rootNodes := subgraphs[nil].Nodes
 
 	graphPrinter, gpOK := p.pp.(GraphPrinter)
 	if gpOK {
