@@ -23,10 +23,21 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/absent"
 	"github.com/asteris-llc/converge/resource/file/content"
+	"github.com/asteris-llc/converge/resource/file/directory"
+	"github.com/asteris-llc/converge/resource/file/file"
+	"github.com/asteris-llc/converge/resource/file/link"
+	"github.com/asteris-llc/converge/resource/file/mode"
+	"github.com/asteris-llc/converge/resource/file/owner"
+	"github.com/asteris-llc/converge/resource/file/touch"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/resource/systemd/disable"
+	"github.com/asteris-llc/converge/resource/systemd/enable"
+	"github.com/asteris-llc/converge/resource/systemd/start"
+	"github.com/asteris-llc/converge/resource/systemd/stop"
 	"github.com/hashicorp/hcl"
 )
 
@@ -57,6 +68,29 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		case "file.content":
 			dest = new(content.Preparer)
+		case "file.file":
+			dest = new(file.Preparer)
+		case "file.absent":
+			dest = new(absent.Preparer)
+		case "file.link":
+			dest = new(link.Preparer)
+		case "file.directory":
+			dest = new(directory.Preparer)
+		case "file.touch":
+			dest = new(touch.Preparer)
+		case "file.mode":
+			dest = new(mode.Preparer)
+		case "file.owner":
+			dest = new(owner.Preparer)
+
+		case "systemd.start":
+			dest = new(start.Preparer)
+		case "systemd.stop":
+			dest = new(stop.Preparer)
+		case "systemd.enable":
+			dest = new(enable.Preparer)
+		case "systemd.disable":
+			dest = new(disable.Preparer)
 
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)

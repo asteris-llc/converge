@@ -12,41 +12,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package content
+package disable
 
 import (
 	"errors"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/systemd/common"
 )
 
 // Preparer for Content
 type Preparer struct {
-	Content     string `hcl:"content"`
-	Destination string `hcl:"destination"`
+	Unit    string `hcl:"unit"`
+	Runtime bool   `hcl:"runtime"`
+	Timeout string `hcl:"timeout"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	content, err := render.Render("content", p.Content)
+	unit, err := render.Render("unit", p.Unit)
 	if err != nil {
 		return nil, err
+	}
+	timeout, err := render.Render("timeout", p.Timeout)
+	if err != nil {
+		return nil, err
+	}
+	var t time.Duration
+	if timeout == "" {
+		t = common.DefaultTimeout
+	} else {
+		t, err = time.ParseDuration(timeout)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	destination, err := render.Render("destination", p.Destination)
-	if err != nil {
-		return nil, err
-	}
-	contentModule := &Content{
-		Destination: destination,
-		Content:     content,
-	}
-	return contentModule, ValidateTask(contentModule)
+	disableModule := &Disable{Unit: unit, Runtime: p.Runtime, Timeout: t}
+	return disableModule, ValidateTask(disableModule)
 }
 
-func ValidateTask(contentModule *Content) error {
-	if contentModule.Destination == "" {
-		return errors.New("resource requires a `destination` parameter")
+func ValidateTask(disableModule *Disable) error {
+	if disableModule.Unit == "" {
+		return errors.New("resource requires a `unit` parameter")
 	}
 	return nil
 }

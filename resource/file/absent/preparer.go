@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package content
+package absent
 
 import (
 	"errors"
@@ -22,30 +22,21 @@ import (
 
 // Preparer for Content
 type Preparer struct {
-	Content     string `hcl:"content"`
 	Destination string `hcl:"destination"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	content, err := render.Render("content", p.Content)
-	if err != nil {
-		return nil, err
-	}
-
 	destination, err := render.Render("destination", p.Destination)
 	if err != nil {
 		return nil, err
 	}
-	contentModule := &Content{
-		Destination: destination,
-		Content:     content,
-	}
-	return contentModule, ValidateTask(contentModule)
+	absentModule := &Absent{Destination: destination}
+	return absentModule, ValidateTask(absentModule)
 }
 
-func ValidateTask(contentModule *Content) error {
-	if contentModule.Destination == "" {
+func ValidateTask(absentModule *Absent) error {
+	if absentModule.Destination == "" {
 		return errors.New("resource requires a `destination` parameter")
 	}
 	return nil
