@@ -18,7 +18,7 @@ type CheckValidator func(status string, willChange bool, err error, index int, t
 
 func CheckValidatorCreator(status string, willChange bool, err string) CheckValidator {
 	return func(s string, w bool, e error, i int, t *testing.T) {
-		assert.Equal(t, status, s)
+		assert.Regexp(t, status, s)
 		assert.Equal(t, willChange, w)
 		if err == "" {
 			assert.NoError(t, e, fmt.Sprintf("Test Index: %d", i))
@@ -29,7 +29,7 @@ func CheckValidatorCreator(status string, willChange bool, err string) CheckVali
 }
 
 func TaskCheckValidator(tasks []resource.Task, checks []CheckValidator, t *testing.T) {
-	assert.Equal(t, len(tasks), len(checks))
+	assert.Equal(t, len(tasks), len(checks), fmt.Sprintf("Length missmatch. Given %d task but %d checks", len(tasks), len(checks)))
 	for i := range tasks {
 		assert.NotNil(t, checks[i])
 		status, willChange, err := tasks[i].Check()

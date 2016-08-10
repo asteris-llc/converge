@@ -9,7 +9,7 @@ import (
 )
 
 func TaskApplyValidator(tasks []resource.Task, errs []string, t *testing.T) {
-	assert.Equal(t, len(tasks), len(errs))
+	assert.Equal(t, len(tasks), len(errs), fmt.Sprintf("Length missmatch. Given %d task but %d errors", len(tasks), len(errs)))
 	for i := range tasks {
 		err := tasks[i].Apply()
 		if errs[i] == "" {
