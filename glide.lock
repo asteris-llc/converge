@@ -1,5 +1,5 @@
-hash: 46778cde1a7eb63f1b23944fec7b0a1aa09bb3db44e6825fd7a56e7e872534e5
-updated: 2016-08-10T17:28:46.018875059-05:00
+hash: 4b35fb3c0a460ebd0bbb9fc5315b25fe704904bb0239d9b982544d9672c6a9a2
+updated: 2016-08-10T17:35:30.558199869-05:00
 imports:
 - name: github.com/acmacalister/skittles
   version: ""
@@ -43,7 +43,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: ""
 - name: github.com/godbus/dbus
-  version: 7a8c533d28e8162671a81090af5b9f78b74e2d26
+  version: 5f6efc7ef2759c81b7ba876593971bfce311eab3
 - name: github.com/hashicorp/errwrap
   version: ""
 - name: github.com/hashicorp/go-multierror
@@ -77,7 +77,7 @@ imports:
 - name: github.com/mattn/go-isatty
   version: ""
 - name: github.com/mitchellh/hashstructure
-  version: f33a8ec3ec6e574f74be77ec6b0713bbf0bc96c6
+  version: 4b74e8dfc4f4eb9bbdc79f3095291f957b70009d
 - name: github.com/mitchellh/mapstructure
   version: ""
 - name: github.com/pkg/errors
@@ -97,9 +97,9 @@ imports:
 - name: github.com/spf13/viper
   version: ""
 - name: github.com/streamrail/concurrent-map
-  version: f33a8ec3ec6e574f74be77ec6b0713bbf0bc96c6
+  version: 4b74e8dfc4f4eb9bbdc79f3095291f957b70009d
 - name: github.com/stretchr/objx
-  version: f33a8ec3ec6e574f74be77ec6b0713bbf0bc96c6
+  version: 4b74e8dfc4f4eb9bbdc79f3095291f957b70009d
 - name: github.com/stretchr/testify
   version: ""
   subpackages:

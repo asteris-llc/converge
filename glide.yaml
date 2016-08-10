@@ -87,3 +87,5 @@ import:
 - package: github.com/mitchellh/hashstructure
 - package: github.com/coreos/go-systemd
   version: ~11.0.0
+- package: github.com/godbus/dbus
+  version: ~4.0.0
