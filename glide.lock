@@ -1,55 +1,26 @@
-hash: 5b10f166b8d140ec52a9faad73d7ff06a2c6fc0026f69df5a7d025da56523703
-updated: 2016-08-10T17:23:28.981429058-05:00
+hash: 90f1547cfe5d569668f4372a5822feb5dfa8663c66ff0e73f186670849f75d56
+updated: 2016-07-30T15:09:52.246363071-05:00
 imports:
 - name: github.com/acmacalister/skittles
-  version: ""
-- name: github.com/asteris-llc/converge
-  version: d4518ed2049be211544970d5aaf718e12abd93db
-  subpackages:
-  - cmd
-  - graph
-  - plan
-  - apply
-  - load
-  - prettyprinters
-  - prettyprinters/graphviz
-  - prettyprinters/graphviz/providers
-  - render
-  - server
-  - helpers/fakerenderer
-  - resource
-  - fetch
-  - parse
-  - render/extensions
-  - resource/file/content
-  - resource/module
-  - resource/param
-  - resource/shell
-  - helpers
+  version: 8f7bde0f0de4cb42c1e8db861e67627558e97019
 - name: github.com/braintree/manners
-  version: ""
+  version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
   - test_helpers
 - name: github.com/BurntSushi/toml
-  version: ""
-- name: github.com/coreos/go-systemd
-  version: d6c05a1dcbb5ac02b7653da4d99e5db340c20778
-  subpackages:
-  - dbus
+  version: f0aeabca5a127c4078abb8c8d64298b147264b55
 - name: github.com/davecgh/go-spew
-  version: ""
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/fsnotify/fsnotify
-  version: ""
-- name: github.com/godbus/dbus
-  version: 7a8c533d28e8162671a81090af5b9f78b74e2d26
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/hashicorp/errwrap
-  version: ""
+  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
 - name: github.com/hashicorp/go-multierror
-  version: ""
+  version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - name: github.com/hashicorp/hcl
-  version: ""
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -61,47 +32,47 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/hashicorp/logutils
-  version: ""
+  version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: ""
+  version: dce175459a9b0bc1f42b1b0f919aae294a73a138
   subpackages:
   - dag
   - vendor/github.com/hashicorp/go-multierror
   - vendor/github.com/hashicorp/errwrap
 - name: github.com/inconshreveable/mousetrap
-  version: ""
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/kardianos/osext
-  version: ""
+  version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
 - name: github.com/magiconair/properties
-  version: ""
+  version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mattn/go-isatty
-  version: ""
+  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
 - name: github.com/mitchellh/hashstructure
-  version: af8303bfbf18e12fc49a16b81672ac8174f7b40e
+  version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
-  version: ""
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/pkg/errors
-  version: ""
+  version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
 - name: github.com/pmezard/go-difflib
-  version: ""
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/spf13/cast
-  version: ""
+  version: 27b586b42e29bec072fe7379259cc719e1289da6
 - name: github.com/spf13/cobra
-  version: ""
+  version: f368244301305f414206f889b1735a54cfc8bde8
 - name: github.com/spf13/jwalterweatherman
-  version: ""
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: ""
+  version: cb88ea77998c3f024757528e3305022ab50b43be
 - name: github.com/spf13/viper
-  version: ""
+  version: d8a428b8a30606e1d0b355d91edf282609ade1a6
 - name: github.com/streamrail/concurrent-map
-  version: af8303bfbf18e12fc49a16b81672ac8174f7b40e
+  version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
 - name: github.com/stretchr/objx
-  version: af8303bfbf18e12fc49a16b81672ac8174f7b40e
+  version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 - name: github.com/stretchr/testify
-  version: ""
+  version: c5d7a69bf8a2c9c374798160849c071093e41dd1
   subpackages:
   - assert
   - require
@@ -109,13 +80,13 @@ imports:
   - vendor/github.com/pmezard/go-difflib/difflib
   - mock
 - name: golang.org/x/net
-  version: ""
+  version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: ""
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2
-  version: ""
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
 testImports: []
