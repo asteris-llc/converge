@@ -18,11 +18,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"golang.org/x/net/context"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 // HTTP fetches content over HTTP
-func HTTP(loc string) ([]byte, error) {
-	response, err := http.Get(loc)
+func HTTP(ctx context.Context, loc string) ([]byte, error) {
+	response, err := ctxhttp.Get(ctx, new(http.Client), loc)
 	if err != nil {
 		return nil, err
 	}

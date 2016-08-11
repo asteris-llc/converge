@@ -18,6 +18,8 @@ import (
 	"path"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"strings"
 
 	"github.com/asteris-llc/converge/fetch"
@@ -34,7 +36,7 @@ func TestHTTP(t *testing.T) {
 	defer cancel()
 	require.NoError(t, err)
 
-	_, err = fetch.HTTP(addr)
+	_, err = fetch.HTTP(context.Background(), addr)
 	assert.NoError(t, err)
 }
 
@@ -48,7 +50,7 @@ func TestHTTPNotFound(t *testing.T) {
 
 	addr = strings.Replace(addr, "hcl", "nope", 1)
 
-	_, err = fetch.HTTP(addr)
+	_, err = fetch.HTTP(context.Background(), addr)
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "Fetching "+addr+" failed: 404 Not Found")
 	}

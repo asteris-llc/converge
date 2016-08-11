@@ -17,6 +17,8 @@ package fetch_test
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,14 +26,14 @@ import (
 func TestAnyBadURL(t *testing.T) {
 	t.Parallel()
 
-	_, err := fetch.Any(":://asdf")
+	_, err := fetch.Any(context.Background(), ":://asdf")
 	assert.Error(t, err)
 }
 
 func TestAnyUnimplementedProtocol(t *testing.T) {
 	t.Parallel()
 
-	_, err := fetch.Any("nope://")
+	_, err := fetch.Any(context.Background(), "nope://")
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, `protocol "nope" is not implemented`)
 	}
