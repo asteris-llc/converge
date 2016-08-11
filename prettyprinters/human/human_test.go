@@ -50,7 +50,7 @@ func TestFinishPPSuccess(t *testing.T) {
 	testFinishPP(
 		t,
 		Printable{"a": "b"},
-		"Summary: 0 errors, 1 changes",
+		"Summary: 0 errors, 1 changes\n",
 	)
 }
 
