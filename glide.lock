@@ -33,7 +33,7 @@ imports:
 - name: github.com/BurntSushi/toml
   version: ""
 - name: github.com/coreos/go-systemd
-  version: d6c05a1dcbb5ac02b7653da4d99e5db340c20778
+  version: ""
   subpackages:
   - dbus
 - name: github.com/davecgh/go-spew
@@ -43,7 +43,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: ""
 - name: github.com/godbus/dbus
-  version: 5f6efc7ef2759c81b7ba876593971bfce311eab3
+  version: ""
 - name: github.com/hashicorp/errwrap
   version: ""
 - name: github.com/hashicorp/go-multierror
