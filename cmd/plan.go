@@ -73,7 +73,7 @@ can be done separately to see what needs to be changed before execution.`,
 			}
 
 			results, err := plan.Plan(ctx, merged)
-			if err != nil {
+			if err != nil && err != plan.ErrHasErrors {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 

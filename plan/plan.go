@@ -15,6 +15,7 @@
 package plan
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -24,9 +25,14 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
+// ErrHasErrors is a signal value to indicate errors in the graph
+var ErrHasErrors = errors.New("plan has errors, check graph")
+
 // Plan the execution of a Graph of resource.Tasks
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
-	return in.Transform(ctx, func(id string, out *graph.Graph) error {
+	var hasErrors error
+
+	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		val := out.Get(id)
 		task, ok := val.(resource.Task)
 		if !ok {
@@ -34,22 +40,49 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
 		}
 
+		log.Printf("[DEBUG] checking dependencies for %q\n", id)
+		for _, depID := range out.DownEdges(id) {
+			dep, ok := out.Get(depID).(*Result)
+			if !ok {
+				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
+			}
+
+			if err := dep.Error(); err != nil {
+				out.Add(
+					id,
+					&Result{
+						Status:     "<unknown>",
+						WillChange: true,
+						Task:       task,
+						Err:        fmt.Errorf("error in dependency %q", depID),
+					},
+				)
+
+				// early return here after we set the signal error
+				hasErrors = ErrHasErrors
+				return nil
+			}
+		}
+
 		log.Printf("[DEBUG] checking %q\n", id)
 
 		status, willChange, err := task.Check()
-		if err != nil {
-			return fmt.Errorf("error checking %s: %s", id, err)
-		}
-
 		out.Add(
 			id,
 			&Result{
 				Status:     status,
 				WillChange: willChange,
 				Task:       task,
+				Err:        err,
 			},
 		)
 
 		return nil
 	})
+
+	if err != nil {
+		return out, err
+	}
+
+	return out, hasErrors
 }
