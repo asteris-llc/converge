@@ -23,3 +23,21 @@ type Result struct {
 
 	Plan *plan.Result
 }
+
+// Fields returns the fields that changed
+func (r *Result) Fields() map[string][2]string {
+	previous := "<unknown>"
+	if r.Plan != nil {
+		previous = r.Plan.Status
+	}
+
+	return map[string][2]string{
+		"state": [2]string{previous, r.Status},
+	}
+}
+
+// HasChanges indicates if this result ran
+func (r *Result) HasChanges() bool { return r.Ran }
+
+// Error always returns nil since application results never fail
+func (r *Result) Error() error { return nil }

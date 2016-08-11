@@ -2,8 +2,6 @@ package: github.com/asteris-llc/converge
 import:
 - package: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
-- package: github.com/acmacalister/skittles
-  version: 8f7bde0f0de4cb42c1e8db861e67627558e97019
 - package: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
@@ -85,3 +83,5 @@ import:
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/objx
 - package: github.com/mitchellh/hashstructure
+- package: github.com/ttacon/chalk
+  version: ~0.1.0

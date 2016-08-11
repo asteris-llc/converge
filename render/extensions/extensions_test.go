@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 	"text/template"
 
@@ -23,19 +24,21 @@ var contextualFunctions = map[string]string{
 func Test_MakeLanguage_MakesEntryForEachKnownKeyword(t *testing.T) {
 	language := extensions.MakeLanguage()
 	funcs := takeKeys(language.Funcs)
-	fmt.Println("Comparing funcs and keywords:")
-	fmt.Println(funcs)
-	fmt.Println(keywords)
-	assert.True(t, reflect.DeepEqual(keywords, takeKeys(language.Funcs)))
+	assert.True(
+		t,
+		reflect.DeepEqual(keywords, takeKeys(language.Funcs)),
+		fmt.Sprintf("Comparing funcs and keywords:\n%v\n%v\n", funcs, keywords),
+	)
 }
 
 func Test_DefaultLanguage_MakesAnEntryForEachKnownKeyword(t *testing.T) {
 	language := extensions.DefaultLanguage()
 	funcs := takeKeys(language.Funcs)
-	fmt.Println("Comparing funcs and keywords:")
-	fmt.Println(funcs)
-	fmt.Println(keywords)
-	assert.True(t, reflect.DeepEqual(keywords, takeKeys(language.Funcs)))
+	assert.True(
+		t,
+		reflect.DeepEqual(keywords, takeKeys(language.Funcs)),
+		fmt.Sprintf("Comparing funcs and keywords:\n%v\n%v\n", funcs, keywords),
+	)
 }
 
 func Test_DefaultLanguage_SetsUnimplementedForContextualFunctions(t *testing.T) {
@@ -57,6 +60,9 @@ func Test_Validate_ReturnsSlicesOfMissingWhenMissingL(t *testing.T) {
 	l := &extensions.LanguageExtension{}
 	missing, _, ok := l.Validate()
 	assert.False(t, ok)
+
+	sort.Strings(expected)
+	sort.Strings(missing)
 	assert.Equal(t, expected, missing)
 }
 
