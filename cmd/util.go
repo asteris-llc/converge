@@ -19,6 +19,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -31,6 +33,21 @@ func viperBindPFlags(flags *pflag.FlagSet) {
 	if err := viper.BindPFlags(flags); err != nil {
 		log.Fatalf("[FATAL] could not bind flags: %s", err)
 	}
+}
+
+func getPrinter() prettyprinters.Printer {
+	filter := human.ShowEverything
+	if !viper.GetBool("show-meta") {
+		filter = human.HideByKind("module", "param", "root")
+	}
+	if viper.GetBool("only-show-changes") {
+		filter = human.AndFilter(human.ShowOnlyChanged, filter)
+	}
+
+	printer := human.NewFiltered(filter)
+	printer.Color = UseColor()
+
+	return prettyprinters.New(printer)
 }
 
 // UseColor tells us whether or not to print colors using ANSI escape sequences
