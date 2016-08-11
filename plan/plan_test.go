@@ -61,7 +61,7 @@ func TestPlanErrorsBelow(t *testing.T) {
 	// touch vertices that are higher up. This test should show an error in the
 	// leafmost node, and not the root.
 	out, err := plan.Plan(context.Background(), g)
-	assert.Equal(t, plan.ErrHasErrors, err)
+	assert.Equal(t, plan.ErrTreeContainsErrors, err)
 
 	errNode, ok := out.Get("root/err").(*plan.Result)
 	require.True(t, ok)
