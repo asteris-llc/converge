@@ -111,7 +111,7 @@ func TestDrawNodeMetaFiltered(t *testing.T) {
 
 	testDrawNodesCustomPrinter(
 		t,
-		human.NewFiltered(human.HideIDTypes("param")),
+		human.NewFiltered(human.HideByKind("param")),
 		"param.test",
 		Printable{},
 		"",

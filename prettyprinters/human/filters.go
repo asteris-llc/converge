@@ -34,10 +34,10 @@ func ShowEverything(string, Printable) bool {
 	return true
 }
 
-// HideIDTypes hides certain ID types in the graph. So for example if you want
+// HideByKind hides certain ID types in the graph. So for example if you want
 // to hide all params, specify `param` as a type to this func. This uses the ID
 // functions in the graph module.
-func HideIDTypes(types ...string) FilterFunc {
+func HideByKind(types ...string) FilterFunc {
 	return func(id string, value Printable) bool {
 		for _, t := range types {
 			if strings.HasPrefix(graph.BaseID(id), t) {
