@@ -82,7 +82,7 @@ can be done separately to see what needs to be changed before execution.`,
 
 			filter := human.ShowEverything
 			if !viper.GetBool("show-meta") {
-				filter = human.HideByKind("module", "param")
+				filter = human.HideByKind("module", "param", "root")
 			}
 			if viper.GetBool("only-show-changes") {
 				filter = human.AndFilter(human.ShowOnlyChanged, filter)
