@@ -18,17 +18,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
-	"sync"
 
 	"golang.org/x/net/context"
 
-	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -77,56 +77,33 @@ can be done separately to see what needs to be changed before execution.`,
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			var (
-				cLock  = new(sync.Mutex)
-				counts struct {
-					results, changes int
-				}
-			)
-
+			// print results
 			fmt.Print("\n")
 
-			err = results.Walk(ctx, func(id string, val interface{}) error {
-				result, ok := val.(*plan.Result)
-				if !ok {
-					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)
-				}
+			filter := human.ShowEverything
+			if !viper.GetBool("show-meta") {
+				filter = human.HideByKind("module", "param")
+			}
+			if viper.GetBool("only-show-changes") {
+				filter = human.AndFilter(human.ShowOnlyChanged, filter)
+			}
 
-				cLock.Lock()
-				defer cLock.Unlock()
+			printer := human.NewFiltered(filter)
+			printer.Color = UseColor()
+			out, err := prettyprinters.New(printer).Show(ctx, results)
 
-				counts.results++
-				if result.WillChange {
-					counts.changes++
-				}
-
-				fmt.Printf(
-					"%s:\n\tWill Change: %t\n\tStatus:\n\t\t%s\n\n",
-					id,
-					result.WillChange,
-					strings.Replace(result.Status, "\n", "\n\t\t", -1),
-				)
-				return nil
-			})
 			if err != nil {
-				log.Fatalf("[FATAL] %s: printing failed: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
-			// summarize the potential changes for the user
-			summary := fmt.Sprintf("\nPlan complete. %d checks, %d will change\n", counts.results, counts.changes)
-			if UseColor() {
-				if counts.changes > 0 {
-					summary = skittles.Yellow(summary)
-				} else {
-					summary = skittles.Green(summary)
-				}
-			}
-			fmt.Print(summary)
+			fmt.Print(out)
 		}
 	},
 }
 
 func init() {
+	planCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
+	planCmd.Flags().Bool("only-show-changes", false, "only show changes")
 	addParamsArguments(planCmd.PersistentFlags())
 	RootCmd.AddCommand(planCmd)
 }
