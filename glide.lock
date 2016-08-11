@@ -1,8 +1,6 @@
 hash: 3088a17de53b8b259e8de6968322b915c9905653a06a4ce19e3fff779c613e51
 updated: 2016-08-09T11:36:49.57366789-05:00
 imports:
-- name: github.com/acmacalister/skittles
-  version: 8f7bde0f0de4cb42c1e8db861e67627558e97019
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
