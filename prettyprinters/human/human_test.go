@@ -90,7 +90,7 @@ func TestDrawNodeNoChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{},
-		"root:\n  Changes:\n    No changes\n\n",
+		"root:\n  Has Changes: no\n  Fields:\n    No changes\n\n",
 	)
 }
 
@@ -124,7 +124,7 @@ func TestDrawNodeChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"a": "b"},
-		"root:\n  Changes:\n    a: \"\" => \"b\"\n\n",
+		"root:\n  Has Changes: yes\n  Fields:\n    a: \"\" => \"b\"\n\n",
 	)
 }
 
@@ -134,7 +134,7 @@ func TestDrawNodeError(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"error": "x"},
-		"root:\n  Error: x\n  Changes:\n    error: \"\" => \"x\"\n\n",
+		"root:\n  Error: x\n  Has Changes: yes\n  Fields:\n    error: \"\" => \"x\"\n\n",
 	)
 }
 

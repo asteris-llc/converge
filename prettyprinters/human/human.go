@@ -95,11 +95,12 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), nil
 	}
 
-	tmpl, err := p.template(`{{if .Error}}{{red .ID}}{{else}}{{green .ID}}{{end}}:
+	tmpl, err := p.template(`{{if .Error}}{{red .ID}}{{else if .HasChanges}}{{yellow .ID}}{{else}}{{.ID}}{{end}}:
   {{- if .Error}}
   {{red "Error"}}: {{.Error}}
   {{- end}}
-  Changes:
+  Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
+  Fields:
     {{- range $key, $values := .Fields}}
     {{cyan $key}}:{{diff (index $values 0) (index $values 1)}}
     {{- else}}
@@ -112,7 +113,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	}
 
 	var out bytes.Buffer
-	err = tmpl.Execute(&out, &Node{ID: id, Printable: printable})
+	err = tmpl.Execute(&out, &printerNode{ID: id, Printable: printable})
 
 	return &out, err
 }
@@ -147,14 +148,13 @@ func (p *Printer) styled(style chalk.Style) func(string) string {
 func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
-	if !strings.Contains(before, "\n") && !strings.Contains(after, "\n") {
-		return fmt.Sprintf(" %q => %q", before, after), nil
+	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
+		return fmt.Sprintf(" %q => %q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
 	}
 
-	// tmpl, err := p.template("before:\n{{indent .Before 2}}\nafter:\n{{indent .After 2}}")
-	tmpl, err := p.template(`{{purple "before"}}:
+	tmpl, err := p.template(`before:
 {{indent .Before 2}}
-{{purple "after"}}:
+after:
 {{indent .After 2}}`)
 	if err != nil {
 		return "", err

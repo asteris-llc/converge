@@ -14,7 +14,7 @@
 
 package human
 
-type Node struct {
+type printerNode struct {
 	ID string
 
 	Printable
