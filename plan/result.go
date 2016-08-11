@@ -21,6 +21,7 @@ type Result struct {
 	Task       resource.Task
 	Status     string
 	WillChange bool
+	Err        error
 }
 
 // Fields returns the fields that will change based on this result
@@ -33,5 +34,7 @@ func (r *Result) Fields() map[string][2]string {
 // HasChanges indicates if this result will change
 func (r *Result) HasChanges() bool { return r.WillChange }
 
-// Error always returns nil since plan results cannot fail
-func (r *Result) Error() error { return nil }
+// Error returns the error assigned to this Result, if any
+func (r *Result) Error() error {
+	return r.Err
+}
