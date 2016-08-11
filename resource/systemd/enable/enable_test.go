@@ -19,7 +19,6 @@ import (
 
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/file/absent"
 	"github.com/asteris-llc/converge/resource/systemd/enable"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +26,7 @@ import (
 func TestTemplateInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Task)(nil), new(absent.Absent))
+	assert.Implements(t, (*resource.Task)(nil), new(enable.Enable))
 }
 
 func TestCheck(t *testing.T) {
