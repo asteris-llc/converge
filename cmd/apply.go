@@ -18,18 +18,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
-	"sync"
 
 	"golang.org/x/net/context"
 
-	"github.com/acmacalister/skittles"
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // applyCmd represents the plan command
@@ -80,55 +80,33 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}
 
+			// print results
 			fmt.Print("\n")
 
-			// count successes and failures to print summary
-			var (
-				cLock  = new(sync.Mutex)
-				counts struct {
-					results, ran int
-				}
-			)
+			filter := human.ShowEverything
+			if !viper.GetBool("show-meta") {
+				filter = human.HideByKind("module", "param")
+			}
+			if viper.GetBool("only-show-changes") {
+				filter = human.AndFilter(human.ShowOnlyChanged, filter)
+			}
 
-			err = results.Walk(ctx, func(id string, val interface{}) error {
-				result, ok := val.(*apply.Result)
-				if !ok {
-					return fmt.Errorf("expected %T at %q, but got %T", result, id, val)
-				}
+			printer := human.NewFiltered(filter)
+			printer.Color = UseColor()
+			out, err := prettyprinters.New(printer).Show(ctx, results)
 
-				cLock.Lock()
-				defer cLock.Unlock()
-
-				counts.results++
-				if result.Ran {
-					counts.ran++
-				}
-
-				fmt.Printf(
-					"%s:\n\tRan: %t\n\tOld Status:\n\t\t%s\n\tNew Status:\n\t\t%s\n\n",
-					id,
-					result.Ran,
-					strings.Replace(result.Plan.Status, "\n", "\n\t\t", -1),
-					strings.Replace(result.Status, "\n", "\n\t\t", -1),
-				)
-
-				return nil
-			})
 			if err != nil {
-				log.Fatalf("[FATAL] %s: printing failed: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
-			// summarize the changes for the user
-			summary := fmt.Sprintf("Apply complete. %d resources, %d applied\n", counts.results, counts.ran)
-			if UseColor() {
-				summary = skittles.Green(summary)
-			}
-			fmt.Print(summary)
+			fmt.Print(out)
 		}
 	},
 }
 
 func init() {
+	applyCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
+	applyCmd.Flags().Bool("only-show-changes", false, "only show changes")
 	addParamsArguments(applyCmd.PersistentFlags())
 	viperBindPFlags(applyCmd.Flags())
 
