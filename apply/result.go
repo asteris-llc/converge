@@ -20,6 +20,7 @@ import "github.com/asteris-llc/converge/plan"
 type Result struct {
 	Ran    bool
 	Status string
+	Err    error
 
 	Plan *plan.Result
 }
@@ -39,5 +40,7 @@ func (r *Result) Fields() map[string][2]string {
 // HasChanges indicates if this result ran
 func (r *Result) HasChanges() bool { return r.Ran }
 
-// Error always returns nil since application results never fail
-func (r *Result) Error() error { return nil }
+// Error returns the error assigned to this Result, if any
+func (r *Result) Error() error {
+	return r.Err
+}
