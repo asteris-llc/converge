@@ -22,3 +22,16 @@ type Result struct {
 	Status     string
 	WillChange bool
 }
+
+// Fields returns the fields that will change based on this result
+func (r *Result) Fields() map[string][2]string {
+	return map[string][2]string{
+		"state": [2]string{r.Status, "<unknown>"},
+	}
+}
+
+// HasChanges indicates if this result will change
+func (r *Result) HasChanges() bool { return r.WillChange }
+
+// Error always returns nil since plan results cannot fail
+func (r *Result) Error() error { return nil }
