@@ -59,7 +59,7 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 		}
 
 		log.Printf("[DEBUG] fetching %s\n", url)
-		content, err := fetch.Any(url)
+		content, err := fetch.Any(ctx, url)
 		if err != nil {
 			return nil, errors.Wrap(err, url)
 		}
