@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/systemd/common"
 	"github.com/asteris-llc/converge/resource/systemd/start"
+	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,6 +34,11 @@ func TestTemplateInterface(t *testing.T) {
 func TestCheck(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
+	conn, err := dbus.New()
+	if err != nil {
+		t.Skip("cannot dial unix /var/run/dbus/system_bus_socket")
+	}
+	conn.Close()
 	tasks := []resource.Task{
 		&start.Start{Unit: "systemd-journald.service"},
 	}
@@ -45,6 +51,11 @@ func TestCheck(t *testing.T) {
 
 func TestApply(t *testing.T) {
 
+	conn, err := dbus.New()
+	if err != nil {
+		t.Skip("cannot dial unix /var/run/dbus/system_bus_socket")
+	}
+	conn.Close()
 	tasks := []resource.Task{
 		&start.Start{Unit: "systemd-journald.service", Mode: common.SMReplace},
 	}
