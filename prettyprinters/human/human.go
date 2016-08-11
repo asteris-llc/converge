@@ -28,9 +28,19 @@ import (
 
 // Printer for human-readable output
 type Printer struct {
-	ShowOnlyChanged bool // limit to changed resources
-	ShowMeta        bool // show metadata like Params and Modules
-	Color           bool // color output
+	Color  bool // color output
+	Filter FilterFunc
+}
+
+// New returns a base version of Printer
+func New() *Printer {
+	return NewFiltered(ShowEverything)
+}
+
+// NewFiltered returns a version of Printer that will filter according to the
+// specified func
+func NewFiltered(f FilterFunc) *Printer {
+	return &Printer{Filter: f}
 }
 
 // StartPP does nothing, but is required to satisfy the GraphPrinter interface
@@ -79,6 +89,10 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	printable, ok := g.Get(id).(Printable)
 	if !ok {
 		return pp.HiddenString(), errors.New("cannot print values that don't implement Printable")
+	}
+
+	if !p.Filter(id, printable) {
+		return pp.HiddenString(), nil
 	}
 
 	tmpl, err := p.template(`{{if .Error}}{{red .ID}}{{else}}{{green .ID}}{{end}}:

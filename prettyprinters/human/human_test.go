@@ -37,7 +37,7 @@ func testFinishPP(t *testing.T, in Printable, out string) {
 	g := graph.New()
 	g.Add("root", in)
 
-	printer := new(human.Printer)
+	printer := human.New()
 	str, err := printer.FinishPP(g)
 
 	require.Nil(t, err)
@@ -65,11 +65,20 @@ func TestFinishPPError(t *testing.T) {
 }
 
 func testDrawNodes(t *testing.T, in Printable, out string) {
-	g := graph.New()
-	g.Add("root", in)
+	testDrawNodesCustomPrinter(
+		t,
+		human.New(),
+		"root",
+		in,
+		out,
+	)
+}
 
-	printer := new(human.Printer)
-	str, err := printer.DrawNode(g, "root")
+func testDrawNodesCustomPrinter(t *testing.T, h *human.Printer, id string, in Printable, out string) {
+	g := graph.New()
+	g.Add(id, in)
+
+	str, err := h.DrawNode(g, id)
 
 	require.Nil(t, err)
 	assert.Equal(t, out, str.String())
@@ -82,6 +91,30 @@ func TestDrawNodeNoChanges(t *testing.T) {
 		t,
 		Printable{},
 		"root:\n  Changes:\n    No changes\n\n",
+	)
+}
+
+func TestDrawNodeNoChangesFiltered(t *testing.T) {
+	t.Parallel()
+
+	testDrawNodesCustomPrinter(
+		t,
+		human.NewFiltered(human.ShowOnlyChanged),
+		"root",
+		Printable{},
+		"",
+	)
+}
+
+func TestDrawNodeMetaFiltered(t *testing.T) {
+	t.Parallel()
+
+	testDrawNodesCustomPrinter(
+		t,
+		human.NewFiltered(human.HideIDTypes("param")),
+		"param.test",
+		Printable{},
+		"",
 	)
 }
 
