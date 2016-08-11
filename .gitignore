@@ -33,3 +33,22 @@ converge
 
 # release
 build
+
+# dbus vendors
+vendor/github.com/coreos/go-systemd/.travis.yml
+vendor/github.com/coreos/go-systemd/CONTRIBUTING.md
+vendor/github.com/coreos/go-systemd/DCO
+vendor/github.com/coreos/go-systemd/LICENSE
+vendor/github.com/coreos/go-systemd/README.md
+vendor/github.com/coreos/go-systemd/examples/activation/httpserver/README.md
+vendor/github.com/coreos/go-systemd/examples/activation/httpserver/hello.service
+vendor/github.com/coreos/go-systemd/examples/activation/httpserver/hello.socket
+vendor/github.com/coreos/go-systemd/fixtures/
+vendor/github.com/coreos/go-systemd/test
+vendor/github.com/godbus/dbus/CONTRIBUTING.md
+vendor/github.com/godbus/dbus/LICENSE
+vendor/github.com/godbus/dbus/MAINTAINERS
+vendor/github.com/godbus/dbus/README.markdown
+vendor/github.com/godbus/dbus/_examples/
+vendor/github.com/godbus/dbus/introspect/
+vendor/github.com/godbus/dbus/prop/
