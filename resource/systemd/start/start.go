@@ -32,10 +32,10 @@ type Start struct {
 // Check if the content needs to be rendered
 func (s *Start) Check() (status string, willChange bool, err error) {
 	conn, err := dbus.New()
-	defer conn.Close()
 	if err != nil {
 		return err.Error(), false, err
 	}
+	defer conn.Close()
 	common.WaitToLoad(conn, s.Unit, s.Timeout)
 	status, willChange, err = common.CheckUnitIsActive(conn, s.Unit)
 	return status, willChange, err
@@ -47,6 +47,7 @@ func (s *Start) Apply() (err error) {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	jobStatus := make(chan string)
 	_, err = conn.StartUnit(s.Unit, string(s.Mode), jobStatus)
 	if err != nil {

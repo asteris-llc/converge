@@ -34,10 +34,10 @@ type Enable struct {
 // Check if the content needs to be rendered
 func (e *Enable) Check() (status string, willChange bool, err error) {
 	conn, err := dbus.New()
-	defer conn.Close()
 	if err != nil {
 		return err.Error(), false, err
 	}
+	defer conn.Close()
 	common.WaitToLoad(conn, e.Unit, e.Timeout)
 	status, willChange, err = common.CheckUnitIsActive(conn, e.Unit)
 	//Check runtime
@@ -57,6 +57,7 @@ func (e *Enable) Apply() (err error) {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	_, _, err = conn.EnableUnitFiles([]string{e.Unit}, e.Runtime, e.Force)
 	return err
 }

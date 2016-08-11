@@ -33,10 +33,10 @@ type Disable struct {
 // Check if the content needs to be rendered
 func (d *Disable) Check() (status string, willChange bool, err error) {
 	conn, err := dbus.New()
-	defer conn.Close()
 	if err != nil {
 		return err.Error(), false, err
 	}
+	defer conn.Close()
 	common.WaitToLoad(conn, d.Unit, d.Timeout)
 	status, willChange, err = common.CheckUnitIsInactive(conn, d.Unit)
 	//Check runtime
@@ -52,6 +52,7 @@ func (d *Disable) Apply() (err error) {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	_, err = conn.DisableUnitFiles([]string{d.Unit}, d.Runtime)
 	return err
 }
