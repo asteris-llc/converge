@@ -25,8 +25,8 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// ErrHasErrors is a signal value to indicate errors in the graph
-var ErrHasErrors = errors.New("plan has errors, check graph")
+// ErrTreeContainsErrors is a signal value to indicate errors in the graph
+var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 
 // Plan the execution of a Graph of resource.Tasks
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
@@ -59,7 +59,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				)
 
 				// early return here after we set the signal error
-				hasErrors = ErrHasErrors
+				hasErrors = ErrTreeContainsErrors
 				return nil
 			}
 		}
