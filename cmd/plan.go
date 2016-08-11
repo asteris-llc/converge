@@ -18,17 +18,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/prettyprinters"
-	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -78,25 +76,16 @@ can be done separately to see what needs to be changed before execution.`,
 			}
 
 			// print results
-			fmt.Print("\n")
-
-			filter := human.ShowEverything
-			if !viper.GetBool("show-meta") {
-				filter = human.HideByKind("module", "param", "root")
-			}
-			if viper.GetBool("only-show-changes") {
-				filter = human.AndFilter(human.ShowOnlyChanged, filter)
-			}
-
-			printer := human.NewFiltered(filter)
-			printer.Color = UseColor()
-			out, err := prettyprinters.New(printer).Show(ctx, results)
-
-			if err != nil {
+			out, perr := getPrinter().Show(ctx, results)
+			if perr != nil {
 				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
+			fmt.Print("\n")
 			fmt.Print(out)
+			if err != nil {
+				os.Exit(1)
+			}
 		}
 	},
 }

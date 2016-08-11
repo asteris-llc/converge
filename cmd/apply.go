@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"golang.org/x/net/context"
 
@@ -25,11 +26,8 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/prettyprinters"
-	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // applyCmd represents the plan command
@@ -70,36 +68,41 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
+			// prep done! Time to run some commands!
+			printer := getPrinter()
+
 			planned, err := plan.Plan(ctx, merged)
 			if err != nil {
+				if err == plan.ErrTreeContainsErrors {
+					out, perr := printer.Show(ctx, planned)
+					if perr != nil {
+						log.Printf("[ERROR] %s: printing failed plan failed: %s\n", fname, perr)
+					} else {
+						fmt.Print("\n")
+						fmt.Print(out)
+					}
+					log.Fatalf("[FATAL] %s: planning failed: check output\n", fname)
+				}
+
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
 			results, err := apply.Apply(ctx, planned)
-			if err != nil {
+			if err != nil && err != apply.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}
 
 			// print results
-			fmt.Print("\n")
-
-			filter := human.ShowEverything
-			if !viper.GetBool("show-meta") {
-				filter = human.HideByKind("module", "param", "root")
-			}
-			if viper.GetBool("only-show-changes") {
-				filter = human.AndFilter(human.ShowOnlyChanged, filter)
-			}
-
-			printer := human.NewFiltered(filter)
-			printer.Color = UseColor()
-			out, err := prettyprinters.New(printer).Show(ctx, results)
-
-			if err != nil {
+			out, perr := printer.Show(ctx, results)
+			if perr != nil {
 				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
+			fmt.Print("\n")
 			fmt.Print(out)
+			if err != nil {
+				os.Exit(1)
+			}
 		}
 	},
 }
