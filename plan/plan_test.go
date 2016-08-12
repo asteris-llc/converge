@@ -50,7 +50,7 @@ func TestPlanErrorsBelow(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", faketask.Error())
+	g.Add("root", faketask.NoOp())
 	g.Add("root/err", faketask.Error())
 
 	g.Connect("root", "root/err")
@@ -60,14 +60,16 @@ func TestPlanErrorsBelow(t *testing.T) {
 	// planning will return an error if any of the leaves error, but it won't even
 	// touch vertices that are higher up. This test should show an error in the
 	// leafmost node, and not the root.
-	_, err := plan.Plan(context.Background(), g)
-	if assert.Error(t, err) {
-		assert.EqualError(
-			t,
-			err,
-			"1 error(s) occurred:\n\n* error checking root/err: error",
-		)
-	}
+	out, err := plan.Plan(context.Background(), g)
+	assert.Equal(t, plan.ErrTreeContainsErrors, err)
+
+	errNode, ok := out.Get("root/err").(*plan.Result)
+	require.True(t, ok)
+	assert.Error(t, errNode.Error())
+
+	rootNode, ok := out.Get("root").(*plan.Result)
+	require.True(t, ok)
+	assert.EqualError(t, rootNode.Error(), `error in dependency "root/err"`)
 }
 
 func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {

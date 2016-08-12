@@ -22,16 +22,43 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/pkg/errors"
 )
+
+// ErrTreeContainsErrors is a signal value to indicate errors in the graph
+var ErrTreeContainsErrors = errors.New("apply had errors, check graph")
 
 // Apply the actions in a Graph of resource.Tasks
 func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
-	return in.Transform(ctx, func(id string, out *graph.Graph) error {
+	var hasErrors error
+
+	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		val := out.Get(id)
 		result, ok := val.(*plan.Result)
 		if !ok {
-			fmt.Println(val)
 			return fmt.Errorf("%s: could not get *plan.Result, was %T", id, val)
+		}
+
+		for _, depID := range out.DownEdges(id) {
+			dep, ok := out.Get(depID).(*Result)
+			if !ok {
+				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
+			}
+
+			if err := dep.Error(); err != nil {
+				out.Add(
+					id,
+					&Result{
+						Ran:    false,
+						Status: "<unknown>",
+						Plan:   result,
+						Err:    fmt.Errorf("error in dependency %q", depID),
+					},
+				)
+				// early return here after we set the signal error
+				hasErrors = ErrTreeContainsErrors
+				return nil
+			}
 		}
 
 		var newResult *Result
@@ -41,26 +68,37 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 			err := result.Task.Apply()
 			if err != nil {
-				return fmt.Errorf("error applying %s: %s", id, err)
+				err = errors.Wrapf(err, "error applying %s", id)
 			}
 
-			status, willChange, err := result.Task.Check()
+			status := "<unknown>"
+			willChange := false
+
+			if err == nil {
+				status, willChange, err = result.Task.Check()
+				if err != nil {
+					err = errors.Wrapf(err, "error checking %s", id)
+				} else if willChange {
+					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
+				}
+			}
+
 			if err != nil {
-				return fmt.Errorf("error checking %s: %s", id, err)
-			} else if willChange {
-				return fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
+				hasErrors = ErrTreeContainsErrors
 			}
 
 			newResult = &Result{
 				Ran:    true,
 				Status: status,
 				Plan:   result,
+				Err:    err,
 			}
 		} else {
 			newResult = &Result{
 				Ran:    false,
 				Status: result.Status,
 				Plan:   result,
+				Err:    nil,
 			}
 		}
 
@@ -68,4 +106,10 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 		return nil
 	})
+
+	if err != nil {
+		return out, err
+	}
+
+	return out, hasErrors
 }
