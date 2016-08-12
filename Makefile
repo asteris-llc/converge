@@ -21,6 +21,9 @@ test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 gotest:
 	go test -v ${TESTDIRS}
 
+goconvey:
+	goconvey ${TESTDIRS}
+
 bench:
 	go test -run='^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 

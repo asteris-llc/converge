@@ -14,7 +14,11 @@
 
 package faketask
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // FakeTask for testing things that require real tasks
 type FakeTask struct {
@@ -24,8 +28,8 @@ type FakeTask struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeTask) Check() (string, bool, error) {
-	return ft.Status, ft.WillChange, ft.Error
+func (ft *FakeTask) Check() (resource.TaskStatus, error) {
+	return resource.NewStatus(ft.Status, ft.WillChange, ft.Error)
 }
 
 // Apply returns values set on struct
@@ -56,6 +60,31 @@ func Error() *FakeTask {
 func WillChange() *FakeTask {
 	return &FakeTask{
 		Status:     "changed",
+		WillChange: true,
+		Error:      nil,
+	}
+}
+
+type FakeSwapper struct {
+	Status     string
+	WillChange bool
+	Error      error
+}
+
+// Check returns values set on struct then negates it
+func (ft *FakeSwapper) Check() (resource.TaskStatus, error) {
+	return resource.NewStatus(ft.Status, ft.WillChange, ft.Error)
+}
+
+// Apply returns values set on struct
+func (ft *FakeSwapper) Apply() error {
+	ft.WillChange = !ft.WillChange
+	return ft.Error
+}
+
+func Swapper() *FakeSwapper {
+	return &FakeSwapper{
+		Status:     "swapper",
 		WillChange: true,
 		Error:      nil,
 	}

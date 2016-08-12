@@ -45,7 +45,6 @@ func (s *Shell) Apply() (err error) {
 
 	return err
 }
-
 func (s *Shell) exec(script string) (out string, code uint32, err error) {
 	command := exec.Command(s.Interpreter)
 	stdin, err := command.StdinPipe()

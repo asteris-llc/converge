@@ -42,9 +42,9 @@ func TestContentCheckEmptyFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "", current)
-	assert.True(t, change)
+	status, err := tmpl.Check()
+	assert.Equal(t, "", status.Messages()[0])
+	assert.True(t, status.Changes())
 	assert.NoError(t, err)
 }
 
@@ -58,9 +58,9 @@ func TestContentCheckEmptyDir(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "", current)
-	assert.True(t, change)
+	status, err := tmpl.Check()
+	assert.Equal(t, "", status.Messages()[0])
+	assert.True(t, status.Changes())
 	if assert.Error(t, err) {
 		assert.EqualError(
 			t,
@@ -84,9 +84,9 @@ func TestContentCheckContentGood(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "this is a test", current)
-	assert.False(t, change)
+	status, err := tmpl.Check()
+	assert.Equal(t, "this is a test", status.Messages()[0])
+	assert.False(t, status.Changes())
 	assert.NoError(t, err)
 }
 
