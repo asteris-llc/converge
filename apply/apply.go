@@ -66,25 +66,26 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		if result.Status.Changes() {
 			log.Printf("[DEBUG] applying %q\n", id)
 
-			err := result.Task.Apply()
+			task := result.Task
+
+			err := task.Apply()
 			if err != nil {
 				err = errors.Wrapf(err, "error applying %s", id)
 			}
 
 			var status resource.TaskStatus = &resource.Status{}
 
-			willChange := false
-
 			if err == nil {
-				status, err = result.Task.Check()
+				status, err = task.Check()
 				if err != nil {
 					err = errors.Wrapf(err, "error checking %s", id)
-				} else if willChange {
-					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
+				} else if status.Changes() {
+					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status.Messages()[0])
 				}
 			}
 
 			if err != nil {
+				fmt.Printf("line ~94: err = %s\n", err)
 				hasErrors = ErrTreeContainsErrors
 			}
 
@@ -113,4 +114,37 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	}
 
 	return out, hasErrors
+}
+
+func ApplyElement(id string, planResult *plan.Result) (*Result, error) {
+	task := planResult.Task
+	var err error
+	result := &Result{
+		Ran:    false,
+		Status: planResult.Status,
+		Plan:   planResult,
+		Err:    nil,
+	}
+
+	if !planResult.Status.Changes() {
+		return result, nil
+	}
+
+	if err := task.Apply(); err != nil {
+		err = errors.Wrapf(err, "error applying %s", id)
+	}
+
+	result.Ran = true
+
+	newStatus, checkErr := task.Check()
+	if checkErr != nil {
+		err = errors.Wrapf(err, "error checking %s", id)
+	}
+
+	if newStatus.Changes() {
+		err = errors.Wrapf(err, "%s still needs to be changed after application. Status: %s", id, newStatus.Messages()[0])
+	}
+
+	result.Err = err
+	return result, err
 }
