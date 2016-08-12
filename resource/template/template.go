@@ -29,7 +29,7 @@ type Template struct {
 }
 
 // Check if the template needs to be rendered
-func (t *Template) Check() *resource.Status {
+func (t *Template) Check() (resource.TaskStatus, error) {
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
 		return resource.NewStatus("", true, nil)

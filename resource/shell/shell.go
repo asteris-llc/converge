@@ -31,7 +31,7 @@ type Shell struct {
 }
 
 // Check system using CheckStmt
-func (s *Shell) Check() *resource.Status {
+func (s *Shell) Check() (resource.TaskStatus, error) {
 	out, code, err := s.exec(s.CheckStmt)
 	return resource.NewStatus(out, code != 0, err)
 }
