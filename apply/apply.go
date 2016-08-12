@@ -61,47 +61,10 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			}
 		}
 
-		var newResult *Result
+		newResult, err := ApplyElement(id, result)
 
-		if result.Status.Changes() {
-			log.Printf("[DEBUG] applying %q\n", id)
-
-			task := result.Task
-
-			err := task.Apply()
-			if err != nil {
-				err = errors.Wrapf(err, "error applying %s", id)
-			}
-
-			var status resource.TaskStatus = &resource.Status{}
-
-			if err == nil {
-				status, err = task.Check()
-				if err != nil {
-					err = errors.Wrapf(err, "error checking %s", id)
-				} else if status.Changes() {
-					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status.Messages()[0])
-				}
-			}
-
-			if err != nil {
-				fmt.Printf("line ~94: err = %s\n", err)
-				hasErrors = ErrTreeContainsErrors
-			}
-
-			newResult = &Result{
-				Ran:    true,
-				Status: status,
-				Plan:   result,
-				Err:    err,
-			}
-		} else {
-			newResult = &Result{
-				Ran:    false,
-				Status: result.Status,
-				Plan:   result,
-				Err:    nil,
-			}
+		if err != nil {
+			hasErrors = ErrTreeContainsErrors
 		}
 
 		out.Add(id, newResult)
@@ -116,35 +79,43 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	return out, hasErrors
 }
 
-func ApplyElement(id string, planResult *plan.Result) (*Result, error) {
-	task := planResult.Task
+func ApplyElement(id string, result *plan.Result) (*Result, error) {
+	var newResult *Result
 	var err error
-	result := &Result{
-		Ran:    false,
-		Status: planResult.Status,
-		Plan:   planResult,
-		Err:    nil,
+	if result.Status.Changes() {
+		log.Printf("[DEBUG] applying %q\n", id)
+
+		task := result.Task
+
+		err = task.Apply()
+		if err != nil {
+			err = errors.Wrapf(err, "error applying %s", id)
+		}
+
+		var status resource.TaskStatus = &resource.Status{}
+
+		if err == nil {
+			status, err = task.Check()
+			if err != nil {
+				err = errors.Wrapf(err, "error checking %s", id)
+			} else if status.Changes() {
+				err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status.Messages()[0])
+			}
+		}
+
+		newResult = &Result{
+			Ran:    true,
+			Status: status,
+			Plan:   result,
+			Err:    err,
+		}
+	} else {
+		newResult = &Result{
+			Ran:    false,
+			Status: result.Status,
+			Plan:   result,
+			Err:    nil,
+		}
 	}
-
-	if !planResult.Status.Changes() {
-		return result, nil
-	}
-
-	if err := task.Apply(); err != nil {
-		err = errors.Wrapf(err, "error applying %s", id)
-	}
-
-	result.Ran = true
-
-	newStatus, checkErr := task.Check()
-	if checkErr != nil {
-		err = errors.Wrapf(err, "error checking %s", id)
-	}
-
-	if newStatus.Changes() {
-		err = errors.Wrapf(err, "%s still needs to be changed after application. Status: %s", id, newStatus.Messages()[0])
-	}
-
-	result.Err = err
-	return result, err
+	return newResult, err
 }
