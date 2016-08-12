@@ -17,7 +17,7 @@ package resource
 // Task does checking as Monitor does, but it can also make changes to make the
 // checks pass.
 type Task interface {
-	Check() (status string, willChange bool, err error)
+	Check() TaskStatus
 	Apply() error
 }
 
