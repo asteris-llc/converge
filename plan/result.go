@@ -18,21 +18,24 @@ import "github.com/asteris-llc/converge/resource"
 
 // Result is the result of planning execution
 type Result struct {
-	Task       resource.Task
-	Status     string
-	WillChange bool
-	Err        error
+	Task   resource.Task
+	Status resource.TaskStatus
+	Err    error
 }
 
 // Fields returns the fields that will change based on this result
 func (r *Result) Fields() map[string][2]string {
-	return map[string][2]string{
-		"state": [2]string{r.Status, "<unknown>"},
+	diffOutput := make(map[string][2]string)
+	for key, diff := range r.Status.Diffs() {
+		if diff.Changes() {
+			diffOutput[key] = [2]string{diff.Original(), diff.Current()}
+		}
 	}
+	return diffOutput
 }
 
 // HasChanges indicates if this result will change
-func (r *Result) HasChanges() bool { return r.WillChange }
+func (r *Result) HasChanges() bool { return r.Status.Changes() }
 
 // Error returns the error assigned to this Result, if any
 func (r *Result) Error() error {

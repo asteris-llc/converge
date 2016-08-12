@@ -29,7 +29,7 @@ type Content struct {
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check() *resource.Status {
+func (t *Content) Check() (resource.TaskStatus, error) {
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
 		return resource.NewStatus("", true, nil)

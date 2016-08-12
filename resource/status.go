@@ -14,11 +14,6 @@
 
 package resource
 
-type Diff struct {
-	Original string
-	Current  string
-}
-
 const (
 	// ErrOk status represents no error
 	ErrOk int = 0
@@ -38,29 +33,23 @@ const (
 
 type TaskStatus interface {
 	Diffs() map[string]Diff
-	Err() error
-	Status() int
+	StatusCode() int
 	Messages() []string
-	WillChange() bool
+	Changes() bool
 }
 
 type Status struct {
-	Changes      map[string]Diff
+	Differences  map[string]Diff
 	WarningLevel int
 	Output       []string
-	HasChanges   bool
-	ErrorStatus  error
+	WillChange   bool
 }
 
 func (t *Status) Diffs() map[string]Diff {
-	return t.Changes
+	return t.Differences
 }
 
-func (t *Status) Error() error {
-	return t.ErrorStatus
-}
-
-func (t *Status) Status() int {
+func (t *Status) StatusCode() int {
 	return t.WarningLevel
 }
 
@@ -68,14 +57,39 @@ func (t *Status) Messages() []string {
 	return t.Output
 }
 
-func (t *Status) WillChange() bool {
-	return t.HasChanges
+func (t *Status) Changes() bool {
+	return t.WillChange
 }
 
-func NewStatus(status string, willChange bool, err error) *Status {
+func NewStatus(status string, willChange bool, err error) (TaskStatus, error) {
 	return &Status{
-		Output:      []string{status},
-		HasChanges:  willChange,
-		ErrorStatus: err,
+		Output:     []string{status},
+		WillChange: willChange,
+	}, err
+}
+
+type Diff interface {
+	Original() string
+	Current() string
+	Changes() bool
+}
+
+type TextDiff [2]string
+
+func (t TextDiff) Original() string {
+	if t[0] == "" {
+		return "<unknown>"
 	}
+	return t[0]
+}
+
+func (t TextDiff) Current() string {
+	if t[1] == "" {
+		return "<unknown>"
+	}
+	return t[1]
+}
+
+func (t TextDiff) Changes() bool {
+	return t[0] == t[1]
 }

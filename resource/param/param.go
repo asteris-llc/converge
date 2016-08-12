@@ -22,7 +22,7 @@ type Param struct {
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
-func (p *Param) Check() *resource.Status {
+func (p *Param) Check() (resource.TaskStatus, error) {
 	return resource.NewStatus(p.String(), false, nil)
 }
 

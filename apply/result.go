@@ -14,12 +14,15 @@
 
 package apply
 
-import "github.com/asteris-llc/converge/plan"
+import (
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Result of application
 type Result struct {
 	Ran    bool
-	Status string
+	Status resource.TaskStatus
 	Err    error
 
 	Plan *plan.Result
@@ -27,14 +30,20 @@ type Result struct {
 
 // Fields returns the fields that changed
 func (r *Result) Fields() map[string][2]string {
-	previous := "<unknown>"
+	changes := make(map[string][2]string)
 	if r.Plan != nil {
-		previous = r.Plan.Status
+		for name, values := range r.Plan.Fields() {
+			changes[name+" (planned)"] = values
+		}
 	}
 
-	return map[string][2]string{
-		"state": [2]string{previous, r.Status},
+	for name, diff := range r.Status.Diffs() {
+		if diff.Changes() {
+			changes[name] = [2]string{diff.Original(), diff.Current()}
+		}
 	}
+
+	return changes
 }
 
 // HasChanges indicates if this result ran
