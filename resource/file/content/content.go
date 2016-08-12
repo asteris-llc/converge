@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/asteris-llc/converge/resource"
 )
 
 // Content renders a content to disk
@@ -27,22 +29,22 @@ type Content struct {
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check() (status string, willChange bool, err error) {
+func (t *Content) Check() *resource.Status {
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
-		return "", true, nil
+		return resource.NewStatus("", true, nil)
 	} else if err != nil {
-		return "", false, err
+		return resource.NewStatus("", false, err)
 	} else if stat.IsDir() {
-		return "", true, fmt.Errorf("cannot content %q, is a directory", t.Destination)
+		return resource.NewStatus("", true, fmt.Errorf("cannot content %q, is a directory", t.Destination))
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return "", false, err
+		return resource.NewStatus("", false, err)
 	}
 
-	return string(actual), t.Content != string(actual), nil
+	return resource.NewStatus(string(actual), t.Content != string(actual), nil)
 }
 
 // Apply writes the content to disk

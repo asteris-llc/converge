@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os/exec"
 	"syscall"
+
+	"github.com/asteris-llc/converge/resource"
 )
 
 // Shell task
@@ -29,9 +31,9 @@ type Shell struct {
 }
 
 // Check system using CheckStmt
-func (s *Shell) Check() (status string, willChange bool, err error) {
+func (s *Shell) Check() *resource.Status {
 	out, code, err := s.exec(s.CheckStmt)
-	return out, code != 0, err
+	return resource.NewStatus(out, code != 0, err)
 }
 
 // Apply ApplyStmt stanza to system
