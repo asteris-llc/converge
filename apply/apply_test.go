@@ -67,24 +67,26 @@ func TestApplyErrorsBelow(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{WillChange: true, Task: faketask.Error()})
+	g.Add("root", &plan.Result{WillChange: true, Task: faketask.NoOp()})
 	g.Add("root/err", &plan.Result{WillChange: true, Task: faketask.Error()})
 
 	g.Connect("root", "root/err")
 
 	require.NoError(t, g.Validate())
 
-	// applying will return an error if anything errors, but it won't even
-	// touch vertices that are higher up. This test should show an error in the
-	// leafmost node, and not the root.
-	_, err := apply.Apply(context.Background(), g)
-	if assert.Error(t, err) {
-		assert.EqualError(
-			t,
-			err,
-			"1 error(s) occurred:\n\n* error applying root/err: error",
-		)
-	}
+	// applying will return an error if anything errors, and will set an error
+	// in vertices that are higher up. This test should show an error in both
+	// nodes.
+	out, err := apply.Apply(context.Background(), g)
+	assert.Equal(t, apply.ErrTreeContainsErrors, err)
+
+	errNode, ok := out.Get("root/err").(*apply.Result)
+	require.True(t, ok)
+	assert.EqualError(t, errNode.Error(), "error applying root/err: error")
+
+	rootNode, ok := out.Get("root").(*apply.Result)
+	require.True(t, ok)
+	assert.EqualError(t, rootNode.Error(), `error in dependency "root/err"`)
 }
 
 func TestApplyStillChange(t *testing.T) {
@@ -99,13 +101,8 @@ func TestApplyStillChange(t *testing.T) {
 	// needs to change
 	_, err := apply.Apply(context.Background(), g)
 	if assert.Error(t, err) {
-		assert.EqualError(
-			t,
-			err,
-			"1 error(s) occurred:\n\n* root still needs to be changed after application. Status: changed",
-		)
+		assert.Equal(t, err, apply.ErrTreeContainsErrors)
 	}
-
 }
 
 func getResult(t *testing.T, src *graph.Graph, key string) *apply.Result {
