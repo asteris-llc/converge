@@ -33,7 +33,7 @@ func (r *Result) Fields() map[string][2]string {
 	changes := make(map[string][2]string)
 	if r.Plan != nil {
 		for name, values := range r.Plan.Fields() {
-			changes[name+" (planned)"] = values
+			changes[name] = values
 		}
 	}
 
