@@ -31,65 +31,113 @@ const (
 	StatusFatal
 )
 
+// TaskStatus represents the results of Check called during planning or
+// application.
 type TaskStatus interface {
+	Value() string
 	Diffs() map[string]Diff
 	StatusCode() int
 	Messages() []string
 	Changes() bool
 }
 
+// Status is the default TaskStatus implementation
 type Status struct {
 	Differences  map[string]Diff
 	WarningLevel int
 	Output       []string
 	WillChange   bool
+	Status       string
 }
 
+// Value returns the status value
+func (t *Status) Value() string {
+	return t.Status
+}
+
+func convertMap(t Diff) Diff {
+	return t
+}
+
+// Diffs returns the internal differences
 func (t *Status) Diffs() map[string]Diff {
 	return t.Differences
 }
 
+// StatusCode returns the current warning level
 func (t *Status) StatusCode() int {
 	return t.WarningLevel
 }
 
+// Messages returns the current outpt slice
 func (t *Status) Messages() []string {
 	return t.Output
 }
 
+// Changes returns the WillChange value
 func (t *Status) Changes() bool {
 	return t.WillChange
 }
 
-func NewStatus(status string, willChange bool, err error) (TaskStatus, error) {
-	return &Status{
-		Output:     []string{status},
-		WillChange: willChange,
-	}, err
+// AddDifference adds a TextDiff to the Differences map
+func (t *Status) AddDifference(name, current, original string) {
+	return
 }
 
+// Diff represents a difference
 type Diff interface {
 	Original() string
 	Current() string
 	Changes() bool
 }
 
-type TextDiff [2]string
+// TextDiff is the default Diff implementation
+type TextDiff struct {
+	Default string
+	Values  [2]string
+}
 
+// Original returns the unmodified value of the diff
 func (t TextDiff) Original() string {
-	if t[0] == "" {
-		return "<unknown>"
+	if t.Values[0] == "" {
+		return t.Default
 	}
-	return t[0]
+	return t.Values[0]
 }
 
+// Current returns the modified value of the diff
 func (t TextDiff) Current() string {
-	if t[1] == "" {
-		return "<unknown>"
+	if t.Values[1] == "" {
+		return t.Default
 	}
-	return t[1]
+	return t.Values[1]
 }
 
+// Changes is true if the Original and Current values differ
 func (t TextDiff) Changes() bool {
-	return t[0] != t[1]
+	return t.Values[0] != t.Values[1]
+}
+
+// AnyChanges takes a diff map and returns true if any of the diffs in the map
+// have changes.
+func AnyChanges(diffs map[string]Diff) bool {
+	for _, diffIf := range diffs {
+		diff, ok := diffIf.(Diff)
+		if !ok {
+			panic("invalid conversion")
+		}
+		if diff.Changes() {
+			return true
+		}
+	}
+	return false
+}
+
+// AddTextDiff inserts a new TextDiff into a map of names to Diffs
+func AddTextDiff(m map[string]Diff, name, original, current string) map[string]Diff {
+	if m == nil {
+		m = make(map[string]Diff)
+	}
+	m[name] = TextDiff{Values: [2]string{original, current}}
+	return m
 }

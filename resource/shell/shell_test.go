@@ -37,7 +37,7 @@ func TestShellTaskCheckNeedsChange(t *testing.T) {
 	}
 
 	status, err := s.Check()
-	assert.Equal(t, "test\n", status.Messages()[0])
+	assert.Equal(t, "stdout: test\n", status.Messages()[0])
 	assert.True(t, status.Changes())
 	assert.Nil(t, err)
 }
@@ -51,7 +51,7 @@ func TestShellCheckNoChange(t *testing.T) {
 	}
 
 	status, err := s.Check()
-	assert.Equal(t, "test\n", status.Messages()[0])
+	assert.Equal(t, "stdout: test\n", status.Messages()[0])
 	assert.False(t, status.Changes())
 	assert.Nil(t, err)
 }
@@ -80,7 +80,7 @@ func TestShellTaskApplyError(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			`exit code 256, output: "bad\n"`,
+			`exit code 256, stdout: "bad\n", stderr: ""`,
 		)
 	}
 }

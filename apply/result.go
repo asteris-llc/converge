@@ -28,11 +28,16 @@ type Result struct {
 	Plan *plan.Result
 }
 
-// Fields returns the fields that changed
-func (r *Result) Fields() map[string][2]string {
+// Messages returns any result status messages supplied by the task
+func (r *Result) Messages() string {
+	return r.Status.Value()
+}
+
+// Changes returns the fields that changed
+func (r *Result) Changes() map[string][2]string {
 	changes := make(map[string][2]string)
 	if r.Plan != nil {
-		for name, values := range r.Plan.Fields() {
+		for name, values := range r.Plan.Changes() {
 			changes[name] = values
 		}
 	}

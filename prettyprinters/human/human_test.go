@@ -90,7 +90,7 @@ func TestDrawNodeNoChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{},
-		"root:\n  Has Changes: no\n  Fields:\n    No changes\n\n",
+		"root:\n\tMessages: \n\tHas Changes: no\n\tChanges:\n\t\tNo changes\n\n",
 	)
 }
 
@@ -124,7 +124,7 @@ func TestDrawNodeChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"a": "b"},
-		"root:\n  Has Changes: yes\n  Fields:\n    a: \"\" => \"b\"\n\n",
+		"root:\n\tMessages: \n\tHas Changes: yes\n\tChanges:\n\t\ta: \"\" => \"b\"\n\n",
 	)
 }
 
@@ -134,7 +134,7 @@ func TestDrawNodeError(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"error": "x"},
-		"root:\n  Error: x\n  Has Changes: yes\n  Fields:\n    error: \"\" => \"x\"\n\n",
+		"root:\n\tError: x\n\tMessages: \n\tHas Changes: yes\n\tChanges:\n\t\terror: \"\" => \"x\"\n\n",
 	)
 }
 
@@ -142,7 +142,11 @@ func TestDrawNodeError(t *testing.T) {
 
 type Printable map[string]string
 
-func (p Printable) Fields() map[string][2]string {
+func (p Printable) Messages() string {
+	return ""
+}
+
+func (p Printable) Changes() map[string][2]string {
 	out := map[string][2]string{}
 
 	for key, value := range p {
