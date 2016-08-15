@@ -21,7 +21,6 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
 
@@ -50,7 +49,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 					id,
 					&Result{
 						Ran:    false,
-						Status: &resource.Status{},
+						Status: "<unknown>",
 						Plan:   result,
 						Err:    fmt.Errorf("error in dependency %q", depID),
 					},
@@ -61,10 +60,45 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			}
 		}
 
-		newResult, err := ApplyElement(id, result)
+		var newResult *Result
 
-		if err != nil {
-			hasErrors = ErrTreeContainsErrors
+		if result.WillChange {
+			log.Printf("[DEBUG] applying %q\n", id)
+
+			err := result.Task.Apply()
+			if err != nil {
+				err = errors.Wrapf(err, "error applying %s", id)
+			}
+
+			status := "<unknown>"
+			willChange := false
+
+			if err == nil {
+				status, willChange, err = result.Task.Check()
+				if err != nil {
+					err = errors.Wrapf(err, "error checking %s", id)
+				} else if willChange {
+					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
+				}
+			}
+
+			if err != nil {
+				hasErrors = ErrTreeContainsErrors
+			}
+
+			newResult = &Result{
+				Ran:    true,
+				Status: status,
+				Plan:   result,
+				Err:    err,
+			}
+		} else {
+			newResult = &Result{
+				Ran:    false,
+				Status: result.Status,
+				Plan:   result,
+				Err:    nil,
+			}
 		}
 
 		out.Add(id, newResult)
@@ -77,45 +111,4 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	}
 
 	return out, hasErrors
-}
-
-func ApplyElement(id string, result *plan.Result) (*Result, error) {
-	var newResult *Result
-	var err error
-	if result.Status.Changes() {
-		log.Printf("[DEBUG] applying %q\n", id)
-
-		task := result.Task
-
-		err = task.Apply()
-		if err != nil {
-			err = errors.Wrapf(err, "error applying %s", id)
-		}
-
-		var status resource.TaskStatus = &resource.Status{}
-
-		if err == nil {
-			status, err = task.Check()
-			if err != nil {
-				err = errors.Wrapf(err, "error checking %s", id)
-			} else if status.Changes() {
-				err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status.Messages()[0])
-			}
-		}
-
-		newResult = &Result{
-			Ran:    true,
-			Status: status,
-			Plan:   result,
-			Err:    err,
-		}
-	} else {
-		newResult = &Result{
-			Ran:    false,
-			Status: result.Status,
-			Plan:   result,
-			Err:    nil,
-		}
-	}
-	return newResult, err
 }
