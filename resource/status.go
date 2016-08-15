@@ -15,20 +15,20 @@
 package resource
 
 const (
-	// ErrOk status represents no error
-	ErrOk int = 0
+	// StatusOK status represents no error
+	StatusOK int = 0
 
-	// ErrInfo status represents a delta that will not change
-	ErrInfo int = iota
+	// StatusInfo status represents a delta that will not change
+	StatusInfo int = iota
 
-	// ErrWarning status represents a delta that will cause a change
-	ErrWarning
+	// StatusWarning status represents a delta that will cause a change
+	StatusWarning
 
-	// ErrError status represents a severe delta that can be corrected
-	ErrError
+	// StatusError status represents a severe delta that can be corrected
+	StatusError
 
-	// ErrFatal status represents an irrecoverable delta
-	ErrFatal
+	// StatusFatal status represents an irrecoverable delta
+	StatusFatal
 )
 
 type TaskStatus interface {
@@ -91,5 +91,5 @@ func (t TextDiff) Current() string {
 }
 
 func (t TextDiff) Changes() bool {
-	return t[0] == t[1]
+	return t[0] != t[1]
 }

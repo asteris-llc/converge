@@ -71,12 +71,13 @@ type FakeSwapper struct {
 	Error      error
 }
 
-// Check returns values set on struct then negates it
+// Check returns values set on struct
 func (ft *FakeSwapper) Check() (resource.TaskStatus, error) {
 	return resource.NewStatus(ft.Status, ft.WillChange, ft.Error)
 }
 
-// Apply returns values set on struct
+// Apply negates the current WillChange value set on struct and returns
+// configured error
 func (ft *FakeSwapper) Apply() error {
 	ft.WillChange = !ft.WillChange
 	return ft.Error
