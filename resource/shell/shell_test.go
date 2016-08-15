@@ -20,67 +20,46 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestShellInterface(t *testing.T) {
-	t.Parallel()
+var (
+	any         = mock.Anything
+	exitSuccess = int(0)
+	exitFailure = int(1)
+)
 
+func Test_HeathCheck_ImplementsTaskInterface(t *testing.T) {
+	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
 }
 
-func TestShellTaskCheckNeedsChange(t *testing.T) {
+func Test_Apply_ReturnsNil(t *testing.T) {
 	t.Parallel()
-
-	s := shell.Shell{
-		Interpreter: "sh",
-		CheckStmt:   "echo test && exit 1",
-	}
-
-	status, err := s.Check()
-	assert.Equal(t, "stdout: test\n", status.Messages()[0])
-	assert.True(t, status.Changes())
-	assert.Nil(t, err)
+	var shell *shell.Shell
+	assert.NoError(t, shell.Apply())
 }
 
-func TestShellCheckNoChange(t *testing.T) {
-	t.Parallel()
-
-	s := shell.Shell{
-		Interpreter: "sh",
-		CheckStmt:   "echo test",
+func Test_Check_CallsExecutionShellCheck(t *testing.T) {
+	mockShell := &MockTask{}
+	mockShell.On("Check").Return("", false, nil)
+	shell := &shell.Shell{
+		ExecutionShell: mockShell,
 	}
-
-	status, err := s.Check()
-	assert.Equal(t, "stdout: test\n", status.Messages()[0])
-	assert.False(t, status.Changes())
-	assert.Nil(t, err)
+	_, _, _ = shell.Check()
+	mockShell.AssertCalled(t, "Check")
 }
 
-func TestShellApplySuccess(t *testing.T) {
-	t.Parallel()
-
-	s := shell.Shell{
-		Interpreter: "sh",
-		ApplyStmt:   "echo test",
-	}
-
-	assert.NoError(t, s.Apply())
+type MockTask struct {
+	mock.Mock
 }
 
-func TestShellTaskApplyError(t *testing.T) {
-	t.Parallel()
+func (m *MockTask) Check() (string, bool, error) {
+	args := m.Called()
+	return args.String(0), args.Bool(1), args.Error(2)
+}
 
-	s := shell.Shell{
-		Interpreter: "sh",
-		ApplyStmt:   "echo bad && exit 1",
-	}
-
-	err := s.Apply()
-	if assert.Error(t, err) {
-		assert.EqualError(
-			t,
-			err,
-			`exit code 256, stdout: "bad\n", stderr: ""`,
-		)
-	}
+func (m *MockTask) Apply() error {
+	args := m.Called()
+	return args.Error(0)
 }

@@ -15,106 +15,274 @@
 package shell
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
-	"syscall"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
+
+	"io"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
+	"syscall"
+	"time"
 )
 
-// Shell task
+// NB: Known Bug with timed script execution:
+
+// Currently when a script executes beyond it's alloted time a timeout will
+// occur and nil is returned by timeoutExec.  The goroutine running the script
+// will continue to drain stdout and stderr from the process sockets and they
+// will be GCed when the script finally finishes.  This means that there is no
+// mechanism for getting the output of a script when it has timed out.  A
+// proposed solution to this would be to implement a ReadUntilWouldBlock-type
+// function that would allow us to read into a buffer from a ReadCloser until
+// the read operation would block, then return the contents of the buffer (along
+// with some marker if we recevied an error or EOF).  Then exec function would
+// then take in pointers to buffers for stdout and stderr and populate them
+// directly, so that if the script execution timed out we would still have a
+// reference to those buffers.
+var (
+	ScriptTimedOutError = errors.New("execution timed out")
+)
+
+var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-order)"
+
+type CommandIOContext struct {
+	Command *exec.Cmd
+	Stdin   io.WriteCloser
+	Stdout  io.ReadCloser
+	Stderr  io.ReadCloser
+}
+
+// CommandResults hold the resulting state of command execution
+type CommandResults struct {
+	ExitStatus uint32
+	Stdout     string
+	Stderr     string
+	Stdin      string
+	Timedout   bool
+	State      *os.ProcessState
+}
+
+// Check is a structure representing a health check task.
 type Shell struct {
-	Interpreter string
-	CheckStmt   string
-	ApplyStmt   string
+	Interpreter      string
+	InterpreterFlags []string
+	CheckStmt        string
+	ApplyStmt        string
+	Description      string
+	MaxDuration      *time.Duration
+	Status           *CommandResults
 }
 
-// Check system using CheckStmt
+// Check passes through to shell.Shell.Check() and then sets the health status
 func (s *Shell) Check() (resource.TaskStatus, error) {
-	out, code, err := s.exec(s.CheckStmt)
-	status := &resource.Status{
-		WarningLevel: exitCodeToWarningLevel(code),
-		Output:       messageMapToStringSlice(out),
-		WillChange:   code != 0,
+	results, err := run(s.Interpreter, s.InterpreterFlags, s.CheckStmt, s.MaxDuration)
+	if err != nil {
+		return nil, err
 	}
-	return status, err
+	s.Status = results
+	return s, nil
 }
 
-// Apply ApplyStmt stanza to system
+// Apply is a NOP for health checks
 func (s *Shell) Apply() (err error) {
-	out, code, err := s.exec(s.ApplyStmt)
-	if code != 0 {
-		return fmt.Errorf("exit code %d, stdout: %q, stderr: %q", code, out["stdout"], out["stderr"])
+	results, err := run(s.Interpreter, s.InterpreterFlags, s.ApplyStmt, s.MaxDuration)
+	if err == nil {
+		s.Status = results
 	}
-
 	return err
 }
 
-func exitCodeToWarningLevel(exitCode uint32) int {
-	switch exitCode {
-	case 0:
-		return resource.StatusNoChange
-	case 1:
-		return resource.StatusWontChange
-	default:
-		return resource.StatusWillChange
+// GetDescription returns the description of the health check
+func (s *Shell) GetDescription() string {
+	if s.Description == "" {
+		return "Unnamed Health Check"
 	}
+	return s.Description
 }
 
-func (s *Shell) exec(script string) (map[string]string, uint32, error) {
-	messages := make(map[string]string)
-	var code uint32
-	command := exec.Command(s.Interpreter)
-	stdin, err := command.StdinPipe()
+// Healthy returns the health status of the node.  If a health check has not
+// been run then Health() will call Check() before returning.  If a call to
+// Check() fails Healthy() will return the error.
+func (s *Shell) Healthy() (bool, error) {
+	if s.Status == nil || s.Status.State == nil {
+		return false, errors.New(outOfOrderMessage)
+	}
+	return s.Status.State.Success(), nil
+}
+
+func run(interpreter string, flags []string, script string, timeout *time.Duration) (*CommandResults, error) {
+	ctx, err := start(interpreter, flags)
 	if err != nil {
-		return messages, 0, err
+		return nil, err
 	}
-
-	// TODO: does this create a race condition?
-	var stdoutBuffer bytes.Buffer
-	var stderrBuffer bytes.Buffer
-	command.Stdout = &stdoutBuffer
-	command.Stderr = &stderrBuffer
-
-	if err = command.Start(); err != nil {
-		return messages, 0, err
-	}
-
-	if _, err = stdin.Write([]byte(script)); err != nil {
-		return messages, 0, err
-	}
-
-	if err = stdin.Close(); err != nil {
-		return messages, 0, err
-	}
-
-	err = command.Wait()
-	if _, ok := err.(*exec.ExitError); !ok && err != nil {
-		return messages, 0, err
-	}
-
-	switch result := command.ProcessState.Sys().(type) {
-	case syscall.WaitStatus:
-		code = uint32(result)
-	default:
-		panic(fmt.Sprintf("unknown type %+v", result))
-	}
-
-	if stdout := stdoutBuffer.String(); stdout != "" {
-		messages["stdout"] = stdout
-	}
-
-	if stderr := stderrBuffer.String(); stderr != "" {
-		messages["stderr"] = stderr
-	}
-	return messages, code, nil
+	return ctx.Run(script, timeout)
 }
 
-func messageMapToStringSlice(m map[string]string) []string {
-	var messages []string
-	for k, v := range m {
-		messages = append(messages, fmt.Sprintf("%s: %s", k, v))
+func (c *CommandIOContext) Run(script string, timeout *time.Duration) (results *CommandResults, err error) {
+	if timeout == nil {
+		results, err = c.exec(script)
+	} else {
+		results, err = c.timeoutExec(script, *timeout)
 	}
-	return messages
+	return
+}
+
+// timeoutExec will run the given script with a timelimit specified by
+// timeout. If the script does not return with that time duration a
+// ScriptTimeoutError is returned.
+func (c *CommandIOContext) timeoutExec(script string, timeout time.Duration) (*CommandResults, error) {
+	timeoutChannel := make(chan []interface{}, 1)
+	go func() {
+		cmdResults, err := c.exec(script)
+		timeoutChannel <- []interface{}{cmdResults, err}
+	}()
+	select {
+	case result := <-timeoutChannel:
+		return result[0].(*CommandResults), result[1].(error)
+	case <-time.After(timeout):
+		return nil, ScriptTimedOutError
+	}
+}
+
+func (c *CommandIOContext) exec(script string) (results *CommandResults, err error) {
+	results = &CommandResults{
+		Stdin:    script,
+		Timedout: false,
+	}
+
+	if err = c.Command.Start(); err != nil {
+		return
+	}
+	if _, err = c.Stdin.Write([]byte(script)); err != nil {
+		return
+	}
+	if err = c.Stdin.Close(); err != nil {
+		return
+	}
+
+	if data, readErr := ioutil.ReadAll(c.Stdout); readErr == nil {
+		results.Stdout = string(data)
+	} else {
+		log.Printf("[WARNING] cannot read stdout from script")
+	}
+
+	if data, readErr := ioutil.ReadAll(c.Stderr); readErr == nil {
+		results.Stderr = string(data)
+	} else {
+		log.Printf("[WARNING] cannot read stderr from script")
+	}
+
+	if waitErr := c.Command.Wait(); waitErr == nil {
+		results.ExitStatus = 0
+	} else {
+		exitErr, ok := waitErr.(*exec.ExitError)
+		if !ok {
+			err = errors.Wrap(waitErr, "failed to wait on process")
+			return
+		}
+		status, ok := exitErr.Sys().(syscall.WaitStatus)
+		if !ok {
+			err = errors.New("unexpected error getting exit status")
+		}
+		results.ExitStatus = uint32(status.ExitStatus())
+	}
+	results.State = c.Command.ProcessState
+	return
+}
+
+func start(interpreter string, flags []string) (*CommandIOContext, error) {
+	command := newCommand(interpreter, flags)
+	stdin, stdout, stderr, err := cmdGetPipes(command)
+	return &CommandIOContext{
+		Command: command,
+		Stdin:   stdin,
+		Stdout:  stdout,
+		Stderr:  stderr,
+	}, err
+}
+
+func newCommand(interpreter string, flags []string) *exec.Cmd {
+	if interpreter == "" {
+		if len(flags) > 0 {
+			log.Println("[INFO] passing flasg to default interpreter (/bin/sh)")
+			return exec.Command(defaultInterpreter, flags...)
+		}
+		return exec.Command(defaultInterpreter, defaultExecFlags...)
+	}
+	return exec.Command(interpreter, flags...)
+}
+
+func (s *Shell) Fields() map[string]string {
+	fields := make(map[string]string)
+	if s == nil || s.Status == nil {
+		return fields
+	}
+	fields["Exit Status"] = fmt.Sprintf("%d", s.Status.ExitStatus)
+	fields["Timedout"] = fmt.Sprintf("%v", s.Status.Timedout)
+	if s.Status.State != nil {
+		fields["Runtime [sys/user]"] = fmt.Sprintf("%s/%s", s.Status.State.SystemTime(), s.Status.State.UserTime())
+	}
+	if s.Status.Stdout != "" {
+		fields["Output"] = s.Status.Stdout
+	}
+	if s.Status.Stderr != "" {
+		fields["Stderr"] = s.Status.Stderr
+	}
+	return fields
+}
+
+func (s *Shell) Warning() bool {
+	if s == nil || s.Status == nil {
+		return false
+	}
+	return s.Status.ExitStatus == 1
+}
+
+func (s *Shell) Error() bool {
+	if s == nil || s.Status == nil {
+		return true
+	}
+	return s.Status.ExitStatus > 1
+}
+
+func (s *Shell) Value() string {
+	return s.Description
+}
+
+func (s *Shell) Diffs() map[string]resource.Diff {
+	return nil
+}
+
+func (s *Shell) StatusCode() int {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return resource.StatusFatal
+	}
+	return int(s.Status.ExitStatus)
+}
+
+func (s *Shell) Messages() (messages []string) {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return
+	}
+	if s.Status.Stdout != "" {
+		messages = append(messages, fmt.Sprintf("stdio: %s", s.Status.Stdout))
+	}
+	if s.Status.Stderr != "" {
+		messages = append(messages, fmt.Sprintf("stderr: %s", s.Status.Stderr))
+	}
+	return
+}
+
+func (s *Shell) Changes() bool {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return false
+	}
+	return (s.Status.ExitStatus != 0)
 }

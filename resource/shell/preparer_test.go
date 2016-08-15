@@ -15,6 +15,7 @@
 package shell_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -23,49 +24,62 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPreparerInterface(t *testing.T) {
+func Test_Preparer_ImplementsResourceInterface(t *testing.T) {
 	t.Parallel()
-
 	assert.Implements(t, (*resource.Resource)(nil), new(shell.Preparer))
 }
 
-func TestPreparerValidateValid(t *testing.T) {
+func Test_Prepare_ReturnsError_WhenScriptFailsSyntaxCheck(t *testing.T) {
 	t.Parallel()
+	p := shPreparer("if [[ -x")
+	_, err := p.Prepare(fakerenderer.New())
+	assert.Error(t, err)
+}
 
-	sp := &shell.Preparer{
-		Check: "echo test",
-		Apply: "echo test",
-	}
-
-	_, err := sp.Prepare(fakerenderer.New())
-
+func Test_Prepare_ReturnsNilError_WhenScriptPassesSyntaxCheck(t *testing.T) {
+	t.Parallel()
+	p := shPreparer("true")
+	_, err := p.Prepare(fakerenderer.New())
 	assert.NoError(t, err)
 }
 
-func TestPreparerValidateInvalidCheck(t *testing.T) {
+func Test_Prepare_ReturnsCheckWithShellTask_WhenSyntaxOK(t *testing.T) {
 	t.Parallel()
-
-	sp := &shell.Preparer{
-		Check: "if do then; esac",
+	checkFlag := []string{"-n"}
+	expectedInterpreter := "/bin/sh"
+	expectedStatement := "true"
+	p := &shell.Preparer{
+		Interpreter: expectedInterpreter,
+		CheckFlags:  checkFlag,
+		Check:       expectedStatement,
 	}
-
-	_, err := sp.Prepare(fakerenderer.New())
-
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "syntax error: exit status 2")
-	}
+	returnedCheck, _ := p.Prepare(fakerenderer.New())
+	actualCheck, ok := returnedCheck.(*shell.Shell)
+	assert.True(t, ok)
+	fmt.Println(actualCheck)
+	_, ok = actualCheck.ExecutionShell.(resource.Task)
+	assert.True(t, ok)
 }
 
-func TestPreparerValidateInvalidApply(t *testing.T) {
+func Test_Prepare_ReturnsError_WhenSyntaxError(t *testing.T) {
 	t.Parallel()
-
-	sp := &shell.Preparer{
-		Apply: "if do then; esac",
+	checkFlag := []string{"-n"}
+	expectedInterpreter := "/bin/sh"
+	expectedStatement := "if [[ -x"
+	p := &shell.Preparer{
+		Interpreter: expectedInterpreter,
+		CheckFlags:  checkFlag,
+		Check:       expectedStatement,
 	}
+	_, err := p.Prepare(fakerenderer.New())
+	assert.Error(t, err)
+}
 
-	_, err := sp.Prepare(fakerenderer.New())
-
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "syntax error: exit status 2")
+func shPreparer(script string) *shell.Preparer {
+	syntaxFlag := []string{"-n"}
+	return &shell.Preparer{
+		Interpreter: "/bin/sh",
+		CheckFlags:  syntaxFlag,
+		Check:       script,
 	}
 }
