@@ -33,45 +33,65 @@ type Shell struct {
 // Check system using CheckStmt
 func (s *Shell) Check() (resource.TaskStatus, error) {
 	out, code, err := s.exec(s.CheckStmt)
-	return resource.NewStatus(out, code != 0, err)
+	status := &resource.Status{
+		WarningLevel: exitCodeToWarningLevel(code),
+		Output:       messageMapToStringSlice(out),
+		WillChange:   code != 0,
+	}
+	return status, err
 }
 
 // Apply ApplyStmt stanza to system
 func (s *Shell) Apply() (err error) {
 	out, code, err := s.exec(s.ApplyStmt)
 	if code != 0 {
-		return fmt.Errorf("exit code %d, output: %q", code, out)
+		return fmt.Errorf("exit code %d, stdout: %q, stderr: %q", code, out["stdout"], out["stderr"])
 	}
 
 	return err
 }
-func (s *Shell) exec(script string) (out string, code uint32, err error) {
+
+func exitCodeToWarningLevel(exitCode uint32) int {
+	switch exitCode {
+	case 0:
+		return resource.StatusOK
+	case 1:
+		return resource.StatusWarning
+	default:
+		return resource.StatusError
+	}
+}
+
+func (s *Shell) exec(script string) (map[string]string, uint32, error) {
+	messages := make(map[string]string)
+	var code uint32
 	command := exec.Command(s.Interpreter)
 	stdin, err := command.StdinPipe()
 	if err != nil {
-		return "", 0, err
+		return messages, 0, err
 	}
 
 	// TODO: does this create a race condition?
-	var sink bytes.Buffer
-	command.Stdout = &sink
-	command.Stderr = &sink
+	var stdoutBuffer bytes.Buffer
+	var stderrBuffer bytes.Buffer
+	command.Stdout = &stdoutBuffer
+	command.Stderr = &stderrBuffer
 
 	if err = command.Start(); err != nil {
-		return "", 0, err
+		return messages, 0, err
 	}
 
 	if _, err = stdin.Write([]byte(script)); err != nil {
-		return "", 0, err
+		return messages, 0, err
 	}
 
 	if err = stdin.Close(); err != nil {
-		return "", 0, err
+		return messages, 0, err
 	}
 
 	err = command.Wait()
 	if _, ok := err.(*exec.ExitError); !ok && err != nil {
-		return "", 0, err
+		return messages, 0, err
 	}
 
 	switch result := command.ProcessState.Sys().(type) {
@@ -81,5 +101,20 @@ func (s *Shell) exec(script string) (out string, code uint32, err error) {
 		panic(fmt.Sprintf("unknown type %+v", result))
 	}
 
-	return sink.String(), code, nil
+	if stdout := stdoutBuffer.String(); stdout != "" {
+		messages["stdout"] = stdout
+	}
+
+	if stderr := stderrBuffer.String(); stderr != "" {
+		messages["stderr"] = stderr
+	}
+	return messages, code, nil
+}
+
+func messageMapToStringSlice(m map[string]string) []string {
+	var messages []string
+	for k, v := range m {
+		messages = append(messages, fmt.Sprintf("%s: %s", k, v))
+	}
+	return messages
 }

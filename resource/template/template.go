@@ -32,19 +32,24 @@ type Template struct {
 func (t *Template) Check() (resource.TaskStatus, error) {
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
-		return resource.NewStatus("", true, nil)
+		return &resource.Status{WillChange: true}, nil
 	} else if err != nil {
-		return resource.NewStatus("", false, err)
+		return &resource.Status{}, err
 	} else if stat.IsDir() {
-		return resource.NewStatus("", true, fmt.Errorf("cannot template %q, is a directory", t.Destination))
+		return &resource.Status{WarningLevel: resource.StatusError}, fmt.Errorf("cannot template %q, is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return resource.NewStatus("", false, err)
+		return &resource.Status{}, err
 	}
 
-	return resource.NewStatus(string(actual), t.Content != string(actual), nil)
+	diffs := make(map[string]resource.Diff)
+	diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	return &resource.Status{
+		Differences: diffs,
+		WillChange:  resource.AnyChanges(diffs),
+	}, nil
 }
 
 // Apply writes the content to disk

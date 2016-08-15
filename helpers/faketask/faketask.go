@@ -29,7 +29,7 @@ type FakeTask struct {
 
 // Check returns values set on struct
 func (ft *FakeTask) Check() (resource.TaskStatus, error) {
-	return resource.NewStatus(ft.Status, ft.WillChange, ft.Error)
+	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
 }
 
 // Apply returns values set on struct
@@ -65,6 +65,8 @@ func WillChange() *FakeTask {
 	}
 }
 
+// FakeSwapper is a task that tracks its state so that it can change between
+// calls to Apply
 type FakeSwapper struct {
 	Status     string
 	WillChange bool
@@ -73,7 +75,7 @@ type FakeSwapper struct {
 
 // Check returns values set on struct
 func (ft *FakeSwapper) Check() (resource.TaskStatus, error) {
-	return resource.NewStatus(ft.Status, ft.WillChange, ft.Error)
+	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
 }
 
 // Apply negates the current WillChange value set on struct and returns
@@ -83,6 +85,7 @@ func (ft *FakeSwapper) Apply() error {
 	return ft.Error
 }
 
+// Swapper creates a new stub swapper with an initial WillChange value of true
 func Swapper() *FakeSwapper {
 	return &FakeSwapper{
 		Status:     "swapper",

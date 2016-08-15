@@ -28,7 +28,7 @@ type Module struct {
 
 // Check just returns the current value of the moduleeter. It should never have to change.
 func (m *Module) Check() (resource.TaskStatus, error) {
-	return resource.NewStatus(m.String(), false, nil)
+	return &resource.Status{Status: m.String(), WillChange: false}, nil
 }
 
 // Apply doesn't do anything since modules are final values

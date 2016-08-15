@@ -23,8 +23,13 @@ type Result struct {
 	Err    error
 }
 
-// Fields returns the fields that will change based on this result
-func (r *Result) Fields() map[string][2]string {
+// Messages returns any message values supplied by the task
+func (r *Result) Messages() string {
+	return r.Status.Value()
+}
+
+// Changes returns the fields that will change based on this result
+func (r *Result) Changes() map[string][2]string {
 	diffOutput := make(map[string][2]string)
 	for key, diff := range r.Status.Diffs() {
 		if diff.Changes() {

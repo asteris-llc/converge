@@ -22,7 +22,8 @@ type printerNode struct {
 
 // Printable defines the methods needed to print with this printer
 type Printable interface {
-	Fields() map[string][2]string
+	Changes() map[string][2]string
+	Messages() string
 	HasChanges() bool
 	Error() error
 }
