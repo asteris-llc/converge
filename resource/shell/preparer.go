@@ -135,14 +135,6 @@ func checkSyntax(interpreter string, flags []string, script string) error {
 		return errors.Wrap(err, "syntax error: "+buffer.String())
 	}
 
-	//	if err := cmdStdout.Close(); err != nil {
-	//		return errors.Wrap(err, "failed to close stdout")
-	//	}
-	//
-	//	if err := cmdStderr.Close(); err != nil {
-	//		return errors.Wrap(err, "failed to close stderr")
-	//	}
-
 	return nil
 }
 
