@@ -54,11 +54,11 @@ func (s *Shell) Apply() (err error) {
 func exitCodeToWarningLevel(exitCode uint32) int {
 	switch exitCode {
 	case 0:
-		return resource.StatusOK
+		return resource.StatusNoChange
 	case 1:
-		return resource.StatusWarning
+		return resource.StatusWontChange
 	default:
-		return resource.StatusError
+		return resource.StatusWillChange
 	}
 }
 

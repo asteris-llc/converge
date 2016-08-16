@@ -51,10 +51,6 @@ func TestContentCheckEmptyFile(t *testing.T) {
 }
 
 func TestContentCheckMissingFile(t *testing.T) {
-	// tmpfile, err := ioutil.TempFile("", "test-check-empty-file")
-	// require.NoError(t, err)
-	// defer func() { require.NoError(t, os.Remove(tmpfile.Name())) }()
-
 	tmpl := content.Content{
 		Destination: "missing-file",
 		Content:     "this is a test",
@@ -85,7 +81,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			fmt.Sprintf("cannot content %q, is a directory", tmpdir),
+			fmt.Sprintf("cannot update contents of %q, it is a directory", tmpdir),
 		)
 	}
 }
