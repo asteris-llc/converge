@@ -26,6 +26,7 @@ type Shell struct {
 	Interpreter string
 	CheckStmt   string
 	ApplyStmt   string
+	Dir         string
 }
 
 // Check system using CheckStmt
@@ -55,6 +56,11 @@ func (s *Shell) exec(script string) (out string, code uint32, err error) {
 	var sink bytes.Buffer
 	command.Stdout = &sink
 	command.Stderr = &sink
+
+	// setup command environment
+	if s.Dir != "" {
+		command.Dir = s.Dir
+	}
 
 	if err = command.Start(); err != nil {
 		return "", 0, err

@@ -15,11 +15,17 @@
 package shell_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShellInterface(t *testing.T) {
@@ -83,4 +89,47 @@ func TestShellTaskApplyError(t *testing.T) {
 			`exit code 256, output: "bad\n"`,
 		)
 	}
+}
+
+func TestShellTaskCheckInDir(t *testing.T) {
+	t.Parallel()
+
+	tmpdir, err := ioutil.TempDir("", "test-shell-task-check-in-dir")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
+
+	s := shell.Shell{
+		Interpreter: "sh",
+		CheckStmt:   "pwd",
+		Dir:         tmpdir,
+	}
+
+	current, change, err := s.Check()
+
+	// workaround: on osx /tmp is symlinked to /private/tmp.
+	actual := strings.TrimPrefix(current, "/private")
+	assert.Equal(t, fmt.Sprintf("%s\n", tmpdir), actual)
+	assert.False(t, change)
+	assert.NoError(t, err)
+}
+
+func TestShellTaskApplyInDir(t *testing.T) {
+	t.Parallel()
+
+	tmpdir, err := ioutil.TempDir("", "test-shell-task-apply-in-dir")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
+
+	s := shell.Shell{
+		Interpreter: "sh",
+		ApplyStmt:   "touch dir-test",
+		Dir:         tmpdir,
+	}
+
+	err = s.Apply()
+	assert.NoError(t, err)
+
+	// verify file exists in working directory
+	_, err = os.Stat(path.Join(tmpdir, "dir-test"))
+	assert.NoError(t, err)
 }
