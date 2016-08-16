@@ -23,20 +23,17 @@ type Result struct {
 	Err    error
 }
 
+// Description returns a description of the task
+func (r *Result) Description() string { return r.Status.Summary() }
+
 // Messages returns any message values supplied by the task
-func (r *Result) Messages() string {
-	return r.Status.Value()
-}
+func (r *Result) Messages() []string { return r.Status.Messages() }
 
 // Changes returns the fields that will change based on this result
-func (r *Result) Changes() map[string]resource.Diff {
-	return r.Status.Diffs()
-}
+func (r *Result) Changes() map[string]resource.Diff { return r.Status.Diffs() }
 
 // HasChanges indicates if this result will change
 func (r *Result) HasChanges() bool { return r.Status.Changes() }
 
 // Error returns the error assigned to this Result, if any
-func (r *Result) Error() error {
-	return r.Err
-}
+func (r *Result) Error() error { return r.Err }

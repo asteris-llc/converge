@@ -99,14 +99,18 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	{{- if .Error}}
 	{{red "Error"}}: {{.Error}}
 	{{- end}}
-	Messages: {{.Messages}}
+	{{- if not (.Description | empty) }}
+	Description: {{.Description}}
+	{{- end}}
+	Messages:
+	{{- range $msg := .Messages}}
+		{{indent $msg 2}}
+	{{- end}}
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
 		{{cyan $key}}:{{diff ($values.Original) ($values.Current)}}
-		{{- else}}
-		No changes
-		{{- end}}
+		{{- else}} No changes {{- end}}
 
 `)
 	if err != nil {
@@ -133,6 +137,7 @@ func (p *Printer) template(source string) (*template.Template, error) {
 		// utility
 		"diff":   p.diff,
 		"indent": p.indent,
+		"empty":  p.empty,
 	}
 
 	return template.New("").Funcs(funcs).Parse(source)
@@ -154,9 +159,9 @@ func (p *Printer) diff(before, after string) (string, error) {
 	}
 
 	tmpl, err := p.template(`before:
-{{indent .Before 2}}
+{{indent .Before 1}}
 after:
-{{indent .After 2}}`)
+{{indent .After 1}}`)
 	if err != nil {
 		return "", err
 	}
@@ -170,8 +175,11 @@ after:
 func (p *Printer) indent(in string, level int) string {
 	var indenter string
 	for i := level; i > 0; i-- {
-		indenter += " "
+		indenter += "\t"
 	}
 
 	return indenter + strings.Replace(in, "\n", "\n"+indenter, -1)
+}
+func (p *Printer) empty(s string) bool {
+	return s == ""
 }

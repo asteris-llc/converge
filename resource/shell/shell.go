@@ -15,6 +15,7 @@
 package shell
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
@@ -249,8 +250,15 @@ func (s *Shell) Error() bool {
 	return s.Status.ExitStatus > 1
 }
 
+func (s *Shell) Summary() string { return s.Description }
+
 func (s *Shell) Value() string {
-	return s.Description
+	var value bytes.Buffer
+	value.WriteString(s.Description + "\n")
+	for _, message := range s.Messages() {
+		value.WriteString(message)
+	}
+	return value.String()
 }
 
 func (s *Shell) Diffs() map[string]resource.Diff {
@@ -266,6 +274,7 @@ func (s *Shell) StatusCode() int {
 }
 
 func (s *Shell) Messages() (messages []string) {
+	messages = make([]string, 0)
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
 		return

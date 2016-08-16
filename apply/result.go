@@ -28,20 +28,17 @@ type Result struct {
 	Plan *plan.Result
 }
 
+// Description returns a description of the task
+func (r *Result) Description() string { return r.Status.Summary() }
+
 // Messages returns any result status messages supplied by the task
-func (r *Result) Messages() string {
-	return r.Status.Value()
-}
+func (r *Result) Messages() []string { return r.Status.Messages() }
 
 // Changes returns the fields that changed
-func (r *Result) Changes() map[string]resource.Diff {
-	return r.Plan.Changes()
-}
+func (r *Result) Changes() map[string]resource.Diff { return r.Plan.Changes() }
 
 // HasChanges indicates if this result ran
 func (r *Result) HasChanges() bool { return r.Ran }
 
 // Error returns the error assigned to this Result, if any
-func (r *Result) Error() error {
-	return r.Err
-}
+func (r *Result) Error() error { return r.Err }
