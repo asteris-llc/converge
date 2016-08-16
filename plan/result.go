@@ -29,14 +29,8 @@ func (r *Result) Messages() string {
 }
 
 // Changes returns the fields that will change based on this result
-func (r *Result) Changes() map[string][2]string {
-	diffOutput := make(map[string][2]string)
-	for key, diff := range r.Status.Diffs() {
-		if diff.Changes() {
-			diffOutput[key] = [2]string{diff.Original(), diff.Current()}
-		}
-	}
-	return diffOutput
+func (r *Result) Changes() map[string]resource.Diff {
+	return r.Status.Diffs()
 }
 
 // HasChanges indicates if this result will change

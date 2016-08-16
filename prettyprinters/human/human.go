@@ -103,7 +103,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
-		{{cyan $key}}:{{diff (index $values 0) (index $values 1)}}
+		{{cyan $key}}:{{diff ($values.Original) ($values.Current)}}
 		{{- else}}
 		No changes
 		{{- end}}

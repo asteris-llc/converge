@@ -34,21 +34,8 @@ func (r *Result) Messages() string {
 }
 
 // Changes returns the fields that changed
-func (r *Result) Changes() map[string][2]string {
-	changes := make(map[string][2]string)
-	if r.Plan != nil {
-		for name, values := range r.Plan.Changes() {
-			changes[name] = values
-		}
-	}
-
-	for name, diff := range r.Status.Diffs() {
-		if diff.Changes() {
-			changes[name] = [2]string{diff.Original(), diff.Current()}
-		}
-	}
-
-	return changes
+func (r *Result) Changes() map[string]resource.Diff {
+	return r.Plan.Changes()
 }
 
 // HasChanges indicates if this result ran
