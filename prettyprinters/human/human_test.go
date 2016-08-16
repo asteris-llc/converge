@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/human"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -146,11 +147,11 @@ func (p Printable) Messages() string {
 	return ""
 }
 
-func (p Printable) Changes() map[string][2]string {
-	out := map[string][2]string{}
+func (p Printable) Changes() map[string]resource.Diff {
+	out := map[string]resource.Diff{}
 
 	for key, value := range p {
-		out[key] = [2]string{"", value}
+		out[key] = resource.TextDiff{Values: [2]string{"", value}}
 	}
 
 	return out

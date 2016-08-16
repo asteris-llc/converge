@@ -14,6 +14,8 @@
 
 package human
 
+import "github.com/asteris-llc/converge/resource"
+
 type printerNode struct {
 	ID string
 
@@ -22,7 +24,7 @@ type printerNode struct {
 
 // Printable defines the methods needed to print with this printer
 type Printable interface {
-	Changes() map[string][2]string
+	Changes() map[string]resource.Diff
 	Messages() string
 	HasChanges() bool
 	Error() error
