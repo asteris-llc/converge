@@ -39,25 +39,52 @@ type Preparer struct {
 	CheckFlags  []string `hcl:"check_flags"`
 	ExecFlags   []string `hcl:"run_flags"`
 	Check       string   `hcl:"check"`
+	Apply       string   `hcl:"apply"`
 	Timeout     string   `hcl:"timeout"`
 	Description string   `hcl:"description"`
 }
 
 // Prepare a new shell task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+
+	check, err := render.Render("check", p.Check)
+	if err != nil {
+		return nil, err
+	}
+
+	apply, err := render.Render("apply", p.Apply)
+	if err != nil {
+		return nil, err
+	}
+
+	interpreter, err := render.Render("interpreter", p.Interpreter)
+	if err != nil {
+		return nil, err
+	}
+
+	description, err := render.Render("description", p.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout, err := render.Render("timeout", p.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
 	shell := &Shell{
-		Interpreter:      p.Interpreter,
-		CheckStmt:        p.Check,
-		Description:      p.Description,
+		Interpreter:      interpreter,
+		CheckStmt:        check,
+		ApplyStmt:        apply,
+		Description:      description,
 		InterpreterFlags: p.ExecFlags,
 	}
 
-	if duration, err := time.ParseDuration(p.Timeout); err == nil {
+	if duration, err := time.ParseDuration(timeout); err == nil {
 		shell.MaxDuration = &duration
 	}
 
-	err := checkSyntax(p.Interpreter, p.CheckFlags, p.Check)
-	return shell, err
+	return shell, checkSyntax(interpreter, p.CheckFlags, check)
 }
 
 func checkSyntax(interpreter string, flags []string, script string) error {
