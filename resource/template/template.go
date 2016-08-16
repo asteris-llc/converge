@@ -36,7 +36,7 @@ func (t *Template) Check() (resource.TaskStatus, error) {
 	} else if err != nil {
 		return &resource.Status{}, err
 	} else if stat.IsDir() {
-		return &resource.Status{WarningLevel: resource.StatusError}, fmt.Errorf("cannot template %q, is a directory", t.Destination)
+		return &resource.Status{WarningLevel: resource.StatusFatal}, fmt.Errorf("cannot template %q, is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)

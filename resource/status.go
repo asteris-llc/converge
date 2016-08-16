@@ -15,19 +15,16 @@
 package resource
 
 const (
-	// StatusOK status represents no error
-	StatusOK int = 0
+	// StatusNoChange means no changes are necessary
+	StatusNoChange int = 0
 
-	// StatusInfo status represents a delta that will not change
-	StatusInfo int = iota
+	// StatusWontChange indicates an acceptable delta that wont be corrected
+	StatusWontChange int = iota
 
-	// StatusWarning status represents a delta that will cause a change
-	StatusWarning
+	// StatusWillChange indicates an unacceptable delta that will be corrected
+	StatusWillChange
 
-	// StatusError status represents a severe delta that can be corrected
-	StatusError
-
-	// StatusFatal status represents an irrecoverable delta
+	// StatusFatal indicates an unacceptable delta that cannot be corrected
 	StatusFatal
 )
 

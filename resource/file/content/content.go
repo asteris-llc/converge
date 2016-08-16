@@ -37,7 +37,7 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
 		return &resource.Status{
-			WarningLevel: resource.StatusError,
+			WarningLevel: resource.StatusWillChange,
 			WillChange:   true,
 			Differences:  diffs,
 		}, nil
@@ -49,7 +49,7 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			WillChange:   true,
-		}, fmt.Errorf("cannot content %q, is a directory", t.Destination)
+		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
@@ -83,10 +83,10 @@ func (t *Content) Apply() error {
 
 func getWarningLevel(original *string, content string) int {
 	if original == nil || *original == "" {
-		return resource.StatusError
+		return resource.StatusWillChange
 	}
 	if *original != content {
-		return resource.StatusWarning
+		return resource.StatusWillChange
 	}
-	return resource.StatusOK
+	return resource.StatusNoChange
 }
