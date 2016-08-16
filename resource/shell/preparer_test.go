@@ -43,24 +43,6 @@ func Test_Prepare_ReturnsNilError_WhenScriptPassesSyntaxCheck(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Test_Prepare_ReturnsCheckWithShellTask_WhenSyntaxOK(t *testing.T) {
-	t.Parallel()
-	checkFlag := []string{"-n"}
-	expectedInterpreter := "/bin/sh"
-	expectedStatement := "true"
-	p := &shell.Preparer{
-		Interpreter: expectedInterpreter,
-		CheckFlags:  checkFlag,
-		Check:       expectedStatement,
-	}
-	returnedCheck, _ := p.Prepare(fakerenderer.New())
-	actualCheck, ok := returnedCheck.(*shell.Shell)
-	assert.True(t, ok)
-	fmt.Println(actualCheck)
-	_, ok = actualCheck.ExecutionShell.(resource.Task)
-	assert.True(t, ok)
-}
-
 func Test_Prepare_ReturnsError_WhenSyntaxError(t *testing.T) {
 	t.Parallel()
 	checkFlag := []string{"-n"}
