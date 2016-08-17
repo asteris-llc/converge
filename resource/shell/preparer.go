@@ -24,11 +24,12 @@ import (
 
 // Preparer for Shell tasks
 type Preparer struct {
-	Interpreter   string  `hcl:"interpreter"`
-	SyntaxChecker *string `hcl:"syntaxchecker"`
-	Check         string  `hcl:"check"`
-	Apply         string  `hcl:"apply"`
-	Dir           string  `hcl:"dir"`
+	Interpreter   string   `hcl:"interpreter"`
+	SyntaxChecker *string  `hcl:"syntaxchecker"`
+	Check         string   `hcl:"check"`
+	Apply         string   `hcl:"apply"`
+	Dir           string   `hcl:"dir"`
+	Env           []string `hcl:"env"`
 }
 
 // Prepare a new task
@@ -65,7 +66,18 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	return &Shell{interpreter, check, apply, dir}, nil
+	// render Env
+	renderedEnv := make([]string, len(p.Env))
+	for i, envvar := range p.Env {
+		rendered, err := render.Render("env"+string(i), envvar)
+		if err != nil {
+			return nil, err
+		}
+
+		renderedEnv[i] = rendered
+	}
+
+	return &Shell{interpreter, check, apply, dir, renderedEnv}, nil
 }
 
 func (p *Preparer) validateScriptSyntax(script string) error {

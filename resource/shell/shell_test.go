@@ -108,7 +108,24 @@ func TestShellTaskCheckInDir(t *testing.T) {
 
 	// workaround: on osx /tmp is symlinked to /private/tmp.
 	actual := strings.TrimPrefix(current, "/private")
+
 	assert.Equal(t, fmt.Sprintf("%s\n", tmpdir), actual)
+	assert.False(t, change)
+	assert.NoError(t, err)
+}
+
+func TestShellTaskCheckWithEnv(t *testing.T) {
+	t.Parallel()
+
+	s := shell.Shell{
+		Interpreter: "sh",
+		CheckStmt:   "echo \"ROLE: $ROLE\"",
+		Env:         []string{"ROLE=test"},
+	}
+
+	current, change, err := s.Check()
+
+	assert.Equal(t, "ROLE: test\n", current)
 	assert.False(t, change)
 	assert.NoError(t, err)
 }
@@ -132,4 +149,28 @@ func TestShellTaskApplyInDir(t *testing.T) {
 	// verify file exists in working directory
 	_, err = os.Stat(path.Join(tmpdir, "dir-test"))
 	assert.NoError(t, err)
+}
+
+func TestShellTaskApplyWithEnv(t *testing.T) {
+	t.Parallel()
+
+	tmpdir, err := ioutil.TempDir("", "test-shell-task-apply-with-env")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
+
+	s := shell.Shell{
+		Interpreter: "sh",
+		Dir:         tmpdir,
+		ApplyStmt:   "echo \"ROLE: $ROLE\" > test-with-env",
+		Env:         []string{"ROLE=test"},
+	}
+
+	err = s.Apply()
+	assert.NoError(t, err)
+
+	// verify file exists in working directory
+	bytes, err := ioutil.ReadFile(path.Join(tmpdir, "test-with-env"))
+	assert.NoError(t, err)
+
+	assert.Equal(t, "ROLE: test\n", string(bytes))
 }
