@@ -15,10 +15,9 @@
 package apply
 
 import (
+	"context"
 	"fmt"
 	"log"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"

@@ -16,9 +16,8 @@ package prettyprinters
 
 import (
 	"bytes"
+	"context"
 	"errors"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 )

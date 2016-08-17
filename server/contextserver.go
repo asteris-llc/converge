@@ -15,12 +15,11 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"github.com/braintree/manners"
-
-	"golang.org/x/net/context"
 )
 
 // ContextServer is a Server controlled by a context for stopping gracefully

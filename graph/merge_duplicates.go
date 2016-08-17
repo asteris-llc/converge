@@ -15,11 +15,10 @@
 package graph
 
 import (
+	"context"
 	"log"
 	"strings"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/mitchellh/hashstructure"
 )

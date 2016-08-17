@@ -15,12 +15,11 @@
 package graph_test
 
 import (
+	"context"
 	"math/rand"
 	"strconv"
 	"sync"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"

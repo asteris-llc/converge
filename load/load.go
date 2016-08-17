@@ -15,9 +15,10 @@
 package load
 
 import (
+	"context"
+
 	"github.com/asteris-llc/converge/graph"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 // Load produces a fully-formed graph from the given root

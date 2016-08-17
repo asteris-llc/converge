@@ -15,10 +15,9 @@
 package fetch_test
 
 import (
+	"context"
 	"path"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"strings"
 

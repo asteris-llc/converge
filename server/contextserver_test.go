@@ -15,13 +15,12 @@
 package server_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/server"

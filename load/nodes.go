@@ -15,10 +15,9 @@
 package load
 
 import (
+	"context"
 	"fmt"
 	"log"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
