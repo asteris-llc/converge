@@ -15,11 +15,10 @@
 package plan
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"

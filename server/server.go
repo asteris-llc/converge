@@ -15,12 +15,11 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"github.com/kardianos/osext"
-
-	"golang.org/x/net/context"
 )
 
 // Server is the root of all public functionality
