@@ -73,7 +73,7 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 		for _, resource := range resources {
 			newID := graph.ID(current.Parent, resource.String())
 			out.Add(newID, resource)
-			out.Connect(current.Parent, newID)
+			out.ConnectParent(current.Parent, newID)
 
 			if resource.IsModule() {
 				toLoad = append(

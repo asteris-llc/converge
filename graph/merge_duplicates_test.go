@@ -64,7 +64,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 		}
 
 		require.NoError(t, err)
-		assert.Contains(t, transformed.DownEdges("root/two"), "root/one")
+		assert.Contains(t, graph.Targets(transformed.DownEdges("root/two")), "root/one")
 
 		return
 	}

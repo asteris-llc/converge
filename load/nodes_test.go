@@ -35,16 +35,16 @@ func TestNodesBasic(t *testing.T) {
 func TestNodesSourceFile(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	graph, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl")
+	g, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl")
 	require.NoError(t, err)
 
-	assert.NotNil(t, graph.Get("root/param.message"))
-	assert.NotNil(t, graph.Get("root/module.basic"))
-	assert.NotNil(t, graph.Get("root/module.basic/param.message"))
-	assert.NotNil(t, graph.Get("root/module.basic/param.filename"))
-	assert.NotNil(t, graph.Get("root/module.basic/task.render"))
+	assert.NotNil(t, g.Get("root/param.message"))
+	assert.NotNil(t, g.Get("root/module.basic"))
+	assert.NotNil(t, g.Get("root/module.basic/param.message"))
+	assert.NotNil(t, g.Get("root/module.basic/param.filename"))
+	assert.NotNil(t, g.Get("root/module.basic/task.render"))
 
-	basicDeps := graph.DownEdges("root/module.basic")
+	basicDeps := graph.Targets(g.DownEdges("root/module.basic"))
 	sort.Strings(basicDeps)
 
 	assert.Equal(

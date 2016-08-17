@@ -62,7 +62,7 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		log.Printf("[DEBUG] merge duplicates: found duplicate: %q and %q\n", target, id)
 
 		// Point all inbound links to value to target instead
-		for _, src := range g.UpEdges(id) {
+		for _, src := range Sources(g.UpEdges(id)) {
 			log.Printf("[TRACE] merge duplicates: re-pointing %q from %q to %q\n", src, id, target)
 			out.Disconnect(src, id)
 			out.Connect(src, target)
