@@ -252,9 +252,9 @@ func (s *Shell) Messages() (messages []string) {
 		fmt.Println(outOfOrderMessage)
 		return
 	}
-	if exitCodes, err := s.Status.ExitStrings(); err == nil {
-		messages = append(messages, fmt.Sprintf("Exit Code(s): %v", exitCodes))
-	}
+	exitCodes := s.Status.ExitStrings()
+	messages = append(messages, fmt.Sprintf("Exit Code(s): %v", exitCodes))
+
 	messages = append(messages, s.Status.GetMessages()...)
 	return
 }

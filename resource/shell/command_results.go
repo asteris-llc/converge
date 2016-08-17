@@ -15,7 +15,6 @@
 package shell
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -93,8 +92,12 @@ func (c *CommandResults) Unlink(cmd *CommandResults) (removed *CommandResults, r
 	}
 	prev := cmd.ResultsContext.Prev
 	next := cmd.ResultsContext.Next
-	prev.ResultsContext.Next = next
-	next.ResultsContext.Prev = prev
+	if prev != nil {
+		prev.ResultsContext.Next = next
+	}
+	if next != nil {
+		next.ResultsContext.Prev = prev
+	}
 	return
 }
 
@@ -103,25 +106,22 @@ func (c *CommandResults) UnlinkWhen(f func(*CommandResults) bool) *CommandResult
 	if c == nil {
 		return c
 	}
-	newHead := c // keep a pointer to someplace that still exists in the list
-	for head := c; head.ResultsContext.Next != nil; {
-		next := head.ResultsContext.Next
-		if f(head) {
-			_, newHead = c.Unlink(head)
+	cur := c
+	for cur != nil {
+		if f(cur) {
+			_, c = c.Unlink(cur)
 		}
-		head = next
+		cur = cur.ResultsContext.Next
 	}
-	return newHead.First()
+	return c.First()
 }
 
 // Uniq removes duplicate entries (as dicated by Eq) from the results list
 func (c *CommandResults) Uniq() *CommandResults {
-	cur := c
-	for cur != nil {
+	for cur := c; cur.ResultsContext.Next != nil; cur = cur.ResultsContext.Next {
 		c = cur.ResultsContext.Next.UnlinkWhen(cur.Eq)
-		cur = cur.ResultsContext.Next
 	}
-	return c.First()
+	return c
 }
 
 // Summarize provides an overall summary of the results of the command
@@ -140,13 +140,12 @@ func (c *CommandResults) Summarize() string {
 
 // SummarizeAll returnes a list of summaries of a command result and it's
 // ancestors
-func (c *CommandResults) SummarizeAll() []string {
-	var summaries []string
-	c.Foldl(nil, func(cmd *CommandResults, _ interface{}) interface{} {
-		summaries = append(summaries, cmd.Summarize())
-		return nil
-	})
-	return summaries
+func (c *CommandResults) SummarizeAll() (summaries []string) {
+	for c != nil {
+		summaries = append(summaries, c.Summarize())
+		c = c.ResultsContext.Next
+	}
+	return
 }
 
 // Eq tests command results for equality
@@ -170,61 +169,39 @@ func (c *CommandResults) Eq(cmd *CommandResults) bool {
 }
 
 // ExitStatuses returns a slice with the exit status of all the commands
-func (c *CommandResults) ExitStatuses() ([]uint32, error) {
-	statuses, ok := c.Foldl([]uint32{}, func(cmd *CommandResults, exitList interface{}) interface{} {
-		lst := exitList.([]uint32)
-		if cmd == nil {
-			return exitList
-		}
-		return append(lst, cmd.ExitStatus)
-	}).([]uint32)
-	if !ok {
-		return nil, errors.New("cannot get exit statuses (type error)")
+func (c *CommandResults) ExitStatuses() (results []uint32) {
+	for c != nil {
+		results = append(results, c.ExitStatus)
+		c = c.ResultsContext.Next
 	}
-	return statuses, nil
+	return
 }
 
 // ExitStrings returns a list of strings containing the operation type and exit
 // status in the form of Operation (code).
-func (c *CommandResults) ExitStrings() ([]string, error) {
-	stats, ok := c.Foldl([]string{}, func(cmd *CommandResults, exitList interface{}) interface{} {
-		if cmd == nil {
-			return exitList
-		}
-		lst := exitList.([]string)
-		return append(lst, fmt.Sprintf("%s (%d)", cmd.ResultsContext.Operation, cmd.ExitStatus))
-	}).([]string)
-	if !ok {
-		return nil, errors.New("cannot get exit statuses (type error)")
+func (c *CommandResults) ExitStrings() (results []string) {
+	for c != nil {
+		results = append(results, fmt.Sprintf("%s (%d)", c.ResultsContext.Operation, c.ExitStatus))
+		c = c.ResultsContext.Next
 	}
-	return stats, nil
+	return
 }
 
 // GetMessages will return a set of output messages from all result sets
-func (c *CommandResults) GetMessages() []string {
-	var output []string
-	c.Foldl(output, func(cmd *CommandResults, _ interface{}) interface{} {
-		output = append(output, "in "+cmd.ResultsContext.Operation+":")
-		stdout := strings.TrimRight(cmd.Stdout, "\r\n\t ")
-		stderr := strings.TrimRight(cmd.Stderr, "\r\n\t ")
+func (c *CommandResults) GetMessages() (output []string) {
+	for c != nil {
+		output = append(output, "in "+c.ResultsContext.Operation+":")
+		stdout := strings.TrimRight(c.Stdout, "\r\n\t ")
+		stderr := strings.TrimRight(c.Stderr, "\r\n\t ")
 		if stdout != "" {
 			output = append(output, fmt.Sprintf("stdout: %s", stdout))
 		}
 		if stderr != "" {
 			output = append(output, fmt.Sprintf("stderr: %s", stderr))
 		}
-		return nil
-	})
-	return output
-}
-
-// Foldl will fold a function over the list of CommandResults.
-func (c *CommandResults) Foldl(start interface{}, f func(*CommandResults, interface{}) interface{}) interface{} {
-	if c == nil {
-		return start
+		c = c.ResultsContext.Next
 	}
-	parent := c.ResultsContext.Next
-	return f(c, parent.Foldl(start, f))
+	return
 }
 
 // Last returns the last element in the list
@@ -262,7 +239,7 @@ func (c *CommandResults) reverseNode() *CommandResults {
 	return c
 }
 
-// Reverse will reverse the list.  Useful after calling Foldl
+// Reverse will reverse the list
 func (c *CommandResults) Reverse() *CommandResults {
 	last := c.Last()
 	for cur := last; cur != nil; cur = cur.ResultsContext.Next {
