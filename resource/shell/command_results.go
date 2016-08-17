@@ -66,13 +66,30 @@ func (c *CommandResults) Cons(op string, toAppend *CommandResults) *CommandResul
 	return toAppend
 }
 
+// Append adds an element to the end of the list
+func (c *CommandResults) Append(op string, toAppend *CommandResults) *CommandResults {
+	if c == nil {
+		return toAppend
+	}
+	last := c.Last()
+	toAppend.ResultsContext.Prev = last
+	toAppend.ResultsContext.Operation = op
+	last.Next = toAppend
+	return c
+}
+
 // Unlink removes an element from the results list, and returns a tuple of the
-// removed element and the updated list
+// removed element and the updated list.  If the Element to remove is the head
+// of the list, then it will return the next element, otherwise return the
+// current head.
 func (c *CommandResults) Unlink(cmd *CommandResults) (removed *CommandResults, results *CommandResults) {
 	results = c
 	removed = cmd
 	if cmd == nil {
 		return
+	}
+	if cmd == c {
+		results = c.ResultsContext.Next
 	}
 	prev := cmd.ResultsContext.Prev
 	next := cmd.ResultsContext.Next
@@ -81,19 +98,30 @@ func (c *CommandResults) Unlink(cmd *CommandResults) (removed *CommandResults, r
 	return
 }
 
+// UnlinkWhen removes each element in the list when the provided function is true
+func (c *CommandResults) UnlinkWhen(f func(*CommandResults) bool) *CommandResults {
+	if c == nil {
+		return c
+	}
+	newHead := c // keep a pointer to someplace that still exists in the list
+	for head := c; head.ResultsContext.Next != nil; {
+		next := head.ResultsContext.Next
+		if f(head) {
+			_, newHead = c.Unlink(head)
+		}
+		head = next
+	}
+	return newHead.First()
+}
+
 // Uniq removes duplicate entries (as dicated by Eq) from the results list
 func (c *CommandResults) Uniq() *CommandResults {
 	cur := c
 	for cur != nil {
-		cur.ResultsContext.Next.Foldl(nil, func(cmd *CommandResults, _ interface{}) interface{} {
-			if cur.Eq(cmd) {
-				cur.Unlink(cmd)
-			}
-			return nil
-		})
+		c = cur.ResultsContext.Next.UnlinkWhen(cur.Eq)
 		cur = cur.ResultsContext.Next
 	}
-	return c
+	return c.First()
 }
 
 // Summarize provides an overall summary of the results of the command
@@ -197,4 +225,48 @@ func (c *CommandResults) Foldl(start interface{}, f func(*CommandResults, interf
 	}
 	parent := c.ResultsContext.Next
 	return f(c, parent.Foldl(start, f))
+}
+
+// Last returns the last element in the list
+func (c *CommandResults) Last() *CommandResults {
+	if c == nil {
+		return nil
+	}
+	last := c
+	for last.ResultsContext.Next != nil {
+		last = last.ResultsContext.Next
+	}
+	return last
+}
+
+// First returns the head of the results list
+func (c *CommandResults) First() *CommandResults {
+	if c == nil {
+		return nil
+	}
+	first := c
+	for first.ResultsContext.Prev != nil {
+		first = first.ResultsContext.Prev
+	}
+	return first
+}
+
+func (c *CommandResults) reverseNode() *CommandResults {
+	if c == nil {
+		return c
+	}
+	prev := c.ResultsContext.Prev
+	next := c.ResultsContext.Next
+	c.ResultsContext.Prev = next
+	c.ResultsContext.Next = prev
+	return c
+}
+
+// Reverse will reverse the list.  Useful after calling Foldl
+func (c *CommandResults) Reverse() *CommandResults {
+	last := c.Last()
+	for cur := last; cur != nil; cur = cur.ResultsContext.Next {
+		cur = cur.reverseNode()
+	}
+	return last
 }
