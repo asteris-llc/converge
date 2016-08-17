@@ -19,30 +19,26 @@ func Test_Eq(t *testing.T) {
 }
 
 func Test_ExitCodes(t *testing.T) {
-	fmt.Println("in test exit codes")
-	expected := []uint32{0, 1, 2, 3}
-	c := newResults("", 0, "")
-	c = c.Cons("", &shell.CommandResults{ExitStatus: 1})
-	c = c.Cons("", &shell.CommandResults{ExitStatus: 2})
-	c = c.Cons("", &shell.CommandResults{ExitStatus: 3})
-	exitCodes, _ := c.ExitStatuses()
-	assert.Equal(t, expected, exitCodes)
-}
-
-func Test_Reverse(t *testing.T) {
-	fmt.Println("In test reverse")
 	expected := []uint32{0, 1, 2, 3}
 	c := newResults("", 0, "")
 	c = c.Append("", &shell.CommandResults{ExitStatus: 1})
 	c = c.Append("", &shell.CommandResults{ExitStatus: 2})
 	c = c.Append("", &shell.CommandResults{ExitStatus: 3})
-	c = c.Reverse()
-	exitCodes, _ := c.ExitStatuses()
+	exitCodes := c.ExitStatuses()
+	assert.Equal(t, expected, exitCodes)
+}
+
+func Test_Reverse(t *testing.T) {
+	expected := []uint32{0, 1, 2, 3}
+	c := newResults("", 0, "")
+	c = c.Append("", &shell.CommandResults{ExitStatus: 1})
+	c = c.Append("", &shell.CommandResults{ExitStatus: 2})
+	c = c.Append("", &shell.CommandResults{ExitStatus: 3})
+	exitCodes := c.ExitStatuses()
 	assert.Equal(t, expected, exitCodes)
 }
 
 func Test_Unlink_RemovesResult(t *testing.T) {
-	fmt.Println("in Test_UnlinkRemovesResults")
 	first := newResults("a", 0, "")
 	toRemove := newResults("b", 0, "")
 	last := newResults("c", 0, "")
@@ -51,23 +47,46 @@ func Test_Unlink_RemovesResult(t *testing.T) {
 	c = c.Append("c", last)
 	removed, c := c.Unlink(toRemove)
 	assert.Equal(t, toRemove, removed)
-	fmt.Println(c.Summarize())
-	fmt.Println(c.ResultsContext.Next.Summarize())
 	assert.True(t, c.Eq(first))
 	assert.True(t, last.Eq(c.ResultsContext.Next))
 	assert.True(t, c.Eq(last.ResultsContext.Prev))
 }
 
-func Test_Uniq(t *testing.T) {
-	expectedBefore := []uint32{0, 1, 0, 2}
-	expectedAfter := []uint32{0, 1, 2}
-	c := newResults("a", 0, "")
-	c = c.Append("", mkCommandResults(1))
+func Test_Unlink_WhenFirstElement_ReturnsNextElement(t *testing.T) {
+	first := mkCommandResults(0)
+	c := first.Append("", mkCommandResults(1))
+	_, removed := c.Unlink(first)
+	assert.Equal(t, removed.ExitStatus, uint32(1))
+}
+
+func Test_UnlinkWhen(t *testing.T) {
+	expectedBefore := []uint32{2, 0, 1, 2, 3}
+	expectedAfter := []uint32{0, 1, 3}
+	c := newResults("a", 2, "")
 	c = c.Append("", mkCommandResults(0))
+	c = c.Append("", mkCommandResults(1))
 	c = c.Append("", mkCommandResults(2))
-	before, _ := c.ExitStatuses()
+	c = c.Append("", mkCommandResults(3))
+	actualBefore := c.ExitStatuses()
+	assert.Equal(t, expectedBefore, actualBefore)
+	c = c.UnlinkWhen(func(cmd *shell.CommandResults) bool {
+		return cmd.ExitStatus == 2
+	})
+	actualAfter := c.ExitStatuses()
+	assert.Equal(t, expectedAfter, actualAfter)
+}
+
+func Test_Uniq(t *testing.T) {
+	fmt.Println("=============================")
+	expectedBefore := []uint32{2, 0, 1, 0}
+	expectedAfter := []uint32{2, 0, 1}
+	c := mkCommandResults(2)
+	c = c.Append("", mkCommandResults(0))
+	c = c.Append("a", mkCommandResults(1))
+	c = c.Append("", mkCommandResults(0))
+	before := c.ExitStatuses()
 	assert.Equal(t, expectedBefore, before)
-	after, _ := c.Uniq().ExitStatuses()
+	after := c.Uniq().ExitStatuses()
 	assert.Equal(t, expectedAfter, after)
 }
 
