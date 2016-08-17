@@ -18,6 +18,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

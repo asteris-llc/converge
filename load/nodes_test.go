@@ -19,6 +19,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
