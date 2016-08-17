@@ -23,9 +23,6 @@ type Result struct {
 	Err    error
 }
 
-// Description returns a description of the task
-func (r *Result) Description() string { return r.Status.Summary() }
-
 // Messages returns any message values supplied by the task
 func (r *Result) Messages() []string { return r.Status.Messages() }
 

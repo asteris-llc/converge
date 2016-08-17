@@ -25,7 +25,6 @@ type printerNode struct {
 // Printable defines the methods needed to print with this printer
 type Printable interface {
 	Changes() map[string]resource.Diff
-	Description() string
 	Messages() []string
 	HasChanges() bool
 	Error() error

@@ -31,7 +31,6 @@ const (
 // TaskStatus represents the results of Check called during planning or
 // application.
 type TaskStatus interface {
-	Summary() string
 	Value() string
 	Diffs() map[string]Diff
 	StatusCode() int
@@ -41,17 +40,11 @@ type TaskStatus interface {
 
 // Status is the default TaskStatus implementation
 type Status struct {
-	Differences   map[string]Diff
-	WarningLevel  int
-	Output        []string
-	WillChange    bool
-	Status        string
-	StatusMessage string
-}
-
-// Summary returns an empty string representing no des
-func (t *Status) Summary() string {
-	return t.StatusMessage
+	Differences  map[string]Diff
+	WarningLevel int
+	Output       []string
+	WillChange   bool
+	Status       string
 }
 
 // Value returns the status value

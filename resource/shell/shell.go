@@ -24,7 +24,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -57,17 +56,7 @@ type CommandIOContext struct {
 	Stderr  io.ReadCloser
 }
 
-// CommandResults hold the resulting state of command execution
-type CommandResults struct {
-	ExitStatus uint32
-	Stdout     string
-	Stderr     string
-	Stdin      string
-	Timedout   bool
-	State      *os.ProcessState
-}
-
-// Check is a structure representing a health check task.
+// Shell is a structure representing a task.
 type Shell struct {
 	Interpreter      string
 	InterpreterFlags []string
@@ -84,7 +73,7 @@ func (s *Shell) Check() (resource.TaskStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Status = results
+	s.consStatus("check", results)
 	return s, nil
 }
 
@@ -92,9 +81,13 @@ func (s *Shell) Check() (resource.TaskStatus, error) {
 func (s *Shell) Apply() (err error) {
 	results, err := run(s.Interpreter, s.InterpreterFlags, s.ApplyStmt, s.MaxDuration)
 	if err == nil {
-		s.Status = results
+		s.consStatus("apply", results)
 	}
 	return err
+}
+
+func (s *Shell) consStatus(op string, cmd *CommandResults) {
+	s.Status = s.Status.Cons(op, cmd)
 }
 
 // GetDescription returns the description of the health check
@@ -123,6 +116,8 @@ func run(interpreter string, flags []string, script string, timeout *time.Durati
 	return ctx.Run(script, timeout)
 }
 
+// Run wraps exec and timeoutExec, executing the script with or without a
+// timeout depending whether or not timeout is nil.
 func (c *CommandIOContext) Run(script string, timeout *time.Duration) (results *CommandResults, err error) {
 	if timeout == nil {
 		results, err = c.exec(script)
@@ -217,25 +212,6 @@ func newCommand(interpreter string, flags []string) *exec.Cmd {
 	return exec.Command(interpreter, flags...)
 }
 
-func (s *Shell) Fields() map[string]string {
-	fields := make(map[string]string)
-	if s == nil || s.Status == nil {
-		return fields
-	}
-	fields["Exit Status"] = fmt.Sprintf("%d", s.Status.ExitStatus)
-	fields["Timedout"] = fmt.Sprintf("%v", s.Status.Timedout)
-	if s.Status.State != nil {
-		fields["Runtime [sys/user]"] = fmt.Sprintf("%s/%s", s.Status.State.SystemTime(), s.Status.State.UserTime())
-	}
-	if s.Status.Stdout != "" {
-		fields["Output"] = s.Status.Stdout
-	}
-	if s.Status.Stderr != "" {
-		fields["Stderr"] = s.Status.Stderr
-	}
-	return fields
-}
-
 func (s *Shell) Warning() bool {
 	if s == nil || s.Status == nil {
 		return false
@@ -249,8 +225,6 @@ func (s *Shell) Error() bool {
 	}
 	return s.Status.ExitStatus > 1
 }
-
-func (s *Shell) Summary() string { return s.Description }
 
 func (s *Shell) Value() string {
 	var value bytes.Buffer
@@ -274,17 +248,14 @@ func (s *Shell) StatusCode() int {
 }
 
 func (s *Shell) Messages() (messages []string) {
-	messages = make([]string, 0)
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
 		return
 	}
-	if s.Status.Stdout != "" {
-		messages = append(messages, fmt.Sprintf("stdio: %s", s.Status.Stdout))
+	if exitCodes, err := s.Status.ExitStrings(); err == nil {
+		messages = append(messages, fmt.Sprintf("Exit Code(s): %v", exitCodes))
 	}
-	if s.Status.Stderr != "" {
-		messages = append(messages, fmt.Sprintf("stderr: %s", s.Status.Stderr))
-	}
+	messages = append(messages, s.Status.GetMessages()...)
 	return
 }
 

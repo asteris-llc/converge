@@ -99,12 +99,9 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	{{- if .Error}}
 	{{red "Error"}}: {{.Error}}
 	{{- end}}
-	{{- if not (.Description | empty) }}
-	Description: {{.Description}}
-	{{- end}}
 	Messages:
 	{{- range $msg := .Messages}}
-		{{indent $msg 2}}
+{{indent $msg 2}}
 	{{- end}}
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:

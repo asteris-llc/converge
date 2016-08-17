@@ -15,7 +15,6 @@
 package shell_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"

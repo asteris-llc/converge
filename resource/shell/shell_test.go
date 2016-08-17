@@ -29,25 +29,9 @@ var (
 	exitFailure = int(1)
 )
 
-func Test_HeathCheck_ImplementsTaskInterface(t *testing.T) {
+func Test_Shell_ImplementsTaskInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
-}
-
-func Test_Apply_ReturnsNil(t *testing.T) {
-	t.Parallel()
-	var shell *shell.Shell
-	assert.NoError(t, shell.Apply())
-}
-
-func Test_Check_CallsExecutionShellCheck(t *testing.T) {
-	mockShell := &MockTask{}
-	mockShell.On("Check").Return("", false, nil)
-	shell := &shell.Shell{
-		ExecutionShell: mockShell,
-	}
-	_, _, _ = shell.Check()
-	mockShell.AssertCalled(t, "Check")
 }
 
 type MockTask struct {

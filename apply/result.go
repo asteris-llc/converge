@@ -28,9 +28,6 @@ type Result struct {
 	Plan *plan.Result
 }
 
-// Description returns a description of the task
-func (r *Result) Description() string { return r.Status.Summary() }
-
 // Messages returns any result status messages supplied by the task
 func (r *Result) Messages() []string { return r.Status.Messages() }
 
