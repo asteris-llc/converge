@@ -40,7 +40,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		}
 
 		log.Printf("[DEBUG] checking dependencies for %q\n", id)
-		for _, depID := range out.DownEdges(id) {
+		for _, depID := range graph.Targets(out.DownEdges(id)) {
 			dep, ok := out.Get(depID).(*Result)
 			if !ok {
 				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
