@@ -15,10 +15,9 @@
 package prettyprinters_test
 
 import (
+	"context"
 	"fmt"
 	"os"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"

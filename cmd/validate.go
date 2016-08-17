@@ -15,10 +15,9 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"log"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"

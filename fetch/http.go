@@ -15,17 +15,23 @@
 package fetch
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // HTTP fetches content over HTTP
 func HTTP(ctx context.Context, loc string) ([]byte, error) {
-	response, err := ctxhttp.Get(ctx, new(http.Client), loc)
+	var client http.Client
+	req, err := http.NewRequest("GET", loc, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+
+	response, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

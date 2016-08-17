@@ -15,10 +15,9 @@
 package load_test
 
 import (
+	"context"
 	"sort"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"

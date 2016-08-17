@@ -15,11 +15,10 @@
 package fetch
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"path"
-
-	"golang.org/x/net/context"
 )
 
 // Any fetches a path based on the scheme of the location
