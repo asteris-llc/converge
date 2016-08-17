@@ -15,9 +15,8 @@
 package apply_test
 
 import (
+	"context"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"

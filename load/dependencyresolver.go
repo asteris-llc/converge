@@ -15,12 +15,11 @@
 package load
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"text/template"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"

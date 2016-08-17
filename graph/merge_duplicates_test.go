@@ -15,10 +15,9 @@
 package graph_test
 
 import (
+	"context"
 	"log"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"

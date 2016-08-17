@@ -15,12 +15,11 @@
 package graph
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"sync"
-
-	"golang.org/x/net/context"
 
 	"github.com/hashicorp/terraform/dag"
 	cmap "github.com/streamrail/concurrent-map"

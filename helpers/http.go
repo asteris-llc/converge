@@ -15,6 +15,7 @@
 package helpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -25,7 +26,6 @@ import (
 	"time"
 
 	"github.com/asteris-llc/converge/server"
-	"golang.org/x/net/context"
 )
 
 // HTTPServeFile constructs a SingleFileServer on a random port, returning that

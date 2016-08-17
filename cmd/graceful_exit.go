@@ -15,11 +15,10 @@
 package cmd
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
-
-	"golang.org/x/net/context"
 )
 
 // GracefulExit traps interrupt signals for a graceful exit

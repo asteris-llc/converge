@@ -15,11 +15,10 @@
 package render
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
-
-	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
