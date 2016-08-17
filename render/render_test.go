@@ -54,8 +54,8 @@ func TestRenderParam(t *testing.T) {
 	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
 	g.Add("root/param.destination", &param.Preparer{Default: newDefault("1")})
 
-	g.Connect("root", "root/file.content.x")
-	g.Connect("root", "root/param.destination")
+	g.ConnectParent("root", "root/file.content.x")
+	g.ConnectParent("root", "root/param.destination")
 	g.Connect("root/file.content.x", "root/param.destination")
 
 	rendered, err := render.Render(context.Background(), g, render.Values{})
@@ -77,8 +77,8 @@ func TestRenderValues(t *testing.T) {
 	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
 	g.Add("root/param.destination", &param.Preparer{Default: newDefault("1")})
 
-	g.Connect("root", "root/file.content.x")
-	g.Connect("root", "root/param.destination")
+	g.ConnectParent("root", "root/file.content.x")
+	g.ConnectParent("root", "root/param.destination")
 	g.Connect("root/file.content.x", "root/param.destination")
 
 	rendered, err := render.Render(context.Background(), g, render.Values{"destination": 2})

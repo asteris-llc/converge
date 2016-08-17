@@ -80,16 +80,26 @@ func (g *Graph) Get(id string) interface{} {
 	return val
 }
 
-// GetParent returns the direct parent vertex of the current node. This only
-// works if you're using the hierarchical ID functions from this module.
+// GetParent returns the direct parent vertex of the current node.
 func (g *Graph) GetParent(id string) interface{} {
-	return g.Get(ParentID(id))
+	var parentID string
+	for _, edge := range g.UpEdges(id) {
+		switch edge.(type) {
+		case *ParentEdge:
+			parentID = edge.Source().(string)
+			break
+		}
+	}
+
+	return g.Get(parentID)
 }
 
-// GetSibling returns the named sibling of the current node. This only works if
-// you're using the hierarchical ID functions from this module.
-func (g *Graph) GetSibling(id, sibling string) interface{} {
-	return g.Get(SiblingID(id, sibling))
+// ConnectParent connects a parent node to a child node
+func (g *Graph) ConnectParent(from, to string) {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.Connect(NewParentEdge(from, to))
 }
 
 // Connect two vertices together by ID
@@ -108,25 +118,29 @@ func (g *Graph) Disconnect(from, to string) {
 	g.inner.RemoveEdge(dag.BasicEdge(from, to))
 }
 
-// UpEdges returns inweard-facing edges of the specified vertex
-func (g *Graph) UpEdges(id string) (out []string) {
+// UpEdges returns inward-facing edges of the specified vertex
+func (g *Graph) UpEdges(id string) (out []dag.Edge) {
 	g.innerLock.RLock()
 	defer g.innerLock.RUnlock()
 
-	for _, edge := range g.inner.UpEdges(id).List() {
-		out = append(out, edge.(string))
+	for _, edge := range g.inner.Edges() {
+		if edge.Target().(string) == id {
+			out = append(out, edge)
+		}
 	}
 
 	return out
 }
 
 // DownEdges returns outward-facing edges of the specified vertex
-func (g *Graph) DownEdges(id string) (out []string) {
+func (g *Graph) DownEdges(id string) (out []dag.Edge) {
 	g.innerLock.RLock()
 	defer g.innerLock.RUnlock()
 
-	for _, edge := range g.inner.DownEdges(id).List() {
-		out = append(out, edge.(string))
+	for _, edge := range g.inner.Edges() {
+		if edge.Source().(string) == id {
+			out = append(out, edge)
+		}
 	}
 
 	return out
@@ -209,7 +223,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		// make sure all sibling dependencies are finished first
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
-			if _, ok := done[edge]; AreSiblingIDs(id, edge) && !ok {
+			if _, ok := done[edge.Target().(string)]; AreSiblingIDs(id, edge.Target().(string)) && !ok {
 				log.Printf("[TRACE] walk(rootfirst): %q still waiting for sibling %q", id, edge)
 				todo = append(todo, id)
 				skip = true
@@ -227,7 +241,9 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 
 		// mark this ID as done and do the children
 		done[id] = struct{}{}
-		todo = append(todo, g.DownEdges(id)...)
+		for _, edge := range g.DownEdges(id) {
+			todo = append(todo, edge.Target().(string))
+		}
 	}
 
 	return nil
@@ -251,8 +267,8 @@ func (g *Graph) Copy() *Graph {
 		context.Background(),
 		func(id string, val interface{}) error {
 			out.Add(id, val)
-			for _, dest := range g.DownEdges(id) {
-				out.Connect(id, dest)
+			for _, edge := range g.DownEdges(id) {
+				out.inner.Connect(edge)
 			}
 
 			return nil

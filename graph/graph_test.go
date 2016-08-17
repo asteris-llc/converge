@@ -17,6 +17,7 @@ package graph_test
 import (
 	"context"
 	"math/rand"
+
 	"strconv"
 	"sync"
 	"testing"
@@ -77,7 +78,7 @@ func TestDownEdges(t *testing.T) {
 	g.Add("two", 2)
 	g.Connect("one", "two")
 
-	assert.Equal(t, []string{"two"}, g.DownEdges("one"))
+	assert.Equal(t, []string{"two"}, graph.Targets(g.DownEdges("one")))
 	assert.Equal(t, 0, len(g.DownEdges("two")))
 }
 
@@ -90,7 +91,7 @@ func TestUpEdges(t *testing.T) {
 	g.Add("two", 2)
 	g.Connect("one", "two")
 
-	assert.Equal(t, []string{"one"}, g.UpEdges("two"))
+	assert.Equal(t, []string{"one"}, graph.Sources(g.UpEdges("two")))
 	assert.Equal(t, 0, len(g.UpEdges("one")))
 }
 
@@ -241,7 +242,7 @@ func TestParent(t *testing.T) {
 	g.Add(graph.ID("root"), 1)
 	g.Add(graph.ID("root", "child"), 2)
 
-	g.Connect(graph.ID("root"), graph.ID("root", "child"))
+	g.ConnectParent(graph.ID("root"), graph.ID("root", "child"))
 
 	require.NoError(t, g.Validate())
 

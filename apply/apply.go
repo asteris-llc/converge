@@ -38,7 +38,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			return fmt.Errorf("%s: could not get *plan.Result, was %T", id, val)
 		}
 
-		for _, depID := range out.DownEdges(id) {
+		for _, depID := range graph.Targets(out.DownEdges(id)) {
 			dep, ok := out.Get(depID).(*Result)
 			if !ok {
 				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
