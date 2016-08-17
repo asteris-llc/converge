@@ -58,7 +58,7 @@ func (r *Renderer) funcs() template.FuncMap {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	val := r.Graph.GetSibling(r.ID, "param."+name)
+	val := r.Graph.Get(graph.SiblingID(r.ID, "param."+name))
 	if val == nil {
 		return "", errors.New("param not found")
 	}

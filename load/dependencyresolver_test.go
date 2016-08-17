@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,11 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 
 	resolved, err := load.ResolveDependencies(context.Background(), nodes)
 	assert.NoError(t, err)
-	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/task.directory")
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.render")),
+		"root/task.directory",
+	)
 }
 
 func TestDependencyResolverBadDependency(t *testing.T) {
@@ -56,8 +61,20 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 	resolved, err := load.ResolveDependencies(context.Background(), nodes)
 	assert.NoError(t, err)
 
-	assert.Contains(t, resolved.DownEdges("root/task.directory"), "root/param.filename")
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.directory")),
+		"root/param.filename",
+	)
 
-	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/param.filename")
-	assert.Contains(t, resolved.DownEdges("root/task.render"), "root/param.message")
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.render")),
+		"root/param.filename",
+	)
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.render")),
+		"root/param.message",
+	)
 }
