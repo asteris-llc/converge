@@ -3,6 +3,6 @@ param "filename" {
 }
 
 task "bad rm" {
-  check = "[[ -f {{param `filename`}} ]]"
+  check = "echo 'check function called'; [[ -f {{param `filename`}} ]]"
   apply = "rm -q {{param `filename`}}"
 }
