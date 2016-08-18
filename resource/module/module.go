@@ -17,6 +17,8 @@ package module
 import (
 	"fmt"
 	"strings"
+
+	"github.com/asteris-llc/converge/resource"
 )
 
 // Module holds stringified values for parameters
@@ -25,8 +27,8 @@ type Module struct {
 }
 
 // Check just returns the current value of the moduleeter. It should never have to change.
-func (m *Module) Check() (string, bool, error) {
-	return m.String(), false, nil
+func (m *Module) Check() (resource.TaskStatus, error) {
+	return &resource.Status{Status: m.String(), WillChange: false}, nil
 }
 
 // Apply doesn't do anything since modules are final values

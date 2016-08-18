@@ -70,7 +70,7 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 			counts.ChangesCount++
 		}
 
-		if err := printable.Error(); err != nil {
+		if err = printable.Error(); err != nil {
 			counts.Errors = append(
 				counts.Errors,
 				errors.Wrap(err, id),
@@ -96,16 +96,17 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	}
 
 	tmpl, err := p.template(`{{if .Error}}{{red .ID}}{{else if .HasChanges}}{{yellow .ID}}{{else}}{{.ID}}{{end}}:
-  {{- if .Error}}
-  {{red "Error"}}: {{.Error}}
-  {{- end}}
-  Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
-  Fields:
-    {{- range $key, $values := .Fields}}
-    {{cyan $key}}:{{diff (index $values 0) (index $values 1)}}
-    {{- else}}
-    No changes
-    {{- end}}
+	{{- if .Error}}
+	{{red "Error"}}: {{.Error}}
+	{{- end}}
+	Messages: {{.Messages}}
+	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
+	Changes:
+		{{- range $key, $values := .Changes}}
+		{{cyan $key}}:{{diff ($values.Original) ($values.Current)}}
+		{{- else}}
+		No changes
+		{{- end}}
 
 `)
 	if err != nil {

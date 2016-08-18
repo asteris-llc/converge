@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/helpers/faketask"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,8 +32,8 @@ func TestApplyNoOp(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	task := faketask.NoOp()
-	g.Add("root", &plan.Result{WillChange: true, Task: task})
+	task := faketask.Swapper()
+	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: task})
 
 	require.NoError(t, g.Validate())
 
@@ -41,7 +42,7 @@ func TestApplyNoOp(t *testing.T) {
 	assert.NoError(t, err)
 
 	result := getResult(t, applied, "root")
-	assert.Equal(t, task.Status, result.Status)
+	assert.Equal(t, task.Status, result.Status.Messages()[0])
 	assert.True(t, result.Ran)
 }
 
@@ -50,7 +51,7 @@ func TestApplyNoRun(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.NoOp()
-	g.Add("root", &plan.Result{WillChange: false, Task: task})
+	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: false}, Task: task})
 
 	require.NoError(t, g.Validate())
 
@@ -66,8 +67,8 @@ func TestApplyErrorsBelow(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{WillChange: true, Task: faketask.NoOp()})
-	g.Add("root/err", &plan.Result{WillChange: true, Task: faketask.Error()})
+	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.NoOp()})
+	g.Add("root/err", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.Error()})
 
 	g.Connect("root", "root/err")
 
@@ -92,7 +93,7 @@ func TestApplyStillChange(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{WillChange: true, Task: faketask.WillChange()})
+	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.WillChange()})
 
 	require.NoError(t, g.Validate())
 

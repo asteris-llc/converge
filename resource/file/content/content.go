@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/asteris-llc/converge/resource"
 )
 
 // Content renders a content to disk
@@ -27,22 +29,40 @@ type Content struct {
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check() (status string, willChange bool, err error) {
+func (t *Content) Check() (resource.TaskStatus, error) {
+	diffs := make(map[string]resource.Diff)
+	contentDiff := resource.TextDiff{Values: [2]string{"", t.Content}}
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
-		return "", true, nil
+		contentDiff.Values[0] = "<file-missing>"
+		diffs[t.Destination] = contentDiff
+		return &resource.Status{
+			WarningLevel: resource.StatusWillChange,
+			WillChange:   true,
+			Differences:  diffs,
+		}, nil
 	} else if err != nil {
-		return "", false, err
+		return &resource.Status{
+			WarningLevel: resource.StatusFatal,
+		}, err
 	} else if stat.IsDir() {
-		return "", true, fmt.Errorf("cannot content %q, is a directory", t.Destination)
+		return &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			WillChange:   true,
+		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return "", false, err
+		return &resource.Status{}, err
 	}
 
-	return string(actual), t.Content != string(actual), nil
+	diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	return &resource.Status{
+		Status:      t.Destination,
+		Differences: diffs,
+		WillChange:  resource.AnyChanges(diffs),
+	}, nil
 }
 
 // Apply writes the content to disk
@@ -59,4 +79,14 @@ func (t *Content) Apply() error {
 	}
 
 	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
+}
+
+func getWarningLevel(original *string, content string) int {
+	if original == nil || *original == "" {
+		return resource.StatusWillChange
+	}
+	if *original != content {
+		return resource.StatusWillChange
+	}
+	return resource.StatusNoChange
 }

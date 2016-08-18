@@ -14,27 +14,28 @@
 
 package apply
 
-import "github.com/asteris-llc/converge/plan"
+import (
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Result of application
 type Result struct {
 	Ran    bool
-	Status string
+	Status resource.TaskStatus
 	Err    error
 
 	Plan *plan.Result
 }
 
-// Fields returns the fields that changed
-func (r *Result) Fields() map[string][2]string {
-	previous := "<unknown>"
-	if r.Plan != nil {
-		previous = r.Plan.Status
-	}
+// Messages returns any result status messages supplied by the task
+func (r *Result) Messages() string {
+	return r.Status.Value()
+}
 
-	return map[string][2]string{
-		"state": [2]string{previous, r.Status},
-	}
+// Changes returns the fields that changed
+func (r *Result) Changes() map[string]resource.Diff {
+	return r.Plan.Changes()
 }
 
 // HasChanges indicates if this result ran

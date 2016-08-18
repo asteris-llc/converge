@@ -40,8 +40,8 @@ func TestPlanNoOp(t *testing.T) {
 	assert.NoError(t, err)
 
 	result := getResult(t, planned, "root")
-	assert.Equal(t, task.Status, result.Status)
-	assert.Equal(t, task.WillChange, result.WillChange)
+	assert.Equal(t, task.Status, result.Status.Messages()[0])
+	assert.Equal(t, task.WillChange, result.Status.Changes())
 	assert.Equal(t, task, result.Task)
 }
 

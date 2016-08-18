@@ -14,7 +14,11 @@
 
 package faketask
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // FakeTask for testing things that require real tasks
 type FakeTask struct {
@@ -24,8 +28,8 @@ type FakeTask struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeTask) Check() (string, bool, error) {
-	return ft.Status, ft.WillChange, ft.Error
+func (ft *FakeTask) Check() (resource.TaskStatus, error) {
+	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
 }
 
 // Apply returns values set on struct
@@ -56,6 +60,35 @@ func Error() *FakeTask {
 func WillChange() *FakeTask {
 	return &FakeTask{
 		Status:     "changed",
+		WillChange: true,
+		Error:      nil,
+	}
+}
+
+// FakeSwapper is a task that tracks its state so that it can change between
+// calls to Apply
+type FakeSwapper struct {
+	Status     string
+	WillChange bool
+	Error      error
+}
+
+// Check returns values set on struct
+func (ft *FakeSwapper) Check() (resource.TaskStatus, error) {
+	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
+}
+
+// Apply negates the current WillChange value set on struct and returns
+// configured error
+func (ft *FakeSwapper) Apply() error {
+	ft.WillChange = !ft.WillChange
+	return ft.Error
+}
+
+// Swapper creates a new stub swapper with an initial WillChange value of true
+func Swapper() *FakeSwapper {
+	return &FakeSwapper{
+		Status:     "swapper",
 		WillChange: true,
 		Error:      nil,
 	}
