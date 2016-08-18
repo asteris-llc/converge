@@ -15,14 +15,59 @@
 package shell_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+var any = mock.Anything
 
 func Test_Shell_ImplementsTaskInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
+}
+
+func Test_Check_WhenRunReturnsError_ReturnsError(t *testing.T) {
+	expected := errors.New("test error")
+	m := new(MockExecutor)
+	m.On("Run", any).Return(&shell.CommandResults{}, expected)
+	sh := testShell(m)
+	_, actual := sh.Check()
+	assert.Error(t, actual)
+}
+
+func Test_Check_WhenRunReturnsResults_PrependsResutsToStatus(t *testing.T) {
+	expected := errors.New("test error")
+	m := new(MockExecutor)
+	m.On("Run", any).Return(&shell.CommandResults{}, expected)
+	sh := testShell(m)
+	_, actual := sh.Check()
+	assert.Error(t, actual)
+}
+
+func testShell(c shell.CommandExecutor) *shell.Shell {
+	return &shell.Shell{CmdGenerator: c}
+}
+
+func defaultTestShell() *shell.Shell {
+	return testShell(defaultExecutor())
+}
+
+type MockExecutor struct {
+	mock.Mock
+}
+
+func (m *MockExecutor) Run(script string) (*shell.CommandResults, error) {
+	args := m.Called(script)
+	return args.Get(0).(*shell.CommandResults), args.Error(1)
+}
+
+func defaultExecutor() *MockExecutor {
+	m := new(MockExecutor)
+	m.On("Run", any).Return(&shell.CommandResults{})
+	return m
 }
