@@ -21,7 +21,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/dag"
+	"github.com/pkg/errors"
 	cmap "github.com/streamrail/concurrent-map"
 )
 
@@ -164,26 +166,183 @@ func (g *Graph) Descendents(id string) (out []string) {
 
 // Walk the graph leaf-to-root
 func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
-	return walk(ctx, g, cb)
+	return dependencyWalk(ctx, g, cb)
 }
 
-// walk is separate for interal use in the transformations
-func walk(ctx context.Context, g *Graph, cb WalkFunc) error {
-	return g.inner.Walk(func(v dag.Vertex) error {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("interrupted at %q", v.(string))
-		default:
+// dependencyWalk walks a graph leaf-to-root respecting dependencies
+func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
+	// the basic idea of this implementation is that we want to defer schedule
+	// children of any given node until after that node's non-child dependencies
+	// are satisfied. We're going to have a couple major components of this.
+	// First, a scheduler/latch to make sure we don't schedule work more than
+	// once. We also need the workers themselves, which take care of waiting for
+	// their own dependencies and executing the callback for their node once the
+	// dependencies are satisfied.
+	root, err := g.Root()
+	if err != nil {
+		return err
+	}
+
+	log.Println("[TRACE] dependency walk: started")
+
+	// errors
+	var (
+		errLock      = new(sync.RWMutex)
+		errs         = map[string]error{}
+		errDepFailed = errors.New("dependency failed")
+	)
+	getErr := func(id string) error {
+		errLock.RLock()
+		defer errLock.RUnlock()
+		return errs[id]
+	}
+	setErr := func(id string, err error) {
+		errLock.Lock()
+		defer errLock.Unlock()
+		errs[id] = err
+	}
+
+	// tracking which dependencies have finished
+	done := map[string]chan struct{}{}
+	for _, id := range g.Vertices() {
+		done[id] = make(chan struct{}, 0)
+	}
+
+	// create a child context out of the parent we receive. We'll use this to
+	// make everything cancellable.
+	ctx, cancel := context.WithCancel(rctx)
+	defer cancel()
+
+	wait := new(sync.WaitGroup)
+
+	// keep track of what we've scheduled so we don't schedule the same work
+	// twice
+	var worker func(id string)
+	scheduler := make(chan string)
+	go func() {
+		log.Println("[TRACE] dependency walk: scheduler: starting")
+		// it's OK to leave this unguarded by a lock, since we're only accessing
+		// it in a single thread. If this algorithm ever changes to schedule
+		// work in parallel, this should be protected by a lock (and the lock
+		// should be held until the work is completely scheduled)
+		scheduled := map[string]struct{}{}
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("[TRACE] dependency walk: scheduler: stopping")
+				return
+
+			case id := <-scheduler:
+				if _, ok := scheduled[id]; !ok {
+					log.Printf("[DEBUG] dependency walk: scheduler: scheduling %s\n", id)
+					scheduled[id] = struct{}{}
+					go worker(id)
+				} else {
+					log.Printf("[TRACE] dependency walk: scheduler: already scheduled %s\n", id)
+				}
+			}
+		}
+	}()
+
+	// utility function to wait for a list of IDs
+	waitFor := func(ids []string) error {
+		for _, id := range ids {
+			depChan, ok := done[id]
+			if !ok {
+				return fmt.Errorf("%q did not have done channel", id)
+			}
+
+			log.Printf("[DEBUG] waiting for %s\n", id)
+			select {
+			case <-ctx.Done():
+				return nil
+
+			case <-depChan:
+				if err := getErr(id); err != nil {
+					return err
+				}
+			}
 		}
 
-		id, ok := v.(string)
+		return nil
+	}
+
+	worker = func(id string) {
+		wait.Add(1)
+		defer wait.Done()
+
+		log.Printf("[DEBUG] dependency walk: worker: starting %s\n", id)
+
+		var deps, children []string
+		for _, edge := range g.DownEdges(id) {
+			switch edge.(type) {
+			case *ParentEdge:
+				children = append(children, edge.Target().(string))
+			default:
+				deps = append(deps, edge.Target().(string))
+			}
+		}
+
+		myDone, ok := done[id]
 		if !ok {
-			// something has gone horribly wrong
-			return fmt.Errorf(`ID "%v" was not a string`, v)
+			setErr(id, errors.New("could not get done channel"))
+			return
+		}
+		defer close(myDone)
+
+		// schedule deps - this prevents against the case where only Connect has
+		// been used and there is no lineage information in the graph. If this
+		// isn't here we'll be waiting for dependencies that never got scheduled
+		// below.
+		for _, dep := range deps {
+			select {
+			case <-ctx.Done():
+				return
+			case scheduler <- dep:
+			}
 		}
 
-		return cb(id, g.Get(id))
-	})
+		if err := waitFor(deps); err != nil {
+			setErr(id, errDepFailed)
+			return
+		}
+
+		for _, child := range children {
+			select {
+			case <-ctx.Done():
+				return
+			case scheduler <- child:
+			}
+		}
+
+		if err := waitFor(children); err != nil {
+			setErr(id, errDepFailed)
+			return
+		}
+
+		log.Printf("[DEBUG] %s: executing\n", id)
+		if err := cb(id, g.Get(id)); err != nil {
+			setErr(id, err)
+		}
+	}
+
+	worker(root)
+
+	wait.Wait()
+
+	// construct error
+	if len(errs) > 0 {
+		var err error
+		for k, v := range errs {
+			if v == errDepFailed {
+				continue
+			}
+			err = multierror.Append(err, errors.Wrap(v, k))
+		}
+		return err
+	}
+	return nil
 }
 
 // RootFirstWalk walks the graph root-to-leaf, checking sibling dependencies
@@ -251,7 +410,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 
 // Transform a graph of type A to a graph of type B. A and B can be the same.
 func (g *Graph) Transform(ctx context.Context, cb TransformFunc) (*Graph, error) {
-	return transform(ctx, g, walk, cb)
+	return transform(ctx, g, dependencyWalk, cb)
 }
 
 // RootFirstTransform does Transform, but starting at the root
