@@ -8,7 +8,7 @@ BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*test
 BENCH = .
 
 converge: $(shell find . -name '*.go')
-	go build .
+	go build -ldflags="-s -w" .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 	@echo
