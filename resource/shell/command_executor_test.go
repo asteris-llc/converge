@@ -15,6 +15,7 @@
 package shell_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -64,9 +65,9 @@ exit 7`
 }
 
 func Test_Run_RunsWithSpecifiedInterpreter(t *testing.T) {
-	script := "puts RUBY_VERSION"
-	generator := &shell.CommandGenerator{Interpreter: "/usr/bin/ruby"}
+	script := "echo -n 'foo'"
+	generator := &shell.CommandGenerator{Interpreter: "/bin/bash"}
 	result, err := generator.Run(script)
 	assert.NoError(t, err)
-	assert.NotEqual(t, "", result.Stdout)
+	assert.False(t, strings.HasPrefix(result.Stdout, "-n"))
 }
