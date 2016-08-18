@@ -76,6 +76,7 @@ xcompile: test
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
+    -ldflags="-s -w" \
 		-os="darwin" \
 		-os="linux" \
 		-os="freebsd" \
