@@ -85,13 +85,9 @@ func (s *Shell) Check() (resource.TaskStatus, error) {
 func (s *Shell) Apply() (err error) {
 	results, err := s.CmdGenerator.Run(s.ApplyStmt)
 	if err == nil {
-		s.consStatus("apply", results)
+		s.Status = s.Status.Cons("apply", results)
 	}
 	return err
-}
-
-func (s *Shell) consStatus(op string, cmd *CommandResults) {
-	s.Status = s.Status.Cons(op, cmd)
 }
 
 // GetDescription returns the description of the health check
@@ -257,10 +253,12 @@ func (s *Shell) Messages() (messages []string) {
 		fmt.Println(outOfOrderMessage)
 		return
 	}
-	exitCodes := s.Status.ExitStrings()
+	uniqStatuses := s.Status.Reverse().UniqOp()
+
+	exitCodes := uniqStatuses.ExitStrings()
 	messages = append(messages, fmt.Sprintf("Exit Code(s): %v", exitCodes))
 
-	messages = append(messages, s.Status.GetMessages()...)
+	messages = append(messages, uniqStatuses.GetMessages()...)
 	return
 }
 

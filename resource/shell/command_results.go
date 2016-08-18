@@ -58,11 +58,13 @@ func (c *CommandResults) OutputMap() map[string]string {
 // multiple runs of a task with a session.
 func (c *CommandResults) Cons(op string, toAppend *CommandResults) *CommandResults {
 	if c == nil {
+		toAppend.Operation = op
 		return toAppend
 	}
 	if toAppend == nil {
 		return c
 	}
+	fmt.Printf("consing with op = %s\n", op)
 	toAppend.ResultsContext = ResultsContext{Operation: op, Next: c}
 	c.Prev = toAppend
 	return toAppend
@@ -127,6 +129,13 @@ func (c *CommandResults) Uniq() *CommandResults {
 	return c
 }
 
+func (c *CommandResults) UniqOp() *CommandResults {
+	for cur := c; cur.ResultsContext.Next != nil; cur = cur.ResultsContext.Next {
+		c = cur.ResultsContext.Next.UnlinkWhen(c.OpEq)
+	}
+	return c
+}
+
 // Summarize provides an overall summary of the results of the command
 func (c *CommandResults) Summarize() string {
 	if c == nil {
@@ -169,6 +178,14 @@ func (c *CommandResults) Eq(cmd *CommandResults) bool {
 		return false
 	}
 	return true
+}
+
+// OpEq tests command results for equality using only the operation name
+func (c *CommandResults) OpEq(cmd *CommandResults) bool {
+	if c == nil || cmd == nil {
+		return false
+	}
+	return c.ResultsContext.Operation == cmd.ResultsContext.Operation
 }
 
 // ExitStatuses returns a slice with the exit status of all the commands
