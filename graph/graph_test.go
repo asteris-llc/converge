@@ -16,6 +16,7 @@ package graph_test
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 
 	"strconv"
@@ -127,8 +128,8 @@ func TestWalkOrder(t *testing.T) {
 	g.Add("child1", nil)
 	g.Add("child2", nil)
 
-	g.Connect("root", "child1")
-	g.Connect("root", "child2")
+	g.ConnectParent("root", "child1")
+	g.ConnectParent("root", "child2")
 
 	out, err := idsInOrderOfExecution(g)
 
@@ -140,11 +141,11 @@ func TestWalkOrderDiamond(t *testing.T) {
 	/*
 		Tree in the form
 
-								a
-							 / \
-							b		c
-							 \ /
-								d
+		|    a    |
+		|   / \   |
+		|  b   c  |
+		|   \ /   |
+		|    d    |
 
 		A proper dependency order search would always result in `d` being the first
 		element processed
@@ -157,14 +158,90 @@ func TestWalkOrderDiamond(t *testing.T) {
 	g.Add("c", nil)
 	g.Add("d", nil)
 
-	g.Connect("a", "b")
-	g.Connect("b", "d")
-	g.Connect("c", "d")
+	g.ConnectParent("a", "b")
+	g.ConnectParent("a", "c")
+	g.ConnectParent("b", "d")
+	g.ConnectParent("c", "d")
 
 	out, err := idsInOrderOfExecution(g)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "d", out[0])
+	if assert.True(t, len(out) > 3, "out was %s", out) {
+		assert.Equal(t, "a", out[3])
+		assert.Equal(t, "d", out[0])
+	}
+}
+
+func TestWalkOrderParentDependency(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	g := graph.New()
+	g.Add("root", 1)
+	g.Add("dependent", 1)
+	g.Add("dependency", 1)
+	g.Add("dependent/child", 1)
+	g.Add("dependency/child", 1)
+
+	g.ConnectParent("root", "dependent")
+	g.ConnectParent("root", "dependency")
+	g.ConnectParent("dependent", "dependent/child")
+	g.ConnectParent("dependency", "dependency/child")
+
+	g.Connect("dependent", "dependency")
+
+	exLock := new(sync.Mutex)
+	var execution []string
+
+	require.NoError(t,
+		g.Walk(
+			context.Background(),
+			func(id string, _ interface{}) error {
+				exLock.Lock()
+				defer exLock.Unlock()
+
+				execution = append(execution, id)
+
+				return nil
+			},
+		),
+	)
+
+	assert.Equal(
+		t,
+		[]string{
+			"dependency/child",
+			"dependency",
+			"dependent/child",
+			"dependent",
+			"root",
+		},
+		execution,
+	)
+}
+
+func TestWalkError(t *testing.T) {
+	g := graph.New()
+
+	g.Add("a", nil)
+	g.Add("b", nil)
+	g.Add("c", nil)
+
+	g.ConnectParent("a", "b")
+	g.ConnectParent("b", "c")
+
+	err := g.Walk(
+		context.Background(),
+		func(id string, _ interface{}) error {
+			if id == "c" {
+				return errors.New("test")
+			}
+			return nil
+		},
+	)
+
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "1 error(s) occurred:\n\n* c: test")
+	}
 }
 
 func TestValidateNoRoot(t *testing.T) {
