@@ -37,7 +37,7 @@ var (
 type Preparer struct {
 	Interpreter string   `hcl:"interpreter"`
 	CheckFlags  []string `hcl:"check_flags"`
-	ExecFlags   []string `hcl:"run_flags"`
+	ExecFlags   []string `hcl:"exec_flags"`
 	Check       string   `hcl:"check"`
 	Apply       string   `hcl:"apply"`
 	Timeout     string   `hcl:"timeout"`
