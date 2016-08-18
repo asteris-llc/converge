@@ -35,6 +35,8 @@ func TestPreparerValidateValid(t *testing.T) {
 	sp := &shell.Preparer{
 		Check: "echo test",
 		Apply: "echo test",
+		Dir:   "/tmp/converge",
+		Env:   []string{"ROLE=test"},
 	}
 
 	_, err := sp.Prepare(fakerenderer.New())

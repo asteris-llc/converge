@@ -17,6 +17,7 @@ package shell
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"syscall"
 
@@ -28,6 +29,8 @@ type Shell struct {
 	Interpreter string
 	CheckStmt   string
 	ApplyStmt   string
+	Dir         string
+	Env         []string
 }
 
 // Check system using CheckStmt
@@ -76,6 +79,19 @@ func (s *Shell) exec(script string) (map[string]string, uint32, error) {
 	var stderrBuffer bytes.Buffer
 	command.Stdout = &stdoutBuffer
 	command.Stderr = &stderrBuffer
+
+	// setup command environment
+	if s.Dir != "" {
+		command.Dir = s.Dir
+	}
+
+	if len(s.Env) > 0 {
+		env := os.Environ()
+		for _, envvar := range s.Env {
+			env = append(env, envvar)
+		}
+		command.Env = env
+	}
 
 	if err = command.Start(); err != nil {
 		return messages, 0, err
