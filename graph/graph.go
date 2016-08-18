@@ -171,6 +171,13 @@ func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
 
 // dependencyWalk walks a graph leaf-to-root respecting dependencies
 func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
+	// the basic idea of this implementation is that we want to defer schedule
+	// children of any given node until after that node's non-child dependencies
+	// are satisfied. We're going to have a couple major components of this.
+	// First, a scheduler/latch to make sure we don't schedule work more than
+	// once. We also need the workers themselves, which take care of waiting for
+	// their own dependencies and executing the callback for their node once the
+	// dependencies are satisfied.
 	root, err := g.Root()
 	if err != nil {
 		return err
@@ -214,6 +221,10 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 	scheduler := make(chan string)
 	go func() {
 		log.Println("[TRACE] dependency walk: scheduler: starting")
+		// it's OK to leave this unguarded by a lock, since we're only accessing
+		// it in a single thread. If this algorithm ever changes to schedule
+		// work in parallel, this should be protected by a lock (and the lock
+		// should be held until the work is completely scheduled)
 		scheduled := map[string]struct{}{}
 
 		for {
@@ -281,7 +292,9 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		defer close(myDone)
 
 		// schedule deps - this prevents against the case where only Connect has
-		// been used and there is no parentage information in the graph.
+		// been used and there is no lineage information in the graph. If this
+		// isn't here we'll be waiting for dependencies that never got scheduled
+		// below.
 		for _, dep := range deps {
 			select {
 			case <-ctx.Done():
