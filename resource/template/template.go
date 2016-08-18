@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/asteris-llc/converge/resource"
 )
 
 // Template renders a template to disk
@@ -27,22 +29,27 @@ type Template struct {
 }
 
 // Check if the template needs to be rendered
-func (t *Template) Check() (status string, willChange bool, err error) {
+func (t *Template) Check() (resource.TaskStatus, error) {
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
-		return "", true, nil
+		return &resource.Status{WillChange: true}, nil
 	} else if err != nil {
-		return "", false, err
+		return &resource.Status{}, err
 	} else if stat.IsDir() {
-		return "", true, fmt.Errorf("cannot template %q, is a directory", t.Destination)
+		return &resource.Status{WarningLevel: resource.StatusFatal}, fmt.Errorf("cannot template %q, is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return "", false, err
+		return &resource.Status{}, err
 	}
 
-	return string(actual), t.Content != string(actual), nil
+	diffs := make(map[string]resource.Diff)
+	diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	return &resource.Status{
+		Differences: diffs,
+		WillChange:  resource.AnyChanges(diffs),
+	}, nil
 }
 
 // Apply writes the content to disk

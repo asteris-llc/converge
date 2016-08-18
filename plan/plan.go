@@ -50,10 +50,9 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				out.Add(
 					id,
 					&Result{
-						Status:     "<unknown>",
-						WillChange: true,
-						Task:       task,
-						Err:        fmt.Errorf("error in dependency %q", depID),
+						Status: &resource.Status{WillChange: true},
+						Task:   task,
+						Err:    fmt.Errorf("error in dependency %q", depID),
 					},
 				)
 
@@ -65,14 +64,13 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 		log.Printf("[DEBUG] checking %q\n", id)
 
-		status, willChange, err := task.Check()
+		status, err := task.Check()
 		out.Add(
 			id,
 			&Result{
-				Status:     status,
-				WillChange: willChange,
-				Task:       task,
-				Err:        err,
+				Status: status,
+				Task:   task,
+				Err:    err,
 			},
 		)
 

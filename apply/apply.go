@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
 
@@ -49,7 +50,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 					id,
 					&Result{
 						Ran:    false,
-						Status: "<unknown>",
+						Status: &resource.Status{},
 						Plan:   result,
 						Err:    fmt.Errorf("error in dependency %q", depID),
 					},
@@ -62,7 +63,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 		var newResult *Result
 
-		if result.WillChange {
+		if result.Status.Changes() {
 			log.Printf("[DEBUG] applying %q\n", id)
 
 			err := result.Task.Apply()
@@ -70,14 +71,13 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				err = errors.Wrapf(err, "error applying %s", id)
 			}
 
-			status := "<unknown>"
-			willChange := false
+			var status resource.TaskStatus
 
 			if err == nil {
-				status, willChange, err = result.Task.Check()
+				status, err = result.Task.Check()
 				if err != nil {
 					err = errors.Wrapf(err, "error checking %s", id)
-				} else if willChange {
+				} else if status.Changes() {
 					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
 				}
 			}

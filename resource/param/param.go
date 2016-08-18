@@ -14,14 +14,16 @@
 
 package param
 
+import "github.com/asteris-llc/converge/resource"
+
 // Param controls parameter flow inside execution
 type Param struct {
 	Value string
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
-func (p *Param) Check() (string, bool, error) {
-	return p.String(), false, nil
+func (p *Param) Check() (resource.TaskStatus, error) {
+	return &resource.Status{Status: p.String()}, nil
 }
 
 // Apply doesn't do anything since params are final values

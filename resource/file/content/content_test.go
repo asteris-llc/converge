@@ -42,10 +42,26 @@ func TestContentCheckEmptyFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "", current)
-	assert.True(t, change)
+	status, err := tmpl.Check()
 	assert.NoError(t, err)
+	fileDiff := status.Diffs()[tmpfile.Name()]
+	assert.Equal(t, "", fileDiff.Original())
+	assert.True(t, status.Changes())
+
+}
+
+func TestContentCheckMissingFile(t *testing.T) {
+	tmpl := content.Content{
+		Destination: "missing-file",
+		Content:     "this is a test",
+	}
+
+	status, err := tmpl.Check()
+	assert.NoError(t, err)
+	fileDiff := status.Diffs()["missing-file"]
+	assert.Equal(t, "<file-missing>", fileDiff.Original())
+	assert.True(t, status.Changes())
+
 }
 
 func TestContentCheckEmptyDir(t *testing.T) {
@@ -58,19 +74,19 @@ func TestContentCheckEmptyDir(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "", current)
-	assert.True(t, change)
+	status, err := tmpl.Check()
+	assert.Equal(t, "", status.Value())
+	assert.True(t, status.Changes())
 	if assert.Error(t, err) {
 		assert.EqualError(
 			t,
 			err,
-			fmt.Sprintf("cannot content %q, is a directory", tmpdir),
+			fmt.Sprintf("cannot update contents of %q, it is a directory", tmpdir),
 		)
 	}
 }
 
-func TestContentCheckContentGood(t *testing.T) {
+func TestContentCheckSetsValueToFileName(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-content-good")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
@@ -84,9 +100,35 @@ func TestContentCheckContentGood(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	current, change, err := tmpl.Check()
-	assert.Equal(t, "this is a test", current)
-	assert.False(t, change)
+	status, err := tmpl.Check()
+	assert.Equal(t, tmpfile.Name(), status.Value())
+	assert.False(t, status.Changes())
+	assert.NoError(t, err)
+}
+
+func TestContentCheckSetsDiffs(t *testing.T) {
+	originalContent := "a test this is"
+	currentContent := "this is a test"
+	tmpfile, err := ioutil.TempFile("", "test-check-content-good")
+
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
+
+	_, err = tmpfile.Write([]byte(originalContent))
+	require.NoError(t, err)
+	require.NoError(t, tmpfile.Sync())
+
+	tmpl := content.Content{
+		Destination: tmpfile.Name(),
+		Content:     currentContent,
+	}
+
+	status, err := tmpl.Check()
+	diffs := status.Diffs()
+	fileDiff, ok := diffs[tmpfile.Name()]
+	assert.True(t, ok)
+	assert.Equal(t, originalContent, fileDiff.Original())
+	assert.Equal(t, currentContent, fileDiff.Current())
 	assert.NoError(t, err)
 }
 
