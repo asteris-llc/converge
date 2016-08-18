@@ -8,14 +8,60 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_OutputMap_SetsOnlyPresentFields(t *testing.T) {
+	var c *shell.CommandResults
+	tmpMap := c.OutputMap()
+	assert.Equal(t, 0, len(tmpMap))
+	c = &shell.CommandResults{}
+	assert.Equal(t, 0, len(c.OutputMap()))
+	c.Stdout = "stdout"
+	_, ok := c.OutputMap()["stdout"]
+	assert.True(t, ok)
+	_, ok = c.OutputMap()["stderr"]
+	assert.False(t, ok)
+	c.Stderr = "stderr"
+	_, ok = c.OutputMap()["stderr"]
+	assert.True(t, ok)
+}
+
+func Test_Cons_WhenItemToConsIsNil_ReturnsPreviousList(t *testing.T) {
+	c := mkCommandResults(0)
+	newList := c.Cons("", nil)
+	assert.Equal(t, c, newList)
+}
+
+func Test_Cons_PrependsElementToList(t *testing.T) {
+	c := mkCommandResults(0)
+	expected := mkCommandResults(1)
+	assert.Equal(t, uint32(0), c.ExitStatus)
+	c = c.Cons("", expected)
+	assert.Equal(t, expected.ExitStatus, c.ExitStatus)
+}
+
+func Test_Append_WhenToAppendIsNil_DoesNotAppend(t *testing.T) {
+	c := mkCommandResults(0)
+	c = c.Append("", mkCommandResults(1))
+	last := c.Last()
+	c = c.Append("", nil)
+	assert.Equal(t, last, c.Last())
+}
+
 func Test_Eq(t *testing.T) {
 	a := newResults("a", 0, "")
 	b := newResults("a", 0, "")
 	c := newResults("b", 0, "")
+	d := newResults("b", 1, "")
 	assert.True(t, a.Eq(b))
 	assert.True(t, b.Eq(a))
 	assert.True(t, a.Eq(a))
 	assert.False(t, a.Eq(c))
+	assert.False(t, c.Eq(d))
+	b.Stdout = "foo"
+	assert.False(t, a.Eq(b))
+	a.Stdout = "foo"
+	b.Stdout = "bar"
+	assert.False(t, a.Eq(b))
+	assert.False(t, a.Eq(nil))
 }
 
 func Test_ExitCodes(t *testing.T) {
