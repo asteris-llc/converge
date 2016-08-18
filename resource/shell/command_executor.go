@@ -107,7 +107,11 @@ func (c *commandIOContext) timeoutExec(script string, timeout time.Duration) (*C
 	}()
 	select {
 	case result := <-timeoutChannel:
-		return result[0].(*CommandResults), result[1].(error)
+		var errResult error
+		if result[1] != nil {
+			errResult = result[1].(error)
+		}
+		return result[0].(*CommandResults), errResult
 	case <-time.After(timeout):
 		return nil, ErrTimedOut
 	}

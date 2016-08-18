@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 )
 
 var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-order)"
@@ -48,34 +47,6 @@ func (s *Shell) Apply() (err error) {
 		s.Status = s.Status.Cons("apply", results)
 	}
 	return err
-}
-
-// Healthy returns the health status of the node.  If a health check has not
-// been run then Health() will call Check() before returning.  If a call to
-// Check() fails Healthy() will return the error.
-func (s *Shell) Healthy() (bool, error) {
-	if s.Status == nil || s.Status.State == nil {
-		return false, errors.New(outOfOrderMessage)
-	}
-	return s.Status.State.Success(), nil
-}
-
-// Warning returns true if the exit code of the last executed command (from
-// check or apply) was 1.
-func (s *Shell) Warning() bool {
-	if s == nil || s.Status == nil {
-		return false
-	}
-	return s.Status.ExitStatus == 1
-}
-
-// Error returns true if the exit code of the last executed command was greater
-// than 1
-func (s *Shell) Error() bool {
-	if s == nil || s.Status == nil {
-		return true
-	}
-	return s.Status.ExitStatus > 1
 }
 
 // Value provides a value for the shell, which is the stdout data from the last
