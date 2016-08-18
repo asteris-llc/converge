@@ -27,7 +27,6 @@ type CommandResults struct {
 	Stdout     string
 	Stderr     string
 	Stdin      string
-	Timedout   bool
 	State      *os.ProcessState
 }
 
@@ -129,6 +128,7 @@ func (c *CommandResults) Uniq() *CommandResults {
 	return c
 }
 
+// UniqOp removes duplicate operation entries based just on their operation name
 func (c *CommandResults) UniqOp() *CommandResults {
 	for cur := c; cur.ResultsContext.Next != nil; cur = cur.ResultsContext.Next {
 		c = cur.ResultsContext.Next.UnlinkWhen(c.OpEq)
@@ -248,6 +248,7 @@ func (c *CommandResults) First() *CommandResults {
 	return first
 }
 
+// reverseNode reverses the direction of a single node
 func (c *CommandResults) reverseNode() *CommandResults {
 	if c == nil {
 		return c
