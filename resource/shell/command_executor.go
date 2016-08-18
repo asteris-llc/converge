@@ -165,7 +165,7 @@ func (c *commandIOContext) exec(script string) (results *CommandResults, err err
 func newCommand(interpreter string, flags []string) *exec.Cmd {
 	if interpreter == "" {
 		if len(flags) > 0 {
-			log.Println("[INFO] passing flasg to default interpreter (/bin/sh)")
+			log.Println("[INFO] passing flags to default interpreter (/bin/sh)")
 			return exec.Command(defaultInterpreter, flags...)
 		}
 		return exec.Command(defaultInterpreter, defaultExecFlags...)
