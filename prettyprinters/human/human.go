@@ -101,7 +101,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	{{- end}}
 	Messages:
 	{{- range $msg := .Messages}}
-{{indent $msg 2}}
+	{{indent $msg}}
 	{{- end}}
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
@@ -156,9 +156,9 @@ func (p *Printer) diff(before, after string) (string, error) {
 	}
 
 	tmpl, err := p.template(`before:
-{{indent .Before 1}}
+{{indent .Before}}
 after:
-{{indent .After 1}}`)
+{{indent .After}}`)
 	if err != nil {
 		return "", err
 	}
@@ -166,16 +166,11 @@ after:
 	buf := new(bytes.Buffer)
 	err = tmpl.Execute(buf, struct{ Before, After string }{before, after})
 
-	return "\n" + p.indent(buf.String(), 6), err
+	return "\n" + p.indent(p.indent(buf.String())), err
 }
 
-func (p *Printer) indent(in string, level int) string {
-	var indenter string
-	for i := level; i > 0; i-- {
-		indenter += "\t"
-	}
-
-	return indenter + strings.Replace(in, "\n", "\n"+indenter, -1)
+func (p *Printer) indent(in string) string {
+	return "\t" + strings.Replace(in, "\n", "\n\t", -1)
 }
 func (p *Printer) empty(s string) bool {
 	return s == ""
