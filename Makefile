@@ -41,13 +41,13 @@ samples/%.png: samples/% converge
 
 lint:
 	@echo '# golint'
-	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/golint
+	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/lint/golint
 
 	@echo '# go tool vet'
 	@go tool vet -all -shadow ${TOLINT} # built in
 
 	@echo '# gosimple'
-	@gosimple ${TOLINT} # github.com/dominikh/go-simple/cmd/gosimple
+	@gosimple ${TOLINT} # honnef.co/go/simple/cmd/gosimple
 
 	@echo '# unconvert'
 	@unconvert ${TOLINT} # github.com/mdempsky/unconvert
