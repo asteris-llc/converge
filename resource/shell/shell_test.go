@@ -20,13 +20,6 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-)
-
-var (
-	any         = mock.Anything
-	exitSuccess = int(0)
-	exitFailure = int(1)
 )
 
 func Test_Shell_ImplementsTaskInterface(t *testing.T) {

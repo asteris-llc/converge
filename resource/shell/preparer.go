@@ -41,7 +41,6 @@ type Preparer struct {
 	Check       string   `hcl:"check"`
 	Apply       string   `hcl:"apply"`
 	Timeout     string   `hcl:"timeout"`
-	Description string   `hcl:"description"`
 }
 
 // Prepare a new shell task
@@ -58,11 +57,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	interpreter, err := render.Render("interpreter", p.Interpreter)
-	if err != nil {
-		return nil, err
-	}
-
-	description, err := render.Render("description", p.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +79,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		CmdGenerator: generator,
 		CheckStmt:    check,
 		ApplyStmt:    apply,
-		Description:  description,
 	}
 
 	return shell, checkSyntax(interpreter, p.CheckFlags, check)

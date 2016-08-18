@@ -15,7 +15,6 @@
 package shell
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
@@ -44,11 +43,13 @@ import (
 // directly, so that if the script execution timed out we would still have a
 // reference to those buffers.
 var (
-	ScriptTimedOutError = errors.New("execution timed out")
+	ErrTimedOut = errors.New("execution timed out")
 )
 
 var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-order)"
 
+// CommandIOContext provides the context for a command that includes it's stdin,
+// stdout, and stderr pipes along with the underlying command.
 type CommandIOContext struct {
 	Command *exec.Cmd
 	Stdin   io.WriteCloser
@@ -56,6 +57,7 @@ type CommandIOContext struct {
 	Stderr  io.ReadCloser
 }
 
+// CommandGenerator provides a container to wrap generating a system command
 type CommandGenerator struct {
 	Interpreter string
 	Flags       []string
@@ -67,7 +69,6 @@ type Shell struct {
 	CmdGenerator *CommandGenerator
 	CheckStmt    string
 	ApplyStmt    string
-	Description  string
 	Status       *CommandResults
 }
 
@@ -90,14 +91,6 @@ func (s *Shell) Apply() (err error) {
 	return err
 }
 
-// GetDescription returns the description of the health check
-func (s *Shell) GetDescription() string {
-	if s.Description == "" {
-		return "Unnamed Health Check"
-	}
-	return s.Description
-}
-
 // Healthy returns the health status of the node.  If a health check has not
 // been run then Health() will call Check() before returning.  If a call to
 // Check() fails Healthy() will return the error.
@@ -108,6 +101,7 @@ func (s *Shell) Healthy() (bool, error) {
 	return s.Status.State.Success(), nil
 }
 
+// Run will generate a new command and run it with optional timeout parameters
 func (cmd *CommandGenerator) Run(script string) (*CommandResults, error) {
 	ctx, err := cmd.start()
 	if err != nil {
@@ -140,14 +134,13 @@ func (c *CommandIOContext) timeoutExec(script string, timeout time.Duration) (*C
 	case result := <-timeoutChannel:
 		return result[0].(*CommandResults), result[1].(error)
 	case <-time.After(timeout):
-		return nil, ScriptTimedOutError
+		return nil, ErrTimedOut
 	}
 }
 
 func (c *CommandIOContext) exec(script string) (results *CommandResults, err error) {
 	results = &CommandResults{
-		Stdin:    script,
-		Timedout: false,
+		Stdin: script,
 	}
 
 	if err = c.Command.Start(); err != nil {
@@ -213,6 +206,8 @@ func newCommand(interpreter string, flags []string) *exec.Cmd {
 	return exec.Command(interpreter, flags...)
 }
 
+// Warning returns true if the exit code of the last executed command (from
+// check or apply) was 1.
 func (s *Shell) Warning() bool {
 	if s == nil || s.Status == nil {
 		return false
@@ -220,6 +215,8 @@ func (s *Shell) Warning() bool {
 	return s.Status.ExitStatus == 1
 }
 
+// Error returns true if the exit code of the last executed command was greater
+// than 1
 func (s *Shell) Error() bool {
 	if s == nil || s.Status == nil {
 		return true
@@ -227,19 +224,19 @@ func (s *Shell) Error() bool {
 	return s.Status.ExitStatus > 1
 }
 
+// Value provides a value for the shell, which is the stdout data from the last
+// executed command.
 func (s *Shell) Value() string {
-	var value bytes.Buffer
-	value.WriteString(s.Description + "\n")
-	for _, message := range s.Messages() {
-		value.WriteString(message)
-	}
-	return value.String()
+	return s.Status.Stdout
 }
 
+// Diffs is required to implement resource.TaskStatus but there is no mechanism
+// for defining diffs for shell operations, so returns a nil map.
 func (s *Shell) Diffs() map[string]resource.Diff {
 	return nil
 }
 
+// StatusCode returns the status code of the most recently executed command
 func (s *Shell) StatusCode() int {
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
@@ -248,20 +245,19 @@ func (s *Shell) StatusCode() int {
 	return int(s.Status.ExitStatus)
 }
 
+// Messages returns a summary of the first execution of check and/or apply.
+// Subsequent runs are surpressed.
 func (s *Shell) Messages() (messages []string) {
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
 		return
 	}
-	uniqStatuses := s.Status.Reverse().UniqOp()
-
-	exitCodes := uniqStatuses.ExitStrings()
-	messages = append(messages, fmt.Sprintf("Exit Code(s): %v", exitCodes))
-
-	messages = append(messages, uniqStatuses.GetMessages()...)
+	messages = append(messages, s.Status.Reverse().UniqOp().SummarizeAll()...)
 	return
 }
 
+// Changes returns true if changes are required as determined by the the most
+// recent run of check.
 func (s *Shell) Changes() bool {
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
