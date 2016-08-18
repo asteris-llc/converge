@@ -15,7 +15,6 @@
 package shell_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource/shell"
@@ -137,7 +136,6 @@ func Test_UnlinkWhen(t *testing.T) {
 }
 
 func Test_Uniq(t *testing.T) {
-	fmt.Println("=============================")
 	expectedBefore := []uint32{2, 0, 1, 0}
 	expectedAfter := []uint32{2, 0, 1}
 	c := mkCommandResults(2)

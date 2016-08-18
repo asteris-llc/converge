@@ -63,7 +63,6 @@ func (c *CommandResults) Cons(op string, toAppend *CommandResults) *CommandResul
 	if toAppend == nil {
 		return c
 	}
-	fmt.Printf("consing with op = %s\n", op)
 	toAppend.ResultsContext = ResultsContext{Operation: op, Next: c}
 	c.Prev = toAppend
 	return toAppend
