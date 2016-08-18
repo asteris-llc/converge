@@ -78,7 +78,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				if err != nil {
 					err = errors.Wrapf(err, "error checking %s", id)
 				} else if status.Changes() {
-					err = fmt.Errorf("%s still needs to be changed after application. Status: %s", id, status)
+					err = fmt.Errorf("%s still needs to be changed after application", id)
 				}
 			}
 
