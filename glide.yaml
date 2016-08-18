@@ -49,7 +49,7 @@ import:
 - package: github.com/pkg/errors
   version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
 - package: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: ~1.0.0
   subpackages:
   - difflib
 - package: github.com/spf13/cast
@@ -86,3 +86,13 @@ import:
 - package: github.com/ttacon/chalk
   version: ~0.1.0
 - package: github.com/fsouza/go-dockerclient
+- package: google.golang.org/grpc
+  version: ~1.0.0
+- package: github.com/grpc-ecosystem/grpc-gateway
+  version: ^1.1.0
+  subpackages:
+  - third_party/googleapis/google/api
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/fgrid/uuid
+  version: ^0.1.0

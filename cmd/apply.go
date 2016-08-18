@@ -19,13 +19,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/rpc"
+	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 )
 
@@ -42,66 +39,92 @@ real happens.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params := getParams(cmd)
-
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		GracefulExit(cancel)
 
-		// iterate over modules
+		maybeSetToken()
+
+		ssl, err := getSSLConfig(getServerName())
+		if err != nil {
+			log.Fatalf("[FATAL] could not get SSL config: %v", err)
+		}
+
+		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+			log.Fatalf("[FATAL] %s\n", err)
+		}
+
+		client, err := getRPCExecutorClient(
+			ctx,
+			&rpc.ClientOpts{
+				Token: getToken(),
+				SSL:   ssl,
+			},
+		)
+		if err != nil {
+			log.Fatalf("[FATAL] %s\n", err)
+		}
+
+		rpcParams := getParamsRPC(cmd)
+
+		// execute files
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			loaded, err := load.Load(ctx, fname)
+			stream, err := client.Apply(
+				ctx,
+				&pb.ExecRequest{
+					Location:   fname,
+					Parameters: rpcParams,
+				},
+			)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: error getting RPC stream: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, loaded, params)
+			g := graph.New()
+
+			// get edges
+			edges, err := getMeta(stream)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: %s\n", fname, err)
+			}
+			for _, edge := range edges {
+				g.Connect(edge.Source, edge.Dest)
 			}
 
-			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
-			if err != nil {
-				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
-			}
+			// get vertices
+			err = iterateOverStream(
+				stream,
+				func(resp *pb.StatusResponse) {
+					log.Printf("[INFO] %s: %s %s %s\n", fname, resp.Stage, resp.Id, resp.Run)
 
-			// prep done! Time to run some commands!
-			printer := getPrinter()
-
-			planned, err := plan.Plan(ctx, merged)
-			if err != nil {
-				if err == plan.ErrTreeContainsErrors {
-					out, perr := printer.Show(ctx, planned)
-					if perr != nil {
-						log.Printf("[ERROR] %s: printing failed plan failed: %s\n", fname, perr)
-					} else {
-						fmt.Print("\n")
-						fmt.Print(out)
+					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
+						details := resp.GetDetails()
+						if details != nil {
+							g.Add(resp.Id, details.ToPrintable())
+						}
 					}
-					log.Fatalf("[FATAL] %s: planning failed: check output\n", fname)
-				}
-
-				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
+				},
+			)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: %s\n", fname, err)
 			}
 
-			results, err := apply.Apply(ctx, planned)
-			if err != nil && err != apply.ErrTreeContainsErrors {
-				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
+			// validate resulting graph
+			if err := g.Validate(); err != nil {
+				log.Printf("[WARNING] %s: graph is not valid: %s\n", fname, err)
 			}
 
 			// print results
-			out, perr := printer.Show(ctx, results)
-			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
+			out, err := getPrinter().Show(ctx, g)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
 			fmt.Print("\n")
 			fmt.Print(out)
-			if err != nil {
-				os.Exit(1)
-			}
 		}
 	},
 }
@@ -109,8 +132,10 @@ real happens.`,
 func init() {
 	applyCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
 	applyCmd.Flags().Bool("only-show-changes", false, "only show changes")
-	addParamsArguments(applyCmd.PersistentFlags())
-	viperBindPFlags(applyCmd.Flags())
+	registerRPCFlags(applyCmd.Flags())
+	registerLocalRPCFlags(applyCmd.Flags())
+	registerSSLFlags(applyCmd.Flags())
+	registerParamsFlags(applyCmd.Flags())
 
 	RootCmd.AddCommand(applyCmd)
 }

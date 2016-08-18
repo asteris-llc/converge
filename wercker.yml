@@ -13,6 +13,17 @@ build:
           apt-get update
           apt-get install -y graphviz
 
+    # install protoc
+    - script:
+        name: install protoc
+        code: |
+          apt-get install -y unzip
+          wget https://github.com/google/protobuf/releases/download/v3.0.0/protoc-3.0.0-linux-x86_64.zip
+          unzip protoc-3.0.0-linux-x86_64.zip
+          mv bin/* /usr/bin/
+          mv include/google /usr/include/google
+          go get -v github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+
     # Test the project
     - script:
         name: go test

@@ -19,8 +19,10 @@ import (
 	"errors"
 	"log"
 	"os"
+	"sync"
+	"time"
 
-	"github.com/asteris-llc/converge/server"
+	"github.com/asteris-llc/converge/rpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,14 +34,8 @@ var serverCmd = &cobra.Command{
 	Aliases: []string{"serve"},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// check HTTPS
-		if viper.GetBool("https") {
-			if viper.GetString("certFile") == "" {
-				return errors.New("certFile is required for HTTPS")
-			}
-
-			if viper.GetString("keyFile") == "" {
-				return errors.New("keyFile is required for HTTPS")
-			}
+		if err := validateSSL(); err != nil {
+			return err
 		}
 
 		// check module serving
@@ -57,41 +53,91 @@ var serverCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
-		var (
-			err error
-			s   = server.New(
+		var running sync.WaitGroup
+		running.Add(2)
+
+		// set up our client and server security options
+		maybeSetToken()
+
+		if !usingSSL() {
+			log.Println("[WARNING] no SSL config in use, server will accept HTTP connections")
+		}
+
+		sslConfig, err := getSSLConfig(getServerName())
+		if err != nil {
+			log.Fatalf("[FATAL] could not get SSL config: %s", err)
+		}
+
+		clientOpts := &rpc.ClientOpts{
+			Token: viper.GetString("auth-token"),
+			SSL:   sslConfig,
+		}
+
+		// start RPC server
+		go func() {
+			defer running.Done()
+
+			err := startRPC(
 				ctx,
+				getRPCAddr(),
+				sslConfig,
 				viper.GetString("root"),
 				viper.GetBool("self-serve"),
 			)
-		)
-		log.Printf("[INFO] serving on %s\n", viper.GetString("addr"))
-		if viper.GetBool("https") {
-			err = s.ListenAndServeTLS(viper.GetString("addr"), viper.GetString("certFile"), viper.GetString("keyFile"))
-		} else {
-			err = s.ListenAndServe(viper.GetString("addr"))
-		}
+			if err != nil {
+				log.Fatalf("[FATAL] could not run RPC: %s", err)
+			}
 
-		if err != nil {
-			log.Fatalf("[FATAL] %s\n", err)
-		}
+			<-ctx.Done()
+		}()
+
+		// sleep here to avoid a race condition. The REST gateway can't connect
+		// to the RPC server if the gateway starts first.
+		time.Sleep(100 * time.Millisecond)
+
+		// start HTTP server
+		go func() {
+			defer running.Done()
+
+			server, err := rpc.NewRESTGateway(ctx, getRPCAddr(), clientOpts)
+			if err != nil {
+				log.Fatalf("[FATAL] failed to create server: %v", err)
+			}
+
+			if viper.GetBool("https") {
+				log.Printf("[INFO] serving HTTPS on %s\n", viper.GetString("api-addr"))
+				err = server.ListenAndServeTLS(
+					viper.GetString("api-addr"),
+					getCertFileLoc(),
+					getKeyFileLoc(),
+				)
+			} else {
+				log.Printf("[INFO] serving HTTP on %s\n", viper.GetString("api-addr"))
+				err = server.ListenAndServe(
+					viper.GetString("api-addr"),
+				)
+			}
+
+			if err != nil {
+				log.Fatalf("[FATAL] %s\n", err)
+			}
+
+			log.Println("[INFO] halted HTTP server")
+		}()
+
+		running.Wait()
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(serverCmd)
 
-	// HTTP(S)
-	serverCmd.PersistentFlags().String("certFile", "", "certificate file for HTTPS")
-	serverCmd.PersistentFlags().String("keyFile", "", "key file for HTTPS")
-	serverCmd.PersistentFlags().Bool("https", false, "turn on HTTPS")
-	serverCmd.PersistentFlags().StringP("addr", "a", ":8080", "address to listen on")
+	// common
+	registerSSLFlags(serverCmd.Flags())
+	registerRPCFlags(serverCmd.Flags())
 
-	// module serving
-	serverCmd.PersistentFlags().String("root", ".", "location of modules to serve")
-
-	// self serve
-	serverCmd.PersistentFlags().Bool("self-serve", false, "serve own binary for bootstrapping")
-
-	viperBindPFlags(serverCmd.PersistentFlags())
+	// API
+	serverCmd.Flags().String("api-addr", addrServerHTTP, "address to serve API")
+	serverCmd.Flags().String("root", ".", "location of modules to serve")
+	serverCmd.Flags().Bool("self-serve", false, "serve own binary for bootstrapping")
 }

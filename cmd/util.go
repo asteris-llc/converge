@@ -15,27 +15,16 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"runtime"
 
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/health"
 	"github.com/asteris-llc/converge/prettyprinters/human"
-	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/mattn/go-isatty"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
-
-// bind a set of PFlags to Viper, failing and exiting on error
-func viperBindPFlags(flags *pflag.FlagSet) {
-	if err := viper.BindPFlags(flags); err != nil {
-		log.Fatalf("[FATAL] could not bind flags: %s", err)
-	}
-}
 
 func humanProvider(filter human.FilterFunc) *human.Printer {
 	if !viper.GetBool("show-meta") {
@@ -72,22 +61,4 @@ func healthPrinter() prettyprinters.Printer {
 func UseColor() bool {
 	isColorTerminal := isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows")
 	return !viper.GetBool("nocolor") && isColorTerminal
-}
-
-// getParams wraps getParamsFromFlags, logging and exiting upon error
-func getParams(cmd *cobra.Command) render.Values {
-	if !cmd.HasPersistentFlags() {
-		log.Fatalf("[FATAL] %s: can't get parameters, command doesn't have persistent flags\n", cmd.Name())
-	}
-
-	params, errors := getParamsFromFlags(cmd.PersistentFlags())
-	for i, err := range errors {
-		log.Printf("[ERROR] error while parsing parameters: %s\n", err)
-
-		// after the last error is printed, exit
-		if i == len(errors)-1 {
-			log.Fatalf("[FATAL] errors while parsing parameters, see log above")
-		}
-	}
-	return params
 }

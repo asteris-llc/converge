@@ -29,6 +29,8 @@ func HTTP(ctx context.Context, loc string) ([]byte, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Accept", "text/plain")
+
 	req = req.WithContext(ctx)
 
 	response, err := client.Do(req)

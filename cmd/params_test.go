@@ -25,7 +25,7 @@ import (
 // set up a FlagSet for testing
 func setupFlags(params, paramsJSON string) *pflag.FlagSet {
 	flagSet := pflag.NewFlagSet("TestGetParamsFromFlags", pflag.PanicOnError)
-	addParamsArguments(flagSet)
+	registerParamsFlags(flagSet)
 	// mirror actual usage by using Parse rather than Set
 	cmdline := []string{"apply"}
 	if params != "" {
@@ -42,9 +42,9 @@ func setupFlags(params, paramsJSON string) *pflag.FlagSet {
 	return flagSet
 }
 
-func TestAddParamsArguments(t *testing.T) {
+func TestRegisterParamsFlags(t *testing.T) {
 	flagSet := pflag.NewFlagSet("", pflag.PanicOnError)
-	addParamsArguments(flagSet)
+	registerParamsFlags(flagSet)
 	assert.True(t, flagSet.HasAvailableFlags())
 }
 
@@ -110,7 +110,7 @@ func TestDuplicateParameters(t *testing.T) {
 // test that defining -p multiple times results in multiple parameters
 func TestMultipleArgs(t *testing.T) {
 	flagSet := pflag.NewFlagSet("", pflag.PanicOnError)
-	addParamsArguments(flagSet)
+	registerParamsFlags(flagSet)
 	assert.NoError(t, flagSet.Parse([]string{"-p", "key1=1", "-p", "key2=2"}))
 	values, errors := getParamsFromFlags(flagSet)
 	assert.Len(t, values, 2)

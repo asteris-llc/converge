@@ -25,7 +25,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/asteris-llc/converge/server"
+	"github.com/asteris-llc/converge/rpc"
 )
 
 // HTTPServeFile constructs a SingleFileServer on a random port, returning that
@@ -51,11 +51,11 @@ func HTTPServeFile(filePath string) (address string, stop func(), err error) {
 		port := rand.Intn(65535-49151) + 49151
 
 		// start an HTTP server on that port
-		server := server.NewContextServer(ctx)
+		server := rpc.NewContextServer(ctx, mux)
 		errors := make(chan error)
 
 		go func(errors chan error) {
-			errors <- server.ListenAndServe(fmt.Sprintf("localhost:%d", port), mux)
+			errors <- server.ListenAndServe(fmt.Sprintf("localhost:%d", port))
 		}(errors)
 
 		// if it hasn't terminated in .1s, assume it's listening

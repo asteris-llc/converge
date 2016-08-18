@@ -97,7 +97,7 @@ not display healthy checks.`,
 
 func init() {
 	healthcheckCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
-	addParamsArguments(healthcheckCmd.PersistentFlags())
-	viperBindPFlags(healthcheckCmd.Flags())
+	registerParamsFlags(healthcheckCmd.Flags())
+
 	RootCmd.AddCommand(healthcheckCmd)
 }
