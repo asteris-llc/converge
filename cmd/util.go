@@ -46,6 +46,7 @@ func getPrinter() prettyprinters.Printer {
 
 	printer := human.NewFiltered(filter)
 	printer.Color = UseColor()
+	printer.InitColors()
 
 	return prettyprinters.New(printer)
 }
