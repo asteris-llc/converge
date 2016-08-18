@@ -121,7 +121,7 @@ func TestSetResourcesBad(t *testing.T) {
 
 	_, err := getResourcesGraph(t, []byte("x x {}"))
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "1 error(s) occurred:\n\n* \"x\" is not a valid resource type in \"x.x\"")
+		assert.EqualError(t, err, "1 error(s) occurred:\n\n* root/x.x: \"x\" is not a valid resource type in \"x.x\"")
 	}
 }
 

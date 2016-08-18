@@ -70,7 +70,7 @@ func TestApplyErrorsBelow(t *testing.T) {
 	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.NoOp()})
 	g.Add("root/err", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.Error()})
 
-	g.Connect("root", "root/err")
+	g.ConnectParent("root", "root/err")
 
 	require.NoError(t, g.Validate())
 
