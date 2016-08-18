@@ -56,30 +56,34 @@ type CommandIOContext struct {
 	Stderr  io.ReadCloser
 }
 
+type CommandGenerator struct {
+	Interpreter string
+	Flags       []string
+	Timeout     *time.Duration
+}
+
 // Shell is a structure representing a task.
 type Shell struct {
-	Interpreter      string
-	InterpreterFlags []string
-	CheckStmt        string
-	ApplyStmt        string
-	Description      string
-	MaxDuration      *time.Duration
-	Status           *CommandResults
+	CmdGenerator *CommandGenerator
+	CheckStmt    string
+	ApplyStmt    string
+	Description  string
+	Status       *CommandResults
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
 func (s *Shell) Check() (resource.TaskStatus, error) {
-	results, err := run(s.Interpreter, s.InterpreterFlags, s.CheckStmt, s.MaxDuration)
+	results, err := s.CmdGenerator.Run(s.CheckStmt)
 	if err != nil {
 		return nil, err
 	}
-	s.consStatus("check", results)
+	s.Status = s.Status.Cons("check", results)
 	return s, nil
 }
 
 // Apply is a NOP for health checks
 func (s *Shell) Apply() (err error) {
-	results, err := run(s.Interpreter, s.InterpreterFlags, s.ApplyStmt, s.MaxDuration)
+	results, err := s.CmdGenerator.Run(s.ApplyStmt)
 	if err == nil {
 		s.consStatus("apply", results)
 	}
@@ -108,12 +112,12 @@ func (s *Shell) Healthy() (bool, error) {
 	return s.Status.State.Success(), nil
 }
 
-func run(interpreter string, flags []string, script string, timeout *time.Duration) (*CommandResults, error) {
-	ctx, err := start(interpreter, flags)
+func (cmd *CommandGenerator) Run(script string) (*CommandResults, error) {
+	ctx, err := cmd.start()
 	if err != nil {
 		return nil, err
 	}
-	return ctx.Run(script, timeout)
+	return ctx.Run(script, cmd.Timeout)
 }
 
 // Run wraps exec and timeoutExec, executing the script with or without a
@@ -190,8 +194,9 @@ func (c *CommandIOContext) exec(script string) (results *CommandResults, err err
 	return
 }
 
-func start(interpreter string, flags []string) (*CommandIOContext, error) {
-	command := newCommand(interpreter, flags)
+//func start(interpreter string, flags []string) (*CommandIOContext, error) {
+func (cmd *CommandGenerator) start() (*CommandIOContext, error) {
+	command := newCommand(cmd.Interpreter, cmd.Flags)
 	stdin, stdout, stderr, err := cmdGetPipes(command)
 	return &CommandIOContext{
 		Command: command,

@@ -72,16 +72,20 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	shell := &Shell{
-		Interpreter:      interpreter,
-		CheckStmt:        check,
-		ApplyStmt:        apply,
-		Description:      description,
-		InterpreterFlags: p.ExecFlags,
+	generator := &CommandGenerator{
+		Interpreter: interpreter,
+		Flags:       p.ExecFlags,
 	}
 
 	if duration, err := time.ParseDuration(timeout); err == nil {
-		shell.MaxDuration = &duration
+		generator.Timeout = &duration
+	}
+
+	shell := &Shell{
+		CmdGenerator: generator,
+		CheckStmt:    check,
+		ApplyStmt:    apply,
+		Description:  description,
 	}
 
 	return shell, checkSyntax(interpreter, p.CheckFlags, check)

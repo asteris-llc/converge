@@ -33,17 +33,3 @@ func Test_Shell_ImplementsTaskInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
 }
-
-type MockTask struct {
-	mock.Mock
-}
-
-func (m *MockTask) Check() (string, bool, error) {
-	args := m.Called()
-	return args.String(0), args.Bool(1), args.Error(2)
-}
-
-func (m *MockTask) Apply() error {
-	args := m.Called()
-	return args.Error(0)
-}

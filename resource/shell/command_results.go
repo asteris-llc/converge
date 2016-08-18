@@ -57,6 +57,9 @@ func (c *CommandResults) OutputMap() map[string]string {
 // Cons a command result to another command result, allowing the capture of
 // multiple runs of a task with a session.
 func (c *CommandResults) Cons(op string, toAppend *CommandResults) *CommandResults {
+	if c == nil {
+		return toAppend
+	}
 	if toAppend == nil {
 		return c
 	}
@@ -67,8 +70,8 @@ func (c *CommandResults) Cons(op string, toAppend *CommandResults) *CommandResul
 
 // Append adds an element to the end of the list
 func (c *CommandResults) Append(op string, toAppend *CommandResults) *CommandResults {
-	if c == nil {
-		return toAppend
+	if toAppend == nil {
+		return c
 	}
 	last := c.Last()
 	toAppend.ResultsContext.Prev = last
