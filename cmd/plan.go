@@ -19,12 +19,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/rpc"
+	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 )
 
@@ -43,48 +41,90 @@ can be done separately to see what needs to be changed before execution.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		GracefulExit(cancel)
 
-		// params
-		params, err := getParamsFromFlags(cmd.Flags())
+		maybeSetToken()
+
+		ssl, err := getSSLConfig(getServerName())
 		if err != nil {
-			log.Fatalf("[FATAL] could not read params: %s\n", err)
+			log.Fatalf("[FATAL] could not get SSL config: %v", err)
 		}
 
+		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+			log.Fatalf("[FATAL] %s\n", err)
+		}
+
+		client, err := getRPCExecutorClient(
+			ctx,
+			&rpc.ClientOpts{
+				Token: getToken(),
+				SSL:   ssl,
+			},
+		)
+		if err != nil {
+			log.Fatalf("[FATAL] %s\n", err)
+		}
+
+		rpcParams := getParamsRPC(cmd)
+
+		// execute files
 		for _, fname := range args {
 			log.Printf("[INFO] planning %s\n", fname)
 
-			loaded, err := load.Load(ctx, fname)
+			stream, err := client.Plan(
+				ctx,
+				&pb.ExecRequest{
+					Location:   fname,
+					Parameters: rpcParams,
+				},
+			)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: error getting RPC stream: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, loaded, params)
+			g := graph.New()
+
+			// get edges
+			edges, err := getMeta(stream)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: %s\n", fname, err)
+			}
+			for _, edge := range edges {
+				g.Connect(edge.Source, edge.Dest)
 			}
 
-			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			// get vertices
+			err = iterateOverStream(
+				stream,
+				func(resp *pb.StatusResponse) {
+					log.Printf("[INFO] %s: %s %s %s\n", fname, resp.Stage, resp.Id, resp.Run)
+
+					if resp.Run == pb.StatusResponse_FINISHED {
+						details := resp.GetDetails()
+						if details != nil {
+							g.Add(resp.Id, details.ToPrintable())
+						}
+					}
+				},
+			)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: %s\n", fname, err)
 			}
 
-			results, err := plan.Plan(ctx, merged)
-			if err != nil && err != plan.ErrTreeContainsErrors {
-				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
+			// validate resulting graph
+			if err := g.Validate(); err != nil {
+				log.Printf("[WARNING] %s: graph is not valid: %s\n", fname, err)
 			}
 
 			// print results
-			out, perr := getPrinter().Show(ctx, results)
-			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
+			out, err := getPrinter().Show(ctx, g)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
 			fmt.Print("\n")
 			fmt.Print(out)
-			if err != nil {
-				os.Exit(1)
-			}
 		}
 	},
 }
@@ -92,6 +132,10 @@ can be done separately to see what needs to be changed before execution.`,
 func init() {
 	planCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
 	planCmd.Flags().Bool("only-show-changes", false, "only show changes")
-	addParamsArguments(planCmd.PersistentFlags())
+	registerRPCFlags(planCmd.Flags())
+	registerLocalRPCFlags(planCmd.Flags())
+	registerSSLFlags(planCmd.Flags())
+	registerParamsFlags(planCmd.Flags())
+
 	RootCmd.AddCommand(planCmd)
 }

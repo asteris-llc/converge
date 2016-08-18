@@ -15,6 +15,9 @@ Converge is a configuration management tool.
         - [Server](#server)
             - [Module Hosting](#module-hosting)
             - [Binary Hosting](#binary-hosting)
+    - [Development](#development)
+        - [Tools](#tools)
+        - [RPC](#rpc)
     - [License](#license)
 
 <!-- markdown-toc end -->
@@ -184,6 +187,32 @@ enabled with the `--self-serve` flag to `converge server`. You can use this to
 bootstrap a new system without downloading the relevant version of converge over
 an external connection. It will be available at
 `http://your.host:8080/bootstrap/binary`.
+
+## Development
+
+### Tools
+
+For linting, you'll need:
+
+| tool | `go get` |
+| ==== | ======== |
+| `golint` | github.com/golang/lint/golint |
+| `go tool vet` | (built in) |
+| `gosimple` | honnef.co/go/simple/cmd/gosimple |
+| `unconvert` | github.com/mdempsky/unconvert |
+| `structcheck` | github.com/opennota/check/cmd/structcheck |
+| `varcheck` | github.com/opennota/check/cmd/varcheck |
+| `aligncheck` | github.com/opennota/check/cmd/aligncheck |
+| `gas` | github.com/HewlettPackard/gas |
+
+### RPC
+
+You'll need:
+
+- [Google's protobuf compiler](https://github.com/google/protobuf/releases), 3.0
+  or above.
+- The go protoc plugin: `go get -a github.com/golang/protobuf/protoc-gen-go`
+- The grpc gateway plugin(s): `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
 
 ## License
 

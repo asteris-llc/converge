@@ -16,8 +16,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -43,13 +46,45 @@ The workflow generally looks like this:
 You can also visualize the execution graph with "converge graph yourfile.hcl" -
 see "converge graph --help" for more details.`,
 
-	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// set log level
 		level, err := cmd.Flags().GetString("log-level")
 		if err != nil {
 			return err
 		}
 
-		return SetLogLevel(level)
+		if err := SetLogLevel(level); err != nil {
+			return err
+		}
+
+		// bind pflags for active commands
+		sub := cmd
+		subFlags := args
+
+		for {
+			log.Printf("[TRACE] registering flags for %s\n", sub.Name())
+
+			if err := viper.BindPFlags(sub.Flags()); err != nil {
+				return errors.Wrapf(err, "failed to bind flags for %s", sub.Name())
+			}
+			if err := viper.BindPFlags(sub.PersistentFlags()); err != nil {
+				return errors.Wrapf(err, "failed to bind persistent flags for %s", sub.Name())
+			}
+
+			potentialSub, potentialSubFlags, err := sub.Find(subFlags)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get child for %s", sub.Name())
+			}
+
+			if sub == potentialSub {
+				break
+			}
+
+			sub = potentialSub
+			subFlags = potentialSubFlags
+		}
+
+		return nil
 	},
 }
 
@@ -65,11 +100,9 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.converge.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is /etc/converge/config.yaml)")
 	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
 	RootCmd.PersistentFlags().StringP("log-level", "l", "INFO", fmt.Sprintf("log level, one of %v", levels))
-
-	viperBindPFlags(RootCmd.PersistentFlags())
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -78,9 +111,12 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	}
 
-	viper.SetConfigName(".converge") // name of config file (without extension)
-	viper.AddConfigPath("$HOME")     // adding home directory as first search path
-	viper.AutomaticEnv()             // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+	viper.SetConfigName("config")        // name of config file (without extension)
+	viper.AddConfigPath("/etc/converge") // adding home directory as first search path
+	viper.SetEnvPrefix("CONVERGE")       // so our environment variables are unambiguous
+	viper.AutomaticEnv()                 // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

@@ -1,0 +1,173 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "root.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/machine/apply": {
+      "post": {
+        "summary": "Apply a module given by the location",
+        "operationId": "Apply",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/pbStatusResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbExecRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Executor"
+        ]
+      }
+    },
+    "/api/v1/machine/plan": {
+      "post": {
+        "summary": "Plan out the execution of a module given by the location",
+        "operationId": "Plan",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/pbStatusResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbExecRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Executor"
+        ]
+      }
+    },
+    "/resources/binary": {
+      "get": {
+        "summary": "GetBinary returns the converge binary itself",
+        "operationId": "GetBinary",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pbContentResponse"
+            }
+          }
+        },
+        "tags": [
+          "ResourceHost"
+        ]
+      }
+    },
+    "/resources/modules/{location}": {
+      "get": {
+        "summary": "GetModule gets the content of a module at the given path",
+        "operationId": "GetModule",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pbContentResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "ResourceHost"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pbContentResponse": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "pbExecRequest": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "format": "string"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      }
+    },
+    "pbLocationRequest": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "pbStatusResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      }
+    },
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    }
+  }
+}
