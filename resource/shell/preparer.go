@@ -15,29 +15,39 @@
 package shell
 
 import (
+	"bytes"
+	"io"
+	"io/ioutil"
 	"log"
 	"os/exec"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 )
 
-// Preparer for Shell tasks
+var (
+	defaultInterpreter = "/bin/sh"
+	defaultCheckFlags  = []string{"-n"}
+	defaultExecFlags   = []string{}
+)
+
+// Preparer for shell tasks
 type Preparer struct {
-	Interpreter   string  `hcl:"interpreter"`
-	SyntaxChecker *string `hcl:"syntaxchecker"`
-	Check         string  `hcl:"check"`
-	Apply         string  `hcl:"apply"`
+	Interpreter string   `hcl:"interpreter"`
+	CheckFlags  []string `hcl:"check_flags"`
+	ExecFlags   []string `hcl:"exec_flags"`
+	Check       string   `hcl:"check"`
+	Apply       string   `hcl:"apply"`
+	Timeout     string   `hcl:"timeout"`
 }
 
-// Prepare a new task
+// Prepare a new shell task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+
 	check, err := render.Render("check", p.Check)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = p.validateScriptSyntax(check); err != nil {
 		return nil, err
 	}
 
@@ -46,66 +56,98 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	if err = p.validateScriptSyntax(apply); err != nil {
-		return nil, err
-	}
-
 	interpreter, err := render.Render("interpreter", p.Interpreter)
 	if err != nil {
 		return nil, err
 	}
 
-	if interpreter == "" {
-		interpreter = "sh" // TODO: make this work on Windows?
+	timeout, err := render.Render("timeout", p.Timeout)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Shell{interpreter, check, apply}, nil
+	generator := &CommandGenerator{
+		Interpreter: interpreter,
+		Flags:       p.ExecFlags,
+	}
+
+	if duration, err := time.ParseDuration(timeout); err == nil {
+		generator.Timeout = &duration
+	}
+
+	shell := &Shell{
+		CmdGenerator: generator,
+		CheckStmt:    check,
+		ApplyStmt:    apply,
+	}
+
+	return shell, checkSyntax(interpreter, p.CheckFlags, check)
 }
 
-func (p *Preparer) validateScriptSyntax(script string) error {
-
-	command, cmdError := p.getValidatorCommand()
-
-	if cmdError != nil {
-		log.Printf("[WARN] script validator returned '%s', will not attempt to validate script syntax\n", cmdError)
-		return nil
+func checkSyntax(interpreter string, flags []string, script string) error {
+	if interpreter == "" {
+		interpreter = defaultInterpreter
+		if len(flags) > 0 {
+			log.Println("[ERROR] check_flags specified without an interpreter")
+			return errors.New("custom syntax check_flags given without an interpreter")
+		}
+		flags = defaultCheckFlags
+	} else {
+		if len(flags) == 0 {
+			log.Println("[INFO] no check_flags specified for interpreter, skipping syntax validation")
+			return nil
+		}
 	}
-
-	in, err := command.StdinPipe()
+	command := exec.Command(interpreter, flags...)
+	cmdStdin, cmdStdout, cmdStderr, err := cmdGetPipes(command)
 	if err != nil {
-		return errors.Wrap(err, "unable to create pipe")
+		return errors.Wrap(err, "unable to communicate with subprocess")
 	}
-
 	if err := command.Start(); err != nil {
-		return errors.Wrap(err, "failed to start interpreter")
+		return errors.Wrap(err, "unable to start subprocess")
 	}
-
-	if _, err := in.Write([]byte(script)); err != nil {
+	if _, err := cmdStdin.Write([]byte(script)); err != nil {
 		return errors.Wrap(err, "unable to write to interpreter")
 	}
 
-	if err := in.Close(); err != nil {
-		return errors.Wrap(err, "failed to close pipe")
+	if err := cmdStdin.Close(); err != nil {
+		return errors.Wrap(err, "failed to close stdin")
+	}
+
+	var buffer bytes.Buffer
+	if data, err := ioutil.ReadAll(cmdStdout); err == nil {
+		if len(data) > 0 {
+			buffer.WriteString("Command Stdout:\n")
+			buffer.Write(data)
+		}
+	}
+	if data, err := ioutil.ReadAll(cmdStderr); err == nil {
+		if len(data) > 0 {
+			buffer.WriteString("Command Stderr:\n")
+			buffer.Write(data)
+		}
 	}
 
 	if err := command.Wait(); err != nil {
-		return errors.Wrap(err, "syntax error")
+		return errors.Wrap(err, "syntax error: "+buffer.String())
 	}
 
 	return nil
 }
 
-func (p *Preparer) getValidatorCommand() (*exec.Cmd, error) {
-	interpreter := p.Interpreter
-	checkFlag := p.SyntaxChecker
-	if interpreter != "" && checkFlag != nil {
-		return exec.Command(interpreter, *checkFlag), nil
+func cmdGetPipes(command *exec.Cmd) (io.WriteCloser, io.ReadCloser, io.ReadCloser, error) {
+	var err error
+	cmdStdin, err := command.StdinPipe()
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to get stdin pipe")
 	}
-	if interpreter == "" && checkFlag == nil {
-		return exec.Command("sh", "-n"), nil
+	cmdStderr, err := command.StderrPipe()
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to get stderr pipe")
 	}
-	if interpreter == "" {
-		return nil, errors.New("syntaxcheck was set without a user-specified interpreter")
+	cmdStdout, err := command.StdoutPipe()
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to get stdout pipe")
 	}
-	return nil, errors.New("custom interpreter defined without syntaxcheck flag")
+	return cmdStdin, cmdStdout, cmdStderr, nil
 }
