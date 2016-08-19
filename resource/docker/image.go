@@ -22,39 +22,61 @@ import (
 
 // Image is responsible for pulling docker images
 type Image struct {
-	Name   string
-	Tag    string
-	client APIClient
+	Name       string
+	Tag        string
+	client     APIClient
+	diffs      map[string]resource.Diff
+	statusCode int
 }
 
 // Check system for presence of docker image
 func (i *Image) Check() (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
-	diffs := make(map[string]resource.Diff)
+	i.diffs = make(map[string]resource.Diff)
 	imagesDiff := resource.TextDiff{Values: [2]string{"<image-missing>", repoTag}}
 
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
-		return &resource.Status{
-			WarningLevel: resource.StatusFatal,
-		}, err
+		i.statusCode = resource.StatusFatal
+		return i, err
 	}
 
 	if image != nil {
 		imagesDiff.Values[0] = repoTag
 	}
 
-	diffs["image"] = imagesDiff
-	return &resource.Status{
-		Status:      repoTag,
-		Differences: diffs,
-		WillChange:  resource.AnyChanges(diffs),
-	}, nil
+	i.diffs["image"] = imagesDiff
+	return i, nil
 }
 
 // Apply pulls a docker image
 func (i *Image) Apply() (err error) {
 	return i.client.PullImage(i.Name, i.Tag)
+}
+
+// Value returns the repo tag of the desired docker image
+func (i *Image) Value() string {
+	return i.RepoTag()
+}
+
+// Diffs returns the diff map for the docker image
+func (i *Image) Diffs() map[string]resource.Diff {
+	return i.diffs
+}
+
+// StatusCode returns the status code
+func (i *Image) StatusCode() int {
+	return i.statusCode
+}
+
+// Messages returns status messages for the docker image resource
+func (i *Image) Messages() []string {
+	return nil
+}
+
+// Changes returns true if a docker image needs to be pulled
+func (i *Image) Changes() bool {
+	return resource.AnyChanges(i.diffs)
 }
 
 // SetClient injects a docker api client
