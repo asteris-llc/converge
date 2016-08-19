@@ -15,13 +15,17 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"log"
 	"os"
 	"runtime"
 
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -75,4 +79,27 @@ func getParams(cmd *cobra.Command) render.Values {
 		}
 	}
 	return params
+}
+
+type statusWrapper interface {
+	GetStatus() resource.TaskStatus
+}
+
+func unboxTaskStatus(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
+	return g.Transform(ctx, func(id string, out *graph.Graph) error {
+		unboxed, err := unboxNode(g.Get(id))
+		if err == nil {
+			out.Add(id, unboxed)
+		}
+		return err
+	})
+}
+
+func unboxNode(i interface{}) (resource.TaskStatus, error) {
+	if wrapper, ok := i.(statusWrapper); ok {
+		return wrapper.GetStatus(), nil
+	} else if taskStatus, ok := i.(resource.TaskStatus); ok {
+		return taskStatus, nil
+	}
+	return nil, errors.New("[FATAL] cannot get task status from node")
 }

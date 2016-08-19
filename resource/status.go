@@ -14,6 +14,11 @@
 
 package resource
 
+import (
+	"bytes"
+	"fmt"
+)
+
 const (
 	// StatusNoChange means no changes are necessary
 	StatusNoChange int = 0
@@ -27,6 +32,11 @@ const (
 	// StatusFatal indicates an unacceptable delta that cannot be corrected
 	StatusFatal
 )
+
+type badDep struct {
+	ID     string
+	Status TaskStatus
+}
 
 // TaskStatus represents the results of Check called during planning or
 // application.
@@ -45,6 +55,7 @@ type Status struct {
 	Output       []string
 	WillChange   bool
 	Status       string
+	FailingDeps  []badDep
 }
 
 // Value returns the status value
@@ -74,6 +85,36 @@ func (t *Status) Messages() []string {
 // Changes returns the WillChange value
 func (t *Status) Changes() bool {
 	return t.WillChange
+}
+
+// HealthCheck provides a default health check implementation for statuses
+func (t *Status) HealthCheck() (status *HealthStatus, err error) {
+	status = new(HealthStatus)
+	var diffBuffer bytes.Buffer
+	if !t.Changes() {
+		return
+	}
+	for diffName, diff := range t.Differences {
+		diffBuffer.WriteString(fmt.Sprintf("%s: %s => %s\n", diffName, diff.Original(), diff.Current()))
+	}
+	for _, dep := range t.FailingDeps {
+		diffBuffer.WriteString(fmt.Sprintf("failing dependency: %s (%s)\n", dep.ID, dep.Status.Value()))
+	}
+	if len(t.FailingDeps) > 0 {
+		status.UpgradeWarning(StatusWarning)
+	}
+	status.Message = diffBuffer.String()
+	if t.StatusCode() < 2 {
+		status.UpgradeWarning(StatusWarning)
+	} else {
+		status.UpgradeWarning(StatusError)
+	}
+	return
+}
+
+// FailingDep tracks a new failing dependency
+func (t *Status) FailingDep(id string, stat TaskStatus) {
+	t.FailingDeps = append(t.FailingDeps, badDep{ID: id, Status: stat})
 }
 
 // AddDifference adds a TextDiff to the Differences map
