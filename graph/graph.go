@@ -422,19 +422,12 @@ func (g *Graph) RootFirstTransform(ctx context.Context, cb TransformFunc) (*Grap
 func (g *Graph) Copy() *Graph {
 	out := New()
 
-	err := g.Walk(
-		context.Background(),
-		func(id string, val interface{}) error {
-			out.Add(id, val)
-			for _, edge := range g.DownEdges(id) {
-				out.inner.Connect(edge)
-			}
+	for _, v := range g.Vertices() {
+		out.Add(v, g.Get(v))
+	}
 
-			return nil
-		},
-	)
-	if err != nil {
-		panic(err)
+	for _, e := range g.inner.Edges() {
+		out.inner.Connect(e)
 	}
 
 	return out
