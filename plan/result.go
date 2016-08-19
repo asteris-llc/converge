@@ -34,3 +34,6 @@ func (r *Result) HasChanges() bool { return r.Status.Changes() }
 
 // Error returns the error assigned to this Result, if any
 func (r *Result) Error() error { return r.Err }
+
+// GetStatus returns the current task status
+func (r *Result) GetStatus() resource.TaskStatus { return r.Status }

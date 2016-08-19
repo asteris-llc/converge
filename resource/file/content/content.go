@@ -80,13 +80,3 @@ func (t *Content) Apply() error {
 
 	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
 }
-
-func getWarningLevel(original *string, content string) int {
-	if original == nil || *original == "" {
-		return resource.StatusWillChange
-	}
-	if *original != content {
-		return resource.StatusWillChange
-	}
-	return resource.StatusNoChange
-}
