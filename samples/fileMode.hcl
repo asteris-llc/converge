@@ -4,5 +4,5 @@ param "filename" {
 
 file.mode "render" {
   destination = "{{param `filename`}}"
-  mode = 0777
+  mode        = 0777
 }
