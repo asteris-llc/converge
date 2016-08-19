@@ -59,6 +59,15 @@ func BenchmarkAddThenGet(b *testing.B) {
 	})
 }
 
+func BenchmarkCopyParallel(b *testing.B) {
+	g := graph.New()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			g.Copy()
+		}
+	})
+}
+
 func TestRemove(t *testing.T) {
 	// Remove should remove a vertex
 	t.Parallel()
