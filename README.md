@@ -11,6 +11,13 @@ Converge is a configuration management tool.
         - [Writing Modules](#writing-modules)
         - [Built-in Modules](#built-in-modules)
             - [File Modules](#file-modules)
+                - [File (file.file)](#file)
+                - [Absent (fille.absent)](#absent-fileowner)
+                - [Contents (fille.contents)](#contents-fileowner)
+                - [Directory (fille.directory)](#directory-fileowner)
+                - [Link (fille.link)](#link-fileowner)
+                - [Touch (fille.touch)](#touch-fileowner)
+                - [Owner (fille.owner)](#owner-fileowner)
                 - [Mode (file.mode)](#mode-filemode)
         - [Server](#server)
             - [Module Hosting](#module-hosting)
@@ -148,9 +155,128 @@ tasks without having to write your own `task` declarations.
 
 #### File Modules
 
+##### Absent (file.absent)
+
+The `file.absent` module takes one required parameters:
+
+- `destination`: the file to be deleted
+
+Sample:
+
+```hcl
+file.absent "test" {
+  destination = "test.txt"
+}
+```
+
+##### Contents (file.contents)
+
+The `file.contents` module takes two required parameters:
+
+- `destination`: the file to be modified
+- `content`: the content of the file
+
+
+Sample:
+
+```hcl
+file.content "test" {
+  destination = "test.txt"
+  content = "hello world"
+}
+```
+
+##### Directory (file.directory)
+
+The `file.directory` module takes one required parameters:
+
+- `destination`: the file to be linked
+- `recurse (optional)`: recursively apply owner and mode
+- `user (optional)`: owner of the folder
+- `mode (optional)`: mode of the folder
+
+Sample:
+
+```hcl
+file.directory "test" {
+  destination = "/path/to/dir"
+}
+```
+
+##### Link (file.link)
+
+The `file.link` module takes two required parameters:
+
+- `source`: the host file
+- `destination`: the file to be linked
+- `type (optional)`: soft or hard link (defaults to `soft`)
+
+Sample:
+
+```hcl
+file.link "test" {
+  source = "text.txt"
+  destination = "test.txt"
+  type = "soft"
+}
+```
+
+##### Touch (file.touch)
+
+The `file.touch` module takes one required parameters:
+
+- `destination`: the file to be created
+
+Sample:
+
+```hcl
+file.absent "test" {
+  destination = "test.txt"
+}
+```
+
+##### File (file.file)
+
+
+The `file.file` module combines file.directory and file.touch so that you can create the directory
+a file should be in before the file is created:
+
+- `directory`: the full path directory to create
+- `file`: the full path file to create
+- `recurse (optional)`: recursively apply owner and mode
+- `user (optional)`: owner of the folder
+- `mode (optional)`: mode of the folder
+
+Sample:
+
+```hcl
+file.directory "test" {
+  directory = "/path/to/dir"
+  file = "/path/to/dir/file.txt"
+}
+```
+
+
+##### Owner (file.owner)
+
+The `file.owner` module takes two required parameters:
+
+- `destination`: the file whose permissions should be checked
+- `user`: the username of the user this file should belong to
+
+Sample:
+
+```hcl
+file.owner "test" {
+  destination = "test.txt"
+  user        = "david"
+}
+```
+
+
 ##### Mode (file.mode)
 
-The `file.mode` module takes two required parameters: 
+The `file.mode` module takes two required parameters:
 
 - `destination`: the file whose permissions should be checked
 - `mode`: the octal mode of the file
