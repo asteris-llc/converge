@@ -1,3 +1,6 @@
+# simple shell tasks, for testing out converge tasks
+# included here for a race condition regression test
+
 param "working-directory" {
   default = "/tmp/converge-testing"
 }
@@ -15,7 +18,7 @@ task "touch-file" {
   interpreter = "/bin/bash"
   check_flags = ["-n"]
 
-  check = "cat {{param `test-file`}} | grep \"hello\""
-  apply = "echo hello > {{param `test-file`}}"
+  check   = "cat {{param `test-file`}} | grep \"hello\""
+  apply   = "echo hello > {{param `test-file`}}"
   depends = ["task.directory"]
 }

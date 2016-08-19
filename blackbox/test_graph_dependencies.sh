@@ -11,9 +11,9 @@ trap finish EXIT
 
 pushd $TMP
 
-for src in ${ROOT}/samples/dependencies/*.hcl; do
+for src in ${ROOT}/samples/testdata/*.hcl; do
 	b=$(basename $src)
-	echo "starting repetative graph test for ${b}"
+	# since panic doesn't happen 100% of the time, run test a few times
 	for i in `seq 1 5`; do 
 		${ROOT}/converge graph -l "WARN" ${src} >/dev/null
 	done
