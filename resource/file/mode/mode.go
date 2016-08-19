@@ -49,9 +49,13 @@ func (t *Mode) Check() (resource.TaskStatus, error) {
 	modeDiff := &FileModeDiff{Actual: mode, Expected: t.Mode}
 	diffs[t.Destination] = modeDiff
 	status := fmt.Sprintf("%q's mode is %q expected %q", t.Destination, mode, t.Mode)
+	warningLevel := resource.StatusWontChange
+	if modeDiff.Changes() {
+		warningLevel = resource.StatusWillChange
+	}
 	return &resource.Status{
 		Status:       status,
-		WarningLevel: resource.StatusWillChange,
+		WarningLevel: warningLevel,
 		WillChange:   modeDiff.Changes(),
 		Differences:  diffs,
 		Output: []string{
