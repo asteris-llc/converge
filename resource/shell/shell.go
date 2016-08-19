@@ -15,106 +15,78 @@
 package shell
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
-	"syscall"
 
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Shell task
+var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-order)"
+
+// Shell is a structure representing a task.
 type Shell struct {
-	Interpreter string
-	CheckStmt   string
-	ApplyStmt   string
+	CmdGenerator CommandExecutor
+	CheckStmt    string
+	ApplyStmt    string
+	Status       *CommandResults
 }
 
-// Check system using CheckStmt
+// Check passes through to shell.Shell.Check() and then sets the health status
 func (s *Shell) Check() (resource.TaskStatus, error) {
-	out, code, err := s.exec(s.CheckStmt)
-	status := &resource.Status{
-		WarningLevel: exitCodeToWarningLevel(code),
-		Output:       messageMapToStringSlice(out),
-		WillChange:   code != 0,
+	results, err := s.CmdGenerator.Run(s.CheckStmt)
+	if err != nil {
+		return nil, err
 	}
-	return status, err
+	s.Status = s.Status.Cons("check", results)
+	return s, nil
 }
 
-// Apply ApplyStmt stanza to system
+// Apply is a NOP for health checks
 func (s *Shell) Apply() (err error) {
-	out, code, err := s.exec(s.ApplyStmt)
-	if code != 0 {
-		return fmt.Errorf("exit code %d, stdout: %q, stderr: %q", code, out["stdout"], out["stderr"])
+	results, err := s.CmdGenerator.Run(s.ApplyStmt)
+	if err == nil {
+		s.Status = s.Status.Cons("apply", results)
 	}
-
 	return err
 }
 
-func exitCodeToWarningLevel(exitCode uint32) int {
-	switch exitCode {
-	case 0:
-		return resource.StatusNoChange
-	case 1:
-		return resource.StatusWontChange
-	default:
-		return resource.StatusWillChange
-	}
+// Value provides a value for the shell, which is the stdout data from the last
+// executed command.
+func (s *Shell) Value() string {
+	return s.Status.Stdout
 }
 
-func (s *Shell) exec(script string) (map[string]string, uint32, error) {
-	messages := make(map[string]string)
-	var code uint32
-	command := exec.Command(s.Interpreter)
-	stdin, err := command.StdinPipe()
-	if err != nil {
-		return messages, 0, err
-	}
-
-	// TODO: does this create a race condition?
-	var stdoutBuffer bytes.Buffer
-	var stderrBuffer bytes.Buffer
-	command.Stdout = &stdoutBuffer
-	command.Stderr = &stderrBuffer
-
-	if err = command.Start(); err != nil {
-		return messages, 0, err
-	}
-
-	if _, err = stdin.Write([]byte(script)); err != nil {
-		return messages, 0, err
-	}
-
-	if err = stdin.Close(); err != nil {
-		return messages, 0, err
-	}
-
-	err = command.Wait()
-	if _, ok := err.(*exec.ExitError); !ok && err != nil {
-		return messages, 0, err
-	}
-
-	switch result := command.ProcessState.Sys().(type) {
-	case syscall.WaitStatus:
-		code = uint32(result)
-	default:
-		panic(fmt.Sprintf("unknown type %+v", result))
-	}
-
-	if stdout := stdoutBuffer.String(); stdout != "" {
-		messages["stdout"] = stdout
-	}
-
-	if stderr := stderrBuffer.String(); stderr != "" {
-		messages["stderr"] = stderr
-	}
-	return messages, code, nil
+// Diffs is required to implement resource.TaskStatus but there is no mechanism
+// for defining diffs for shell operations, so returns a nil map.
+func (s *Shell) Diffs() map[string]resource.Diff {
+	return nil
 }
 
-func messageMapToStringSlice(m map[string]string) []string {
-	var messages []string
-	for k, v := range m {
-		messages = append(messages, fmt.Sprintf("%s: %s", k, v))
+// StatusCode returns the status code of the most recently executed command
+func (s *Shell) StatusCode() int {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return resource.StatusFatal
 	}
-	return messages
+	return int(s.Status.ExitStatus)
+}
+
+// Messages returns a summary of the first execution of check and/or apply.
+// Subsequent runs are surpressed.
+func (s *Shell) Messages() (messages []string) {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return
+	}
+	messages = append(messages, s.Status.Reverse().UniqOp().SummarizeAll()...)
+	return
+}
+
+// Changes returns true if changes are required as determined by the the most
+// recent run of check.
+func (s *Shell) Changes() bool {
+	if s.Status == nil {
+		fmt.Println(outOfOrderMessage)
+		return false
+	}
+	return (s.Status.ExitStatus != 0)
 }
