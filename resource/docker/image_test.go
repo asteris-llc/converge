@@ -120,6 +120,24 @@ func TestImageApply(t *testing.T) {
 	assert.NoError(t, image.Apply())
 }
 
+func TestImageApplyTimedOut(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		PullImageFunc: func(string, string) error {
+			return errors.New("inactivity time exceeded timeout")
+		},
+	}
+
+	image := &docker.Image{Name: "ubuntu", Tag: "precise"}
+	image.SetClient(c)
+
+	err := image.Apply()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "inactivity time exceeded timeout")
+	}
+}
+
 type fakeAPIClient struct {
 	FindImageFunc func(repoTag string) (*dc.APIImages, error)
 	PullImageFunc func(name, tag string) error

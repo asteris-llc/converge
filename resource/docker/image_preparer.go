@@ -14,12 +14,17 @@
 
 package docker
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"time"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // ImagePreparer for docker images
 type ImagePreparer struct {
-	Name string `hcl:"name"`
-	Tag  string `hcl:"tag"`
+	Name    string `hcl:"name"`
+	Tag     string `hcl:"tag"`
+	Timeout string `hcl:"timeout"`
 }
 
 // Prepare a new docker image
@@ -34,9 +39,22 @@ func (p *ImagePreparer) Prepare(render resource.Renderer) (resource.Task, error)
 		return nil, err
 	}
 
+	timeout, err := render.Render("timeout", p.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
 	dockerClient, err := newDockerClient()
 	if err != nil {
 		return nil, err
+	}
+
+	if timeout != "" {
+		duration, err := time.ParseDuration(timeout)
+		if err != nil {
+			return nil, err
+		}
+		dockerClient.PullInactivityTimeout = duration
 	}
 
 	image := &Image{

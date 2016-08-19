@@ -17,6 +17,7 @@ package docker_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 	"github.com/stretchr/testify/assert"
@@ -25,4 +26,10 @@ import (
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(docker.ImagePreparer))
+}
+
+func TestPreparerInvalidTimeout(t *testing.T) {
+	p := &docker.ImagePreparer{Timeout: "invalid"}
+	_, err := p.Prepare(fakerenderer.New())
+	assert.Error(t, err)
 }

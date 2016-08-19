@@ -17,6 +17,7 @@ package docker
 import (
 	"log"
 	"strings"
+	"time"
 
 	dc "github.com/fsouza/go-dockerclient"
 )
@@ -29,14 +30,15 @@ type APIClient interface {
 
 type dockerClient struct {
 	*dc.Client
+	PullInactivityTimeout time.Duration
 }
 
-func newDockerClient() (APIClient, error) {
+func newDockerClient() (*dockerClient, error) {
 	c, err := dc.NewClientFromEnv()
 	if err != nil {
 		return nil, err
 	}
-	return &dockerClient{c}, nil
+	return &dockerClient{Client: c}, nil
 }
 
 func (c *dockerClient) FindImage(repoTag string) (*dc.APIImages, error) {
@@ -61,8 +63,9 @@ func (c *dockerClient) FindImage(repoTag string) (*dc.APIImages, error) {
 func (c *dockerClient) PullImage(name, tag string) error {
 	log.Printf("[DEBUG] docker: pulling %s:%s", name, tag)
 	opts := dc.PullImageOptions{
-		Repository: name,
-		Tag:        tag,
+		Repository:        name,
+		Tag:               tag,
+		InactivityTimeout: c.PullInactivityTimeout,
 	}
 
 	err := c.Client.PullImage(opts, dc.AuthConfiguration{})
