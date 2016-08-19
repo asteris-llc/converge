@@ -1,4 +1,6 @@
 # create certificates for a Kubernetes cluster
+# included here for a race condition regression test
+
 param "master_ip" {}
 
 task "directory" {
