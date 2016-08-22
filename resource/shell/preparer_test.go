@@ -63,6 +63,6 @@ func shPreparer(script string) *shell.Preparer {
 		CheckFlags:  syntaxFlag,
 		Check:       script,
 		Dir:         "/tmp/converge",
-		Env:         []string{"ROLE=test"},
+		Env:         map[string]string{"ROLE": "test"},
 	}
 }
