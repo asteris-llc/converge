@@ -57,7 +57,10 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		return &resource.Status{}, err
 	}
 
-	diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	if string(actual) != t.Content {
+		diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	}
+
 	return &resource.Status{
 		Status:      t.Destination,
 		Differences: diffs,

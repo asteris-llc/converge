@@ -105,6 +105,7 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	printable, ok := g.Get(id).(Printable)
 	if !ok {
+		fmt.Println("does not implement printable!")
 		return pp.HiddenString(), errors.New("cannot print values that don't implement Printable")
 	}
 
@@ -185,6 +186,7 @@ after:
 func (p *Printer) indent(in string) string {
 	return "\t" + strings.Replace(in, "\n", "\n\t", -1)
 }
+
 func (p *Printer) empty(s string) bool {
 	return s == ""
 }

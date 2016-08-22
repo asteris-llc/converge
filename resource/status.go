@@ -14,11 +14,6 @@
 
 package resource
 
-import (
-	"bytes"
-	"fmt"
-)
-
 const (
 	// StatusNoChange means no changes are necessary
 	StatusNoChange int = 0
@@ -89,21 +84,14 @@ func (t *Status) Changes() bool {
 
 // HealthCheck provides a default health check implementation for statuses
 func (t *Status) HealthCheck() (status *HealthStatus, err error) {
-	status = new(HealthStatus)
-	var diffBuffer bytes.Buffer
-	if !t.Changes() {
+	status = &HealthStatus{TaskStatus: t, FailingDeps: make(map[string]string)}
+	if !t.Changes() && len(t.FailingDeps) == 0 {
 		return
 	}
-	for diffName, diff := range t.Differences {
-		diffBuffer.WriteString(fmt.Sprintf("%s: %s => %s\n", diffName, diff.Original(), diff.Current()))
+	status.UpgradeWarning(StatusWarning)
+	for _, failingDep := range t.FailingDeps {
+		status.FailingDeps[failingDep.ID] = failingDep.Status.Value()
 	}
-	for _, dep := range t.FailingDeps {
-		diffBuffer.WriteString(fmt.Sprintf("failing dependency: %s (%s)\n", dep.ID, dep.Status.Value()))
-	}
-	if len(t.FailingDeps) > 0 {
-		status.UpgradeWarning(StatusWarning)
-	}
-	status.Message = diffBuffer.String()
 	if t.StatusCode() < 2 {
 		status.UpgradeWarning(StatusWarning)
 	} else {
