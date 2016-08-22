@@ -29,10 +29,20 @@ type Result struct {
 }
 
 // Messages returns any result status messages supplied by the task
-func (r *Result) Messages() []string { return r.Status.Messages() }
+func (r *Result) Messages() []string {
+	if r.Status != nil {
+		return r.Status.Messages()
+	}
+	return nil
+}
 
 // Changes returns the fields that changed
-func (r *Result) Changes() map[string]resource.Diff { return r.Plan.Changes() }
+func (r *Result) Changes() map[string]resource.Diff {
+	if r.Plan != nil {
+		return r.Plan.Changes()
+	}
+	return nil
+}
 
 // HasChanges indicates if this result ran
 func (r *Result) HasChanges() bool { return r.Ran }
