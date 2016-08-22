@@ -83,13 +83,13 @@ not display healthy checks.`,
 
 			results, err := resource.CheckGraph(ctx, unboxed)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: health checking failed: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: checking failed: %s\n", fname, err)
 			}
 
-			fmt.Println("results...")
-			fmt.Println(results)
-
-			out, perr := healthPrinter().Show(ctx, results)
+			// printer := health.New()
+			// printer.Printer.Color = UseColor()
+			// out, perr := prettyprinters.New(printer).Show(ctx, results)
+			out, perr := getPrinter().Show(ctx, results)
 			if perr != nil {
 				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
