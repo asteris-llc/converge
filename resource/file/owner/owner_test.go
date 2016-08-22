@@ -80,6 +80,6 @@ func TestApply(t *testing.T) {
 	assert.NoError(t, err)
 	status, err := o.Check()
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("owner of file %q is %q should be %q", o.Destination, actualUser.Username, o.User.Username), status.Value())
-	assert.Equal(t, resource.StatusWillChange, status.StatusCode)
+	assert.Equal(t, fmt.Sprintf("owner of file %q is %q should be %q", o.Destination, o.User.Username, actualUser.Username), status.Value())
+	assert.Equal(t, resource.StatusWillChange, status.StatusCode())
 }
