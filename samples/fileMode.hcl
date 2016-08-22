@@ -2,7 +2,7 @@ param "filename" {
   default = "test.txt"
 }
 
-file.owner "render" {
+file.mode "render" {
   destination = "{{param `filename`}}"
-  user        = "nobody"
+  mode        = 0777
 }
