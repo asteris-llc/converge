@@ -1,5 +1,5 @@
-hash: 3088a17de53b8b259e8de6968322b915c9905653a06a4ce19e3fff779c613e51
-updated: 2016-08-09T11:36:49.57366789-05:00
+hash: e7d56964f2cfbc3f05969c0df30f6ac72791b1189817352f75b96ebfca78c9ce
+updated: 2016-08-22T18:05:52.845901333-04:00
 imports:
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
@@ -11,10 +11,37 @@ imports:
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
+- name: github.com/docker/docker
+  version: 7cd88e5ec4fc13e1ded0eb7c565ed299b46c8259
+  subpackages:
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/homedir
+  - pkg/stdcopy
+  - pkg/idtools
+  - pkg/ioutils
+  - pkg/pools
+  - pkg/promise
+  - pkg/system
+  - pkg/longpath
+- name: github.com/docker/engine-api
+  version: 2f8c367944a28130f3c2fb9f0aad7f1d5db952a9
+  subpackages:
+  - types/swarm
+  - types/filters
+  - types/mount
+  - types/versions
+- name: github.com/docker/go-units
+  version: eb879ae3e2b84e2a142af415b679ddeda47ec71c
 - name: github.com/fsnotify/fsnotify
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+- name: github.com/fsouza/go-dockerclient
+  version: 0436d420da98515cfe6370c9c5cdde868415637b
 - name: github.com/hashicorp/errwrap
   version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
+- name: github.com/hashicorp/go-cleanhttp
+  version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/go-multierror
   version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - name: github.com/hashicorp/hcl
@@ -51,6 +78,15 @@ imports:
   version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/opencontainers/runc
+  version: 31d51c10e1ee92736556d33a0793ff37685a1172
+  subpackages:
+  - libcontainer/system
+  - libcontainer/user
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: 0049ab3dc4c4c70a9eee23087437b69c0dde2130
 - name: github.com/pkg/errors
   version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
 - name: github.com/pkg/sftp
@@ -59,8 +95,10 @@ imports:
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
+- name: github.com/Sirupsen/logrus
+  version: 08a8a7c27e3d058a8989316a850daad1c10bf4ab
 - name: github.com/spf13/afero
-  version: cc9c21814bb945440253108c4d3c65c85aac3c68
+  version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
   - mem
   - sftp
@@ -75,7 +113,7 @@ imports:
 - name: github.com/spf13/viper
   version: d8a428b8a30606e1d0b355d91edf282609ade1a6
 - name: github.com/streamrail/concurrent-map
-  version: 238fe79560e1b42091fb0eba460fdefb8a485931
+  version: cb2afd122df56f577a08233461f439bbd74c1e1f
 - name: github.com/stretchr/objx
   version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 - name: github.com/stretchr/testify
@@ -89,7 +127,7 @@ imports:
 - name: github.com/ttacon/chalk
   version: 76b3c8b611dea8f83e49e9ce81fc2b189e0ef3d2
 - name: golang.org/x/crypto
-  version: e0d166c33c321d0ff863f459a5882096e334f508
+  version: b35ccbc95a0eaae49fb65c5d627cb7149ed8d1ab
   subpackages:
   - ssh
   - curve25519
@@ -99,12 +137,13 @@ imports:
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
   - context
+  - context/ctxhttp
 - name: golang.org/x/sys
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  version: d69c40b4be55797923cec7457fac7a244d91a9b6
   subpackages:
   - transform
   - unicode/norm
