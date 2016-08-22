@@ -41,6 +41,8 @@ type Preparer struct {
 	Check       string   `hcl:"check"`
 	Apply       string   `hcl:"apply"`
 	Timeout     string   `hcl:"timeout"`
+	Dir         string   `hcl:"dir"`
+	Env         []string `hcl:"env"`
 }
 
 // Prepare a new shell task
@@ -61,6 +63,22 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
+	dir, err := render.Render("dir", p.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	// render Env
+	renderedEnv := make([]string, len(p.Env))
+	for i, envvar := range p.Env {
+		rendered, err := render.Render("env"+string(i), envvar)
+		if err != nil {
+			return nil, err
+		}
+
+		renderedEnv[i] = rendered
+	}
+
 	timeout, err := render.Render("timeout", p.Timeout)
 	if err != nil {
 		return nil, err
@@ -69,6 +87,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	generator := &CommandGenerator{
 		Interpreter: interpreter,
 		Flags:       p.ExecFlags,
+		Dir:         dir,
+		Env:         renderedEnv,
 	}
 
 	if duration, err := time.ParseDuration(timeout); err == nil {
