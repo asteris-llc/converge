@@ -16,6 +16,7 @@ package shell
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -35,14 +36,14 @@ var (
 
 // Preparer for shell tasks
 type Preparer struct {
-	Interpreter string   `hcl:"interpreter"`
-	CheckFlags  []string `hcl:"check_flags"`
-	ExecFlags   []string `hcl:"exec_flags"`
-	Check       string   `hcl:"check"`
-	Apply       string   `hcl:"apply"`
-	Timeout     string   `hcl:"timeout"`
-	Dir         string   `hcl:"dir"`
-	Env         []string `hcl:"env"`
+	Interpreter string            `hcl:"interpreter"`
+	CheckFlags  []string          `hcl:"check_flags"`
+	ExecFlags   []string          `hcl:"exec_flags"`
+	Check       string            `hcl:"check"`
+	Apply       string            `hcl:"apply"`
+	Timeout     string            `hcl:"timeout"`
+	Dir         string            `hcl:"dir"`
+	Env         map[string]string `hcl:"env"`
 }
 
 // Prepare a new shell task
@@ -70,13 +71,15 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	// render Env
 	renderedEnv := make([]string, len(p.Env))
-	for i, envvar := range p.Env {
-		rendered, err := render.Render("env"+string(i), envvar)
+	idx := 0
+	for name, val := range p.Env {
+		pair := fmt.Sprintf("%s=%s", name, val)
+		rendered, err := render.Render("env-"+name, pair)
 		if err != nil {
 			return nil, err
 		}
-
-		renderedEnv[i] = rendered
+		renderedEnv[idx] = rendered
+		idx++
 	}
 
 	timeout, err := render.Render("timeout", p.Timeout)
