@@ -29,9 +29,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// planCmd represents the plan command
-var checkCmd = &cobra.Command{
-	Use:   "check",
+// healthcheckCmd represents the 'healthcheck' command
+var healthcheckCmd = &cobra.Command{
+	Use:   "healthcheck",
 	Short: "display a system health check",
 	Long: `Health checks determine the health status of your system.  Health
 checks are similar to 'plan' but will not calculate potential deltas, and will
@@ -96,8 +96,8 @@ not display healthy checks.`,
 }
 
 func init() {
-	checkCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
-	addParamsArguments(checkCmd.PersistentFlags())
-	viperBindPFlags(checkCmd.Flags())
-	RootCmd.AddCommand(checkCmd)
+	healthcheckCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
+	addParamsArguments(healthcheckCmd.PersistentFlags())
+	viperBindPFlags(healthcheckCmd.Flags())
+	RootCmd.AddCommand(healthcheckCmd)
 }
