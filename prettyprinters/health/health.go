@@ -17,14 +17,13 @@ package health
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/human"
+	"github.com/asteris-llc/converge/prettyprinters/tmpltools"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/ttacon/chalk"
 )
 
 // Printer for health checks
@@ -160,63 +159,5 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 }
 
 func (p *Printer) template(source string) (*template.Template, error) {
-	funcs := map[string]interface{}{
-		// colors
-		"black":       p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)),
-		"red":         p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)),
-		"green":       p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)),
-		"yellow":      p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)),
-		"magenta":     p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)),
-		"cyan":        p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)),
-		"white":       p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)),
-		"indent":      p.indent,
-		"diff":        p.diff,
-		"showWarning": p.showWarning,
-	}
-	return template.New("").Funcs(funcs).Parse(source)
-}
-
-func (p *Printer) diff(before, after string) (string, error) {
-	// remember when modifying these that diff is responsible for leading
-	// whitespace
-	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		return fmt.Sprintf(" %q => %q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
-	}
-
-	tmpl, err := p.template(`before:
-{{indent .Before}}
-after:
-{{indent .After}}`)
-	if err != nil {
-		return "", err
-	}
-
-	buf := new(bytes.Buffer)
-	err = tmpl.Execute(buf, struct{ Before, After string }{before, after})
-
-	return "\n" + p.indent(p.indent(buf.String())), err
-}
-
-func (p *Printer) showWarning(c resource.HealthStatusCode) string {
-	switch c {
-	case resource.StatusHealthy:
-		return "Healthy"
-	case resource.StatusWarning:
-		return "Warning"
-	case resource.StatusError:
-		return "Error"
-	default:
-		return "Fatal: Unkown Error"
-	}
-}
-
-func (p *Printer) indent(in string) string {
-	return "\t" + strings.Replace(in, "\n", "\n\t", -1)
-}
-
-func (p *Printer) styled(style chalk.Style) func(string) string {
-	if !p.Printer.Color {
-		return func(in string) string { return in }
-	}
-	return style.Style
+	return tmpltools.Run(p.Printer.Color, source)
 }

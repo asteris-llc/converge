@@ -185,7 +185,6 @@ after:
 func (p *Printer) indent(in string) string {
 	return "\t" + strings.Replace(in, "\n", "\n\t", -1)
 }
-
 func (p *Printer) empty(s string) bool {
 	return s == ""
 }
