@@ -46,7 +46,7 @@ func TestContentCheckEmptyFile(t *testing.T) {
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()[tmpfile.Name()]
 	assert.Equal(t, "", fileDiff.Original())
-	assert.True(t, status.Changes())
+	assert.True(t, status.HasChanges())
 
 }
 
@@ -60,7 +60,7 @@ func TestContentCheckMissingFile(t *testing.T) {
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()["missing-file"]
 	assert.Equal(t, "<file-missing>", fileDiff.Original())
-	assert.True(t, status.Changes())
+	assert.True(t, status.HasChanges())
 
 }
 
@@ -76,7 +76,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 
 	status, err := tmpl.Check()
 	assert.Equal(t, "", status.Value())
-	assert.True(t, status.Changes())
+	assert.True(t, status.HasChanges())
 	if assert.Error(t, err) {
 		assert.EqualError(
 			t,
@@ -102,7 +102,7 @@ func TestContentCheckSetsValueToFileName(t *testing.T) {
 
 	status, err := tmpl.Check()
 	assert.Equal(t, tmpfile.Name(), status.Value())
-	assert.False(t, status.Changes())
+	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
 }
 

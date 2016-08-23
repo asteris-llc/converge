@@ -78,7 +78,7 @@ func (h *HealthStatus) Changes() map[string]Diff {
 
 // HasChanges returns true if the status indicates that there are changes
 func (h *HealthStatus) HasChanges() bool {
-	return h.Changes()
+	return h.HasChanges()
 }
 
 // Error returns nil

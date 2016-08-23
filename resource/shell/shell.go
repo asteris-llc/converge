@@ -81,9 +81,9 @@ func (s *Shell) Messages() (messages []string) {
 	return
 }
 
-// Changes returns true if changes are required as determined by the the most
+// HasChanges returns true if changes are required as determined by the the most
 // recent run of check.
-func (s *Shell) Changes() bool {
+func (s *Shell) HasChanges() bool {
 	if s.Status == nil {
 		fmt.Println(outOfOrderMessage)
 		return false
