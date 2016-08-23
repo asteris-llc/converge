@@ -60,10 +60,6 @@ func (t *Status) Value() string {
 	return t.Status
 }
 
-func convertMap(t Diff) Diff {
-	return t
-}
-
 // Diffs returns the internal differences
 func (t *Status) Diffs() map[string]Diff {
 	return t.Differences
