@@ -31,6 +31,7 @@ import (
 // Printer for health checks
 type Printer struct {
 	*human.Printer
+	Summary bool
 }
 
 // healthWrapper wraps a HealthStatus with ID context
@@ -47,8 +48,7 @@ func New() *Printer {
 
 // NewWithPrinter uses the provided human printer
 func NewWithPrinter(h *human.Printer) *Printer {
-	return &Printer{h}
-
+	return &Printer{Printer: h}
 }
 
 // FinishPP sumarizes the results of the health check
@@ -95,6 +95,32 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 	return &out, err
 }
 
+func (p *Printer) getDrawTemplate() (*template.Template, error) {
+	if p.Summary {
+		return p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}: Status: {{showWarning .WarningLevel}}; {{len .FailingDeps}} failing dependencies
+
+`)
+	}
+	return p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}: {{showWarning .WarningLevel}}
+	Messages:
+	{{- range $msg := .Messages}}
+	{{indent $msg}}
+	{{- end}}
+	{{- if .HasChanges}}
+	{{- range $key, $values := .Changes}}
+	{{red $key}}: {{diff ($values.Original) ($values.Current)}}
+	{{- end}}
+	{{- end}}
+	{{- if .HasFailingDeps}}
+	Dependencies Have Failed:
+	{{- range $dep, $val := .FailingDeps}}
+	{{indent $dep}}: {{$val}}
+	{{- end}}
+	{{- end}}
+
+`)
+}
+
 // DrawNode draws a single health check
 func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	type printerNode struct {
@@ -117,23 +143,8 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), nil
 	}
 
-	tmpl, err := p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}: {{showWarning .WarningLevel}}
-	Messages:
-	{{- range $msg := .Messages}}
-	{{indent $msg}}
-	{{- end}}
-	{{- if .HasChanges}}
-	{{- range $key, $values := .Changes}}
-	{{red $key}}: {{diff ($values.Original) ($values.Current)}}
-	{{- end}}
-	{{- end}}
-	{{- if .HasFailingDeps}}
-	Dependencies Have Failed:
-	{{- range $dep, $val := .FailingDeps}}
-	{{indent $dep}}: {{$val}}
-	{{- end}}
-	{{- end}}
-`)
+	tmpl, err := p.getDrawTemplate()
+
 	if err != nil {
 		fmt.Println("template generation error")
 		return pp.HiddenString(), err

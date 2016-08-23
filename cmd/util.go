@@ -61,7 +61,9 @@ func healthPrinter() prettyprinters.Printer {
 		return ok
 	}
 	provider := humanProvider(showHealthNodes)
-	return prettyprinters.New(health.NewWithPrinter(provider))
+	health := health.NewWithPrinter(provider)
+	health.Summary = viper.GetBool("quiet")
+	return prettyprinters.New(health)
 }
 
 // UseColor tells us whether or not to print colors using ANSI escape sequences
