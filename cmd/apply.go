@@ -94,7 +94,7 @@ real happens.`,
 			// print results
 			out, perr := printer.Show(ctx, results)
 			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
 			}
 
 			fmt.Print("\n")
