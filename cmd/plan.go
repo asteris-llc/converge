@@ -77,7 +77,7 @@ can be done separately to see what needs to be changed before execution.`,
 			// print results
 			out, perr := getPrinter().Show(ctx, results)
 			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
 			}
 
 			fmt.Print("\n")
