@@ -15,6 +15,7 @@
 package param_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -67,6 +68,44 @@ func TestPreparerRequired(t *testing.T) {
 
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "param is required")
+	}
+}
+
+func TestPreparerValidate(t *testing.T) {
+	t.Parallel()
+
+	test_table := []struct {
+		pType string
+		exp   error
+		val   string
+		musts []string
+	}{
+		// STRING TESTS
+
+		// type check only
+		{"string", nil, "password", nil},
+
+		// rule checks
+		{"string", nil, "password", []string{"len . | le 4"}},
+		{"string", errors.New("Expected true from rule-0-must-0, got false"), "password", []string{"empty"}},
+
+		// INT TESTS
+
+		// type check only
+		{"int", nil, "12", nil},
+		{"int", errors.New("vtype is \"int\", but converting \"twelve\" failed"), "twelve", nil},
+
+		// rule checks
+		{"int", nil, "12", []string{"min 3"}},
+		{"int", errors.New("Expected true from rule-0-must-0, got false"), "12", []string{"max 3"}},
+	}
+
+	for _, test := range test_table {
+		rules := &param.Rule{Must: test.musts}
+		prep := &param.Preparer{Type: test.pType, Rules: []*param.Rule{rules}}
+
+		_, act := prep.Prepare(fakerenderer.NewWithValue(test.val))
+		assert.Equal(t, test.exp, act)
 	}
 }
 
