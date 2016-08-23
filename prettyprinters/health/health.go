@@ -30,7 +30,7 @@ import (
 
 // Printer for health checks
 type Printer struct {
-	human.Printer
+	*human.Printer
 }
 
 // healthWrapper wraps a HealthStatus with ID context
@@ -42,42 +42,107 @@ type healthWrapper struct {
 // New returns a new Printer with an embedded human printer that hides
 // non-healthcheck nodes
 func New() *Printer {
-	return &Printer{*human.New()}
+	return NewWithPrinter(human.New())
+}
+
+// NewWithPrinter uses the provided human printer
+func NewWithPrinter(h *human.Printer) *Printer {
+	return &Printer{h}
+
 }
 
 // FinishPP sumarizes the results of the health check
 func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
-	return pp.VisibleString("==End of Graph==\n"), nil
+	var warnings int
+	var errors int
+	var deps int
+	type summaryObj struct {
+		Warnings int
+		Errors   int
+		Deps     int
+	}
+	root, err := g.Root()
+	if err != nil {
+		return pp.HiddenString(), err
+	}
+	for _, vertex := range g.Vertices() {
+		if vertex == root {
+			continue
+		}
+		status, ok := g.Get(vertex).(*resource.HealthStatus)
+		if !ok {
+			continue
+		}
+		if status.IsError() {
+			errors++
+		}
+		if status.IsWarning() {
+			warnings++
+		}
+		if len(status.FailingDeps) > 0 {
+			deps++
+		}
+	}
+	tmpl, err := p.template(`{{if (gt .Errors 0)}}{{red "Summary"}}{{else if (gt .Warnings 0)}}{{yellow "Summary"}}{{else}}Summary{{end}}: {{.Errors}} errors, {{.Warnings}} warnings
+{{.Deps}} checks will fail due to failing dependencies
+`)
+	if err != nil {
+		fmt.Println("failed to render template")
+		return pp.HiddenString(), err
+	}
+	var out bytes.Buffer
+	err = tmpl.Execute(&out, &summaryObj{Warnings: warnings, Errors: errors, Deps: deps})
+	return &out, err
 }
 
 // DrawNode draws a single health check
 func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
-	check, ok := g.Get(id).(resource.Check)
-	if !ok {
-		return pp.HiddenString(), nil
+	type printerNode struct {
+		ID string
+		*resource.HealthStatus
 	}
-	status, err := check.HealthCheck()
-	if err != nil {
+
+	if root, err := g.Root(); root == id || err != nil {
 		return pp.HiddenString(), err
 	}
 
-	if !status.ShouldDisplay() {
+	node := g.Get(id)
+	healthStatus, ok := node.(*resource.HealthStatus)
+	if !ok {
+		fmt.Printf("%s is not a health node, deferring to the human printer\n", id)
+		return p.Printer.DrawNode(g, id)
+	}
+
+	if !healthStatus.ShouldDisplay() {
 		return pp.HiddenString(), nil
 	}
 
-	fmt.Printf("status: %v\n", status)
-
-	tmpl, err := p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}:
-	Messages
+	tmpl, err := p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}: {{showWarning .WarningLevel}}
+	Messages:
+	{{- range $msg := .Messages}}
+	{{indent $msg}}
+	{{- end}}
+	{{- if .HasChanges}}
+	{{- range $key, $values := .Changes}}
+	{{red $key}}: {{diff ($values.Original) ($values.Current)}}
+	{{- end}}
+	{{- end}}
+	{{- if .HasFailingDeps}}
+	Dependencies Have Failed:
+	{{- range $dep, $val := .FailingDeps}}
+	{{indent $dep}}: {{$val}}
+	{{- end}}
+	{{- end}}
 `)
 	if err != nil {
-		return nil, err
+		fmt.Println("template generation error")
+		return pp.HiddenString(), err
 	}
 
 	var out bytes.Buffer
-	wrapper := &healthWrapper{HealthStatus: status, ID: id}
-	err = tmpl.Execute(&out, wrapper)
-	return pp.VisibleString(out.String()), err
+	err = tmpl.Execute(&out, &printerNode{ID: id, HealthStatus: healthStatus})
+
+	return &out, err
 }
 
 func mkError(msg string) (pp.Renderable, error) {
@@ -87,16 +152,52 @@ func mkError(msg string) (pp.Renderable, error) {
 func (p *Printer) template(source string) (*template.Template, error) {
 	funcs := map[string]interface{}{
 		// colors
-		"black":   p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)),
-		"red":     p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)),
-		"green":   p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)),
-		"yellow":  p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)),
-		"magenta": p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)),
-		"cyan":    p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)),
-		"white":   p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)),
-		"indent":  p.indent,
+		"black":       p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)),
+		"red":         p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)),
+		"green":       p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)),
+		"yellow":      p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)),
+		"magenta":     p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)),
+		"cyan":        p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)),
+		"white":       p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)),
+		"indent":      p.indent,
+		"diff":        p.diff,
+		"showWarning": p.showWarning,
 	}
 	return template.New("").Funcs(funcs).Parse(source)
+}
+
+func (p *Printer) diff(before, after string) (string, error) {
+	// remember when modifying these that diff is responsible for leading
+	// whitespace
+	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
+		return fmt.Sprintf(" %q => %q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
+	}
+
+	tmpl, err := p.template(`before:
+{{indent .Before}}
+after:
+{{indent .After}}`)
+	if err != nil {
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+	err = tmpl.Execute(buf, struct{ Before, After string }{before, after})
+
+	return "\n" + p.indent(p.indent(buf.String())), err
+}
+
+func (p *Printer) showWarning(c resource.HealthStatusCode) string {
+	switch c {
+	case resource.StatusHealthy:
+		return "Healthy"
+	case resource.StatusWarning:
+		return "Warning"
+	case resource.StatusError:
+		return "Error"
+	default:
+		return "Fatal: Unkown Error"
+	}
 }
 
 func (p *Printer) indent(in string) string {

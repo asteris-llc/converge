@@ -76,20 +76,12 @@ not display healthy checks.`,
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			unboxed, err := unboxTaskStatus(ctx, planned)
-			if err != nil {
-				log.Fatalf("[FATAL] %s: unboxing plan failed: %s\n", fname, err)
-			}
-
-			results, err := resource.CheckGraph(ctx, unboxed)
+			results, err := resource.CheckGraph(ctx, planned)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: checking failed: %s\n", fname, err)
 			}
 
-			// printer := health.New()
-			// printer.Printer.Color = UseColor()
-			// out, perr := prettyprinters.New(printer).Show(ctx, results)
-			out, perr := getPrinter().Show(ctx, results)
+			out, perr := healthPrinter().Show(ctx, results)
 			if perr != nil {
 				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}

@@ -11,3 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+package resource_test
+
+import (
+	"testing"
+
+	"github.com/asteris-llc/converge/prettyprinters/human"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test_HeathStatus_ImplementsPrinterInterface(t *testing.T) {
+	t.Parallel()
+	assert.Implements(t, (*human.Printable)(nil), new(resource.HealthStatus))
+}
