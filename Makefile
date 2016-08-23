@@ -19,7 +19,7 @@ test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 	./converge fmt --check samples/*.hcl
 
 gotest:
-	go test -v ${TESTDIRS}
+	go test ${TESTDIRS}
 
 bench:
 	go test -run='^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
