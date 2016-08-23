@@ -40,7 +40,7 @@ type TaskStatus interface {
 	Diffs() map[string]Diff
 	StatusCode() int
 	Messages() []string
-	Changes() bool
+	HasChanges() bool
 }
 
 // Status is the default TaskStatus implementation
@@ -77,15 +77,15 @@ func (t *Status) Messages() []string {
 	return t.Output
 }
 
-// Changes returns the WillChange value
-func (t *Status) Changes() bool {
+// HasChanges returns the WillChange value
+func (t *Status) HasChanges() bool {
 	return t.WillChange
 }
 
 // HealthCheck provides a default health check implementation for statuses
 func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	status = &HealthStatus{TaskStatus: t, FailingDeps: make(map[string]string)}
-	if !t.Changes() && len(t.FailingDeps) == 0 {
+	if !t.HasChanges() && len(t.FailingDeps) == 0 {
 		return
 	}
 	status.UpgradeWarning(StatusWarning)

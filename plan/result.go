@@ -30,7 +30,7 @@ func (r *Result) Messages() []string { return r.Status.Messages() }
 func (r *Result) Changes() map[string]resource.Diff { return r.Status.Diffs() }
 
 // HasChanges indicates if this result will change
-func (r *Result) HasChanges() bool { return r.Status.Changes() }
+func (r *Result) HasChanges() bool { return r.Status.HasChanges() }
 
 // Error returns the error assigned to this Result, if any
 func (r *Result) Error() error { return r.Err }

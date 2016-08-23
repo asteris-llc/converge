@@ -37,7 +37,7 @@ func isFailingStatus(stat TaskStatus) bool {
 	if check, ok := stat.(Check); ok {
 		return healthCheckOK(check)
 	}
-	return stat.Changes()
+	return stat.HasChanges()
 }
 
 func healthCheckOK(c Check) bool {
