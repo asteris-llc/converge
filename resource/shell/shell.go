@@ -28,6 +28,7 @@ type Shell struct {
 	CheckStmt    string
 	ApplyStmt    string
 	Status       *CommandResults
+	HealthStatus *resource.HealthStatus
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
@@ -48,6 +49,8 @@ func (s *Shell) Apply() (err error) {
 	}
 	return err
 }
+
+// resource.TaskStatus functions
 
 // Value provides a value for the shell, which is the stdout data from the last
 // executed command.
@@ -89,4 +92,48 @@ func (s *Shell) HasChanges() bool {
 		return false
 	}
 	return (s.Status.ExitStatus != 0)
+}
+
+// healthcheck.Check functions
+
+// FailingDep tracks a failing dependency
+func (s *Shell) FailingDep(name string, task resource.TaskStatus) {
+	if s.HealthStatus == nil {
+		s.HealthStatus = new(resource.HealthStatus)
+		s.HealthStatus.FailingDeps = make(map[string]string)
+	}
+	s.HealthStatus.FailingDeps[name] = task.Value()
+}
+
+// HealthCheck performs a health check
+func (s *Shell) HealthCheck() (*resource.HealthStatus, error) {
+	var err error
+	if s.HealthStatus == nil {
+		err = s.updateHealthStatus()
+	}
+	return s.HealthStatus, err
+}
+
+func (s *Shell) updateHealthStatus() error {
+	if s.Status == nil {
+		fmt.Println("[INFO] health status requested with no plan, running check")
+		if _, err := s.Check(); err != nil {
+			return err
+		}
+	}
+	if s.HealthStatus == nil {
+		s.HealthStatus = new(resource.HealthStatus)
+	}
+	s.HealthStatus.TaskStatus = s
+	s.HealthStatus.WarningLevel = exitStatusToWarningLevel(s.Status.ExitStatus)
+	return nil
+}
+
+func exitStatusToWarningLevel(status uint32) resource.HealthStatusCode {
+	if status == 0 {
+		return resource.StatusHealthy
+	} else if status == 1 {
+		return resource.StatusWarning
+	}
+	return resource.StatusError
 }

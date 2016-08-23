@@ -18,6 +18,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,7 @@ var any = mock.Anything
 func Test_Shell_ImplementsTaskInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(shell.Shell))
+	assert.Implements(t, (*healthcheck.Check)(nil), new(shell.Shell))
 }
 
 // Check
