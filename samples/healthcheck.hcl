@@ -8,8 +8,8 @@ param "filename" {
 
 file.content "dep" {
   destination = "{{param `filename`}}.2"
-  content = "{{param `message`}}"
-  depends = ["file.content.render"]
+  content     = "{{param `message`}}"
+  depends     = ["file.content.render"]
 }
 
 file.content "render" {
