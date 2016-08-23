@@ -4,5 +4,5 @@ param "filename" {
 
 file.group "render" {
   destination = "{{param `filename`}}"
-  group        = "test"
+  group       = "test"
 }
