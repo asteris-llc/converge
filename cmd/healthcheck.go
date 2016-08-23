@@ -22,10 +22,10 @@ import (
 	"os"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
-	"github.com/asteris-llc/converge/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -76,7 +76,7 @@ not display healthy checks.`,
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			results, err := resource.CheckGraph(ctx, planned)
+			results, err := healthcheck.CheckGraph(ctx, planned)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: checking failed: %s\n", fname, err)
 			}

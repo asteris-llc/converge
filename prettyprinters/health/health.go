@@ -16,7 +16,6 @@ package health
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -95,9 +94,17 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 	return &out, err
 }
 
-func (p *Printer) getDrawTemplate() (*template.Template, error) {
+func (p *Printer) getDrawTemplate(st *resource.HealthStatus) (*template.Template, error) {
 	if p.Summary {
+		if !st.ShouldDisplay() {
+			return p.template(``)
+		}
 		return p.template(`{{if .IsError}}{{red .ID}}{{else if .IsWarning}}{{yellow .ID}}{{else}}{{.ID}}{{end}}: Status: {{showWarning .WarningLevel}}; {{len .FailingDeps}} failing dependencies
+
+`)
+	}
+	if !st.ShouldDisplay() {
+		return p.template(`{{green .ID}}: OK
 
 `)
 	}
@@ -139,11 +146,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return p.Printer.DrawNode(g, id)
 	}
 
-	if !healthStatus.ShouldDisplay() {
-		return pp.HiddenString(), nil
-	}
-
-	tmpl, err := p.getDrawTemplate()
+	tmpl, err := p.getDrawTemplate(healthStatus)
 
 	if err != nil {
 		fmt.Println("template generation error")
@@ -154,10 +157,6 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	err = tmpl.Execute(&out, &printerNode{ID: id, HealthStatus: healthStatus})
 
 	return &out, err
-}
-
-func mkError(msg string) (pp.Renderable, error) {
-	return nil, errors.New(msg)
 }
 
 func (p *Printer) template(source string) (*template.Template, error) {
