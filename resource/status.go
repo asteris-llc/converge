@@ -14,6 +14,8 @@
 
 package resource
 
+import "fmt"
+
 const (
 	// StatusNoChange means no changes are necessary
 	StatusNoChange int = 0
@@ -90,7 +92,14 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	}
 	status.UpgradeWarning(StatusWarning)
 	for _, failingDep := range t.FailingDeps {
-		status.FailingDeps[failingDep.ID] = failingDep.Status.Value()
+		var depMessage string
+		if msg := failingDep.Status.Value(); msg != "" {
+			depMessage = msg
+		} else {
+			depMessage = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
+		}
+
+		status.FailingDeps[failingDep.ID] = depMessage
 	}
 	if t.StatusCode() < 2 {
 		status.UpgradeWarning(StatusWarning)

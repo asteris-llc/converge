@@ -31,6 +31,11 @@ type HealthStatus struct {
 	FailingDeps  map[string]string
 }
 
+// HasFailingDeps returns true of FailingDeps is not empty
+func (h *HealthStatus) HasFailingDeps() bool {
+	return len(h.FailingDeps) > 0
+}
+
 // UpgradeWarning will increase the warning level to at least `level`, but will
 // not decrease it if it's already higher.
 func (h *HealthStatus) UpgradeWarning(level HealthStatusCode) {
@@ -62,23 +67,27 @@ func (h *HealthStatus) ShouldDisplay() bool {
 
 // Messages returns health status messages
 func (h *HealthStatus) Messages() []string {
-	messages := make([]string, 1+len(h.FailingDeps))
-	if h.ShouldDisplay() {
-		messages = append(messages, fmt.Sprintf("health check returned %d\n", h.StatusCode()))
+	var messages []string
+	if statusCode := h.TaskStatus.StatusCode(); statusCode != 0 {
+		messages = append(messages, fmt.Sprintf("Check returned %d", statusCode))
 	}
-	for depName, depStatus := range h.FailingDeps {
-		messages = append(messages, fmt.Sprintf("failing dependency: %s: %s", depName, depStatus))
+	if h.TaskStatus.HasChanges() {
+		messages = append(messages, "Check indicates changes are required")
+	}
+	if depCount := len(h.FailingDeps); depCount > 0 {
+		messages = append(messages, fmt.Sprintf("%d failing dependencies", depCount))
 	}
 	return messages
 }
 
+// Changes returns changes from the underlying TaskStatus diffs
 func (h *HealthStatus) Changes() map[string]Diff {
 	return h.Diffs()
 }
 
 // HasChanges returns true if the status indicates that there are changes
 func (h *HealthStatus) HasChanges() bool {
-	return h.HasChanges()
+	return h.TaskStatus.HasChanges()
 }
 
 // Error returns nil

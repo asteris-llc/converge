@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 
 	"github.com/asteris-llc/converge/graph"
 )
@@ -15,7 +16,11 @@ type Check interface {
 // CheckGraph walks a graph and runs health checks on each health-checkable node
 func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	return in.Transform(ctx, func(id string, out *graph.Graph) error {
-		asCheck, ok := out.Get(id).(Check)
+		task, err := unboxNode(out.Get(id))
+		if err != nil {
+			return err
+		}
+		asCheck, ok := task.(Check)
 		if !ok {
 			return nil
 		}
@@ -28,9 +33,26 @@ func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				asCheck.FailingDep(dep, depStatus)
 			}
 		}
-		out.Add(id, asCheck)
+		status, err := asCheck.HealthCheck()
+		if err != nil {
+			return err
+		}
+		out.Add(id, status)
 		return nil
 	})
+}
+
+func unboxNode(i interface{}) (TaskStatus, error) {
+	type statusWrapper interface {
+		GetStatus() TaskStatus
+	}
+
+	if wrapper, ok := i.(statusWrapper); ok {
+		return wrapper.GetStatus(), nil
+	} else if taskStatus, ok := i.(TaskStatus); ok {
+		return taskStatus, nil
+	}
+	return nil, errors.New("[FATAL] cannot get task status from node")
 }
 
 func isFailingStatus(stat TaskStatus) bool {

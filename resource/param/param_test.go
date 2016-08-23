@@ -35,7 +35,7 @@ func TestParamCheck(t *testing.T) {
 
 	status, err := param.Check()
 	assert.Equal(t, param.Value, status.Value())
-	assert.False(t, status.Changes())
+	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
 }
 
