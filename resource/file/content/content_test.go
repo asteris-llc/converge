@@ -74,8 +74,10 @@ func TestContentCheckEmptyDir(t *testing.T) {
 		Content:     "this is a test",
 	}
 
+	expected := tmpdir + " is a directory"
+
 	status, err := tmpl.Check()
-	assert.Equal(t, "", status.Value())
+	assert.Equal(t, expected, status.Value())
 	assert.True(t, status.HasChanges())
 	if assert.Error(t, err) {
 		assert.EqualError(
@@ -86,7 +88,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 	}
 }
 
-func TestContentCheckSetsValueToFileName(t *testing.T) {
+func TestContentCheckSetsValueToOKWhenEverythingIsOK(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "test-check-content-good")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
@@ -101,7 +103,7 @@ func TestContentCheckSetsValueToFileName(t *testing.T) {
 	}
 
 	status, err := tmpl.Check()
-	assert.Equal(t, tmpfile.Name(), status.Value())
+	assert.Equal(t, "OK", status.Value())
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
 }
