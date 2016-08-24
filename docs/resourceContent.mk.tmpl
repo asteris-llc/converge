@@ -5,7 +5,7 @@
 	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
 	echo "menu:" >> $@
 	echo "  main:" >> $@
-	echo "    parent: modules" >> $@
+	echo "    parent: resources" >> $@
 	echo '---' >> $@
 	echo >> $@
-	./extract --example @@EXAMPLE --modulename @@NAME --path @@SOURCE --type @@TYPE >> $@
+	./extract --example @@EXAMPLE --resource-name @@NAME --path @@SOURCE --type @@TYPE >> $@
