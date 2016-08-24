@@ -164,6 +164,27 @@ func (g *Graph) Descendents(id string) (out []string) {
 	return out
 }
 
+// Dependencies gets a list of all dependencies without relying on the ID
+// functions and will work for dependencies that have been added during
+// load.ResolveDependencies
+func (g *Graph) Dependencies(id string) []string {
+	var uniq []string
+	for key := range g.dependencies(id, make(map[string]struct{})) {
+		uniq = append(uniq, key)
+	}
+	return uniq
+}
+
+// internal version of dependencies with a carry map
+func (g *Graph) dependencies(id string, carry map[string]struct{}) map[string]struct{} {
+	for _, edge := range g.DownEdges(id) {
+		elem := edge.Target().(string)
+		carry[elem] = struct{}{}
+		carry = g.dependencies(elem, carry)
+	}
+	return carry
+}
+
 // Walk the graph leaf-to-root
 func (g *Graph) Walk(ctx context.Context, cb WalkFunc) error {
 	return dependencyWalk(ctx, g, cb)

@@ -21,20 +21,21 @@ import (
 	"log"
 	"os"
 
-	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
 
-// applyCmd represents the plan command
-var applyCmd = &cobra.Command{
-	Use:   "apply",
-	Short: "apply what needs to change in the system",
-	Long: `application is where the actual work of making your execution graph
-real happens.`,
+// healthcheckCmd represents the 'healthcheck' command
+var healthcheckCmd = &cobra.Command{
+	Use:   "healthcheck",
+	Short: "display a system health check",
+	Long: `Health checks determine the health status of your system.  Health
+checks are similar to 'plan' but will not calculate potential deltas, and will
+not display healthy checks.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("Need at least one module filename as argument, got 0")
@@ -42,15 +43,18 @@ real happens.`,
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params := getParams(cmd)
-
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
-		// iterate over modules
+		// params
+		params, err := getParamsFromFlags(cmd.Flags())
+		if err != nil {
+			log.Fatalf("[FATAL] could not read params: %s\n", err)
+		}
+
 		for _, fname := range args {
-			log.Printf("[INFO] applying %s\n", fname)
+			log.Printf("[INFO] planning %s\n", fname)
 
 			loaded, err := load.Load(ctx, fname)
 			if err != nil {
@@ -67,34 +71,19 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
-			// prep done! Time to run some commands!
-			printer := getPrinter()
-
 			planned, err := plan.Plan(ctx, merged)
-			if err != nil {
-				if err == plan.ErrTreeContainsErrors {
-					out, perr := printer.Show(ctx, planned)
-					if perr != nil {
-						log.Printf("[ERROR] %s: printing failed plan failed: %s\n", fname, perr)
-					} else {
-						fmt.Print("\n")
-						fmt.Print(out)
-					}
-					log.Fatalf("[FATAL] %s: planning failed: check output\n", fname)
-				}
-
+			if err != nil && err != plan.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}
 
-			results, err := apply.Apply(ctx, planned)
-			if err != nil && err != apply.ErrTreeContainsErrors {
-				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
+			results, err := healthcheck.CheckGraph(ctx, planned)
+			if err != nil {
+				log.Fatalf("[FATAL] %s: checking failed: %s\n", fname, err)
 			}
 
-			// print results
-			out, perr := printer.Show(ctx, results)
+			out, perr := healthPrinter().Show(ctx, results)
 			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
+				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
 			}
 
 			fmt.Print("\n")
@@ -107,10 +96,8 @@ real happens.`,
 }
 
 func init() {
-	applyCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
-	applyCmd.Flags().Bool("only-show-changes", false, "only show changes")
-	addParamsArguments(applyCmd.PersistentFlags())
-	viperBindPFlags(applyCmd.Flags())
-
-	RootCmd.AddCommand(applyCmd)
+	healthcheckCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
+	addParamsArguments(healthcheckCmd.PersistentFlags())
+	viperBindPFlags(healthcheckCmd.Flags())
+	RootCmd.AddCommand(healthcheckCmd)
 }

@@ -20,8 +20,10 @@ import (
 	"runtime"
 
 	"github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/prettyprinters/health"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -35,8 +37,7 @@ func viperBindPFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func getPrinter() prettyprinters.Printer {
-	filter := human.ShowEverything
+func humanProvider(filter human.FilterFunc) *human.Printer {
 	if !viper.GetBool("show-meta") {
 		filter = human.HideByKind("module", "param", "root")
 	}
@@ -46,8 +47,23 @@ func getPrinter() prettyprinters.Printer {
 
 	printer := human.NewFiltered(filter)
 	printer.Color = UseColor()
+	printer.InitColors()
+	return printer
+}
 
-	return prettyprinters.New(printer)
+func getPrinter() prettyprinters.Printer {
+	return prettyprinters.New(humanProvider(human.ShowEverything))
+}
+
+func healthPrinter() prettyprinters.Printer {
+	showHealthNodes := func(id string, value human.Printable) bool {
+		_, ok := value.(*resource.HealthStatus)
+		return ok
+	}
+	provider := humanProvider(showHealthNodes)
+	health := health.NewWithPrinter(provider)
+	health.Summary = viper.GetBool("quiet")
+	return prettyprinters.New(health)
 }
 
 // UseColor tells us whether or not to print colors using ANSI escape sequences

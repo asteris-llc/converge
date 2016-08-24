@@ -26,6 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	defaultPrinter     = human.New()
+	printerOnlyChanged = human.NewFiltered(human.ShowOnlyChanged)
+	printerHideByKind  = human.NewFiltered(human.HideByKind("param"))
+)
+
 func TestSatisfiesInterface(t *testing.T) {
 	t.Parallel()
 
@@ -39,6 +45,7 @@ func testFinishPP(t *testing.T, in Printable, out string) {
 	g.Add("root", in)
 
 	printer := human.New()
+	printer.InitColors()
 	str, err := printer.FinishPP(g)
 
 	require.Nil(t, err)
@@ -66,9 +73,11 @@ func TestFinishPPError(t *testing.T) {
 }
 
 func testDrawNodes(t *testing.T, in Printable, out string) {
+	printer := human.New()
+	printer.InitColors()
 	testDrawNodesCustomPrinter(
 		t,
-		human.New(),
+		printer,
 		"root",
 		in,
 		out,
@@ -85,6 +94,21 @@ func testDrawNodesCustomPrinter(t *testing.T, h *human.Printer, id string, in Pr
 	assert.Equal(t, out, str.String())
 }
 
+func benchmarkDrawNodes(in Printable) {
+	benchmarkDrawNodesCustomPrinter(
+		defaultPrinter,
+		"root",
+		in,
+	)
+}
+
+func benchmarkDrawNodesCustomPrinter(h *human.Printer, id string, in Printable) {
+	g := graph.New()
+	g.Add(id, in)
+
+	h.DrawNode(g, id)
+}
+
 func TestDrawNodeNoChanges(t *testing.T) {
 	t.Parallel()
 
@@ -95,28 +119,58 @@ func TestDrawNodeNoChanges(t *testing.T) {
 	)
 }
 
+func BenchmarkDrawNodeNoChanges(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		benchmarkDrawNodes(
+			Printable{},
+		)
+	}
+}
+
 func TestDrawNodeNoChangesFiltered(t *testing.T) {
 	t.Parallel()
+	printerOnlyChanged.InitColors()
 
 	testDrawNodesCustomPrinter(
 		t,
-		human.NewFiltered(human.ShowOnlyChanged),
+		printerOnlyChanged,
 		"root",
 		Printable{},
 		"",
 	)
 }
 
+func BenchmarkDrawNodeNoChangesFiltered(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		benchmarkDrawNodesCustomPrinter(
+			printerOnlyChanged,
+			"root",
+			Printable{},
+		)
+	}
+}
+
 func TestDrawNodeMetaFiltered(t *testing.T) {
 	t.Parallel()
+	printerHideByKind.InitColors()
 
 	testDrawNodesCustomPrinter(
 		t,
-		human.NewFiltered(human.HideByKind("param")),
+		printerHideByKind,
 		"param.test",
 		Printable{},
 		"",
 	)
+}
+
+func BenchmarkDrawNodeMetaFiltered(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		benchmarkDrawNodesCustomPrinter(
+			printerHideByKind,
+			"param.test",
+			Printable{},
+		)
+	}
 }
 
 func TestDrawNodeChanges(t *testing.T) {
@@ -129,6 +183,14 @@ func TestDrawNodeChanges(t *testing.T) {
 	)
 }
 
+func BenchmarkDrawNodeChanges(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		benchmarkDrawNodes(
+			Printable{"a": "b"},
+		)
+	}
+}
+
 func TestDrawNodeError(t *testing.T) {
 	t.Parallel()
 
@@ -137,6 +199,14 @@ func TestDrawNodeError(t *testing.T) {
 		Printable{"error": "x"},
 		"root:\n\tError: x\n\tMessages:\n\tHas Changes: yes\n\tChanges:\n\t\terror: \"\" => \"x\"\n\n",
 	)
+}
+
+func BenchmarkDrawNodeError(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		benchmarkDrawNodes(
+			Printable{"error": "x"},
+		)
+	}
 }
 
 // printable stub

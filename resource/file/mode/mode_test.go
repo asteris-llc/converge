@@ -42,7 +42,7 @@ func TestCheck(t *testing.T) {
 	status, err := mode.Check()
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
-	assert.True(t, status.Changes())
+	assert.True(t, status.HasChanges())
 }
 
 func TestApply(t *testing.T) {
@@ -57,5 +57,5 @@ func TestApply(t *testing.T) {
 	status, err := mode.Check()
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
-	assert.False(t, status.Changes())
+	assert.False(t, status.HasChanges())
 }

@@ -63,7 +63,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 		var newResult *Result
 
-		if result.Status.Changes() {
+		if result.Status.HasChanges() {
 			log.Printf("[DEBUG] applying %q\n", id)
 
 			err := result.Task.Apply()
@@ -77,7 +77,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				status, err = result.Task.Check()
 				if err != nil {
 					err = errors.Wrapf(err, "error checking %s", id)
-				} else if status.Changes() {
+				} else if status.HasChanges() {
 					err = fmt.Errorf("%s still needs to be changed after application", id)
 				}
 			}

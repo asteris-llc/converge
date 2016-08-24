@@ -39,11 +39,11 @@ func TestRenderSingleNode(t *testing.T) {
 
 	node := rendered.Get("root/file.content.x")
 
-	content, ok := node.(*content.Content)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", content, node))
+	fileContent, ok := node.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, node))
 
-	assert.Equal(t, "1", content.Destination)
-	assert.Equal(t, "2", content.Content)
+	assert.Equal(t, "1", fileContent.Destination)
+	assert.Equal(t, "2", fileContent.Content)
 }
 
 func TestRenderParam(t *testing.T) {
@@ -63,10 +63,10 @@ func TestRenderParam(t *testing.T) {
 
 	node := rendered.Get("root/file.content.x")
 
-	content, ok := node.(*content.Content)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", content, node))
+	fileContent, ok := node.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, node))
 
-	assert.Equal(t, "1", content.Destination)
+	assert.Equal(t, "1", fileContent.Destination)
 }
 
 func TestRenderValues(t *testing.T) {
