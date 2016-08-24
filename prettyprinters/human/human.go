@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -32,6 +33,11 @@ type Printer struct {
 	Filter FilterFunc
 }
 
+var (
+	funcs   = map[string]interface{}{}
+	funcsMu sync.Mutex
+)
+
 // New returns a base version of Printer
 func New() *Printer {
 	return NewFiltered(ShowEverything)
@@ -41,6 +47,17 @@ func New() *Printer {
 // specified func
 func NewFiltered(f FilterFunc) *Printer {
 	return &Printer{Filter: f}
+}
+
+// InitColors initializes the colors used by the human printer
+func (p *Printer) InitColors() {
+	p.funcsMapWrite("black", p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("red", p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("green", p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("yellow", p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("magenta", p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("cyan", p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)))
+	p.funcsMapWrite("white", p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)))
 }
 
 // StartPP does nothing, but is required to satisfy the GraphPrinter interface
@@ -120,23 +137,19 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	return &out, err
 }
 
+func (p *Printer) funcsMapWrite(key string, value interface{}) {
+	funcsMu.Lock()
+	defer funcsMu.Unlock()
+	funcs[key] = value
+}
+
 func (p *Printer) template(source string) (*template.Template, error) {
-	funcs := map[string]interface{}{
-		// colors
-		"black":   p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)),
-		"red":     p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)),
-		"green":   p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)),
-		"yellow":  p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)),
-		"magenta": p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)),
-		"cyan":    p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)),
-		"white":   p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)),
+	p.funcsMapWrite("diff", p.diff)
+	p.funcsMapWrite("indent", p.indent)
+	p.funcsMapWrite("empty", p.empty)
 
-		// utility
-		"diff":   p.diff,
-		"indent": p.indent,
-		"empty":  p.empty,
-	}
-
+	funcsMu.Lock()
+	defer funcsMu.Unlock()
 	return template.New("").Funcs(funcs).Parse(source)
 }
 
