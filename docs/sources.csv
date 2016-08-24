@@ -1,0 +1,5 @@
+file.content,../resource/file/content/content.go,../samples/fileContent.hcl,Content
+file.mode,../resource/file/mode/mode.go,../samples/fileMode.hcl,Mode
+module,../resource/module/module.go,../samples/basic.hcl,Module
+param,../resource/param/param.go,../samples/basic.hcl,Param
+task,../resource/shell/shell.go,../samples/basic.hcl,Shell
