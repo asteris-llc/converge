@@ -1,3 +1,17 @@
+// Copyright © 2016 Asteris, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package healthcheck
 
 import (
@@ -30,7 +44,10 @@ func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			if !ok {
 				continue
 			}
-			if isFailingStatus(depStatus) {
+
+			if isFailure, err := isFailingStatus(depStatus); err != nil {
+				return err
+			} else if isFailure {
 				asCheck.FailingDep(dep, depStatus)
 			}
 		}
@@ -48,26 +65,23 @@ func unboxNode(i interface{}) (resource.TaskStatus, error) {
 	type statusWrapper interface {
 		GetStatus() resource.TaskStatus
 	}
-
-	if wrapper, ok := i.(statusWrapper); ok {
-		return wrapper.GetStatus(), nil
-	} else if taskStatus, ok := i.(resource.TaskStatus); ok {
-		return taskStatus, nil
+	switch result := i.(type) {
+	case statusWrapper:
+		return result.GetStatus(), nil
+	case resource.TaskStatus:
+		return result, nil
+	default:
+		return nil, errors.New("[ERROR] cannot get task status from node")
 	}
-	return nil, errors.New("[FATAL] cannot get task status from node")
 }
 
-func isFailingStatus(stat resource.TaskStatus) bool {
+func isFailingStatus(stat resource.TaskStatus) (bool, error) {
 	if check, ok := stat.(Check); ok {
-		return healthCheckOK(check)
+		checkStatus, err := check.HealthCheck()
+		if err != nil {
+			return true, err
+		}
+		return checkStatus.ShouldDisplay(), nil
 	}
-	return stat.HasChanges()
-}
-
-func healthCheckOK(c Check) bool {
-	status, err := c.HealthCheck()
-	if err != nil {
-		return false
-	}
-	return status.ShouldDisplay()
+	return stat.HasChanges(), nil
 }
