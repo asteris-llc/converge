@@ -168,22 +168,21 @@ func (g *Graph) Descendents(id string) (out []string) {
 // functions and will work for dependencies that have been added during
 // load.ResolveDependencies
 func (g *Graph) Dependencies(id string) []string {
-	var out []string
 	var uniq []string
-	deps := make(map[string]struct{})
-	downEdges := g.DownEdges(id)
-	for _, edge := range downEdges {
-		out = append(out, edge.Target().(string))
-		out = append(out, g.Dependencies(edge.Target().(string))...)
-	}
-	for _, elem := range out {
-		deps[elem] = struct{}{}
-	}
-	for key := range deps {
+	for key := range g.dependencies(id, make(map[string]struct{})) {
 		uniq = append(uniq, key)
 	}
-
 	return uniq
+}
+
+// internal version of dependencies with a carry map
+func (g *Graph) dependencies(id string, carry map[string]struct{}) map[string]struct{} {
+	for _, edge := range g.DownEdges(id) {
+		elem := edge.Target().(string)
+		carry[elem] = struct{}{}
+		carry = g.dependencies(elem, carry)
+	}
+	return carry
 }
 
 // Walk the graph leaf-to-root
