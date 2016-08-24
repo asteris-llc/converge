@@ -17,7 +17,6 @@ package mode
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -81,23 +80,23 @@ func (t *Mode) Validate() error {
 	return nil
 }
 
-func ModeString(mode os.FileMode) string {
-	return strconv.FormatUint(uint64(mode), 8)
-}
-
+// FileModeDiff shows a diff of the file modes
 type FileModeDiff struct {
 	Actual   os.FileMode
 	Expected os.FileMode
 }
 
+// Original shows the original file mode
 func (diff *FileModeDiff) Original() string {
 	return fmt.Sprint(diff.Actual)
 }
 
+// Current shows the current file mode
 func (diff *FileModeDiff) Current() string {
 	return fmt.Sprint(diff.Expected)
 }
 
+// Changes returns true if the expected file mode differs from the current mode
 func (diff *FileModeDiff) Changes() bool {
 	return diff.Actual != diff.Expected
 }

@@ -41,7 +41,7 @@ func TestPlanNoOp(t *testing.T) {
 
 	result := getResult(t, planned, "root")
 	assert.Equal(t, task.Status, result.Status.Messages()[0])
-	assert.Equal(t, task.WillChange, result.Status.Changes())
+	assert.Equal(t, task.WillChange, result.Status.HasChanges())
 	assert.Equal(t, task, result.Task)
 }
 

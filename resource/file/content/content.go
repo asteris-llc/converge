@@ -40,15 +40,18 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 			WarningLevel: resource.StatusWillChange,
 			WillChange:   true,
 			Differences:  diffs,
+			Status:       t.Destination + ": File is missing",
 		}, nil
 	} else if err != nil {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
+			Status:       "Cannot read `" + t.Destination + "`",
 		}, err
 	} else if stat.IsDir() {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			WillChange:   true,
+			Status:       t.Destination + " is a directory",
 		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
@@ -57,9 +60,15 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		return &resource.Status{}, err
 	}
 
-	diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	statusMessage := "OK"
+
+	if string(actual) != t.Content {
+		statusMessage = "contents differ"
+		diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
+	}
+
 	return &resource.Status{
-		Status:      t.Destination,
+		Status:      statusMessage,
 		Differences: diffs,
 		WillChange:  resource.AnyChanges(diffs),
 	}, nil
@@ -79,14 +88,4 @@ func (t *Content) Apply() error {
 	}
 
 	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
-}
-
-func getWarningLevel(original *string, content string) int {
-	if original == nil || *original == "" {
-		return resource.StatusWillChange
-	}
-	if *original != content {
-		return resource.StatusWillChange
-	}
-	return resource.StatusNoChange
 }

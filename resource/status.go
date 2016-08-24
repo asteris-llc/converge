@@ -14,6 +14,8 @@
 
 package resource
 
+import "fmt"
+
 const (
 	// StatusNoChange means no changes are necessary
 	StatusNoChange int = 0
@@ -28,6 +30,11 @@ const (
 	StatusFatal
 )
 
+type badDep struct {
+	ID     string
+	Status TaskStatus
+}
+
 // TaskStatus represents the results of Check called during planning or
 // application.
 type TaskStatus interface {
@@ -35,7 +42,7 @@ type TaskStatus interface {
 	Diffs() map[string]Diff
 	StatusCode() int
 	Messages() []string
-	Changes() bool
+	HasChanges() bool
 }
 
 // Status is the default TaskStatus implementation
@@ -45,15 +52,12 @@ type Status struct {
 	Output       []string
 	WillChange   bool
 	Status       string
+	FailingDeps  []badDep
 }
 
 // Value returns the status value
 func (t *Status) Value() string {
 	return t.Status
-}
-
-func convertMap(t Diff) Diff {
-	return t
 }
 
 // Diffs returns the internal differences
@@ -71,9 +75,41 @@ func (t *Status) Messages() []string {
 	return t.Output
 }
 
-// Changes returns the WillChange value
-func (t *Status) Changes() bool {
+// HasChanges returns the WillChange value
+func (t *Status) HasChanges() bool {
 	return t.WillChange
+}
+
+// HealthCheck provides a default health check implementation for statuses
+func (t *Status) HealthCheck() (status *HealthStatus, err error) {
+	status = &HealthStatus{TaskStatus: t, FailingDeps: make(map[string]string)}
+	if !t.HasChanges() && len(t.FailingDeps) == 0 {
+		return
+	}
+
+	// There are changes or failing dependencies so the health check is at least
+	// at a warning status.
+	status.UpgradeWarning(StatusWarning)
+
+	for _, failingDep := range t.FailingDeps {
+		var depMessage string
+		if msg := failingDep.Status.Value(); msg != "" {
+			depMessage = msg
+		} else {
+			depMessage = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
+		}
+
+		status.FailingDeps[failingDep.ID] = depMessage
+	}
+	if t.StatusCode() >= 2 {
+		status.UpgradeWarning(StatusError)
+	}
+	return
+}
+
+// FailingDep tracks a new failing dependency
+func (t *Status) FailingDep(id string, stat TaskStatus) {
+	t.FailingDeps = append(t.FailingDeps, badDep{ID: id, Status: stat})
 }
 
 // AddDifference adds a TextDiff to the Differences map
