@@ -22,9 +22,12 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Content renders a content to disk
+// Content renders content to disk
 type Content struct {
-	Content     string
+	// the file content. Will be rendered as a template.
+	Content string
+
+	// the location on disk that the content will end up at
 	Destination string
 }
 
