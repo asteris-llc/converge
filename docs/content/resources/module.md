@@ -1,12 +1,15 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-08-24T16:45:03-05:00"
+date: "2016-08-24T16:55:17-05:00"
 menu:
   main:
     parent: resources
 ---
 
+Module holds stringified values for parameters
+
+## Example
 ```hcl
 param "message" {
   default = "Hello, World!"
@@ -22,8 +25,7 @@ task "render" {
 }
 ```
 
-Module holds stringified values for parameters
-
+## Parameters
 - Params (`&{764 string string}`)
 
   
