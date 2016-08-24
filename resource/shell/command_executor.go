@@ -129,7 +129,7 @@ func (c *commandIOContext) exec(script string) (results *CommandResults, err err
 	// result. otherwise, Command.Start will return an error and short-circuit
 	// plan/apply
 	if c.Command.Dir != "" {
-		_, err := os.Stat(c.Command.Dir)
+		_, err = os.Stat(c.Command.Dir)
 		if os.IsNotExist(err) {
 			results.ExitStatus = 1
 			results.Stdout = err.Error()
