@@ -16,8 +16,31 @@ const (
 	StatusRevoked    = "revoked"
 )
 
-// ErrUnsupportedKey is returned when an unsupported key type is encountered.
-var ErrUnsupportedKey = errors.New("acme: unknown key type; only RSA and ECDSA are supported")
+// CRLReasonCode identifies the reason for a certificate revocation.
+type CRLReasonCode int
+
+// CRL reason codes as defined in RFC 5280.
+const (
+	CRLReasonUnspecified          CRLReasonCode = 0
+	CRLReasonKeyCompromise        CRLReasonCode = 1
+	CRLReasonCACompromise         CRLReasonCode = 2
+	CRLReasonAffiliationChanged   CRLReasonCode = 3
+	CRLReasonSuperseded           CRLReasonCode = 4
+	CRLReasonCessationOfOperation CRLReasonCode = 5
+	CRLReasonCertificateHold      CRLReasonCode = 6
+	CRLReasonRemoveFromCRL        CRLReasonCode = 8
+	CRLReasonPrivilegeWithdrawn   CRLReasonCode = 9
+	CRLReasonAACompromise         CRLReasonCode = 10
+)
+
+var (
+	// ErrAuthorizationFailed indicates that an authorization for an identifier
+	// did not succeed.
+	ErrAuthorizationFailed = errors.New("acme: identifier authorization failed")
+
+	// ErrUnsupportedKey is returned when an unsupported key type is encountered.
+	ErrUnsupportedKey = errors.New("acme: unknown key type; only RSA and ECDSA are supported")
+)
 
 // Error is an ACME error, defined in Problem Details for HTTP APIs doc
 // http://tools.ietf.org/html/draft-ietf-appsawg-http-problem.
