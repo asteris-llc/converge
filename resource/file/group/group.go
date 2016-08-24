@@ -24,16 +24,21 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Mode monitors the file mode of a file
+// Group monitors the group of a file
 type Group struct {
 	Group       *user.Group
 	Destination string
 }
 
-// Check whether the Destination is owned by the user
+// Check whether the Destination is in the same group
+// 1. If the destination doesn't exist, do nothing
+// 2. If this machine is not a linux system, skip
+// 3. If expected group is the actual group, skip
+// 4. If the expected group and actual group differ, change
 func (t *Group) Check() (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	stat, err := os.Stat(t.Destination)
+
 	if os.IsNotExist(err) {
 		diffs[t.Destination] = &FileGroupDiff{Expected: t.Group}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
@@ -44,18 +49,23 @@ func (t *Group) Check() (resource.TaskStatus, error) {
 			Differences:  diffs,
 			Output:       []string{status},
 		}, nil
-	} else if err != nil {
+	} else if err != nil { // actual error
 		return nil, err
 	}
+
+	// will fail on non linux systems
 	statT, ok := stat.Sys().(*syscall.Stat_t)
 	if !ok {
 		return nil, fmt.Errorf("file.group does not currently work on non linux systems")
 	}
+
 	gid := statT.Gid
 	actualGroup, err := user.LookupGroupId(fmt.Sprintf("%v", gid))
 	if err != nil {
 		return nil, err
 	}
+
+	// assume no changes need to be made, if there are changes change the warning level
 	groupDiff := &FileGroupDiff{Expected: t.Group, Actual: actualGroup}
 	diffs[t.Destination] = groupDiff
 	warningLevel := resource.StatusWontChange
@@ -63,6 +73,7 @@ func (t *Group) Check() (resource.TaskStatus, error) {
 		warningLevel = resource.StatusWillChange
 	}
 	status := fmt.Sprintf("file belongs to group %q should be %q", actualGroup.Name, t.Group.Name)
+
 	return &resource.Status{
 		Status:       status,
 		WarningLevel: warningLevel,
