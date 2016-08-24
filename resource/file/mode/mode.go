@@ -17,7 +17,6 @@ package mode
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -79,13 +78,6 @@ func (t *Mode) Validate() error {
 		return fmt.Errorf("invalid %q parameter: %q", "mode", t.Mode)
 	}
 	return nil
-}
-
-// ToOctString converts a filesystem mode to a string representation of it's
-// octal permissions value (e.g. rwxrwxrwx => "777"); if extended attributes are
-// set they will be shown as part of the representation as higher order bits.
-func ToOctString(mode os.FileMode) string {
-	return strconv.FormatUint(uint64(mode), 8)
 }
 
 // FileModeDiff shows a diff of the file modes
