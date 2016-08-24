@@ -1,8 +1,12 @@
 ---
-name: "file.content"
+title: "file.content"
 slug: "file-content"
-date: "2016-08-24T13:20:32-05:00"
+date: "2016-08-24T16:26:34-05:00"
+menu:
+  main:
+    parent: modules
 ---
+
 ```hcl
 param "message" {
   default = "Hello, World"
