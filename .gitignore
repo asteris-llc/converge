@@ -33,3 +33,7 @@ converge
 
 # release
 build
+
+# docs
+docs/extract
+docs/modules.mk
