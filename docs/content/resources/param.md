@@ -1,12 +1,15 @@
 ---
 title: "param"
 slug: "param"
-date: "2016-08-24T16:45:03-05:00"
+date: "2016-08-24T16:55:17-05:00"
 menu:
   main:
     parent: resources
 ---
 
+Param controls parameter flow inside execution
+
+## Example
 ```hcl
 param "message" {
   default = "Hello, World!"
@@ -22,8 +25,7 @@ task "render" {
 }
 ```
 
-Param controls parameter flow inside execution
-
+## Parameters
 - Value (`string`)
 
   

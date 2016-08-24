@@ -1,12 +1,15 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-08-24T16:45:03-05:00"
+date: "2016-08-24T16:55:17-05:00"
 menu:
   main:
     parent: resources
 ---
 
+Shell is a structure representing a task.
+
+## Example
 ```hcl
 param "message" {
   default = "Hello, World!"
@@ -22,8 +25,7 @@ task "render" {
 }
 ```
 
-Shell is a structure representing a task.
-
+## Parameters
 - CmdGenerator (`CommandExecutor`)
 
   
@@ -36,7 +38,7 @@ Shell is a structure representing a task.
 - Status (`&{911 CommandResults}`)
 
   
-- HealthStatus (`&{941 0xc42009c700}`)
+- HealthStatus (`&{941 0xc420010900}`)
 
   
 

@@ -1,12 +1,15 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-08-24T16:45:03-05:00"
+date: "2016-08-24T16:55:17-05:00"
 menu:
   main:
     parent: resources
 ---
 
+Content renders content to disk
+
+## Example
 ```hcl
 param "message" {
   default = "Hello, World"
@@ -22,8 +25,7 @@ file.content "render" {
 }
 ```
 
-Content renders content to disk
-
+## Parameters
 - Content (`string`)
 
   the file content. Will be rendered as a template.   

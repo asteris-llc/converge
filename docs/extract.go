@@ -144,15 +144,18 @@ func (*TypeExtractor) Docs(gs ...*ast.CommentGroup) string {
 
 func (te *TypeExtractor) String() string {
 	var out bytes.Buffer
+	// Docs
+	out.WriteString(te.TopDoc)
+	out.WriteString("\n")
+
 	// example
+	out.WriteString("## Example\n")
 	out.WriteString("```hcl\n")
 	out.Write(te.ExampleSource)
 	out.WriteString("```\n\n")
 
-	// docs
-	out.WriteString(te.TopDoc)
-	out.WriteString("\n")
-
+	// Parameters
+	out.WriteString("## Parameters\n")
 	for _, field := range te.Fields {
 		out.WriteString("- " + field.Name + " (`" + field.Type + "`)\n\n")
 		out.WriteString("  " + strings.Replace(field.Doc, "\n", "   \n", -1))
