@@ -71,7 +71,7 @@ func unboxNode(i interface{}) (resource.TaskStatus, error) {
 	case resource.TaskStatus:
 		return result, nil
 	default:
-		return nil, errors.New("[ERROR] cannot get task status from node")
+		return nil, errors.New("cannot get task status from node")
 	}
 }
 
