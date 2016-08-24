@@ -1,9 +1,8 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
-TOLINT = $(shell find . -name '*.go' -exec dirname \{\} \; | grep -v vendor | grep -v -e '^\.$$' | uniq)
+TOLINT = $(shell find . -type f \( -not -ipath './vendor*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
-
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
 BENCH = .
 
@@ -20,6 +19,10 @@ test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 
 gotest:
 	go test ${TESTDIRS}
+
+license-check:
+	@echo "=== Missing License Files ==="
+	@./check_license.sh
 
 bench:
 	go test -run='^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
@@ -91,4 +94,4 @@ package: xcompile
     echo $$f; \
   done
 
-.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint bench
+.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
