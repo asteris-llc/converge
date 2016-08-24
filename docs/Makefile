@@ -19,7 +19,7 @@ content/license.md: ../LICENSE
 	echo >> $@
 	cat ../LICENSE >> $@
 
-content/resources: resources.mk $(shell cut -d, -f2,3 sources.csv | sed -E 's|,| |g')
+content/resources: extract resources.mk $(shell cut -d, -f2,3 sources.csv | sed -E 's|,| |g')
 	mkdir -p $@ || true
 	@for line in $$(cat sources.csv); do \
 		make -f resources.mk $@/$$(echo $$line | cut -d, -f1).md; \
