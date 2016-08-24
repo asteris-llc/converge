@@ -1,7 +1,11 @@
 @@TARGET: extract @@SOURCE @@EXAMPLE
-	echo '---' > @@TARGET
-	echo 'name: "@@NAME"' >> @@TARGET
-	echo "slug: \"$$(echo @@NAME | sed 's/\./-/g')\"" >> @@TARGET
-	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> @@TARGET
-	echo '---' >> @@TARGET
-	./extract --example @@EXAMPLE --modulename @@NAME --path @@SOURCE --type @@TYPE >> @@TARGET
+	echo '---' > $@
+	echo 'title: "@@NAME"' >> $@
+	echo 'slug: "@@SLUG"' >> $@
+	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
+	echo "menu:" >> $@
+	echo "  main:" >> $@
+	echo "    parent: modules" >> $@
+	echo '---' >> $@
+	echo >> $@
+	./extract --example @@EXAMPLE --modulename @@NAME --path @@SOURCE --type @@TYPE >> $@

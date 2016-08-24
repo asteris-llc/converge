@@ -1,8 +1,12 @@
 ---
-name: "task"
+title: "task"
 slug: "task"
-date: "2016-08-24T13:20:32-05:00"
+date: "2016-08-24T16:26:34-05:00"
+menu:
+  main:
+    parent: modules
 ---
+
 ```hcl
 param "message" {
   default = "Hello, World!"
@@ -32,7 +36,7 @@ Shell is a structure representing a task.
 - Status (`&{911 CommandResults}`)
 
   
-- HealthStatus (`&{941 0xc42009e700}`)
+- HealthStatus (`&{941 0xc42009a700}`)
 
   
 

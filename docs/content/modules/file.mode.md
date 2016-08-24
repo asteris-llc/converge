@@ -1,8 +1,12 @@
 ---
-name: "file.mode"
+title: "file.mode"
 slug: "file-mode"
-date: "2016-08-24T13:20:32-05:00"
+date: "2016-08-24T16:26:34-05:00"
+menu:
+  main:
+    parent: modules
 ---
+
 ```hcl
 param "filename" {
   default = "test.txt"
