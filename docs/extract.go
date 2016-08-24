@@ -14,16 +14,16 @@ import (
 )
 
 var (
-	typeName    string
-	fPath       string
-	examplePath string
-	moduleName  string
+	typeName     string
+	fPath        string
+	examplePath  string
+	resourceName string
 )
 
 func init() {
 	pflag.StringVar(&typeName, "type", "", "type to extract and document")
 	pflag.StringVar(&fPath, "path", "", "source of Go file for extraction")
-	pflag.StringVar(&moduleName, "modulename", "", "name to import module in HCL source")
+	pflag.StringVar(&resourceName, "resource-name", "", "name to import resource in HCL source")
 	pflag.StringVar(&examplePath, "example", "", "name of example file to include")
 
 	pflag.Parse()
@@ -51,7 +51,7 @@ func main() {
 	extractor := &TypeExtractor{
 		Target:        typeName,
 		ExampleSource: out,
-		ModuleName:    moduleName,
+		ResourceName:  resourceName,
 	}
 	ast.Walk(extractor, file)
 
@@ -72,7 +72,7 @@ type TypeExtractor struct {
 
 	// information we get externally (from flags)
 	ExampleSource []byte
-	ModuleName    string
+	ResourceName  string
 }
 
 func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
