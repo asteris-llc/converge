@@ -86,7 +86,11 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	if !t.HasChanges() && len(t.FailingDeps) == 0 {
 		return
 	}
+
+	// There are changes or failing dependencies so the health check is at least
+	// at a warning status.
 	status.UpgradeWarning(StatusWarning)
+
 	for _, failingDep := range t.FailingDeps {
 		var depMessage string
 		if msg := failingDep.Status.Value(); msg != "" {
@@ -97,9 +101,7 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 
 		status.FailingDeps[failingDep.ID] = depMessage
 	}
-	if t.StatusCode() < 2 {
-		status.UpgradeWarning(StatusWarning)
-	} else {
+	if t.StatusCode() >= 2 {
 		status.UpgradeWarning(StatusError)
 	}
 	return
