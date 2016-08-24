@@ -193,9 +193,7 @@ func newCommand(cmd *CommandGenerator) *exec.Cmd {
 	command.Dir = cmd.Dir
 	if len(cmd.Env) > 0 {
 		env := os.Environ()
-		for _, envvar := range cmd.Env {
-			env = append(env, envvar)
-		}
+		env = append(env, cmd.Env...)
 		command.Env = env
 	}
 
