@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	printer            = human.New()
+	defaultPrinter     = human.New()
 	printerOnlyChanged = human.NewFiltered(human.ShowOnlyChanged)
 	printerHideByKind  = human.NewFiltered(human.HideByKind("param"))
 )
@@ -96,7 +96,7 @@ func testDrawNodesCustomPrinter(t *testing.T, h *human.Printer, id string, in Pr
 
 func benchmarkDrawNodes(in Printable) {
 	benchmarkDrawNodesCustomPrinter(
-		printer,
+		defaultPrinter,
 		"root",
 		in,
 	)

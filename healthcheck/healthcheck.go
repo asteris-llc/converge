@@ -45,8 +45,8 @@ func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				continue
 			}
 
-			if isFailure, err := isFailingStatus(depStatus); err != nil {
-				return err
+			if isFailure, failErr := isFailingStatus(depStatus); failErr != nil {
+				return failErr
 			} else if isFailure {
 				asCheck.FailingDep(dep, depStatus)
 			}
