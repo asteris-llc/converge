@@ -102,6 +102,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		CmdGenerator: generator,
 		CheckStmt:    check,
 		ApplyStmt:    apply,
+		Dir:          dir,
+		Env:          renderedEnv,
 	}
 
 	return shell, checkSyntax(interpreter, p.CheckFlags, check)
