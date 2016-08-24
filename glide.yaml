@@ -85,3 +85,4 @@ import:
 - package: github.com/mitchellh/hashstructure
 - package: github.com/ttacon/chalk
   version: ~0.1.0
+- package: github.com/fsouza/go-dockerclient

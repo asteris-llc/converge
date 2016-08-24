@@ -113,8 +113,8 @@ func (t *Status) FailingDep(id string, stat TaskStatus) {
 }
 
 // AddDifference adds a TextDiff to the Differences map
-func (t *Status) AddDifference(name, current, original string) {
-	return
+func (t *Status) AddDifference(name, original, current, defaultVal string) {
+	t.Differences = AddTextDiff(t.Differences, name, original, current, defaultVal)
 }
 
 // Diff represents a difference
@@ -167,10 +167,10 @@ func AnyChanges(diffs map[string]Diff) bool {
 }
 
 // AddTextDiff inserts a new TextDiff into a map of names to Diffs
-func AddTextDiff(m map[string]Diff, name, original, current string) map[string]Diff {
+func AddTextDiff(m map[string]Diff, name, original, current, defaultVal string) map[string]Diff {
 	if m == nil {
 		m = make(map[string]Diff)
 	}
-	m[name] = TextDiff{Values: [2]string{original, current}}
+	m[name] = TextDiff{Values: [2]string{original, current}, Default: defaultVal}
 	return m
 }
