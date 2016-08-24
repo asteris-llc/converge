@@ -74,9 +74,9 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	idx := 0
 	for name, val := range p.Env {
 		pair := fmt.Sprintf("%s=%s", name, val)
-		rendered, err := render.Render("env-"+name, pair)
-		if err != nil {
-			return nil, err
+		rendered, rerr := render.Render("env-"+name, pair)
+		if rerr != nil {
+			return nil, rerr
 		}
 		renderedEnv[idx] = rendered
 		idx++
