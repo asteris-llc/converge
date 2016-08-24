@@ -104,7 +104,8 @@ func (h *HealthStatus) HasChanges() bool {
 	return h.TaskStatus.HasChanges()
 }
 
-// Error returns nil
+// Error returns nil on success.  If the health checks or it's dedencies are
+// failing an appropriate error is returned.
 func (h *HealthStatus) Error() error {
 	var msg bytes.Buffer
 	var hasError bool
