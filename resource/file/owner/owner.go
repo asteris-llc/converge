@@ -24,16 +24,22 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Mode monitors the file mode of a file
+// Owner monitors the file owner of a file
 type Owner struct {
 	User        *user.User
 	Destination string
 }
 
 // Check whether the Destination is owned by the user
+// 1. If the destination doesn't exist, do nothing
+// 2. If this machine is not a linux system, skip
+// 3. If expected owner is the actual owner, skip
+// 4. If the expected owner and actual owner differ, change
+// file to be owned by the actual owner.
 func (t *Owner) Check() (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	stat, err := os.Stat(t.Destination)
+
 	if os.IsNotExist(err) {
 		diffs[t.Destination] = &FileUserDiff{Expected: t.User}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
@@ -47,21 +53,28 @@ func (t *Owner) Check() (resource.TaskStatus, error) {
 	} else if err != nil {
 		return nil, err
 	}
+
+	//Cast stat to a statT, this won't work on windows
 	statT, ok := stat.Sys().(*syscall.Stat_t)
 	if !ok {
 		return nil, fmt.Errorf("file.owner does not currently work on non linux systems")
 	}
+
 	uid := statT.Uid
 	actualUser, err := user.LookupId(fmt.Sprintf("%v", uid))
 	if err != nil {
 		return nil, err
 	}
+
+	// Assume no changes are needed
 	ownerDiff := &FileUserDiff{Expected: t.User, Actual: actualUser}
 	diffs[t.Destination] = ownerDiff
 	warningLevel := resource.StatusWontChange
+	// If changes are needed update warning level
 	if ownerDiff.Changes() {
 		warningLevel = resource.StatusWillChange
 	}
+
 	status := fmt.Sprintf("owner of file %q is %q should be %q", t.Destination, actualUser.Username, t.User.Username)
 	return &resource.Status{
 		Status:       status,
@@ -75,7 +88,7 @@ func (t *Owner) Check() (resource.TaskStatus, error) {
 	}, nil
 }
 
-// Apply the changes in mode
+// Change the owner of the file
 func (o *Owner) Apply() error {
 	uid, _ := strconv.Atoi(o.User.Uid)
 	gid, _ := strconv.Atoi(o.User.Gid)
