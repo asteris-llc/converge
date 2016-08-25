@@ -250,6 +250,9 @@ func stringify(node ast.Expr) string {
 	case *ast.InterfaceType:
 		return "anything"
 
+	case *ast.StarExpr:
+		return fmt.Sprintf("optional %s", stringify(n.X))
+
 	default:
 		return fmt.Sprintf("%T", n)
 	}
