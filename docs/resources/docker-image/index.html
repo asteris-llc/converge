@@ -413,9 +413,9 @@ already a Docker daemon running on the system.</p>
 <h2 id="example">Example</h2>
 
 <pre><code class="language-hcl">docker.image &quot;busybox&quot; {
-  name    = &quot;busybox&quot;
-  tag     = &quot;latest&quot;
-  timeout = &quot;60s&quot;
+  name               = &quot;busybox&quot;
+  tag                = &quot;latest&quot;
+  inactivity_timeout = &quot;60s&quot;
 }
 
 </code></pre>
@@ -435,14 +435,14 @@ already a Docker daemon running on the system.</p>
 <p>tag of the image to pull</p>
 
 <ul>
-<li><code>timeout</code> (duration_string)</li>
+<li><code>inactivity_timeout</code> (duration_string)</li>
 </ul>
 
-<p>the amount of time the pull will wait before halting forcefully. The
-format is Go&rsquo;s duraction string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;,
-&ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
+<p>the amount of time to wait after a period of inactivity. The timeout is
+reset each time new data arrives. The format is Go&rsquo;s duration string. A
+duration string is a possibly signed sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
+Valid time units are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
 
 
 			<aside class="copyright" role="note">

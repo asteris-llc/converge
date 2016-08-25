@@ -6,13 +6,13 @@
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 25 Aug 2016 10:12:08 -0500</lastBuildDate>
+    <lastBuildDate>Thu, 25 Aug 2016 12:19:27 -0400</lastBuildDate>
     <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>docker.image</title>
       <link>http://converge.aster.is/resources/docker-image/</link>
-      <pubDate>Thu, 25 Aug 2016 10:12:08 -0500</pubDate>
+      <pubDate>Thu, 25 Aug 2016 12:19:27 -0400</pubDate>
       
       <guid>http://converge.aster.is/resources/docker-image/</guid>
       <description>
@@ -23,9 +23,9 @@ already a Docker daemon running on the system.&lt;/p&gt;
 &lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.image &amp;quot;busybox&amp;quot; {
-  name    = &amp;quot;busybox&amp;quot;
-  tag     = &amp;quot;latest&amp;quot;
-  timeout = &amp;quot;60s&amp;quot;
+  name               = &amp;quot;busybox&amp;quot;
+  tag                = &amp;quot;latest&amp;quot;
+  inactivity_timeout = &amp;quot;60s&amp;quot;
 }
 
 &lt;/code&gt;&lt;/pre&gt;
@@ -45,14 +45,14 @@ already a Docker daemon running on the system.&lt;/p&gt;
 &lt;p&gt;tag of the image to pull&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration_string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;inactivity_timeout&lt;/code&gt; (duration_string)&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;the amount of time the pull will wait before halting forcefully. The
-format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
-&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+&lt;p&gt;the amount of time to wait after a period of inactivity. The timeout is
+reset each time new data arrives. The format is Go&amp;rsquo;s duration string. A
+duration string is a possibly signed sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;.
+Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
 </description>
     </item>
     
