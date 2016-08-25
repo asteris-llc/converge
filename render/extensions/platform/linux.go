@@ -20,16 +20,20 @@ import (
 	"strings"
 )
 
+//LinuxLSB finds Linux LSB files and parses them
+//Most modern :inux distributions have standardized on
+// /etc/os-release
 func (platform *Platform) LinuxLSB() {
-	lsb_file := "/etc/os-release"
+	lsbFile := "/etc/os-release"
 	content, err := ioutil.ReadFile(lsb_file)
 	if err != nil {
-		log.Printf("[INFO] Error opening %s: %s. Will skip parsing lsb data", lsb_file, err)
+		log.Printf("[INFO] Error opening %s: %s. Will skip parsing lsb data", lsbFile, err)
 		return
 	}
 	platform.ParseLSBContent(string(content))
 }
 
+//ParseLSBContent populates a Platform struct with /etc/os-release data
 func (platform *Platform) ParseLSBContent(content string) {
 	lines := strings.Split(content, "\n")
 	for _, v := range lines {
