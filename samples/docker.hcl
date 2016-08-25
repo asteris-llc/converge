@@ -1,5 +1,5 @@
 docker.image "busybox" {
-  name    = "busybox"
-  tag     = "latest"
-  timeout = "60s"
+  name               = "busybox"
+  tag                = "latest"
+  inactivity_timeout = "60s"
 }
