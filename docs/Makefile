@@ -1,7 +1,7 @@
 TASKFILE=../resource/resource.go
 TASKLOC=${TASKFILE}:\#$(shell grep -b 'type Task interface' ${TASKFILE} | cut -d: -f1)
 
-public: content/resources content/license.md
+public: content/*.md static/**/* content/resources content/license.md
 	hugo
 
 extract: extract.go
