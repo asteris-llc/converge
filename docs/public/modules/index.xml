@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Modules on Converge</title>
+    <link>http://converge.aster.is/modules/</link>
+    <description>Recent content in Modules on Converge</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 24 Aug 2016 16:26:34 -0500</lastBuildDate>
+    <atom:link href="http://converge.aster.is/modules/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>file.content</title>
+      <link>http://converge.aster.is/modules/file-content/</link>
+      <pubDate>Wed, 24 Aug 2016 16:26:34 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/modules/file-content/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+file.content &amp;quot;render&amp;quot; {
+  destination = &amp;quot;{{param `filename`}}&amp;quot;
+  content     = &amp;quot;{{param `message`}}&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Content renders content to disk&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Content (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the file content. Will be rendered as a template.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Destination (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the location on disk that the content will end up at&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>file.mode</title>
+      <link>http://converge.aster.is/modules/file-mode/</link>
+      <pubDate>Wed, 24 Aug 2016 16:26:34 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/modules/file-mode/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+file.mode &amp;quot;render&amp;quot; {
+  destination = &amp;quot;{{param `filename`}}&amp;quot;
+  mode        = 0777
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Mode monitors the file Mode of a file&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Destination (&lt;code&gt;string&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Mode (&lt;code&gt;&amp;amp;{os FileMode}&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>module</title>
+      <link>http://converge.aster.is/modules/module/</link>
+      <pubDate>Wed, 24 Aug 2016 16:26:34 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/modules/module/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Module holds stringified values for parameters&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Params (&lt;code&gt;&amp;amp;{764 string string}&lt;/code&gt;)
+
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>param</title>
+      <link>http://converge.aster.is/modules/param/</link>
+      <pubDate>Wed, 24 Aug 2016 16:26:34 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/modules/param/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Param controls parameter flow inside execution&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Value (&lt;code&gt;string&lt;/code&gt;)
+
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>task</title>
+      <link>http://converge.aster.is/modules/task/</link>
+      <pubDate>Wed, 24 Aug 2016 16:26:34 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/modules/task/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Shell is a structure representing a task.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;CmdGenerator (&lt;code&gt;CommandExecutor&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;CheckStmt (&lt;code&gt;string&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ApplyStmt (&lt;code&gt;string&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Status (&lt;code&gt;&amp;amp;{911 CommandResults}&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;HealthStatus (&lt;code&gt;&amp;amp;{941 0xc42009a700}&lt;/code&gt;)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
