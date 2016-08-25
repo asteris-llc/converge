@@ -13,13 +13,14 @@
 // limitations under the License.
 
 //Package platform queries the underlying operating system
-
 package platform
 
 import (
 	"runtime"
 )
 
+//Platform is a struct containing version information for the
+//underlying operating system
 type Platform struct {
 	OS                string
 	LinuxDistribution string
@@ -30,6 +31,8 @@ type Platform struct {
 	Build             string
 }
 
+//NewPlatform Queries the runtime and then attempts to
+//discover version information from the underlying operating system
 func NewPlatform() Platform {
 	var platform Platform
 	platform.OS = runtime.GOOS
