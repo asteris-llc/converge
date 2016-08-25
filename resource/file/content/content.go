@@ -24,10 +24,7 @@ import (
 
 // Content renders content to disk
 type Content struct {
-	// the file content. Will be rendered as a template.
-	Content string
-
-	// the location on disk that the content will end up at
+	Content     string
 	Destination string
 }
 
