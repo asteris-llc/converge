@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-08-24T23:25:46-05:00"
+date: "2016-08-25T10:03:34-05:00"
 menu:
   main:
     parent: resources
@@ -66,5 +66,13 @@ format is Go's duraction string. A duration string is a possibly signed
 sequence of decimal numbers, each with optional fraction and a unit
 suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 "us" (or "µs"), "ms", "s", "m", "h".
+
+- `dir` (string)
+
+  the working directory this command should be run in
+
+- `env` (map of string to string)
+
+  any environment variables that should be passed to the command
 
 
