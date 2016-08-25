@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
+	"github.com/asteris-llc/converge/resource/file/absent"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/asteris-llc/converge/resource/module"
@@ -61,6 +62,9 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		case "file.mode":
 			dest = new(mode.Preparer)
+
+		case "file.absent":
+			dest = new(absent.Preparer)
 
 		case "docker.image":
 			dest = new(image.Preparer)
