@@ -900,115 +900,12 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
       <pubDate>Wed, 24 Aug 2016 15:33:42 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/</guid>
-      <description>
+      <description>&lt;p&gt;Converge has resources that you can use to make various changes on your system.
+For example, &lt;code&gt;file.content&lt;/code&gt; will control the content of a file, and &lt;code&gt;file.mode&lt;/code&gt;
+will control that file&amp;rsquo;s mode.&lt;/p&gt;
 
-&lt;h2 id=&#34;modules&#34;&gt;Modules&lt;/h2&gt;
-
-&lt;p&gt;The basic unit of composition in Converge is the module. Modules have parameters
-and can call tasks and render templates, among other things. Your usage is
-likely to look like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# install traefik
-param &amp;quot;version&amp;quot; {}
-
-module &amp;quot;yum.hcl&amp;quot; &amp;quot;traefik&amp;quot;  {
-  params {
-    package = &amp;quot;traefik&amp;quot;
-    version = &amp;quot;{{param `version`}}&amp;quot;
-  }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;You&amp;rsquo;ll invoke this with &lt;code&gt;converge apply traefik.hcl&lt;/code&gt; to install Traefik from yum
-on your system. You can also &lt;code&gt;converge plan traefik.hcl&lt;/code&gt; to see what changes
-will be made before you apply them.&lt;/p&gt;
-
-&lt;h2 id=&#34;using-resources&#34;&gt;Using Resources&lt;/h2&gt;
-
-&lt;p&gt;The content of a simple module is below:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# start a systemd unit
-param &amp;quot;name&amp;quot; {}
-
-task &amp;quot;start-unit&amp;quot; {
-  check = &amp;quot;systemctl status {{param `name`}} | tee /dev/stderr | grep -q running&amp;quot;
-  apply = &amp;quot;systemctl start {{param `name`}}&amp;quot;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Within a module, you can have tasks. Shown here is a task with two stanzas:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;check&lt;/code&gt; returns the actual state, and an error code indicating if it needs to
-be changed&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; is run to create the resource controlled by this task. You can omit
-this stanza if you want the command to be purely informational.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;If the exit code of &lt;code&gt;check&lt;/code&gt; is non-zero, &lt;code&gt;apply&lt;/code&gt; will be called, after which
-time &lt;code&gt;check&lt;/code&gt; will be called again to get the new state and success.&lt;/p&gt;
-
-&lt;p&gt;A module can have multiple tasks. It can also have templates, which render data
-to the filesystem from the module&amp;rsquo;s parameters:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create systemd unit file
-param &amp;quot;name&amp;quot; {}
-
-param &amp;quot;execStart&amp;quot; {}
-
-param &amp;quot;user&amp;quot; {
-  default = &amp;quot;root&amp;quot;
-}
-
-param &amp;quot;group&amp;quot; {
-  default = &amp;quot;root&amp;quot;
-}
-
-param &amp;quot;description&amp;quot; {
-  default = &amp;quot;{{param `name`}}&amp;quot;
-}
-
-file.content &amp;quot;unit&amp;quot; {
-  destination = &amp;quot;/etc/systemd/system/{{param `name`}}.service&amp;quot;
-
-  content = &amp;lt;&amp;lt;EOF
-[Unit]
-Description={{param `description`}}
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-User={{param `user`}}
-Group={{param `group`}}
-ExecStart={{param `execStart`}}
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
-task &amp;quot;reload-daemon&amp;quot; {
-  check    = &amp;quot;systemd-delta --type=overridden {{param `name`}}&amp;quot;
-  apply    = &amp;quot;systemctl daemon-reload&amp;quot;
-  requires = [&amp;quot;file.content.unit&amp;quot;]
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This module creates a systemd unit file and registers it with the system. Note
-that both resource blocks have a name, and that &amp;ldquo;daemon-reload&amp;rdquo; depends on
-&amp;ldquo;unit&amp;rdquo;. Converge uses these dependencies to determine execution order.&lt;/p&gt;
-
-&lt;p&gt;The arguments for the &lt;code&gt;file.content&lt;/code&gt; resource:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;destination&lt;/code&gt;: where to render the template. If you don&amp;rsquo;t want to render to
-disk, omit this stanza. In that case, you can access the rendered template
-with the &lt;code&gt;template&lt;/code&gt; template function.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;content&lt;/code&gt;: this can be a string, a multi-line string (as in the example above)
-or any template function that returns a string. Converge intelligently renders
-the template until there are no more blocks, so sourcing a template from a
-template is fine.&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;For more details on how to use the resources, see the
+&lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
     

@@ -389,115 +389,12 @@
 		<div class="wrapper">
 			<h1>Resource Reference </h1>
 
-			
+			<p>Converge has resources that you can use to make various changes on your system.
+For example, <code>file.content</code> will control the content of a file, and <code>file.mode</code>
+will control that file&rsquo;s mode.</p>
 
-<h2 id="modules">Modules</h2>
-
-<p>The basic unit of composition in Converge is the module. Modules have parameters
-and can call tasks and render templates, among other things. Your usage is
-likely to look like this:</p>
-
-<pre><code class="language-hcl"># install traefik
-param &quot;version&quot; {}
-
-module &quot;yum.hcl&quot; &quot;traefik&quot;  {
-  params {
-    package = &quot;traefik&quot;
-    version = &quot;{{param `version`}}&quot;
-  }
-}
-</code></pre>
-
-<p>You&rsquo;ll invoke this with <code>converge apply traefik.hcl</code> to install Traefik from yum
-on your system. You can also <code>converge plan traefik.hcl</code> to see what changes
-will be made before you apply them.</p>
-
-<h2 id="using-resources">Using Resources</h2>
-
-<p>The content of a simple module is below:</p>
-
-<pre><code class="language-hcl"># start a systemd unit
-param &quot;name&quot; {}
-
-task &quot;start-unit&quot; {
-  check = &quot;systemctl status {{param `name`}} | tee /dev/stderr | grep -q running&quot;
-  apply = &quot;systemctl start {{param `name`}}&quot;
-}
-</code></pre>
-
-<p>Within a module, you can have tasks. Shown here is a task with two stanzas:</p>
-
-<ul>
-<li><code>check</code> returns the actual state, and an error code indicating if it needs to
-be changed</li>
-<li><code>apply</code> is run to create the resource controlled by this task. You can omit
-this stanza if you want the command to be purely informational.</li>
-</ul>
-
-<p>If the exit code of <code>check</code> is non-zero, <code>apply</code> will be called, after which
-time <code>check</code> will be called again to get the new state and success.</p>
-
-<p>A module can have multiple tasks. It can also have templates, which render data
-to the filesystem from the module&rsquo;s parameters:</p>
-
-<pre><code class="language-hcl"># create systemd unit file
-param &quot;name&quot; {}
-
-param &quot;execStart&quot; {}
-
-param &quot;user&quot; {
-  default = &quot;root&quot;
-}
-
-param &quot;group&quot; {
-  default = &quot;root&quot;
-}
-
-param &quot;description&quot; {
-  default = &quot;{{param `name`}}&quot;
-}
-
-file.content &quot;unit&quot; {
-  destination = &quot;/etc/systemd/system/{{param `name`}}.service&quot;
-
-  content = &lt;&lt;EOF
-[Unit]
-Description={{param `description`}}
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-User={{param `user`}}
-Group={{param `group`}}
-ExecStart={{param `execStart`}}
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
-task &quot;reload-daemon&quot; {
-  check    = &quot;systemd-delta --type=overridden {{param `name`}}&quot;
-  apply    = &quot;systemctl daemon-reload&quot;
-  requires = [&quot;file.content.unit&quot;]
-}
-</code></pre>
-
-<p>This module creates a systemd unit file and registers it with the system. Note
-that both resource blocks have a name, and that &ldquo;daemon-reload&rdquo; depends on
-&ldquo;unit&rdquo;. Converge uses these dependencies to determine execution order.</p>
-
-<p>The arguments for the <code>file.content</code> resource:</p>
-
-<ul>
-<li><code>destination</code>: where to render the template. If you don&rsquo;t want to render to
-disk, omit this stanza. In that case, you can access the rendered template
-with the <code>template</code> template function.</li>
-<li><code>content</code>: this can be a string, a multi-line string (as in the example above)
-or any template function that returns a string. Converge intelligently renders
-the template until there are no more blocks, so sourcing a template from a
-template is fine.</li>
-</ul>
+<p>For more details on how to use the resources, see the
+<a href="http://converge.aster.is/getting-started/">getting started guide</a>.</p>
 
 
 			<aside class="copyright" role="note">
