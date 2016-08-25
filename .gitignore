@@ -27,7 +27,7 @@ _testmain.go
 converge
 *.dot
 *.ps
-*.png
+samples/**/*.png
 *.dot
 *-fuzz.zip
 
