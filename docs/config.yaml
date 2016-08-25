@@ -32,8 +32,8 @@ params:
   highlight_css: ""
 
   palette:
-    accent: light-green
-    primary: red
+    accent: teal
+    primary: indigo
 
   font:
     code: Ubuntu Mono
