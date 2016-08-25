@@ -62,5 +62,7 @@ func shPreparer(script string) *shell.Preparer {
 		Interpreter: "/bin/sh",
 		CheckFlags:  syntaxFlag,
 		Check:       script,
+		Dir:         "/tmp/converge",
+		Env:         map[string]string{"ROLE": "test"},
 	}
 }

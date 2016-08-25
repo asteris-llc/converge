@@ -16,6 +16,7 @@ package shell
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -27,6 +28,8 @@ type Shell struct {
 	CmdGenerator CommandExecutor
 	CheckStmt    string
 	ApplyStmt    string
+	Dir          string
+	Env          []string
 	Status       *CommandResults
 	HealthStatus *resource.HealthStatus
 }
@@ -80,6 +83,15 @@ func (s *Shell) Messages() (messages []string) {
 		fmt.Println(outOfOrderMessage)
 		return
 	}
+
+	if s.Dir != "" {
+		messages = append(messages, fmt.Sprintf("dir (%s)", s.Dir))
+	}
+
+	if len(s.Env) > 0 {
+		messages = append(messages, fmt.Sprintf("env (%s)", strings.Join(s.Env, " ")))
+	}
+
 	messages = append(messages, s.Status.Reverse().UniqOp().SummarizeAll()...)
 	return
 }

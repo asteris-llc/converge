@@ -143,6 +143,22 @@ func Test_StatusCode_WhenMultipleStatus_ReturnsMostRecentSTatus(t *testing.T) {
 	assert.Equal(t, int(expected), sh.StatusCode())
 }
 
+// Shell context
+
+func Test_Messages_Includes_Dir(t *testing.T) {
+	sh := defaultTestShell()
+	sh.Dir = "/tmp/testing"
+	sh.Check()
+	assert.Contains(t, sh.Messages(), "dir (/tmp/testing)")
+}
+
+func Test_Messages_Includes_Env(t *testing.T) {
+	sh := defaultTestShell()
+	sh.Env = []string{"VAR=test", "ANOTHER_VAR=test2"}
+	sh.Check()
+	assert.Contains(t, sh.Messages(), "env (VAR=test ANOTHER_VAR=test2)")
+}
+
 // Test Utils
 
 func testShell(c shell.CommandExecutor) *shell.Shell {
