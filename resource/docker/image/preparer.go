@@ -22,10 +22,22 @@ import (
 )
 
 // Preparer for docker images
+//
+// Image is responsible for pulling Docker images. It assumes that there is
+// already a Docker daemon running on the system.
 type Preparer struct {
-	Name    string `hcl:"name"`
-	Tag     string `hcl:"tag"`
-	Timeout string `hcl:"timeout"`
+	// name of the image to pull
+	Name string `hcl:"name"`
+
+	// tag of the image to pull
+	Tag string `hcl:"tag"`
+
+	// the amount of time the pull will wait before halting forcefully. The
+	// format is Go's duraction string. A duration string is a possibly signed
+	// sequence of decimal numbers, each with optional fraction and a unit
+	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+	// "us" (or "µs"), "ms", "s", "m", "h".
+	Timeout string `hcl:"timeout" doc_type:"duration_string"`
 }
 
 // Prepare a new docker image
