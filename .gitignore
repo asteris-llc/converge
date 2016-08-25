@@ -37,3 +37,4 @@ build
 # docs
 docs_source/extract
 docs_source/resources.mk
+docs_source/public
