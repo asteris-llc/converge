@@ -35,15 +35,43 @@ var (
 )
 
 // Preparer for shell tasks
+//
+// Task allows you to run arbitrary shell commands on your system, first
+// checking if the command should be run.
 type Preparer struct {
-	Interpreter string            `hcl:"interpreter"`
-	CheckFlags  []string          `hcl:"check_flags"`
-	ExecFlags   []string          `hcl:"exec_flags"`
-	Check       string            `hcl:"check"`
-	Apply       string            `hcl:"apply"`
-	Timeout     string            `hcl:"timeout"`
-	Dir         string            `hcl:"dir"`
-	Env         map[string]string `hcl:"env"`
+	// the shell interpreter that will be used for your scripts. `/bin/sh` is
+	// used by default.
+	Interpreter string `hcl:"interpreter"`
+
+	// flags to pass to the `interpreter` binary to check validity. For
+	// `/bin/sh` this is `-n`
+	CheckFlags []string `hcl:"check_flags"`
+
+	// flags to pass to the interpreter at execution time
+	ExecFlags []string `hcl:"exec_flags"`
+
+	// the script to run to check if a resource needs to be changed. It should
+	// exit with exit code 0 if the resource does not need to be changed, and
+	// 1 (or above) otherwise.
+	Check string `hcl:"check"`
+
+	// the script to run to apply the resource. Normal shell exit code
+	// expectations apply (that is, exit code 0 for success, 1 or above for
+	// failure.)
+	Apply string `hcl:"apply"`
+
+	// the amount of time the command will wait before halting forcefully. The
+	// format is Go's duraction string. A duration string is a possibly signed
+	// sequence of decimal numbers, each with optional fraction and a unit
+	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
+	// "us" (or "µs"), "ms", "s", "m", "h".
+	Timeout string `hcl:"timeout" doc_type:"duration string"`
+
+	// the working directory this command should be run in
+	Dir string `hcl:"dir"`
+
+	// any environment variables that should be passed to the command
+	Env map[string]string `hcl:"env"`
 }
 
 // Prepare a new shell task

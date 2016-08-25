@@ -1,0 +1,913 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Converge</title>
+    <link>http://converge.aster.is/</link>
+    <description>Recent content on Converge</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 25 Aug 2016 07:53:04 -0500</lastBuildDate>
+    <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Module Organization</title>
+      <link>http://converge.aster.is/organization/</link>
+      <pubDate>Thu, 25 Aug 2016 07:53:04 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/organization/</guid>
+      <description>&lt;p&gt;TODO: when we have a better idea of the best ways to organize these&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Using Dependencies</title>
+      <link>http://converge.aster.is/dependencies/</link>
+      <pubDate>Thu, 25 Aug 2016 00:13:59 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/dependencies/</guid>
+      <description>
+
+&lt;p&gt;In the &lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt; we talked about
+dependencies, and briefly mentioned that they&amp;rsquo;re &lt;em&gt;super important&lt;/em&gt; for Converge
+to work properly. But we didn&amp;rsquo;t really go into them there&amp;hellip; so here we
+are!&lt;/p&gt;
+
+&lt;h2 id=&#34;graph-walking&#34;&gt;Graph Walking&lt;/h2&gt;
+
+&lt;p&gt;Briefly, Converge operates by thinking about your deployment as a graph of tasks
+that need to be done. It walks around the graph from the leaves (AKA tasks with
+no dependencies) all the way to to the root (AKA Rome, where all roads lead.)
+Let&amp;rsquo;s explore what that means with one of our graphs from before:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;A graph with a parameter. The file hello.txt depends on the name parameter.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        A graph with a parameter. The file hello.txt depends on the name parameter.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;What does Converge do when you ask it to apply this graph? When Converge loads
+this file, it will load then file and then start walking at the node that
+doesn&amp;rsquo;t have any dependencies. In this case, that&amp;rsquo;s &lt;code&gt;param.name = &amp;quot;World&amp;quot;&lt;/code&gt;. When
+&lt;code&gt;param.name&lt;/code&gt; has been successfully walked, it will move on to &lt;code&gt;File: hello.txt&lt;/code&gt;.
+If we&amp;rsquo;re successful, the root (&lt;code&gt;/&lt;/code&gt;) will be marked as successful, and our graph
+will be successful. Neat!&lt;/p&gt;
+
+&lt;h2 id=&#34;the-graph-command&#34;&gt;The Graph Command&lt;/h2&gt;
+
+&lt;p&gt;All the graphs we&amp;rsquo;ve been seeing so far have just been the output of Converge&amp;rsquo;s
+&lt;code&gt;graph&lt;/code&gt; command. When asked, Converge will load up any modules you specify and
+then render them as &lt;a href=&#34;http://graphviz.org/&#34;&gt;Graphviz&lt;/a&gt; dot output. You can render
+that like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge graph yourModule.hcl | dot -Tpng &amp;gt; yourModule.png
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When you&amp;rsquo;re developing modules, make a habit of rendering them as graphs. It
+makes it easier to think about how the graph will be executed.&lt;/p&gt;
+
+&lt;h2 id=&#34;explicit-dependencies&#34;&gt;Explicit Dependencies&lt;/h2&gt;
+
+&lt;p&gt;When we&amp;rsquo;re walking our graph, there are a lot of operations that can be done in
+parallel. For this to work, you will need to specify dependencies between
+resources in the same file. Let&amp;rsquo;s take the following example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
+  check = &amp;quot;test -d names&amp;quot;
+  apply = &amp;quot;mkdir names&amp;quot;
+}
+
+file.content &amp;quot;hello&amp;quot; {
+  destination = &amp;quot;names/hello.txt&amp;quot;
+  content     = &amp;quot;Hello, World!&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As a human reading this, we can clearly see that &lt;code&gt;file.content.hello&lt;/code&gt; is
+dependent on &lt;code&gt;task.names&lt;/code&gt;, because the file needs the directory to be created
+before it can write files into it. But Converge doesn&amp;rsquo;t know that yet, so here&amp;rsquo;s
+how it looks:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/dependencies/without-depends.png&#34; alt=&#34;The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;To fix this, we&amp;rsquo;ll need to specify &lt;code&gt;depends&lt;/code&gt; on our &lt;code&gt;file.content&lt;/code&gt;. &lt;code&gt;depends&lt;/code&gt; is
+a list of resources in the current module that must be successfully walked
+before walking ours. They&amp;rsquo;re specified as the resource type, a dot, then the
+resource name. So &lt;code&gt;task &amp;quot;names&amp;quot;&lt;/code&gt; above becomes &lt;code&gt;task.names&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
+  check = &amp;quot;test -d names&amp;quot;
+  apply = &amp;quot;mkdir names&amp;quot;
+}
+
+file.content &amp;quot;hello&amp;quot; {
+  destination = &amp;quot;names/hello.txt&amp;quot;
+  content     = &amp;quot;Hello, World!&amp;quot;
+
+  depends = [&amp;quot;task.names&amp;quot;] # added in the resource that needs the dependency
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now Converge correctly sees that it needs to walk &lt;code&gt;task.names&lt;/code&gt; before
+&lt;code&gt;file.content.hello&lt;/code&gt;:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/dependencies/with-depends.png&#34; alt=&#34;The graph output of the above module. Converge now sees the dependency between the directory and the file.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        The graph output of the above module. Converge now sees the dependency between the directory and the file.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;div class=&#34;admonition note&#34;&gt;
+&lt;p class=&#34;admonition-title&#34;&gt;Future Improvements&lt;/p&gt;
+&lt;p&gt;We&amp;rsquo;re working hard on making Converge better at detecting situations like this
+automatically. Ideally, you wouldn&amp;rsquo;t have to specify dependencies at all, and it
+would all work like &lt;a href=&#34;http://converge.aster.is/getting-started/#params&#34;&gt;the param example in the getting started guide&lt;/a&gt;. We&amp;rsquo;re not quite there yet, but keep an eye
+out!&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>http://converge.aster.is/getting-started/</link>
+      <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/getting-started/</guid>
+      <description>
+
+&lt;p&gt;In this tutorial we&amp;rsquo;re going to step through basic Converge usage by creating a
+small &amp;ldquo;hello world&amp;rdquo; module. Before beginning, please make sure to
+&lt;a href=&#34;http://converge.aster.is/install/&#34;&gt;install Converge&lt;/a&gt;. You can test your installation by
+issuing &lt;code&gt;converge version&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;hello-world&#34;&gt;Hello World!&lt;/h2&gt;
+
+&lt;p&gt;We&amp;rsquo;ll begin by writing a small module using the &lt;a href=&#34;http://converge.aster.is/resources/file-content/&#34;&gt;file.content&lt;/a&gt; resource. Put the following into
+&lt;code&gt;helloWorld.hcl&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;file.content &amp;quot;render&amp;quot; {
+  destination = &amp;quot;hello.txt&amp;quot;
+  content     = &amp;quot;Hello, World!&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;planning&#34;&gt;Planning&lt;/h2&gt;
+
+&lt;p&gt;This is our first module! Let&amp;rsquo;s plan out our execution first by running
+&lt;code&gt;converge plan helloWorld.hcl&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan helloWorld.hcl
+2016/08/24 23:58:28 [INFO] planning content/helloWorld.hcl
+2016/08/24 23:58:28 [INFO] resolving dependencies
+2016/08/24 23:58:28 [INFO] loading resources
+2016/08/24 23:58:28 [INFO] rendering
+
+root/file.content.render:
+        Messages:
+        Has Changes: yes
+        Changes:
+            hello.txt: &amp;quot;&amp;lt;file-missing&amp;gt;&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
+
+Summary: 0 errors, 1 changes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can see our single file is going to be rendered at &amp;ldquo;hello.txt&amp;rdquo;, and the file
+will be created. When created, it will say &amp;ldquo;Hello, World!&amp;rdquo; Planning out your
+changes is usually a good idea; all of Converge&amp;rsquo;s resource types support planned
+output.&lt;/p&gt;
+
+&lt;h2 id=&#34;applying&#34;&gt;Applying&lt;/h2&gt;
+
+&lt;p&gt;Next, let&amp;rsquo;s actually make the changes, using &lt;code&gt;converge apply&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge apply helloWorld.hcl
+2016/08/25 00:00:35 [INFO] applying content/helloWorld.hcl
+2016/08/25 00:00:35 [INFO] resolving dependencies
+2016/08/25 00:00:35 [INFO] loading resources
+2016/08/25 00:00:35 [INFO] rendering
+
+root/file.content.render:
+        Messages:
+        Has Changes: yes
+        Changes:
+            hello.txt: &amp;quot;&amp;lt;file-missing&amp;gt;&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
+
+Summary: 0 errors, 1 changes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This looks &lt;em&gt;suspiciously&lt;/em&gt; similar to the output from before. That&amp;rsquo;s good,
+because it means Converge made exactly (and only) the changes that it planned
+out. If we check by opening &amp;ldquo;hello.txt&amp;rdquo; in an editor, we&amp;rsquo;ll see that it says
+&amp;ldquo;Hello, World!&amp;rdquo;&lt;/p&gt;
+
+&lt;h2 id=&#34;the-graph&#34;&gt;The Graph&lt;/h2&gt;
+
+&lt;p&gt;So what&amp;rsquo;s actually going on here? Converge is taking your module file and
+turning it into a graph, then walking over the graph in order to make changes.
+Right now we only have one resource, so the graph is pretty simple:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world.png&#34; alt=&#34;The graph of our hello world module. Root (represented as /) depends on the file we defined.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        The graph of our hello world module. Root (represented as /) depends on the file we defined.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;(By the way, you can find more information about this in &lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;Dependencies&lt;/a&gt;)&lt;/p&gt;
+
+&lt;h2 id=&#34;divergence&#34;&gt;Divergence!&lt;/h2&gt;
+
+&lt;p&gt;Converge doesn&amp;rsquo;t just create resources, though: it also makes sure they stay up
+to date. While you&amp;rsquo;re in your editor, go ahead and change the message to
+something else. I changed mine to &amp;ldquo;LOL World!&amp;rdquo; Once you&amp;rsquo;ve done that, run the
+plan again.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan helloWorld.hcl
+2016/08/25 00:05:31 [INFO] planning content/helloWorld.hcl
+2016/08/25 00:05:31 [INFO] resolving dependencies
+2016/08/25 00:05:31 [INFO] loading resources
+2016/08/25 00:05:31 [INFO] rendering
+
+root/file.content.render:
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: &amp;quot;LOL, World!&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
+
+Summary: 0 errors, 1 changes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We see that we&amp;rsquo;re going to change our message back to what&amp;rsquo;s specified in the
+module. Handy! A quick &lt;code&gt;converge apply helloWorld.hcl&lt;/code&gt; and we&amp;rsquo;re back to normal.&lt;/p&gt;
+
+&lt;h2 id=&#34;params&#34;&gt;Params&lt;/h2&gt;
+
+&lt;p&gt;Now let&amp;rsquo;s add the ability to greet someone in particular, instead of the whole
+world. We&amp;rsquo;re going to use &lt;a href=&#34;http://converge.aster.is/resources/param/&#34;&gt;params&lt;/a&gt; for this.
+Change your &lt;code&gt;helloWorld.hcl&lt;/code&gt; to look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;name&amp;quot; {
+  default = &amp;quot;World&amp;quot;
+}
+
+file.content &amp;quot;render&amp;quot; {
+  destination = &amp;quot;hello.txt&amp;quot;
+  content     = &amp;quot;Hello, {{param `name`}}!&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This &lt;a href=&#34;http://converge.aster.is/resources/param/&#34;&gt;param&lt;/a&gt; allows us to add a parameter to
+our module when we call it. (Notice that we&amp;rsquo;re using the result of our parameter
+in a template block in the &lt;code&gt;content&lt;/code&gt; stanza of &lt;code&gt;file.content.render&lt;/code&gt;.)&lt;/p&gt;
+
+&lt;div class=&#34;admonition note&#34;&gt;
+&lt;p class=&#34;admonition-title&#34;&gt;Templates&lt;/p&gt;
+&lt;p&gt;Converge uses Go&amp;rsquo;s &lt;code&gt;text/template&lt;/code&gt; library. You can template most stanzas in
+your resources. The
+&lt;a href=&#34;https://golang.org/pkg/text/template/&#34;&gt;Go Documentation on &lt;code&gt;text/template&lt;/code&gt;&lt;/a&gt; is
+a handy reference to keep around as you&amp;rsquo;re finding your feet with these
+templates.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Let&amp;rsquo;s change the name in the template to your name (I&amp;rsquo;m going to assume it&amp;rsquo;s
+&amp;ldquo;Spartacus&amp;rdquo;.) We&amp;rsquo;ll use the &lt;code&gt;-p&lt;/code&gt; flag to &lt;code&gt;converge plan&lt;/code&gt; to see what&amp;rsquo;ll happen:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan -p name=Spartacus content/helloWorld.hcl
+2016/08/25 00:17:11 [INFO] applying content/helloWorld.hcl
+2016/08/25 00:17:11 [INFO] resolving dependencies
+2016/08/25 00:17:11 [INFO] loading resources
+2016/08/25 00:17:11 [INFO] rendering
+
+root/file.content.render:
+        Messages:
+        Has Changes: yes
+        Changes:
+            hello.txt: &amp;quot;Hello, World!&amp;quot; =&amp;gt; &amp;quot;Hello, Spartacus!&amp;quot;
+
+Summary: 0 errors, 1 changes
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Makes sense, right? When we provide the param, it&amp;rsquo;s value is used instead of the
+default of &amp;ldquo;World&amp;rdquo;.&lt;/p&gt;
+
+&lt;p&gt;By the way, how does this effect our graph? Well, we&amp;rsquo;ve added a new resource.
+Normally, you&amp;rsquo;d have to &lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;explicitly specify dependencies&lt;/a&gt;, but Converge will look inside our template strings for
+references to Params. That means our graph is all hooked up, and looks like
+this:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;Our graph with parameter. The file now depends on the name parameter.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        Our graph with parameter. The file now depends on the name parameter.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;h2 id=&#34;modules-calling-modules&#34;&gt;Modules Calling Modules&lt;/h2&gt;
+
+&lt;p&gt;This is all well and good, but we don&amp;rsquo;t want to have to write things the same
+&lt;em&gt;every time&lt;/em&gt; right? Well, good news: that&amp;rsquo;s what modules are for! Now that
+you&amp;rsquo;ve written a module, you can require it from any other module to add it to
+your tree. Create a new module, let&amp;rsquo;s call it &lt;code&gt;helloYou.hcl&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;module &amp;quot;helloWorld.hcl&amp;quot; &amp;quot;hello&amp;quot; {
+  params {
+    name = &amp;quot;Spartacus&amp;quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now try running &lt;code&gt;converge plan helloYou.hcl&lt;/code&gt;. The same thing happens as if you
+had called the module yourself!&lt;/p&gt;
+
+&lt;p&gt;But once again, how does this effect our graph? You remember before that we had
+a root, a file resource, and a param resource. We still have all those things,
+but with a wrinkle: we&amp;rsquo;ve seen &lt;code&gt;/&lt;/code&gt; as our root module in all the previous
+diagrams, but &lt;code&gt;/&lt;/code&gt; is really just an alias for the root. Since we&amp;rsquo;re not
+requiring &lt;code&gt;helloWorld.hcl&lt;/code&gt; from &lt;code&gt;helloYou.hcl&lt;/code&gt;, Converge will reason about it as
+a separate module. But really, these are all part of the same tree, and Converge
+will walk over them as nodes.&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-you.png&#34; alt=&#34;Our graph, but with our original module as a dependent module.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        Our graph, but with our original module as a dependent module.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;h2 id=&#34;what-s-next&#34;&gt;What&amp;rsquo;s Next?&lt;/h2&gt;
+
+&lt;p&gt;If you&amp;rsquo;ve made it this far, you&amp;rsquo;ve got a decision to make! What to read next?
+The road diverges in this wood, so you&amp;rsquo;ve got two choices: you could
+&lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;read about how all those neat little dependencies &lt;em&gt;actually work&lt;/em&gt;&lt;/a&gt;, or now that you know how to link modules together you
+could
+&lt;a href=&#34;http://converge.aster.is/organization/&#34;&gt;learn about how to keep everything from becoming a sprawling mess of files&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Install</title>
+      <link>http://converge.aster.is/install/</link>
+      <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/install/</guid>
+      <description>&lt;p&gt;TODO: Installation instructions!&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>param</title>
+      <link>http://converge.aster.is/resources/param/</link>
+      <pubDate>Wed, 24 Aug 2016 23:45:18 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/param/</guid>
+      <description>
+
+&lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
+&lt;code&gt;{{param &amp;quot;name&amp;quot;}}&lt;/code&gt; template call anywhere you need the value of a param
+inside the current module.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (optional string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Default is an optional field that provides a default value if none is
+provided to this parameter. If this field is not set, this param will be
+treated as required.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>file.content</title>
+      <link>http://converge.aster.is/resources/file-content/</link>
+      <pubDate>Wed, 24 Aug 2016 23:41:00 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/file-content/</guid>
+      <description>
+
+&lt;p&gt;Content renders content to disk&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+file.content &amp;quot;render&amp;quot; {
+  destination = &amp;quot;{{param `filename`}}&amp;quot;
+  content     = &amp;quot;{{param `message`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;content&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Content is the file content. This will be rendered as a template.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;destination&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Destination is the location on disk where the content will be rendered.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>module</title>
+      <link>http://converge.aster.is/resources/module/</link>
+      <pubDate>Wed, 24 Aug 2016 23:41:00 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/module/</guid>
+      <description>
+
+&lt;p&gt;Module remotely sources other modules and adds them to the tree&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello from another module!&amp;quot;
+}
+
+module &amp;quot;basic.hcl&amp;quot; &amp;quot;basic&amp;quot; {
+  params = {
+    message = &amp;quot;{{param `message`}}&amp;quot;
+  }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;params&lt;/code&gt; (map of string to anything)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Params is a map of strings to anything you&amp;rsquo;d like. It will be passed to
+the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s there.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>file.mode</title>
+      <link>http://converge.aster.is/resources/file-mode/</link>
+      <pubDate>Wed, 24 Aug 2016 23:29:09 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/file-mode/</guid>
+      <description>
+
+&lt;p&gt;Mode monitors the mode of a file&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+file.mode &amp;quot;render&amp;quot; {
+  destination = &amp;quot;{{param `filename`}}&amp;quot;
+  mode        = 0777
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;destination&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Destination specifies which file will be modified by this resource. The
+file must exist on the system (for example, having been created with
+&lt;code&gt;file.content&lt;/code&gt;.)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;mode&lt;/code&gt; (octal string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Mode is the mode of the file, specified in octal.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>task</title>
+      <link>http://converge.aster.is/resources/task/</link>
+      <pubDate>Wed, 24 Aug 2016 23:25:46 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/task/</guid>
+      <description>
+
+&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
+checking if the command should be run.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to check if a resource needs to be changed. It should
+exit with exit code 0 if the resource does not need to be changed, and
+1 (or above) otherwise.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to apply the resource. Normal shell exit code
+expectations apply (that is, exit code 0 for success, 1 or above for
+failure.)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully. The
+format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
+sequence of decimal numbers, each with optional fraction and a unit
+suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
+&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>License</title>
+      <link>http://converge.aster.is/license/</link>
+      <pubDate>Wed, 24 Aug 2016 16:29:08 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/license/</guid>
+      <description>&lt;p&gt;Apache License
+                           Version 2.0, January 2004
+                        &lt;a href=&#34;http://www.apache.org/licenses/&#34;&gt;http://www.apache.org/licenses/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Definitions.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;License&amp;rdquo; shall mean the terms and conditions for use, reproduction,
+  and distribution as defined by Sections 1 through 9 of this document.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Licensor&amp;rdquo; shall mean the copyright owner or entity authorized by
+  the copyright owner that is granting the License.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Legal Entity&amp;rdquo; shall mean the union of the acting entity and all
+  other entities that control, are controlled by, or are under common
+  control with that entity. For the purposes of this definition,
+  &amp;ldquo;control&amp;rdquo; means (i) the power, direct or indirect, to cause the
+  direction or management of such entity, whether by contract or
+  otherwise, or (ii) ownership of fifty percent (50%) or more of the
+  outstanding shares, or (iii) beneficial ownership of such entity.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;You&amp;rdquo; (or &amp;ldquo;Your&amp;rdquo;) shall mean an individual or Legal Entity
+  exercising permissions granted by this License.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Source&amp;rdquo; form shall mean the preferred form for making modifications,
+  including but not limited to software source code, documentation
+  source, and configuration files.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Object&amp;rdquo; form shall mean any form resulting from mechanical
+  transformation or translation of a Source form, including but
+  not limited to compiled object code, generated documentation,
+  and conversions to other media types.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Work&amp;rdquo; shall mean the work of authorship, whether in Source or
+  Object form, made available under the License, as indicated by a
+  copyright notice that is included in or attached to the work
+  (an example is provided in the Appendix below).&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Derivative Works&amp;rdquo; shall mean any work, whether in Source or Object
+  form, that is based on (or derived from) the Work and for which the
+  editorial revisions, annotations, elaborations, or other modifications
+  represent, as a whole, an original work of authorship. For the purposes
+  of this License, Derivative Works shall not include works that remain
+  separable from, or merely link (or bind by name) to the interfaces of,
+  the Work and Derivative Works thereof.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Contribution&amp;rdquo; shall mean any work of authorship, including
+  the original version of the Work and any modifications or additions
+  to that Work or Derivative Works thereof, that is intentionally
+  submitted to Licensor for inclusion in the Work by the copyright owner
+  or by an individual or Legal Entity authorized to submit on behalf of
+  the copyright owner. For the purposes of this definition, &amp;ldquo;submitted&amp;rdquo;
+  means any form of electronic, verbal, or written communication sent
+  to the Licensor or its representatives, including but not limited to
+  communication on electronic mailing lists, source code control systems,
+  and issue tracking systems that are managed by, or on behalf of, the
+  Licensor for the purpose of discussing and improving the Work, but
+  excluding communication that is conspicuously marked or otherwise
+  designated in writing by the copyright owner as &amp;ldquo;Not a Contribution.&amp;rdquo;&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Contributor&amp;rdquo; shall mean Licensor and any individual or Legal Entity
+  on behalf of whom a Contribution has been received by Licensor and
+  subsequently incorporated within the Work.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Grant of Copyright License. Subject to the terms and conditions of
+  this License, each Contributor hereby grants to You a perpetual,
+  worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+  copyright license to reproduce, prepare Derivative Works of,
+  publicly display, publicly perform, sublicense, and distribute the
+  Work and such Derivative Works in Source or Object form.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Grant of Patent License. Subject to the terms and conditions of
+  this License, each Contributor hereby grants to You a perpetual,
+  worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+  (except as stated in this section) patent license to make, have made,
+  use, offer to sell, sell, import, and otherwise transfer the Work,
+  where such license applies only to those patent claims licensable
+  by such Contributor that are necessarily infringed by their
+  Contribution(s) alone or by combination of their Contribution(s)
+  with the Work to which such Contribution(s) was submitted. If You
+  institute patent litigation against any entity (including a
+  cross-claim or counterclaim in a lawsuit) alleging that the Work
+  or a Contribution incorporated within the Work constitutes direct
+  or contributory patent infringement, then any patent licenses
+  granted to You under this License for that Work shall terminate
+  as of the date such litigation is filed.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Redistribution. You may reproduce and distribute copies of the
+  Work or Derivative Works thereof in any medium, with or without
+  modifications, and in Source or Object form, provided that You
+  meet the following conditions:&lt;/p&gt;
+
+&lt;p&gt;(a) You must give any other recipients of the Work or
+      Derivative Works a copy of this License; and&lt;/p&gt;
+
+&lt;p&gt;(b) You must cause any modified files to carry prominent notices
+      stating that You changed the files; and&lt;/p&gt;
+
+&lt;p&gt;&amp;copy; You must retain, in the Source form of any Derivative Works
+      that You distribute, all copyright, patent, trademark, and
+      attribution notices from the Source form of the Work,
+      excluding those notices that do not pertain to any part of
+      the Derivative Works; and&lt;/p&gt;
+
+&lt;p&gt;(d) If the Work includes a &amp;ldquo;NOTICE&amp;rdquo; text file as part of its
+      distribution, then any Derivative Works that You distribute must
+      include a readable copy of the attribution notices contained
+      within such NOTICE file, excluding those notices that do not
+      pertain to any part of the Derivative Works, in at least one
+      of the following places: within a NOTICE text file distributed
+      as part of the Derivative Works; within the Source form or
+      documentation, if provided along with the Derivative Works; or,
+      within a display generated by the Derivative Works, if and
+      wherever such third-party notices normally appear. The contents
+      of the NOTICE file are for informational purposes only and
+      do not modify the License. You may add Your own attribution
+      notices within Derivative Works that You distribute, alongside
+      or as an addendum to the NOTICE text from the Work, provided
+      that such additional attribution notices cannot be construed
+      as modifying the License.&lt;/p&gt;
+
+&lt;p&gt;You may add Your own copyright statement to Your modifications and
+  may provide additional or different license terms and conditions
+  for use, reproduction, or distribution of Your modifications, or
+  for any such Derivative Works as a whole, provided Your use,
+  reproduction, and distribution of the Work otherwise complies with
+  the conditions stated in this License.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Submission of Contributions. Unless You explicitly state otherwise,
+  any Contribution intentionally submitted for inclusion in the Work
+  by You to the Licensor shall be under the terms and conditions of
+  this License, without any additional terms or conditions.
+  Notwithstanding the above, nothing herein shall supersede or modify
+  the terms of any separate license agreement you may have executed
+  with Licensor regarding such Contributions.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Trademarks. This License does not grant permission to use the trade
+  names, trademarks, service marks, or product names of the Licensor,
+  except as required for reasonable and customary use in describing the
+  origin of the Work and reproducing the content of the NOTICE file.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Disclaimer of Warranty. Unless required by applicable law or
+  agreed to in writing, Licensor provides the Work (and each
+  Contributor provides its Contributions) on an &amp;ldquo;AS IS&amp;rdquo; BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+  implied, including, without limitation, any warranties or conditions
+  of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+  PARTICULAR PURPOSE. You are solely responsible for determining the
+  appropriateness of using or redistributing the Work and assume any
+  risks associated with Your exercise of permissions under this License.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Limitation of Liability. In no event and under no legal theory,
+  whether in tort (including negligence), contract, or otherwise,
+  unless required by applicable law (such as deliberate and grossly
+  negligent acts) or agreed to in writing, shall any Contributor be
+  liable to You for damages, including any direct, indirect, special,
+  incidental, or consequential damages of any character arising as a
+  result of this License or out of the use or inability to use the
+  Work (including but not limited to damages for loss of goodwill,
+  work stoppage, computer failure or malfunction, or any and all
+  other commercial damages or losses), even if such Contributor
+  has been advised of the possibility of such damages.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Accepting Warranty or Additional Liability. While redistributing
+  the Work or Derivative Works thereof, You may choose to offer,
+  and charge a fee for, acceptance of support, warranty, indemnity,
+  or other liability obligations and/or rights consistent with this
+  License. However, in accepting such obligations, You may act only
+  on Your own behalf and on Your sole responsibility, not on behalf
+  of any other Contributor, and only if You agree to indemnify,
+  defend, and hold each Contributor harmless for any liability
+  incurred by, or claims asserted against, such Contributor by reason
+  of your accepting any such warranty or additional liability.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;END OF TERMS AND CONDITIONS&lt;/p&gt;
+
+&lt;p&gt;APPENDIX: How to apply the Apache License to your work.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;  To apply the Apache License to your work, attach the following
+  boilerplate notice, with the fields enclosed by brackets &amp;quot;[]&amp;quot;
+  replaced with your own identifying information. (Don&#39;t include
+  the brackets!)  The text should be enclosed in the appropriate
+  comment syntax for the file format. We also recommend that a
+  file or class name and description of purpose be included on the
+  same &amp;quot;printed page&amp;quot; as the copyright notice for easier
+  identification within third-party archives.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Copyright [yyyy] [name of copyright owner]&lt;/p&gt;
+
+&lt;p&gt;Licensed under the Apache License, Version 2.0 (the &amp;ldquo;License&amp;rdquo;);
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;   http://www.apache.org/licenses/LICENSE-2.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an &amp;ldquo;AS IS&amp;rdquo; BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Converge</title>
+      <link>http://converge.aster.is/</link>
+      <pubDate>Wed, 24 Aug 2016 15:47:16 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/</guid>
+      <description>
+
+&lt;h2 id=&#34;installation&#34;&gt;Installation&lt;/h2&gt;
+
+&lt;h2 id=&#34;license&#34;&gt;License&lt;/h2&gt;
+
+&lt;p&gt;See &lt;a href=&#34;http://converge.aster.is/license/&#34;&gt;LICENSE&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Resource Reference</title>
+      <link>http://converge.aster.is/resources/</link>
+      <pubDate>Wed, 24 Aug 2016 15:33:42 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/</guid>
+      <description>&lt;p&gt;Converge has resources that you can use to make various changes on your system.
+For example, &lt;code&gt;file.content&lt;/code&gt; will control the content of a file, and &lt;code&gt;file.mode&lt;/code&gt;
+will control that file&amp;rsquo;s mode.&lt;/p&gt;
+
+&lt;p&gt;For more details on how to use the resources, see the
+&lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
