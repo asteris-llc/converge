@@ -1,5 +1,5 @@
 ---
-title: "Resources"
+title: "Resource Reference"
 date: "2016-08-24T15:33:42-05:00"
 
 menu:
