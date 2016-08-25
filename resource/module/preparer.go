@@ -21,7 +21,11 @@ import (
 )
 
 // Preparer for modules
+//
+// Module remotely sources other modules and adds them to the tree
 type Preparer struct {
+	// Params is a map of strings to anything you'd like. It will be passed to
+	// the called module as the default values for the `param`s there.
 	Params map[string]interface{} `hcl:"params"`
 }
 

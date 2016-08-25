@@ -1,32 +1,37 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-08-24T16:55:17-05:00"
+date: "2016-08-24T23:41:00-05:00"
 menu:
   main:
     parent: resources
 ---
 
-Module holds stringified values for parameters
+
+Module remotely sources other modules and adds them to the tree
+
 
 ## Example
+
 ```hcl
 param "message" {
-  default = "Hello, World!"
+  default = "Hello from another module!"
 }
 
-param "filename" {
-  default = "test.txt"
+module "basic.hcl" "basic" {
+  params = {
+    message = "{{param `message`}}"
+  }
 }
 
-task "render" {
-  check = "cat {{param `filename`}} | tee /dev/stderr | grep -q '{{param `message`}}'"
-  apply = "echo '{{param `message`}}' > {{param `filename`}}"
-}
 ```
 
-## Parameters
-- Params (`&{764 string string}`)
 
-  
+## Parameters
+
+- `params` (map of string to anything)
+
+  Params is a map of strings to anything you'd like. It will be passed to
+the called module as the default values for the `param`s there.
+
 
