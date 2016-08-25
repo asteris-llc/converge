@@ -135,16 +135,8 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 	case *ast.Field:
 		field := &Field{
 			Name: n.Names[0].String(),
-			Type: fmt.Sprint(n.Type),
+			Type: stringify(n.Type),
 			Doc:  te.Docs(n.Doc, n.Comment),
-		}
-
-		switch t := n.Type.(type) {
-		case *ast.Ident:
-			field.Type = t.Name
-
-		case *ast.ArrayType:
-			field.Type = fmt.Sprintf("list of %ss", t.Elt)
 		}
 
 		if n.Tag != nil {
@@ -242,4 +234,23 @@ func parseTag(tag string) map[string][]string {
 
 func fencedCode(in string) string {
 	return fmt.Sprintf("```hcl\n%s\n```\n", in)
+}
+
+func stringify(node ast.Expr) string {
+	switch n := node.(type) {
+	case *ast.Ident:
+		return n.Name
+
+	case *ast.ArrayType:
+		return fmt.Sprintf("list of %ss", stringify(n.Elt))
+
+	case *ast.MapType:
+		return fmt.Sprintf("map of %s to %s", stringify(n.Key), stringify(n.Value))
+
+	case *ast.InterfaceType:
+		return "anything"
+
+	default:
+		return fmt.Sprintf("%T", n)
+	}
 }
