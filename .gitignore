@@ -35,5 +35,5 @@ samples/**/*.png
 build
 
 # docs
-docs/extract
-docs/resources.mk
+docs_source/extract
+docs_source/resources.mk
