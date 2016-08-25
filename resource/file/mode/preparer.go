@@ -24,9 +24,16 @@ import (
 )
 
 // Preparer for file Mode
+//
+// Mode monitors the mode of a file
 type Preparer struct {
+	// Destination specifies which file will be modified by this resource. The
+	// file must exist on the system (for example, having been created with
+	// `file.content`.)
 	Destination string `hcl:"destination"`
-	Mode        string `hcl:"mode"`
+
+	// Mode is the mode of the file, specified in octal.
+	Mode string `hcl:"mode" doc_type:"octal string"`
 }
 
 // Prepare this resource for use
