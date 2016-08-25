@@ -17,8 +17,13 @@ package content
 import "github.com/asteris-llc/converge/resource"
 
 // Preparer for Content
+//
+// Content renders content to disk
 type Preparer struct {
-	Content     string `hcl:"content"`
+	// Content is the file content. This will be rendered as a template.
+	Content string `hcl:"content"`
+
+	// Destination is the location on disk where the content will be rendered.
 	Destination string `hcl:"destination"`
 }
 

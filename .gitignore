@@ -27,9 +27,14 @@ _testmain.go
 converge
 *.dot
 *.ps
-*.png
+samples/**/*.png
 *.dot
 *-fuzz.zip
 
 # release
 build
+
+# docs
+docs_source/extract
+docs_source/resources.mk
+docs_source/public

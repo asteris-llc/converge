@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://converge.aster.is/</loc>
+    <lastmod>2016-08-25T07:53:04-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/organization/</loc>
+    <lastmod>2016-08-25T07:53:04-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/dependencies/</loc>
+    <lastmod>2016-08-25T00:13:59-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/getting-started/</loc>
+    <lastmod>2016-08-24T23:49:44-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/install/</loc>
+    <lastmod>2016-08-24T23:49:44-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/param/</loc>
+    <lastmod>2016-08-24T23:45:18-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/file-content/</loc>
+    <lastmod>2016-08-24T23:41:00-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/module/</loc>
+    <lastmod>2016-08-24T23:41:00-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/file-mode/</loc>
+    <lastmod>2016-08-24T23:29:09-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/task/</loc>
+    <lastmod>2016-08-24T23:25:46-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/license/</loc>
+    <lastmod>2016-08-24T16:29:08-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/</loc>
+    <lastmod>2016-08-24T15:47:16-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/</loc>
+    <lastmod>2016-08-24T15:33:42-05:00</lastmod>
+  </url>
+  
+</urlset>
