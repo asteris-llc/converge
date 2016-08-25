@@ -16,6 +16,7 @@ package shell
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -35,12 +36,14 @@ var (
 
 // Preparer for shell tasks
 type Preparer struct {
-	Interpreter string   `hcl:"interpreter"`
-	CheckFlags  []string `hcl:"check_flags"`
-	ExecFlags   []string `hcl:"exec_flags"`
-	Check       string   `hcl:"check"`
-	Apply       string   `hcl:"apply"`
-	Timeout     string   `hcl:"timeout"`
+	Interpreter string            `hcl:"interpreter"`
+	CheckFlags  []string          `hcl:"check_flags"`
+	ExecFlags   []string          `hcl:"exec_flags"`
+	Check       string            `hcl:"check"`
+	Apply       string            `hcl:"apply"`
+	Timeout     string            `hcl:"timeout"`
+	Dir         string            `hcl:"dir"`
+	Env         map[string]string `hcl:"env"`
 }
 
 // Prepare a new shell task
@@ -61,6 +64,24 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
+	dir, err := render.Render("dir", p.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	// render Env
+	renderedEnv := make([]string, len(p.Env))
+	idx := 0
+	for name, val := range p.Env {
+		pair := fmt.Sprintf("%s=%s", name, val)
+		rendered, rerr := render.Render("env-"+name, pair)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedEnv[idx] = rendered
+		idx++
+	}
+
 	timeout, err := render.Render("timeout", p.Timeout)
 	if err != nil {
 		return nil, err
@@ -69,6 +90,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	generator := &CommandGenerator{
 		Interpreter: interpreter,
 		Flags:       p.ExecFlags,
+		Dir:         dir,
+		Env:         renderedEnv,
 	}
 
 	if duration, err := time.ParseDuration(timeout); err == nil {
@@ -79,6 +102,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		CmdGenerator: generator,
 		CheckStmt:    check,
 		ApplyStmt:    apply,
+		Dir:          dir,
+		Env:          renderedEnv,
 	}
 
 	return shell, checkSyntax(interpreter, p.CheckFlags, check)
