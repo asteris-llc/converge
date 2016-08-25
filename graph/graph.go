@@ -79,7 +79,7 @@ func (g *Graph) Remove(id string) {
 
 // Get a value by ID
 func (g *Graph) Get(id string) interface{} {
-	val, _ := g.values.Get(id) // TODO: return presence as well
+	val, _ := g.values.Get(id)
 	return val
 }
 
@@ -501,6 +501,18 @@ func (g *Graph) Vertices() []string {
 		vertices[v] = graphVertices[v].(string)
 	}
 	return vertices
+}
+
+// MaybeGet returns the value of the element and a bool indicating if it was
+// found, if it was not found the value of the returned element is nil.
+func (g *Graph) MaybeGet(id string) (interface{}, bool) {
+	return g.values.Get(id)
+}
+
+// Contains returns true if the id exists in the map
+func (g *Graph) Contains(id string) bool {
+	_, found := g.MaybeGet(id)
+	return found
 }
 
 // Edges will get a list of all of the edges in the graph.

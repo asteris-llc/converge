@@ -48,6 +48,26 @@ func TestGetNothing(t *testing.T) {
 	assert.Nil(t, g.Get("nothing"))
 }
 
+func TestMaybeGet(t *testing.T) {
+	t.Parallel()
+	g := graph.New()
+	g.Add("one", 1)
+	val, found := g.MaybeGet("one")
+	assert.Equal(t, 1, val)
+	assert.True(t, found)
+	val, found = g.MaybeGet("two")
+	assert.Nil(t, val)
+	assert.False(t, found)
+}
+
+func TestContains(t *testing.T) {
+	t.Parallel()
+	g := graph.New()
+	g.Add("one", 1)
+	assert.True(t, g.Contains("one"))
+	assert.False(t, g.Contains("two"))
+}
+
 func BenchmarkAddThenGet(b *testing.B) {
 	g := graph.New()
 	b.RunParallel(func(pb *testing.PB) {
