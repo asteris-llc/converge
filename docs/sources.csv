@@ -1,5 +1,5 @@
-file.content,../resource/file/content/content.go,../samples/fileContent.hcl,Content
-file.mode,../resource/file/mode/mode.go,../samples/fileMode.hcl,Mode
-module,../resource/module/module.go,../samples/basic.hcl,Module
-param,../resource/param/param.go,../samples/basic.hcl,Param
-task,../resource/shell/shell.go,../samples/basic.hcl,Shell
+file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Preparer
+file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer
+module,../resource/module/preparer.go,../samples/basic.hcl,Preparer
+param,../resource/param/preparer.go,../samples/basic.hcl,Preparer
+task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer

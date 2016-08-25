@@ -9,15 +9,31 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/pflag"
 )
 
 var (
-	typeName     string
-	fPath        string
-	examplePath  string
-	resourceName string
+	typeName      string
+	fPath         string
+	examplePath   string
+	resourceName  string
+	stripDocLines int
+
+	tmpl = template.Must(template.New("").Funcs(template.FuncMap{"fencedCode": fencedCode}).Parse(`
+{{.TopDoc}}
+
+## Example
+
+{{fencedCode .ExampleSource}}
+
+## Parameters
+{{ range .Fields}}
+- {{.Name}} ({{.Type}})
+
+  {{.Doc}}{{end}}
+`))
 )
 
 func init() {
@@ -25,6 +41,7 @@ func init() {
 	pflag.StringVar(&fPath, "path", "", "source of Go file for extraction")
 	pflag.StringVar(&resourceName, "resource-name", "", "name to import resource in HCL source")
 	pflag.StringVar(&examplePath, "example", "", "name of example file to include")
+	pflag.IntVar(&stripDocLines, "strip-doc-lines", 0, "strip this many lines of docs from the type - so it doesn't all have to start with \"ModuleName blah blah...\"")
 
 	pflag.Parse()
 }
@@ -50,7 +67,7 @@ func main() {
 
 	extractor := &TypeExtractor{
 		Target:        typeName,
-		ExampleSource: out,
+		ExampleSource: string(out),
 		ResourceName:  resourceName,
 	}
 	ast.Walk(extractor, file)
@@ -71,7 +88,7 @@ type TypeExtractor struct {
 	Fields []*Field
 
 	// information we get externally (from flags)
-	ExampleSource []byte
+	ExampleSource string
 	ResourceName  string
 }
 
@@ -96,7 +113,7 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 			return nil
 		}
 
-		te.TopDoc = te.Docs(n.Doc, spec.Doc, spec.Comment)
+		te.TopDoc = stripLines(te.Docs(n.Doc, spec.Doc, spec.Comment))
 
 		return te
 
@@ -116,14 +133,34 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		return te
 
 	case *ast.Field:
-		te.Fields = append(
-			te.Fields,
-			&Field{
-				Name: n.Names[0].String(),
-				Type: fmt.Sprint(n.Type),
-				Doc:  te.Docs(n.Doc, n.Comment),
-			},
-		)
+		field := &Field{
+			Name: n.Names[0].String(),
+			Type: fmt.Sprint(n.Type),
+			Doc:  te.Docs(n.Doc, n.Comment),
+		}
+
+		switch t := n.Type.(type) {
+		case *ast.Ident:
+			field.Type = t.Name
+
+		case *ast.ArrayType:
+			field.Type = fmt.Sprintf("list of %ss", t.Elt)
+		}
+
+		if n.Tag != nil {
+			for k, v := range parseTag(strings.Trim(n.Tag.Value, "`")) {
+				switch k {
+				case "hcl":
+					field.Name = fmt.Sprintf("`%s`", v[0])
+
+				case "doc_type":
+					field.Type = v[0]
+				}
+			}
+		}
+
+		te.Fields = append(te.Fields, field)
+
 		return nil
 
 	default:
@@ -144,23 +181,65 @@ func (*TypeExtractor) Docs(gs ...*ast.CommentGroup) string {
 
 func (te *TypeExtractor) String() string {
 	var out bytes.Buffer
-	// Docs
-	out.WriteString(te.TopDoc)
-	out.WriteString("\n")
 
-	// example
-	out.WriteString("## Example\n")
-	out.WriteString("```hcl\n")
-	out.Write(te.ExampleSource)
-	out.WriteString("```\n\n")
-
-	// Parameters
-	out.WriteString("## Parameters\n")
-	for _, field := range te.Fields {
-		out.WriteString("- " + field.Name + " (`" + field.Type + "`)\n\n")
-		out.WriteString("  " + strings.Replace(field.Doc, "\n", "   \n", -1))
-		out.WriteString("\n")
+	err := tmpl.Execute(&out, te)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return out.String()
+}
+
+func stripLines(doc string) string {
+	lines := strings.Split(doc, "\n")
+	return strings.Join(lines[stripDocLines:], "\n")
+}
+
+func parseTag(tag string) map[string][]string {
+	out := map[string][]string{}
+
+	for len(tag) > 0 {
+		var key bytes.Buffer
+
+		// consume whitespace
+		tag = strings.TrimLeft(tag, " ")
+
+		// parse tag
+		for _, b := range tag {
+			tag = tag[1:]
+
+			if b == ':' {
+				break
+			}
+			key.WriteRune(b)
+		}
+
+		// consume quote
+		tag = strings.TrimLeft(tag, "\"")
+
+		// start consuming keys
+		var value bytes.Buffer
+		for _, b := range tag {
+			tag = tag[1:]
+
+			if b == '"' || b == ',' {
+				out[key.String()] = append(out[key.String()], value.String())
+				value.Reset()
+			}
+
+			if b == '"' {
+				break
+			} else if b == ',' {
+				continue
+			}
+
+			value.WriteRune(b)
+		}
+	}
+
+	return out
+}
+
+func fencedCode(in string) string {
+	return fmt.Sprintf("```hcl\n%s\n```\n", in)
 }
