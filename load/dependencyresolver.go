@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
+	"github.com/asteris-llc/converge/render/extensions/platform"
 )
 
 type dependencyGenerator func(node *parse.Node) ([]string, error)
@@ -98,6 +99,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 	language := extensions.MakeLanguage()
 	language.On("param", extensions.RememberCalls(&out, 0))
 	language.On("split", extensions.StubTemplateFunc)
+	language.On("platform", platform.NewPlatform)
 	for _, s := range strings {
 		useless := stub{}
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
