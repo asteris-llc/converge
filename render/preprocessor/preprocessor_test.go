@@ -3,6 +3,7 @@ package preprocessor_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,6 +16,39 @@ func Test_HasField_WhenStruct_ReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.True(t, preprocessor.HasField(TestStruct{}, "FieldA"))
 	assert.False(t, preprocessor.HasField(TestStruct{}, "FieldB"))
 
+}
+
+func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
+	s := "a.b.c.d.e"
+	g := graph.New()
+	g.Add("a", "a")
+	g.Add("a.b", "a.b.")
+	g.Add("a.c.d.", "a.c.d")
+	g.Add("a.b.c", "a.b.c")
+	pfx, rest, found := preprocessor.VertexSplit(g, s)
+	assert.Equal(t, "a.b.c", pfx)
+	assert.Equal(t, "d.e", rest)
+	assert.True(t, found)
+}
+
+func Test_VertexSplit_WhenExactMatch_ReturnsPrefix(t *testing.T) {
+	s := "a.b.c"
+	g := graph.New()
+	g.Add("a.b.c", "a.b.c")
+	pfx, rest, found := preprocessor.VertexSplit(g, s)
+	assert.Equal(t, "a.b.c", pfx)
+	assert.Equal(t, "", rest)
+	assert.True(t, found)
+}
+
+func Test_VertexSplit_WhenNoMatch_ReturnsRest(t *testing.T) {
+	s := "x.y.z"
+	g := graph.New()
+	g.Add("a.b.c", "a.b.c")
+	pfx, rest, found := preprocessor.VertexSplit(g, s)
+	assert.Equal(t, "", pfx)
+	assert.Equal(t, "x.y.z", rest)
+	assert.False(t, found)
 }
 
 func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
