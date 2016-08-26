@@ -1,6 +1,7 @@
 package preprocessor
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -38,12 +39,35 @@ func Inits(in []string) [][]string {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
-	_, found := reflect.TypeOf(obj).FieldByName(fieldName)
-	return found
+	v := reflect.ValueOf(obj)
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return false
+		}
+		v = v.Elem()
+	}
+	_, hasField := v.Type().FieldByName(fieldName)
+	return hasField
 }
 
 // HasMethod returns true if the provided struct supports the defined method
 func HasMethod(obj interface{}, methodName string) bool {
 	_, found := reflect.TypeOf(obj).MethodByName(methodName)
 	return found
+}
+
+// EvalMember gets a member from a stuct, dereferencing pointers as necessary
+func EvalMember(name string, obj interface{}) interface{} {
+	v := reflect.ValueOf(obj)
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return fmt.Errorf("cannot dereference nil pointer of type %s\n", v.Type().String())
+		}
+		v = v.Elem()
+	}
+
+	if _, hasField := v.Type().FieldByName(name); !hasField {
+		return fmt.Errorf("%s has no field named %s", v.Type().String(), name)
+	}
+	return v.FieldByName(name)
 }
