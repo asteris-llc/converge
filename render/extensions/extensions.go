@@ -73,6 +73,16 @@ func (l *LanguageExtension) On(keyword string, action interface{}) *LanguageExte
 	return l
 }
 
+// Join adds the keywords from toAdd that do not exist in l and adds them
+func (l *LanguageExtension) Join(toAdd *LanguageExtension) *LanguageExtension {
+	for keyword, f := range toAdd.Funcs {
+		if _, found := l.Funcs[keyword]; !found {
+			l = l.On(keyword, f)
+		}
+	}
+	return l
+}
+
 // Validate checks the defined language against the known keywords and returns
 // the deltas, if any.  It returns true if the language exactly matches the
 // known keyword list and false, with deltas, otherwise.
