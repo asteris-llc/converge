@@ -2,6 +2,7 @@ package vg
 
 import (
 	"fmt"
+	"github.com/asteris-llc/converge/resource"
 	lvm "github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
@@ -12,11 +13,17 @@ type ResourceVG struct {
 	DevicesToRemove []string
 }
 
-func (r *ResourceVG) Check() (status string, willChange bool, err error) {
+func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
+    var wc bool
 	if r.Exists && len(r.DevicesToAdd) == 0 && len(r.DevicesToRemove) == 0 {
-		return "", false, nil
-	}
-	return "", true, nil
+		wc = false
+	} else {
+        wc = true
+    }
+	return &resource.Status{
+        WillChange: wc,
+        Status: "",
+    }, nil
 }
 
 func (r *ResourceVG) Apply() error {
