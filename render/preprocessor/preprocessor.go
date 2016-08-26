@@ -27,6 +27,11 @@ func SplitTerms(in string) []string {
 	return strings.Split(in, ".")
 }
 
+// JoinTerms takes a list of terms and joins them with '.'
+func JoinTerms(s []string) string {
+	return strings.Join(s, ".")
+}
+
 // Inits returns a list of heads of the string,
 // e.g. [1,2,3] -> [[1,2,3],[1,2],[1]]
 func Inits(in []string) [][]string {
@@ -35,6 +40,39 @@ func Inits(in []string) [][]string {
 		results = append([][]string{in[0 : i+1]}, results...)
 	}
 	return results
+}
+
+// Prefixes returns a set of prefixes for a string, e.g. "a.b.c.d" will yield
+// []string{"a.b.c.d","a.b.c","a.b.","a"}
+func Prefixes(in string) (out []string) {
+	for _, termSet := range Inits(SplitTerms(in)) {
+		out = append(out, JoinTerms(termSet))
+	}
+	return out
+}
+
+// Find returns the first element of the string slice for which f returns true
+func Find(slice []string, f func(string) bool) (string, bool) {
+	for _, elem := range slice {
+		if f(elem) {
+			return elem, true
+		}
+	}
+	return "", false
+}
+
+// VertexSplit takes a graph with a set of vertexes and a string, and returns
+// the longest vertex id from the graph and the remainder of the string.  If no
+// matching vertex is found 'false' is returned.
+func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
+	prefix, found := Find(Prefixes(s), g.Contains)
+	if !found {
+		return "", s, false
+	}
+	if prefix == s {
+		return prefix, "", true
+	}
+	return prefix, s[len(prefix)+1:], true
 }
 
 // HasField returns true if the provided struct has the defined field
@@ -61,13 +99,22 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {
-			return reflect.Zero(reflect.TypeOf(obj)), fmt.Errorf("cannot dereference nil pointer of type %s\n", v.Type().String())
+			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
 		}
 		v = v.Elem()
 	}
 
 	if _, hasField := v.Type().FieldByName(name); !hasField {
-		return reflect.Zero(reflect.TypeOf(obj)), fmt.Errorf("%s has no field named %s", v.Type().String(), name)
+		return reflect.Zero(reflect.TypeOf(obj)), missingFieldError(name, v)
 	}
 	return v.FieldByName(name), nil
+}
+
+func nilPtrError(v reflect.Value) error {
+	typeStr := v.Type().String()
+	return fmt.Errorf("cannot dereference nil pointer of type %T", typeStr)
+}
+
+func missingFieldError(name string, v reflect.Value) error {
+	return fmt.Errorf("%s has no field named %s", v.Type().String(), name)
 }
