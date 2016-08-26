@@ -25,7 +25,7 @@ import (
 // /etc/os-release
 func (platform *Platform) LinuxLSB() {
 	lsbFile := "/etc/os-release"
-	content, err := ioutil.ReadFile(lsb_file)
+	content, err := ioutil.ReadFile(lsbFile)
 	if err != nil {
 		log.Printf("[INFO] Error opening %s: %s. Will skip parsing lsb data", lsbFile, err)
 		return
