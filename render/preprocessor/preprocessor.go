@@ -57,17 +57,17 @@ func HasMethod(obj interface{}, methodName string) bool {
 }
 
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
-func EvalMember(name string, obj interface{}) interface{} {
+func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {
-			return fmt.Errorf("cannot dereference nil pointer of type %s\n", v.Type().String())
+			return reflect.Zero(reflect.TypeOf(obj)), fmt.Errorf("cannot dereference nil pointer of type %s\n", v.Type().String())
 		}
 		v = v.Elem()
 	}
 
 	if _, hasField := v.Type().FieldByName(name); !hasField {
-		return fmt.Errorf("%s has no field named %s", v.Type().String(), name)
+		return reflect.Zero(reflect.TypeOf(obj)), fmt.Errorf("%s has no field named %s", v.Type().String(), name)
 	}
-	return v.FieldByName(name)
+	return v.FieldByName(name), nil
 }
