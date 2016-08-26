@@ -49,7 +49,6 @@ func GetDbusConnection() (*Conn, error) {
 		default:
 			dbusConn, err := dbus.New()
 			if err != nil {
-				dbusConn.Close()
 				return nil, err
 			}
 			connectionPool <- dbusConn
