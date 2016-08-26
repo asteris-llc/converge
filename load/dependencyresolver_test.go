@@ -78,3 +78,21 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 		"root/param.message",
 	)
 }
+
+
+func TestDependencyResolverResolvesPlatform(t *testing.T) {
+	defer helpers.HideLogs(t)()
+
+	nodes, err := load.Nodes(context.Background(), "../samples/platform.hcl")
+	require.NoError(t, err)
+
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
+	assert.NoError(t, err)
+
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/file.content.platformData")),
+		"root/param.filename",
+	)
+
+}

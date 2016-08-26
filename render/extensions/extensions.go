@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"text/template"
+	"github.com/asteris-llc/converge/render/extensions/platform"
 )
 
 // languageKeywords defines the known keywords that have been added to the
@@ -27,6 +28,7 @@ import (
 var languageKeywords = map[string]struct{}{
 	"param": {},
 	"split": {},
+	"platform": {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -53,6 +55,7 @@ func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
+	language.On("platform", platform.NewPlatform)
 	language.Validate()
 	return language
 }
