@@ -117,6 +117,31 @@ func (t *Status) AddDifference(name, original, current, defaultVal string) {
 	t.Differences = AddTextDiff(t.Differences, name, original, current, defaultVal)
 }
 
+// Merge takes the current status and adds on any additional messages from another
+func (t *Status) Merge(next *Status) {
+	// first merge differences
+	for key, diff := range next.Differences {
+		if _, ok := t.Differences[key]; !ok {
+			t.Differences[key] = diff
+		}
+	}
+	// Next Merge WarningLevel such that the higher number takes precedence.
+	// This way Willchange overrides Won't change
+	t.WarningLevel = max(t.WarningLevel, next.WarningLevel)
+	// Merge the Outputs
+	t.Output = append(t.Output, next.Output...)
+	// Or willchange
+	t.WillChange = t.WillChange || next.WillChange
+}
+
+// max is used solely for the above function
+func max(a, b int) int {
+	if b > a {
+		return b
+	}
+	return a
+}
+
 // Diff represents a difference
 type Diff interface {
 	Original() string

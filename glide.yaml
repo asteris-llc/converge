@@ -86,3 +86,7 @@ import:
 - package: github.com/ttacon/chalk
   version: ~0.1.0
 - package: github.com/fsouza/go-dockerclient
+- package: github.com/coreos/go-systemd
+  version: v12
+- package: github.com/godbus/dbus
+  version: v4.0.0
