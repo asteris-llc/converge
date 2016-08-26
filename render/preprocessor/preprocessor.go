@@ -1,6 +1,8 @@
 package preprocessor
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -59,6 +61,27 @@ func Find(slice []string, f func(string) bool) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// MkCallPipeline transforms a term group (b.c.d) into a pipeline (b | c | d)
+func MkCallPipeline(s string) string {
+	return strings.Join(SplitTerms(s), " | ")
+}
+
+// DesugarCall takes a call in the form of "a.b.c.d" and returns a desugared
+// string that will work with the language extension provided by calling
+// .Language()
+func DesugarCall(g *graph.Graph, call string) (string, error) {
+	var out bytes.Buffer
+	pfx, rest, found := VertexSplit(g, call)
+	if !found {
+		return "", errors.New("syntax error call to non-existant dependency")
+	}
+	out.WriteString(fmt.Sprintf("(eval %q)", pfx))
+	if rest != "" {
+		out.WriteString(fmt.Sprintf("| %s", MkCallPipeline(rest)))
+	}
+	return out.String()
 }
 
 // VertexSplit takes a graph with a set of vertexes and a string, and returns
