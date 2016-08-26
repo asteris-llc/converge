@@ -17,6 +17,7 @@ package extensions_test
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"reflect"
 	"sort"
 	"testing"
@@ -27,6 +28,7 @@ import (
 )
 
 var keywords = map[string]struct{}{
+	"env":   {},
 	"param": {},
 	"split": {},
 }
@@ -70,7 +72,7 @@ func Test_Validate_ReturnsEmptySlicesWhenValidDSL(t *testing.T) {
 }
 
 func Test_Validate_ReturnsSlicesOfMissingWhenMissingL(t *testing.T) {
-	expected := []string{"param", "split"}
+	expected := []string{"env", "param", "split"}
 	l := &extensions.LanguageExtension{}
 	missing, _, ok := l.Validate()
 	assert.False(t, ok)
@@ -87,6 +89,19 @@ func Test_Validate_ReturnsSlicesOfExtraWhenExtra(t *testing.T) {
 	_, extra, ok := l.Validate()
 	assert.False(t, ok)
 	assert.Equal(t, expected, extra)
+}
+
+func Test_DefaultEnv_EnvExists(t *testing.T) {
+	os.Setenv("FOO", "1")
+	expected := "1"
+	actual := extensions.DefaultEnv("FOO")
+	assert.Equal(t, expected, actual)
+}
+
+func Test_DefaultEnv_EnvNotFound(t *testing.T) {
+	expected := ""
+	actual := extensions.DefaultEnv("fake_env_var")
+	assert.Equal(t, expected, actual)
 }
 
 func Test_DefaultSplit_SplitsBasedOnFirstArg(t *testing.T) {

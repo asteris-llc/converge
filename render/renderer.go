@@ -51,8 +51,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) funcs() template.FuncMap {
-	language := extensions.MakeLanguage()
-	language.On("split", extensions.DefaultSplit)
+	language := extensions.DefaultLanguage()
 	language.On("param", r.param)
 	return language.Funcs
 }
