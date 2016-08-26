@@ -14,7 +14,23 @@
 
 package extensions
 
-import "strings"
+import (
+	"os"
+	"strings"
+)
+
+// DefaultEnv provides a default implementation for the env function in text
+// templates. It operates by determining whether an environment variable
+// exists; if so, returns its value, otherwise returns an empty string.
+func DefaultEnv(env string) string {
+	for _, e := range os.Environ() {
+		pair := strings.Split(e, "=")
+		if pair[0] == env {
+			return pair[1]
+		}
+	}
+	return ""
+}
 
 // DefaultSplit provides a default implementation for the split function in text
 // templates. It operates by simply reversing the arguments to split so that it

@@ -95,9 +95,8 @@ func getParams(node *parse.Node) (out []string, err error) {
 	}
 
 	type stub struct{}
-	language := extensions.MakeLanguage()
+	language := extensions.DefaultLanguage()
 	language.On("param", extensions.RememberCalls(&out, 0))
-	language.On("split", extensions.StubTemplateFunc)
 	for _, s := range strings {
 		useless := stub{}
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
