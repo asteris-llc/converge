@@ -102,17 +102,6 @@ func (daemon *Daemon) Containers(config *types.ContainerListOptions) ([]*types.C
 	return daemon.reduceContainers(config, daemon.transformContainer)
 }
 
-// ListContainersForNode returns all containerID that match the specified nodeID
-func (daemon *Daemon) ListContainersForNode(nodeID string) []string {
-	var ids []string
-	for _, c := range daemon.List() {
-		if c.Config.Labels["com.docker.swarm.node.id"] == nodeID {
-			ids = append(ids, c.ID)
-		}
-	}
-	return ids
-}
-
 func (daemon *Daemon) filterByNameIDMatches(ctx *listContext) []*container.Container {
 	idSearch := false
 	names := ctx.filters.Get("name")
@@ -158,7 +147,9 @@ func (daemon *Daemon) filterByNameIDMatches(ctx *listContext) []*container.Conta
 
 	cntrs := make([]*container.Container, 0, len(matches))
 	for id := range matches {
-		cntrs = append(cntrs, daemon.containers.Get(id))
+		if c := daemon.containers.Get(id); c != nil {
+			cntrs = append(cntrs, c)
+		}
 	}
 
 	// Restore sort-order after filtering

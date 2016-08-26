@@ -28,8 +28,7 @@ func New() ConcurrentMap {
 
 // Returns shard under given key
 func (m ConcurrentMap) GetShard(key string) *ConcurrentMapShared {
-	sum := fnv32([]byte(key))
-	return m[uint(sum)%uint(SHARD_COUNT)]
+	return m[uint(fnv32(key))%uint(SHARD_COUNT)]
 }
 
 func (m ConcurrentMap) MSet(data map[string]interface{}) {
@@ -123,6 +122,17 @@ func (m *ConcurrentMap) Remove(key string) {
 	shard.Unlock()
 }
 
+// Removes an element from the map and returns it
+func (m *ConcurrentMap) Pop(key string) (v interface{}, exists bool) {
+	// Try to get shard.
+	shard := m.GetShard(key)
+	shard.Lock()
+	v, exists = shard.items[key]
+	delete(shard.items, key)
+	shard.Unlock()
+	return v, exists
+}
+
 // Checks if map is empty.
 func (m *ConcurrentMap) IsEmpty() bool {
 	return m.Count() == 0
@@ -196,6 +206,25 @@ func (m ConcurrentMap) Items() map[string]interface{} {
 	return tmp
 }
 
+// Iterator callback,called for every key,value found in
+// maps. RLock is held for all calls for a given shard
+// therefore callback sess consistent view of a shard,
+// but not across the shards
+type IterCb func(key string, v interface{})
+
+// Callback based iterator, cheapest way to read
+// all elements in a map.
+func (m *ConcurrentMap) IterCb(fn IterCb) {
+	for idx := range *m {
+		shard := (*m)[idx]
+		shard.RLock()
+		for key, value := range shard.items {
+			fn(key, value)
+		}
+		shard.RUnlock()
+	}
+}
+
 // Return all keys as []string
 func (m ConcurrentMap) Keys() []string {
 	count := m.Count()
@@ -239,12 +268,12 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(tmp)
 }
 
-func fnv32(key []byte) uint32 {
+func fnv32(key string) uint32 {
 	hash := uint32(2166136261)
-	prime32 := uint32(16777619)
-	for _, c := range key {
+	const prime32 = uint32(16777619)
+	for i := 0; i < len(key); i++ {
 		hash *= prime32
-		hash ^= uint32(c)
+		hash ^= uint32(key[i])
 	}
 	return hash
 }

@@ -196,7 +196,7 @@ func (s *DockerDaemonSuite) TestVolumePlugin(c *check.C) {
 		}
 	}()
 
-	out, err = s.d.Cmd("volume", "create", "-d", pluginName, "--name", volName)
+	out, err = s.d.Cmd("volume", "create", "-d", pluginName, volName)
 	if err != nil {
 		c.Fatalf("Could not create volume: %v %s", err, out)
 	}
@@ -205,6 +205,13 @@ func (s *DockerDaemonSuite) TestVolumePlugin(c *check.C) {
 			c.Fatalf("Could not remove volume: %v %s", err, out)
 		}
 	}()
+
+	out, err = s.d.Cmd("volume", "ls")
+	if err != nil {
+		c.Fatalf("Could not list volume: %v %s", err, out)
+	}
+	c.Assert(out, checker.Contains, volName)
+	c.Assert(out, checker.Contains, pluginName)
 
 	mountPoint, err := s.d.Cmd("volume", "inspect", volName, "--format", "{{.Mountpoint}}")
 	if err != nil {

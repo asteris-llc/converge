@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/integration/checker"
+	icmd "github.com/docker/docker/pkg/integration/cmd"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/go-units"
 	"github.com/docker/libnetwork/iptables"
@@ -351,10 +352,8 @@ func (s *DockerDaemonSuite) TestDaemonIptablesCreate(c *check.C) {
 func (s *DockerSuite) TestDaemonIPv6Enabled(c *check.C) {
 	testRequires(c, IPv6)
 
-	if err := setupV6(); err != nil {
-		c.Fatal("Could not set up host for IPv6 tests")
-	}
-
+	setupV6(c)
+	defer teardownV6(c)
 	d := NewDaemon(c)
 
 	if err := d.StartWithBusybox("--ipv6"); err != nil {
@@ -411,11 +410,6 @@ func (s *DockerSuite) TestDaemonIPv6Enabled(c *check.C) {
 	if ip := net.ParseIP(out); ip != nil {
 		c.Fatalf("Container should not have a global IPv6 address: %v", out)
 	}
-
-	if err := teardownV6(); err != nil {
-		c.Fatal("Could not perform teardown for IPv6 tests")
-	}
-
 }
 
 // TestDaemonIPv6FixedCIDR checks that when the daemon is started with --ipv6=true and a fixed CIDR
@@ -423,16 +417,16 @@ func (s *DockerSuite) TestDaemonIPv6Enabled(c *check.C) {
 func (s *DockerDaemonSuite) TestDaemonIPv6FixedCIDR(c *check.C) {
 	// IPv6 setup is messing with local bridge address.
 	testRequires(c, SameHostDaemon)
-	err := setupV6()
-	c.Assert(err, checker.IsNil, check.Commentf("Could not set up host for IPv6 tests"))
+	setupV6(c)
+	defer teardownV6(c)
 
-	err = s.d.StartWithBusybox("--ipv6", "--fixed-cidr-v6='2001:db8:2::/64'", "--default-gateway-v6='2001:db8:2::100'")
+	err := s.d.StartWithBusybox("--ipv6", "--fixed-cidr-v6=2001:db8:2::/64", "--default-gateway-v6=2001:db8:2::100")
 	c.Assert(err, checker.IsNil, check.Commentf("Could not start daemon with busybox: %v", err))
 
 	out, err := s.d.Cmd("run", "-itd", "--name=ipv6test", "busybox:latest")
 	c.Assert(err, checker.IsNil, check.Commentf("Could not run container: %s, %v", out, err))
 
-	out, err = s.d.Cmd("inspect", "--format", "'{{.NetworkSettings.Networks.bridge.GlobalIPv6Address}}'", "ipv6test")
+	out, err = s.d.Cmd("inspect", "--format", "{{.NetworkSettings.Networks.bridge.GlobalIPv6Address}}", "ipv6test")
 	out = strings.Trim(out, " \r\n'")
 
 	c.Assert(err, checker.IsNil, check.Commentf(out))
@@ -440,13 +434,10 @@ func (s *DockerDaemonSuite) TestDaemonIPv6FixedCIDR(c *check.C) {
 	ip := net.ParseIP(out)
 	c.Assert(ip, checker.NotNil, check.Commentf("Container should have a global IPv6 address"))
 
-	out, err = s.d.Cmd("inspect", "--format", "'{{.NetworkSettings.Networks.bridge.IPv6Gateway}}'", "ipv6test")
+	out, err = s.d.Cmd("inspect", "--format", "{{.NetworkSettings.Networks.bridge.IPv6Gateway}}", "ipv6test")
 	c.Assert(err, checker.IsNil, check.Commentf(out))
 
 	c.Assert(strings.Trim(out, " \r\n'"), checker.Equals, "2001:db8:2::100", check.Commentf("Container should have a global IPv6 gateway"))
-
-	err = teardownV6()
-	c.Assert(err, checker.IsNil, check.Commentf("Could not perform teardown for IPv6 tests"))
 }
 
 // TestDaemonIPv6FixedCIDRAndMac checks that when the daemon is started with ipv6 fixed CIDR
@@ -454,21 +445,18 @@ func (s *DockerDaemonSuite) TestDaemonIPv6FixedCIDR(c *check.C) {
 func (s *DockerDaemonSuite) TestDaemonIPv6FixedCIDRAndMac(c *check.C) {
 	// IPv6 setup is messing with local bridge address.
 	testRequires(c, SameHostDaemon)
-	err := setupV6()
-	c.Assert(err, checker.IsNil)
+	setupV6(c)
+	defer teardownV6(c)
 
-	err = s.d.StartWithBusybox("--ipv6", "--fixed-cidr-v6='2001:db8:1::/64'")
+	err := s.d.StartWithBusybox("--ipv6", "--fixed-cidr-v6=2001:db8:1::/64")
 	c.Assert(err, checker.IsNil)
 
 	out, err := s.d.Cmd("run", "-itd", "--name=ipv6test", "--mac-address", "AA:BB:CC:DD:EE:FF", "busybox")
 	c.Assert(err, checker.IsNil)
 
-	out, err = s.d.Cmd("inspect", "--format", "'{{.NetworkSettings.Networks.bridge.GlobalIPv6Address}}'", "ipv6test")
+	out, err = s.d.Cmd("inspect", "--format", "{{.NetworkSettings.Networks.bridge.GlobalIPv6Address}}", "ipv6test")
 	c.Assert(err, checker.IsNil)
 	c.Assert(strings.Trim(out, " \r\n'"), checker.Equals, "2001:db8:1::aabb:ccdd:eeff")
-
-	err = teardownV6()
-	c.Assert(err, checker.IsNil)
 }
 
 func (s *DockerDaemonSuite) TestDaemonLogLevelWrong(c *check.C) {
@@ -908,9 +896,8 @@ func (s *DockerDaemonSuite) TestDaemonDefaultNetworkInvalidClusterConfig(c *chec
 	c.Assert(err, checker.IsNil)
 
 	// Start daemon with docker0 bridge
-	ifconfigCmd := exec.Command("ifconfig", defaultNetworkBridge)
-	_, err = runCommand(ifconfigCmd)
-	c.Assert(err, check.IsNil)
+	result := icmd.RunCommand("ifconfig", defaultNetworkBridge)
+	c.Assert(result, icmd.Matches, icmd.Success)
 
 	err = d.Restart(fmt.Sprintf("--cluster-store=%s", discoveryBackend))
 	c.Assert(err, checker.IsNil)
@@ -1724,13 +1711,15 @@ func (s *DockerDaemonSuite) TestDaemonNoTlsCliTlsVerifyWithEnv(c *check.C) {
 
 }
 
-func setupV6() error {
+func setupV6(c *check.C) {
 	// Hack to get the right IPv6 address on docker0, which has already been created
-	return exec.Command("ip", "addr", "add", "fe80::1/64", "dev", "docker0").Run()
+	result := icmd.RunCommand("ip", "addr", "add", "fe80::1/64", "dev", "docker0")
+	result.Assert(c, icmd.Expected{})
 }
 
-func teardownV6() error {
-	return exec.Command("ip", "addr", "del", "fe80::1/64", "dev", "docker0").Run()
+func teardownV6(c *check.C) {
+	result := icmd.RunCommand("ip", "addr", "del", "fe80::1/64", "dev", "docker0")
+	result.Assert(c, icmd.Expected{})
 }
 
 func (s *DockerDaemonSuite) TestDaemonRestartWithContainerWithRestartPolicyAlways(c *check.C) {
@@ -1827,7 +1816,7 @@ func (s *DockerDaemonSuite) TestDaemonRestartRmVolumeInUse(c *check.C) {
 func (s *DockerDaemonSuite) TestDaemonRestartLocalVolumes(c *check.C) {
 	c.Assert(s.d.Start(), check.IsNil)
 
-	_, err := s.d.Cmd("volume", "create", "--name", "test")
+	_, err := s.d.Cmd("volume", "create", "test")
 	c.Assert(err, check.IsNil)
 	c.Assert(s.d.Restart(), check.IsNil)
 
@@ -2235,7 +2224,6 @@ func (s *DockerDaemonSuite) TestDaemonRestartWithUnpausedRunningContainer(t *che
 
 	pid, err := s.d.Cmd("inspect", "-f", "{{.State.Pid}}", cid)
 	t.Assert(err, check.IsNil)
-	pid = strings.TrimSpace(pid)
 
 	// pause the container
 	if _, err := s.d.Cmd("pause", cid); err != nil {
@@ -2248,19 +2236,18 @@ func (s *DockerDaemonSuite) TestDaemonRestartWithUnpausedRunningContainer(t *che
 	}
 
 	// resume the container
-	runCmd := exec.Command(ctrBinary, "--address", "unix:///var/run/docker/libcontainerd/docker-containerd.sock", "containers", "resume", cid)
-	if out, ec, err := runCommandWithOutput(runCmd); err != nil {
-		t.Fatalf("Failed to run ctr, ExitCode: %d, err: '%v' output: '%s' cid: '%s'\n", ec, err, out, cid)
-	}
+	result := icmd.RunCommand(
+		ctrBinary,
+		"--address", "unix:///var/run/docker/libcontainerd/docker-containerd.sock",
+		"containers", "resume", cid)
+	t.Assert(result, icmd.Matches, icmd.Success)
 
 	// Give time to containerd to process the command if we don't
 	// the resume event might be received after we do the inspect
-	pidCmd := exec.Command("kill", "-0", pid)
-	_, ec, _ := runCommandWithOutput(pidCmd)
-	for ec == 0 {
-		time.Sleep(1 * time.Second)
-		_, ec, _ = runCommandWithOutput(pidCmd)
-	}
+	waitAndAssert(t, defaultReconciliationTimeout, func(*check.C) (interface{}, check.CommentInterface) {
+		result := icmd.RunCommand("kill", "-0", strings.TrimSpace(pid))
+		return result.ExitCode, nil
+	}, checker.Equals, 0)
 
 	// restart the daemon
 	if err := s.d.Start("--live-restore"); err != nil {
@@ -2365,14 +2352,21 @@ func (s *DockerSuite) TestDaemonDiscoveryBackendConfigReload(c *check.C) {
 
 	// daemon config file
 	daemonConfig := `{ "debug" : false }`
-	configFilePath := "test.json"
+	configFile, err := ioutil.TempFile("", "test-daemon-discovery-backend-config-reload-config")
+	c.Assert(err, checker.IsNil, check.Commentf("could not create temp file for config reload"))
+	configFilePath := configFile.Name()
+	defer func() {
+		configFile.Close()
+		os.RemoveAll(configFile.Name())
+	}()
 
-	configFile, err := os.Create(configFilePath)
+	_, err = configFile.Write([]byte(daemonConfig))
 	c.Assert(err, checker.IsNil)
-	fmt.Fprintf(configFile, "%s", daemonConfig)
 
 	d := NewDaemon(c)
-	err = d.Start(fmt.Sprintf("--config-file=%s", configFilePath))
+	// --log-level needs to be set so that d.Start() doesn't add --debug causing
+	// a conflict with the config
+	err = d.Start("--config-file", configFilePath, "--log-level=info")
 	c.Assert(err, checker.IsNil)
 	defer d.Stop()
 
@@ -2383,21 +2377,20 @@ func (s *DockerSuite) TestDaemonDiscoveryBackendConfigReload(c *check.C) {
 	      "debug" : false
 	}`
 
-	configFile.Close()
-	os.Remove(configFilePath)
-
-	configFile, err = os.Create(configFilePath)
+	err = configFile.Truncate(0)
 	c.Assert(err, checker.IsNil)
-	defer os.Remove(configFilePath)
-	fmt.Fprintf(configFile, "%s", daemonConfig)
-	configFile.Close()
+	_, err = configFile.Seek(0, os.SEEK_SET)
+	c.Assert(err, checker.IsNil)
 
-	syscall.Kill(d.cmd.Process.Pid, syscall.SIGHUP)
+	_, err = configFile.Write([]byte(daemonConfig))
+	c.Assert(err, checker.IsNil)
 
-	time.Sleep(3 * time.Second)
+	err = d.reloadConfig()
+	c.Assert(err, checker.IsNil, check.Commentf("error reloading daemon config"))
 
 	out, err := d.Cmd("info")
 	c.Assert(err, checker.IsNil)
+
 	c.Assert(out, checker.Contains, fmt.Sprintf("Cluster Store: consul://consuladdr:consulport/some/path"))
 	c.Assert(out, checker.Contains, fmt.Sprintf("Cluster Advertise: 192.168.56.100:0"))
 }

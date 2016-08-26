@@ -566,11 +566,7 @@ func verifyDaemonSettings(config *Config) error {
 	if config.Runtimes == nil {
 		config.Runtimes = make(map[string]types.Runtime)
 	}
-	stockRuntimeOpts := []string{}
-	if UsingSystemd(config) {
-		stockRuntimeOpts = append(stockRuntimeOpts, "--systemd-cgroup=true")
-	}
-	config.Runtimes[stockRuntimeName] = types.Runtime{Path: DefaultRuntimeBinary, Args: stockRuntimeOpts}
+	config.Runtimes[stockRuntimeName] = types.Runtime{Path: DefaultRuntimeBinary}
 
 	return nil
 }
@@ -1003,6 +999,20 @@ func setupDaemonRoot(config *Config, rootDir string, rootUID, rootGID int) error
 		// Create the root directory if it doesn't exist
 		if err := idtools.MkdirAllAs(config.Root, 0700, rootUID, rootGID); err != nil {
 			return fmt.Errorf("Cannot create daemon root: %s: %v", config.Root, err)
+		}
+		// we also need to verify that any pre-existing directories in the path to
+		// the graphroot won't block access to remapped root--if any pre-existing directory
+		// has strict permissions that don't allow "x", container start will fail, so
+		// better to warn and fail now
+		dirPath := config.Root
+		for {
+			dirPath = filepath.Dir(dirPath)
+			if dirPath == "/" {
+				break
+			}
+			if !idtools.CanAccess(dirPath, rootUID, rootGID) {
+				return fmt.Errorf("A subdirectory in your graphroot path (%s) restricts access to the remapped root uid/gid; please fix by allowing 'o+x' permissions on existing directories.", config.Root)
+			}
 		}
 	}
 	return nil

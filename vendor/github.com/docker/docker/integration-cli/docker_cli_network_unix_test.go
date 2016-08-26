@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/integration/checker"
+	icmd "github.com/docker/docker/pkg/integration/cmd"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/engine-api/types"
@@ -477,27 +478,33 @@ func (s *DockerSuite) TestDockerNetworkInspectWithID(c *check.C) {
 }
 
 func (s *DockerSuite) TestDockerInspectMultipleNetwork(c *check.C) {
-	out, _ := dockerCmd(c, "network", "inspect", "host", "none")
+	result := dockerCmdWithResult("network", "inspect", "host", "none")
+	c.Assert(result, icmd.Matches, icmd.Success)
+
 	networkResources := []types.NetworkResource{}
-	err := json.Unmarshal([]byte(out), &networkResources)
+	err := json.Unmarshal([]byte(result.Stdout()), &networkResources)
 	c.Assert(err, check.IsNil)
 	c.Assert(networkResources, checker.HasLen, 2)
 
 	// Should print an error, return an exitCode 1 *but* should print the host network
-	out, exitCode, err := dockerCmdWithError("network", "inspect", "host", "nonexistent")
-	c.Assert(err, checker.NotNil)
-	c.Assert(exitCode, checker.Equals, 1)
-	c.Assert(out, checker.Contains, "Error: No such network: nonexistent")
+	result = dockerCmdWithResult("network", "inspect", "host", "nonexistent")
+	c.Assert(result, icmd.Matches, icmd.Expected{
+		ExitCode: 1,
+		Err:      "Error: No such network: nonexistent",
+		Out:      "host",
+	})
+
 	networkResources = []types.NetworkResource{}
-	inspectOut := strings.SplitN(out, "\nError: No such network: nonexistent\n", 2)[0]
-	err = json.Unmarshal([]byte(inspectOut), &networkResources)
+	err = json.Unmarshal([]byte(result.Stdout()), &networkResources)
 	c.Assert(networkResources, checker.HasLen, 1)
 
 	// Should print an error and return an exitCode, nothing else
-	out, exitCode, err = dockerCmdWithError("network", "inspect", "nonexistent")
-	c.Assert(err, checker.NotNil)
-	c.Assert(exitCode, checker.Equals, 1)
-	c.Assert(out, checker.Contains, "Error: No such network: nonexistent")
+	result = dockerCmdWithResult("network", "inspect", "nonexistent")
+	c.Assert(result, icmd.Matches, icmd.Expected{
+		ExitCode: 1,
+		Err:      "Error: No such network: nonexistent",
+		Out:      "[]",
+	})
 }
 
 func (s *DockerSuite) TestDockerInspectNetworkWithContainerName(c *check.C) {
@@ -1709,4 +1716,21 @@ func (s *DockerNetworkSuite) TestDockerNetworkFlagAlias(c *check.C) {
 
 	output, status, _ = dockerCmdWithError("run", "--rm", "--network=user", "--net-alias=foo", "--network-alias=bar", "busybox", "true")
 	c.Assert(status, checker.Equals, 0, check.Commentf("unexpected status code %d (%s)", status, output))
+}
+
+func (s *DockerNetworkSuite) TestDockerNetworkValidateIP(c *check.C) {
+	_, _, err := dockerCmdWithError("network", "create", "--ipv6", "--subnet=172.28.0.0/16", "--subnet=2001:db8:1234::/64", "mynet")
+	c.Assert(err, check.IsNil)
+	assertNwIsAvailable(c, "mynet")
+
+	_, _, err = dockerCmdWithError("run", "-d", "--name", "mynet0", "--net=mynet", "--ip", "172.28.99.88", "--ip6", "2001:db8:1234::9988", "busybox", "top")
+	c.Assert(err, check.IsNil)
+	c.Assert(waitRun("mynet0"), check.IsNil)
+	verifyIPAddressConfig(c, "mynet0", "mynet", "172.28.99.88", "2001:db8:1234::9988")
+	verifyIPAddresses(c, "mynet0", "mynet", "172.28.99.88", "2001:db8:1234::9988")
+
+	_, _, err = dockerCmdWithError("run", "--net=mynet", "--ip", "mynet_ip", "--ip6", "2001:db8:1234::9999", "busybox", "top")
+	c.Assert(err.Error(), checker.Contains, "invalid IPv4 address")
+	_, _, err = dockerCmdWithError("run", "--net=mynet", "--ip", "172.28.99.99", "--ip6", "mynet_ip6", "busybox", "top")
+	c.Assert(err.Error(), checker.Contains, "invalid IPv6 address")
 }

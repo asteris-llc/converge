@@ -35,7 +35,6 @@ type linuxContainer struct {
 	root                 string
 	config               *configs.Config
 	cgroupManager        cgroups.Manager
-	initPath             string
 	initArgs             []string
 	initProcess          parentProcess
 	initProcessStartTime string
@@ -92,7 +91,8 @@ type Container interface {
 	// If the Container state is PAUSED, do nothing.
 	//
 	// errors:
-	// ContainerDestroyed - Container no longer exists,
+	// ContainerNotExists - Container no longer exists,
+	// ContainerNotRunning - Container not running,
 	// Systemerror - System error.
 	Pause() error
 
@@ -101,7 +101,8 @@ type Container interface {
 	// If the Container state is RUNNING, do nothing.
 	//
 	// errors:
-	// ContainerDestroyed - Container no longer exists,
+	// ContainerNotExists - Container no longer exists,
+	// ContainerNotPaused - Container is not paused,
 	// Systemerror - System error.
 	Resume() error
 
@@ -308,10 +309,7 @@ func (c *linuxContainer) newParentProcess(p *Process, doInit bool) (parentProces
 }
 
 func (c *linuxContainer) commandTemplate(p *Process, childPipe, rootDir *os.File) (*exec.Cmd, error) {
-	cmd := &exec.Cmd{
-		Path: c.initPath,
-		Args: c.initArgs,
-	}
+	cmd := exec.Command(c.initArgs[0], c.initArgs[1:]...)
 	cmd.Stdin = p.Stdin
 	cmd.Stdout = p.Stdout
 	cmd.Stderr = p.Stderr
@@ -1049,6 +1047,8 @@ func (c *linuxContainer) criuNotifications(resp *criurpc.CriuResp, process *Proc
 		}); err != nil {
 			return err
 		}
+		// create a timestamp indicating when the restored checkpoint was started
+		c.created = time.Now().UTC()
 		if _, err := c.updateState(r); err != nil {
 			return err
 		}
