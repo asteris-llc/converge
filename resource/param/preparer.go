@@ -21,7 +21,14 @@ import (
 )
 
 // Preparer for params
+//
+// Param controls the flow of values through `module` calls. You can use the
+// `{{param "name"}}` template call anywhere you need the value of a param
+// inside the current module.
 type Preparer struct {
+	// Default is an optional field that provides a default value if none is
+	// provided to this parameter. If this field is not set, this param will be
+	// treated as required.
 	Default *string `hcl:"default"`
 }
 

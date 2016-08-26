@@ -2,7 +2,6 @@ package cmap
 
 import (
 	"encoding/json"
-	"hash/fnv"
 	"sync"
 )
 
@@ -29,9 +28,8 @@ func New() ConcurrentMap {
 
 // Returns shard under given key
 func (m ConcurrentMap) GetShard(key string) *ConcurrentMapShared {
-	hasher := fnv.New32()
-	hasher.Write([]byte(key))
-	return m[uint(hasher.Sum32())%uint(SHARD_COUNT)]
+	sum := fnv32([]byte(key))
+	return m[uint(sum)%uint(SHARD_COUNT)]
 }
 
 func (m ConcurrentMap) MSet(data map[string]interface{}) {
@@ -50,6 +48,23 @@ func (m *ConcurrentMap) Set(key string, value interface{}) {
 	shard.Lock()
 	shard.items[key] = value
 	shard.Unlock()
+}
+
+// Callback to return new element to be inserted into the map
+// It is called while lock is held, therefore it MUST NOT
+// try to access other keys in same map, as it can lead to deadlock since
+// Go sync.RWLock is not reentrant
+type UpsertCb func(exist bool, valueInMap interface{}, newValue interface{}) interface{}
+
+// Insert or Update - updates existing element or inserts a new one using UpsertCb
+func (m *ConcurrentMap) Upsert(key string, value interface{}, cb UpsertCb) (res interface{}) {
+	shard := m.GetShard(key)
+	shard.Lock()
+	v, ok := shard.items[key]
+	res = cb(ok, v, value)
+	shard.items[key] = res
+	shard.Unlock()
+	return res
 }
 
 // Sets the given value under the specified key if no value was associated with it.
@@ -222,6 +237,16 @@ func (m ConcurrentMap) MarshalJSON() ([]byte, error) {
 		tmp[item.Key] = item.Val
 	}
 	return json.Marshal(tmp)
+}
+
+func fnv32(key []byte) uint32 {
+	hash := uint32(2166136261)
+	prime32 := uint32(16777619)
+	for _, c := range key {
+		hash *= prime32
+		hash ^= uint32(c)
+	}
+	return hash
 }
 
 // Concurrent map uses Interface{} as its value, therefor JSON Unmarshal

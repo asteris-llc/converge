@@ -94,4 +94,9 @@ package: xcompile
     echo $$f; \
   done
 
+docs: docs_source/**/*
+	rm -rf docs || true
+	cd docs_source; make
+	mv docs_source/public docs
+
 .PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check

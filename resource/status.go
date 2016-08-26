@@ -113,8 +113,36 @@ func (t *Status) FailingDep(id string, stat TaskStatus) {
 }
 
 // AddDifference adds a TextDiff to the Differences map
-func (t *Status) AddDifference(name, current, original string) {
-	return
+func (t *Status) AddDifference(name, original, current, defaultVal string) {
+	t.Differences = AddTextDiff(t.Differences, name, original, current, defaultVal)
+}
+
+// Merge takes the current status and adds on any additional messages from another
+func (t *Status) Merge(next *Status) {
+	if next == nil {
+		return
+	}
+	// first merge differences
+	for key, diff := range next.Differences {
+		if _, ok := t.Differences[key]; !ok {
+			t.Differences[key] = diff
+		}
+	}
+	// Next Merge WarningLevel such that the higher number takes precedence.
+	// This way Willchange overrides Won't change
+	t.WarningLevel = max(t.WarningLevel, next.WarningLevel)
+	// Merge the Outputs
+	t.Output = append(t.Output, next.Output...)
+	// Or willchange
+	t.WillChange = t.WillChange || next.WillChange
+}
+
+// max is used solely for the above function
+func max(a, b int) int {
+	if b > a {
+		return b
+	}
+	return a
 }
 
 // Diff represents a difference
@@ -167,10 +195,10 @@ func AnyChanges(diffs map[string]Diff) bool {
 }
 
 // AddTextDiff inserts a new TextDiff into a map of names to Diffs
-func AddTextDiff(m map[string]Diff, name, original, current string) map[string]Diff {
+func AddTextDiff(m map[string]Diff, name, original, current, defaultVal string) map[string]Diff {
 	if m == nil {
 		m = make(map[string]Diff)
 	}
-	m[name] = TextDiff{Values: [2]string{original, current}}
+	m[name] = TextDiff{Values: [2]string{original, current}, Default: defaultVal}
 	return m
 }

@@ -22,7 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Content renders a content to disk
+// Content renders content to disk
 type Content struct {
 	Content     string
 	Destination string

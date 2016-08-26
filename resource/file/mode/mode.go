@@ -21,7 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Mode monitors the file Mode of a file
+// Mode monitors the mode of a file
 type Mode struct {
 	Destination string
 	Mode        os.FileMode

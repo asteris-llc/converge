@@ -21,13 +21,16 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/group"
 )
 
 // Owner monitors the file owner of a file
 type Owner struct {
 	User        *user.User
 	Destination string
+	Group       *group.Group
 }
 
 // Check whether the Destination is owned by the user
@@ -41,7 +44,7 @@ func (t *Owner) Check() (resource.TaskStatus, error) {
 	stat, err := os.Stat(t.Destination)
 
 	if os.IsNotExist(err) {
-		diffs[t.Destination] = &FileUserDiff{Expected: t.User}
+		diffs[fmt.Sprintf("%s:owner", t.Destination)] = &FileUserDiff{Expected: t.User}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
 		return &resource.Status{
 			Status:       status,
@@ -68,36 +71,57 @@ func (t *Owner) Check() (resource.TaskStatus, error) {
 
 	// Assume no changes are needed
 	ownerDiff := &FileUserDiff{Expected: t.User, Actual: actualUser}
-	diffs[t.Destination] = ownerDiff
+	diffs[fmt.Sprintf("%s:owner", t.Destination)] = ownerDiff
 	warningLevel := resource.StatusWontChange
 	// If changes are needed update warning level
 	if ownerDiff.Changes() {
 		warningLevel = resource.StatusWillChange
 	}
 
-	status := fmt.Sprintf("owner of file %q is %q should be %q", t.Destination, actualUser.Username, t.User.Username)
-	return &resource.Status{
-		Status:       status,
+	statusMsg := fmt.Sprintf("owner of file %q is %q should be %q", t.Destination, actualUser.Username, t.User.Username)
+	status := &resource.Status{
+		Status:       statusMsg,
 		WarningLevel: warningLevel,
 		WillChange:   ownerDiff.Changes(),
 		Differences:  diffs,
 		Output: []string{
 			fmt.Sprintf("%q exist", t.Destination),
-			status,
+			statusMsg,
 		},
-	}, nil
+	}
+	if t.Group != nil {
+		groupStatus, e := t.Group.Check()
+		status.Merge(groupStatus.(*resource.Status))
+		err = helpers.MultiErrorAppend(err, e)
+	}
+	return status, err
 }
 
-// Change the owner of the file
-func (o *Owner) Apply() error {
-	uid, _ := strconv.Atoi(o.User.Uid)
-	gid, _ := strconv.Atoi(o.User.Gid)
-	return os.Chown(o.Destination, uid, gid)
+// Apply changes the owner of the file
+func (t *Owner) Apply() error {
+	uid, _ := strconv.Atoi(t.User.Uid)
+	gid, _ := strconv.Atoi(t.User.Gid)
+	if t.Group != nil {
+		gid, _ = strconv.Atoi(t.Group.Group.Gid)
+	}
+	return os.Chown(t.Destination, uid, gid)
 }
 
 func (t *Owner) Validate() error {
 	if t.Destination == "" {
 		return fmt.Errorf("task requires a %q parameter", "destination")
+	}
+	// check that uid and gid are numbers
+	uid, err := strconv.Atoi(t.User.Uid)
+	if err != nil {
+		return fmt.Errorf("%q parameter of task has invalid property %q, should be an integer is %q", "user", "Uid", uid)
+	}
+	gid, err := strconv.Atoi(t.User.Gid)
+	if err != nil {
+		return fmt.Errorf("%q parameter of task has invalid property %q, should be an integer is %q", "user", "Gid", gid)
+	}
+	if t.Group != nil {
+		return t.Group.Validate()
 	}
 	return nil
 }

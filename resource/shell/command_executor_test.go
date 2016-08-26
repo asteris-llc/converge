@@ -15,12 +15,15 @@
 package shell_test
 
 import (
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Run_WhenScriptTimesOut_ReturnsTimeoutError(t *testing.T) {
@@ -34,7 +37,7 @@ func Test_Run_WhenScriptTimesOut_ReturnsTimeoutError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func Test_Run_WhenTimeotuSetScriptDoesNotTimeout_DoesNotReturnError(t *testing.T) {
+func Test_Run_WhenTimeoutSetScriptDoesNotTimeout_DoesNotReturnError(t *testing.T) {
 	script := "true"
 	timeout := 5 * time.Second
 	generator := &shell.CommandGenerator{
@@ -70,4 +73,30 @@ func Test_Run_RunsWithSpecifiedInterpreter(t *testing.T) {
 	result, err := generator.Run(script)
 	assert.NoError(t, err)
 	assert.False(t, strings.HasPrefix(result.Stdout, "-n"))
+}
+
+func Test_Run_RunsInDir(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "test-shell-task-check-in-dir")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, os.RemoveAll(tmpdir)) }()
+
+	script := "echo -n $(pwd)"
+	generator := &shell.CommandGenerator{Interpreter: "/bin/bash", Dir: tmpdir}
+	result, err := generator.Run(script)
+	assert.NoError(t, err)
+
+	pwd := result.Stdout
+	pwd = strings.TrimPrefix(pwd, "/private") // on osx, /tmp is a symlink to private/tmp
+	assert.Equal(t, tmpdir, pwd)
+}
+
+func Test_Run_RunsWithEnv(t *testing.T) {
+	script := "echo -n \"Role: $ROLE, Version: $VERSION\""
+	generator := &shell.CommandGenerator{
+		Interpreter: "/bin/bash",
+		Env:         []string{"ROLE=test", "VERSION=0.1"},
+	}
+	result, err := generator.Run(script)
+	assert.NoError(t, err)
+	assert.Equal(t, "Role: test, Version: 0.1", result.Stdout)
 }

@@ -16,6 +16,7 @@ package owner_test
 
 import (
 	"fmt"
+	"os/user"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -35,6 +36,16 @@ func TestVaildPreparer(t *testing.T) {
 	fr := fakerenderer.FakeRenderer{}
 	prep := owner.Preparer{Destination: "path/to/file", User: "nobody"}
 	_, err := prep.Prepare(&fr)
+	assert.NoError(t, err)
+}
+
+func TestComposition(t *testing.T) {
+	t.Parallel()
+	fr := fakerenderer.FakeRenderer{}
+	u, err := user.Current()
+	assert.NoError(t, err)
+	prep := owner.Preparer{Destination: "path/to/file", User: "nobody", Group: u.Username}
+	_, err = prep.Prepare(&fr)
 	assert.NoError(t, err)
 }
 

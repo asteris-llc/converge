@@ -18,6 +18,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -53,6 +54,8 @@ type CommandExecutor interface {
 type CommandGenerator struct {
 	Interpreter string
 	Flags       []string
+	Dir         string
+	Env         []string
 	Timeout     *time.Duration
 }
 
@@ -66,7 +69,7 @@ func (cmd *CommandGenerator) Run(script string) (*CommandResults, error) {
 }
 
 func (cmd *CommandGenerator) start() (*commandIOContext, error) {
-	command := newCommand(cmd.Interpreter, cmd.Flags)
+	command := newCommand(cmd)
 	stdin, stdout, stderr, err := cmdGetPipes(command)
 	return &commandIOContext{
 		Command: command,
@@ -122,6 +125,18 @@ func (c *commandIOContext) exec(script string) (results *CommandResults, err err
 		Stdin: script,
 	}
 
+	// if working dir does not exist, we want the check to return a non-zero
+	// result. otherwise, Command.Start will return an error and short-circuit
+	// plan/apply
+	if c.Command.Dir != "" {
+		_, err = os.Stat(c.Command.Dir)
+		if os.IsNotExist(err) {
+			results.ExitStatus = 1
+			results.Stdout = err.Error()
+			return results, nil
+		}
+	}
+
 	if err = c.Command.Start(); err != nil {
 		return
 	}
@@ -162,13 +177,25 @@ func (c *commandIOContext) exec(script string) (results *CommandResults, err err
 	return
 }
 
-func newCommand(interpreter string, flags []string) *exec.Cmd {
-	if interpreter == "" {
-		if len(flags) > 0 {
+func newCommand(cmd *CommandGenerator) *exec.Cmd {
+	var command *exec.Cmd
+	if cmd.Interpreter == "" {
+		if len(cmd.Flags) > 0 {
 			log.Println("[INFO] passing flags to default interpreter (/bin/sh)")
-			return exec.Command(defaultInterpreter, flags...)
+			command = exec.Command(defaultInterpreter, cmd.Flags...)
+		} else {
+			command = exec.Command(defaultInterpreter, defaultExecFlags...)
 		}
-		return exec.Command(defaultInterpreter, defaultExecFlags...)
+	} else {
+		command = exec.Command(cmd.Interpreter, cmd.Flags...)
 	}
-	return exec.Command(interpreter, flags...)
+
+	command.Dir = cmd.Dir
+	if len(cmd.Env) > 0 {
+		env := os.Environ()
+		env = append(env, cmd.Env...)
+		command.Env = env
+	}
+
+	return command
 }
