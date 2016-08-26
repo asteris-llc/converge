@@ -25,6 +25,7 @@ import (
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
+	"env":   {},
 	"param": {},
 	"split": {},
 }
@@ -51,6 +52,7 @@ func MakeLanguage() *LanguageExtension {
 // supplied with context or which may register dependencies.
 func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
+	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
 	language.Validate()
