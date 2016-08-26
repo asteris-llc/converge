@@ -18,8 +18,8 @@ import (
 	"os/user"
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/asteris-llc/converge/resource/systemd/enable"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,6 +31,10 @@ func TestTemplateInterface(t *testing.T) {
 }
 
 func TestCheck(t *testing.T) {
+	_, err := systemd.GetDbusConnection()
+	if err != nil {
+		t.Skip(err)
+	}
 	task := &enable.Enable{Unit: "systemd-journald.service"}
 	assert.NoError(t, task.Validate())
 
@@ -41,8 +45,10 @@ func TestCheck(t *testing.T) {
 }
 
 func TestApply(t *testing.T) {
-	defer helpers.HideLogs(t)()
-
+	_, err := systemd.GetDbusConnection()
+	if err != nil {
+		t.Skip(err)
+	}
 	u, err := user.Current()
 	assert.NoError(t, err)
 

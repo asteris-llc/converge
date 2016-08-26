@@ -17,8 +17,8 @@ package disable_test
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/asteris-llc/converge/resource/systemd/disable"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,7 +30,10 @@ func TestTemplateInterface(t *testing.T) {
 }
 
 func TestCheck(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	_, err := systemd.GetDbusConnection()
+	if err != nil {
+		t.Skip(err)
+	}
 	task := &disable.Disable{Unit: "systemd-journald.service"}
 	assert.NoError(t, task.Validate())
 

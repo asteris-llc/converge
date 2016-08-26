@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/asteris-llc/converge/resource/systemd/start"
 	"github.com/asteris-llc/converge/resource/systemd/stop"
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,11 @@ func TestTemplateInterface(t *testing.T) {
 }
 
 func TestCheck(t *testing.T) {
+	_, err := systemd.GetDbusConnection()
+	if err != nil {
+		t.Skip(err)
+	}
+
 	task := &stop.Stop{Unit: "systemd-journald.service", Mode: "replace"}
 	assert.NoError(t, task.Validate())
 
@@ -41,6 +47,11 @@ func TestCheck(t *testing.T) {
 }
 
 func TestApply(t *testing.T) {
+	_, err := systemd.GetDbusConnection()
+	if err != nil {
+		t.Skip(err)
+	}
+
 	u, err := user.Current()
 	assert.NoError(t, err)
 
