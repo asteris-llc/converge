@@ -4,20 +4,20 @@ import (
 	"strings"
 )
 
-type PV struct {
+type PhysicalVolume struct {
 	Name   string `mapstructure:"LVM2_PV_NAME"`
-	Vg     string `mapstructure:"LVM2_VG_NAME"`
+	Group  string `mapstructure:"LVM2_VG_NAME"`
 	Device string
 }
 
-func QueryPV() (map[string]*PV, error) {
-	result := map[string]*PV{}
+func QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
+	result := map[string]*PhysicalVolume{}
 	pvs, err := queryLVM("pvs", "pv_all,vg_name", []string{})
 	if err != nil {
 		return nil, err
 	}
 	for _, values := range pvs {
-		pv := &PV{}
+		pv := &PhysicalVolume{}
 		if err := parseLVM(&pv, values); err != nil {
 			return nil, err
 		}

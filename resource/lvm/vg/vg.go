@@ -14,16 +14,16 @@ type ResourceVG struct {
 }
 
 func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
-    var wc bool
+	var wc bool
 	if r.Exists && len(r.DevicesToAdd) == 0 && len(r.DevicesToRemove) == 0 {
 		wc = false
 	} else {
-        wc = true
-    }
+		wc = true
+	}
 	return &resource.Status{
-        WillChange: wc,
-        Status: "",
-    }, nil
+		WillChange: wc,
+		Status:     "",
+	}, nil
 }
 
 func (r *ResourceVG) Apply() error {
@@ -45,20 +45,20 @@ func (r *ResourceVG) Apply() error {
 }
 
 func (r *ResourceVG) Setup(devs []string) error {
-	pvs, err := lvm.QueryPV()
+	pvs, err := lvm.QueryPhysicalVolumes()
 	if err != nil {
 		return err
 	}
 
-	vgs, err := lvm.QueryVG()
+	vgs, err := lvm.QueryVolumeGroups()
 	if err != nil {
 		return err
 	}
 
 	for _, dev := range devs {
 		if pv, ok := pvs[dev]; ok {
-			if pv.Vg != r.Name {
-				return fmt.Errorf("Can't add device %s to VG %s, it already member of VG %s", dev, r.Name, pv.Vg)
+			if pv.Group != r.Name {
+				return fmt.Errorf("Can't add device %s to VG %s, it already member of VG %s", dev, r.Name, pv.Group)
 			}
 		} else {
 			r.DevicesToAdd = append(r.DevicesToAdd, dev)
