@@ -1,5 +1,11 @@
-docker.image "busybox" {
-  name               = "busybox"
-  tag                = "latest"
-  inactivity_timeout = "60s"
+docker.image "nginx" {
+  name    = "nginx"
+  tag     = "latest"
+  timeout = "60s"
+}
+
+docker.container "nginx" {
+  name    = "nginx"
+  image   = "nginx:latest"
+  depends = ["docker.image.nginx"]
 }

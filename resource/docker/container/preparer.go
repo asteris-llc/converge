@@ -14,14 +14,74 @@
 
 package container
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"fmt"
+
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/docker"
+)
 
 // Preparer for docker containers
 type Preparer struct {
-	Name string `hcl:"name"`
+	Name       string `hcl:"name"`
+	Image      string `hcl:"image"`
+	Entrypoint string `hcl:"entrypoint"`
+	Command    string `hcl:"command"`
+	WorkingDir string `hcl:"working_dir"`
 }
 
 // Prepare a docker container
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	return nil, nil
+	name, err := requiredRender(render, "name", p.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	image, err := requiredRender(render, "image", p.Image)
+	if err != nil {
+		return nil, err
+	}
+
+	entrypoint, err := render.Render("entrypoint", p.Entrypoint)
+	if err != nil {
+		return nil, err
+	}
+
+	command, err := render.Render("command", p.Command)
+	if err != nil {
+		return nil, err
+	}
+
+	workDir, err := render.Render("working_dir", p.WorkingDir)
+	if err != nil {
+		return nil, err
+	}
+
+	dockerClient, err := docker.NewDockerClient()
+	if err != nil {
+		return nil, err
+	}
+
+	container := &Container{
+		Name:       name,
+		Image:      image,
+		Entrypoint: entrypoint,
+		Command:    command,
+		WorkingDir: workDir,
+	}
+	container.SetClient(dockerClient)
+	return container, nil
+}
+
+func requiredRender(render resource.Renderer, name string, content string) (string, error) {
+	rendered, err := render.Render(name, content)
+	if err != nil {
+		return "", err
+	}
+
+	if rendered == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+
+	return rendered, nil
 }

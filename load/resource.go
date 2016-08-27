@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/docker/container"
 	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/file/mode"
@@ -65,6 +66,9 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		case "docker.image":
 			dest = new(image.Preparer)
+
+		case "docker.container":
+			dest = new(container.Preparer)
 
 		default:
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)

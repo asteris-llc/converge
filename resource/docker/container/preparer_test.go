@@ -17,6 +17,7 @@ package container_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/container"
 	"github.com/stretchr/testify/assert"
@@ -25,4 +26,20 @@ import (
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(container.Preparer))
+}
+
+func TestPreparerNameIsRequired(t *testing.T) {
+	p := &container.Preparer{}
+	_, err := p.Prepare(fakerenderer.New())
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "name is required")
+	}
+}
+
+func TestPreparerImageIsRequired(t *testing.T) {
+	p := &container.Preparer{Name: "test"}
+	_, err := p.Prepare(fakerenderer.New())
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "image is required")
+	}
 }
