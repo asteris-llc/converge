@@ -1,0 +1,338 @@
+// Copyright © 2016 Asteris, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package container_test
+
+import (
+	"errors"
+	"testing"
+
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/docker/container"
+	dc "github.com/fsouza/go-dockerclient"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestContainerInterface(t *testing.T) {
+	t.Parallel()
+	assert.Implements(t, (*resource.Task)(nil), new(container.Container))
+}
+
+func TestContainerCheckContainerNotFound(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(string) (*dc.Container, error) {
+			return nil, nil
+		},
+	}
+
+	name := "nginx"
+	container := &container.Container{Name: name}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assert.Equal(t, name, status.Value())
+	assertDiff(t, status.Diffs(), "name", "<container-missing>", name)
+}
+
+func TestContainerCheckContainerFindContainerError(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(string) (*dc.Container, error) {
+			return nil, errors.New("find container failed")
+		},
+	}
+
+	container := &container.Container{Name: "nginx"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "find container failed")
+	}
+	assert.Equal(t, resource.StatusFatal, status.StatusCode())
+	assert.False(t, status.HasChanges())
+}
+
+func TestContainerCheckContainerNoChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   "nginx",
+				State:  dc.State{Status: "running"},
+				Config: &dc.Config{}}, nil
+		},
+		FindImageFunc: func(string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+
+	assert.Nil(t, err)
+	assert.False(t, status.HasChanges())
+}
+
+func TestContainerCheckNotRunningNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		// the existing container is running the "nginx" command
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Cmd: []string{"nginx"},
+				},
+				State: dc.State{Status: "exited"},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "status", "exited", "running")
+}
+
+func TestContainerCheckCommandNeedsChange(t *testing.T) {
+	// This test simulates a running container with a command that is different
+	// than the specified command
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		// the existing container is running the "nginx" command
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Cmd: []string{"nginx"},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	// the resource uses an empty command implying that the default should be
+	// running
+	container := &container.Container{Name: "nginx", Command: "nginx -g daemon off;"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
+}
+
+func TestContainerCheckEmptyCommandNeedsChange(t *testing.T) {
+	// Specifying an empty Command means we want to use the default image command.
+	// This test simulates a running container with a command that is different
+	// than the image default.
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		// the existing container is running the "nginx" command
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Cmd: []string{"nginx"},
+				},
+			}, nil
+		},
+		// the image has a default command of "nginx -g daemon off;"
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{
+					Cmd: []string{"nginx", "-g", "daemon off;"},
+				},
+			}, nil
+		},
+	}
+
+	// the resource uses an empty command implying that the default should be
+	// running
+	container := &container.Container{Name: "nginx", Command: ""}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
+}
+
+func TestContainerCheckImageNeedsChange(t *testing.T) {
+	// This test simulates a running container with an image that is different
+	// than the specified image.
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		// the existing container is running the "nginx" image
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   name,
+				Image:  "nginx",
+				Config: &dc.Config{},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				RepoTags: []string{"nginx"},
+				Config: &dc.Config{
+					Image: "nginx",
+				},
+			}, nil
+		},
+	}
+
+	// the resource uses a different image
+	container := &container.Container{Name: "nginx", Image: "busybox"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "image", "nginx", "busybox")
+}
+
+func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		// the existing container is running the "start" entrypoint
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Entrypoint: []string{"start"},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx", Entrypoint: "/bin/bash start"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "entrypoint", "start", "/bin/bash start")
+}
+
+func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					WorkingDir: "/tmp",
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	// the resource uses an empty command implying that the default should be
+	// running
+	container := &container.Container{Name: "nginx", WorkingDir: "/tmp/working"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "working_dir", "/tmp", "/tmp/working")
+}
+
+func TestContainerApply(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		CreateContainerFunc: func(opts dc.CreateContainerOptions) (*dc.Container, error) {
+			return &dc.Container{}, nil
+		},
+	}
+	container := &container.Container{Name: "nginx", Image: "nginx:latest"}
+	container.SetClient(c)
+
+	assert.NoError(t, container.Apply())
+}
+
+func assertDiff(t *testing.T, diffs map[string]resource.Diff, name, original, current string) bool {
+	var ok bool
+
+	if ok = assert.NotEmpty(t, diffs); !ok {
+		return false
+	}
+
+	if ok = assert.NotNil(t, diffs[name]); !ok {
+		return false
+	}
+
+	if ok = assert.Equal(t, diffs[name].Original(), original); !ok {
+		return false
+	}
+
+	if ok = assert.Equal(t, diffs[name].Current(), current); !ok {
+		return false
+	}
+
+	return true
+}
+
+type fakeAPIClient struct {
+	FindImageFunc       func(repoTag string) (*dc.Image, error)
+	PullImageFunc       func(name, tag string) error
+	FindContainerFunc   func(name string) (*dc.Container, error)
+	CreateContainerFunc func(opts dc.CreateContainerOptions) (*dc.Container, error)
+}
+
+func (f *fakeAPIClient) FindImage(repoTag string) (*dc.Image, error) {
+	return f.FindImageFunc(repoTag)
+}
+
+func (f *fakeAPIClient) PullImage(name, tag string) error {
+	return f.PullImageFunc(name, tag)
+}
+
+func (f *fakeAPIClient) FindContainer(name string) (*dc.Container, error) {
+	return f.FindContainerFunc(name)
+}
+
+func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container, error) {
+	return f.CreateContainerFunc(opts)
+}
