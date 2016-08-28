@@ -143,7 +143,7 @@ func (c *Client) FindContainer(name string) (*dc.Container, error) {
 			}
 		}
 
-		if containerID == "" {
+		if containerID != "" {
 			break
 		}
 	}

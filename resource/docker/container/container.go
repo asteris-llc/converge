@@ -15,10 +15,13 @@
 package container
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	mapset "github.com/deckarep/golang-set"
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 )
@@ -30,6 +33,8 @@ type Container struct {
 	Entrypoint string
 	Command    string
 	WorkingDir string
+	Env        []string
+	Expose     []string
 	client     docker.APIClient
 }
 
@@ -59,9 +64,13 @@ func (c *Container) Check() (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() error {
+	exposeMap := toPortMap(c.Expose)
+
 	config := &dc.Config{
-		Image:      c.Image,
-		WorkingDir: c.WorkingDir,
+		Image:        c.Image,
+		WorkingDir:   c.WorkingDir,
+		Env:          c.Env,
+		ExposedPorts: exposeMap,
 	}
 
 	if c.Command != "" {
@@ -127,11 +136,89 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	}
 	status.AddDifference("working_dir", actual, expected, "")
 
-	// look for a tag name instead of reporting the Image ID in the diff
+	// Env
+	actual, expected = c.compareEnv(container, image)
+	status.AddDifference("env", actual, expected, "")
+
+	// Expose
+	actual, expected = c.compareExposedPorts(container, image)
+	status.AddDifference("expose", actual, expected, "")
+
+	// Image
 	existingRepoTag := preferredRepoTag(c.Image, image)
 	status.AddDifference("image", existingRepoTag, c.Image, "")
 
 	return nil
+}
+
+func (c *Container) compareEnv(container *dc.Container, image *dc.Image) (actual, expected string) {
+	toSet := func(env []string) mapset.Set {
+		set := mapset.NewSet()
+		for _, envvar := range env {
+			set.Add(envvar)
+		}
+		return set
+	}
+
+	containerSet := toSet(container.Config.Env)
+	imageSet := toSet(image.Config.Env)
+	// we don't want to include the default image env in the diff to reduce noise
+	compareSet := containerSet.Difference(imageSet)
+	expectedSet := toSet(c.Env)
+
+	actual = joinStringSet(compareSet, " ")
+	expected = joinStringSet(expectedSet, " ")
+
+	return actual, expected
+}
+
+func (c *Container) compareExposedPorts(container *dc.Container, image *dc.Image) (actual, expected string) {
+	toSet := func(portMap map[dc.Port]struct{}) mapset.Set {
+		portSlice := make([]string, len(portMap))
+		idx := 0
+		for port := range portMap {
+			portSlice[idx] = fmt.Sprintf("%s/%s", port.Port(), port.Proto())
+			idx++
+		}
+		return toStringSet(portSlice)
+	}
+
+	containerSet := toSet(container.Config.ExposedPorts)
+	imageSet := toSet(image.Config.ExposedPorts)
+	expectedSet := toSet(toPortMap(c.Expose)).Union(imageSet)
+
+	actual = joinStringSet(containerSet, ", ")
+	expected = joinStringSet(expectedSet, ", ")
+
+	return actual, expected
+}
+
+func toStringSet(strings []string) mapset.Set {
+	set := mapset.NewSet()
+	for _, val := range strings {
+		set.Add(val)
+	}
+	return set
+}
+
+func joinStringSet(set mapset.Set, sep string) string {
+	list := set.ToSlice()
+	strlist := make([]string, len(list))
+	for i, val := range list {
+		strlist[i] = val.(string)
+	}
+	sort.Strings(strlist)
+	return strings.Join(strlist, sep)
+}
+
+func toPortMap(portList []string) map[dc.Port]struct{} {
+	portMap := make(map[dc.Port]struct{}, len(portList))
+	for _, e := range portList {
+		port := dc.Port(e)
+		port = dc.Port(fmt.Sprintf("%s/%s", port.Port(), port.Proto()))
+		portMap[port] = struct{}{}
+	}
+	return portMap
 }
 
 func preferredRepoTag(want string, image *dc.Image) string {
