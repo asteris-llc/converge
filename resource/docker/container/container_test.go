@@ -267,8 +267,6 @@ func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
 		},
 	}
 
-	// the resource uses an empty command implying that the default should be
-	// running
 	container := &container.Container{Name: "nginx", WorkingDir: "/tmp/working"}
 	container.SetClient(c)
 
@@ -276,6 +274,72 @@ func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
 	assertDiff(t, status.Diffs(), "working_dir", "/tmp", "/tmp/working")
+}
+
+func TestContainerCheckEnvNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Env: []string{"FROMIMAGE=yes", "FOO=BAR"},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{
+					Env: []string{"FROMIMAGE=yes"},
+				},
+			}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx", Env: []string{"BAR=BAZ", "FOO=BAR"}}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "env", "FOO=BAR", "BAR=BAZ FOO=BAR")
+}
+
+func TestContainerCheckExposeNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					ExposedPorts: map[dc.Port]struct{}{
+						"80/tcp":  struct{}{},
+						"443/tcp": struct{}{},
+					},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{
+					ExposedPorts: map[dc.Port]struct{}{
+						"80/tcp":  struct{}{},
+						"443/tcp": struct{}{},
+					},
+				},
+			}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx", Expose: []string{"8001", "8002/udp"}}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "expose", "443/tcp, 80/tcp", "443/tcp, 80/tcp, 8001/tcp, 8002/udp")
 }
 
 func TestContainerApply(t *testing.T) {

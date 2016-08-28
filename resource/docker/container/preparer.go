@@ -23,11 +23,13 @@ import (
 
 // Preparer for docker containers
 type Preparer struct {
-	Name       string `hcl:"name"`
-	Image      string `hcl:"image"`
-	Entrypoint string `hcl:"entrypoint"`
-	Command    string `hcl:"command"`
-	WorkingDir string `hcl:"working_dir"`
+	Name       string            `hcl:"name"`
+	Image      string            `hcl:"image"`
+	Entrypoint string            `hcl:"entrypoint"`
+	Command    string            `hcl:"command"`
+	WorkingDir string            `hcl:"working_dir"`
+	Env        map[string]string `hcl:"env"`
+	Expose     []string          `hcl:"expose"`
 }
 
 // Prepare a docker container
@@ -57,6 +59,28 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
+	// render Env
+	renderedEnv := make([]string, len(p.Env))
+	idx := 0
+	for name, val := range p.Env {
+		pair := fmt.Sprintf("%s=%s", name, val)
+		rendered, rerr := render.Render(fmt.Sprintf("env[%s]", name), pair)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedEnv[idx] = rendered
+		idx++
+	}
+
+	renderedExpose := make([]string, len(p.Expose))
+	for i, expose := range p.Expose {
+		rendered, rerr := render.Render(fmt.Sprintf("expose[%d]", i), expose)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedExpose[i] = rendered
+	}
+
 	dockerClient, err := docker.NewDockerClient()
 	if err != nil {
 		return nil, err
@@ -68,6 +92,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Entrypoint: entrypoint,
 		Command:    command,
 		WorkingDir: workDir,
+		Env:        renderedEnv,
+		Expose:     renderedExpose,
 	}
 	container.SetClient(dockerClient)
 	return container, nil
