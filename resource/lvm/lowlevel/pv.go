@@ -10,19 +10,19 @@ type PhysicalVolume struct {
 	Device string
 }
 
-func QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
+func (lvm *LVM) QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
 	result := map[string]*PhysicalVolume{}
-	pvs, err := queryLVM("pvs", "pv_all,vg_name", []string{})
+	pvs, err := lvm.Query("pvs", "pv_all,vg_name", []string{})
 	if err != nil {
 		return nil, err
 	}
 	for _, values := range pvs {
 		pv := &PhysicalVolume{}
-		if err := parseLVM(&pv, values); err != nil {
+		if err := lvm.parse(values, pv); err != nil {
 			return nil, err
 		}
 		if strings.HasPrefix(pv.Name, "/dev/dm-") {
-			pv.Device, err = queryDeviceMapperName(pv.Name)
+			pv.Device, err = lvm.QueryDeviceMapperName(pv.Name)
 			if err != nil {
 				return nil, err
 			}

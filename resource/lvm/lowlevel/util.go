@@ -1,23 +1,25 @@
 package lowlevel
 
-import (
-	"os/exec"
-)
+type LVM struct {
+	Backend Exec
+}
 
-func VGCreate(vg string, devs []string) error {
+var LvmBackend = &LVM{Backend: &OsExec{}}
+
+func (lvm *LVM) CreateVolumeGroup(vg string, devs []string) error {
 	args := []string{vg}
 	args = append(args, devs...)
-	return exec.Command("vgcreate", args...).Wait()
+	return lvm.Backend.Run("vgcreate", args)
 }
 
-func VGExtend(vg string, dev string) error {
-	return exec.Command("vgextend", vg, dev).Wait()
+func (lvm *LVM) ExtendVolumeGroup(vg string, dev string) error {
+	return lvm.Backend.Run("vgextend", []string{vg, dev})
 }
 
-func VGReduce(vg string, dev string) error {
-	return exec.Command("vgreduce", vg, dev).Wait()
+func (lvm *LVM) ReduceVolumeGroup(vg string, dev string) error {
+	return lvm.Backend.Run("vgreduce", []string{vg, dev})
 }
 
-func PVCreate(dev string) error {
-	return exec.Command("pvcreate", dev).Wait()
+func (lvm *LVM) CreatePhysicalVolume(dev string) error {
+	return lvm.Backend.Run("pvcreate", []string{dev})
 }
