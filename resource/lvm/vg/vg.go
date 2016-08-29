@@ -3,7 +3,7 @@ package vg
 import (
 	"fmt"
 	"github.com/asteris-llc/converge/resource"
-	lvm "github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
 type ResourceVG struct {
@@ -11,6 +11,7 @@ type ResourceVG struct {
 	Exists          bool
 	DevicesToAdd    []string
 	DevicesToRemove []string
+	lvm             lowlevel.LVM
 }
 
 func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
@@ -29,28 +30,28 @@ func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
 func (r *ResourceVG) Apply() error {
 	if r.Exists {
 		for _, d := range r.DevicesToAdd {
-			if err := lvm.VGExtend(r.Name, d); err != nil {
+			if err := r.lvm.ExtendVolumeGroup(r.Name, d); err != nil {
 				return err
 			}
 		}
 		for _, d := range r.DevicesToRemove {
-			if err := lvm.VGReduce(r.Name, d); err != nil {
+			if err := r.lvm.ReduceVolumeGroup(r.Name, d); err != nil {
 				return err
 			}
 		}
 	} else {
-		return lvm.VGCreate(r.Name, r.DevicesToAdd)
+		return r.lvm.CreateVolumeGroup(r.Name, r.DevicesToAdd)
 	}
 	return nil
 }
 
 func (r *ResourceVG) Setup(devs []string) error {
-	pvs, err := lvm.QueryPhysicalVolumes()
+	pvs, err := r.lvm.QueryPhysicalVolumes()
 	if err != nil {
 		return err
 	}
 
-	vgs, err := lvm.QueryVolumeGroups()
+	vgs, err := r.lvm.QueryVolumeGroups()
 	if err != nil {
 		return err
 	}
