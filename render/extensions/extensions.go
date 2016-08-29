@@ -19,15 +19,18 @@ import (
 	"fmt"
 	"log"
 	"text/template"
+
+	"github.com/asteris-llc/converge/render/extensions/platform"
 )
 
 // languageKeywords defines the known keywords that have been added to the
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"env":   {},
-	"param": {},
-	"split": {},
+	"env":      {},
+	"param":    {},
+	"platform": {},
+	"split":    {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -55,6 +58,7 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
+	language.On("platform", platform.DefaultPlatform)
 	language.Validate()
 	return language
 }
