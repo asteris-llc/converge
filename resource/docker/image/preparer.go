@@ -22,10 +22,22 @@ import (
 )
 
 // Preparer for docker images
+//
+// Image is responsible for pulling Docker images. It assumes that there is
+// already a Docker daemon running on the system.
 type Preparer struct {
-	Name    string `hcl:"name"`
-	Tag     string `hcl:"tag"`
-	Timeout string `hcl:"timeout"`
+	// name of the image to pull
+	Name string `hcl:"name"`
+
+	// tag of the image to pull
+	Tag string `hcl:"tag"`
+
+	// the amount of time to wait after a period of inactivity. The timeout is
+	// reset each time new data arrives. The format is Go's duration string. A
+	// duration string is a possibly signed sequence of decimal numbers, each with
+	// optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
+	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+	InactivityTimeout string `hcl:"inactivity_timeout" doc_type:"duration_string"`
 }
 
 // Prepare a new docker image
@@ -40,7 +52,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	timeout, err := render.Render("timeout", p.Timeout)
+	timeout, err := render.Render("inactivity_timeout", p.InactivityTimeout)
 	if err != nil {
 		return nil, err
 	}

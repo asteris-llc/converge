@@ -1,3 +1,17 @@
+// Copyright © 2016 Asteris, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -76,10 +90,12 @@ func main() {
 	fmt.Println(extractor)
 }
 
+// Field represents a documentation field
 type Field struct {
 	Name, Type, Doc string
 }
 
+// TypeExtractor extracts documentation information
 type TypeExtractor struct {
 	Target string
 
@@ -92,6 +108,7 @@ type TypeExtractor struct {
 	ResourceName  string
 }
 
+// Visit inspects each node in the Ast and returns a Visitor
 func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 	if node == nil {
 		return nil
@@ -160,6 +177,7 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 	}
 }
 
+// Docs generates a documentation string
 func (*TypeExtractor) Docs(gs ...*ast.CommentGroup) string {
 	var out []string
 	for _, g := range gs {
