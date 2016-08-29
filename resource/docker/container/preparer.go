@@ -30,6 +30,7 @@ type Preparer struct {
 	WorkingDir string            `hcl:"working_dir"`
 	Env        map[string]string `hcl:"env"`
 	Expose     []string          `hcl:"expose"`
+	Links      []string          `hcl:"links"`
 
 	// Allocates a random host port for all of a container’s exposed ports. Specified as a boolean value.
 	PublishAllPorts bool `hcl:"publish_all_ports"` // TODO: how do we render bool values from params
@@ -84,6 +85,15 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		renderedExpose[i] = rendered
 	}
 
+	renderedLinks := make([]string, len(p.Links))
+	for i, link := range p.Links {
+		rendered, rerr := render.Render(fmt.Sprintf("link[%d]", i), link)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedLinks[i] = rendered
+	}
+
 	dockerClient, err := docker.NewDockerClient()
 	if err != nil {
 		return nil, err
@@ -97,6 +107,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		WorkingDir:      workDir,
 		Env:             renderedEnv,
 		Expose:          renderedExpose,
+		Links:           renderedLinks,
 		PublishAllPorts: p.PublishAllPorts,
 	}
 	container.SetClient(dockerClient)

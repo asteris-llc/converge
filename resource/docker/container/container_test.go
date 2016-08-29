@@ -16,6 +16,7 @@ package container_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
@@ -340,6 +341,42 @@ func TestContainerCheckExposeNeedsChange(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
 	assertDiff(t, status.Diffs(), "expose", "443/tcp, 80/tcp", "443/tcp, 80/tcp, 8001/tcp, 8002/udp")
+}
+
+func TestContainerCheckLinksNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   name,
+				Config: &dc.Config{},
+				HostConfig: &dc.HostConfig{
+					// no alias
+					Links: []string{fmt.Sprintf("/redis-server:/%s/redis-server", name)},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{},
+			}, nil
+		},
+	}
+
+	// include alias for existing link and a acouple of more links
+	container := &container.Container{
+		Name:  "nginx",
+		Links: []string{"redis-server:redis", "memcached", "postgresql:db"},
+	}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "links",
+		"redis-server",
+		"memcached, postgresql:db, redis-server:redis")
 }
 
 func TestContainerApply(t *testing.T) {

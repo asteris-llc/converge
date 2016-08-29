@@ -16,6 +16,7 @@ package container
 
 import (
 	"fmt"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,6 +37,7 @@ type Container struct {
 	WorkingDir      string
 	Env             []string
 	Expose          []string
+	Links           []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -77,6 +79,7 @@ func (c *Container) Apply() error {
 
 	hostConfig := &dc.HostConfig{
 		PublishAllPorts: c.PublishAllPorts,
+		Links:           c.Links,
 	}
 
 	if c.Command != "" {
@@ -108,11 +111,13 @@ func (c *Container) SetClient(client docker.APIClient) {
 func (c *Container) diffContainer(container *dc.Container, status *resource.Status) error {
 	status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 	status.AddDifference("status", container.State.Status, "running", "")
-	status.AddDifference(
-		"publish_all_ports",
-		strconv.FormatBool(container.HostConfig.PublishAllPorts),
-		strconv.FormatBool(c.PublishAllPorts),
-		"false")
+	if container.HostConfig != nil {
+		status.AddDifference(
+			"publish_all_ports",
+			strconv.FormatBool(container.HostConfig.PublishAllPorts),
+			strconv.FormatBool(c.PublishAllPorts),
+			"false")
+	}
 
 	image, err := c.client.FindImage(container.Image)
 	if err != nil {
@@ -155,6 +160,10 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	// Expose
 	actual, expected = c.compareExposedPorts(container, image)
 	status.AddDifference("expose", actual, expected, "")
+
+	// Links
+	actual, expected = c.compareLinks(container)
+	status.AddDifference("links", actual, expected, "")
 
 	// Image
 	existingRepoTag := preferredRepoTag(c.Image, image)
@@ -200,6 +209,51 @@ func (c *Container) compareExposedPorts(container *dc.Container, image *dc.Image
 	expectedSet := toSet(toPortMap(c.Expose)).Union(imageSet)
 
 	actual = joinStringSet(containerSet, ", ")
+	expected = joinStringSet(expectedSet, ", ")
+
+	return actual, expected
+}
+
+func (c *Container) compareLinks(container *dc.Container) (actual, expected string) {
+	normalizeLink := func(link string) string {
+		// internally links are stored as "/linkedcontainer:/containername/alias"
+		parts := strings.Split(link, ":")
+		if len(parts) == 1 {
+			return strings.TrimPrefix(link, "/")
+		}
+
+		var name, alias string
+		if strings.HasPrefix(parts[0], "/") {
+			_, alias = path.Split(parts[1])
+			name = parts[0][1:]
+		} else {
+			name = parts[0]
+			alias = parts[1]
+		}
+
+		if strings.EqualFold(name, alias) {
+			return name
+		}
+
+		return fmt.Sprintf("%s:%s", name, alias)
+	}
+
+	normalizedLinks := func(rawlinks []string) []string {
+		links := make([]string, len(rawlinks))
+		for i, link := range rawlinks {
+			links[i] = normalizeLink(link)
+		}
+		return links
+	}
+
+	if container.HostConfig == nil || len(container.HostConfig.Links) == 0 {
+		return "", ""
+	}
+
+	actualSet := toStringSet(normalizedLinks(container.HostConfig.Links))
+	expectedSet := toStringSet(c.Links)
+
+	actual = joinStringSet(actualSet, ", ")
 	expected = joinStringSet(expectedSet, ", ")
 
 	return actual, expected
