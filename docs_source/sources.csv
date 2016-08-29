@@ -3,3 +3,4 @@ file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer
 module,../resource/module/preparer.go,../samples/sourceFile.hcl,Preparer
 param,../resource/param/preparer.go,../samples/basic.hcl,Preparer
 task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer
+docker.image,../resource/docker/image/preparer.go,../samples/docker.hcl,Preparer

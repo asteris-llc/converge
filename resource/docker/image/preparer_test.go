@@ -29,7 +29,7 @@ func TestPreparerInterface(t *testing.T) {
 }
 
 func TestPreparerInvalidTimeout(t *testing.T) {
-	p := &image.Preparer{Timeout: "invalid"}
+	p := &image.Preparer{InactivityTimeout: "invalid"}
 	_, err := p.Prepare(fakerenderer.New())
 	assert.Error(t, err)
 }
