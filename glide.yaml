@@ -86,3 +86,6 @@ import:
 - package: github.com/ttacon/chalk
   version: ~0.1.0
 - package: github.com/fsouza/go-dockerclient
+- package: golang.org/x/crypto
+  subpackages:
+  - openpgp

@@ -1,5 +1,5 @@
-hash: e7d56964f2cfbc3f05969c0df30f6ac72791b1189817352f75b96ebfca78c9ce
-updated: 2016-08-26T14:57:35.805104177-05:00
+hash: 790ff585a0ee6f5907c051b3ec4652dfccd7a4b701bbe719b71021d239b04bf3
+updated: 2016-08-29T14:08:36.387721702-05:00
 imports:
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
@@ -113,6 +113,10 @@ imports:
   - vendor/github.com/pmezard/go-difflib/difflib
 - name: github.com/ttacon/chalk
   version: 76b3c8b611dea8f83e49e9ce81fc2b189e0ef3d2
+- name: golang.org/x/crypto
+  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
+  subpackages:
+  - openpgp
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
