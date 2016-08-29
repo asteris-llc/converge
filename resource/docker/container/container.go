@@ -17,6 +17,7 @@ package container
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
@@ -28,14 +29,15 @@ import (
 
 // Container is responsible for running docker containers
 type Container struct {
-	Name       string
-	Image      string
-	Entrypoint string
-	Command    string
-	WorkingDir string
-	Env        []string
-	Expose     []string
-	client     docker.APIClient
+	Name            string
+	Image           string
+	Entrypoint      string
+	Command         string
+	WorkingDir      string
+	Env             []string
+	Expose          []string
+	PublishAllPorts bool
+	client          docker.APIClient
 }
 
 // Check that a docker container with the specified configuration is running
@@ -73,6 +75,10 @@ func (c *Container) Apply() error {
 		ExposedPorts: exposeMap,
 	}
 
+	hostConfig := &dc.HostConfig{
+		PublishAllPorts: c.PublishAllPorts,
+	}
+
 	if c.Command != "" {
 		config.Cmd = strings.Split(c.Command, " ")
 	}
@@ -82,8 +88,9 @@ func (c *Container) Apply() error {
 	}
 
 	opts := dc.CreateContainerOptions{
-		Name:   c.Name,
-		Config: config,
+		Name:       c.Name,
+		Config:     config,
+		HostConfig: hostConfig,
 	}
 	_, err := c.client.CreateContainer(opts)
 
@@ -101,6 +108,11 @@ func (c *Container) SetClient(client docker.APIClient) {
 func (c *Container) diffContainer(container *dc.Container, status *resource.Status) error {
 	status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 	status.AddDifference("status", container.State.Status, "running", "")
+	status.AddDifference(
+		"publish_all_ports",
+		strconv.FormatBool(container.HostConfig.PublishAllPorts),
+		strconv.FormatBool(c.PublishAllPorts),
+		"false")
 
 	image, err := c.client.FindImage(container.Image)
 	if err != nil {
