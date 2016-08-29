@@ -77,11 +77,11 @@ func DesugarCall(g *graph.Graph, call string) (string, error) {
 	if !found {
 		return "", errors.New("syntax error call to non-existant dependency")
 	}
-	out.WriteString(fmt.Sprintf("(eval %q)", pfx))
+	out.WriteString(fmt.Sprintf("(noderef %q)", pfx))
 	if rest != "" {
 		out.WriteString(fmt.Sprintf("| %s", MkCallPipeline(rest)))
 	}
-	return out.String()
+	return out.String(), nil
 }
 
 // VertexSplit takes a graph with a set of vertexes and a string, and returns
