@@ -21,8 +21,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-//LinuxLSB finds Linux LSB files and parses them
-//Most modern :inux distributions have standardized on
+// LinuxLSB finds Linux LSB files and parses them
+// Most modern :inux distributions have standardized on
 // /etc/os-release
 func (platform *Platform) LinuxLSB() error {
 	lsbFile := "/etc/os-release"
@@ -34,11 +34,11 @@ func (platform *Platform) LinuxLSB() error {
 	return err
 }
 
-//ParseLSBContent populates a Platform struct with /etc/os-release data
+// ParseLSBContent populates a Platform struct with /etc/os-release data
 func (platform *Platform) ParseLSBContent(content string) {
 	lines := strings.Split(content, "\n")
 	for _, v := range lines {
-		s := strings.Split(v, "=")
+		s := strings.SplitN(v, "=", 2)
 		if len(s) == 2 {
 			k, v := s[0], strings.Replace(s[1], "\"", "", -1) //remove quotes
 			switch k {
