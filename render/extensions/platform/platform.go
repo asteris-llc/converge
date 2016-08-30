@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//Package platform queries the underlying operating system
+// Package platform queries the underlying operating system
 package platform
 
 import "runtime"
 
-//Platform is a struct containing version information for the
-//underlying operating system
+// Platform is a struct containing version information for the
+// underlying operating system
 type Platform struct {
 	Build             string
 	OS                string
@@ -29,8 +29,8 @@ type Platform struct {
 	Version           string
 }
 
-//NewPlatform Queries the runtime and then attempts to
-//discover version information from the underlying operating system
+// DefaultPlatform Queries the runtime and then attempts to
+// discover version information from the underlying operating system
 func DefaultPlatform() (*Platform, error) {
 	var platform Platform
 	var err error

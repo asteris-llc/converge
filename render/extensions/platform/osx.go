@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//OSXVers runs /usr/bin/sw_vers to get OSX version information
+// OSXVers runs /usr/bin/sw_vers to get OSX version information
 func (platform *Platform) OSXVers() error {
 	cmd := "/usr/bin/sw_vers"
 	var (
@@ -36,7 +36,7 @@ func (platform *Platform) OSXVers() error {
 	return err
 }
 
-//ParseOSXVersion Takes output from /usr/bin/sw_vers and stores in a Platform
+// ParseOSXVersion Takes output from /usr/bin/sw_vers and stores in a Platform
 func (platform *Platform) ParseOSXVersion(versionData string) {
 	lines := strings.Split(versionData, "\n")
 	for _, l := range lines {
