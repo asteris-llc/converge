@@ -28,12 +28,6 @@ import (
 // Values for rendering
 type Values map[string]interface{}
 
-// Lens contains a renderable node and it's context
-type Lens struct {
-	nodeRenderer *Renderer
-	Node         interface{}
-}
-
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
 	log.Println("[INFO] rendering")

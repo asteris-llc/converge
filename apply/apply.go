@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
@@ -32,7 +33,16 @@ var ErrTreeContainsErrors = errors.New("apply had errors, check graph")
 func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	var hasErrors error
 
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		nodeRenderer, err := renderingPlant.GetRenderer(id)
+		if err != nil {
+			return err
+		}
 		val := out.Get(id)
 		result, ok := val.(*plan.Result)
 		if !ok {
@@ -66,7 +76,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		if result.Status.HasChanges() {
 			log.Printf("[DEBUG] applying %q\n", id)
 
-			err := result.Task.Apply()
+			err := result.Task.Apply(nodeRenderer)
 			if err != nil {
 				err = errors.Wrapf(err, "error applying %s", id)
 			}

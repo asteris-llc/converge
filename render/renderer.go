@@ -51,14 +51,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	name = "param." + name
-	fmt.Println("Getting param for: ", name)
-	g := r.Graph()
-	fmt.Println("Vertices")
-	for _, vertex := range g.Vertices() {
-		fmt.Printf("\t%s :: %T\n", vertex, g.Get(vertex))
-	}
-	val := r.Graph().Get(graph.SiblingID(r.ID, name))
+	val := r.Graph().Get(graph.SiblingID(r.ID, "param."+name))
 	if val == nil {
 		return "", errors.New("param not found")
 	}

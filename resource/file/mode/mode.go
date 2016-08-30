@@ -65,7 +65,7 @@ func (t *Mode) Check() (resource.TaskStatus, error) {
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply() error {
+func (t *Mode) Apply(resource.Renderer) error {
 	return os.Chmod(t.Destination, t.Mode.Perm())
 }
 

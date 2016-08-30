@@ -18,7 +18,7 @@ package resource
 // checks pass.
 type Task interface {
 	Check() (TaskStatus, error)
-	Apply() error
+	Apply(Renderer) error
 }
 
 // Resource adds metadata about the executed tasks
