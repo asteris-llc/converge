@@ -16,11 +16,14 @@ package render
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"strings"
+	"log"
 
+	"github.com/asteris-llc/converge/executor"
+	"github.com/asteris-llc/converge/executor/either"
+	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/pkg/errors"
@@ -31,46 +34,112 @@ type Values map[string]interface{}
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
-	logger := logging.GetLogger(ctx).WithField("function", "Render")
-
-	logger.Info("rendering")
-
+	renderingPlant, err := NewFactory(ctx, g)
+	if err != nil {
+		return nil, err
+	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
-		if id == "root" {
-			logger.Debug("wrappering root")
-			out.Add(id, module.NewPreparer(top))
+		pipeline := Pipeline(out, id, renderingPlant, top)
+		result := pipeline.Exec(either.ReturnM(out.Get(id)))
+		value, isRight := result.FromEither()
+		if !isRight {
+			return fmt.Errorf("%v", value)
 		}
-
-		res, ok := out.Get(id).(resource.Resource)
-		if !ok {
-			return fmt.Errorf("Render only deals with graphs of resource.Resource, node was %T", out.Get(id))
-		}
-
-		logger.WithField("id", id).Debug("preparing")
-
-		// determine dot value of the current node - mostly for params and modules
-		renderer := &Renderer{Graph: out, ID: id}
-
-		name := graph.BaseID(id)
-		if strings.HasPrefix(name, "param") {
-			parent, ok := out.GetParent(id).(*module.Module)
-			if !ok {
-				return fmt.Errorf("Parent of param was not a module, was %T", out.GetParent(id))
-			}
-
-			if val, ok := parent.Params[name[len("param."):]]; ok {
-				renderer.DotValue = val
-				renderer.DotValuePresent = true
-			}
-		}
-
-		rendered, err := res.Prepare(renderer)
-		if err != nil {
-			return errors.Wrap(err, id)
-		}
-
-		out.Add(id, rendered)
-
+		out.Add(id, value)
+		renderingPlant.Graph = out
 		return nil
 	})
+}
+
+type pipelineGen struct {
+	Graph          *graph.Graph
+	RenderingPlant *Factory
+	ID             string
+	Top            Values
+}
+
+// Pipeline generates a pipelined form of rendering
+func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.Pipeline {
+	p := pipelineGen{Graph: g, RenderingPlant: factory, Top: top, ID: id}
+	return executor.NewPipeline().
+		AndThen(p.maybeTransformRoot).
+		AndThen(p.prepareNode).
+		AndThen(p.wrapTask)
+}
+
+// Check to see if the current id is "root", if so generate a new module
+// preparer for it and add in all of the command-line parameters; otherwise if
+// the node is a valide resource.Resource return it.  If it's not root and not a
+// resource.Resource return an error.
+func (p pipelineGen) maybeTransformRoot(idi interface{}) monad.Monad {
+	if p.ID == "root" {
+		return either.RightM(module.NewPreparer(p.Top))
+	}
+	if res, ok := idi.(resource.Resource); ok {
+		return either.RightM(res)
+	}
+	return either.LeftM(typeError("resource.Renderer", idi))
+}
+
+// Run prepare on the node and return the resource.Resource to be wrapped
+func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
+	res, ok := idi.(resource.Resource)
+	if !ok {
+		return either.LeftM(typeError("resource.Resource", idi))
+	}
+	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
+	if err != nil {
+		return either.LeftM(err)
+	}
+
+	prepared, err := res.Prepare(renderer)
+	if err != nil {
+		if err == ErrUnresolvable {
+			log.Println("[INFO] Attempting to thunk unresolvable preparer " + p.ID)
+			return either.RightM(createThunk(nil, func(factory *Factory) (resource.Task, error) {
+				dynamicRenderer, rendErr := factory.GetRenderer(p.ID)
+				if rendErr != nil {
+					return nil, rendErr
+				}
+				return res.Prepare(dynamicRenderer)
+			}))
+		}
+		fmt.Printf("%s got a non-unresolvable error: %s", p.ID, errors.Cause(err))
+		return either.LeftM(err)
+	}
+
+	return either.RightM(prepared)
+}
+
+// Takes a resource.Task and wraps it in resource.TaskWrapper
+func (p pipelineGen) wrapTask(taski interface{}) monad.Monad {
+	if task, ok := taski.(*PrepareThunk); ok {
+		return either.RightM(task)
+	}
+	if task, ok := taski.(resource.Task); ok {
+		return either.RightM(resource.WrapTask(task))
+	}
+	return either.LeftM(typeError("resource.Task", taski))
+}
+
+func typeError(expected string, actual interface{}) error {
+	return fmt.Errorf("type error: expected type %s but received type %T", expected, actual)
+}
+
+// PrepareThunk returns a possibly lazily evaluated preparer
+type PrepareThunk struct {
+	resource.Task
+	// prevent hashing thunks into a single value
+	Data  []byte
+	Thunk func(*Factory) (resource.Task, error) `hash:"ignore"`
+}
+
+func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *PrepareThunk {
+	junk := make([]byte, 32)
+	rand.Read(junk)
+	return &PrepareThunk{
+		Task:  task,
+		Thunk: f,
+		Data:  junk,
+	}
 }
