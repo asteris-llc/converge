@@ -57,7 +57,6 @@ func (v *LazyValue) Value() (string, bool, error) {
 
 // GetRenderer returns a Factory for the specific graph node
 func (f *Factory) GetRenderer(id string) (*Renderer, error) {
-	fmt.Println("getting renderer for: ", id)
 	r := &Renderer{Language: f.Language, Graph: func() *graph.Graph { return f.Graph }, ID: id}
 	if dotVal, found := f.DotValues[id]; found {
 		if valResult, valFound, err := dotVal.Value(); err != nil {
@@ -98,14 +97,12 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 	f := func() (string, bool, error) { return "", false, nil }
 	if strings.HasPrefix(name, "param") {
 		f = func() (string, bool, error) {
-			fmt.Println("getting overrides for param: ", name)
 			parent, ok := gFunc().GetParent(id).(*module.Module)
 			if !ok {
 				p := gFunc().GetParent(id)
 				return "", false, fmt.Errorf("Parent of param %s was not a module, was %s :: %T", id, p, p)
 			}
 			if val, ok := parent.Params[name[len("param."):]]; ok {
-				fmt.Println("found overrides")
 				return val, true, nil
 			}
 			return "", false, nil

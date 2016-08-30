@@ -81,7 +81,7 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply() error {
+func (t *Content) Apply(resource.Renderer) error {
 	var perm os.FileMode
 
 	stat, err := os.Stat(t.Destination)

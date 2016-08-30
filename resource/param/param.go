@@ -27,7 +27,7 @@ func (p *Param) Check() (resource.TaskStatus, error) {
 }
 
 // Apply doesn't do anything since params are final values
-func (*Param) Apply() error {
+func (*Param) Apply(resource.Renderer) error {
 	return nil
 }
 
