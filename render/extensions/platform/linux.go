@@ -16,21 +16,22 @@ package platform
 
 import (
 	"io/ioutil"
-	"log"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 //LinuxLSB finds Linux LSB files and parses them
 //Most modern :inux distributions have standardized on
 // /etc/os-release
-func (platform *Platform) LinuxLSB() {
+func (platform *Platform) LinuxLSB() error {
 	lsbFile := "/etc/os-release"
 	content, err := ioutil.ReadFile(lsbFile)
 	if err != nil {
-		log.Printf("[INFO] Error opening %s: %s. Will skip parsing lsb data", lsbFile, err)
-		return
+		return errors.Wrapf(err, "%s. Will be unable to parse LSB data", lsbFile)
 	}
 	platform.ParseLSBContent(string(content))
+	return err
 }
 
 //ParseLSBContent populates a Platform struct with /etc/os-release data

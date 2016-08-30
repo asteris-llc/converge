@@ -15,13 +15,14 @@
 package platform
 
 import (
-	"log"
 	"os/exec"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 //OSXVers runs /usr/bin/sw_vers to get OSX version information
-func (platform *Platform) OSXVers() {
+func (platform *Platform) OSXVers() error {
 	cmd := "/usr/bin/sw_vers"
 	var (
 		cmdOut []byte
@@ -29,10 +30,10 @@ func (platform *Platform) OSXVers() {
 	)
 
 	if cmdOut, err = exec.Command(cmd).Output(); err != nil {
-		log.Println("[INFO] Error running %s:%s Will be unable to parse release data", cmd, err)
-		return
+		return errors.Wrapf(err, "%s. Will be unable to parse release data", cmd)
 	}
 	platform.ParseOSXVersion(string(cmdOut))
+	return err
 }
 
 //ParseOSXVersion Takes output from /usr/bin/sw_vers and stores in a Platform
