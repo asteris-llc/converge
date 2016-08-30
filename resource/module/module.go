@@ -32,7 +32,7 @@ func (m *Module) Check() (resource.TaskStatus, error) {
 }
 
 // Apply doesn't do anything since modules are final values
-func (*Module) Apply() error {
+func (*Module) Apply(resource.Renderer) error {
 	return nil
 }
 

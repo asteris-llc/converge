@@ -45,7 +45,7 @@ func (s *Shell) Check() (resource.TaskStatus, error) {
 }
 
 // Apply is a NOP for health checks
-func (s *Shell) Apply() (err error) {
+func (s *Shell) Apply(resource.Renderer) (err error) {
 	results, err := s.CmdGenerator.Run(s.ApplyStmt)
 	if err == nil {
 		s.Status = s.Status.Cons("apply", results)

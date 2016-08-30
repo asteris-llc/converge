@@ -52,7 +52,7 @@ func (i *Image) Check() (resource.TaskStatus, error) {
 }
 
 // Apply pulls a docker image
-func (i *Image) Apply() (err error) {
+func (i *Image) Apply(resource.Renderer) (err error) {
 	return i.client.PullImage(i.Name, i.Tag)
 }
 
