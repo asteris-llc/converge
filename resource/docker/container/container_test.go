@@ -343,6 +343,52 @@ func TestContainerCheckExposeNeedsChange(t *testing.T) {
 	assertDiff(t, status.Diffs(), "expose", "443/tcp, 80/tcp", "443/tcp, 80/tcp, 8001/tcp, 8002/udp")
 }
 
+func TestContainerCheckPortsNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					ExposedPorts: map[dc.Port]struct{}{
+						"80/tcp":   struct{}{},
+						"443/tcp":  struct{}{},
+						"8003/tcp": struct{}{},
+					},
+				},
+				HostConfig: &dc.HostConfig{
+					PortBindings: map[dc.Port][]dc.PortBinding{
+						dc.Port("80/tcp"): []dc.PortBinding{dc.PortBinding{HostPort: "8003/tcp"}},
+					},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{
+					ExposedPorts: map[dc.Port]struct{}{
+						"80/tcp":  struct{}{},
+						"443/tcp": struct{}{},
+					},
+				},
+			}, nil
+		},
+	}
+
+	container := &container.Container{
+		Name:         "nginx",
+		Expose:       []string{"8003"},
+		PortMappings: []string{"127.0.0.1:8000:80", "127.0.0.1::80/tcp", "443:443", "8003:80", "8004:80"},
+	}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "ports", ":8003/tcp:80/tcp", "127.0.0.1:8000/tcp:80/tcp, 127.0.0.1::80/tcp, :443/tcp:443/tcp, :8003/tcp:80/tcp, :8004/tcp:80/tcp")
+}
+
 func TestContainerCheckLinksNeedsChange(t *testing.T) {
 	t.Parallel()
 
@@ -404,11 +450,11 @@ func assertDiff(t *testing.T, diffs map[string]resource.Diff, name, original, cu
 		return false
 	}
 
-	if ok = assert.Equal(t, diffs[name].Original(), original); !ok {
+	if ok = assert.Equal(t, original, diffs[name].Original()); !ok {
 		return false
 	}
 
-	if ok = assert.Equal(t, diffs[name].Current(), current); !ok {
+	if ok = assert.Equal(t, current, diffs[name].Current()); !ok {
 		return false
 	}
 
