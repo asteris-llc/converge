@@ -25,6 +25,7 @@ func propDependency(name string, units []string) *dbus.Property {
 }
 
 type LoadState string
+type LoadStates []LoadState
 
 const (
 	LSLoaded LoadState = "loaded"
@@ -37,6 +38,15 @@ func PropLoadState(ls LoadState) *dbus.Property {
 		Name:  "LoadState",
 		Value: godbus.MakeVariant(string(ls)),
 	}
+}
+
+func (states LoadStates) Contains(state LoadState) bool {
+	for _, s := range states {
+		if s == state {
+			return true
+		}
+	}
+	return false
 }
 
 type ActiveState string
@@ -68,6 +78,7 @@ func PropActiveState(as ActiveState) *dbus.Property {
 }
 
 type UnitFileState string
+type UnitFileStates []UnitFileState
 
 const (
 	UFSEnabled        UnitFileState = "enabled"
@@ -88,6 +99,42 @@ func PropUnitFileState(ufs UnitFileState) *dbus.Property {
 	}
 }
 
+// Determines whether unit should be enabled
+func (state UnitFileState) IsEnabled() bool {
+	return state == UFSLinked || state == UFSLinkedRuntime
+}
+
+// Determines whether service should be linked to usual locations
+func (state UnitFileState) IsLinked() bool {
+	return state == UFSLinked || state == UFSLinkedRuntime
+}
+
+// IsRuntimeState returns true if unit should be in the /run folder
+func (state UnitFileState) IsRuntimeState() bool {
+	return state == UFSEnabledRuntime || state == UFSLinkedRuntime || state == UFSMaskedRuntime
+}
+
+// IsMaskedState
+func (state UnitFileState) IsMaskedState() bool {
+	return state == UFSMasked || state == UFSMaskedRuntime
+}
+
+var ValidUnitFileStates = UnitFileStates{UFSEnabled, UFSEnabledRuntime, UFSLinked, UFSLinkedRuntime, UFSMasked, UFSMaskedRuntime, UFSStatic, UFSDisabled, UFSInvalid}
+var ValidUnitFileStatesWithoutInvalid = ValidUnitFileStates[:len(ValidUnitFileStates)-1]
+
+func (states UnitFileStates) Contains(s UnitFileState) bool {
+	for i, _ := range states {
+		if s == states[i] {
+			return true
+		}
+	}
+	return false
+}
+
+func IsValidUnitFileState(ufs UnitFileState) bool {
+	return ValidUnitFileStates.Contains(ufs)
+}
+
 type StartMode string
 type StartModes []StartMode
 
@@ -99,20 +146,17 @@ const (
 	SMIgnoreRequirements StartMode = "ignore-requirements"
 )
 
-func IsValidStartMode(sm StartMode) bool {
-	switch sm {
-	case SMReplace:
-		return true
-	case SMFail:
-		return true
-	case SMIsolate:
-		return true
-	case SMIgnoreDependencies:
-		return true
-	case SMIgnoreRequirements:
-		return true
+func (states StartModes) Contains(s StartMode) bool {
+	for i, _ := range states {
+		if s == states[i] {
+			return true
+		}
 	}
 	return false
 }
 
 var ValidStartModes = StartModes{SMReplace, SMFail, SMIsolate, SMIgnoreDependencies, SMIgnoreRequirements}
+
+func IsValidStartMode(sm StartMode) bool {
+	return ValidStartModes.Contains(sm)
+}

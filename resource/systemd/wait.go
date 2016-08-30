@@ -27,15 +27,16 @@ const DefaultTimeout = time.Second * 5
 func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	//Check if unit is loading
 	status, err := CheckProperty(conn, unit, "ActiveState", []*dbus.Property{
-		PropActiveState(ASActivating),
 		PropActiveState(ASReloading),
+		PropActiveState(ASActivating),
+		PropActiveState(ASDeactivating),
 	})
 	if err != nil {
 		return err
 	}
 	//If loading wait until it becomes stable
 	if status.WarningLevel == resource.StatusNoChange {
-		err := WaitForActiveState(ctx, conn, unit, []ActiveState{ASActive, ASFailed, ASInactive})
+		err := WaitForLoadedState(ctx, conn, unit)
 		if err != nil {
 			return err
 		}
@@ -43,21 +44,22 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	return nil
 }
 
-func WaitForActiveState(ctx context.Context, conn *dbus.Conn, unit string, states []ActiveState) error {
+func WaitForLoadedState(ctx context.Context, conn *dbus.Conn, unit string) error {
 	err := conn.Subscribe()
 	if err != nil {
 		return err
 	}
-
-	statuses, errs := conn.SubscribeUnits(time.Second)
-	// defer con.UnSubscribe()
+	// @ Reviewer. function may complete faster by putting this function in a
+	// looping gorutine constatnly pooling for the state instead of subscribing to state changes
+	// ever arbitrary time period. this would take more cpu cycles.
+	statuses, errs := conn.SubscribeUnits(100 * time.Millisecond)
 
 	for {
 		select {
 		case status := <-statuses:
-			unitStatus := status[unit]
-			if unitStatus != nil {
-				if ActiveStates(states).Contains(ActiveState(unitStatus.ActiveState)) {
+			unitStatus, ok := status[unit]
+			if unitStatus != nil && ok {
+				if unitStatus.ActiveState != string(ASReloading) {
 					return nil
 				}
 			}
