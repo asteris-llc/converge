@@ -73,6 +73,10 @@ type Preparer struct {
 
 	// any environment variables that should be passed to the command
 	Env map[string]string `hcl:"env"`
+
+	// interpolation allows us to pass vars into scripts while still attempting to
+	// syntax check them.
+	Interpolations map[string]string `hcl:"interpolations"`
 }
 
 // Prepare a new shell task
@@ -122,11 +126,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	shell := &Shell{
-		CmdGenerator: generator,
-		CheckStmt:    check,
-		ApplyStmt:    apply,
-		Dir:          dir,
-		Env:          renderedEnv,
+		CmdGenerator:   generator,
+		CheckStmt:      check,
+		ApplyStmt:      apply,
+		Dir:            dir,
+		Env:            renderedEnv,
+		Interpolations: p.Interpolations,
 	}
 
 	return shell, checkSyntax(interpreter, p.CheckFlags, check)
