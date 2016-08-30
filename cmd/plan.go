@@ -93,5 +93,7 @@ func init() {
 	planCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
 	planCmd.Flags().Bool("only-show-changes", false, "only show changes")
 	addParamsArguments(planCmd.PersistentFlags())
+	viperBindPFlags(planCmd.Flags())
+
 	RootCmd.AddCommand(planCmd)
 }
