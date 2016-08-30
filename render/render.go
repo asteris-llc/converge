@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
@@ -29,46 +28,39 @@ import (
 // Values for rendering
 type Values map[string]interface{}
 
+// Lens contains a renderable node and it's context
+type Lens struct {
+	nodeRenderer *Renderer
+	Node         interface{}
+}
+
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
 	log.Println("[INFO] rendering")
 
+	if g.Contains("root") {
+		g.Add("root", module.NewPreparer(top))
+	}
+	factory, err := NewFactory(ctx, g)
+	if err != nil {
+		return nil, err
+	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
-		if id == "root" {
-			log.Println("[DEBUG] render: wrapping root")
-			out.Add(id, module.NewPreparer(top))
-		}
-
 		res, ok := out.Get(id).(resource.Resource)
 		if !ok {
 			return fmt.Errorf("Render only deals with graphs of resource.Resource, node was %T", out.Get(id))
 		}
-
 		log.Printf("[DEBUG] render: preparing %q\n", id)
-
-		// determine dot value of the current node - mostly for params and modules
-		renderer := &Renderer{Graph: out, ID: id}
-
-		name := graph.BaseID(id)
-		if strings.HasPrefix(name, "param") {
-			parent, ok := out.GetParent(id).(*module.Module)
-			if !ok {
-				return fmt.Errorf("Parent of param was not a module, was %T", out.GetParent(id))
-			}
-
-			if val, ok := parent.Params[name[len("param."):]]; ok {
-				renderer.DotValue = val
-				renderer.DotValuePresent = true
-			}
+		renderer, err := factory.GetRenderer(id)
+		if err != nil {
+			return errors.Wrap(err, id)
 		}
-
 		rendered, err := res.Prepare(renderer)
 		if err != nil {
 			return errors.Wrap(err, id)
 		}
-
 		out.Add(id, rendered)
-
+		factory.Graph = out
 		return nil
 	})
 }

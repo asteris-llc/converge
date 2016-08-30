@@ -21,11 +21,11 @@ import (
 
 // Result of application
 type Result struct {
-	Ran    bool
-	Status resource.TaskStatus
-	Err    error
-
-	Plan *plan.Result
+	Ran       bool
+	Status    resource.TaskStatus
+	Err       error
+	Plan      *plan.Result
+	PostCheck *plan.Result
 }
 
 // Messages returns any result status messages supplied by the task

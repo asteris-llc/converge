@@ -26,6 +26,7 @@ import (
 type Content struct {
 	Content     string
 	Destination string
+	*resource.Status
 }
 
 // Check if the content needs to be rendered
@@ -36,28 +37,32 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 	if os.IsNotExist(err) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusWillChange,
 			WillChange:   true,
 			Differences:  diffs,
 			Status:       t.Destination + ": File is missing",
-		}, nil
+		}
+		return t, nil
 	} else if err != nil {
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			Status:       "Cannot read `" + t.Destination + "`",
-		}, err
+		}
+		return t, err
 	} else if stat.IsDir() {
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			WillChange:   true,
 			Status:       t.Destination + " is a directory",
-		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
+		}
+		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return &resource.Status{}, err
+		t.Status = &resource.Status{}
+		return t, err
 	}
 
 	statusMessage := "OK"
@@ -67,11 +72,12 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
 	}
 
-	return &resource.Status{
+	t.Status = &resource.Status{
 		Status:      statusMessage,
 		Differences: diffs,
 		WillChange:  resource.AnyChanges(diffs),
-	}, nil
+	}
+	return t, nil
 }
 
 // Apply writes the content to disk

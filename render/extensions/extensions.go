@@ -21,6 +21,11 @@ import (
 	"text/template"
 )
 
+// RefFuncName is the name of the function to reference exported values from
+// other nodes.  It is a const defined here to make it easily changeable to
+// avoid bikeshedding
+const RefFuncName string = "xref"
+
 // languageKeywords defines the known keywords that have been added to the
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
@@ -55,6 +60,7 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
+	language.On(RefFuncName, Unimplemented(RefFuncName))
 	language.Validate()
 	return language
 }

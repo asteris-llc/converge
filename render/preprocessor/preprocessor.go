@@ -133,6 +133,22 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	return v.FieldByName(name), nil
 }
 
+// EvalTerms acts as a left fold over a list of term accessors
+func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
+	for _, term := range terms {
+		if HasField(obj, term) {
+			val, err := EvalMember(term, obj)
+			if err != nil {
+				return nil, err
+			}
+			obj = val.Interface()
+		} else {
+			return nil, fmt.Errorf("%T has no field named %s\n", obj, term)
+		}
+	}
+	return obj, nil
+}
+
 func nilPtrError(v reflect.Value) error {
 	typeStr := v.Type().String()
 	return fmt.Errorf("cannot dereference nil pointer of type %T", typeStr)
