@@ -40,14 +40,16 @@ func (platform *Platform) OSXVers() error {
 func (platform *Platform) ParseOSXVersion(versionData string) {
 	lines := strings.Split(versionData, "\n")
 	for _, l := range lines {
-		s := strings.Split(l, ":")
-		switch s[0] {
-		case "ProductName":
-			platform.Name = strings.Trim(s[1], "\t")
-		case "ProductVersion":
-			platform.Version = strings.Trim(s[1], "\t")
-		case "BuildVersion":
-			platform.Build = strings.Trim(s[1], "\t")
+		s := strings.Split(l, ":\t")
+		if len(s) == 2 {
+			switch s[0] {
+			case "ProductName":
+				platform.Name = s[1]
+			case "ProductVersion":
+				platform.Version = s[1]
+			case "BuildVersion":
+				platform.Build = s[1]
+			}
 		}
 	}
 }
