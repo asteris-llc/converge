@@ -39,6 +39,7 @@ type Container struct {
 	Expose          []string
 	Links           []string
 	PortBindings    []string
+	DNS             []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -79,6 +80,7 @@ func (c *Container) Apply() error {
 	hostConfig := &dc.HostConfig{
 		PublishAllPorts: c.PublishAllPorts,
 		Links:           c.Links,
+		DNS:             c.DNS,
 		PortBindings:    toPortBindingMap(c.PortBindings),
 	}
 
@@ -117,6 +119,11 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 			strconv.FormatBool(container.HostConfig.PublishAllPorts),
 			strconv.FormatBool(c.PublishAllPorts),
 			"false")
+		status.AddDifference(
+			"dns",
+			strings.Join(container.HostConfig.DNS, ", "),
+			strings.Join(c.DNS, ", "),
+			"")
 	}
 
 	image, err := c.client.FindImage(container.Image)

@@ -425,6 +425,39 @@ func TestContainerCheckLinksNeedsChange(t *testing.T) {
 		"memcached, postgresql:db, redis-server:redis")
 }
 
+func TestContainerCheckDNSNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   name,
+				Config: &dc.Config{},
+				HostConfig: &dc.HostConfig{
+					DNS: []string{},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{
+				Config: &dc.Config{},
+			}, nil
+		},
+	}
+
+	// include alias for existing link and a acouple of more links
+	container := &container.Container{
+		Name: "nginx",
+		DNS:  []string{"8.8.8.8", "8.8.4.4"},
+	}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "dns", "", "8.8.8.8, 8.8.4.4")
+}
+
 func TestContainerApply(t *testing.T) {
 	t.Parallel()
 
