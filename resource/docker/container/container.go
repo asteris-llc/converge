@@ -38,7 +38,7 @@ type Container struct {
 	Env             []string
 	Expose          []string
 	Links           []string
-	PortMappings    []string
+	PortBindings    []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -79,7 +79,7 @@ func (c *Container) Apply() error {
 	hostConfig := &dc.HostConfig{
 		PublishAllPorts: c.PublishAllPorts,
 		Links:           c.Links,
-		PortBindings:    c.portBindingMap(),
+		PortBindings:    toPortBindingMap(c.PortBindings),
 	}
 
 	if c.Command != "" {
@@ -202,7 +202,7 @@ func (c *Container) compareExposedPorts(container *dc.Container, image *dc.Image
 		portSlice := make([]string, len(portMap))
 		idx := 0
 		for port := range portMap {
-			portSlice[idx] = fmt.Sprintf("%s/%s", port.Port(), port.Proto())
+			portSlice[idx] = docker.NewPort(string(port)).String()
 			idx++
 		}
 		return toStringSet(portSlice)
@@ -226,14 +226,12 @@ func (c *Container) comparePortMappings(container *dc.Container) (actual, expect
 	toBindingsList := func(bindings map[dc.Port][]dc.PortBinding) []string {
 		var containerBindings []string
 		for port, pbindings := range bindings {
-			proto := port.Proto()
-			cport := fmt.Sprintf("%s/%s", port.Port(), proto)
+			cport := docker.NewPort(string(port)).String()
 			for _, pbinding := range pbindings {
 				ip := pbinding.HostIP
 				hport := pbinding.HostPort
 				if hport != "" {
 					hport = strings.Split(hport, "/")[0]
-					hport = fmt.Sprintf("%s/%s", hport, proto)
 				}
 				containerBindings = append(containerBindings, fmt.Sprintf("%s:%s:%s", ip, hport, cport))
 			}
@@ -244,7 +242,7 @@ func (c *Container) comparePortMappings(container *dc.Container) (actual, expect
 	}
 
 	actual = strings.Join(toBindingsList(container.HostConfig.PortBindings), ", ")
-	expected = strings.Join(toBindingsList(c.portBindingMap()), ", ")
+	expected = strings.Join(toBindingsList(toPortBindingMap(c.PortBindings)), ", ")
 
 	return actual, expected
 }
@@ -278,6 +276,7 @@ func (c *Container) compareLinks(container *dc.Container) (actual, expected stri
 		for i, link := range rawlinks {
 			links[i] = normalizeLink(link)
 		}
+		sort.Strings(links)
 		return links
 	}
 
@@ -285,36 +284,29 @@ func (c *Container) compareLinks(container *dc.Container) (actual, expected stri
 		return "", ""
 	}
 
-	actualSet := toStringSet(normalizedLinks(container.HostConfig.Links))
-	expectedSet := toStringSet(c.Links)
-
-	actual = joinStringSet(actualSet, ", ")
-	expected = joinStringSet(expectedSet, ", ")
+	actual = strings.Join(normalizedLinks(container.HostConfig.Links), ", ")
+	expected = strings.Join(normalizedLinks(c.Links), ", ")
 
 	return actual, expected
 }
 
-func (c *Container) portBindingMap() map[dc.Port][]dc.PortBinding {
-	// TODO: error if passed an invalid string?
+func toPortBindingMap(portBindings []string) map[dc.Port][]dc.PortBinding {
 	bindings := make(map[dc.Port][]dc.PortBinding)
-	for _, mapping := range c.PortMappings {
+	for _, mapping := range portBindings {
 		parts := strings.Split(mapping, ":")
 		partslen := len(parts)
 		switch {
 		case partslen == 1:
-			cport := dc.Port(parts[0])
-			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			cport := docker.NewPort(parts[0]).ToDockerClientPort()
 			bindings[cport] = append(bindings[cport], dc.PortBinding{})
 		case partslen == 2:
 			hport := parts[0]
-			cport := dc.Port(parts[1])
-			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			cport := docker.NewPort(parts[1]).ToDockerClientPort()
 			bindings[cport] = append(bindings[cport], dc.PortBinding{HostPort: hport})
 		case partslen > 2:
 			ip := parts[0]
 			hport := parts[1]
-			cport := dc.Port(parts[2])
-			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			cport := docker.NewPort(parts[2]).ToDockerClientPort()
 			bindings[cport] = append(bindings[cport], dc.PortBinding{HostPort: hport, HostIP: ip})
 		}
 	}
@@ -342,8 +334,7 @@ func joinStringSet(set mapset.Set, sep string) string {
 func toPortMap(portList []string) map[dc.Port]struct{} {
 	portMap := make(map[dc.Port]struct{}, len(portList))
 	for _, e := range portList {
-		port := dc.Port(e)
-		port = dc.Port(fmt.Sprintf("%s/%s", port.Port(), port.Proto()))
+		port := docker.NewPort(e).ToDockerClientPort()
 		portMap[port] = struct{}{}
 	}
 	return portMap
