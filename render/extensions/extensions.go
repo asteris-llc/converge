@@ -17,20 +17,23 @@ package extensions
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"text/template"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/render/extensions/platform"
 )
+
+// RefFuncName is the name of the function to reference exported values from
+// other nodes.  It is a const defined here to make it easily changeable to
+// avoid bikeshedding
+const RefFuncName string = "lookup"
 
 // languageKeywords defines the known keywords that have been added to the
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"env":      {},
-	"param":    {},
-	"platform": {},
-	"split":    {},
+	"env":    {},
+	"param":  {},
+	"split":  {},
+	"lookup": {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -58,7 +61,8 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
-	language.On("platform", platform.DefaultPlatform)
+	language.On("lookup", Unimplemented("lookup"))
+	language.On(RefFuncName, Unimplemented(RefFuncName))
 	language.Validate()
 	return language
 }
@@ -103,7 +107,10 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 		}
 	}
 	if !ok {
-		log.WithField("extra", extra).WithField("missing", missing).Warn("bad template DSL")
+		log.Printf("[WARN] bad template DSL: extra keywords: %v, missing: %v\n",
+			extra,
+			missing,
+		)
 	}
 	return missing, extra, ok
 }
@@ -135,7 +142,7 @@ func StubTemplateFunc(...string) (string, error) {
 func RememberCalls(list *[]string, nameIndex int) interface{} {
 	return func(params ...string) (string, error) {
 		name := params[0]
-		*list = append(*list, "param."+name)
+		*list = append(*list, name)
 		return name, nil
 	}
 }

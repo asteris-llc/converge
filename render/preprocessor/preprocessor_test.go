@@ -95,6 +95,31 @@ func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func Test_EvalTerms(t *testing.T) {
+	type C struct {
+		CVal string
+	}
+	type B struct {
+		BVal string
+		BC   *C
+	}
+
+	type A struct {
+		AVal string
+		AB   *B
+	}
+	a := &A{AVal: "a", AB: &B{BVal: "b", BC: &C{CVal: "c"}}}
+	val, err := preprocessor.EvalTerms(a, "AB", "BVal")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "b")
+	val, err = preprocessor.EvalTerms(a, "AB", "BC", "CVal")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "c")
+	val, err = preprocessor.EvalTerms(a, "AVal")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "a")
+}
+
 type TestStruct struct {
 	FieldA string
 }
