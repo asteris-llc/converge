@@ -6,7 +6,7 @@ NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
 BENCH = .
 
-converge: $(shell find . -name '*.go')
+converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
 	go build -ldflags="-s -w" .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
@@ -69,13 +69,16 @@ lint:
 
 vendor: ${NONVENDOR}
 	glide install --strip-vcs --strip-vendor --update-vendored
-	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -type f -delete
+	make vendor-clean
 
 vendor-update: ${NOVENDOR}
 	glide update --strip-vcs --strip-vendor --update-vendored
-	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -type f -delete
+	make vendor-clean
 
-xcompile: test
+vendor-clean: ${NOVENDOR}
+	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
+
+xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
@@ -94,9 +97,27 @@ package: xcompile
     echo $$f; \
   done
 
+rpc/pb/root.pb.go: rpc/pb/root.proto
+	protoc -I rpc/pb \
+         -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+         --go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:rpc/pb \
+         rpc/pb/root.proto
+
+rpc/pb/root.pb.gw.go: rpc/pb/root.proto
+	protoc -I rpc/pb \
+         -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+         --grpc-gateway_out=logtostderr=true:rpc/pb \
+         rpc/pb/root.proto
+
+rpc/pb/root.swagger.json: rpc/pb/root.proto
+	protoc -I rpc/pb \
+         -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+         --swagger_out=logtostderr=true:rpc/pb \
+         rpc/pb/root.proto
+
 docs: docs_source/**/*
 	rm -rf docs || true
 	cd docs_source; make
 	mv docs_source/public docs
 
-.PHONY: test gotest vendor-update xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check

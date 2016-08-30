@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-08-25T12:19:27-04:00"
+date: "2016-08-30T15:12:06-05:00"
 menu:
   main:
     parent: resources

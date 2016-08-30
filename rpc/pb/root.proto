@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+message LocationRequest {
+  string location = 1;
+}
+
+message ExecRequest {
+  string location = 1;
+  map<string, string> parameters = 2;
+}
+
+message ContentResponse {
+  string content = 1;
+}
+
+message StatusResponse {
+  string id = 1;
+
+  // the stage from which this status response is being sent
+  enum Stage {
+    UNSPECIFIED_STAGE = 0;
+    PLAN = 1;
+    APPLY = 2;
+  }
+  Stage stage = 2;
+
+  // when is this status response being sent?
+  enum Run {
+    UNSPECIFIED_RUN = 0;
+    STARTED = 1;
+    FINISHED = 2;
+  }
+  Run run = 3;
+
+  // the informational message, if present
+  message Details {
+    repeated string messages = 1;
+    map<string, DiffResponse> changes = 2;
+    bool hasChanges = 3;
+    string error = 4;
+  }
+  Details details = 4;
+}
+
+message DiffResponse {
+  string original = 1;
+  string current = 2;
+  bool changes = 3;
+}
+
+// Executor is responsible for remote execution on the machine
+service Executor {
+  // Plan out the execution of a module given by the location
+  rpc Plan (ExecRequest) returns (stream StatusResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/machine/plan"
+      body: "*"
+    };
+  }
+
+  // Apply a module given by the location
+  rpc Apply (ExecRequest) returns (stream StatusResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/machine/apply"
+      body: "*"
+    };
+  }
+}
+
+// ResourceHost contains the information needed for the system to bootstrap
+// itself, as well as hosting modules.
+service ResourceHost {
+  // GetBinary returns the converge binary itself
+  rpc GetBinary (google.protobuf.Empty) returns (ContentResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/binary"
+    };
+  }
+
+  // GetModule gets the content of a module at the given path
+  rpc GetModule (LocationRequest) returns (ContentResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/modules/{location=**}"
+    };
+  }
+}

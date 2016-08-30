@@ -98,8 +98,7 @@ You can pipe the output directly to the 'dot' command, for example:
 func init() {
 	graphCmd.Flags().Bool("show-params", false, "also graph param dependencies")
 	graphCmd.Flags().Bool("merge-duplicates", false, "merge duplicates before rendering")
-	addParamsArguments(graphCmd.PersistentFlags())
-	viperBindPFlags(graphCmd.Flags())
+	registerParamsFlags(graphCmd.Flags())
 
 	RootCmd.AddCommand(graphCmd)
 }

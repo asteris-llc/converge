@@ -69,7 +69,6 @@ var fmtCmd = &cobra.Command{
 
 func init() {
 	fmtCmd.Flags().Bool("check", false, "only check, no writing")
-	viperBindPFlags(fmtCmd.Flags())
 
 	RootCmd.AddCommand(fmtCmd)
 }

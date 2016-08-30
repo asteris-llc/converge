@@ -37,8 +37,8 @@ type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
 // An Edge is a generic pair of IDs indicating a directed edge in the graph
 type Edge struct {
-	Source string
-	Dest   string
+	Source string `json:"source"`
+	Dest   string `json:"dest"`
 }
 
 // Graph is a generic graph structure that uses IDs to connect the graph
