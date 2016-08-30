@@ -38,6 +38,7 @@ type Container struct {
 	Env             []string
 	Expose          []string
 	Links           []string
+	PortMappings    []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -68,18 +69,17 @@ func (c *Container) Check() (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() error {
-	exposeMap := toPortMap(c.Expose)
-
 	config := &dc.Config{
 		Image:        c.Image,
 		WorkingDir:   c.WorkingDir,
 		Env:          c.Env,
-		ExposedPorts: exposeMap,
+		ExposedPorts: toPortMap(c.Expose),
 	}
 
 	hostConfig := &dc.HostConfig{
 		PublishAllPorts: c.PublishAllPorts,
 		Links:           c.Links,
+		PortBindings:    c.portBindingMap(),
 	}
 
 	if c.Command != "" {
@@ -157,6 +157,10 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	actual, expected = c.compareEnv(container, image)
 	status.AddDifference("env", actual, expected, "")
 
+	// Ports
+	actual, expected = c.comparePortMappings(container)
+	status.AddDifference("ports", actual, expected, "")
+
 	// Expose
 	actual, expected = c.compareExposedPorts(container, image)
 	status.AddDifference("expose", actual, expected, "")
@@ -214,9 +218,40 @@ func (c *Container) compareExposedPorts(container *dc.Container, image *dc.Image
 	return actual, expected
 }
 
+func (c *Container) comparePortMappings(container *dc.Container) (actual, expected string) {
+	if container.HostConfig == nil {
+		return "", ""
+	}
+
+	toBindingsList := func(bindings map[dc.Port][]dc.PortBinding) []string {
+		var containerBindings []string
+		for port, pbindings := range bindings {
+			proto := port.Proto()
+			cport := fmt.Sprintf("%s/%s", port.Port(), proto)
+			for _, pbinding := range pbindings {
+				ip := pbinding.HostIP
+				hport := pbinding.HostPort
+				if hport != "" {
+					hport = strings.Split(hport, "/")[0]
+					hport = fmt.Sprintf("%s/%s", hport, proto)
+				}
+				containerBindings = append(containerBindings, fmt.Sprintf("%s:%s:%s", ip, hport, cport))
+			}
+		}
+
+		sort.Strings(containerBindings)
+		return containerBindings
+	}
+
+	actual = strings.Join(toBindingsList(container.HostConfig.PortBindings), ", ")
+	expected = strings.Join(toBindingsList(c.portBindingMap()), ", ")
+
+	return actual, expected
+}
+
 func (c *Container) compareLinks(container *dc.Container) (actual, expected string) {
 	normalizeLink := func(link string) string {
-		// internally links are stored as "/linkedcontainer:/containername/alias"
+		// internally links are stored as "/linkedcontainername:/containername/alias"
 		parts := strings.Split(link, ":")
 		if len(parts) == 1 {
 			return strings.TrimPrefix(link, "/")
@@ -246,7 +281,7 @@ func (c *Container) compareLinks(container *dc.Container) (actual, expected stri
 		return links
 	}
 
-	if container.HostConfig == nil || len(container.HostConfig.Links) == 0 {
+	if container.HostConfig == nil {
 		return "", ""
 	}
 
@@ -257,6 +292,33 @@ func (c *Container) compareLinks(container *dc.Container) (actual, expected stri
 	expected = joinStringSet(expectedSet, ", ")
 
 	return actual, expected
+}
+
+func (c *Container) portBindingMap() map[dc.Port][]dc.PortBinding {
+	// TODO: error if passed an invalid string?
+	bindings := make(map[dc.Port][]dc.PortBinding)
+	for _, mapping := range c.PortMappings {
+		parts := strings.Split(mapping, ":")
+		partslen := len(parts)
+		switch {
+		case partslen == 1:
+			cport := dc.Port(parts[0])
+			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			bindings[cport] = append(bindings[cport], dc.PortBinding{})
+		case partslen == 2:
+			hport := parts[0]
+			cport := dc.Port(parts[1])
+			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			bindings[cport] = append(bindings[cport], dc.PortBinding{HostPort: hport})
+		case partslen > 2:
+			ip := parts[0]
+			hport := parts[1]
+			cport := dc.Port(parts[2])
+			cport = dc.Port(fmt.Sprintf("%s/%s", cport.Port(), cport.Proto()))
+			bindings[cport] = append(bindings[cport], dc.PortBinding{HostPort: hport, HostIP: ip})
+		}
+	}
+	return bindings
 }
 
 func toStringSet(strings []string) mapset.Set {
