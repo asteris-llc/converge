@@ -7,6 +7,6 @@ param "filename" {
 }
 
 file.content "platformData" {
-  destination = "{{ platform.OS }}-{{param `filename`}}"
-  content     = "Detected {{ platform.Name }} ({{ platform.OS }}) {{ platform.Version}} {{ platform.LinuxDistribution}}"
+  destination = "{{platform.OS}}-{{param `filename`}}"
+  content     = "Detected {{platform.Name}} ({{platform.OS}}) {{platform.Version}} {{platform.LinuxDistribution}}"
 }
