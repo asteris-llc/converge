@@ -15,9 +15,7 @@
 //Package platform queries the underlying operating system
 package platform
 
-import (
-	"runtime"
-)
+import "runtime"
 
 //Platform is a struct containing version information for the
 //underlying operating system
@@ -33,14 +31,15 @@ type Platform struct {
 
 //NewPlatform Queries the runtime and then attempts to
 //discover version information from the underlying operating system
-func DefaultPlatform() Platform {
+func DefaultPlatform() (*Platform, error) {
 	var platform Platform
+	var err error
 	platform.OS = runtime.GOOS
 	switch platform.OS {
 	case "darwin":
-		platform.OSXVers()
+		err = platform.OSXVers()
 	case "linux":
-		platform.LinuxLSB()
+		err = platform.LinuxLSB()
 	}
-	return platform
+	return &platform, err
 }
