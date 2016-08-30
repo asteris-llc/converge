@@ -28,7 +28,7 @@ import (
 func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl", false)
 	require.NoError(t, err)
 
 	resolved, err := load.ResolveDependencies(context.Background(), nodes)
@@ -43,7 +43,7 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 func TestDependencyResolverBadDependency(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes(context.Background(), "../samples/errors/bad_requirement.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/errors/bad_requirement.hcl", false)
 	require.NoError(t, err)
 
 	_, err = load.ResolveDependencies(context.Background(), nodes)
@@ -55,7 +55,7 @@ func TestDependencyResolverBadDependency(t *testing.T) {
 func TestDependencyResolverResolvesParam(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
+	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl", false)
 	require.NoError(t, err)
 
 	resolved, err := load.ResolveDependencies(context.Background(), nodes)

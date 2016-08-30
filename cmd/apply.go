@@ -52,7 +52,7 @@ real happens.`,
 		for _, fname := range args {
 			log.Printf("[INFO] applying %s\n", fname)
 
-			loaded, err := load.Load(ctx, fname)
+			loaded, err := load.Load(ctx, fname, false)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}

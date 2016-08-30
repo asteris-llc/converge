@@ -29,14 +29,14 @@ import (
 func TestNodesBasic(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	_, err := load.Nodes(context.Background(), "../samples/basic.hcl")
+	_, err := load.Nodes(context.Background(), "../samples/basic.hcl", false)
 	assert.NoError(t, err)
 }
 
 func TestNodesSourceFile(t *testing.T) {
 	defer helpers.HideLogs(t)()
 
-	g, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl")
+	g, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl", false)
 	require.NoError(t, err)
 
 	assert.NotNil(t, g.Get("root/param.message"))

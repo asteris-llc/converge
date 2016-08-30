@@ -15,12 +15,14 @@
 package load
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/pkg/errors"
 )
@@ -36,7 +38,7 @@ func (s *source) String() string {
 }
 
 // Nodes loads and parses all resources referred to by the provided url
-func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
+func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
@@ -63,7 +65,22 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 			return nil, errors.Wrap(err, url)
 		}
 
-		// TODO: signing and verification? Here or elsewhere?
+		if verify {
+			signatureURL := url + ".asc"
+
+			log.Printf("[DEBUG] fetching %s\n", signatureURL)
+			signature, err := fetch.Any(ctx, signatureURL)
+			if err != nil {
+				return nil, errors.Wrap(err, signatureURL)
+			}
+
+			ks := keystore.Default()
+			err = ks.CheckSignature(bytes.NewBuffer(content), bytes.NewBuffer(signature))
+
+			if err != nil {
+				return nil, errors.Wrap(err, signatureURL)
+			}
+		}
 
 		resources, err := parse.Parse(content)
 		if err != nil {

@@ -39,7 +39,7 @@ var validateCmd = &cobra.Command{
 		GracefulExit(cancel)
 
 		for _, fname := range args {
-			_, err := load.Load(ctx, fname)
+			_, err := load.Load(ctx, fname, false)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}

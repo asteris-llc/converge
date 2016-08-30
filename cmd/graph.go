@@ -55,7 +55,7 @@ You can pipe the output directly to the 'dot' command, for example:
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
-		out, err := load.Load(ctx, fname)
+		out, err := load.Load(ctx, fname, false)
 		if err != nil {
 			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 		}

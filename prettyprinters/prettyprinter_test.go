@@ -64,7 +64,7 @@ func Example_usingTheIDProvider() {
 }
 
 func Example_generateAGraphFromAFileOnDisk() {
-	g, err := load.Load(context.Background(), os.Args[1])
+	g, err := load.Load(context.Background(), os.Args[1], false)
 	if err != nil {
 		fmt.Println(err)
 		return
