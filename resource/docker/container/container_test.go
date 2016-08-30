@@ -458,6 +458,77 @@ func TestContainerCheckDNSNeedsChange(t *testing.T) {
 	assertDiff(t, status.Diffs(), "dns", "", "8.8.8.8, 8.8.4.4")
 }
 
+func TestContainerCheckVolumesNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Volumes: map[string]struct{}{
+						"/var/log": struct{}{},
+					},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{
+				Volumes: map[string]struct{}{
+					"/var/log": struct{}{},
+				},
+			}}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx", Volumes: []string{"/var/html"}}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/html, /var/log")
+}
+
+func TestContainerCheckBindsNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name: name,
+				Config: &dc.Config{
+					Volumes: map[string]struct{}{
+						"/var/log": struct{}{},
+					},
+				},
+				HostConfig: &dc.HostConfig{
+					Binds: []string{},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{
+				Volumes: map[string]struct{}{
+					"/var/log": struct{}{},
+				},
+			}}, nil
+		},
+	}
+
+	container := &container.Container{
+		Name:    "nginx",
+		Volumes: []string{"/var/log:/var/log", "/var/db:/var/db:ro"},
+	}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/db, /var/log")
+	assertDiff(t, status.Diffs(), "binds", "", "/var/db:/var/db:ro, /var/log:/var/log")
+}
+
 func TestContainerApply(t *testing.T) {
 	t.Parallel()
 

@@ -40,6 +40,7 @@ type Container struct {
 	Links           []string
 	PortBindings    []string
 	DNS             []string
+	Volumes         []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -70,11 +71,13 @@ func (c *Container) Check() (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() error {
+	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
 		WorkingDir:   c.WorkingDir,
 		Env:          c.Env,
 		ExposedPorts: toPortMap(c.Expose),
+		Volumes:      volumes,
 	}
 
 	hostConfig := &dc.HostConfig{
@@ -82,6 +85,7 @@ func (c *Container) Apply() error {
 		Links:           c.Links,
 		DNS:             c.DNS,
 		PortBindings:    toPortBindingMap(c.PortBindings),
+		Binds:           binds,
 	}
 
 	if c.Command != "" {
@@ -176,6 +180,14 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	actual, expected = c.compareLinks(container)
 	status.AddDifference("links", actual, expected, "")
 
+	// Volumes
+	actual, expected = c.compareVolumes(container, image)
+	status.AddDifference("volumes", actual, expected, "")
+
+	// Binds
+	actual, expected = c.compareBinds(container)
+	status.AddDifference("binds", actual, expected, "")
+
 	// Image
 	existingRepoTag := preferredRepoTag(c.Image, image)
 	status.AddDifference("image", existingRepoTag, c.Image, "")
@@ -226,10 +238,6 @@ func (c *Container) compareExposedPorts(container *dc.Container, image *dc.Image
 }
 
 func (c *Container) comparePortMappings(container *dc.Container) (actual, expected string) {
-	if container.HostConfig == nil {
-		return "", ""
-	}
-
 	toBindingsList := func(bindings map[dc.Port][]dc.PortBinding) []string {
 		var containerBindings []string
 		for port, pbindings := range bindings {
@@ -248,7 +256,12 @@ func (c *Container) comparePortMappings(container *dc.Container) (actual, expect
 		return containerBindings
 	}
 
-	actual = strings.Join(toBindingsList(container.HostConfig.PortBindings), ", ")
+	if container.HostConfig == nil {
+		actual = ""
+	} else {
+		actual = strings.Join(toBindingsList(container.HostConfig.PortBindings), ", ")
+	}
+
 	expected = strings.Join(toBindingsList(toPortBindingMap(c.PortBindings)), ", ")
 
 	return actual, expected
@@ -288,11 +301,57 @@ func (c *Container) compareLinks(container *dc.Container) (actual, expected stri
 	}
 
 	if container.HostConfig == nil {
-		return "", ""
+		actual = ""
+	} else {
+		actual = strings.Join(normalizedLinks(container.HostConfig.Links), ", ")
 	}
 
-	actual = strings.Join(normalizedLinks(container.HostConfig.Links), ", ")
 	expected = strings.Join(normalizedLinks(c.Links), ", ")
+
+	return actual, expected
+}
+
+func (c *Container) compareVolumes(container *dc.Container, image *dc.Image) (actual, expected string) {
+	toSet := func(vols map[string]struct{}) mapset.Set {
+		vollist := make([]string, len(vols))
+		idx := 0
+		for vol := range vols {
+			vollist[idx] = vol
+			idx++
+		}
+		return toStringSet(vollist)
+	}
+
+	containerSet := toSet(container.Config.Volumes)
+	imageSet := toSet(image.Config.Volumes)
+
+	volumes, _ := volumeConfigs(c.Volumes)
+	expectedSet := toSet(volumes).Union(imageSet)
+
+	actual = joinStringSet(containerSet, ", ")
+	expected = joinStringSet(expectedSet, ", ")
+
+	return actual, expected
+}
+
+func (c *Container) compareBinds(container *dc.Container) (actual, expected string) {
+	toList := func(binds []string) []string {
+		list := make([]string, len(binds))
+		for i, bind := range binds {
+			list[i] = bind
+		}
+		sort.Strings(list)
+		return list
+	}
+
+	if container.HostConfig == nil {
+		actual = ""
+	} else {
+		actual = strings.Join(toList(container.HostConfig.Binds), ", ")
+	}
+
+	_, binds := volumeConfigs(c.Volumes)
+	expected = strings.Join(toList(binds), ", ")
 
 	return actual, expected
 }
@@ -345,6 +404,26 @@ func toPortMap(portList []string) map[dc.Port]struct{} {
 		portMap[port] = struct{}{}
 	}
 	return portMap
+}
+
+func volumeConfigs(vols []string) (map[string]struct{}, []string) {
+	volumes := make(map[string]struct{})
+	binds := []string{}
+	for _, vol := range vols {
+		parts := strings.Split(vol, ":")
+		partslen := len(parts)
+
+		switch {
+		case partslen == 1:
+			volumes[parts[0]] = struct{}{}
+		case partslen > 1:
+			volume := parts[1]
+			volumes[volume] = struct{}{}
+			binds = append(binds, vol)
+		}
+	}
+
+	return volumes, binds
 }
 
 func preferredRepoTag(want string, image *dc.Image) string {
