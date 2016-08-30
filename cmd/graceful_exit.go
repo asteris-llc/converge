@@ -23,22 +23,26 @@ import (
 
 // GracefulExit traps interrupt signals for a graceful exit
 func GracefulExit(cancel context.CancelFunc) {
+	go GracefulExitBlocking(cancel)
+}
+
+// GracefulExitBlocking handles graceful exits, and blocks until exit
+func GracefulExitBlocking(cancel context.CancelFunc) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	go func() {
-		interruptCount := 0
 
-		for range c {
-			interruptCount++
+	interruptCount := 0
 
-			switch interruptCount {
-			case 1:
-				log.Println("[INFO] gracefully shutting down (interrupt again to halt)")
-				cancel()
-			case 2:
-				log.Println("[WARN] hard stop! System may be left in an incomplete state")
-				os.Exit(2)
-			}
+	for range c {
+		interruptCount++
+
+		switch interruptCount {
+		case 1:
+			log.Println("[INFO] gracefully shutting down (interrupt again to halt)")
+			cancel()
+		case 2:
+			log.Println("[WARN] hard stop! System may be left in an incomplete state")
+			os.Exit(2)
 		}
-	}()
+	}
 }

@@ -2,13 +2,15 @@
 set -eo pipefail
 
 ROOT=$(pwd)
-SOURCE=${1:-http://localhost:8080/modules/basic.hcl}
+SOURCE=${1:-http://localhost:2694/api/v1/resources/modules/basic.hcl}
 
-$ROOT/converge server --root $ROOT/samples &
+$ROOT/converge server --no-token --root $ROOT/samples &
 PID=$!
 function finish {
     kill -2 $PID
 }
 trap finish EXIT
+
+sleep 0.5
 
 $ROOT/blackbox/test_apply.sh $SOURCE

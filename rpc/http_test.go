@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server_test
+package rpc_test
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/asteris-llc/converge/helpers"
-	"github.com/asteris-llc/converge/server"
+	"github.com/asteris-llc/converge/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,9 +44,9 @@ func TestContextServerListenAndServe(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	server := server.NewContextServer(ctx)
+	s := rpc.NewContextServer(ctx, mux)
 	go func() {
-		err := server.ListenAndServe("localhost:18080", mux)
+		err := s.ListenAndServe("localhost:18080")
 		assert.NoError(t, err)
 	}()
 

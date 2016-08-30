@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/render"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
@@ -28,7 +29,7 @@ import (
 var paramsJSON string
 var params []string
 
-func addParamsArguments(flags *pflag.FlagSet) {
+func registerParamsFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&paramsJSON, "paramsJSON", "{}", "parameters for the top-level module, in JSON format")
 	flags.StringSliceVarP(&params, "params", "p", []string{}, "parameters for the top-level module in key=value format")
 }
@@ -94,4 +95,29 @@ func getParamsFromFlags(flags *pflag.FlagSet) (vals render.Values, errors []erro
 	}
 
 	return vals, errors
+}
+
+// getParams wraps getParamsFromFlags, logging and exiting upon error
+func getParams(cmd *cobra.Command) render.Values {
+	params, errors := getParamsFromFlags(cmd.Flags())
+	for i, err := range errors {
+		log.Printf("[ERROR] error while parsing parameters: %s\n", err)
+
+		// after the last error is printed, exit
+		if i == len(errors)-1 {
+			log.Fatalf("[FATAL] errors while parsing parameters, see log above")
+		}
+	}
+	return params
+}
+
+func getParamsRPC(cmd *cobra.Command) map[string]string {
+	params := getParams(cmd)
+
+	clientParams := map[string]string{}
+	for k, v := range params {
+		clientParams[k] = fmt.Sprintf("%v", v)
+	}
+
+	return clientParams
 }

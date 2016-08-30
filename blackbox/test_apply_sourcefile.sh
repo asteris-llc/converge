@@ -12,7 +12,7 @@ trap finish EXIT
 
 pushd $TMP
 
-$ROOT/converge apply -p "message=x" $SOURCE
+$ROOT/converge apply --local --rpc-addr=:8002 -p "message=x" $SOURCE
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"

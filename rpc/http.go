@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package rpc
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/braintree/manners"
@@ -24,20 +23,21 @@ import (
 
 // ContextServer is a Server controlled by a context for stopping gracefully
 type ContextServer struct {
-	ctx context.Context
+	ctx     context.Context
+	handler http.Handler
 }
 
 // NewContextServer constructs and returns a server. Mux has the same meaning as
 // in the standard HTTP package (that is, if nil it will use the globally
 // registered handlers)
-func NewContextServer(ctx context.Context) *ContextServer {
-	return &ContextServer{ctx}
+func NewContextServer(ctx context.Context, handler http.Handler) *ContextServer {
+	return &ContextServer{ctx, handler}
 }
 
 // ListenAndServe does the same thing as the net/http equivalent, except
 // using the context.
-func (s *ContextServer) ListenAndServe(addr string, handler http.Handler) error {
-	server := manners.NewWithServer(&http.Server{Addr: addr, Handler: handler})
+func (s *ContextServer) ListenAndServe(addr string) error {
+	server := manners.NewWithServer(&http.Server{Addr: addr, Handler: s.handler})
 	go s.close(server)
 
 	return server.ListenAndServe()
@@ -45,8 +45,8 @@ func (s *ContextServer) ListenAndServe(addr string, handler http.Handler) error 
 
 // ListenAndServeTLS does the same thing as the net/http equivalent, except
 // using the context.
-func (s *ContextServer) ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) error {
-	server := manners.NewWithServer(&http.Server{Addr: addr, Handler: handler})
+func (s *ContextServer) ListenAndServeTLS(addr, certFile, keyFile string) error {
+	server := manners.NewWithServer(&http.Server{Addr: addr, Handler: s.handler})
 	go s.close(server)
 
 	return server.ListenAndServeTLS(certFile, keyFile)
@@ -54,7 +54,5 @@ func (s *ContextServer) ListenAndServeTLS(addr, certFile, keyFile string, handle
 
 func (s *ContextServer) close(server *manners.GracefulServer) {
 	<-s.ctx.Done()
-	log.Println("[INFO] gracefully stopping server")
 	server.BlockingClose()
-	log.Println("[INFO] server stopped")
 }

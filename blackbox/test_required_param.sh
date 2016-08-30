@@ -13,7 +13,7 @@ pushd $TMP
 
 echo 'param "test" {}' > required_param.hcl
 
-if $ROOT/converge apply required_param.hcl; then
+if $ROOT/converge apply --local required_param.hcl; then
     echo "failed: apply without required param succeeded"
     exit 1
 else
