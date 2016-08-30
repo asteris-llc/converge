@@ -119,7 +119,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Expose:          renderedExpose,
 		Links:           renderedLinks,
 		PublishAllPorts: p.PublishAllPorts,
-		PortMappings:    renderedPorts,
+		PortBindings:    renderedPorts,
 	}
 	container.SetClient(dockerClient)
 	return container, nil

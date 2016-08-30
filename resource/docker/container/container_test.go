@@ -359,7 +359,7 @@ func TestContainerCheckPortsNeedsChange(t *testing.T) {
 				},
 				HostConfig: &dc.HostConfig{
 					PortBindings: map[dc.Port][]dc.PortBinding{
-						dc.Port("80/tcp"): []dc.PortBinding{dc.PortBinding{HostPort: "8003/tcp"}},
+						dc.Port("80/tcp"): []dc.PortBinding{dc.PortBinding{HostPort: "8003"}},
 					},
 				},
 			}, nil
@@ -378,15 +378,15 @@ func TestContainerCheckPortsNeedsChange(t *testing.T) {
 
 	container := &container.Container{
 		Name:         "nginx",
-		Expose:       []string{"8003"},
-		PortMappings: []string{"127.0.0.1:8000:80", "127.0.0.1::80/tcp", "443:443", "8003:80", "8004:80"},
+		Expose:       []string{"8003", "8005/udp"},
+		PortBindings: []string{"127.0.0.1:8000:80", "127.0.0.1::80/tcp", "443:443", "8003:80", "8004:80", "80", "8085/udp"},
 	}
 	container.SetClient(c)
 
 	status, err := container.Check()
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "ports", ":8003/tcp:80/tcp", "127.0.0.1:8000/tcp:80/tcp, 127.0.0.1::80/tcp, :443/tcp:443/tcp, :8003/tcp:80/tcp, :8004/tcp:80/tcp")
+	assertDiff(t, status.Diffs(), "ports", ":8003:80/tcp", "127.0.0.1:8000:80/tcp, 127.0.0.1::80/tcp, :443:443/tcp, :8003:80/tcp, :8004:80/tcp, ::80/tcp, ::8085/udp")
 }
 
 func TestContainerCheckLinksNeedsChange(t *testing.T) {
