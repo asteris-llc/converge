@@ -17,10 +17,10 @@ package load
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/pkg/errors"
 )
@@ -37,6 +37,8 @@ func (s *source) String() string {
 
 // Nodes loads and parses all resources referred to by the provided url
 func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
+	logger := logging.GetLogger(ctx).WithField("function", "Nodes")
+
 	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
@@ -57,7 +59,7 @@ func Nodes(ctx context.Context, root string) (*graph.Graph, error) {
 			return nil, err
 		}
 
-		log.Printf("[DEBUG] fetching %s\n", url)
+		logger.WithField("url", url).Debug("fetching")
 		content, err := fetch.Any(ctx, url)
 		if err != nil {
 			return nil, errors.Wrap(err, url)
