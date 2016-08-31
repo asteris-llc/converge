@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
+	"github.com/asteris-llc/converge/render/preprocessor"
 )
 
 type dependencyGenerator func(node *parse.Node) ([]string, error)
@@ -47,6 +48,9 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		depGenerators := []dependencyGenerator{
 			getDepends,
 			getParams,
+			func(node *parse.Node) (out []string, err error) {
+				return getXrefs(g, node)
+			},
 		}
 
 		// we have dependencies from various sources, but they're always IDs, so we
@@ -81,14 +85,6 @@ func getDepends(node *parse.Node) ([]string, error) {
 }
 
 func getParams(node *parse.Node) (out []string, err error) {
-	// get sibling dependencies. In this case, we need to look for template
-	// calls to `param`. Note that I am not proud of this approach. If you,
-	// future reader, have a better idea of what to do here: do it!
-	//
-	// But before you think "oh, I'll just render using a fake param function",
-	// remember that every time we add another function in render we'd have to
-	// add it here too. If you're reading this, let's have a discussion about
-	// what we should do to deduplicate. I'm not sure.
 	var strings []string
 	strings, err = node.GetStrings()
 	if err != nil {
@@ -105,7 +101,40 @@ func getParams(node *parse.Node) (out []string, err error) {
 			return out, tmplErr
 		}
 		tmpl.Execute(ioutil.Discard, &useless)
+	}
+	for idx, val := range out {
+		out[idx] = "param." + val
+	}
+	return out, err
+}
 
+func getXrefs(g *graph.Graph, node *parse.Node) (out []string, err error) {
+	var strings []string
+	var calls []string
+	nodeRefs := make(map[string]struct{})
+	strings, err = node.GetStrings()
+	if err != nil {
+		return nil, err
+	}
+	language := extensions.DefaultLanguage()
+	language.On(extensions.RefFuncName, extensions.RememberCalls(&calls, 0))
+	for _, s := range strings {
+		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
+		if tmplErr != nil {
+			return out, tmplErr
+		}
+		tmpl.Execute(ioutil.Discard, &struct{}{})
+	}
+	for _, call := range calls {
+		vertex, _, found := preprocessor.VertexSplit(g, "root/"+call)
+		if !found {
+			return []string{}, fmt.Errorf("unresolvable call to %s", call)
+		}
+		vertex = vertex[len("root/"):]
+		if _, ok := nodeRefs[vertex]; !ok {
+			nodeRefs[vertex] = struct{}{}
+			out = append(out, vertex)
+		}
 	}
 	return out, err
 }
