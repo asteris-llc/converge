@@ -26,6 +26,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/fgrid/uuid"
@@ -63,6 +64,11 @@ func maybeStartSelfHostedRPC(ctx context.Context, secure *tls.Config) error {
 }
 
 func startRPC(ctx context.Context, addr string, secure *tls.Config, resourceRoot string, enableBinaryDownload bool) error {
+	// set context for logging
+	logger := logging.GetLogger(ctx).WithField("component", "rpc")
+	ctx = logging.WithLogger(ctx, logger)
+
+	// listen and start server
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return errors.Wrap(err, "could not open RPC listener connection")
@@ -78,7 +84,7 @@ func startRPC(ctx context.Context, addr string, secure *tls.Config, resourceRoot
 		server.GracefulStop()
 	}()
 
-	rpcLog := log.WithField("addr", addr).WithField("service", "RPC")
+	rpcLog := logger.WithField("addr", addr)
 
 	rpcLog.Info("serving")
 	go func() {
