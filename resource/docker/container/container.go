@@ -33,6 +33,14 @@ const (
 	containerStatusCreated = "created"
 )
 
+// these variable names are excluded when comparing environment variables
+var excludedEnvVars = map[string]struct{}{
+	"http_proxy":  struct{}{},
+	"https_proxy": struct{}{},
+	"no_proxy":    struct{}{},
+	"ftp_proxy":   struct{}{},
+}
+
 // Container is responsible for creating docker containers
 type Container struct {
 	Name            string
@@ -222,7 +230,10 @@ func (c *Container) compareEnv(container *dc.Container, image *dc.Image) (actual
 	toSet := func(env []string) mapset.Set {
 		set := mapset.NewSet()
 		for _, envvar := range env {
-			set.Add(envvar)
+			varname := strings.Split(envvar, "=")[0]
+			if _, ok := excludedEnvVars[strings.ToLower(varname)]; !ok {
+				set.Add(envvar)
+			}
 		}
 		return set
 	}
