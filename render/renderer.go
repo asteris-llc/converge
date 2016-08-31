@@ -63,6 +63,7 @@ func (r *Renderer) param(name string) (string, error) {
 	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
 
 	if val == nil || !ok {
+		return "", errors.New("param not found")
 	}
 	return fmt.Sprintf("%+v", val), nil
 }

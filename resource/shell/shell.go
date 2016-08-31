@@ -33,10 +33,12 @@ type Shell struct {
 	Status         *CommandResults
 	HealthStatus   *resource.HealthStatus
 	Interpolations map[string]string
+	renderer       resource.Renderer
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
-func (s *Shell) Check() (resource.TaskStatus, error) {
+func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
+	s.renderer = r
 	results, err := s.CmdGenerator.Run(s.CheckStmt)
 	if err != nil {
 		return nil, err
@@ -146,7 +148,7 @@ func (s *Shell) HealthCheck() (*resource.HealthStatus, error) {
 func (s *Shell) updateHealthStatus() error {
 	if s.Status == nil {
 		fmt.Println("[INFO] health status requested with no plan, running check")
-		if _, err := s.Check(); err != nil {
+		if _, err := s.Check(s.renderer); err != nil {
 			return err
 		}
 	}

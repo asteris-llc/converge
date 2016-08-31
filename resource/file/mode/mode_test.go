@@ -20,6 +20,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func TestApply(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
-	err = mode.Apply()
+	err = mode.Apply(fakerenderer.New())
 	assert.NoError(t, err)
 	status, err := mode.Check()
 	assert.NoError(t, err)

@@ -16,12 +16,12 @@ package plan
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
+	"github.com/asteris-llc/converge/render"
 )
 
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph
@@ -29,59 +29,38 @@ var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 
 // Plan the execution of a Graph of resource.Tasks
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
-	return WithNotify(ctx, in, nil)
-}
-
-// WithNotify is plan, but with a notification function
-func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
-	logger := logging.GetLogger(ctx).WithField("function", "Plan")
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
 
-	out, err := in.Transform(
-		ctx,
-		notify.Transform(func(id string, out *graph.Graph) error {
-			val := out.Get(id)
-			task, ok := val.(resource.Task)
-			if !ok {
-				fmt.Println(val)
-				return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
-			}
+	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		renderingPlant.Graph = out
 
-			logger.WithField("id", id).Debug("checking dependencies")
-			for _, depID := range graph.Targets(out.DownEdges(id)) {
-				dep, ok := out.Get(depID).(*Result)
-				if !ok {
-					return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
-				}
+		pipeline := Pipeline(out, id, renderingPlant)
+		result := pipeline.Exec(either.ReturnM(out.Get(id)))
+		val, isRight := result.FromEither()
+		if !isRight {
+			fmt.Printf("pipeline returned Right %v\n", val)
+			return fmt.Errorf("%v", val)
+		}
 
-				if err := dep.Error(); err != nil {
-					result := &Result{
-						Status: &resource.Status{WillChange: true},
-						Task:   task,
-						Err:    fmt.Errorf("error in dependency %q", depID),
-					}
-					out.Add(id, result)
+		asResult, ok := val.(*Result)
+		if !ok {
+			fmt.Printf("expected *Result but got %T\n", val)
+			return fmt.Errorf("expected asResult but got %T", val)
+		}
 
-					// early return here after we set the signal error
-					hasErrors = ErrTreeContainsErrors
-					return nil
-				}
-			}
+		if nil != asResult.Error() {
+			hasErrors = ErrTreeContainsErrors
+		}
 
-			logger.WithField("id", id).Debug("checking")
+		out.Add(id, asResult)
+		return nil
+	})
 
-			status, err := task.Check()
-			result := &Result{
-				Status: status,
-				Task:   task,
-				Err:    err,
-			}
-			out.Add(id, result)
-
-			return nil
-		}),
-	)
 	if err != nil {
 		return out, err
 	}

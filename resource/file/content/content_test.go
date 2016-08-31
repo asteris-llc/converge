@@ -20,6 +20,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
@@ -144,7 +145,7 @@ func TestContentApply(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	assert.NoError(t, tmpl.Apply(fakerenderer.New()))
 
 	// read the new file
 	content, err := ioutil.ReadFile(tmpfile.Name())
@@ -162,7 +163,7 @@ func TestContentApplyPermissionDefault(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	assert.NoError(t, tmpl.Apply(fakerenderer.New()))
 
 	// stat the new file
 	stat, err := os.Stat(tmpfile.Name())
@@ -185,7 +186,7 @@ func TestContentApplyKeepPermission(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	assert.NoError(t, tmpl.Apply(fakerenderer.New()))
 
 	// check permissions matched
 	stat, err := os.Stat(tmpfile.Name())
