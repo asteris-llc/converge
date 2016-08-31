@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"time"
 
 	"github.com/pkg/errors"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -141,13 +141,13 @@ func checkSyntax(interpreter string, flags []string, script string) error {
 	if interpreter == "" {
 		interpreter = defaultInterpreter
 		if len(flags) > 0 {
-			log.Println("[ERROR] check_flags specified without an interpreter")
 			return errors.New("custom syntax check_flags given without an interpreter")
 		}
 		flags = defaultCheckFlags
 	} else {
 		if len(flags) == 0 {
-			log.Println("[INFO] no check_flags specified for interpreter, skipping syntax validation")
+			// TODO: add ID in here somehow
+			log.Info("no check_flags specified for interpeter, skipping syntax validation")
 			return nil
 		}
 	}
