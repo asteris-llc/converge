@@ -44,6 +44,7 @@ func (r *Renderer) Value() (value string, present bool) {
 // Render a string with text/template
 func (r *Renderer) Render(name, src string) (string, error) {
 	r.Language = r.Language.On("param", r.param)
+	r.Language = r.Language.On(extensions.RefFuncName, r.lookup)
 	out, err := r.Language.Render(r.DotValue, name, src)
 	if err != nil {
 		return "", err
@@ -58,4 +59,12 @@ func (r *Renderer) param(name string) (string, error) {
 		return "", errors.New("param not found")
 	}
 	return fmt.Sprintf("%+v", val), nil
+}
+
+func (r *Renderer) lookup(name string) (string, error) {
+	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, name)))
+	if !ok {
+		return (name + " not found"), nil
+	}
+	return fmt.Sprintf("%s found: type %T", val, val), nil
 }

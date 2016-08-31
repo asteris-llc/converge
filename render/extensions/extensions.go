@@ -24,7 +24,7 @@ import (
 // RefFuncName is the name of the function to reference exported values from
 // other nodes.  It is a const defined here to make it easily changeable to
 // avoid bikeshedding
-const RefFuncName string = "xref"
+const RefFuncName string = "lookup"
 
 // languageKeywords defines the known keywords that have been added to the
 // templating language.  This is stored as a map for quick lookup and is used
