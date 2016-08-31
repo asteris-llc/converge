@@ -19,12 +19,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
-	"log"
 	"net"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
@@ -78,13 +78,15 @@ func startRPC(ctx context.Context, addr string, secure *tls.Config, resourceRoot
 		server.GracefulStop()
 	}()
 
-	log.Printf("[INFO] serving RPC on %s\n", addr)
+	rpcLog := log.WithField("addr", addr).WithField("service", "RPC")
+
+	rpcLog.Info("serving")
 	go func() {
 		if err := server.Serve(lis); err != nil {
-			log.Fatalf("[FATAL] RPC failed to serve: %v", err)
+			rpcLog.WithError(err).Fatal("failed to serve")
 		}
 
-		log.Println("[INFO] halted RPC server")
+		rpcLog.Info("halted")
 	}()
 
 	return nil
@@ -153,13 +155,13 @@ func getToken() string { return viper.GetString(rpcTokenFlagName) }
 
 func maybeSetToken() {
 	if viper.GetBool(rpcNoTokenFlagName) {
-		log.Printf("[WARNING] no token set, server is unauthenticated. This should *only* be used for development.")
+		log.Warning("no token set, server is unauthenticated. This should *only* be used for development.")
 		return
 	}
 
 	if getToken() == "" {
 		viper.Set(rpcTokenFlagName, uuid.NewV4().String())
-		log.Printf("[INFO] setting session-local token: %s", getToken())
+		log.WithField("token", getToken()).Warn("setting session-local token")
 	}
 }
 

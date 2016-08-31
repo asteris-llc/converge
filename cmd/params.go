@@ -17,9 +17,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -78,8 +78,6 @@ func getParamsFromFlags(flags *pflag.FlagSet) (vals render.Values, errors []erro
 	// get parameters passed to the --paramsJSON flag
 	jsonParams := render.Values{}
 	if len(paramsJSON) > 0 {
-		log.Println("[TRACE] parsing --paramsJSON")
-
 		err := json.Unmarshal([]byte(paramsJSON), &jsonParams)
 		// accumulate errors
 		if err != nil {
@@ -101,11 +99,11 @@ func getParamsFromFlags(flags *pflag.FlagSet) (vals render.Values, errors []erro
 func getParams(cmd *cobra.Command) render.Values {
 	params, errors := getParamsFromFlags(cmd.Flags())
 	for i, err := range errors {
-		log.Printf("[ERROR] error while parsing parameters: %s\n", err)
+		log.WithError(err).Error("error while parsing parameters")
 
 		// after the last error is printed, exit
 		if i == len(errors)-1 {
-			log.Fatalf("[FATAL] errors while parsing parameters, see log above")
+			log.Fatalf("errors while parsing parameters, see log above")
 		}
 	}
 	return params

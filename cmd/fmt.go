@@ -18,9 +18,9 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/hcl/hcl/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,29 +38,31 @@ var fmtCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, fname := range args {
+			flog := log.WithField("file", fname)
+
 			content, err := ioutil.ReadFile(fname)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not read %s\n", fname, err)
+				flog.WithError(err).Fatal("could not read")
 			}
 
 			formatted, err := printer.Format(content)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not format content\n", fname)
+				flog.WithError(err).Fatal("could not format content")
 			}
 
 			if viper.GetBool("check") {
 				if !bytes.Equal(content, formatted) {
-					log.Fatalf("[FATAL] %s: needs formatting\n", fname)
+					flog.Fatal("needs formatting")
 				}
 			} else {
 				stat, err := os.Stat(fname)
 				if err != nil {
-					log.Fatalf("[FATAL] %s: could not stat: %s\n", fname, err)
+					flog.WithError(err).Fatal("could not stat")
 				}
 
 				err = ioutil.WriteFile(fname, formatted, stat.Mode())
 				if err != nil {
-					log.Fatalf("[FATAL] %s: could not write content: %s\n", fname, err)
+					flog.WithError(err).Fatal("could not write content")
 				}
 			}
 		}
