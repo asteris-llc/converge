@@ -48,16 +48,16 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply is a NOP for health checks
-func (s *Shell) Apply(r resource.Renderer) (err error) {
+func (s *Shell) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	var extraEnv []string
 	for key, val := range s.Interpolations {
 		keyRendered, err := r.Render("interpolations", key)
 		if err != nil {
-			return err
+			return s, err
 		}
 		valRendered, err := r.Render("interpolations", val)
 		if err != nil {
-			return err
+			return s, err
 		}
 		extraEnv = append(extraEnv, fmt.Sprintf("%s=%s", keyRendered, valRendered))
 	}
@@ -69,7 +69,7 @@ func (s *Shell) Apply(r resource.Renderer) (err error) {
 	if err == nil {
 		s.Status = s.Status.Cons("apply", results)
 	}
-	return err
+	return s, err
 }
 
 // resource.TaskStatus functions

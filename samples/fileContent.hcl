@@ -1,5 +1,5 @@
 param "message" {
-  default = "Hello, World"
+  default = "Hello, World in {{param `filename`}}"
 }
 
 param "filename" {
