@@ -86,22 +86,14 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	renderedEntrypoint := make([]string, len(p.Entrypoint))
-	for i, entrypoint := range p.Entrypoint {
-		rendered, rerr := render.Render(fmt.Sprintf("entrypoint[%d]", i), entrypoint)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedEntrypoint[i] = rendered
+	renderedEntrypoint, err := renderStringSlice(render, "entrypoint", p.Entrypoint)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedCommand := make([]string, len(p.Command))
-	for i, command := range p.Command {
-		rendered, rerr := render.Render(fmt.Sprintf("command[%d]", i), command)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedCommand[i] = rendered
+	renderedCommand, err := renderStringSlice(render, "command", p.Command)
+	if err != nil {
+		return nil, err
 	}
 
 	workDir, err := render.Render("working_dir", p.WorkingDir)
@@ -114,71 +106,41 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	// render Env
-	renderedEnv := make([]string, len(p.Env))
-	idx := 0
-	for name, val := range p.Env {
-		pair := fmt.Sprintf("%s=%s", name, val)
-		rendered, rerr := render.Render(fmt.Sprintf("env[%s]", name), pair)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedEnv[idx] = rendered
-		idx++
+	renderedEnv, err := renderStringMapToStringSlice(render, "env", p.Env, func(k, v string) string {
+		return fmt.Sprintf("%s=%s", k, v)
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	renderedExpose := make([]string, len(p.Expose))
-	for i, expose := range p.Expose {
-		rendered, rerr := render.Render(fmt.Sprintf("expose[%d]", i), expose)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedExpose[i] = rendered
+	renderedExpose, err := renderStringSlice(render, "expose", p.Expose)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedLinks := make([]string, len(p.Links))
-	for i, link := range p.Links {
-		rendered, rerr := render.Render(fmt.Sprintf("link[%d]", i), link)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedLinks[i] = rendered
+	renderedLinks, err := renderStringSlice(render, "links", p.Links)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedPorts := make([]string, len(p.Ports))
-	for i, port := range p.Ports {
-		rendered, rerr := render.Render(fmt.Sprintf("port[%d]", i), port)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedPorts[i] = rendered
+	renderedPorts, err := renderStringSlice(render, "ports", p.Ports)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedDNS := make([]string, len(p.DNS))
-	for i, server := range p.DNS {
-		rendered, rerr := render.Render(fmt.Sprintf("dns[%d]", i), server)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedDNS[i] = rendered
+	renderedDNS, err := renderStringSlice(render, "dns", p.DNS)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedVolumes := make([]string, len(p.Volumes))
-	for i, vol := range p.Volumes {
-		rendered, rerr := render.Render(fmt.Sprintf("volume[%d]", i), vol)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedVolumes[i] = rendered
+	renderedVolumes, err := renderStringSlice(render, "volumes", p.Volumes)
+	if err != nil {
+		return nil, err
 	}
 
-	renderedVolumesFrom := make([]string, len(p.VolumesFrom))
-	for i, vol := range p.VolumesFrom {
-		rendered, rerr := render.Render(fmt.Sprintf("volumes_from[%d]", i), vol)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedVolumesFrom[i] = rendered
+	renderedVolumesFrom, err := renderStringSlice(render, "volumes_from", p.VolumesFrom)
+	if err != nil {
+		return nil, err
 	}
 
 	dockerClient, err := docker.NewDockerClient()
@@ -217,7 +179,7 @@ func validateContainer(container *Container) error {
 	return nil
 }
 
-func requiredRender(render resource.Renderer, name string, content string) (string, error) {
+func requiredRender(render resource.Renderer, name, content string) (string, error) {
 	rendered, err := render.Render(name, content)
 	if err != nil {
 		return "", err
@@ -228,4 +190,32 @@ func requiredRender(render resource.Renderer, name string, content string) (stri
 	}
 
 	return rendered, nil
+}
+
+func renderStringSlice(render resource.Renderer, name string, content []string) ([]string, error) {
+	renderedSlice := make([]string, len(content))
+	for i, val := range content {
+		rendered, err := render.Render(fmt.Sprintf("%s[%d]", name, i), val)
+		if err != nil {
+			return nil, err
+		}
+		renderedSlice[i] = rendered
+	}
+	return renderedSlice, nil
+}
+
+func renderStringMapToStringSlice(render resource.Renderer, name string, content map[string]string, stringFunc func(string, string) string) ([]string, error) {
+	renderedSlice := make([]string, len(content))
+	idx := 0
+	for key, val := range content {
+		pair := stringFunc(key, val)
+		rendered, err := render.Render(fmt.Sprintf("%s[%s]", name, val), pair)
+		if err != nil {
+			return nil, err
+		}
+		renderedSlice[idx] = rendered
+		idx++
+	}
+
+	return renderedSlice, nil
 }
