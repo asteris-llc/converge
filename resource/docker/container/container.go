@@ -28,7 +28,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Container is responsible for running docker containers
+const (
+	containerStatusRunning = "running"
+	containerStatusCreated = "created"
+)
+
+// Container is responsible for creating docker containers
 type Container struct {
 	Name            string
 	Image           string
@@ -43,10 +48,11 @@ type Container struct {
 	Volumes         []string
 	VolumesFrom     []string
 	PublishAllPorts bool
+	Status          string
 	client          docker.APIClient
 }
 
-// Check that a docker container with the specified configuration is running
+// Check that a docker container with the specified configuration exists
 func (c *Container) Check() (resource.TaskStatus, error) {
 	status := &resource.Status{Status: c.Name}
 
@@ -103,11 +109,19 @@ func (c *Container) Apply() error {
 		Config:     config,
 		HostConfig: hostConfig,
 	}
-	_, err := c.client.CreateContainer(opts)
 
+	container, err := c.client.CreateContainer(opts)
 	if err != nil {
 		return errors.Wrapf(err, "failed to run container %s", c.Name)
 	}
+
+	if c.Status == "" || c.Status == containerStatusRunning {
+		err = c.client.StartContainer(c.Name, container.ID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to start container %s", c.Name)
+		}
+	}
+
 	return nil
 }
 
@@ -118,7 +132,13 @@ func (c *Container) SetClient(client docker.APIClient) {
 
 func (c *Container) diffContainer(container *dc.Container, status *resource.Status) error {
 	status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
-	status.AddDifference("status", container.State.Status, "running", "")
+
+	expectedStatus := strings.ToLower(c.Status)
+	if expectedStatus == "" {
+		expectedStatus = containerStatusRunning
+	}
+	status.AddDifference("status", strings.ToLower(container.State.Status), expectedStatus, "")
+
 	if container.HostConfig != nil {
 		status.AddDifference(
 			"publish_all_ports",

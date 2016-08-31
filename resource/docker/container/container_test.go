@@ -94,7 +94,7 @@ func TestContainerCheckContainerNoChange(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
-func TestContainerCheckNotRunningNeedsChange(t *testing.T) {
+func TestContainerCheckStatusNeedsChange(t *testing.T) {
 	t.Parallel()
 
 	c := &fakeAPIClient{
@@ -120,6 +120,31 @@ func TestContainerCheckNotRunningNeedsChange(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
 	assertDiff(t, status.Diffs(), "status", "exited", "running")
+}
+
+func TestContainerCheckStatusNoChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   name,
+				Config: &dc.Config{},
+				State:  dc.State{Status: "created"},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	container := &container.Container{Name: "nginx", Status: "created"}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.False(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "status", "created", "created")
 }
 
 func TestContainerCheckCommandNeedsChange(t *testing.T) {
@@ -566,6 +591,7 @@ func TestContainerApply(t *testing.T) {
 		CreateContainerFunc: func(opts dc.CreateContainerOptions) (*dc.Container, error) {
 			return &dc.Container{}, nil
 		},
+		StartContainerFunc: func(string, string) error { return nil },
 	}
 	container := &container.Container{Name: "nginx", Image: "nginx:latest"}
 	container.SetClient(c)
@@ -600,6 +626,7 @@ type fakeAPIClient struct {
 	PullImageFunc       func(name, tag string) error
 	FindContainerFunc   func(name string) (*dc.Container, error)
 	CreateContainerFunc func(opts dc.CreateContainerOptions) (*dc.Container, error)
+	StartContainerFunc  func(name, id string) error
 }
 
 func (f *fakeAPIClient) FindImage(repoTag string) (*dc.Image, error) {
@@ -616,4 +643,8 @@ func (f *fakeAPIClient) FindContainer(name string) (*dc.Container, error) {
 
 func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container, error) {
 	return f.CreateContainerFunc(opts)
+}
+
+func (f *fakeAPIClient) StartContainer(name, id string) error {
+	return f.StartContainerFunc(name, id)
 }

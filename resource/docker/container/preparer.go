@@ -15,7 +15,9 @@
 package container
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
@@ -60,8 +62,11 @@ type Preparer struct {
 	// mounts all volumes from the specified container
 	VolumesFrom []string `hcl:"volumes_from"`
 
-	// Allocates a random host port for all of a container’s exposed ports. Specified as a boolean value.
+	// allocates a random host port for all of a container’s exposed ports. Specified as a boolean value
 	PublishAllPorts bool `hcl:"publish_all_ports"` // TODO: how do we render bool values from params
+
+	// the desired status of the container. running|created
+	Status string
 }
 
 // Prepare a docker container
@@ -87,6 +92,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	workDir, err := render.Render("working_dir", p.WorkingDir)
+	if err != nil {
+		return nil, err
+	}
+
+	status, err := render.Render("status", p.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +175,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	container := &Container{
 		Name:            name,
+		Status:          status,
 		Image:           image,
 		Entrypoint:      entrypoint,
 		Command:         command,
@@ -179,7 +190,17 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		VolumesFrom:     renderedVolumesFrom,
 	}
 	container.SetClient(dockerClient)
-	return container, nil
+	return container, validateContainer(container)
+}
+
+func validateContainer(container *Container) error {
+	if container.Status != "" {
+		if !strings.EqualFold(container.Status, containerStatusRunning) &&
+			!strings.EqualFold(container.Status, containerStatusCreated) {
+			return errors.New("status must be 'running' or 'created'")
+		}
+	}
+	return nil
 }
 
 func requiredRender(render resource.Renderer, name string, content string) (string, error) {

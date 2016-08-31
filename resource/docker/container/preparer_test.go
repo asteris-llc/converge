@@ -43,3 +43,11 @@ func TestPreparerImageIsRequired(t *testing.T) {
 		assert.EqualError(t, err, "image is required")
 	}
 }
+
+func TestPreparerInvalidStatus(t *testing.T) {
+	p := &container.Preparer{Name: "test", Image: "nginx", Status: "exited"}
+	_, err := p.Prepare(fakerenderer.New())
+	if assert.Error(t, err) {
+		assert.EqualError(t, err, "status must be 'running' or 'created'")
+	}
+}
