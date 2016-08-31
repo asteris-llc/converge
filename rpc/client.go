@@ -53,3 +53,13 @@ func NewExecutorClient(ctx context.Context, addr string, opts *ClientOpts) (pb.E
 
 	return pb.NewExecutorClient(cc), nil
 }
+
+// NewGrapherClient returns a client for a server that implements Executor
+func NewGrapherClient(ctx context.Context, addr string, opts *ClientOpts) (pb.GrapherClient, error) {
+	cc, err := grpc.DialContext(ctx, addr, opts.Opts()...)
+	if err != nil {
+		return nil, err
+	}
+
+	return pb.NewGrapherClient(cc), nil
+}

@@ -38,6 +38,7 @@ func New(token string, secure *tls.Config, resourceRoot string, enableBinaryDown
 	auth := &authorizer{JWTToken: jwt}
 
 	pb.RegisterExecutorServer(server, &executor{auth: auth})
+	pb.RegisterGrapherServer(server, &grapher{auth: auth})
 	pb.RegisterResourceHostServer(
 		server,
 		&resourceHost{

@@ -42,6 +42,32 @@
         ]
       }
     },
+    "/api/v1/machine/graph": {
+      "post": {
+        "operationId": "Graph",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/pbGraphComponent"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbLoadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Grapher"
+        ]
+      }
+    },
     "/api/v1/machine/plan": {
       "post": {
         "summary": "Plan out the execution of a module given by the location",
@@ -114,6 +140,35 @@
     }
   },
   "definitions": {
+    "GraphComponentEdge": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "dest": {
+          "type": "string",
+          "format": "string"
+        },
+        "source": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "GraphComponentVertex": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "StatusResponseDetails": {
       "type": "object",
       "properties": {
@@ -184,6 +239,17 @@
         "original": {
           "type": "string",
           "format": "string"
+        }
+      }
+    },
+    "pbGraphComponent": {
+      "type": "object",
+      "properties": {
+        "edge": {
+          "$ref": "#/definitions/GraphComponentEdge"
+        },
+        "vertex": {
+          "$ref": "#/definitions/GraphComponentVertex"
         }
       }
     },
