@@ -29,6 +29,7 @@ type APIClient interface {
 	PullImage(string, string) error
 	FindContainer(string) (*dc.Container, error)
 	CreateContainer(dc.CreateContainerOptions) (*dc.Container, error)
+	StartContainer(string, string) error
 }
 
 // Client provides api access to Docker
@@ -162,7 +163,7 @@ func (c *Client) FindContainer(name string) (*dc.Container, error) {
 	return nil, nil
 }
 
-// CreateContainer ensures a container is running with the specified options
+// CreateContainer creates a container with the specified options
 func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container, error) {
 	name := opts.Name
 
@@ -200,11 +201,15 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 		return nil, errors.Wrapf(err, "failed to create container %s", name)
 	}
 
-	log.Printf("[DEBUG] docker: starting container %s (%s)", name, container.ID)
-	err = c.Client.StartContainer(container.ID, nil)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to start container %s (%s)", name, container.ID)
-	}
-
 	return container, err
+}
+
+// StartContainer starts the container with the specified ID
+func (c *Client) StartContainer(name, containerID string) error {
+	log.Printf("[DEBUG] docker: starting container %s (%s)", name, containerID)
+	err := c.Client.StartContainer(containerID, nil)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to start container %s (%s)", name, containerID)
+	}
+	return err
 }
