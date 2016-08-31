@@ -70,12 +70,6 @@ func (f *Factory) GetRenderer(id string) (*Renderer, error) {
 	return r, nil
 }
 
-// HandleLookup performs a cross-node lookup
-func (f *Factory) HandleLookup(id string) interface{} {
-	fmt.Println("factory lookup for " + id)
-	return nil
-}
-
 // NewFactory generates a new Render factory
 func NewFactory(ctx context.Context, g *graph.Graph) (*Factory, error) {
 	f := &Factory{
@@ -84,7 +78,6 @@ func NewFactory(ctx context.Context, g *graph.Graph) (*Factory, error) {
 		DotValues: make(map[string]*LazyValue),
 	}
 
-	f.Language = f.Language.On("lookup", f.HandleLookup)
 	for _, vertex := range g.Vertices() {
 		if dotVal, found := getParamOverrides(func() *graph.Graph { return f.Graph }, vertex); found {
 			f.DotValues[vertex] = &LazyValue{dotVal}
