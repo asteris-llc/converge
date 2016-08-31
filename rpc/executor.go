@@ -20,16 +20,13 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/rpc/pb"
-	"github.com/fgrid/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -39,12 +36,6 @@ var (
 
 type executor struct {
 	auth *authorizer
-}
-
-func (e *executor) getLogger(ctx context.Context) (*logrus.Entry, context.Context) {
-	logger := getLogger(ctx).WithField("runID", uuid.NewV4().String())
-
-	return logger, logging.WithLogger(ctx, logger)
 }
 
 func (e *executor) load(ctx context.Context, location string, params map[string]string) (*graph.Graph, error) {
@@ -141,7 +132,7 @@ func (e *executor) sendPlan(ctx context.Context, stream statusResponseStream, in
 }
 
 func (e *executor) Plan(in *pb.ExecRequest, stream pb.Executor_PlanServer) error {
-	logger, ctx := e.getLogger(stream.Context())
+	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Plan")
 
 	if err := e.auth.authorize(ctx); err != nil {
@@ -177,7 +168,7 @@ func (e *executor) sendApply(ctx context.Context, stream statusResponseStream, i
 }
 
 func (e *executor) Apply(in *pb.ExecRequest, stream pb.Executor_ApplyServer) error {
-	logger, ctx := e.getLogger(stream.Context())
+	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Apply")
 
 	if err := e.auth.authorize(ctx); err != nil {
