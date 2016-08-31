@@ -5,11 +5,7 @@ package pb;
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
-message LocationRequest {
-  string location = 1;
-}
-
-message ExecRequest {
+message LoadRequest {
   string location = 1;
   map<string, string> parameters = 2;
 }
@@ -56,7 +52,7 @@ message DiffResponse {
 // Executor is responsible for remote execution on the machine
 service Executor {
   // Plan out the execution of a module given by the location
-  rpc Plan (ExecRequest) returns (stream StatusResponse) {
+  rpc Plan (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
       post: "/api/v1/machine/plan"
       body: "*"
@@ -64,7 +60,7 @@ service Executor {
   }
 
   // Apply a module given by the location
-  rpc Apply (ExecRequest) returns (stream StatusResponse) {
+  rpc Apply (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
       post: "/api/v1/machine/apply"
       body: "*"
@@ -83,7 +79,7 @@ service ResourceHost {
   }
 
   // GetModule gets the content of a module at the given path
-  rpc GetModule (LocationRequest) returns (ContentResponse) {
+  rpc GetModule (LoadRequest) returns (ContentResponse) {
     option (google.api.http) = {
       get: "/api/v1/resources/modules/{location=**}"
     };
