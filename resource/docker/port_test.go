@@ -24,7 +24,7 @@ import (
 func TestDockerPortPort(t *testing.T) {
 	port := "80"
 	dockerPort := docker.NewPort(port)
-	assert.Equal(t, "80", dockerPort.Port())
+	assert.Equal(t, "80", dockerPort.PortNum())
 }
 
 func TestDockerPortDefaultProtocol(t *testing.T) {
