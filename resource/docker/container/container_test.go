@@ -529,6 +529,36 @@ func TestContainerCheckBindsNeedsChange(t *testing.T) {
 	assertDiff(t, status.Diffs(), "binds", "", "/var/db:/var/db:ro, /var/log:/var/log")
 }
 
+func TestContainerCheckVolumesFromNeedsChange(t *testing.T) {
+	t.Parallel()
+
+	c := &fakeAPIClient{
+		FindContainerFunc: func(name string) (*dc.Container, error) {
+			return &dc.Container{
+				Name:   name,
+				Config: &dc.Config{},
+				HostConfig: &dc.HostConfig{
+					VolumesFrom: []string{},
+				},
+			}, nil
+		},
+		FindImageFunc: func(repoTag string) (*dc.Image, error) {
+			return &dc.Image{Config: &dc.Config{}}, nil
+		},
+	}
+
+	container := &container.Container{
+		Name:        "nginx",
+		VolumesFrom: []string{"dbvol", "webvol:ro,z"},
+	}
+	container.SetClient(c)
+
+	status, err := container.Check()
+	assert.NoError(t, err)
+	assert.True(t, status.HasChanges())
+	assertDiff(t, status.Diffs(), "volumes_from", "", "dbvol, webvol:ro,z")
+}
+
 func TestContainerApply(t *testing.T) {
 	t.Parallel()
 
