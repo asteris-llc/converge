@@ -15,14 +15,15 @@
 package fetch
 
 import (
-	"log"
 	"path"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // ResolveInContext resolves a path relative to another
 func ResolveInContext(loc, ctx string) (string, error) {
-	log.Printf("[TRACE] resolving URL %q in context of URL %q\n", loc, ctx)
+	log.WithField("target", loc).WithField("context", ctx).Debug("resolving target in contextj")
 
 	var (
 		locScheme, locPath = parse(loc)
