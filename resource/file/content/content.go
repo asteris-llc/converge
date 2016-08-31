@@ -81,17 +81,35 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply(resource.Renderer) error {
+func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	var perm os.FileMode
+	var preChange string
+	diffs := make(map[string]resource.Diff)
 
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
+		diffs["mode"] = resource.TextDiff{Values: [2]string{"not set", "0600"}}
 		perm = 0600
 	} else if err != nil {
-		return err
+		return t.Check(r)
 	} else {
 		perm = stat.Mode()
 	}
 
-	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
+	if rawData, err := ioutil.ReadFile(t.Destination); err != nil {
+		preChange = "<file-missing>"
+	} else {
+		preChange = string(rawData)
+	}
+
+	diffs[t.Destination] = resource.TextDiff{Values: [2]string{preChange, t.Content}}
+
+	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
+		return &resource.Status{
+			Status:       fmt.Sprintf("%s", err),
+			WarningLevel: resource.StatusFatal,
+			Differences:  diffs,
+		}, err
+	}
+	return &resource.Status{Differences: diffs}, nil
 }

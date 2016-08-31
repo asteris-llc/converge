@@ -77,7 +77,8 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		if result.Status.HasChanges() {
 			log.Printf("[DEBUG] applying %q\n", id)
 
-			err := result.Task.Apply(nodeRenderer)
+			applyStatus, err := result.Task.Apply(nodeRenderer)
+			fmt.Printf("%s: applyStatus: %v\n", id, applyStatus)
 			if err != nil {
 				err = errors.Wrapf(err, "error applying %s", id)
 			}
@@ -97,18 +98,20 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				hasErrors = ErrTreeContainsErrors
 			}
 
+			fmt.Println("id: " + id + " ; setting result with ran: true")
 			newResult = &Result{
-				Ran:    true,
-				Status: status,
-				Plan:   result,
-				Err:    err,
+				Ran:       true,
+				Status:    applyStatus,
+				Plan:      result,
+				PostCheck: status,
+				Err:       err,
 			}
 		} else {
+			fmt.Println("id: " + id + " ; setting result with ran: false")
 			newResult = &Result{
-				Ran:    false,
-				Status: result.Status,
-				Plan:   result,
-				Err:    nil,
+				Ran:  false,
+				Plan: result,
+				Err:  nil,
 			}
 		}
 

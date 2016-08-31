@@ -38,7 +38,11 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	}
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		renderingPlant.Graph = out
 		nodeRenderer, err := renderingPlant.GetRenderer(id)
+		if err != nil {
+			return err
+		}
 		val := out.Get(id)
 		task, ok := val.(resource.Task)
 		if !ok {
