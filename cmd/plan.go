@@ -81,7 +81,7 @@ can be done separately to see what needs to be changed before execution.`,
 
 			stream, err := client.Plan(
 				ctx,
-				&pb.ExecRequest{
+				&pb.LoadRequest{
 					Location:   fname,
 					Parameters: rpcParams,
 				},

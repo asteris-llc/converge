@@ -29,7 +29,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
 func request_Executor_Plan_0(ctx context.Context, marshaler runtime.Marshaler, client ExecutorClient, req *http.Request, pathParams map[string]string) (Executor_PlanClient, runtime.ServerMetadata, error) {
-	var protoReq ExecRequest
+	var protoReq LoadRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
@@ -50,7 +50,7 @@ func request_Executor_Plan_0(ctx context.Context, marshaler runtime.Marshaler, c
 }
 
 func request_Executor_Apply_0(ctx context.Context, marshaler runtime.Marshaler, client ExecutorClient, req *http.Request, pathParams map[string]string) (Executor_ApplyClient, runtime.ServerMetadata, error) {
-	var protoReq ExecRequest
+	var protoReq LoadRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
@@ -79,8 +79,12 @@ func request_ResourceHost_GetBinary_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
+var (
+	filter_ResourceHost_GetModule_0 = &utilities.DoubleArray{Encoding: map[string]int{"location": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
+
 func request_ResourceHost_GetModule_0(ctx context.Context, marshaler runtime.Marshaler, client ResourceHostClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq LocationRequest
+	var protoReq LoadRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -99,6 +103,10 @@ func request_ResourceHost_GetModule_0(ctx context.Context, marshaler runtime.Mar
 
 	if err != nil {
 		return nil, metadata, err
+	}
+
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_ResourceHost_GetModule_0); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.GetModule(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
