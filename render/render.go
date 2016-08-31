@@ -53,7 +53,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		if err != nil {
 			return errors.Wrap(err, id)
 		}
-		out.Add(id, rendered)
+		out.Add(id, resource.WrapTask(rendered))
 		factory.Graph = out
 		return nil
 	})

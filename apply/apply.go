@@ -84,7 +84,7 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 			var status resource.TaskStatus
 
 			if err == nil {
-				status, err = result.Task.Check()
+				status, err = result.Task.Check(nodeRenderer)
 				if err != nil {
 					err = errors.Wrapf(err, "error checking %s", id)
 				} else if status.HasChanges() {

@@ -17,6 +17,7 @@ package param_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
@@ -44,5 +45,5 @@ func TestParamApply(t *testing.T) {
 
 	param := new(param.Param)
 
-	assert.NoError(t, param.Apply())
+	assert.NoError(t, param.Apply(fakerenderer.New()))
 }

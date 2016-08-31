@@ -52,3 +52,11 @@ func (r *Result) Error() error { return r.Err }
 
 // GetStatus returns the current task status
 func (r *Result) GetStatus() resource.TaskStatus { return r.Status }
+
+// GetTask returns the task of the embedded plan, if there is one
+func (r *Result) GetTask() (resource.Task, bool) {
+	if r.Plan != nil {
+		return r.Plan.GetTask()
+	}
+	return nil, false
+}

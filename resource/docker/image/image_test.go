@@ -18,6 +18,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
 	dc "github.com/fsouza/go-dockerclient"
@@ -117,7 +118,7 @@ func TestImageApply(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	assert.NoError(t, image.Apply())
+	assert.NoError(t, image.Apply(fakerenderer.New()))
 }
 
 func TestImageApplyTimedOut(t *testing.T) {
@@ -132,7 +133,7 @@ func TestImageApplyTimedOut(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	err := image.Apply()
+	err := image.Apply(fakerenderer.New())
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "inactivity time exceeded timeout")
 	}

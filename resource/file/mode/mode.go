@@ -28,7 +28,7 @@ type Mode struct {
 }
 
 // Check whether the Destination has the right Mode
-func (t *Mode) Check() (resource.TaskStatus, error) {
+func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {

@@ -21,6 +21,7 @@ import (
 	"log"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -31,7 +32,13 @@ var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	var hasErrors error
 
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		nodeRenderer, err := renderingPlant.GetRenderer(id)
 		val := out.Get(id)
 		task, ok := val.(resource.Task)
 		if !ok {
@@ -55,6 +62,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 						Err:    fmt.Errorf("error in dependency %q", depID),
 					},
 				)
+				renderingPlant.Graph = out
 
 				// early return here after we set the signal error
 				hasErrors = ErrTreeContainsErrors
@@ -64,7 +72,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 		log.Printf("[DEBUG] checking %q\n", id)
 
-		status, err := task.Check()
+		status, err := task.Check(nodeRenderer)
 		out.Add(
 			id,
 			&Result{
@@ -73,7 +81,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 				Err:    err,
 			},
 		)
-
+		renderingPlant.Graph = out
 		return nil
 	})
 

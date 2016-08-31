@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
+	"github.com/asteris-llc/converge/resource"
 )
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
@@ -51,8 +52,9 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	val := r.Graph().Get(graph.SiblingID(r.ID, "param."+name))
-	if val == nil {
+	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+
+	if val == nil || !ok {
 		return "", errors.New("param not found")
 	}
 	return fmt.Sprintf("%+v", val), nil
