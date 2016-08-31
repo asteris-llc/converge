@@ -16,9 +16,10 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // GracefulExit traps interrupt signals for a graceful exit
@@ -38,10 +39,10 @@ func GracefulExitBlocking(cancel context.CancelFunc) {
 
 		switch interruptCount {
 		case 1:
-			log.Println("[INFO] gracefully shutting down (interrupt again to halt)")
+			log.Info("gracefully shutting down (interrupt again to halt)")
 			cancel()
 		case 2:
-			log.Println("[WARN] hard stop! System may be left in an incomplete state")
+			log.Warn("hard stop! System may be left in an incomplete state")
 			os.Exit(2)
 		}
 	}

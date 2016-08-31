@@ -16,10 +16,10 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,16 +53,19 @@ see "converge graph --help" for more details.`,
 			return err
 		}
 
-		if err := SetLogLevel(level); err != nil {
+		parsedLevel, err := log.ParseLevel(level)
+		if err != nil {
 			return err
 		}
+
+		log.SetLevel(parsedLevel)
 
 		// bind pflags for active commands
 		sub := cmd
 		subFlags := args
 
 		for {
-			log.Printf("[TRACE] registering flags for %s\n", sub.Name())
+			log.WithField("command", sub.Name()).Debug("registering flags")
 
 			if err := viper.BindPFlags(sub.Flags()); err != nil {
 				return errors.Wrapf(err, "failed to bind flags for %s", sub.Name())
@@ -102,7 +105,7 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is /etc/converge/config.yaml)")
 	RootCmd.PersistentFlags().BoolP("nocolor", "n", false, "force colorless output")
-	RootCmd.PersistentFlags().StringP("log-level", "l", "INFO", fmt.Sprintf("log level, one of %v", levels))
+	RootCmd.PersistentFlags().StringP("log-level", "l", "INFO", "log level, one of debug, info, warning, error, or fatal")
 }
 
 // initConfig reads in config file and ENV variables if set.

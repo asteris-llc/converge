@@ -17,11 +17,11 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -60,12 +60,12 @@ var serverCmd = &cobra.Command{
 		maybeSetToken()
 
 		if !usingSSL() {
-			log.Println("[WARNING] no SSL config in use, server will accept HTTP connections")
+			log.Warning("no SSL config in use, server will accept HTTP connections")
 		}
 
 		sslConfig, err := getSSLConfig(getServerName())
 		if err != nil {
-			log.Fatalf("[FATAL] could not get SSL config: %s", err)
+			log.WithError(err).Fatal("could not get SSL config")
 		}
 
 		clientOpts := &rpc.ClientOpts{
@@ -85,7 +85,7 @@ var serverCmd = &cobra.Command{
 				viper.GetBool("self-serve"),
 			)
 			if err != nil {
-				log.Fatalf("[FATAL] could not run RPC: %s", err)
+				log.WithError(err).Fatal("could not run RPC")
 			}
 
 			<-ctx.Done()
@@ -99,30 +99,35 @@ var serverCmd = &cobra.Command{
 		go func() {
 			defer running.Done()
 
+			httpLog := log.WithFields(log.Fields{
+				"addr":    viper.GetString("api-addr"),
+				"service": "API",
+			})
+
 			server, err := rpc.NewRESTGateway(ctx, getRPCAddr(), clientOpts)
 			if err != nil {
-				log.Fatalf("[FATAL] failed to create server: %v", err)
+				httpLog.WithError(err).Fatal("failed to create server")
 			}
 
 			if viper.GetBool("https") {
-				log.Printf("[INFO] serving HTTPS on %s\n", viper.GetString("api-addr"))
+				httpLog.WithField("protocol", "HTTPS").Info("serving")
 				err = server.ListenAndServeTLS(
 					viper.GetString("api-addr"),
 					getCertFileLoc(),
 					getKeyFileLoc(),
 				)
 			} else {
-				log.Printf("[INFO] serving HTTP on %s\n", viper.GetString("api-addr"))
+				httpLog.WithField("protocol", "HTTP").Info("serving")
 				err = server.ListenAndServe(
 					viper.GetString("api-addr"),
 				)
 			}
 
 			if err != nil {
-				log.Fatalf("[FATAL] %s\n", err)
+				httpLog.WithError(err).Fatal("failed to serve")
 			}
 
-			log.Println("[INFO] halted HTTP server")
+			httpLog.Info("halted")
 		}()
 
 		running.Wait()

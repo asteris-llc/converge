@@ -18,8 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
@@ -44,15 +44,18 @@ real happens.`,
 		defer cancel()
 		GracefulExit(cancel)
 
+		// logging
+		clog := log.WithField("component", "client")
+
 		maybeSetToken()
 
 		ssl, err := getSSLConfig(getServerName())
 		if err != nil {
-			log.Fatalf("[FATAL] could not get SSL config: %v", err)
+			clog.WithError(err).Fatal("could not get SSL config")
 		}
 
 		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
-			log.Fatalf("[FATAL] %s\n", err)
+			clog.WithError(err).Fatal("could not start RPC")
 		}
 
 		client, err := getRPCExecutorClient(
@@ -63,14 +66,16 @@ real happens.`,
 			},
 		)
 		if err != nil {
-			log.Fatalf("[FATAL] %s\n", err)
+			clog.WithError(err).Fatal("could not get client")
 		}
 
 		rpcParams := getParamsRPC(cmd)
 
 		// execute files
 		for _, fname := range args {
-			log.Printf("[INFO] applying %s\n", fname)
+			flog := clog.WithField("file", fname)
+
+			flog.Info("applying")
 
 			stream, err := client.Apply(
 				ctx,
@@ -80,7 +85,7 @@ real happens.`,
 				},
 			)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: error getting RPC stream: %s\n", fname, err)
+				flog.WithError(err).Fatal("error getting RPC stream")
 			}
 
 			g := graph.New()
@@ -88,7 +93,7 @@ real happens.`,
 			// get edges
 			edges, err := getMeta(stream)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: %s\n", fname, err)
+				flog.WithError(err).Fatal("error getting RPC metadata")
 			}
 			for _, edge := range edges {
 				g.Connect(edge.Source, edge.Dest)
@@ -98,7 +103,11 @@ real happens.`,
 			err = iterateOverStream(
 				stream,
 				func(resp *pb.StatusResponse) {
-					log.Printf("[INFO] %s: %s %s %s\n", fname, resp.Stage, resp.Id, resp.Run)
+					flog.WithFields(log.Fields{
+						"stage": resp.Stage,
+						"run":   resp.Run,
+						"id":    resp.Id,
+					}).Info("got status")
 
 					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
@@ -109,18 +118,18 @@ real happens.`,
 				},
 			)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not get responses")
 			}
 
 			// validate resulting graph
 			if err := g.Validate(); err != nil {
-				log.Printf("[WARNING] %s: graph is not valid: %s\n", fname, err)
+				flog.WithError(err).Warning("graph is not valid")
 			}
 
 			// print results
 			out, err := getPrinter().Show(ctx, g)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
+				flog.WithError(err).Fatal("failed to print results")
 			}
 
 			fmt.Print("\n")
