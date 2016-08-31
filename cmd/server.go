@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc/grpclog"
 )
 
 // serverCmd represents the server command
@@ -145,4 +146,7 @@ func init() {
 	serverCmd.Flags().String("api-addr", addrServerHTTP, "address to serve API")
 	serverCmd.Flags().String("root", ".", "location of modules to serve")
 	serverCmd.Flags().Bool("self-serve", false, "serve own binary for bootstrapping")
+
+	// set RPC logging to use logrus
+	grpclog.SetLogger(log.WithField("component", "grpc"))
 }
