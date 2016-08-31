@@ -23,17 +23,42 @@ import (
 
 // Preparer for docker containers
 type Preparer struct {
-	Name       string            `hcl:"name"`
-	Image      string            `hcl:"image"`
-	Entrypoint string            `hcl:"entrypoint"`
-	Command    string            `hcl:"command"`
-	WorkingDir string            `hcl:"working_dir"`
-	Env        map[string]string `hcl:"env"`
-	Expose     []string          `hcl:"expose"`
-	Links      []string          `hcl:"links"`
-	Ports      []string          `hcl:"ports"`
-	DNS        []string          `hcl:"dns"`
-	Volumes    []string          `hcl:"volumes"`
+	// name of the container
+	Name string `hcl:"name"`
+
+	// the image name or ID to use for the container
+	Image string `hcl:"image"`
+
+	// override the container entrypoint
+	Entrypoint string `hcl:"entrypoint"`
+
+	// override the container command
+	Command string `hcl:"command"`
+
+	// override the working directory of the container
+	WorkingDir string `hcl:"working_dir"`
+
+	// set environmnet variables in the container
+	Env map[string]string `hcl:"env"`
+
+	// additional ports to expose in the container
+	Expose []string `hcl:"expose"`
+
+	// A list of links for the container. Each link entry should be in the form of
+	// container_name:alias
+	Links []string `hcl:"links"`
+
+	// publish container ports to the host
+	Ports []string `hcl:"ports"`
+
+	// list of DNS servers for the container to use
+	DNS []string `hcl:"dns"`
+
+	// bind mounts volumes
+	Volumes []string `hcl:"volumes"`
+
+	// mounts all volumes from the specified container
+	VolumesFrom []string `hcl:"volumes_from"`
 
 	// Allocates a random host port for all of a container’s exposed ports. Specified as a boolean value.
 	PublishAllPorts bool `hcl:"publish_all_ports"` // TODO: how do we render bool values from params
@@ -124,6 +149,15 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		renderedVolumes[i] = rendered
 	}
 
+	renderedVolumesFrom := make([]string, len(p.VolumesFrom))
+	for i, vol := range p.VolumesFrom {
+		rendered, rerr := render.Render(fmt.Sprintf("volumes_from[%d]", i), vol)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedVolumesFrom[i] = rendered
+	}
+
 	dockerClient, err := docker.NewDockerClient()
 	if err != nil {
 		return nil, err
@@ -142,6 +176,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		PortBindings:    renderedPorts,
 		DNS:             renderedDNS,
 		Volumes:         renderedVolumes,
+		VolumesFrom:     renderedVolumesFrom,
 	}
 	container.SetClient(dockerClient)
 	return container, nil

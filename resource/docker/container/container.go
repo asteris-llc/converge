@@ -41,6 +41,7 @@ type Container struct {
 	PortBindings    []string
 	DNS             []string
 	Volumes         []string
+	VolumesFrom     []string
 	PublishAllPorts bool
 	client          docker.APIClient
 }
@@ -86,6 +87,7 @@ func (c *Container) Apply() error {
 		DNS:             c.DNS,
 		PortBindings:    toPortBindingMap(c.PortBindings),
 		Binds:           binds,
+		VolumesFrom:     c.VolumesFrom,
 	}
 
 	if c.Command != "" {
@@ -127,6 +129,11 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 			"dns",
 			strings.Join(container.HostConfig.DNS, ", "),
 			strings.Join(c.DNS, ", "),
+			"")
+		status.AddDifference(
+			"volumes_from",
+			strings.Join(container.HostConfig.VolumesFrom, ", "),
+			strings.Join(c.VolumesFrom, ", "),
 			"")
 	}
 
