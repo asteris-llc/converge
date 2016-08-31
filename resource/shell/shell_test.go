@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/healthcheck"
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func Test_Apply_WhenRunReturnsError_ReturnsError(t *testing.T) {
 	m := new(MockExecutor)
 	m.On("Run", any).Return(&shell.CommandResults{}, expected)
 	sh := testShell(m)
-	actual := sh.Apply()
+	actual := sh.Apply(fakerenderer.New())
 	assert.Error(t, actual)
 }
 
@@ -90,7 +91,7 @@ func Test_Apply_WhenRunReturnsResults_PrependsResutsToStatus(t *testing.T) {
 	m.On("Run", any).Return(expectedResult, nil)
 	sh := testShell(m)
 	sh.Status = firstResult
-	actual := sh.Apply()
+	actual := sh.Apply(fakerenderer.New())
 	assert.NoError(t, actual)
 	assert.Equal(t, expectedResult, sh.Status)
 }
@@ -99,7 +100,7 @@ func Test_Apply_SetsStatusOperationToApply(t *testing.T) {
 	result := &shell.CommandResults{}
 	m := resultExecutor(result)
 	sh := testShell(m)
-	sh.Apply()
+	sh.Apply(fakerenderer.New())
 	assert.Equal(t, "apply", result.ResultsContext.Operation)
 }
 
@@ -107,7 +108,7 @@ func Test_Apply_CallsRunWithApplyStatement(t *testing.T) {
 	statement := "test statement"
 	m := defaultExecutor()
 	sh := &shell.Shell{ApplyStmt: statement, CmdGenerator: m}
-	sh.Apply()
+	sh.Apply(fakerenderer.New())
 	m.AssertCalled(t, "Run", statement)
 }
 

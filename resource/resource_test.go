@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package param
+package resource_test
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"testing"
 
-// Param controls parameter flow inside execution
-type Param struct {
-	Value string
-}
+	"github.com/asteris-llc/converge/resource"
+	"github.com/stretchr/testify/assert"
+)
 
-// Check just returns the current value of the parameter. It should never have to change.
-func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Status: p.String()}, nil
-}
-
-// Apply doesn't do anything since params are final values
-func (*Param) Apply(resource.Renderer) error {
-	return nil
-}
-
-// String is the final value of thie Param
-func (p *Param) String() string {
-	return p.Value
+func Test_TaskWrapper_ImplementsTask(t *testing.T) {
+	assert.Implements(t, (*resource.Task)(nil), new(resource.TaskWrapper))
 }

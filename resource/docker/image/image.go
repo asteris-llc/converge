@@ -29,7 +29,7 @@ type Image struct {
 }
 
 // Check system for presence of docker image
-func (i *Image) Check() (resource.TaskStatus, error) {
+func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
 	status := &resource.Status{Status: repoTag}
 	image, err := i.client.FindImage(repoTag)

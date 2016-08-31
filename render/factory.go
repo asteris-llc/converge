@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 )
 
@@ -97,10 +98,13 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 	f := func() (string, bool, error) { return "", false, nil }
 	if strings.HasPrefix(name, "param") {
 		f = func() (string, bool, error) {
-			parent, ok := gFunc().GetParent(id).(*module.Module)
+			parentTask, ok := resource.ResolveTask(gFunc().GetParent(id))
 			if !ok {
-				p := gFunc().GetParent(id)
-				return "", false, fmt.Errorf("Parent of param %s was not a module, was %s :: %T", id, p, p)
+				return "", false, fmt.Errorf("parent node is not a valid task type")
+			}
+			parent, ok := parentTask.(*module.Module)
+			if !ok {
+				return "", false, fmt.Errorf("Parent of param %s was not a module, was %T", id, parentTask)
 			}
 			if val, ok := parent.Params[name[len("param."):]]; ok {
 				return val, true, nil

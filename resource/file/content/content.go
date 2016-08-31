@@ -30,7 +30,7 @@ type Content struct {
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check() (resource.TaskStatus, error) {
+func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	contentDiff := resource.TextDiff{Values: [2]string{"", t.Content}}
 	stat, err := os.Stat(t.Destination)
