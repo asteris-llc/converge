@@ -40,9 +40,7 @@ INFO[0000] resolving dependencies                        component=rpc function=
 INFO[0000] loading resources                             component=rpc function=SetResources runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
 INFO[0000] rendering                                     component=rpc function=Render runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
 INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
         Messages:
@@ -71,13 +69,9 @@ INFO[0000] resolving dependencies                        component=rpc function=
 INFO[0000] loading resources                             component=rpc function=SetResources runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
 INFO[0000] rendering                                     component=rpc function=Render runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
 INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=APPLY
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=APPLY
 INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=APPLY
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=APPLY
 
 root/file.content.render:
         Messages:
@@ -121,9 +115,7 @@ INFO[0000] resolving dependencies                        component=rpc function=
 INFO[0000] loading resources                             component=rpc function=SetResources runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
 INFO[0000] rendering                                     component=rpc function=Render runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
 INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
         Messages:
@@ -178,11 +170,8 @@ INFO[0000] resolving dependencies                        component=rpc function=
 INFO[0000] loading resources                             component=rpc function=SetResources runID=91562f11-df7b-4e8e-8fda-d341531afe92
 INFO[0000] rendering                                     component=rpc function=Render runID=91562f11-df7b-4e8e-8fda-d341531afe92
 INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
 INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
         Messages:

@@ -105,11 +105,16 @@ can be done separately to see what needs to be changed before execution.`,
 			err = iterateOverStream(
 				stream,
 				func(resp *pb.StatusResponse) {
-					flog.WithFields(log.Fields{
+					slog := flog.WithFields(log.Fields{
 						"stage": resp.Stage,
 						"run":   resp.Run,
 						"id":    resp.Id,
-					}).Info("got status")
+					})
+					if resp.Run == pb.StatusResponse_STARTED {
+						slog.Info("got status")
+					} else {
+						slog.Debug("got status")
+					}
 
 					if resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
