@@ -17,9 +17,9 @@ package apply
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
@@ -36,6 +36,8 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 // WithNotify is Apply, but with notification functions
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
+
+	logger := logging.GetLogger(ctx).WithField("function", "Apply")
 
 	out, err := in.Transform(
 		ctx,
@@ -71,7 +73,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 			var newResult *Result
 
 			if result.Status.HasChanges() {
-				log.Printf("[DEBUG] applying %q\n", id)
+				logger.WithField("id", id).Debug("applying")
 
 				err := result.Task.Apply()
 				if err != nil {
