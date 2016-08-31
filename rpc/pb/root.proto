@@ -85,3 +85,33 @@ service ResourceHost {
     };
   }
 }
+
+/************
+ * GRAPHING *
+ ************/
+
+message GraphComponent {
+  message Vertex {
+    string id = 1;
+  }
+
+  message Edge {
+    string source = 1;
+    string dest = 2;
+    repeated string attributes = 3;
+  }
+
+  oneof component {
+    Vertex vertex = 1;
+    Edge edge = 2;
+  }
+}
+
+service Grapher {
+  rpc Graph (LoadRequest) returns (stream GraphComponent) {
+    option (google.api.http) = {
+      post: "/api/v1/machine/graph"
+      body: "*"
+    };
+  }
+}
