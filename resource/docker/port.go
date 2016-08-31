@@ -22,27 +22,22 @@ import (
 
 // Port represents a docker port specification
 type Port struct {
-	p dc.Port
+	dc.Port
 }
 
 // NewPort creates a new Port
 func NewPort(s string) Port {
-	return Port{p: dc.Port(s)}
+	return Port{dc.Port(s)}
 }
 
-// Port returns the port as a string
-func (p Port) Port() string {
-	return p.p.Port()
-}
-
-// Proto returns the protocol
-func (p Port) Proto() string {
-	return p.p.Proto()
+// PortNum returns the port as a string
+func (p Port) PortNum() string {
+	return p.Port.Port()
 }
 
 // String returns the port as a string with Port and Protocol
 func (p Port) String() string {
-	return fmt.Sprintf("%s/%s", p.Port(), p.Proto())
+	return fmt.Sprintf("%s/%s", p.Port.Port(), p.Port.Proto())
 }
 
 // ToDockerClientPort returns a dc.Port from a Port
