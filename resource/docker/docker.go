@@ -81,7 +81,7 @@ func (c *Client) FindImage(repoTag string) (*dc.Image, error) {
 	}
 
 	if imageID != "" {
-		log.Printf("[DEBUG] docker: found image %s", repoTag)
+		log.WithField("module", "docker").WithField("tag", repoTag).Debug("found image")
 		image, err := c.Client.InspectImage(imageID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to inspect image %s (%s)", repoTag, imageID)
@@ -90,7 +90,7 @@ func (c *Client) FindImage(repoTag string) (*dc.Image, error) {
 		return image, nil
 	}
 
-	log.Printf("[DEBUG] docker: could not find image %s", repoTag)
+	log.WithField("module", "docker").WithField("tag", repoTag).Debug("could not find image")
 	return nil, nil
 }
 
@@ -150,7 +150,7 @@ func (c *Client) FindContainer(name string) (*dc.Container, error) {
 	}
 
 	if containerID != "" {
-		log.Printf("[DEBUG] docker: found container %s", name)
+		log.WithField("module", "docker").WithField("name", name).Debug("found container")
 		container, err := c.Client.InspectContainer(containerID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to inspect container %s (%s)", name, containerID)
@@ -159,7 +159,7 @@ func (c *Client) FindContainer(name string) (*dc.Container, error) {
 		return container, nil
 	}
 
-	log.Printf("[DEBUG] docker: could not find container %s", name)
+	log.WithField("module", "docker").WithField("name", name).Debug("could not find container")
 	return nil, nil
 }
 
@@ -174,11 +174,11 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 
 	// the container already exists
 	if container != nil {
-		log.Printf("[DEBUG] docker: container %s exists", name)
+		log.WithField("module", "docker").WithField("name", name).Debug("container exists")
 
 		// stop the container if running
 		if container.State.Running {
-			log.Printf("[DEBUG] docker: stopping container %s (%s)", name, container.ID)
+			log.WithField("module", "docker").WithFields(log.Fields{"name": name, "id": container.ID}).Debug("stopping container")
 			err = c.Client.StopContainer(container.ID, 60)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to stop container %s (%s)", name, container.ID)
@@ -186,7 +186,7 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 		}
 
 		// remove the container
-		log.Printf("[DEBUG] docker: removing container %s (%s)", name, container.ID)
+		log.WithField("module", "docker").WithFields(log.Fields{"name": name, "id": container.ID}).Debug("removing container")
 		err = c.Client.RemoveContainer(dc.RemoveContainerOptions{ID: container.ID})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to remove container %s (%s)", name, container.ID)
@@ -194,7 +194,7 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 	}
 
 	// create the container
-	log.Printf("[DEBUG] docker: creating container %s", name)
+	log.WithField("module", "docker").WithField("name", name).Debug("creating container")
 	container, err = c.Client.CreateContainer(opts)
 
 	if err != nil {
@@ -206,7 +206,7 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 
 // StartContainer starts the container with the specified ID
 func (c *Client) StartContainer(name, containerID string) error {
-	log.Printf("[DEBUG] docker: starting container %s (%s)", name, containerID)
+	log.WithField("module", "docker").WithFields(log.Fields{"name": name, "id": containerID}).Debug("starting container")
 	err := c.Client.StartContainer(containerID, nil)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to start container %s (%s)", name, containerID)
