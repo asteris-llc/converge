@@ -67,6 +67,11 @@ type Preparer struct {
 
 	// the desired status of the container. running|created
 	Status string
+
+	// indicates whether or not the container will be recreated if the state is
+	// not what is expected. By default, the module will only check to see if the
+	// container exists
+	Force bool
 }
 
 // Prepare a docker container
@@ -174,6 +179,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	container := &Container{
+		Force:           p.Force,
 		Name:            name,
 		Status:          status,
 		Image:           image,

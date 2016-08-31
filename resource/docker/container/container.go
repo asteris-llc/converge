@@ -49,6 +49,7 @@ type Container struct {
 	VolumesFrom     []string
 	PublishAllPorts bool
 	Status          string
+	Force           bool
 	client          docker.APIClient
 }
 
@@ -63,7 +64,10 @@ func (c *Container) Check() (resource.TaskStatus, error) {
 	}
 
 	if container != nil {
-		c.diffContainer(container, status)
+		status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
+		if c.Force {
+			c.diffContainer(container, status)
+		}
 	} else {
 		status.AddDifference("name", "", c.Name, "<container-missing>")
 	}
@@ -131,8 +135,6 @@ func (c *Container) SetClient(client docker.APIClient) {
 }
 
 func (c *Container) diffContainer(container *dc.Container, status *resource.Status) error {
-	status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
-
 	expectedStatus := strings.ToLower(c.Status)
 	if expectedStatus == "" {
 		expectedStatus = containerStatusRunning

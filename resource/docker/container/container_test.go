@@ -40,7 +40,7 @@ func TestContainerCheckContainerNotFound(t *testing.T) {
 	}
 
 	name := "nginx"
-	container := &container.Container{Name: name}
+	container := &container.Container{Force: true, Name: name}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -59,7 +59,7 @@ func TestContainerCheckContainerFindContainerError(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx"}
+	container := &container.Container{Force: true, Name: "nginx"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -85,7 +85,7 @@ func TestContainerCheckContainerNoChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx"}
+	container := &container.Container{Force: true, Name: "nginx"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -113,7 +113,7 @@ func TestContainerCheckStatusNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx"}
+	container := &container.Container{Force: true, Name: "nginx"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -138,7 +138,7 @@ func TestContainerCheckStatusNoChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", Status: "created"}
+	container := &container.Container{Force: true, Name: "nginx", Status: "created"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -169,7 +169,7 @@ func TestContainerCheckCommandNeedsChange(t *testing.T) {
 
 	// the resource uses an empty command implying that the default should be
 	// running
-	container := &container.Container{Name: "nginx", Command: "nginx -g daemon off;"}
+	container := &container.Container{Force: true, Name: "nginx", Command: "nginx -g daemon off;"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -206,7 +206,7 @@ func TestContainerCheckEmptyCommandNeedsChange(t *testing.T) {
 
 	// the resource uses an empty command implying that the default should be
 	// running
-	container := &container.Container{Name: "nginx", Command: ""}
+	container := &container.Container{Force: true, Name: "nginx", Command: ""}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -240,7 +240,7 @@ func TestContainerCheckImageNeedsChange(t *testing.T) {
 	}
 
 	// the resource uses a different image
-	container := &container.Container{Name: "nginx", Image: "busybox"}
+	container := &container.Container{Force: true, Name: "nginx", Image: "busybox"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -267,7 +267,7 @@ func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", Entrypoint: "/bin/bash start"}
+	container := &container.Container{Force: true, Name: "nginx", Entrypoint: "/bin/bash start"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -293,7 +293,7 @@ func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", WorkingDir: "/tmp/working"}
+	container := &container.Container{Force: true, Name: "nginx", WorkingDir: "/tmp/working"}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -323,7 +323,7 @@ func TestContainerCheckEnvNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", Env: []string{"BAR=BAZ", "FOO=BAR"}}
+	container := &container.Container{Force: true, Name: "nginx", Env: []string{"BAR=BAZ", "FOO=BAR"}}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -359,7 +359,7 @@ func TestContainerCheckExposeNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", Expose: []string{"8001", "8002/udp"}}
+	container := &container.Container{Force: true, Name: "nginx", Expose: []string{"8001", "8002/udp"}}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -402,6 +402,7 @@ func TestContainerCheckPortsNeedsChange(t *testing.T) {
 	}
 
 	container := &container.Container{
+		Force:        true,
 		Name:         "nginx",
 		Expose:       []string{"8003", "8005/udp"},
 		PortBindings: []string{"127.0.0.1:8000:80", "127.0.0.1::80/tcp", "443:443", "8003:80", "8004:80", "80", "8085/udp"},
@@ -437,6 +438,7 @@ func TestContainerCheckLinksNeedsChange(t *testing.T) {
 
 	// include alias for existing link and a acouple of more links
 	container := &container.Container{
+		Force: true,
 		Name:  "nginx",
 		Links: []string{"redis-server:redis", "memcached", "postgresql:db"},
 	}
@@ -472,8 +474,9 @@ func TestContainerCheckDNSNeedsChange(t *testing.T) {
 
 	// include alias for existing link and a acouple of more links
 	container := &container.Container{
-		Name: "nginx",
-		DNS:  []string{"8.8.8.8", "8.8.4.4"},
+		Force: true,
+		Name:  "nginx",
+		DNS:   []string{"8.8.8.8", "8.8.4.4"},
 	}
 	container.SetClient(c)
 
@@ -506,7 +509,7 @@ func TestContainerCheckVolumesNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Name: "nginx", Volumes: []string{"/var/html"}}
+	container := &container.Container{Force: true, Name: "nginx", Volumes: []string{"/var/html"}}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -542,6 +545,7 @@ func TestContainerCheckBindsNeedsChange(t *testing.T) {
 	}
 
 	container := &container.Container{
+		Force:   true,
 		Name:    "nginx",
 		Volumes: []string{"/var/log:/var/log", "/var/db:/var/db:ro"},
 	}
@@ -573,6 +577,7 @@ func TestContainerCheckVolumesFromNeedsChange(t *testing.T) {
 	}
 
 	container := &container.Container{
+		Force:       true,
 		Name:        "nginx",
 		VolumesFrom: []string{"dbvol", "webvol:ro,z"},
 	}
@@ -593,7 +598,7 @@ func TestContainerApply(t *testing.T) {
 		},
 		StartContainerFunc: func(string, string) error { return nil },
 	}
-	container := &container.Container{Name: "nginx", Image: "nginx:latest"}
+	container := &container.Container{Force: true, Name: "nginx", Image: "nginx:latest"}
 	container.SetClient(c)
 
 	assert.NoError(t, container.Apply())
