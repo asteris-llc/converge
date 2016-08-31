@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
@@ -46,6 +47,7 @@ real happens.`,
 
 		// logging
 		clog := log.WithField("component", "client")
+		ctx = logging.WithLogger(ctx, clog)
 
 		maybeSetToken()
 
