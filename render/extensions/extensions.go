@@ -17,9 +17,9 @@ package extensions
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"text/template"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/render/extensions/platform"
 )
 
@@ -93,10 +93,7 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 		}
 	}
 	if !ok {
-		log.Printf("[WARN] bad template DSL: extra keywords: %v, missing: %v\n",
-			extra,
-			missing,
-		)
+		log.WithField("extra", extra).WithField("missing", missing).Warn("bad template DSL")
 	}
 	return missing, extra, ok
 }
