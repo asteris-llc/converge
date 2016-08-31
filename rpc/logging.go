@@ -19,8 +19,15 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/fgrid/uuid"
 )
 
 func getLogger(ctx context.Context) *logrus.Entry {
 	return logging.GetLogger(ctx).WithField("component", "rpc")
+}
+
+func setIDLogger(ctx context.Context) (*logrus.Entry, context.Context) {
+	logger := getLogger(ctx).WithField("runID", uuid.NewV4().String())
+
+	return logger, logging.WithLogger(ctx, logger)
 }
