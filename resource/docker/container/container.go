@@ -37,8 +37,8 @@ const (
 type Container struct {
 	Name            string
 	Image           string
-	Entrypoint      string
-	Command         string
+	Entrypoint      []string
+	Command         []string
 	WorkingDir      string
 	Env             []string
 	Expose          []string
@@ -89,6 +89,8 @@ func (c *Container) Apply() error {
 		Env:          c.Env,
 		ExposedPorts: toPortMap(c.Expose),
 		Volumes:      volumes,
+		Cmd:          c.Command,
+		Entrypoint:   c.Entrypoint,
 	}
 
 	hostConfig := &dc.HostConfig{
@@ -98,14 +100,6 @@ func (c *Container) Apply() error {
 		PortBindings:    toPortBindingMap(c.PortBindings),
 		Binds:           binds,
 		VolumesFrom:     c.VolumesFrom,
-	}
-
-	if c.Command != "" {
-		config.Cmd = strings.Split(c.Command, " ")
-	}
-
-	if c.Entrypoint != "" {
-		config.Entrypoint = strings.Split(c.Entrypoint, " ")
 	}
 
 	opts := dc.CreateContainerOptions{
@@ -168,19 +162,19 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	var actual, expected string
 	// if Cmd is empty, compare using the default from the container Image
 	actual = strings.Join(container.Config.Cmd, " ")
-	if c.Command == "" {
+	if len(c.Command) == 0 {
 		expected = strings.Join(image.Config.Cmd, " ")
 	} else {
-		expected = c.Command
+		expected = strings.Join(c.Command, " ")
 	}
 	status.AddDifference("command", actual, expected, "")
 
 	// if Entrypoint is empty, compare using the default from the container Image
 	actual = strings.Join(container.Config.Entrypoint, " ")
-	if c.Entrypoint == "" {
+	if len(c.Entrypoint) == 0 {
 		expected = strings.Join(image.Config.Entrypoint, " ")
 	} else {
-		expected = c.Entrypoint
+		expected = strings.Join(c.Entrypoint, " ")
 	}
 	status.AddDifference("entrypoint", actual, expected, "")
 
