@@ -46,7 +46,7 @@ var validateCmd = &cobra.Command{
 				flog.WithError(err).Fatal("could not parse file")
 			}
 
-			flog.Info("module syntax valid")
+			flog.Info("module valid")
 		}
 	},
 }
