@@ -81,7 +81,6 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 		}
 
 		out.Add(id, asResult)
-
 		return nil
 	})
 
