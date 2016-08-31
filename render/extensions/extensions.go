@@ -140,7 +140,7 @@ func StubTemplateFunc(...string) (string, error) {
 func RememberCalls(list *[]string, nameIndex int) interface{} {
 	return func(params ...string) (string, error) {
 		name := params[0]
-		*list = append(*list, "param."+name)
+		*list = append(*list, name)
 		return name, nil
 	}
 }

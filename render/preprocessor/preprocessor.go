@@ -100,6 +100,7 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
+	fmt.Printf("looking up %s on %T\n", fieldName, obj)
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {
@@ -135,6 +136,14 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
+	v := reflect.ValueOf(obj)
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+		}
+		v = v.Elem()
+	}
+
 	for _, term := range terms {
 		if HasField(obj, term) {
 			val, err := EvalMember(term, obj)

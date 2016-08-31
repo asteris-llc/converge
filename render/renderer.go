@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
+	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -62,9 +63,28 @@ func (r *Renderer) param(name string) (string, error) {
 }
 
 func (r *Renderer) lookup(name string) (string, error) {
-	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, name)))
-	if !ok {
-		return (name + " not found"), nil
+	g := r.Graph()
+	// fully-qualified graph name
+
+	fqgn := graph.SiblingID(r.ID, name)
+	vertexName, terms, found := preprocessor.VertexSplit(g, fqgn)
+
+	if !found {
+		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
-	return fmt.Sprintf("%s found: type %T", val, val), nil
+
+	val, ok := resource.ResolveTask(g.Get(vertexName))
+
+	if !ok {
+		p := g.Get(vertexName)
+		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, p)
+	}
+
+	result, err := preprocessor.EvalTerms(val, preprocessor.SplitTerms(terms)...)
+
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%v", result), nil
 }
