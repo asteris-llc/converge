@@ -32,8 +32,8 @@ func (m *Module) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply doesn't do anything since modules are final values
-func (*Module) Apply(resource.Renderer) error {
-	return nil
+func (m *Module) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	return m.Check(r)
 }
 
 // String is the final value of thie Module

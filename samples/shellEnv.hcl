@@ -12,6 +12,7 @@ task "refgen" {
 }
 
 task "shellref" {
-  check = "echo 'stdout: {{lookup `task.refgen.Status.Stdout`}}'; [[ -f sr.txt ]]"
+  #  check = "echo 'stdout: {{lookup `task.refgen.Status.Stdout`}}'; [[ -f sr.txt ]]"
+  check = "echo 'check without xref' sr.txt ]]"
   apply = "echo 'stdout: {{lookup `task.refgen.Status.Stdout`}}' | tee sr.txt"
 }

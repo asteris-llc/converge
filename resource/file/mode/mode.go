@@ -65,8 +65,16 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply(resource.Renderer) error {
-	return os.Chmod(t.Destination, t.Mode.Perm())
+func (t *Mode) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	err := os.Chmod(t.Destination, t.Mode.Perm())
+	if err == nil {
+		return t.Check(r)
+	}
+	return &resource.Status{
+		WarningLevel: resource.StatusFatal,
+		Status:       fmt.Sprintf("%s", err),
+		Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
+	}, err
 }
 
 // Validate Mode

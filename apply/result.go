@@ -15,6 +15,8 @@
 package apply
 
 import (
+	"fmt"
+
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -25,7 +27,7 @@ type Result struct {
 	Status    resource.TaskStatus
 	Err       error
 	Plan      *plan.Result
-	PostCheck *plan.Result
+	PostCheck resource.TaskStatus
 }
 
 // Messages returns any result status messages supplied by the task
@@ -38,9 +40,18 @@ func (r *Result) Messages() []string {
 
 // Changes returns the fields that changed
 func (r *Result) Changes() map[string]resource.Diff {
-	if r.Plan != nil {
+	fmt.Println("apply.changes...")
+	if r.Status != nil {
+		fmt.Println("returning r.Status.Diffs()...")
+		return r.Status.Diffs()
+	} else if r.PostCheck != nil {
+		fmt.Println("returning r.PostCheck.Diffs()...")
+		return r.PostCheck.Diffs()
+	} else if r.Plan != nil {
+		fmt.Println("returning r.Plan.Changes()...")
 		return r.Plan.Changes()
 	}
+	fmt.Println("returning nil")
 	return nil
 }
 
