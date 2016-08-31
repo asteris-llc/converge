@@ -20,13 +20,16 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/rpc/pb"
+	"github.com/fgrid/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -38,9 +41,18 @@ type executor struct {
 	auth *authorizer
 }
 
+func (e *executor) getLogger(ctx context.Context) (*logrus.Entry, context.Context) {
+	logger := getLogger(ctx).WithField("runID", uuid.NewV4().String())
+
+	return logger, logging.WithLogger(ctx, logger)
+}
+
 func (e *executor) load(ctx context.Context, location string, params map[string]string) (*graph.Graph, error) {
+	logger := getLogger(ctx).WithField("function", "executor.load").WithField("location", location)
+
 	loaded, err := load.Load(ctx, location)
 	if err != nil {
+		logger.WithError(err).Error("could not load")
 		return nil, errors.Wrapf(err, "loading %s", location)
 	}
 
@@ -50,11 +62,13 @@ func (e *executor) load(ctx context.Context, location string, params map[string]
 	}
 	rendered, err := render.Render(ctx, loaded, values)
 	if err != nil {
+		logger.WithError(err).Error("could not render")
 		return nil, errors.Wrapf(err, "rendering %s", location)
 	}
 
 	merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
 	if err != nil {
+		logger.WithError(err).Error("could not merge")
 		return nil, errors.Wrapf(err, "merging %s", location)
 	}
 
@@ -66,23 +80,30 @@ type statusResponseStream interface {
 	SendHeader(metadata.MD) error
 }
 
-func (e *executor) edgeMeta(g *graph.Graph) (metadata.MD, error) {
+func (e *executor) edgeMeta(ctx context.Context, g *graph.Graph) (metadata.MD, error) {
+	logger := getLogger(ctx).WithField("function", "executor.edgeMeta")
+
 	edges, err := json.Marshal(g.Edges())
 	if err != nil {
+		logger.WithError(err).Error("could not serialize edges")
 		return nil, errors.Wrapf(err, "serializing edges")
 	}
 
 	return metadata.New(map[string]string{"edges": string(edges)}), nil
 }
 
-func (e *executor) sendMeta(g *graph.Graph, stream statusResponseStream) error {
+func (e *executor) sendMeta(ctx context.Context, g *graph.Graph, stream statusResponseStream) error {
+	logger := getLogger(ctx).WithField("function", "executor.sendMeta")
+
 	// dehydrate graph edges and send them in the header metadata
-	meta, err := e.edgeMeta(g)
+	meta, err := e.edgeMeta(ctx, g)
 	if err != nil {
+		// already logged, don't log here
 		return errors.Wrap(err, "preparing metadata")
 	}
 
 	if err = stream.SendHeader(meta); err != nil {
+		logger.WithError(err).Error("could not send metadata")
 		return errors.Wrap(err, "sending metadata")
 	}
 
@@ -120,9 +141,11 @@ func (e *executor) sendPlan(ctx context.Context, stream statusResponseStream, in
 }
 
 func (e *executor) Plan(in *pb.ExecRequest, stream pb.Executor_PlanServer) error {
-	ctx := stream.Context()
+	logger, ctx := e.getLogger(stream.Context())
+	logger = logger.WithField("function", "executor.Plan")
 
 	if err := e.auth.authorize(ctx); err != nil {
+		logger.WithError(err).Info("authorization failed")
 		return errors.Wrap(err, "authorization failed")
 	}
 
@@ -131,13 +154,14 @@ func (e *executor) Plan(in *pb.ExecRequest, stream pb.Executor_PlanServer) error
 		return err
 	}
 
-	if err = e.sendMeta(loaded, stream); err != nil {
+	if err = e.sendMeta(ctx, loaded, stream); err != nil {
 		return err
 	}
 
 	// send the plan
 	_, err = e.sendPlan(ctx, stream, loaded)
 	if err != nil {
+		logger.WithError(err).WithField("location", in.Location).Error("planning failed")
 		return errors.Wrapf(err, "planning %s", in.Location)
 	}
 
@@ -153,9 +177,11 @@ func (e *executor) sendApply(ctx context.Context, stream statusResponseStream, i
 }
 
 func (e *executor) Apply(in *pb.ExecRequest, stream pb.Executor_ApplyServer) error {
-	ctx := stream.Context()
+	logger, ctx := e.getLogger(stream.Context())
+	logger = logger.WithField("function", "executor.Apply")
 
 	if err := e.auth.authorize(ctx); err != nil {
+		logger.WithError(err).Info("authorization failed")
 		return errors.Wrap(err, "authorization failed")
 	}
 
@@ -164,17 +190,19 @@ func (e *executor) Apply(in *pb.ExecRequest, stream pb.Executor_ApplyServer) err
 		return err
 	}
 
-	if err = e.sendMeta(loaded, stream); err != nil {
+	if err = e.sendMeta(ctx, loaded, stream); err != nil {
 		return err
 	}
 
 	planned, err := e.sendPlan(ctx, stream, loaded)
 	if err != nil {
+		logger.WithError(err).WithField("location", in.Location).Error("planning failed")
 		return errors.Wrapf(err, "planning %s", in.Location)
 	}
 
 	_, err = e.sendApply(ctx, stream, planned)
 	if err != nil {
+		logger.WithError(err).WithField("location", in.Location).Error("application failed")
 		return errors.Wrapf(err, "applying %s", in.Location)
 	}
 

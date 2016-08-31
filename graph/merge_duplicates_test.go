@@ -16,7 +16,6 @@ package graph_test
 
 import (
 	"context"
-	"log"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -59,7 +58,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 		// we need to get a result where root/first is removed so we can test
 		// dependency migration. So if root/first still exists, we need to skip
 		if transformed.Get("root/first") != nil {
-			log.Printf("[DEBUG] retrying test after failing %d times\n", i)
+			t.Logf("retrying test after failing %d times", i)
 			continue
 		}
 

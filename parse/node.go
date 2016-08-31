@@ -17,10 +17,10 @@ package parse
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 )
@@ -189,7 +189,7 @@ func (n *Node) GetStrings() (vals []string, err error) {
 			toConsider = append(toConsider, val.([]interface{})...)
 
 		default:
-			log.Printf("[WARNING] Node.GetStrings: unknown value: %T (%v)\n", val, val)
+			log.WithField("type", fmt.Sprintf("%T", val)).WithField("val", val).Debug("unknown value")
 		}
 	}
 

@@ -34,21 +34,27 @@ type resourceHost struct {
 }
 
 func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.ContentResponse, error) {
+	logger := getLogger(ctx).WithField("function", "resourceHost.GetBinary")
+
 	if err := rh.auth.authorize(ctx); err != nil {
+		logger.WithError(err).Info("failed authorization")
 		return nil, err
 	}
 
 	if !rh.enableBinaryDownload {
+		logger.Debug("got request for binary, but binary download not enabled")
 		return nil, errors.New("binary download not enabled")
 	}
 
 	name, err := osext.Executable()
 	if err != nil {
+		logger.WithError(err).Error("could not determine binary location")
 		return nil, errors.Wrap(err, "could not determine binary location")
 	}
 
 	content, err := ioutil.ReadFile(name)
 	if err != nil {
+		logger.WithError(err).Error("could not read binary")
 		return nil, errors.Wrap(err, "could not read binary")
 	}
 
@@ -56,20 +62,25 @@ func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.Cont
 }
 
 func (rh *resourceHost) GetModule(ctx context.Context, loc *pb.LocationRequest) (*pb.ContentResponse, error) {
+	logger := getLogger(ctx).WithField("function", "resourceHost.GetModule").WithField("location", loc.Location)
+
 	if err := rh.auth.authorize(ctx); err != nil {
 		return nil, err
 	}
 
 	if rh.root == "" {
+		logger.Debug("got request for module, but module download not enabled")
 		return nil, errors.New("module download not enabled")
 	}
 
 	if strings.Contains(loc.Location, "..") {
+		logger.Warning("got request for relative path")
 		return nil, errors.New("cannot use relative paths")
 	}
 
 	content, err := ioutil.ReadFile(path.Join(rh.root, loc.Location))
 	if err != nil {
+		logger.WithError(err).Error("could not read location")
 		return nil, errors.Wrap(err, "could not read location")
 	}
 

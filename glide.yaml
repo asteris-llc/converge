@@ -96,3 +96,5 @@ import:
   version: ^3.0.0
 - package: github.com/fgrid/uuid
   version: ^0.1.0
+- package: github.com/Sirupsen/logrus
+  version: ^0.10.0

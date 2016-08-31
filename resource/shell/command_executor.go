@@ -17,12 +17,12 @@ package shell
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 )
 
@@ -150,13 +150,13 @@ func (c *commandIOContext) exec(script string) (results *CommandResults, err err
 	if data, readErr := ioutil.ReadAll(c.Stdout); readErr == nil {
 		results.Stdout = string(data)
 	} else {
-		log.Printf("[WARNING] cannot read stdout from script")
+		log.WithField("module", "shell").Warn("cannot read stdout from script")
 	}
 
 	if data, readErr := ioutil.ReadAll(c.Stderr); readErr == nil {
 		results.Stderr = string(data)
 	} else {
-		log.Printf("[WARNING] cannot read stderr from script")
+		log.WithField("module", "shell").Warn("cannot read stdout from script")
 	}
 
 	if waitErr := c.Command.Wait(); waitErr == nil {
@@ -181,7 +181,7 @@ func newCommand(cmd *CommandGenerator) *exec.Cmd {
 	var command *exec.Cmd
 	if cmd.Interpreter == "" {
 		if len(cmd.Flags) > 0 {
-			log.Println("[INFO] passing flags to default interpreter (/bin/sh)")
+			log.WithField("module", "shell").WithField("interpreter", "/bin/sh").Debug("passing flags to default interpreter")
 			command = exec.Command(defaultInterpreter, cmd.Flags...)
 		} else {
 			command = exec.Command(defaultInterpreter, defaultExecFlags...)

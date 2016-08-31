@@ -17,8 +17,8 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
 )
@@ -39,12 +39,14 @@ var validateCmd = &cobra.Command{
 		GracefulExit(cancel)
 
 		for _, fname := range args {
+			flog := log.WithField("file", fname)
+
 			_, err := load.Load(ctx, fname)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not parse file")
 			}
 
-			log.Printf("[INFO] %s: module valid\n", fname)
+			flog.Info("module valid")
 		}
 	},
 }

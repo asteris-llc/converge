@@ -1,5 +1,5 @@
-hash: b7c8c7fc0202cf69bf0946d21e57dfec880daf7cf77196d28d47bf6f3c511291
-updated: 2016-08-29T13:43:48.014156875-05:00
+hash: 9fc310506982944d66fede877931e56e1110444089687e608d1f281d0f8b1b1c
+updated: 2016-08-30T18:05:47.325583678-05:00
 imports:
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
@@ -106,7 +106,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: 08a8a7c27e3d058a8989316a850daad1c10bf4ab
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/spf13/cast
   version: 27b586b42e29bec072fe7379259cc719e1289da6
 - name: github.com/spf13/cobra

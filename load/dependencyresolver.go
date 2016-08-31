@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
 )
@@ -31,7 +31,8 @@ type dependencyGenerator func(node *parse.Node) ([]string, error)
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
 func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
-	log.Println("[INFO] resolving dependencies")
+	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
+	logger.Info("resolving dependencies")
 
 	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // skip root

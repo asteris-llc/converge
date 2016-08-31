@@ -17,9 +17,9 @@ package load
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
@@ -33,7 +33,8 @@ import (
 
 // SetResources loads the resources for each graph node
 func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
-	log.Println("[INFO] loading resources")
+	logger := logging.GetLogger(ctx).WithField("function", "SetResources")
+	logger.Info("loading resources")
 
 	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // root
