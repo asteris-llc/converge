@@ -167,9 +167,11 @@ func TestContainerCheckCommandNeedsChange(t *testing.T) {
 		},
 	}
 
-	// the resource uses an empty command implying that the default should be
-	// running
-	container := &container.Container{Force: true, Name: "nginx", Command: "nginx -g daemon off;"}
+	container := &container.Container{
+		Force:   true,
+		Name:    "nginx",
+		Command: []string{"nginx", "-g", "daemon", "off;"},
+	}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -206,7 +208,11 @@ func TestContainerCheckEmptyCommandNeedsChange(t *testing.T) {
 
 	// the resource uses an empty command implying that the default should be
 	// running
-	container := &container.Container{Force: true, Name: "nginx", Command: ""}
+	container := &container.Container{
+		Force:   true,
+		Name:    "nginx",
+		Command: []string{},
+	}
 	container.SetClient(c)
 
 	status, err := container.Check()
@@ -267,7 +273,11 @@ func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Force: true, Name: "nginx", Entrypoint: "/bin/bash start"}
+	container := &container.Container{
+		Force:      true,
+		Name:       "nginx",
+		Entrypoint: []string{"/bin/bash", "start"},
+	}
 	container.SetClient(c)
 
 	status, err := container.Check()

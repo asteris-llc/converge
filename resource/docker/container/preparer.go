@@ -32,10 +32,10 @@ type Preparer struct {
 	Image string `hcl:"image"`
 
 	// override the container entrypoint
-	Entrypoint string `hcl:"entrypoint"`
+	Entrypoint []string `hcl:"entrypoint"`
 
 	// override the container command
-	Command string `hcl:"command"`
+	Command []string `hcl:"command"`
 
 	// override the working directory of the container
 	WorkingDir string `hcl:"working_dir"`
@@ -86,14 +86,22 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	entrypoint, err := render.Render("entrypoint", p.Entrypoint)
-	if err != nil {
-		return nil, err
+	renderedEntrypoint := make([]string, len(p.Entrypoint))
+	for i, entrypoint := range p.Entrypoint {
+		rendered, rerr := render.Render(fmt.Sprintf("entrypoint[%d]", i), entrypoint)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedEntrypoint[i] = rendered
 	}
 
-	command, err := render.Render("command", p.Command)
-	if err != nil {
-		return nil, err
+	renderedCommand := make([]string, len(p.Command))
+	for i, command := range p.Command {
+		rendered, rerr := render.Render(fmt.Sprintf("command[%d]", i), command)
+		if rerr != nil {
+			return nil, rerr
+		}
+		renderedCommand[i] = rendered
 	}
 
 	workDir, err := render.Render("working_dir", p.WorkingDir)
@@ -183,8 +191,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Name:            name,
 		Status:          status,
 		Image:           image,
-		Entrypoint:      entrypoint,
-		Command:         command,
+		Entrypoint:      renderedEntrypoint,
+		Command:         renderedCommand,
 		WorkingDir:      workDir,
 		Env:             renderedEnv,
 		Expose:          renderedExpose,
