@@ -17,10 +17,10 @@ package graph
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/pkg/errors"
@@ -204,7 +204,9 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		return err
 	}
 
-	log.Println("[TRACE] dependency walk: started")
+	logger := logging.GetLogger(rctx).WithField("function", "dependencyWalk")
+
+	logger.Debug("started")
 
 	// errors
 	var (
@@ -241,7 +243,7 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 	var worker func(id string)
 	scheduler := make(chan string)
 	go func() {
-		log.Println("[TRACE] dependency walk: scheduler: starting")
+		logger.Debug("starting scheduler")
 		// it's OK to leave this unguarded by a lock, since we're only accessing
 		// it in a single thread. If this algorithm ever changes to schedule
 		// work in parallel, this should be protected by a lock (and the lock
@@ -251,16 +253,16 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("[TRACE] dependency walk: scheduler: stopping")
+				logger.Debug("stopping scheduler")
 				return
 
 			case id := <-scheduler:
 				if _, ok := scheduled[id]; !ok {
-					log.Printf("[DEBUG] dependency walk: scheduler: scheduling %s\n", id)
+					logger.WithField("id", id).Debug("scheduling")
 					scheduled[id] = struct{}{}
 					go worker(id)
 				} else {
-					log.Printf("[TRACE] dependency walk: scheduler: already scheduled %s\n", id)
+					logger.WithField("id", id).Debug("already scheduled")
 				}
 			}
 		}
@@ -274,7 +276,7 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 				return fmt.Errorf("%q did not have done channel", id)
 			}
 
-			log.Printf("[DEBUG] waiting for %s\n", id)
+			logger.WithField("id", id).Debug("waiting for id")
 			select {
 			case <-ctx.Done():
 				return nil
@@ -293,7 +295,7 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		wait.Add(1)
 		defer wait.Done()
 
-		log.Printf("[DEBUG] dependency walk: worker: starting %s\n", id)
+		logger.WithField("id", id).Debug("starting worker")
 
 		var deps, children []string
 		for _, edge := range g.DownEdges(id) {
@@ -342,7 +344,7 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 			return
 		}
 
-		log.Printf("[DEBUG] %s: executing\n", id)
+		logger.WithField("id", id).Debug("executing")
 		if err := cb(id, g.Get(id)); err != nil {
 			setErr(id, err)
 		}
@@ -379,6 +381,8 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		return err
 	}
 
+	logger := logging.GetLogger(ctx).WithField("function", "rootFirstWalk")
+
 	var (
 		todo = []string{root.(string)}
 		done = map[string]struct{}{}
@@ -404,7 +408,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
 			if _, ok := done[edge.Target().(string)]; AreSiblingIDs(id, edge.Target().(string)) && !ok {
-				log.Printf("[TRACE] walk(rootfirst): %q still waiting for sibling %q", id, edge)
+				logger.WithField("id", id).WithField("target", edge).Debug("still waiting for sibling")
 				todo = append(todo, id)
 				skip = true
 			}
@@ -413,7 +417,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 			continue
 		}
 
-		log.Printf("[DEBUG] walk(rootfirst): walking %s\n", id)
+		logger.WithField("id", id).Debug("walking")
 
 		if err := cb(id, g.Get(id)); err != nil {
 			return err
