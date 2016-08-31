@@ -6,8 +6,98 @@
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 30 Aug 2016 15:12:06 -0500</lastBuildDate>
+    <lastBuildDate>Wed, 31 Aug 2016 09:51:20 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>task</title>
+      <link>http://converge.aster.is/resources/task/</link>
+      <pubDate>Wed, 31 Aug 2016 09:51:20 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/task/</guid>
+      <description>
+
+&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
+checking if the command should be run.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to check if a resource needs to be changed. It should
+exit with exit code 0 if the resource does not need to be changed, and
+1 (or above) otherwise.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to apply the resource. Normal shell exit code
+expectations apply (that is, exit code 0 for success, 1 or above for
+failure.)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully. The
+format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
+sequence of decimal numbers, each with optional fraction and a unit
+suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
+&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>docker.image</title>
@@ -217,96 +307,6 @@ treated as required.&lt;/p&gt;
     </item>
     
     <item>
-      <title>task</title>
-      <link>http://converge.aster.is/resources/task/</link>
-      <pubDate>Tue, 30 Aug 2016 15:12:06 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/task/</guid>
-      <description>
-
-&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
-checking if the command should be run.&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
-  default = &amp;quot;Hello, World!&amp;quot;
-}
-
-param &amp;quot;filename&amp;quot; {
-  default = &amp;quot;test.txt&amp;quot;
-}
-
-task &amp;quot;render&amp;quot; {
-  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
-  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
-used by default.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
-&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script to run to check if a resource needs to be changed. It should
-exit with exit code 0 if the resource does not need to be changed, and
-1 (or above) otherwise.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script to run to apply the resource. Normal shell exit code
-expectations apply (that is, exit code 0 for success, 1 or above for
-failure.)&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the amount of time the command will wait before halting forcefully. The
-format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
-&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Configuration</title>
       <link>http://converge.aster.is/configuration/</link>
       <pubDate>Mon, 29 Aug 2016 16:51:52 -0500</pubDate>
@@ -323,8 +323,8 @@ them, send &lt;code&gt;--help&lt;/code&gt; to any command. In addition, all comm
 
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;--config&lt;/code&gt;: set the config file (see below for more info on this file)&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;--log-level&lt;/code&gt;: log level, one of &lt;code&gt;TRACE&lt;/code&gt;, &lt;code&gt;DEBUG&lt;/code&gt;, &lt;code&gt;INFO&lt;/code&gt;, &lt;code&gt;WARN&lt;/code&gt;, &lt;code&gt;ERROR&lt;/code&gt;, or
-&lt;code&gt;FATAL&lt;/code&gt; (&lt;code&gt;INFO&lt;/code&gt; is used by default)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;--log-level&lt;/code&gt;: log level, one of &lt;code&gt;DEBUG&lt;/code&gt;, &lt;code&gt;INFO&lt;/code&gt;, &lt;code&gt;WARN&lt;/code&gt;, &lt;code&gt;ERROR&lt;/code&gt;, or &lt;code&gt;FATAL&lt;/code&gt;
+(&lt;code&gt;INFO&lt;/code&gt; is used by default)&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;--nocolor&lt;/code&gt;: set to force colorless output&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -636,11 +636,17 @@ issuing &lt;code&gt;converge version&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;This is our first module! Let&amp;rsquo;s plan out our execution first by running
 &lt;code&gt;converge plan helloWorld.hcl&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan helloWorld.hcl
-2016/08/24 23:58:28 [INFO] planning content/helloWorld.hcl
-2016/08/24 23:58:28 [INFO] resolving dependencies
-2016/08/24 23:58:28 [INFO] loading resources
-2016/08/24 23:58:28 [INFO] rendering
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=7671639d-b007-4145-994b-0765080bd82c
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] loading resources                             component=rpc function=SetResources runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] rendering                                     component=rpc function=Render runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
         Messages:
@@ -660,11 +666,21 @@ output.&lt;/p&gt;
 
 &lt;p&gt;Next, let&amp;rsquo;s actually make the changes, using &lt;code&gt;converge apply&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge apply helloWorld.hcl
-2016/08/25 00:00:35 [INFO] applying content/helloWorld.hcl
-2016/08/25 00:00:35 [INFO] resolving dependencies
-2016/08/25 00:00:35 [INFO] loading resources
-2016/08/25 00:00:35 [INFO] rendering
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge apply --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=4ffe080e-bc6b-4655-b7d5-e5456beb1e67
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] applying                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] loading resources                             component=rpc function=SetResources runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] rendering                                     component=rpc function=Render runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=APPLY
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=APPLY
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=APPLY
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=APPLY
 
 root/file.content.render:
         Messages:
@@ -713,17 +729,23 @@ to date. While you&amp;rsquo;re in your editor, go ahead and change the message 
 something else. I changed mine to &amp;ldquo;LOL World!&amp;rdquo; Once you&amp;rsquo;ve done that, run the
 plan again.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan helloWorld.hcl
-2016/08/25 00:05:31 [INFO] planning content/helloWorld.hcl
-2016/08/25 00:05:31 [INFO] resolving dependencies
-2016/08/25 00:05:31 [INFO] loading resources
-2016/08/25 00:05:31 [INFO] rendering
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=2157f1e9-6ca9-4e6f-a203-096608c9adcd
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] loading resources                             component=rpc function=SetResources runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] rendering                                     component=rpc function=Render runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
-    Messages:
-    Has Changes: yes
-    Changes:
-        hello.txt: &amp;quot;LOL, World!&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
+        Messages:
+        Has Changes: yes
+        Changes:
+            hello.txt: &amp;quot;LOL World!&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
 
 Summary: 0 errors, 1 changes
 &lt;/code&gt;&lt;/pre&gt;
@@ -763,17 +785,25 @@ templates.&lt;/p&gt;
 &lt;p&gt;Let&amp;rsquo;s change the name in the template to your name (I&amp;rsquo;m going to assume it&amp;rsquo;s
 &amp;ldquo;Spartacus&amp;rdquo;.) We&amp;rsquo;ll use the &lt;code&gt;-p&lt;/code&gt; flag to &lt;code&gt;converge plan&lt;/code&gt; to see what&amp;rsquo;ll happen:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan -p name=Spartacus content/helloWorld.hcl
-2016/08/25 00:17:11 [INFO] applying content/helloWorld.hcl
-2016/08/25 00:17:11 [INFO] resolving dependencies
-2016/08/25 00:17:11 [INFO] loading resources
-2016/08/25 00:17:11 [INFO] rendering
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local -p name=Spartacus content/helloWorld.hcl
+WARN[0000] setting session-local token                   token=dc73ca2e-d5dc-46d6-a2e4-81b848e7309c
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] loading resources                             component=rpc function=SetResources runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] rendering                                     component=rpc function=Render runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=FINISHED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=FINISHED stage=PLAN
 
 root/file.content.render:
         Messages:
         Has Changes: yes
         Changes:
-            hello.txt: &amp;quot;Hello, World!&amp;quot; =&amp;gt; &amp;quot;Hello, Spartacus!&amp;quot;
+            hello.txt: &amp;quot;LOL World!&amp;quot; =&amp;gt; &amp;quot;Hello, Spartacus!&amp;quot;
 
 Summary: 0 errors, 1 changes
 &lt;/code&gt;&lt;/pre&gt;
