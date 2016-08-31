@@ -16,8 +16,8 @@ Command-line flags will always be considered over any other source. To view
 them, send `--help` to any command. In addition, all commands have these flags:
 
 - `--config`: set the config file (see below for more info on this file)
-- `--log-level`: log level, one of `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, or
-  `FATAL` (`INFO` is used by default)
+- `--log-level`: log level, one of `DEBUG`, `INFO`, `WARN`, `ERROR`, or `FATAL`
+  (`INFO` is used by default)
 - `--nocolor`: set to force colorless output
 
 ## Environment
