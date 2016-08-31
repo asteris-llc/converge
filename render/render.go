@@ -17,10 +17,10 @@ package render
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/pkg/errors"
@@ -31,11 +31,13 @@ type Values map[string]interface{}
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
-	log.Println("[INFO] rendering")
+	logger := logging.GetLogger(ctx).WithField("function", "Render")
+
+	logger.Info("rendering")
 
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" {
-			log.Println("[DEBUG] render: wrapping root")
+			logger.Debug("wrappering root")
 			out.Add(id, module.NewPreparer(top))
 		}
 
@@ -44,7 +46,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 			return fmt.Errorf("Render only deals with graphs of resource.Resource, node was %T", out.Get(id))
 		}
 
-		log.Printf("[DEBUG] render: preparing %q\n", id)
+		logger.WithField("id", id).Debug("preparing")
 
 		// determine dot value of the current node - mostly for params and modules
 		renderer := &Renderer{Graph: out, ID: id}

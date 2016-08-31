@@ -32,11 +32,15 @@ This is our first module! Let's plan out our execution first by running
 `converge plan helloWorld.hcl`:
 
 ```sh
-$ converge plan helloWorld.hcl
-2016/08/24 23:58:28 [INFO] planning content/helloWorld.hcl
-2016/08/24 23:58:28 [INFO] resolving dependencies
-2016/08/24 23:58:28 [INFO] loading resources
-2016/08/24 23:58:28 [INFO] rendering
+$ converge plan --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=7671639d-b007-4145-994b-0765080bd82c
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] loading resources                             component=rpc function=SetResources runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] rendering                                     component=rpc function=Render runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
         Messages:
@@ -57,11 +61,17 @@ output.
 Next, let's actually make the changes, using `converge apply`:
 
 ```sh
-$ converge apply helloWorld.hcl
-2016/08/25 00:00:35 [INFO] applying content/helloWorld.hcl
-2016/08/25 00:00:35 [INFO] resolving dependencies
-2016/08/25 00:00:35 [INFO] loading resources
-2016/08/25 00:00:35 [INFO] rendering
+$ converge apply --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=4ffe080e-bc6b-4655-b7d5-e5456beb1e67
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] applying                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] loading resources                             component=rpc function=SetResources runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] rendering                                     component=rpc function=Render runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=APPLY
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=APPLY
 
 root/file.content.render:
         Messages:
@@ -97,17 +107,21 @@ something else. I changed mine to "LOL World!" Once you've done that, run the
 plan again.
 
 ```sh
-$ converge plan helloWorld.hcl
-2016/08/25 00:05:31 [INFO] planning content/helloWorld.hcl
-2016/08/25 00:05:31 [INFO] resolving dependencies
-2016/08/25 00:05:31 [INFO] loading resources
-2016/08/25 00:05:31 [INFO] rendering
+$ converge plan --local helloWorld.hcl
+WARN[0000] setting session-local token                   token=2157f1e9-6ca9-4e6f-a203-096608c9adcd
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] loading resources                             component=rpc function=SetResources runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] rendering                                     component=rpc function=Render runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
-    Messages:
-    Has Changes: yes
-    Changes:
-        hello.txt: "LOL, World!" => "Hello, World!"
+        Messages:
+        Has Changes: yes
+        Changes:
+            hello.txt: "LOL World!" => "Hello, World!"
 
 Summary: 0 errors, 1 changes
 ```
@@ -148,17 +162,22 @@ Let's change the name in the template to your name (I'm going to assume it's
 "Spartacus".) We'll use the `-p` flag to `converge plan` to see what'll happen:
 
 ```sh
-$ converge plan -p name=Spartacus content/helloWorld.hcl
-2016/08/25 00:17:11 [INFO] applying content/helloWorld.hcl
-2016/08/25 00:17:11 [INFO] resolving dependencies
-2016/08/25 00:17:11 [INFO] loading resources
-2016/08/25 00:17:11 [INFO] rendering
+$ converge plan --local -p name=Spartacus content/helloWorld.hcl
+WARN[0000] setting session-local token                   token=dc73ca2e-d5dc-46d6-a2e4-81b848e7309c
+INFO[0000] serving                                       addr=:26930 component=rpc
+INFO[0000] planning                                      component=client file=hello.hcl
+INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] loading resources                             component=rpc function=SetResources runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] rendering                                     component=rpc function=Render runID=91562f11-df7b-4e8e-8fda-d341531afe92
+INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
+INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
         Messages:
         Has Changes: yes
         Changes:
-            hello.txt: "Hello, World!" => "Hello, Spartacus!"
+            hello.txt: "LOL World!" => "Hello, Spartacus!"
 
 Summary: 0 errors, 1 changes
 ```

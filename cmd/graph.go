@@ -18,8 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
@@ -51,25 +51,26 @@ You can pipe the output directly to the 'dot' command, for example:
 		params := getParams(cmd)
 
 		fname := args[0]
+		flog := log.WithField("file", fname)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
 		out, err := load.Load(ctx, fname)
 		if err != nil {
-			log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
+			flog.WithError(err).Fatal("could not parse file")
 		}
 
 		if viper.GetBool("merge-duplicates") {
 			var rendered *graph.Graph
 			rendered, err = render.Render(ctx, out, params)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not render")
 			}
 
 			out, err = graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not merge duplicates")
 			}
 		}
 
@@ -88,7 +89,7 @@ You can pipe the output directly to the 'dot' command, for example:
 		printer := prettyprinters.New(dotPrinter)
 		dotCode, err := printer.Show(ctx, out)
 		if err != nil {
-			log.Fatalf("[FATAL] %s: could not generate dot output: %s", fname, err)
+			flog.WithError(err).Fatal("could not generate dot output")
 		}
 		fmt.Println(dotCode)
 

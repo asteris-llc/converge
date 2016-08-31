@@ -12,31 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helpers
+package rpc
 
 import (
-	"bufio"
-	"bytes"
-	"fmt"
-	"os"
-	"testing"
+	"context"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/helpers/logging"
 )
 
-// HideLogs hides logs during test execution
-func HideLogs(t *testing.T) func() {
-	var b bytes.Buffer
-	writer := bufio.NewWriter(&b)
-	log.SetOutput(writer)
-
-	return func() {
-		if t.Failed() {
-			assert.NoError(t, writer.Flush())
-			fmt.Print(b.String())
-		}
-
-		log.SetOutput(os.Stderr)
-	}
+func getLogger(ctx context.Context) *logrus.Entry {
+	return logging.GetLogger(ctx).WithField("component", "rpc")
 }

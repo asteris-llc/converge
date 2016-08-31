@@ -16,10 +16,10 @@ package graph
 
 import (
 	"context"
-	"log"
 	"strings"
 	"sync"
 
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/mitchellh/hashstructure"
 )
 
@@ -31,13 +31,15 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 	lock := new(sync.Mutex)
 	values := map[uint64]string{}
 
+	logger := logging.GetLogger(ctx).WithField("function", "MergeDuplicates")
+
 	return g.RootFirstTransform(ctx, func(id string, out *Graph) error {
 		if id == "root" { // root
 			return nil
 		}
 
 		if skip(id) {
-			log.Printf("[TRACE] merge duplicates: skipping %q by request\n", id)
+			logger.WithField("id", id).Debug("skipping by request")
 			return nil
 		}
 
@@ -53,24 +55,24 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-			log.Printf("[TRACE] merge duplicates: registering %q as original\n", id)
+			logger.WithField("id", id).Debug("registering as original")
 			values[hash] = id
 
 			return nil
 		}
 
-		log.Printf("[DEBUG] merge duplicates: found duplicate: %q and %q\n", target, id)
+		logger.WithField("id", target).WithField("duplicate", id).Debug("found duplicate")
 
 		// Point all inbound links to value to target instead
 		for _, src := range Sources(g.UpEdges(id)) {
-			log.Printf("[TRACE] merge duplicates: re-pointing %q from %q to %q\n", src, id, target)
+			logger.WithField("src", src).WithField("duplicate", id).WithField("target", target).Debug("re-pointing dependency")
 			out.Disconnect(src, id)
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
 		for _, child := range g.Descendents(id) {
-			log.Printf("[TRACE] merge duplicates: removing child %q\n", child)
+			logger.WithField("child", child).Debug("removing child")
 			out.Remove(child)
 		}
 

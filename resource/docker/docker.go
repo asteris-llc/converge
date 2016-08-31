@@ -15,10 +15,10 @@
 package docker
 
 import (
-	"log"
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	dc "github.com/fsouza/go-dockerclient"
 )
 
@@ -50,10 +50,14 @@ func (c *Client) FindImage(repoTag string) (*dc.APIImages, error) {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] docker: image filter %s found %d images", repoTag, len(images))
+	log.WithFields(log.Fields{
+		"module":      "docker",
+		"filter":      repoTag,
+		"image_count": len(images),
+	}).Debug("image filter found images")
 	for _, image := range images {
 		for _, tag := range image.RepoTags {
-			log.Printf("[DEBUG] docker: found %s", tag)
+			log.WithField("module", "docker").WithField("tag", tag).Debug("found tag")
 			if strings.EqualFold(repoTag, tag) {
 				return &image, nil
 			}
@@ -65,7 +69,11 @@ func (c *Client) FindImage(repoTag string) (*dc.APIImages, error) {
 
 // PullImage pulls an image with the specified name and tag
 func (c *Client) PullImage(name, tag string) error {
-	log.Printf("[DEBUG] docker: pulling %s:%s", name, tag)
+	log.WithFields(log.Fields{
+		"module": "docker",
+		"name":   name,
+		"tag":    tag,
+	}).Debug("pulling")
 	opts := dc.PullImageOptions{
 		Repository:        name,
 		Tag:               tag,
@@ -77,6 +85,10 @@ func (c *Client) PullImage(name, tag string) error {
 		return err
 	}
 
-	log.Printf("[DEBUG] docker: done pulling %s:%s", name, tag)
+	log.WithFields(log.Fields{
+		"module": "docker",
+		"name":   name,
+		"tag":    tag,
+	}).Debug("done pulling")
 	return nil
 }

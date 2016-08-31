@@ -18,9 +18,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/load"
@@ -48,42 +48,40 @@ not display healthy checks.`,
 		GracefulExit(cancel)
 
 		// params
-		params, err := getParamsFromFlags(cmd.Flags())
-		if err != nil {
-			log.Fatalf("[FATAL] could not read params: %s\n", err)
-		}
+		params := getParams(cmd)
 
 		for _, fname := range args {
-			log.Printf("[INFO] planning %s\n", fname)
+			flog := log.WithField("file", fname)
+			flog.Info("checking health")
 
 			loaded, err := load.Load(ctx, fname)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not parse file")
 			}
 
 			rendered, err := render.Render(ctx, loaded, params)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not render")
 			}
 
 			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
+				flog.WithError(err).Fatal("could not merge duplicates")
 			}
 
 			planned, err := plan.Plan(ctx, merged)
 			if err != nil && err != plan.ErrTreeContainsErrors {
-				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
+				flog.WithError(err).Fatal("planning failed")
 			}
 
 			results, err := healthcheck.CheckGraph(ctx, planned)
 			if err != nil {
-				log.Fatalf("[FATAL] %s: checking failed: %s\n", fname, err)
+				flog.WithError(err).Fatal("checking failed")
 			}
 
 			out, perr := healthPrinter().Show(ctx, results)
 			if perr != nil {
-				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, err)
+				flog.WithError(perr).Fatal("failed printing results")
 			}
 
 			fmt.Print("\n")

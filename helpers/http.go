@@ -18,13 +18,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"path"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/rpc"
 )
 
@@ -62,7 +62,7 @@ func HTTPServeFile(filePath string) (address string, stop func(), err error) {
 		dur, _ := time.ParseDuration(".1s")
 		select {
 		case err := <-errors:
-			log.Printf("[ERROR]: HTTPServeFile: %s\n", err)
+			log.WithError(err).Error("error in HTTPServeFile")
 			fmt.Println(err)
 		case <-time.After(dur):
 			return fmt.Sprintf("http://localhost:%d/%s", port, path.Base(filePath)), cancel, nil
