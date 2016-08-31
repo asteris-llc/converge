@@ -17,9 +17,9 @@ package plan
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
@@ -36,6 +36,8 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
+	logger := logging.GetLogger(ctx).WithField("function", "Plan")
+
 	out, err := in.Transform(
 		ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
@@ -46,7 +48,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 				return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
 			}
 
-			log.Printf("[DEBUG] checking dependencies for %q\n", id)
+			logger.WithField("id", id).Debug("checking dependencies")
 			for _, depID := range graph.Targets(out.DownEdges(id)) {
 				dep, ok := out.Get(depID).(*Result)
 				if !ok {
@@ -67,7 +69,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 				}
 			}
 
-			log.Printf("[DEBUG] checking %q\n", id)
+			logger.WithField("id", id).Debug("checking")
 
 			status, err := task.Check()
 			result := &Result{
