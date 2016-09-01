@@ -15,7 +15,7 @@
 package registry
 
 import (
-	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -36,7 +36,7 @@ func New() *Registry {
 // Register a new type by import name
 func (r *Registry) Register(name string, i interface{}, reverse ...interface{}) error {
 	if _, present := r.forward[name]; present {
-		return errors.New("name already registered")
+		return fmt.Errorf("%q already registered", name)
 	}
 
 	r.forward[name] = reflect.TypeOf(i)
@@ -55,7 +55,7 @@ func (r *Registry) RegisterReverse(i interface{}, name string) error {
 	t := reflect.TypeOf(i)
 
 	if _, present := r.reverse[t]; present {
-		return errors.New("type already registered")
+		return nil
 	}
 
 	r.reverse[t] = name
@@ -70,11 +70,19 @@ func (r *Registry) NewByName(name string) (interface{}, bool) {
 		return nil, false
 	}
 
-	val := reflect.New(t)
-	if val.CanInterface() {
-		return reflect.Indirect(val).Interface(), true
+	var val reflect.Value
+	if t.Kind() == reflect.Ptr {
+		val = reflect.New(t.Elem())
+	} else {
+		val = reflect.New(t)
 	}
 
+	// send the interface...
+	if val.CanInterface() {
+		return val.Interface(), true
+	}
+
+	// ...but if we can't, return false
 	return nil, false
 }
 

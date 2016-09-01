@@ -15,6 +15,7 @@
 package registry_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -22,7 +23,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestType struct{}
+type TestType struct {
+	X string `json:"x"`
+}
 
 func TestRegistryRegister(t *testing.T) {
 	t.Parallel()
@@ -58,20 +61,21 @@ func TestRegistryRegisterReverse(t *testing.T) {
 		r := registry.New()
 
 		assert.NoError(t, r.RegisterReverse(val, "test"))
-		assert.Error(t, r.RegisterReverse(val, "test"))
+		assert.NoError(t, r.RegisterReverse(val, "test.second"))
 	})
 }
 
 func TestRegistryNewByName(t *testing.T) {
 	t.Parallel()
 
-	val := new(TestType)
+	var val *TestType
 	r := registry.New()
 	require.NoError(t, r.Register("test", val))
 
 	t.Run("good", func(t *testing.T) {
 		out, ok := r.NewByName("test")
 		assert.IsType(t, (*TestType)(nil), out)
+		assert.NotNil(t, out)
 		assert.True(t, ok)
 	})
 
@@ -79,6 +83,20 @@ func TestRegistryNewByName(t *testing.T) {
 		out, ok := r.NewByName("unregistered")
 		assert.Nil(t, out)
 		assert.False(t, ok)
+	})
+
+	t.Run("deserialize-json", func(t *testing.T) {
+		r := registry.New()
+		require.NoError(t, r.Register("test", val))
+
+		dest, ok := r.NewByName("test")
+		require.True(t, ok)
+		err := json.Unmarshal([]byte(`{"x":"y"}`), dest)
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, dest) {
+			assert.Equal(t, "y", dest.(*TestType).X)
+		}
 	})
 }
 
