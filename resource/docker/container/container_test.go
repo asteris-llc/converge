@@ -320,26 +320,50 @@ func TestContainerCheckEnvNeedsChange(t *testing.T) {
 			return &dc.Container{
 				Name: name,
 				Config: &dc.Config{
-					Env: []string{"FROMIMAGE=yes", "FOO=BAR"},
+					Env: []string{
+						"PATH=/usr/bin",                    // set from image
+						"HTTP_PROXY=http://localhost:8080", // set by engine
+						"no_proxy=*.local",                 // set by engine
+						"FROMIMAGE=yes",                    // set from image
+						"FOO=BAR",                          // set in container
+						"EXTRA=TEST",                       // set in container
+					},
 				},
 			}, nil
 		},
 		FindImageFunc: func(repoTag string) (*dc.Image, error) {
 			return &dc.Image{
 				Config: &dc.Config{
-					Env: []string{"FROMIMAGE=yes"},
+					Env: []string{"PATH=/usr/bin", "FROMIMAGE=yes"},
 				},
 			}, nil
 		},
 	}
 
-	container := &container.Container{Force: true, Name: "nginx", Env: []string{"BAR=BAZ", "FOO=BAR"}}
+	container := &container.Container{
+		Force: true,
+		Name:  "nginx",
+		Env: []string{
+			"BAR=BAZ",                      // new container var
+			"FOO=BAR",                      // existing container var
+			"PATH=/usr/bin;/usr/sbin",      // override image var
+			"NO_PROXY=*.local, 169.254/16", // override engine var
+		},
+	}
 	container.SetClient(c)
 
 	status, err := container.Check()
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "env", "FOO=BAR", "BAR=BAZ FOO=BAR")
+	// diff should include the new BAR var and the overridden PATH and NO_PROXY
+	// vars. The EXTRA var should not be included in the desired state either
+	assertDiff(
+		t,
+		status.Diffs(),
+		"env",
+		"EXTRA=TEST FOO=BAR PATH=/usr/bin no_proxy=*.local",
+		"BAR=BAZ FOO=BAR NO_PROXY=*.local, 169.254/16 PATH=/usr/bin;/usr/sbin",
+	)
 }
 
 func TestContainerCheckExposeNeedsChange(t *testing.T) {

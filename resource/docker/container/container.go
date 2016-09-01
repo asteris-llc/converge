@@ -33,13 +33,8 @@ const (
 	containerStatusCreated = "created"
 )
 
-// these variable names are excluded when comparing environment variables
-var excludedEnvVars = map[string]struct{}{
-	"http_proxy":  struct{}{},
-	"https_proxy": struct{}{},
-	"no_proxy":    struct{}{},
-	"ftp_proxy":   struct{}{},
-}
+// these variable names can be injected by the docker engine
+var engineEnvVars = []string{"https_proxy", "http_proxy", "no_proxy", "ftp_proxy"}
 
 // Container is responsible for creating docker containers
 type Container struct {
@@ -227,22 +222,39 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 }
 
 func (c *Container) compareEnv(container *dc.Container, image *dc.Image) (actual, expected string) {
-	toSet := func(env []string) mapset.Set {
+	varName := func(envvar string) string {
+		return strings.ToLower(strings.Split(envvar, "=")[0])
+	}
+
+	varNameSet := func(env []string) mapset.Set {
+		varnames := make([]string, len(env))
+		for i, envvar := range env {
+			varnames[i] = varName(envvar)
+		}
+		return toStringSet(varnames)
+	}
+
+	varSet := func(env []string, varNames mapset.Set) mapset.Set {
 		set := mapset.NewSet()
 		for _, envvar := range env {
-			varname := strings.Split(envvar, "=")[0]
-			if _, ok := excludedEnvVars[strings.ToLower(varname)]; !ok {
+			if varNames.Contains(varName(envvar)) {
 				set.Add(envvar)
 			}
 		}
 		return set
 	}
 
-	containerSet := toSet(container.Config.Env)
-	imageSet := toSet(image.Config.Env)
-	// we don't want to include the default image env in the diff to reduce noise
-	compareSet := containerSet.Difference(imageSet)
-	expectedSet := toSet(c.Env)
+	wantedVarNames := varNameSet(c.Env)                   // desired var names
+	imageVarNames := varNameSet(image.Config.Env)         // var names defined in the image config
+	engineVarNames := varNameSet(engineEnvVars)           // var names defined by the engine
+	containerVarNames := varNameSet(container.Config.Env) // all var names defined in the running container
+
+	// we want to ignore vars that are injected by the image config or the engine
+	// unless they are explicitly set/overridden in the desired state
+	compareVarNames := wantedVarNames.Union(containerVarNames.Difference(imageVarNames.Union(engineVarNames)))
+
+	compareSet := varSet(container.Config.Env, compareVarNames)
+	expectedSet := varSet(c.Env, compareVarNames)
 
 	actual = joinStringSet(compareSet, " ")
 	expected = joinStringSet(expectedSet, " ")
