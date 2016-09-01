@@ -19,7 +19,7 @@ docker.image "nginx" {
 docker.container "nginx" {
   name  = "{{param `container`}}"
   image = "{{param `image`}}:{{param `image-tag`}}"
-  force = true
+  force = "true"
 
   expose = [
     "80",
@@ -27,7 +27,7 @@ docker.container "nginx" {
     "8080",
   ]
 
-  publish_all_ports = false
+  publish_all_ports = "false"
 
   ports = [
     "80",

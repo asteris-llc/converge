@@ -17,6 +17,7 @@ package container
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
@@ -66,20 +67,26 @@ type Preparer struct {
 	// mounts all volumes from the specified container
 	VolumesFrom []string `hcl:"volumes_from"`
 
-	// allocates a random host port for all of a container’s exposed ports. Specified as a boolean value
-	PublishAllPorts bool `hcl:"publish_all_ports"` // TODO: how do we render bool values from params
+	// allocates a random host port for all of a container’s exposed ports.
+	// Specified as a boolean value
+	PublishAllPorts string `hcl:"publish_all_ports" doc_type:"bool"`
 
 	// the desired status of the container. running|created
-	Status string
+	Status string `hcl:"status"`
 
 	// indicates whether or not the container will be recreated if the state is
 	// not what is expected. By default, the module will only check to see if the
-	// container exists
-	Force bool
+	// container exists. Specified as a boolean value
+	Force string `hcl:"force" doc_type:"bool"`
 }
 
 // Prepare a docker container
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	force, err := renderBool(render, "force", p.Force)
+	if err != nil {
+		return nil, err
+	}
+
 	name, err := requiredRender(render, "name", p.Name)
 	if err != nil {
 		return nil, err
@@ -127,6 +134,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
+	publishAllPorts, err := renderBool(render, "publish_all_ports", p.PublishAllPorts)
+	if err != nil {
+		return nil, err
+	}
+
 	renderedPorts, err := renderStringSlice(render, "ports", p.Ports)
 	if err != nil {
 		return nil, err
@@ -153,7 +165,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	container := &Container{
-		Force:           p.Force,
+		Force:           force,
 		Name:            name,
 		Status:          status,
 		Image:           image,
@@ -163,7 +175,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Env:             renderedEnv,
 		Expose:          renderedExpose,
 		Links:           renderedLinks,
-		PublishAllPorts: p.PublishAllPorts,
+		PublishAllPorts: publishAllPorts,
 		PortBindings:    renderedPorts,
 		DNS:             renderedDNS,
 		Volumes:         renderedVolumes,
@@ -194,6 +206,21 @@ func requiredRender(render resource.Renderer, name, content string) (string, err
 	}
 
 	return rendered, nil
+}
+
+func renderBool(render resource.Renderer, name, content string) (bool, error) {
+	var b bool
+	rendered, err := render.Render(name, content)
+	if err != nil {
+		return b, err
+	}
+
+	b, err = strconv.ParseBool(rendered)
+	if err != nil {
+		return b, err
+	}
+
+	return b, nil
 }
 
 func renderStringSlice(render resource.Renderer, name string, content []string) ([]string, error) {
