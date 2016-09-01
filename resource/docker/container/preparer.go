@@ -50,7 +50,11 @@ type Preparer struct {
 	// container_name:alias
 	Links []string `hcl:"links"`
 
-	// publish container ports to the host
+	// publish container ports to the host. Each item should be in the following
+	// format:
+	// ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
+	// Ports can be specified in the format: portnum/proto. If proto is not
+	// specified, "tcp" is assumed
 	Ports []string `hcl:"ports"`
 
 	// list of DNS servers for the container to use
