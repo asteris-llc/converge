@@ -24,6 +24,9 @@ import (
 )
 
 // Preparer for docker containers
+//
+// Container is responsible for creating docker containers. It assumes that
+// there is already a Docker daemon running on the system.
 type Preparer struct {
 	// name of the container
 	Name string `hcl:"name"`
