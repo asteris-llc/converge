@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/executor/either"
+	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
@@ -45,7 +46,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 }
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
-func (g pipelineGen) GetTask(idi interface{}) either.EitherM {
+func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 	id := idi.(string)
 	node := g.Graph.Get(id)
 	if task, ok := node.(resource.Task); ok {
@@ -59,7 +60,7 @@ func (g pipelineGen) GetTask(idi interface{}) either.EitherM {
 // it returns `Right (Left Status)` and otherwise returns `Right (Right
 // Task)`. The return values are structured to short-circuit `PlanNode` if we
 // have failures.
-func (g pipelineGen) DependencyCheck(taskI interface{}) either.EitherM {
+func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 	task, ok := taskI.(taskWrapper)
 	if !ok {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
@@ -85,7 +86,7 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) either.EitherM {
 // if the input value is Left, returns it as a Right value, otherwise it
 // attempts to run plan on the TaskWrapper and returns an appropriate Left or
 // Right value.
-func (g pipelineGen) PlanNode(taski interface{}) either.EitherM {
+func (g pipelineGen) PlanNode(taski interface{}) monad.Monad {
 	taskE, ok := taski.(either.EitherM)
 	if !ok {
 		return either.LeftM(errors.New("plan node was expected to be EitherM"))
