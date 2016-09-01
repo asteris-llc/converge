@@ -17,6 +17,7 @@ package module
 import (
 	"fmt"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -54,4 +55,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	return module, nil
+}
+
+func init() {
+	registry.Register("module", (*Preparer)(nil), (*Module)(nil))
 }

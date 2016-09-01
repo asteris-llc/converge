@@ -14,7 +14,10 @@
 
 package content
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"github.com/asteris-llc/converge/load/registry"
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Preparer for Content
 //
@@ -43,4 +46,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Destination: destination,
 		Content:     content,
 	}, nil
+}
+
+func init() {
+	registry.Register("file.content", (*Preparer)(nil), (*Content)(nil))
 }

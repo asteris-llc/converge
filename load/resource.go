@@ -20,16 +20,18 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/docker/container"
-	"github.com/asteris-llc/converge/resource/docker/image"
-	"github.com/asteris-llc/converge/resource/file/content"
-	"github.com/asteris-llc/converge/resource/file/mode"
-	"github.com/asteris-llc/converge/resource/module"
-	"github.com/asteris-llc/converge/resource/param"
-	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/hashicorp/hcl"
+
+	// import empty to register types for SetResources
+	_ "github.com/asteris-llc/converge/resource/docker/container"
+	_ "github.com/asteris-llc/converge/resource/docker/image"
+	_ "github.com/asteris-llc/converge/resource/file/content"
+	_ "github.com/asteris-llc/converge/resource/file/mode"
+	_ "github.com/asteris-llc/converge/resource/module"
+	_ "github.com/asteris-llc/converge/resource/param"
+	_ "github.com/asteris-llc/converge/resource/shell"
 )
 
 // SetResources loads the resources for each graph node
@@ -47,30 +49,8 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
-		var dest resource.Resource
-		switch node.Kind() {
-		case "param":
-			dest = new(param.Preparer)
-
-		case "module":
-			dest = new(module.Preparer)
-
-		case "task", "healthcheck.task":
-			dest = new(shell.Preparer)
-
-		case "file.content":
-			dest = new(content.Preparer)
-
-		case "file.mode":
-			dest = new(mode.Preparer)
-
-		case "docker.image":
-			dest = new(image.Preparer)
-
-		case "docker.container":
-			dest = new(container.Preparer)
-
-		default:
+		dest, ok := registry.NewByName(node.Kind())
+		if !ok {
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
 		}
 
