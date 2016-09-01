@@ -19,6 +19,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
@@ -59,4 +60,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	modeTask := &Mode{Destination: Destination, Mode: mode}
 	return modeTask, modeTask.Validate()
+}
+
+func init() {
+	registry.Register("file.mod", (*Preparer)(nil), (*Mode)(nil))
 }
