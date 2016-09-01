@@ -109,6 +109,17 @@ func getRPCExecutorClient(ctx context.Context, opts *rpc.ClientOpts) (pb.Executo
 	return rpc.NewExecutorClient(ctx, addr, opts)
 }
 
+func getRPCGrapherClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.GrapherClient, error) {
+	var addr string
+	if viper.GetBool(rpcEnableLocalName) {
+		addr = viper.GetString(rpcLocalAddrName)
+	} else {
+		addr = viper.GetString(rpcAddrFlagName)
+	}
+
+	return rpc.NewGrapherClient(ctx, addr, opts)
+}
+
 type recver interface {
 	Recv() (*pb.StatusResponse, error)
 }
