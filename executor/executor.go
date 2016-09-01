@@ -12,26 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package monad
+package executor
 
-// BindFunc is a function type used for Bind
-type BindFunc func(interface{}) Monad
+import (
+	"context"
 
-// Monad represents a generic monad
-type Monad interface {
-	AndThen(func(interface{}) Monad) Monad
-	Return(i interface{}) Monad
+	"github.com/asteris-llc/converge/graph"
+)
+
+// Status represents an executor node that can provide status
+type Status interface {
+	Error() error
 }
 
-// FMap applies a function inside of a monadic value
-func FMap(f func(interface{}) interface{}, m Monad) Monad {
-	fmap := func(i interface{}) Monad {
-		return m.Return(f(i))
-	}
-	return m.AndThen(fmap)
-}
-
-// Join takes a Monad (Monad (interface{})) and returns Monad (interface{})
-func Join(m Monad) Monad {
-	return m.AndThen(func(i interface{}) Monad { return i.(Monad) })
+// Execute executes a pipeline on each node
+func Execute(ctx context.Context, in *graph.Graph, pipeline Pipeline) (*graph.Graph, error) {
+	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		return nil
+	})
+	return out, err
 }

@@ -35,7 +35,12 @@ type Either interface {
 	AndThen(AndThenFunc) Either
 }
 
-// EitherM provides a full monadic wrapper around Either with Return
+// EitherM provides a full monadic wrapper around Either with Return so that it
+// implements monad.Monad. An either may be a LeftType or a RightType.  By
+// convention LeftType represents some terminal or error condition, and
+// RightType represents some intermediate or terminal phase of computation.  It
+// is common to use Either in a way similar ot multi-return functions,
+// e.g. Either error Type.
 type EitherM struct {
 	Either
 }
@@ -54,6 +59,36 @@ func (m EitherM) AndThen(f func(interface{}) monad.Monad) monad.Monad {
 // Return creates a Right value
 func (m EitherM) Return(i interface{}) monad.Monad {
 	return EitherM{Either: Right(i)}
+}
+
+// FromLeft gets the left-hand value
+func (m EitherM) FromLeft() interface{} {
+	return m.Either.(LeftType).Val
+}
+
+// FromRight gets the right-hand value
+func (m EitherM) FromRight() interface{} {
+	return m.Either.(RightType).Val
+}
+
+// IsRight returns true if the value is Right
+func (m EitherM) IsRight() bool {
+	_, ok := m.Either.(RightType)
+	return ok
+}
+
+// IsLeft returns true if the value is Left
+func (m EitherM) IsLeft() bool {
+	_, ok := m.Either.(LeftType)
+	return ok
+}
+
+// FromEither returns the value and true if it was a right-hand value
+func (m EitherM) FromEither() (interface{}, bool) {
+	if m.IsRight() {
+		return m.FromRight(), true
+	}
+	return m.FromLeft(), false
 }
 
 // ReturnM returns and EitherM
