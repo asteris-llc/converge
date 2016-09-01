@@ -15,47 +15,46 @@
 package executor
 
 import (
+	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/executor/list"
-	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/graph"
 )
 
 // Pipeline is a type alias for a lazy list of pipeline functions
-type Pipeline list.List
-
-type DependencyError struct {
-	Err error
+type Pipeline struct {
+	CallStack list.List
 }
 
-type EvaluatedResult struct {
-	Task   resource.Task
-	Result resource.TaskStatus
+// NewPipeline creats a new Pipeline with an empty call stack
+func NewPipeline() Pipeline {
+	return Pipeline{CallStack: list.Mzero()}
 }
 
-type PipelineStage interface{}
-
-func IsLeft(p PipelineStage) bool {
-	_, ok := p.(*DependencyError)
-	return ok
+// AndThen pushes a function onto the pipeline call stack
+func (p Pipeline) AndThen(f func(interface{}) either.EitherM) Pipeline {
+	p.CallStack = list.Cons(f, p.CallStack)
+	return p
 }
 
-func Left(p PipelineStage) *DependencyError {
-	return p.(*DependencyError)
+// PipelineCall represents a single element in the pipeline
+type PipelineCall struct {
+	Description    string
+	Transformation func(interface{}, *graph.Graph) either.EitherM
 }
 
-func IsRight(p PipelineStage) bool {
-	_, ok := p.(*EvaluatedResult)
-	return ok
+// ResultList is a slice of result values
+type ResultList struct {
+	Results []Result
 }
 
-func Right(p PipelineStage) *EvaluatedResult {
-	return p.(*EvaluatedResult)
+// Result defines the result of single call in a call stack
+type Result struct {
+	Node interface{}
 }
 
-type PipelineFunc func(interface{}) EvaluatedResult
-
-func bindPipeline(s PipelineStage, f func(EvaluatedResult) PipelineStage) x {
-	if IsLeft(s) {
-		return s
-	}
-	return
+// Execute performs a left-fold over the call stack accumulating results in the
+// results structure.  Intermediate values are available for successful calls.
+func (p *Pipeline) Execute() *ResultList {
+	result := &ResultList{}
+	return result
 }
