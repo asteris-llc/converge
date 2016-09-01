@@ -20,12 +20,11 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
-	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/rpc"
+	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -48,58 +47,74 @@ You can pipe the output directly to the 'dot' command, for example:
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		params := getParams(cmd)
-
 		fname := args[0]
-		flog := log.WithField("file", fname)
 
+		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		GracefulExit(cancel)
 
-		out, err := load.Load(ctx, fname)
+		// logging
+		flog := log.WithField("file", fname).WithField("component", "client")
+
+		maybeSetToken()
+
+		ssl, err := getSSLConfig(getServerName())
 		if err != nil {
-			flog.WithError(err).Fatal("could not parse file")
+			flog.WithError(err).Fatal("could not get SSL config")
 		}
 
-		if viper.GetBool("merge-duplicates") {
-			var rendered *graph.Graph
-			rendered, err = render.Render(ctx, out, params)
-			if err != nil {
-				flog.WithError(err).Fatal("could not render")
-			}
-
-			out, err = graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
-			if err != nil {
-				flog.WithError(err).Fatal("could not merge duplicates")
-			}
+		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+			flog.WithError(err).Fatal("could not start RPC")
 		}
 
-		var provider graphviz.PrintProvider
-		if viper.GetBool("merge-duplicates") {
-			provider = providers.ResourceProvider{
-				ShowParams: viper.GetBool("show-params"),
-			}
-		} else {
-			provider = providers.PreparerProvider{
-				ShowParams: viper.GetBool("show-params"),
-			}
+		client, err := getRPCGrapherClient(
+			ctx,
+			&rpc.ClientOpts{
+				Token: getToken(),
+				SSL:   ssl,
+			},
+		)
+		if err != nil {
+			flog.WithError(err).Fatal("could not get client")
 		}
 
-		dotPrinter := graphviz.New(graphviz.DefaultOptions(), provider)
-		printer := prettyprinters.New(dotPrinter)
-		dotCode, err := printer.Show(ctx, out)
+		// load the graph
+		graph, err := client.Graph(
+			ctx,
+			&pb.LoadRequest{
+				Location:   fname,
+				Parameters: getParamsRPC(cmd),
+			},
+		)
+		if err != nil {
+			flog.WithError(err).Fatal("could not get graph")
+		}
+
+		printer := prettyprinters.New(
+			graphviz.New(
+				graphviz.DefaultOptions(),
+				providers.ResourceProvider{
+					ShowParams: viper.GetBool("show-params"),
+				},
+			),
+		)
+
+		dotCode, err := printer.Show(ctx, graph)
 		if err != nil {
 			flog.WithError(err).Fatal("could not generate dot output")
 		}
-		fmt.Println(dotCode)
 
+		fmt.Println(dotCode)
 	},
 }
 
 func init() {
 	graphCmd.Flags().Bool("show-params", false, "also graph param dependencies")
-	graphCmd.Flags().Bool("merge-duplicates", false, "merge duplicates before rendering")
 	registerParamsFlags(graphCmd.Flags())
+	registerSSLFlags(graphCmd.Flags())
+	registerRPCFlags(graphCmd.Flags())
+	registerLocalRPCFlags(graphCmd.Flags())
 
 	RootCmd.AddCommand(graphCmd)
 }
