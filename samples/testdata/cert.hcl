@@ -1,9 +1,13 @@
 # a generic OpenSSL cert module
 # included here for a race condition regression test
 
-param "cn" {}
+param "cn" {
+  default = "127.0.0.1"
+}
 
-param "name" {}
+param "name" {
+  default = "localhost"
+}
 
 param "ca_crt" {
   default = "ca.crt"
