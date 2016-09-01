@@ -14,6 +14,11 @@
 
 package fakerenderer
 
+import (
+	"fmt"
+	"strconv"
+)
+
 // FakeRenderer is a pass-through renderer for testing resources
 type FakeRenderer struct {
 	DotValue     string
@@ -28,6 +33,33 @@ func (fr *FakeRenderer) Value() (string, bool) {
 // Render returns whatever content is passed in
 func (fr *FakeRenderer) Render(name, content string) (string, error) {
 	return content, nil
+}
+
+// RequiredRender returns an error if content is an empty string
+func (fr *FakeRenderer) RequiredRender(name, content string) (string, error) {
+	if content == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+	return content, nil
+}
+
+// RenderBool renders a boolean value
+func (fr *FakeRenderer) RenderBool(name, content string) (bool, error) {
+	if content == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(content)
+}
+
+// RenderStringSlice renders the slice of strings passed in
+func (fr *FakeRenderer) RenderStringSlice(name string, content []string) ([]string, error) {
+	return content, nil
+}
+
+// RenderStringMapToStringSlice renders a map of strings to strings as a string
+// slice
+func (fr *FakeRenderer) RenderStringMapToStringSlice(name string, content map[string]string, toString func(string, string) string) ([]string, error) {
+	return []string{}, nil
 }
 
 // New gets a default FakeRenderer

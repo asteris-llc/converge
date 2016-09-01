@@ -17,7 +17,6 @@ package container
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
@@ -82,27 +81,27 @@ type Preparer struct {
 
 // Prepare a docker container
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	force, err := renderBool(render, "force", p.Force)
+	force, err := render.RenderBool("force", p.Force)
 	if err != nil {
 		return nil, err
 	}
 
-	name, err := requiredRender(render, "name", p.Name)
+	name, err := render.RequiredRender("name", p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	image, err := requiredRender(render, "image", p.Image)
+	image, err := render.RequiredRender("image", p.Image)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedEntrypoint, err := renderStringSlice(render, "entrypoint", p.Entrypoint)
+	renderedEntrypoint, err := render.RenderStringSlice("entrypoint", p.Entrypoint)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedCommand, err := renderStringSlice(render, "command", p.Command)
+	renderedCommand, err := render.RenderStringSlice("command", p.Command)
 	if err != nil {
 		return nil, err
 	}
@@ -117,44 +116,44 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	renderedEnv, err := renderStringMapToStringSlice(render, "env", p.Env, func(k, v string) string {
+	renderedEnv, err := render.RenderStringMapToStringSlice("env", p.Env, func(k, v string) string {
 		return fmt.Sprintf("%s=%s", k, v)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	renderedExpose, err := renderStringSlice(render, "expose", p.Expose)
+	renderedExpose, err := render.RenderStringSlice("expose", p.Expose)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedLinks, err := renderStringSlice(render, "links", p.Links)
+	renderedLinks, err := render.RenderStringSlice("links", p.Links)
 	if err != nil {
 		return nil, err
 	}
 
-	publishAllPorts, err := renderBool(render, "publish_all_ports", p.PublishAllPorts)
+	publishAllPorts, err := render.RenderBool("publish_all_ports", p.PublishAllPorts)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedPorts, err := renderStringSlice(render, "ports", p.Ports)
+	renderedPorts, err := render.RenderStringSlice("ports", p.Ports)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedDNS, err := renderStringSlice(render, "dns", p.DNS)
+	renderedDNS, err := render.RenderStringSlice("dns", p.DNS)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedVolumes, err := renderStringSlice(render, "volumes", p.Volumes)
+	renderedVolumes, err := render.RenderStringSlice("volumes", p.Volumes)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedVolumesFrom, err := renderStringSlice(render, "volumes_from", p.VolumesFrom)
+	renderedVolumesFrom, err := render.RenderStringSlice("volumes_from", p.VolumesFrom)
 	if err != nil {
 		return nil, err
 	}
@@ -193,60 +192,4 @@ func validateContainer(container *Container) error {
 		}
 	}
 	return nil
-}
-
-func requiredRender(render resource.Renderer, name, content string) (string, error) {
-	rendered, err := render.Render(name, content)
-	if err != nil {
-		return "", err
-	}
-
-	if rendered == "" {
-		return "", fmt.Errorf("%s is required", name)
-	}
-
-	return rendered, nil
-}
-
-func renderBool(render resource.Renderer, name, content string) (bool, error) {
-	var b bool
-	rendered, err := render.Render(name, content)
-	if err != nil {
-		return b, err
-	}
-
-	b, err = strconv.ParseBool(rendered)
-	if err != nil {
-		return b, err
-	}
-
-	return b, nil
-}
-
-func renderStringSlice(render resource.Renderer, name string, content []string) ([]string, error) {
-	renderedSlice := make([]string, len(content))
-	for i, val := range content {
-		rendered, err := render.Render(fmt.Sprintf("%s[%d]", name, i), val)
-		if err != nil {
-			return nil, err
-		}
-		renderedSlice[i] = rendered
-	}
-	return renderedSlice, nil
-}
-
-func renderStringMapToStringSlice(render resource.Renderer, name string, content map[string]string, stringFunc func(string, string) string) ([]string, error) {
-	renderedSlice := make([]string, len(content))
-	idx := 0
-	for key, val := range content {
-		pair := stringFunc(key, val)
-		rendered, err := render.Render(fmt.Sprintf("%s[%s]", name, val), pair)
-		if err != nil {
-			return nil, err
-		}
-		renderedSlice[idx] = rendered
-		idx++
-	}
-
-	return renderedSlice, nil
 }
