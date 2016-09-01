@@ -63,5 +63,5 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func init() {
-	registry.Register("file.mod", (*Preparer)(nil), (*Mode)(nil))
+	registry.Register("file.mode", (*Preparer)(nil), (*Mode)(nil))
 }

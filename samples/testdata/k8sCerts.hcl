@@ -1,7 +1,9 @@
 # create certificates for a Kubernetes cluster
 # included here for a race condition regression test
 
-param "master_ip" {}
+param "master_ip" {
+  default = "127.0.0.1"
+}
 
 task "directory" {
   check = "test -d ssl"
