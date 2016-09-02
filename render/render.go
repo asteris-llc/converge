@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/asteris-llc/converge/executor"
+	"github.com/asteris-llc/converge/executor/either"
+	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
@@ -57,4 +60,63 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		factory.Graph = out
 		return nil
 	})
+}
+
+type pipelineGen struct {
+	Graph          *graph.Graph
+	RenderingPlant *Factory
+	ID             string
+	Top            Values
+}
+
+// Pipeline generates a pipelined form of rendering
+func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.Pipeline {
+	p := pipelineGen{Graph: g, RenderingPlant: factory, Top: top}
+	return executor.NewPipeline().
+		AndThen(p.maybeTransformRoot).
+		AndThen(p.prepareNode).
+		AndThen(p.wrapTask)
+}
+
+// Check to see if the current id is "root", if so generate a new module
+// preparer for it and add in all of the command-line parameters; otherwise if
+// the node is a valide resource.Resource return it.  If it's not root and not a
+// resource.Resource return an error.
+func (p pipelineGen) maybeTransformRoot(idi interface{}) monad.Monad {
+	if p.ID == "root" {
+		return either.RightM(module.NewPreparer(p.Top))
+	}
+	if res, ok := idi.(resource.Resource); ok {
+		return either.RightM(res)
+	}
+	return either.LeftM(typeError("resource.Renderer", idi))
+}
+
+// Run prepare on the node and return the resource.Resource to be wrapped
+func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
+	res, ok := idi.(resource.Resource)
+	if !ok {
+		return either.LeftM(typeError("resource.Resource", idi))
+	}
+	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
+	if err != nil {
+		return either.LeftM(err)
+	}
+	prepared, err := res.Prepare(renderer)
+	if err != nil {
+		return either.LeftM(err)
+	}
+	return either.RightM(prepared)
+}
+
+// Takes a resource.Task and wraps it in resource.TaskWrapper
+func (p pipelineGen) wrapTask(taski interface{}) monad.Monad {
+	if task, ok := taski.(resource.Task); ok {
+		return either.RightM(resource.WrapTask(task))
+	}
+	return either.LeftM(typeError("resource.Task", taski))
+}
+
+func typeError(expected string, actual interface{}) error {
+	return fmt.Errorf("type error: expected type %s but received type %T", expected, actual)
 }
