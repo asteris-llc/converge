@@ -15,13 +15,147 @@
 package apply
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/asteris-llc/converge/executor"
+	"github.com/asteris-llc/converge/executor/either"
+	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 )
 
-// Pipeline generates a pipeline to evaluate a single graph node
-func Pipeline(g *graph.Graph, id string) executor.Pipeline {
-	pipeline := executor.NewPipeline()
+type pipelineGen struct {
+	Graph          *graph.Graph
+	ID             string
+	RenderingPlant *render.Factory
+}
 
-	return pipeline
+type resultWrapper struct {
+	ID   string
+	Plan *plan.Result
+}
+
+// Pipeline generates a pipeline to evaluate a single graph node
+func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
+	gen := pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
+	return executor.NewPipeline().
+		AndThen(gen.GetTask).
+		AndThen(gen.DependencyCheck).
+		AndThen(gen.applyNode).
+		AndThen(gen.maybeRunFinalCheck)
+}
+
+// GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
+// Error if not
+func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
+	id := idi.(string)
+	node := g.Graph.Get(id)
+	if plan, ok := node.(*plan.Result); ok {
+		return either.RightM(resultWrapper{ID: id, Plan: plan})
+	}
+	return either.LeftM(fmt.Errorf("expected resource.Task but got %T", node))
+}
+
+// DependencyCheck looks for failing dependency nodes.  If an error is
+// encountered it returns `Left error`, if failing dependencies are encountered
+// it returns `Right (Left apply.Result)` and otherwise returns `Right (Right
+// plan.Result)`. The return values are structured to short-circuit `PlanNode`
+// if we have failures.
+func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
+	result, ok := taskI.(resultWrapper)
+	if !ok {
+		return either.LeftM(errors.New("input node is not a task wrapper"))
+	}
+	for _, depID := range graph.Targets(g.Graph.DownEdges(result.ID)) {
+		dep, ok := g.Graph.Get(depID).(executor.Status)
+		if !ok {
+			return either.LeftM(errors.New("dependency is not a status node"))
+		}
+		if err := dep.Error(); err != nil {
+			errResult := &Result{
+				Ran:    false,
+				Status: &resource.Status{WillChange: true},
+				Err:    fmt.Errorf("error in dependency %q", depID),
+			}
+			return either.RightM(either.LeftM(errResult))
+		}
+	}
+	return either.RightM(either.RightM(result))
+}
+
+// maybeSkipApplication :: Either *apply.Result *plan.Result -> Either *apply.Result resultWrapper
+func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
+	// checkResult :: Either apply.Result Plan.Result
+	checkResult := func(plannerI interface{}) interface{} {
+		plan := plannerI.(resultWrapper)
+		if !plan.Plan.Status.HasChanges() {
+			return either.LeftM(&Result{
+				Ran:  false,
+				Plan: plan.Plan,
+				Err:  nil,
+			})
+		}
+		return either.RightM(plan)
+	}
+	return monad.Join(monad.FMap(checkResult, resultI.(either.EitherM)))
+}
+
+// applyNode runs apply on the node, it takes an Either *apply.Result
+// *plan.Result and, if the input value is Left, returns it as a Right value,
+// otherwise it attempts to run apply on the *plan.Result.Task and returns an
+// appropriate Left or Right value.
+func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
+	taskE, ok := taski.(either.EitherM)
+	if !ok {
+		return either.LeftM(errors.New("plan node was expected to be EitherM"))
+	}
+	val, isRight := taskE.FromEither()
+	if !isRight {
+		return either.RightM(val)
+	}
+	twrapper, ok := val.(resultWrapper)
+	if !ok {
+		return either.LeftM(fmt.Errorf("apply expected a *plan.Result but got %T", val))
+	}
+	renderer, err := g.Renderer(twrapper.ID)
+	if err != nil {
+		return either.LeftM(fmt.Errorf("unable to get renderer for %s", twrapper.ID))
+	}
+	applyStatus, err := twrapper.Plan.Task.Apply(renderer)
+	return either.RightM(&Result{
+		Ran:    true,
+		Status: applyStatus,
+		Plan:   twrapper.Plan,
+		Err:    err,
+	})
+}
+
+// maybeRunFinalCheck :: *Result -> Either error *Result; looks to see if the
+// current result ran, and if so it re-runs plan and sets PostCheck to the
+// resulting status.
+func (g pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
+	result, ok := resultI.(*Result)
+	if !ok {
+		return either.LeftM(fmt.Errorf("expected *Result but got %T", resultI))
+	}
+	if !result.Ran {
+		return either.RightM(result)
+	}
+	return plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).
+		Exec(either.ReturnM(g.ID)).
+		AndThen(func(planI interface{}) monad.Monad {
+			plan, ok := planI.(*plan.Result)
+			if !ok {
+				return either.LeftM(fmt.Errorf("expected *plan.Result but got %T", planI))
+			}
+			result.PostCheck = plan.Status
+			return either.RightM(result)
+		})
+}
+
+func (g pipelineGen) Renderer(id string) (*render.Renderer, error) {
+	return g.RenderingPlant.GetRenderer(id)
 }
