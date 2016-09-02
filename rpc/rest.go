@@ -37,6 +37,11 @@ func restGatewayMux(ctx context.Context, addr string, opts *ClientOpts) (http.Ha
 		return nil, err
 	}
 
+	err = pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr, opts.Opts())
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 

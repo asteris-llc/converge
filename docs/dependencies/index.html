@@ -490,7 +490,7 @@ will be successful. Neat!</p>
 then render them as <a href="http://graphviz.org/">Graphviz</a> dot output. You can render
 that like so:</p>
 
-<pre><code class="language-sh">$ converge graph yourModule.hcl | dot -Tpng &gt; yourModule.png
+<pre><code class="language-sh">$ converge graph --local yourModule.hcl | dot -Tpng &gt; yourModule.png
 </code></pre>
 
 <p>When you&rsquo;re developing modules, make a habit of rendering them as graphs. It

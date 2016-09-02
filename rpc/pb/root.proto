@@ -4,12 +4,9 @@ package pb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
 
-message LocationRequest {
-  string location = 1;
-}
-
-message ExecRequest {
+message LoadRequest {
   string location = 1;
   map<string, string> parameters = 2;
 }
@@ -56,7 +53,7 @@ message DiffResponse {
 // Executor is responsible for remote execution on the machine
 service Executor {
   // Plan out the execution of a module given by the location
-  rpc Plan (ExecRequest) returns (stream StatusResponse) {
+  rpc Plan (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
       post: "/api/v1/machine/plan"
       body: "*"
@@ -64,7 +61,7 @@ service Executor {
   }
 
   // Apply a module given by the location
-  rpc Apply (ExecRequest) returns (stream StatusResponse) {
+  rpc Apply (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
       post: "/api/v1/machine/apply"
       body: "*"
@@ -83,9 +80,41 @@ service ResourceHost {
   }
 
   // GetModule gets the content of a module at the given path
-  rpc GetModule (LocationRequest) returns (ContentResponse) {
+  rpc GetModule (LoadRequest) returns (ContentResponse) {
     option (google.api.http) = {
       get: "/api/v1/resources/modules/{location=**}"
+    };
+  }
+}
+
+/************
+ * GRAPHING *
+ ************/
+
+message GraphComponent {
+  message Vertex {
+    string id = 1;
+    string kind = 2;
+    google.protobuf.Any details = 3;
+  }
+
+  message Edge {
+    string source = 1;
+    string dest = 2;
+    repeated string attributes = 3;
+  }
+
+  oneof component {
+    Vertex vertex = 1;
+    Edge edge = 2;
+  }
+}
+
+service Grapher {
+  rpc Graph (LoadRequest) returns (stream GraphComponent) {
+    option (google.api.http) = {
+      post: "/api/v1/machine/graph"
+      body: "*"
     };
   }
 }

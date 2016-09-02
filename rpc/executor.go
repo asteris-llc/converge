@@ -20,16 +20,11 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
-	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/rpc/pb"
-	"github.com/fgrid/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -39,40 +34,6 @@ var (
 
 type executor struct {
 	auth *authorizer
-}
-
-func (e *executor) getLogger(ctx context.Context) (*logrus.Entry, context.Context) {
-	logger := getLogger(ctx).WithField("runID", uuid.NewV4().String())
-
-	return logger, logging.WithLogger(ctx, logger)
-}
-
-func (e *executor) load(ctx context.Context, location string, params map[string]string) (*graph.Graph, error) {
-	logger := getLogger(ctx).WithField("function", "executor.load").WithField("location", location)
-
-	loaded, err := load.Load(ctx, location)
-	if err != nil {
-		logger.WithError(err).Error("could not load")
-		return nil, errors.Wrapf(err, "loading %s", location)
-	}
-
-	values := render.Values{}
-	for k, v := range params {
-		values[k] = v
-	}
-	rendered, err := render.Render(ctx, loaded, values)
-	if err != nil {
-		logger.WithError(err).Error("could not render")
-		return nil, errors.Wrapf(err, "rendering %s", location)
-	}
-
-	merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
-	if err != nil {
-		logger.WithError(err).Error("could not merge")
-		return nil, errors.Wrapf(err, "merging %s", location)
-	}
-
-	return merged, nil
 }
 
 type statusResponseStream interface {
@@ -140,8 +101,8 @@ func (e *executor) sendPlan(ctx context.Context, stream statusResponseStream, in
 	return out, nil
 }
 
-func (e *executor) Plan(in *pb.ExecRequest, stream pb.Executor_PlanServer) error {
-	logger, ctx := e.getLogger(stream.Context())
+func (e *executor) Plan(in *pb.LoadRequest, stream pb.Executor_PlanServer) error {
+	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Plan")
 
 	if err := e.auth.authorize(ctx); err != nil {
@@ -149,7 +110,7 @@ func (e *executor) Plan(in *pb.ExecRequest, stream pb.Executor_PlanServer) error
 		return errors.Wrap(err, "authorization failed")
 	}
 
-	loaded, err := e.load(ctx, in.Location, in.Parameters)
+	loaded, err := in.Load(ctx)
 	if err != nil {
 		return err
 	}
@@ -176,8 +137,8 @@ func (e *executor) sendApply(ctx context.Context, stream statusResponseStream, i
 	return out, nil
 }
 
-func (e *executor) Apply(in *pb.ExecRequest, stream pb.Executor_ApplyServer) error {
-	logger, ctx := e.getLogger(stream.Context())
+func (e *executor) Apply(in *pb.LoadRequest, stream pb.Executor_ApplyServer) error {
+	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Apply")
 
 	if err := e.auth.authorize(ctx); err != nil {
@@ -185,7 +146,7 @@ func (e *executor) Apply(in *pb.ExecRequest, stream pb.Executor_ApplyServer) err
 		return errors.Wrap(err, "authorization failed")
 	}
 
-	loaded, err := e.load(ctx, in.Location, in.Parameters)
+	loaded, err := in.Load(ctx)
 	if err != nil {
 		return err
 	}

@@ -643,7 +643,7 @@ will be successful. Neat!&lt;/p&gt;
 then render them as &lt;a href=&#34;http://graphviz.org/&#34;&gt;Graphviz&lt;/a&gt; dot output. You can render
 that like so:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge graph yourModule.hcl | dot -Tpng &amp;gt; yourModule.png
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge graph --local yourModule.hcl | dot -Tpng &amp;gt; yourModule.png
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;When you&amp;rsquo;re developing modules, make a habit of rendering them as graphs. It

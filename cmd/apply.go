@@ -81,7 +81,7 @@ real happens.`,
 
 			stream, err := client.Apply(
 				ctx,
-				&pb.ExecRequest{
+				&pb.LoadRequest{
 					Location:   fname,
 					Parameters: rpcParams,
 				},

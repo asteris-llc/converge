@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -197,4 +198,9 @@ func cmdGetPipes(command *exec.Cmd) (io.WriteCloser, io.ReadCloser, io.ReadClose
 		return nil, nil, nil, errors.Wrap(err, "failed to get stdout pipe")
 	}
 	return cmdStdin, cmdStdout, cmdStderr, nil
+}
+
+func init() {
+	registry.Register("task", (*Preparer)(nil), (*Shell)(nil))
+	registry.Register("healthcheck.task", (*Preparer)(nil), (*Shell)(nil))
 }

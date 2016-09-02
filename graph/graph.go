@@ -37,8 +37,9 @@ type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
 // An Edge is a generic pair of IDs indicating a directed edge in the graph
 type Edge struct {
-	Source string `json:"source"`
-	Dest   string `json:"dest"`
+	Source     string   `json:"source"`
+	Dest       string   `json:"dest"`
+	Attributes []string `json:"attributes"`
 }
 
 // Graph is a generic graph structure that uses IDs to connect the graph
@@ -507,7 +508,15 @@ func (g *Graph) Edges() []Edge {
 	graphEdges := g.inner.Edges()
 	edges := make([]Edge, len(graphEdges))
 	for idx, srcEdge := range graphEdges {
-		edge := Edge{Source: srcEdge.Source().(string), Dest: srcEdge.Target().(string)}
+		edge := Edge{
+			Source: srcEdge.Source().(string),
+			Dest:   srcEdge.Target().(string),
+		}
+
+		if _, ok := srcEdge.(*ParentEdge); ok {
+			edge.Attributes = append(edge.Attributes, "parent")
+		}
+
 		edges[idx] = edge
 	}
 	return edges
