@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>Server - Converge</title>
+    <title>docker.container - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="TODO: punchy description">
     
-    <link rel="canonical" href="http://converge.aster.is/server/">
+    <link rel="canonical" href="http://converge.aster.is/resources/docker-container/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/server/">
+    <meta property="og:url" content="http://converge.aster.is/resources/docker-container/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        Server
+        docker.container
       </div>
     </div>
 
@@ -250,14 +250,11 @@
 
 
 
-<a class="current" title="Server" href="http://converge.aster.is/server/">
+<a  title="Server" href="http://converge.aster.is/server/">
   
   Server
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -317,11 +314,14 @@
 
 
 
-<a  title="docker.container" href="http://converge.aster.is/resources/docker-container/">
+<a class="current" title="docker.container" href="http://converge.aster.is/resources/docker-container/">
   
   docker.container
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -442,104 +442,130 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>Server </h1>
+			<h1>docker.container </h1>
 
 			
 
-<p>Converge comes with a server that can:</p>
+<p>Container is responsible for creating docker containers. It assumes that
+there is already a Docker daemon running on the system.</p>
+
+<h2 id="example">Example</h2>
+
+<pre><code class="language-hcl">docker.container &quot;nginx&quot; {
+  name  = &quot;nginx&quot;
+  image = &quot;nginx:1.10-alpine&quot;
+  force = &quot;true&quot;
+
+  ports = [
+    &quot;80&quot;,
+  ]
+
+  env {
+    &quot;FOO&quot; = &quot;BAR&quot;
+  }
+}
+
+</code></pre>
+
+<h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>run <code>plan</code> and <code>apply</code> and stream the results (using
-<a href="http://www.grpc.io/">gRPC</a>)</li>
-<li>serve modules from a given root</li>
-<li>serve the Converge binary itself, for bootstrapping new systems inside your
-network</li>
+<li><code>name</code> (string)</li>
 </ul>
 
-<h2 id="https">HTTPS</h2>
+<p>name of the container</p>
 
-<p>You can run the server over HTTPS. If you don&rsquo;t have your own certificates, you
-can use <a href="https://github.com/square/certstrap">certstrap</a> to get some with the
-following commands:</p>
+<ul>
+<li><code>image</code> (string)</li>
+</ul>
 
-<pre><code class="language-shell">$ certstrap init --common-name your-company
-$ certstrap request-cert --ip 127.0.0.1
-$ certstrap sign 127.0.0.1 --CA your-company
-</code></pre>
+<p>the image name or ID to use for the container</p>
 
-<p>Of course, replace <code>your-company</code> and <code>127.0.0.1</code> with your company&rsquo;s name and
-the your server&rsquo;s IP address, respectively (but those defaults will work fine
-for trying it out locally.) The certificates will be placed in <code>out</code> in the
-directory you run the command from.</p>
+<ul>
+<li><code>entrypoint</code> (list of strings)</li>
+</ul>
 
-<p>Afterwards, reference these files like so:</p>
+<p>override the container entrypoint</p>
 
-<pre><code class="language-shell">converge server --cert-file out/127.0.0.1.crt \
-                --key-file out/127.0.0.1.crt \
-                --ca-file out/your-company.crt \
-                --use-ssl \
-                --rpc-token your-token
-</code></pre>
+<ul>
+<li><code>command</code> (list of strings)</li>
+</ul>
 
-<p>You&rsquo;ll also need to pass the <code>--ca-file</code> flag to commands like <code>plan</code> and
-<code>apply</code>, in order to trust your new CA (or put it in the system roots.)</p>
+<p>override the container command</p>
 
-<h2 id="apis">APIs</h2>
+<ul>
+<li><code>working_dir</code> (string)</li>
+</ul>
 
-<p>Using the Converge command-line interface is good enough for most cases. If you
-want to integrate Converge into your system in novel ways, however, an API is
-available.</p>
+<p>override the working directory of the container</p>
 
-<h3 id="authentication">Authentication</h3>
+<ul>
+<li><code>env</code> (map of string to string)</li>
+</ul>
 
-<p>Authentication happens with <a href="https://jwt.io/">JSON Web Tokens</a>. The only
-currently supported algorithm is HS512, and issued tokens must have a 30 second
-expiration. Tokens are set using the <code>--rpc-token</code> <a href="http://converge.aster.is/configuration/">configuration flag</a> to all subcommands that use the API.</p>
+<p>set environmnet variables in the container</p>
 
-<h3 id="http-2-0-and-grpc">HTTP/2.0 And gRPC</h3>
+<ul>
+<li><code>expose</code> (list of strings)</li>
+</ul>
 
-<p>If you want to create your own client for Converge, you&rsquo;ll probably want to use
-gRPC. You can get instructions for your chosen langauge in
-<a href="http://www.grpc.io/docs/">the gRPC docs</a>, and the protobuf file is
-<code>rpc/pb/root.proto</code> in the Converge source. If you&rsquo;re using Go, the client
-implementations in <code>rpc/client.go</code> are your friends.</p>
+<p>additional ports to expose in the container</p>
 
-<p>When using the RPC interface, the JWT token should be sent in the request
-metadata&rsquo;s <code>authorization</code> field with the prefix <code>BEARER</code>.</p>
+<ul>
+<li><code>links</code> (list of strings)</li>
+</ul>
 
-<h3 id="http-1-1-and-json">HTTP/1.1 And JSON</h3>
+<p>A list of links for the container. Each link entry should be in the form of
+container_name:alias</p>
 
-<p>A pseudo-RESTful interface is available to do the same things the gRPC interface
-can do. See the protobuf file for the most up-to-date endpoints and payload
-information.</p>
+<ul>
+<li><code>ports</code> (list of strings)</li>
+</ul>
 
-<p>When using the HTTP/1.1 interface, the JWT token should be sent in the
-<code>Authorization</code> header with the prefix <code>BEARER</code>. You can also set the <code>jwt</code>
-querystring var, or send it in the <code>jwt</code> cookie.</p>
+<p>publish container ports to the host. Each item should be in the following
+format:
+ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
+Ports can be specified in the format: portnum/proto. If proto is not
+specified, &ldquo;tcp&rdquo; is assumed</p>
 
-<h2 id="standalone-server-for-the-command-line">Standalone Server For The Command-Line</h2>
+<ul>
+<li><code>dns</code> (list of strings)</li>
+</ul>
 
-<p>The main Converge commands (like <code>plan</code> and <code>apply</code>) will take a <code>--local</code>
-argument (or set <code>CONVERGE_LOCAL=1</code>.) This will:</p>
+<p>list of DNS servers for the container to use</p>
 
-<ol>
-<li>Start a local RPC server</li>
-<li>Perform the requested action against the RPC server</li>
-<li>Shut down the RPC server</li>
-</ol>
+<ul>
+<li><code>volumes</code> (list of strings)</li>
+</ul>
 
-<p>During this process, a port (<code>localhost:26930</code>) will be opened and RPC will be
-running on it. This interface will be protected with an randomly-generated
-token, unless you specify <code>--no-token</code></p>
+<p>bind mounts volumes</p>
 
-<div class="admonition warning">
-<p class="admonition-title">Don&#39;t Disable Tokens</p>
-<p>Please don&rsquo;t disable token generation with <code>--no-token</code>. I know we just said you
-can, but don&rsquo;t do it. This will open up remote execution of arbitrary
-instructions to whoever can reach that port. You can make this process <em>more</em>
-secure by specifying <code>--cert-file</code>, <code>--key-file</code>, and optionally <code>--ca-file</code> to
-connect over HTTPS.</p>
-</div>
+<ul>
+<li><code>volumes_from</code> (list of strings)</li>
+</ul>
+
+<p>mounts all volumes from the specified container</p>
+
+<ul>
+<li><code>publish_all_ports</code> (bool)</li>
+</ul>
+
+<p>allocates a random host port for all of a container’s exposed ports.
+Specified as a boolean value</p>
+
+<ul>
+<li><code>status</code> (string)</li>
+</ul>
+
+<p>the desired status of the container. running|created</p>
+
+<ul>
+<li><code>force</code> (bool)</li>
+</ul>
+
+<p>indicates whether or not the container will be recreated if the state is
+not what is expected. By default, the module will only check to see if the
+container exists. Specified as a boolean value</p>
 
 
 			<aside class="copyright" role="note">
@@ -558,34 +584,18 @@ connect over HTTPS.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/configuration/" title="Configuration">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              Configuration
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/organization/" title="Module Organization">
+      <a href="http://converge.aster.is/resources/docker-image/" title="docker.image">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Module Organization
+              docker.image
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

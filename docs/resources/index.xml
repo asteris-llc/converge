@@ -6,8 +6,186 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 31 Aug 2016 09:51:20 -0500</lastBuildDate>
+    <lastBuildDate>Thu, 01 Sep 2016 13:37:54 -0400</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>docker.container</title>
+      <link>http://converge.aster.is/resources/docker-container/</link>
+      <pubDate>Thu, 01 Sep 2016 13:37:54 -0400</pubDate>
+      
+      <guid>http://converge.aster.is/resources/docker-container/</guid>
+      <description>
+
+&lt;p&gt;Container is responsible for creating docker containers. It assumes that
+there is already a Docker daemon running on the system.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.container &amp;quot;nginx&amp;quot; {
+  name  = &amp;quot;nginx&amp;quot;
+  image = &amp;quot;nginx:1.10-alpine&amp;quot;
+  force = &amp;quot;true&amp;quot;
+
+  ports = [
+    &amp;quot;80&amp;quot;,
+  ]
+
+  env {
+    &amp;quot;FOO&amp;quot; = &amp;quot;BAR&amp;quot;
+  }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;name of the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;image&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the image name or ID to use for the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;entrypoint&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the container entrypoint&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;command&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the container command&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;working_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the working directory of the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;set environmnet variables in the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;expose&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;additional ports to expose in the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;links&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;A list of links for the container. Each link entry should be in the form of
+container_name:alias&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ports&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;publish container ports to the host. Each item should be in the following
+format:
+ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
+Ports can be specified in the format: portnum/proto. If proto is not
+specified, &amp;ldquo;tcp&amp;rdquo; is assumed&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dns&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;list of DNS servers for the container to use&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;volumes&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;bind mounts volumes&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;volumes_from&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;mounts all volumes from the specified container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;publish_all_ports&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;allocates a random host port for all of a container’s exposed ports.
+Specified as a boolean value&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;status&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the desired status of the container. running|created&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;force&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;indicates whether or not the container will be recreated if the state is
+not what is expected. By default, the module will only check to see if the
+container exists. Specified as a boolean value&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>docker.image</title>
+      <link>http://converge.aster.is/resources/docker-image/</link>
+      <pubDate>Thu, 01 Sep 2016 13:33:56 -0400</pubDate>
+      
+      <guid>http://converge.aster.is/resources/docker-image/</guid>
+      <description>
+
+&lt;p&gt;Image is responsible for pulling Docker images. It assumes that there is
+already a Docker daemon running on the system.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.image &amp;quot;busybox&amp;quot; {
+  name               = &amp;quot;busybox&amp;quot;
+  tag                = &amp;quot;latest&amp;quot;
+  inactivity_timeout = &amp;quot;60s&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;name of the image to pull&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;tag&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;tag of the image to pull&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;inactivity_timeout&lt;/code&gt; (duration_string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time to wait after a period of inactivity. The timeout is
+reset each time new data arrives. The format is Go&amp;rsquo;s duration string. A
+duration string is a possibly signed sequence of decimal numbers, each with
+optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;.
+Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>task</title>
@@ -96,53 +274,6 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
 &lt;/ul&gt;
 
 &lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>docker.image</title>
-      <link>http://converge.aster.is/resources/docker-image/</link>
-      <pubDate>Tue, 30 Aug 2016 15:12:06 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/docker-image/</guid>
-      <description>
-
-&lt;p&gt;Image is responsible for pulling Docker images. It assumes that there is
-already a Docker daemon running on the system.&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.image &amp;quot;busybox&amp;quot; {
-  name               = &amp;quot;busybox&amp;quot;
-  tag                = &amp;quot;latest&amp;quot;
-  inactivity_timeout = &amp;quot;60s&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;name of the image to pull&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;tag&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;tag of the image to pull&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;inactivity_timeout&lt;/code&gt; (duration_string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the amount of time to wait after a period of inactivity. The timeout is
-reset each time new data arrives. The format is Go&amp;rsquo;s duration string. A
-duration string is a possibly signed sequence of decimal numbers, each with
-optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;.
-Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
 </description>
     </item>
     

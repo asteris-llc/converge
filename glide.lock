@@ -13,6 +13,8 @@ imports:
   - spew
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+- name: github.com/deckarep/golang-set
+  version: 52ba7f28f319e9d560acbf47c7fcf9b9ee7aa7d3
 - name: github.com/docker/docker
   version: d55b3ff568f998fc3f471c1f25110da43f59bbc4
   subpackages:
