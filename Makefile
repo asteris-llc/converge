@@ -40,7 +40,7 @@ blackbox/*.sh: converge
 samples/%.png: samples/% converge
 	@echo
 	@echo === rendering $@ ===
-	./converge graph $< | dot -Tpng -o$@
+	./converge graph --local $< | dot -Tpng -o$@
 
 lint:
 	@echo '# golint'
