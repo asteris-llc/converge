@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/container"
@@ -66,8 +67,8 @@ func TestContainerCheckContainerFindContainerError(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "find container failed")
 	}
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.False(t, status.HasChanges())
+	assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+	assert.True(t, status.HasChanges())
 }
 
 func TestContainerCheckContainerNoChange(t *testing.T) {
@@ -687,3 +688,5 @@ func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Con
 func (f *fakeAPIClient) StartContainer(name, id string) error {
 	return f.StartContainerFunc(name, id)
 }
+
+func (f *fakeAPIClient) SetRetryOptions(timeout, retryInterval time.Duration) {}

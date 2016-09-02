@@ -17,6 +17,7 @@ package image_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
@@ -102,8 +103,8 @@ func TestImageCheckFailed(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "find image failed")
 	}
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.False(t, status.HasChanges())
+	assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+	assert.True(t, status.HasChanges())
 }
 
 func TestImageApply(t *testing.T) {
@@ -165,3 +166,5 @@ func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Con
 func (f *fakeAPIClient) StartContainer(name, id string) error {
 	return f.StartContainerFunc(name, id)
 }
+
+func (f *fakeAPIClient) SetRetryOptions(timeout, retryInterval time.Duration) {}

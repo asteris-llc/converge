@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
@@ -58,11 +59,14 @@ type Container struct {
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check() (resource.TaskStatus, error) {
+	c.client.SetRetryOptions(2*time.Second, 1*time.Second)
 	status := &resource.Status{Status: c.Name}
 
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.AddDifference("name", "<docker-error>", c.Name, "<docker-error>")
+		status.WillChange = true
+		status.WarningLevel = resource.StatusWillChange
 		return status, err
 	}
 
@@ -85,6 +89,7 @@ func (c *Container) Check() (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() error {
+	c.client.SetRetryOptions(10*time.Second, 2*time.Second)
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,

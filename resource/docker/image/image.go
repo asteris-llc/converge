@@ -16,6 +16,7 @@ package image
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
@@ -30,11 +31,14 @@ type Image struct {
 
 // Check system for presence of docker image
 func (i *Image) Check() (resource.TaskStatus, error) {
+	i.client.SetRetryOptions(2*time.Second, 1*time.Second)
 	repoTag := i.RepoTag()
 	status := &resource.Status{Status: repoTag}
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.AddDifference("image", "<docker-error>", repoTag, "<docker-error>")
+		status.WillChange = true
+		status.WarningLevel = resource.StatusWillChange
 		return status, err
 	}
 
@@ -53,6 +57,7 @@ func (i *Image) Check() (resource.TaskStatus, error) {
 
 // Apply pulls a docker image
 func (i *Image) Apply() (err error) {
+	i.client.SetRetryOptions(10*time.Second, 2*time.Second)
 	return i.client.PullImage(i.Name, i.Tag)
 }
 
