@@ -172,12 +172,12 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	}
 	status.AddDifference("command", actual, expected, "")
 
-	// if Entrypoint is empty, compare using the default from the container Image
+	// if the existing container Entrypoint is empty and we expected a non-empty
+	// entrypoint, compare using the default from the container Image
 	actual = strings.Join(container.Config.Entrypoint, " ")
-	if len(c.Entrypoint) == 0 {
-		expected = strings.Join(image.Config.Entrypoint, " ")
-	} else {
-		expected = strings.Join(c.Entrypoint, " ")
+	expected = strings.Join(c.Entrypoint, " ")
+	if expected != "" && actual == "" {
+		actual = strings.Join(image.Config.Entrypoint, " ")
 	}
 	status.AddDifference("entrypoint", actual, expected, "")
 
