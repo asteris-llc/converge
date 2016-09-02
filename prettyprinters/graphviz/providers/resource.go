@@ -15,15 +15,16 @@
 package providers
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/resource/file/content"
-	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
-	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/rpc/pb"
+	"github.com/pkg/errors"
 )
 
 // ResourceProvider is the PrintProvider type for Resources
@@ -35,8 +36,13 @@ type ResourceProvider struct {
 // VertexGetID returns the graph ID as the VertexID, possibly maksing it
 // depending on the vertext type and configuration.
 func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
-	switch e.Value.(type) {
-	case *param.Param:
+	val, ok := e.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
+		return pp.VisibleString(e.Name), nil
+	}
+
+	switch val.Kind {
+	case "param":
 		return pp.RenderableString(e.Name, p.ShowParams), nil
 
 	default:
@@ -59,18 +65,36 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRend
 		name = strings.Split(e.Name, "root/")[1]
 	}
 
-	switch e.Value.(type) {
-	case *content.Content:
-		v := e.Value.(*content.Content)
-		return pp.VisibleString(fmt.Sprintf("File: %s", v.Destination)), nil
+	val, ok := e.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
+		return pp.VisibleString(name), nil
+	}
 
-	case *module.Module:
+	var details []byte
+	if szd := val.GetDetails(); szd != nil {
+		details = szd.Value
+	}
+
+	switch val.Kind {
+	case "file.content":
+		var dest = new(content.Content)
+		if err := json.Unmarshal(details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal file content")
+		}
+
+		return pp.VisibleString(fmt.Sprintf("File: %s", dest.Destination)), nil
+
+	case "module":
 		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
 
-	case *param.Param:
-		v := e.Value.(*param.Param)
+	case "param":
+		var dest = new(param.Param)
+		if err := json.Unmarshal(details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal param")
+		}
+
 		return pp.RenderableString(
-			fmt.Sprintf(`%s = \"%s\"`, name, v.Value),
+			fmt.Sprintf("%s: %s", name, dest.Value),
 			p.ShowParams,
 		), nil
 
@@ -84,13 +108,20 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRend
 // and 'tab' for templates, and we set the entire root node to be invisible.
 func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
-	switch e.Value.(type) {
-	case *shell.Shell:
+
+	val, ok := e.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
+		return properties
+	}
+
+	switch val.Kind {
+	case "task":
 		properties["shape"] = "component"
 
-	case *content.Content:
+	case "file.content":
 		properties["shape"] = "tab"
 	}
+
 	return properties
 }
 
@@ -105,12 +136,16 @@ func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphv
 // Specifically, it starts a new subgraph whenever a new 'Module' type resource
 // is encountered.
 func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
-	switch e.Value.(type) {
-	case *module.Module:
-		return graphviz.SubgraphMarkerStart
-	default:
+	val, ok := e.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
 		return graphviz.SubgraphMarkerNOP
 	}
+
+	if val.Kind == "module" {
+		return graphviz.SubgraphMarkerStart
+	}
+
+	return graphviz.SubgraphMarkerNOP
 }
 
 // NewResourceProvider is a utility function to return a new ResourceProvider

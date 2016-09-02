@@ -62,7 +62,7 @@ func (gc *GrapherClient) Graph(ctx context.Context, loc *pb.LoadRequest, opts ..
 		}
 
 		if vertex := container.GetVertex(); vertex != nil {
-			g.Add(vertex.Id, nil)
+			g.Add(vertex.Id, vertex)
 		} else if edge := container.GetEdge(); edge != nil {
 			var parent bool
 			for _, attr := range edge.Attributes {
