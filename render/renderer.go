@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -48,6 +49,70 @@ func (r *Renderer) Render(name, src string) (string, error) {
 	err = tmpl.Execute(&dest, r.DotValue)
 
 	return dest.String(), err
+}
+
+// RequiredRender will return an error if rendered value is an empty string
+func (r *Renderer) RequiredRender(name, src string) (string, error) {
+	rendered, err := r.Render(name, src)
+	if err != nil {
+		return "", err
+	}
+
+	if rendered == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+
+	return rendered, nil
+}
+
+// RenderBool renders a boolean value
+func (r *Renderer) RenderBool(name, src string) (bool, error) {
+	var b bool
+	rendered, err := r.Render(name, src)
+	if err != nil {
+		return b, err
+	}
+
+	if rendered == "" {
+		return b, nil
+	}
+
+	return strconv.ParseBool(rendered)
+}
+
+// RenderStringSlice renders a slice of strings
+func (r *Renderer) RenderStringSlice(name string, src []string) ([]string, error) {
+	renderedSlice := make([]string, len(src))
+	for i, val := range src {
+		rendered, err := r.Render(fmt.Sprintf("%s[%d]", name, i), val)
+		if err != nil {
+			return nil, err
+		}
+		renderedSlice[i] = rendered
+	}
+	return renderedSlice, nil
+}
+
+// RenderStringMapToStringSlice renders a map of strings to strings as a string
+// slice
+func (r *Renderer) RenderStringMapToStringSlice(name string, src map[string]string, toString func(string, string) string) ([]string, error) {
+	if toString == nil {
+		toString = func(k, v string) string { return k + " " + v }
+	}
+
+	renderedSlice := make([]string, len(src))
+	idx := 0
+	for key, val := range src {
+		pair := toString(key, val)
+		rendered, err := r.Render(fmt.Sprintf("%s[%s]", name, val), pair)
+		if err != nil {
+			return nil, err
+		}
+		renderedSlice[idx] = rendered
+		idx++
+	}
+
+	return renderedSlice, nil
 }
 
 func (r *Renderer) funcs() template.FuncMap {

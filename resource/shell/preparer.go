@@ -97,17 +97,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	// render Env
-	renderedEnv := make([]string, len(p.Env))
-	idx := 0
-	for name, val := range p.Env {
-		pair := fmt.Sprintf("%s=%s", name, val)
-		rendered, rerr := render.Render("env-"+name, pair)
-		if rerr != nil {
-			return nil, rerr
-		}
-		renderedEnv[idx] = rendered
-		idx++
+	renderedEnv, err := render.RenderStringMapToStringSlice("env", p.Env, func(k, v string) string {
+		return fmt.Sprintf("%s=%s", k, v)
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	timeout, err := render.Render("timeout", p.Timeout)

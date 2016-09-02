@@ -53,7 +53,7 @@ func TestImageCheckImageNeedsChange(t *testing.T) {
 	t.Parallel()
 
 	c := &fakeAPIClient{
-		FindImageFunc: func(string) (*dc.APIImages, error) {
+		FindImageFunc: func(string) (*dc.Image, error) {
 			return nil, nil
 		},
 	}
@@ -72,8 +72,8 @@ func TestImageCheckImageNoChange(t *testing.T) {
 	t.Parallel()
 
 	c := &fakeAPIClient{
-		FindImageFunc: func(string) (*dc.APIImages, error) {
-			return &dc.APIImages{}, nil
+		FindImageFunc: func(string) (*dc.Image, error) {
+			return &dc.Image{}, nil
 		},
 	}
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
@@ -91,7 +91,7 @@ func TestImageCheckFailed(t *testing.T) {
 	t.Parallel()
 
 	c := &fakeAPIClient{
-		FindImageFunc: func(string) (*dc.APIImages, error) {
+		FindImageFunc: func(string) (*dc.Image, error) {
 			return nil, errors.New("find image failed")
 		},
 	}
@@ -139,14 +139,29 @@ func TestImageApplyTimedOut(t *testing.T) {
 }
 
 type fakeAPIClient struct {
-	FindImageFunc func(repoTag string) (*dc.APIImages, error)
-	PullImageFunc func(name, tag string) error
+	FindImageFunc       func(repoTag string) (*dc.Image, error)
+	PullImageFunc       func(name, tag string) error
+	FindContainerFunc   func(name string) (*dc.Container, error)
+	CreateContainerFunc func(opts dc.CreateContainerOptions) (*dc.Container, error)
+	StartContainerFunc  func(name, id string) error
 }
 
-func (f *fakeAPIClient) FindImage(repoTag string) (*dc.APIImages, error) {
+func (f *fakeAPIClient) FindImage(repoTag string) (*dc.Image, error) {
 	return f.FindImageFunc(repoTag)
 }
 
 func (f *fakeAPIClient) PullImage(name, tag string) error {
 	return f.PullImageFunc(name, tag)
+}
+
+func (f *fakeAPIClient) FindContainer(name string) (*dc.Container, error) {
+	return f.FindContainerFunc(name)
+}
+
+func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container, error) {
+	return f.CreateContainerFunc(opts)
+}
+
+func (f *fakeAPIClient) StartContainer(name, id string) error {
+	return f.StartContainerFunc(name, id)
 }
