@@ -18,11 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
+	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
-	"github.com/asteris-llc/converge/resource"
 )
 
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph
@@ -39,53 +38,26 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		renderingPlant.Graph = out
-		nodeRenderer, err := renderingPlant.GetRenderer(id)
-		if err != nil {
-			return err
+
+		pipeline := Pipeline(out, id, renderingPlant)
+		result := pipeline.Exec(either.ReturnM(id))
+		val, isRight := result.FromEither()
+		if !isRight {
+			fmt.Printf("pipeline returned Right %v\n", val)
+			return fmt.Errorf("%v", val)
 		}
-		val := out.Get(id)
-		task, ok := val.(resource.Task)
+
+		asResult, ok := val.(*Result)
 		if !ok {
-			fmt.Println(val)
-			return fmt.Errorf("%s: could not get resource.Task, was %T", id, val)
+			fmt.Printf("expected *Result but got %T\n", val)
+			return fmt.Errorf("expected asResult but got %T", val)
 		}
 
-		log.Printf("[DEBUG] checking dependencies for %q\n", id)
-		for _, depID := range graph.Targets(out.DownEdges(id)) {
-			dep, ok := out.Get(depID).(*Result)
-			if !ok {
-				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
-			}
-
-			if err := dep.Error(); err != nil {
-				out.Add(
-					id,
-					&Result{
-						Status: &resource.Status{WillChange: true},
-						Task:   task,
-						Err:    fmt.Errorf("error in dependency %q", depID),
-					},
-				)
-				renderingPlant.Graph = out
-
-				// early return here after we set the signal error
-				hasErrors = ErrTreeContainsErrors
-				return nil
-			}
+		if nil != asResult.Error() {
+			hasErrors = ErrTreeContainsErrors
 		}
 
-		log.Printf("[DEBUG] checking %q\n", id)
-
-		status, err := task.Check(nodeRenderer)
-		out.Add(
-			id,
-			&Result{
-				Status: status,
-				Task:   task,
-				Err:    err,
-			},
-		)
-		renderingPlant.Graph = out
+		out.Add(id, asResult)
 		return nil
 	})
 
