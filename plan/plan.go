@@ -40,7 +40,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		renderingPlant.Graph = out
 
 		pipeline := Pipeline(out, id, renderingPlant)
-		result := pipeline.Exec(either.ReturnM(id))
+		result := pipeline.Exec(either.ReturnM(out.Get(id)))
 		val, isRight := result.FromEither()
 		if !isRight {
 			fmt.Printf("pipeline returned Right %v\n", val)

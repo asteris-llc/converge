@@ -16,6 +16,7 @@ package apply_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/apply"
@@ -39,6 +40,7 @@ func TestApplyNoOp(t *testing.T) {
 
 	// test that applying applies the vertex
 	applied, err := apply.Apply(context.Background(), g)
+	fmt.Println("TestApplyNoOp: error: ", err)
 	assert.NoError(t, err)
 
 	result := getResult(t, applied, "root")
@@ -60,6 +62,7 @@ func TestApplyNoRun(t *testing.T) {
 	assert.NoError(t, err)
 
 	result := getResult(t, applied, "root")
+	fmt.Println("result: ", result)
 	assert.False(t, result.Ran)
 }
 

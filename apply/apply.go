@@ -17,12 +17,10 @@ package apply
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
-	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
 
@@ -40,87 +38,35 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		renderingPlant.Graph = out
-		nodeRenderer, err := renderingPlant.GetRenderer(id)
-		if err != nil {
-			return err
+
+		pipeline := Pipeline(out, id, renderingPlant)
+		result := pipeline.Exec(either.ReturnM(out.Get(id)))
+		val, isRight := result.FromEither()
+
+		if !isRight {
+			hasErrors = ErrTreeContainsErrors
+			if e, ok := val.(error); ok {
+				fmt.Println("got an error back; returning")
+				return e
+			}
 		}
-		val := out.Get(id)
-		result, ok := val.(*plan.Result)
+
+		asResult, ok := val.(*Result)
 		if !ok {
-			return fmt.Errorf("%s: could not get *plan.Result, was %T", id, val)
+			fmt.Printf("expected *Result but got %T\n", val)
+			return fmt.Errorf("expected asResult but got %T", val)
 		}
 
-		for _, depID := range graph.Targets(out.DownEdges(id)) {
-			dep, ok := out.Get(depID).(*Result)
-			if !ok {
-				return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
-			}
-
-			if err := dep.Error(); err != nil {
-				out.Add(
-					id,
-					&Result{
-						Ran:    false,
-						Status: &resource.Status{},
-						Plan:   result,
-						Err:    fmt.Errorf("error in dependency %q", depID),
-					},
-				)
-				// early return here after we set the signal error
-				hasErrors = ErrTreeContainsErrors
-				return nil
-			}
+		if nil != asResult.Error() {
+			hasErrors = ErrTreeContainsErrors
 		}
 
-		var newResult *Result
-
-		if result.Status.HasChanges() {
-			log.Printf("[DEBUG] applying %q\n", id)
-
-			applyStatus, err := result.Task.Apply(nodeRenderer)
-			fmt.Printf("%s: applyStatus: %v\n", id, applyStatus)
-			if err != nil {
-				err = errors.Wrapf(err, "error applying %s", id)
-			}
-
-			var status resource.TaskStatus
-
-			if err == nil {
-				status, err = result.Task.Check(nodeRenderer)
-				if err != nil {
-					err = errors.Wrapf(err, "error checking %s", id)
-				} else if status.HasChanges() {
-					err = fmt.Errorf("%s still needs to be changed after application", id)
-				}
-			}
-
-			if err != nil {
-				hasErrors = ErrTreeContainsErrors
-			}
-
-			fmt.Println("id: " + id + " ; setting result with ran: true")
-			newResult = &Result{
-				Ran:       true,
-				Status:    applyStatus,
-				Plan:      result,
-				PostCheck: status,
-				Err:       err,
-			}
-		} else {
-			fmt.Println("id: " + id + " ; setting result with ran: false")
-			newResult = &Result{
-				Ran:  false,
-				Plan: result,
-				Err:  nil,
-			}
-		}
-
-		out.Add(id, newResult)
-
+		out.Add(id, asResult)
 		return nil
 	})
 
 	if err != nil {
+		fmt.Println("err != nil: ", err)
 		return out, err
 	}
 

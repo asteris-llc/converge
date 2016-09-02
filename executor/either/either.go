@@ -16,6 +16,7 @@ package either
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/asteris-llc/converge/executor/monad"
 )
@@ -54,6 +55,16 @@ func (m EitherM) AndThen(f func(interface{}) monad.Monad) monad.Monad {
 		return f(t.Val)
 	}
 	return LeftM(errors.New("invalid either type"))
+}
+
+// Show shows the string
+func (m EitherM) String() string {
+	val, isRight := m.FromEither()
+	pfx := "Left"
+	if isRight {
+		pfx = "Right"
+	}
+	return fmt.Sprintf("%s (%v)", pfx, val)
 }
 
 // Return creates a Right value
