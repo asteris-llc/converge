@@ -259,17 +259,19 @@ func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
 	t.Parallel()
 
 	c := &fakeAPIClient{
-		// the existing container is running the "start" entrypoint
+		// the existing container defaults to the "start" entrypoint
 		FindContainerFunc: func(name string) (*dc.Container, error) {
 			return &dc.Container{
 				Name: name,
 				Config: &dc.Config{
-					Entrypoint: []string{"start"},
+					Entrypoint: []string{},
 				},
 			}, nil
 		},
 		FindImageFunc: func(repoTag string) (*dc.Image, error) {
-			return &dc.Image{Config: &dc.Config{}}, nil
+			return &dc.Image{Config: &dc.Config{
+				Entrypoint: []string{"start"},
+			}}, nil
 		},
 	}
 
