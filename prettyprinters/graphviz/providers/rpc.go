@@ -27,15 +27,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ResourceProvider is the PrintProvider type for Resources
-type ResourceProvider struct {
+// RPCProvider is the PrintProvider type for Resources
+type RPCProvider struct {
 	graphviz.GraphIDProvider
 	ShowParams bool
 }
 
 // VertexGetID returns the graph ID as the VertexID, possibly maksing it
 // depending on the vertext type and configuration.
-func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
+func (p RPCProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	val, ok := e.Value.(*pb.GraphComponent_Vertex)
 	if !ok {
 		return pp.VisibleString(e.Name), nil
@@ -56,7 +56,7 @@ func (p ResourceProvider) VertexGetID(e graphviz.GraphEntity) (pp.VisibleRendera
 //    Modules: Return 'Module' and the module name
 //    Params: Return 'name -> "value"'
 //    otherwise: Return 'name'
-func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
+func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderable, error) {
 	var name string
 
 	if e.Name == rootNodeID {
@@ -106,7 +106,7 @@ func (p ResourceProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRend
 // VertexGetProperties sets graphviz attributes based on the type of the
 // resource. Specifically, we set the shape to 'component' for Shell preparers
 // and 'tab' for templates, and we set the entire root node to be invisible.
-func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
+func (p RPCProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 
 	val, ok := e.Value.(*pb.GraphComponent_Vertex)
@@ -127,7 +127,7 @@ func (p ResourceProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.P
 
 // EdgeGetProperties sets attributes for graph edges, specifically making edges
 // originating from the Root node invisible.
-func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
+func (p RPCProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
 	return properties
 }
@@ -135,7 +135,7 @@ func (p ResourceProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphv
 // SubgraphMarker identifies the start of subgraphs for resources.
 // Specifically, it starts a new subgraph whenever a new 'Module' type resource
 // is encountered.
-func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
+func (p RPCProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.SubgraphMarkerKey {
 	val, ok := e.Value.(*pb.GraphComponent_Vertex)
 	if !ok {
 		return graphviz.SubgraphMarkerNOP
@@ -148,7 +148,7 @@ func (p ResourceProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.Subgra
 	return graphviz.SubgraphMarkerNOP
 }
 
-// NewResourceProvider is a utility function to return a new ResourceProvider
-func NewResourceProvider() graphviz.PrintProvider {
-	return ResourceProvider{}
+// NewRPCProvider is a utility function to return a new RPCProvider
+func NewRPCProvider() graphviz.PrintProvider {
+	return RPCProvider{}
 }
