@@ -52,6 +52,13 @@ func (p Pipeline) AndThen(f func(interface{}) monad.Monad) Pipeline {
 	return p
 }
 
+// Connect adds a pipeline to the end of the current pipeline.
+// E.g. {a,b,c}.Connect({d,e,f}) = {a,b,c,d,e.f}
+func (p Pipeline) Connect(end Pipeline) Pipeline {
+	p.CallStack = list.Concat(p.CallStack, end.CallStack)
+	return p
+}
+
 // Exec executes the pipeline
 func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
 	foldFunc := func(carry, elem interface{}) interface{} {
