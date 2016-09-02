@@ -38,7 +38,7 @@ then render them as [Graphviz](http://graphviz.org/) dot output. You can render
 that like so:
 
 ```sh
-$ converge graph yourModule.hcl | dot -Tpng > yourModule.png
+$ converge graph --local yourModule.hcl | dot -Tpng > yourModule.png
 ```
 
 When you're developing modules, make a habit of rendering them as graphs. It
