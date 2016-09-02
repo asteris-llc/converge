@@ -35,10 +35,10 @@ func ExampleJoin() {
 	fmt.Println(a)
 	fmt.Println(monad.Join(a))
 	//Output:
-	// {{{{foo}}}}
-	// {{foo}}
-	// {{{{foo}}}}
-	// {{{{foo}}}}
+	// Right (Right (foo))
+	// Right (foo)
+	// Left (Left (foo))
+	// Left (Left (foo))
 
 }
 
@@ -50,10 +50,10 @@ func ExampleEither() {
 	b1 := b.AndThen(addOne)
 	show(a1.(either.EitherM), b1.(either.EitherM))
 	//Output:
-	// {{1}}
-	// {{foo}}
-	// {{2}}
-	// {{foo}}
+	// Right (1)
+	// Left (foo)
+	// Right (2)
+	// Left (foo)
 }
 
 func ExampleChainAndThen() {
@@ -63,8 +63,8 @@ func ExampleChainAndThen() {
 	b := monad.FMap(plusOne, a)
 	fmt.Println(b)
 	//Output:
-	// {{4}}
-	// {{5}}
+	// Right (4)
+	// Right (5)
 }
 
 func ExampleEitherFMap() {
@@ -77,7 +77,7 @@ func ExampleEitherFMap() {
 	b = monad.FMap(plusOne, b)
 	fmt.Println(b)
 	//Output:
-	// {{2}}
-	// {{3}}
-	// {{4}}
+	// Right (2)
+	// Right (3)
+	// Right (4)
 }
