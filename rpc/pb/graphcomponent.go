@@ -12,22 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rpc
+package pb
 
-import (
-	"context"
+// NewGraphComponent wraps the given component in a GraphComponent wrapper. If
+// the argument is not something that can be wrapped, GraphComponent will not
+// contain anything.
+func NewGraphComponent(component interface{}) *GraphComponent {
+	container := new(GraphComponent)
+	switch c := component.(type) {
+	case *GraphComponent_Edge:
+		container.Component = &GraphComponent_Edge_{Edge: c}
 
-	"github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/fgrid/uuid"
-)
+	case *GraphComponent_Vertex:
+		container.Component = &GraphComponent_Vertex_{Vertex: c}
+	}
 
-func getLogger(ctx context.Context) *logrus.Entry {
-	return logging.GetLogger(ctx).WithField("component", "rpc")
-}
-
-func setIDLogger(ctx context.Context) (*logrus.Entry, context.Context) {
-	logger := getLogger(ctx).WithField("runID", uuid.NewV4().String())
-
-	return logger, logging.WithLogger(ctx, logger)
+	return container
 }

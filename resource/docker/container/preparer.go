@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 )
@@ -195,4 +196,8 @@ func validateContainer(container *Container) error {
 		}
 	}
 	return nil
+}
+
+func init() {
+	registry.Register("docker.container", (*Preparer)(nil), (*Container)(nil))
 }

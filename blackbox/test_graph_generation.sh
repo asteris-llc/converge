@@ -14,7 +14,7 @@ for i in ${ROOT}/samples/*.hcl; do
     b=$(basename $i)
     dotSource="${b}.dot"
     pngOutput="${dotSource}.png"
-    ${ROOT}/converge graph ${i} > ${dotSource}
+    ${ROOT}/converge graph --local ${i} > ${dotSource}
     if [[ ! $? ]]; then
         echo "failed to generate graph for ${b}"
         exit 1

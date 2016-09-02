@@ -17,6 +17,7 @@ package param
 import (
 	"errors"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -48,4 +49,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	return &Param{Value: def}, nil
+}
+
+func init() {
+	registry.Register("param", (*Preparer)(nil), (*Param)(nil))
 }

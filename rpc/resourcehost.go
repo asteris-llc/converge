@@ -61,7 +61,7 @@ func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.Cont
 	return &pb.ContentResponse{Content: string(content)}, nil
 }
 
-func (rh *resourceHost) GetModule(ctx context.Context, loc *pb.LocationRequest) (*pb.ContentResponse, error) {
+func (rh *resourceHost) GetModule(ctx context.Context, loc *pb.LoadRequest) (*pb.ContentResponse, error) {
 	logger := getLogger(ctx).WithField("function", "resourceHost.GetModule").WithField("location", loc.Location)
 
 	if err := rh.auth.authorize(ctx); err != nil {

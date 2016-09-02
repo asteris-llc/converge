@@ -17,6 +17,7 @@ package image
 import (
 	"time"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 )
@@ -76,4 +77,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 	image.SetClient(dockerClient)
 	return image, nil
+}
+
+func init() {
+	registry.Register("docker.image", (*Preparer)(nil), (*Image)(nil))
 }
