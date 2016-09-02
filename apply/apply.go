@@ -61,6 +61,7 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 	var hasErrors error
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
+		fmt.Printf("Starting: %s\n", id)
 		renderingPlant.Graph = out
 		pipeline := pipelineF(out, id)
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
