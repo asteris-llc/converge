@@ -94,7 +94,7 @@ You can pipe the output directly to the 'dot' command, for example:
 		printer := prettyprinters.New(
 			graphviz.New(
 				graphviz.DefaultOptions(),
-				providers.ResourceProvider{
+				providers.RPCProvider{
 					ShowParams: viper.GetBool("show-params"),
 				},
 			),

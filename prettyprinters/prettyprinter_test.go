@@ -69,7 +69,7 @@ func Example_generateAGraphFromAFileOnDisk() {
 		fmt.Println(err)
 		return
 	}
-	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.NewPreparerProvider()))
+	printer := prettyprinters.New(graphviz.New(graphviz.DefaultOptions(), providers.NewRPCProvider()))
 	dotCode, err := printer.Show(context.Background(), g)
 	if err != nil {
 		fmt.Println(err)
