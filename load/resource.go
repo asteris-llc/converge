@@ -25,7 +25,9 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/container"
 	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/asteris-llc/converge/resource/file/content"
+	"github.com/asteris-llc/converge/resource/file/group"
 	"github.com/asteris-llc/converge/resource/file/mode"
+	"github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/shell"
@@ -60,6 +62,12 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		case "file.content":
 			dest = new(content.Preparer)
+
+		case "file.owner":
+			dest = new(owner.Preparer)
+
+		case "file.group":
+			dest = new(group.Preparer)
 
 		case "file.mode":
 			dest = new(mode.Preparer)
