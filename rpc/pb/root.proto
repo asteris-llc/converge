@@ -4,6 +4,7 @@ package pb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
 
 message LoadRequest {
   string location = 1;
@@ -93,6 +94,8 @@ service ResourceHost {
 message GraphComponent {
   message Vertex {
     string id = 1;
+    string kind = 2;
+    google.protobuf.Any details = 3;
   }
 
   message Edge {

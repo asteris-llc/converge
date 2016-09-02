@@ -15,7 +15,11 @@
 package rpc
 
 import (
+	"encoding/json"
+
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/rpc/pb"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/pkg/errors"
 )
 
@@ -40,10 +44,24 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 	}
 
 	for _, vertex := range loaded.Vertices() {
+		kind, ok := registry.NameForType(loaded.Get(vertex))
+		if !ok {
+			kind = "unknown"
+		}
+
+		vbytes, err := json.Marshal(loaded.Get(vertex))
+		if err != nil {
+			return errors.Wrap(err, "could not marshal vertex")
+		}
+
 		err = stream.Send(
-			&pb.GraphComponent{&pb.GraphComponent_Vertex_{&pb.GraphComponent_Vertex{
-				Id: vertex,
-			}}},
+			pb.NewGraphComponent(&pb.GraphComponent_Vertex{
+				Id:   vertex,
+				Kind: kind,
+				Details: &any.Any{
+					Value: vbytes,
+				},
+			}),
 		)
 		if err != nil {
 			logger.WithError(err).WithField("id", vertex).Error("failed to send vertex")
@@ -53,11 +71,11 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 
 	for _, edge := range loaded.Edges() {
 		err = stream.Send(
-			&pb.GraphComponent{&pb.GraphComponent_Edge_{&pb.GraphComponent_Edge{
+			pb.NewGraphComponent(&pb.GraphComponent_Edge{
 				Source:     edge.Source,
 				Dest:       edge.Dest,
 				Attributes: edge.Attributes,
-			}}},
+			}),
 		)
 		if err != nil {
 			logger.WithError(err).WithField("edge", edge).Error("failed to send edge")
