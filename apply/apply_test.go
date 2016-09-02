@@ -89,6 +89,7 @@ func TestApplyErrorsBelow(t *testing.T) {
 
 	rootNode, ok := out.Get("root").(*apply.Result)
 	require.True(t, ok)
+	fmt.Println("Root Node: ", rootNode)
 	assert.EqualError(t, rootNode.Error(), `error in dependency "root/err"`)
 }
 

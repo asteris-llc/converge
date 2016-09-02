@@ -38,10 +38,8 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		pipeline := Pipeline(out, id, renderingPlant, top)
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
-		fmt.Printf("pipeline returned: %v :: %T\n", result, result)
 		value, isRight := result.FromEither()
 		if !isRight {
-			fmt.Printf("pipeline returned an error: %v\n", value)
 			return fmt.Errorf("%v", value)
 		}
 		out.Add(id, value)
@@ -59,7 +57,6 @@ type pipelineGen struct {
 
 // Pipeline generates a pipelined form of rendering
 func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.Pipeline {
-	fmt.Printf("Generating pipeline for %s\n", id)
 	p := pipelineGen{Graph: g, RenderingPlant: factory, Top: top, ID: id}
 	return executor.NewPipeline().
 		AndThen(p.maybeTransformRoot).
@@ -72,17 +69,12 @@ func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.
 // the node is a valide resource.Resource return it.  If it's not root and not a
 // resource.Resource return an error.
 func (p pipelineGen) maybeTransformRoot(idi interface{}) monad.Monad {
-	fmt.Printf("checking for %s == \"root\"...\n", p.ID)
 	if p.ID == "root" {
-		fmt.Println("maybeTransformRoot: returning Right (new preparer for root")
 		return either.RightM(module.NewPreparer(p.Top))
 	}
-	fmt.Println("\tno match")
 	if res, ok := idi.(resource.Resource); ok {
-		fmt.Println("maybeTransformRoot: returning Right preparer")
 		return either.RightM(res)
 	}
-	fmt.Println("maybeTransformRoot: returning Left 'not a preparer'")
 	return either.LeftM(typeError("resource.Renderer", idi))
 }
 
@@ -90,30 +82,24 @@ func (p pipelineGen) maybeTransformRoot(idi interface{}) monad.Monad {
 func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
 	res, ok := idi.(resource.Resource)
 	if !ok {
-		fmt.Println("prepareNode: returning Left 'not a resource.Resource'")
 		return either.LeftM(typeError("resource.Resource", idi))
 	}
 	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
 	if err != nil {
-		fmt.Println("prepareNode: returning Left 'Unable to get renderer'")
 		return either.LeftM(err)
 	}
 	prepared, err := res.Prepare(renderer)
 	if err != nil {
-		fmt.Println("prepareNode: returning Left 'Unable to run prepare'")
 		return either.LeftM(err)
 	}
-	fmt.Println("prepareNode: returning Right Preparer")
 	return either.RightM(prepared)
 }
 
 // Takes a resource.Task and wraps it in resource.TaskWrapper
 func (p pipelineGen) wrapTask(taski interface{}) monad.Monad {
 	if task, ok := taski.(resource.Task); ok {
-		fmt.Println("wrapTask: returning Right WrappedTask")
 		return either.RightM(resource.WrapTask(task))
 	}
-	fmt.Println("wrapTask: returning Left not a resource.Task")
 	return either.LeftM(typeError("resource.Task", taski))
 }
 

@@ -51,10 +51,10 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
+	fmt.Printf("%s starting apply with type %T\n", g.ID, idi)
 	if plan, ok := idi.(*plan.Result); ok {
 		return either.RightM(resultWrapper{Plan: plan})
 	}
-	fmt.Printf("GetTask: expected *plan.Result but got %T\n", idi)
 	return either.LeftM(fmt.Errorf("expected plan.Result but got %T", idi))
 }
 
@@ -69,9 +69,10 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
 	}
 	for _, depID := range graph.Targets(g.Graph.DownEdges(g.ID)) {
-		dep, ok := g.Graph.Get(depID).(executor.Status)
+		elem := g.Graph.Get(depID)
+		dep, ok := elem.(executor.Status)
 		if !ok {
-			return either.LeftM(errors.New("dependency is not a status node"))
+			return either.LeftM(fmt.Errorf("apply.DependencyCheck: expected %s to have type executor.Status but got type %T", depID, elem))
 		}
 		if err := dep.Error(); err != nil {
 			errResult := &Result{
@@ -109,7 +110,6 @@ func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 	taskE, ok := taski.(either.EitherM)
 	if !ok {
-		fmt.Printf("applyNode: failed to get an either.EitherM (%T)", taski)
 		return either.LeftM(fmt.Errorf("expected either.EitherM but got %T", taski))
 	}
 	val, isRight := taskE.FromEither()
@@ -118,7 +118,6 @@ func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 	}
 	twrapper, ok := val.(resultWrapper)
 	if !ok {
-		fmt.Printf("applyNode: expected resultWrapper but got %T", val)
 		return either.LeftM(fmt.Errorf("apply expected a resultWrappert but got %T", val))
 	}
 	renderer, err := g.Renderer(g.ID)
@@ -149,13 +148,11 @@ func (g pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
 		return either.RightM(result)
 	}
 	task := result.Plan.Task
-	fmt.Printf("got a task from result.Plan.Task: %v", task)
 	return plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).
 		Exec(either.ReturnM(task)).
 		AndThen(func(planI interface{}) monad.Monad {
 			plan, ok := planI.(*plan.Result)
 			if !ok {
-				fmt.Printf("maybeRunFinalCheck:Inner: expected *plan.Result but got %T\n", planI)
 				return either.LeftM(fmt.Errorf("expected *plan.Result but got %T", planI))
 			}
 			result.PostCheck = plan.Status

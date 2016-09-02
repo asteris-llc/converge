@@ -24,7 +24,6 @@ import (
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
@@ -67,31 +66,13 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
-			// prep done! Time to run some commands!
-			printer := getPrinter()
-
-			planned, err := plan.Plan(ctx, merged)
-			if err != nil {
-				if err == plan.ErrTreeContainsErrors {
-					out, perr := printer.Show(ctx, planned)
-					if perr != nil {
-						log.Printf("[ERROR] %s: printing failed plan failed: %s\n", fname, perr)
-					} else {
-						fmt.Print("\n")
-						fmt.Print(out)
-					}
-					log.Fatalf("[FATAL] %s: planning failed: check output\n", fname)
-				}
-
-				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
-			}
-
-			results, err := apply.Apply(ctx, planned)
+			results, err := apply.PlanAndApply(ctx, merged)
 			if err != nil && err != apply.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}
 
 			// print results
+			printer := getPrinter()
 			out, perr := printer.Show(ctx, results)
 			if perr != nil {
 				log.Fatalf("[FATAL] %s: failed printing results: %s\n", fname, perr)
