@@ -29,16 +29,16 @@ import (
 type pipelineGen struct {
 	Graph          *graph.Graph
 	RenderingPlant *render.Factory
+	ID             string
 }
 
 type taskWrapper struct {
-	ID   string
 	Task resource.Task
 }
 
 // Pipeline generates a pipeline to evaluate a single graph node
 func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
-	gen := pipelineGen{Graph: g, RenderingPlant: factory}
+	gen := pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
 		AndThen(gen.DependencyCheck).
@@ -47,12 +47,10 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
-	id := idi.(string)
-	node := g.Graph.Get(id)
-	if task, ok := node.(resource.Task); ok {
-		return either.RightM(taskWrapper{ID: id, Task: task})
+	if task, ok := idi.(resource.Task); ok {
+		return either.RightM(taskWrapper{Task: task})
 	}
-	return either.LeftM(fmt.Errorf("expected resource.Task but got %T", node))
+	return either.LeftM(fmt.Errorf("expected resource.Task but got %T", idi))
 }
 
 // DependencyCheck looks for failing dependency nodes.  If an error is
@@ -65,7 +63,7 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 	if !ok {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
 	}
-	for _, depID := range graph.Targets(g.Graph.DownEdges(task.ID)) {
+	for _, depID := range graph.Targets(g.Graph.DownEdges(g.ID)) {
 		dep, ok := g.Graph.Get(depID).(executor.Status)
 		if !ok {
 			return either.LeftM(errors.New("dependency is not a status node"))
@@ -99,9 +97,9 @@ func (g pipelineGen) PlanNode(taski interface{}) monad.Monad {
 	if !ok {
 		return either.LeftM(fmt.Errorf("plan expected a taskWrapper but got %T", val))
 	}
-	renderer, err := g.Renderer(twrapper.ID)
+	renderer, err := g.Renderer(g.ID)
 	if err != nil {
-		return either.LeftM(fmt.Errorf("unable to get renderer for %s", twrapper.ID))
+		return either.LeftM(fmt.Errorf("unable to get renderer for %s", g.ID))
 	}
 	status, err := twrapper.Task.Check(renderer)
 	return either.RightM(&Result{

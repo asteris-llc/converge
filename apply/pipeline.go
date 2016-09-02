@@ -34,7 +34,6 @@ type pipelineGen struct {
 }
 
 type resultWrapper struct {
-	ID   string
 	Plan *plan.Result
 }
 
@@ -44,6 +43,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
 		AndThen(gen.DependencyCheck).
+		AndThen(gen.maybeSkipApplication).
 		AndThen(gen.applyNode).
 		AndThen(gen.maybeRunFinalCheck)
 }
@@ -51,12 +51,11 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
-	id := idi.(string)
-	node := g.Graph.Get(id)
-	if plan, ok := node.(*plan.Result); ok {
-		return either.RightM(resultWrapper{ID: id, Plan: plan})
+	if plan, ok := idi.(*plan.Result); ok {
+		return either.RightM(resultWrapper{Plan: plan})
 	}
-	return either.LeftM(fmt.Errorf("expected resource.Task but got %T", node))
+	fmt.Printf("GetTask: expected *plan.Result but got %T\n", idi)
+	return either.LeftM(fmt.Errorf("expected plan.Result but got %T", idi))
 }
 
 // DependencyCheck looks for failing dependency nodes.  If an error is
@@ -69,7 +68,7 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 	if !ok {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
 	}
-	for _, depID := range graph.Targets(g.Graph.DownEdges(result.ID)) {
+	for _, depID := range graph.Targets(g.Graph.DownEdges(g.ID)) {
 		dep, ok := g.Graph.Get(depID).(executor.Status)
 		if !ok {
 			return either.LeftM(errors.New("dependency is not a status node"))
@@ -100,7 +99,7 @@ func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 		}
 		return either.RightM(plan)
 	}
-	return monad.Join(monad.FMap(checkResult, resultI.(either.EitherM)))
+	return monad.FMap(checkResult, resultI.(either.EitherM))
 }
 
 // applyNode runs apply on the node, it takes an Either *apply.Result
@@ -110,7 +109,8 @@ func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 	taskE, ok := taski.(either.EitherM)
 	if !ok {
-		return either.LeftM(errors.New("plan node was expected to be EitherM"))
+		fmt.Printf("applyNode: failed to get an either.EitherM (%T)", taski)
+		return either.LeftM(fmt.Errorf("expected either.EitherM but got %T", taski))
 	}
 	val, isRight := taskE.FromEither()
 	if !isRight {
@@ -118,13 +118,17 @@ func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 	}
 	twrapper, ok := val.(resultWrapper)
 	if !ok {
-		return either.LeftM(fmt.Errorf("apply expected a *plan.Result but got %T", val))
+		fmt.Printf("applyNode: expected resultWrapper but got %T", val)
+		return either.LeftM(fmt.Errorf("apply expected a resultWrappert but got %T", val))
 	}
-	renderer, err := g.Renderer(twrapper.ID)
+	renderer, err := g.Renderer(g.ID)
 	if err != nil {
-		return either.LeftM(fmt.Errorf("unable to get renderer for %s", twrapper.ID))
+		return either.LeftM(fmt.Errorf("unable to get renderer for %s", g.ID))
 	}
 	applyStatus, err := twrapper.Plan.Task.Apply(renderer)
+	if err != nil {
+		err = fmt.Errorf("error applying %s: %s", g.ID, err)
+	}
 	return either.RightM(&Result{
 		Ran:    true,
 		Status: applyStatus,
@@ -144,14 +148,20 @@ func (g pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
 	if !result.Ran {
 		return either.RightM(result)
 	}
+	task := result.Plan.Task
+	fmt.Printf("got a task from result.Plan.Task: %v", task)
 	return plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).
-		Exec(either.ReturnM(g.ID)).
+		Exec(either.ReturnM(task)).
 		AndThen(func(planI interface{}) monad.Monad {
 			plan, ok := planI.(*plan.Result)
 			if !ok {
+				fmt.Printf("maybeRunFinalCheck:Inner: expected *plan.Result but got %T\n", planI)
 				return either.LeftM(fmt.Errorf("expected *plan.Result but got %T", planI))
 			}
 			result.PostCheck = plan.Status
+			if plan.HasChanges() {
+				result.Err = fmt.Errorf("%s still has changes after apply", g.ID)
+			}
 			return either.RightM(result)
 		})
 }
