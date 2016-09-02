@@ -59,7 +59,7 @@ func (i *Image) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 			Status:       fmt.Sprintf("%s", err),
 		}, err
 	}
-	return i.Check(r)
+	return &resource.Status{Status: i.RepoTag()}, nil
 }
 
 // SetClient injects a docker api client
