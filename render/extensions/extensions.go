@@ -30,9 +30,10 @@ const RefFuncName string = "lookup"
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"env":   {},
-	"param": {},
-	"split": {},
+	"env":    {},
+	"param":  {},
+	"split":  {},
+	"lookup": {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -60,6 +61,7 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
+	language.On("lookup", Unimplemented("lookup"))
 	language.On(RefFuncName, Unimplemented(RefFuncName))
 	language.Validate()
 	return language

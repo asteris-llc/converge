@@ -40,7 +40,7 @@ func TestCheck(t *testing.T) {
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
 	assert.NoError(t, mode.Validate())
 
-	status, err := mode.Check()
+	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
 	assert.True(t, status.HasChanges())
@@ -53,9 +53,9 @@ func TestApply(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
-	err = mode.Apply(fakerenderer.New())
+	_, err = mode.Apply(fakerenderer.New())
 	assert.NoError(t, err)
-	status, err := mode.Check()
+	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
 	assert.False(t, status.HasChanges())
