@@ -10,6 +10,10 @@ import (
 	"github.com/asteris-llc/converge/graph"
 )
 
+// ErrUnresolvable indicates that a field exists but is unresolvable due to nil
+// references
+var ErrUnresolvable = errors.New("field is unresolvable")
+
 // Preprocessor is a template preprocessor
 type Preprocessor struct {
 	vertices map[string]struct{}
@@ -100,16 +104,30 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
-	fmt.Printf("looking up %s on %T\n", fieldName, obj)
-	v := reflect.ValueOf(obj)
+	v := reflect.TypeOf(obj)
 	for v.Kind() == reflect.Ptr {
-		if v.IsNil() {
-			return false
-		}
 		v = v.Elem()
 	}
-	_, hasField := v.Type().FieldByName(fieldName)
+	_, hasField := v.FieldByName(fieldName)
 	return hasField
+}
+
+// ListFields returns a list of fields for the struct
+func ListFields(obj interface{}) (map[string]reflect.Type, error) {
+	results := make(map[string]reflect.Type)
+	v := reflect.TypeOf(obj)
+	for v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	e := reflect.Zero(v)
+	if reflect.Struct != e.Kind() {
+		return results, fmt.Errorf("element is %s, not a struct", e.Type())
+	}
+	for idx := 0; idx < e.Type().NumField(); idx++ {
+		field := e.Type().Field(idx)
+		results[field.Name] = field.Type
+	}
+	return results, nil
 }
 
 // HasMethod returns true if the provided struct supports the defined method
@@ -134,12 +152,33 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	return v.FieldByName(name), nil
 }
 
+// HasPath returns true of the set of terms can resolve to a value
+func HasPath(obj interface{}, terms ...string) error {
+	t := reflect.TypeOf(obj)
+	for _, term := range terms {
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+
+		field, ok := t.FieldByName(term)
+		if !ok {
+			return fmt.Errorf("%s no such field", term)
+		}
+		t = field.Type
+	}
+	return nil
+}
+
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
+	if err := HasPath(obj, terms...); err != nil {
+		return nil, err
+	}
+
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {
-			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+			return reflect.Zero(reflect.TypeOf(obj)), ErrUnresolvable
 		}
 		v = v.Elem()
 	}
@@ -148,11 +187,11 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 		if HasField(obj, term) {
 			val, err := EvalMember(term, obj)
 			if err != nil {
-				return nil, err
+				return nil, ErrUnresolvable
 			}
 			obj = val.Interface()
 		} else {
-			return nil, fmt.Errorf("%T has no field named %s\n", obj, term)
+			return nil, ErrUnresolvable
 		}
 	}
 	return obj, nil
