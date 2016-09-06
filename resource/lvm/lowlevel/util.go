@@ -4,7 +4,9 @@ type LVM struct {
 	Backend Exec
 }
 
-var LvmBackend = &LVM{Backend: &OsExec{}}
+func MakeLvmBackend() *LVM {
+	return &LVM{Backend: &OsExec{}}
+}
 
 func (lvm *LVM) CreateVolumeGroup(vg string, devs []string) error {
 	args := []string{vg}
