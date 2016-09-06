@@ -24,7 +24,6 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/pkg/errors"
-	"github.com/ttacon/chalk"
 )
 
 // Printer for human-readable output
@@ -51,13 +50,15 @@ func NewFiltered(f FilterFunc) *Printer {
 
 // InitColors initializes the colors used by the human printer
 func (p *Printer) InitColors() {
-	p.funcsMapWrite("black", p.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("red", p.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("green", p.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("yellow", p.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("magenta", p.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("cyan", p.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)))
-	p.funcsMapWrite("white", p.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)))
+	reset := "\x1b[0m"
+	p.funcsMapWrite("black", func(in string) string { return "\x1b[30m" + in + reset })
+	p.funcsMapWrite("red", func(in string) string { return "\x1b[31m" + in + reset })
+	p.funcsMapWrite("green", func(in string) string { return "\x1b[32m" + in + reset })
+	p.funcsMapWrite("yellow", func(in string) string { return "\x1b[33m" + in + reset })
+	p.funcsMapWrite("blue", func(in string) string { return "\x1b[34m" + in + reset })
+	p.funcsMapWrite("magenta", func(in string) string { return "\x1b[35m" + in + reset })
+	p.funcsMapWrite("cyan", func(in string) string { return "\x1b[36m" + in + reset })
+	p.funcsMapWrite("white", func(in string) string { return "\x1b[37m" + in + reset })
 }
 
 // StartPP does nothing, but is required to satisfy the GraphPrinter interface
@@ -153,12 +154,12 @@ func (p *Printer) template(source string) (*template.Template, error) {
 	return template.New("").Funcs(funcs).Parse(source)
 }
 
-func (p *Printer) styled(style chalk.Style) func(string) string {
+func (p *Printer) styled(style func(string) string) func(string) string {
 	if !p.Color {
 		return func(in string) string { return in }
 	}
 
-	return style.Style
+	return style
 }
 
 func (p *Printer) diff(before, after string) (string, error) {

@@ -131,8 +131,6 @@ imports:
   - require
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
-- name: github.com/ttacon/chalk
-  version: 76b3c8b611dea8f83e49e9ce81fc2b189e0ef3d2
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
