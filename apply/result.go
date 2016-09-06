@@ -23,9 +23,11 @@ import (
 
 // Result of application
 type Result struct {
+	Task   resource.Task
+	Status resource.TaskStatus
+	Err    error
+
 	Ran       bool
-	Status    resource.TaskStatus
-	Err       error
 	Plan      *plan.Result
 	PostCheck resource.TaskStatus
 }
