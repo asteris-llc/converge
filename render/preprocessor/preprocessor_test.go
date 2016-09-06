@@ -56,9 +56,9 @@ func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "FieldB"))
 }
 
-func Test_HasField_WhenNilPtr_ReturnsFalse(t *testing.T) {
+func Test_HasField_WhenNilPtr_ReturnsTrue(t *testing.T) {
 	var test *TestStruct
-	assert.False(t, preprocessor.HasField(test, "FieldA"))
+	assert.True(t, preprocessor.HasField(test, "FieldA"))
 	assert.False(t, preprocessor.HasField(test, "FieldB"))
 }
 
