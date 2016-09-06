@@ -94,6 +94,7 @@ func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 		if !plan.Plan.Status.HasChanges() {
 			return either.LeftM(&Result{
 				Ran:  false,
+				Task: plan.Plan.Task,
 				Plan: plan.Plan,
 				Err:  nil,
 			})
@@ -131,6 +132,7 @@ func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 	return either.RightM(&Result{
 		Ran:    true,
 		Status: applyStatus,
+		Task:   twrapper.Plan.Task,
 		Plan:   twrapper.Plan,
 		Err:    err,
 	})
