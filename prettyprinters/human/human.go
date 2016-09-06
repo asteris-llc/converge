@@ -51,14 +51,14 @@ func NewFiltered(f FilterFunc) *Printer {
 // InitColors initializes the colors used by the human printer
 func (p *Printer) InitColors() {
 	reset := "\x1b[0m"
-	p.funcsMapWrite("black", func(in string) string { return "\x1b[30m" + in + reset })
-	p.funcsMapWrite("red", func(in string) string { return "\x1b[31m" + in + reset })
-	p.funcsMapWrite("green", func(in string) string { return "\x1b[32m" + in + reset })
-	p.funcsMapWrite("yellow", func(in string) string { return "\x1b[33m" + in + reset })
-	p.funcsMapWrite("blue", func(in string) string { return "\x1b[34m" + in + reset })
-	p.funcsMapWrite("magenta", func(in string) string { return "\x1b[35m" + in + reset })
-	p.funcsMapWrite("cyan", func(in string) string { return "\x1b[36m" + in + reset })
-	p.funcsMapWrite("white", func(in string) string { return "\x1b[37m" + in + reset })
+	p.funcsMapWrite("black", p.styled(func(in string) string { return "\x1b[30m" + in + reset }))
+	p.funcsMapWrite("red", p.styled(func(in string) string { return "\x1b[31m" + in + reset }))
+	p.funcsMapWrite("green", p.styled(func(in string) string { return "\x1b[32m" + in + reset }))
+	p.funcsMapWrite("yellow", p.styled(func(in string) string { return "\x1b[33m" + in + reset }))
+	p.funcsMapWrite("blue", p.styled(func(in string) string { return "\x1b[34m" + in + reset }))
+	p.funcsMapWrite("magenta", p.styled(func(in string) string { return "\x1b[35m" + in + reset }))
+	p.funcsMapWrite("cyan", p.styled(func(in string) string { return "\x1b[36m" + in + reset }))
+	p.funcsMapWrite("white", p.styled(func(in string) string { return "\x1b[37m" + in + reset }))
 }
 
 // StartPP does nothing, but is required to satisfy the GraphPrinter interface
