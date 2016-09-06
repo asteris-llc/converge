@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
@@ -26,13 +27,14 @@ import (
 	"github.com/asteris-llc/converge/resource/module"
 )
 
+// MkPipelineF is a function to generate a pipeline given an id
+type MkPipelineF func(*graph.Graph, string) executor.Pipeline
+
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph
 var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 
-// Plan the execution of a Graph of resource.Tasks
-func Plan(ctx context.Context, in *graph.Graph, params render.Values) (*graph.Graph, error) {
-	var hasErrors error
-
+// RenderAndPlan renders the graph then runs Plan
+func RenderAndPlan(ctx context.Context, in *graph.Graph, params render.Values) (*graph.Graph, error) {
 	if err := ensureRootModule(ctx, in, params); err != nil {
 		return nil, err
 	}
@@ -42,20 +44,39 @@ func Plan(ctx context.Context, in *graph.Graph, params render.Values) (*graph.Gr
 		return nil, err
 	}
 
+	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
+		return render.Pipeline(ctx, g, id, params).Connect(Pipeline(g, id, renderingPlant))
+	}
+	return execPipeline(ctx, in, renderingPlant, pipeline)
+}
+
+// Plan the execution of a Graph of resource.Tasks
+func Plan(ctx context.Context, in *graph.Graph, params render.Values) (*graph.Graph, error) {
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
+		return Pipeline(g, id, renderingPlant)
+	}
+	return execPipeline(ctx, in, renderingPlant, pipeline)
+}
+
+func execPipeline(ctx context.Context, in *graph.Graph, renderingPlant *render.Factory, pipelineF MkPipelineF) (*graph.Graph, error) {
+	var hasErrors error
+
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		renderingPlant.Graph = out
-
-		pipeline := render.Pipeline(ctx, out, id, params).Connect(Pipeline(out, id, renderingPlant))
+		pipeline := pipelineF(out, id)
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
 		val, isRight := result.FromEither()
 		if !isRight {
-			fmt.Printf("pipeline returned Right %v\n", val)
 			return fmt.Errorf("%v", val)
 		}
 
 		asResult, ok := val.(*Result)
 		if !ok {
-			fmt.Printf("expected *Result but got %T\n", val)
 			return fmt.Errorf("expected asResult but got %T", val)
 		}
 
@@ -81,6 +102,10 @@ func ensureRootModule(ctx context.Context, g *graph.Graph, params render.Values)
 	}
 	if grRoot != "root" {
 		fmt.Printf("[INFO] root node is '%s' not 'root', skipping\n", grRoot)
+		return nil
+	}
+	if g.Get(grRoot) != nil {
+		fmt.Printf("[INFO] found a non-nil value at root, skipping preparer generation\n")
 		return nil
 	}
 	rootPreparer := module.NewPreparer(params)

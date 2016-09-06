@@ -46,7 +46,6 @@ type LazyValue struct {
 func (v *LazyValue) Value() (string, bool, error) {
 	switch result := v.val.(type) {
 	case [3]interface{}:
-		fmt.Println("factory.Value: result: ", result)
 		var resultErr error
 		if result[2] != nil {
 			resultErr = result[2].(error)

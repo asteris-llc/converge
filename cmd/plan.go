@@ -63,7 +63,7 @@ can be done separately to see what needs to be changed before execution.`,
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
-			results, err := plan.Plan(ctx, merged, params)
+			results, err := plan.RenderAndPlan(ctx, merged, params)
 			if err != nil && err != plan.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}

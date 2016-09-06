@@ -22,6 +22,8 @@ import (
 	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/helpers/faketask"
 	"github.com/asteris-llc/converge/plan"
+	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,14 +34,17 @@ func TestPlanNoOp(t *testing.T) {
 	g := graph.New()
 	task := faketask.NoOp()
 	g.Add("root", task)
-
 	require.NoError(t, g.Validate())
 
 	// test that running this results in an appropriate result
-	planned, err := plan.Plan(context.Background(), g)
+	planned, err := plan.Plan(context.Background(), g, render.Values{})
 	assert.NoError(t, err)
 
 	result := getResult(t, planned, "root")
+
+	_, resolved := resource.ResolveTask(result.Task)
+	assert.True(t, resolved)
+
 	assert.Equal(t, task.Status, result.Status.Messages()[0])
 	assert.Equal(t, task.WillChange, result.Status.HasChanges())
 	assert.Equal(t, task, result.Task)
@@ -59,7 +64,7 @@ func TestPlanErrorsBelow(t *testing.T) {
 	// planning will return an error if any of the leaves error, but it won't even
 	// touch vertices that are higher up. This test should show an error in the
 	// leafmost node, and not the root.
-	out, err := plan.Plan(context.Background(), g)
+	out, err := plan.Plan(context.Background(), g, render.Values{})
 	assert.Equal(t, plan.ErrTreeContainsErrors, err)
 
 	errNode, ok := out.Get("root/err").(*plan.Result)
