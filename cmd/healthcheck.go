@@ -25,7 +25,6 @@ import (
 	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
 
@@ -61,17 +60,12 @@ not display healthy checks.`,
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, loaded, params)
-			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
-			}
-
-			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			merged, err := graph.MergeDuplicates(ctx, loaded, graph.SkipModuleAndParams)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
-			planned, err := plan.Plan(ctx, merged)
+			planned, err := plan.Plan(ctx, merged, params)
 			if err != nil && err != plan.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: planning failed: %s\n", fname, err)
 			}

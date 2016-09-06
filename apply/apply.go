@@ -23,6 +23,8 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/module"
 	"github.com/pkg/errors"
 )
 
@@ -45,13 +47,17 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 }
 
 // PlanAndApply plans and applies each node
-func PlanAndApply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+func PlanAndApply(ctx context.Context, in *graph.Graph, top render.Values) (*graph.Graph, error) {
+	if rootErr := ensureRootModule(ctx, in, top); rootErr != nil {
+		return in, errors.Wrap(rootErr, "cannot configure root module")
+	}
+
 	renderingPlant, err := render.NewFactory(ctx, in)
 	if err != nil {
 		return nil, err
 	}
 	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
-		return plan.Pipeline(g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant))
+		return render.Pipeline(ctx, g, id, top).Connect(plan.Pipeline(g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant)))
 	}
 	return execPipeline(ctx, in, pipeline, renderingPlant)
 }
@@ -61,7 +67,6 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 	var hasErrors error
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
-		fmt.Printf("Starting: %s\n", id)
 		renderingPlant.Graph = out
 		pipeline := pipelineF(out, id)
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
@@ -69,13 +74,12 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 		if !isRight {
 			hasErrors = ErrTreeContainsErrors
 			if e, ok := val.(error); ok {
-				fmt.Println("got an error back; returning")
+				fmt.Printf("apply.go (%s) - execPipeline: pipeline returned %s\n", id, e)
 				return e
 			}
 		}
 		asResult, ok := val.(*Result)
 		if !ok {
-			fmt.Printf("expected *Result but got %T\n", val)
 			return fmt.Errorf("expected asResult but got %T", val)
 		}
 
@@ -93,4 +97,31 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 	}
 
 	return out, hasErrors
+}
+
+func ensureRootModule(ctx context.Context, g *graph.Graph, params render.Values) error {
+	grRoot, err := g.Root()
+	if err != nil {
+		return err
+	}
+	if grRoot != "root" {
+		fmt.Printf("[INFO] root node is '%s' not 'root', skipping\n", grRoot)
+		return nil
+	}
+	rootPreparer := module.NewPreparer(params)
+	renderingPlant, err := render.NewFactory(ctx, g)
+	if err != nil {
+		return err
+	}
+	renderer, err := renderingPlant.GetRenderer(grRoot)
+	if err != nil {
+		return err
+	}
+	rootTask, err := rootPreparer.Prepare(renderer)
+	if err != nil {
+		return err
+	}
+	wrapped := resource.WrapTask(rootTask)
+	g.Add(grRoot, wrapped)
+	return nil
 }

@@ -98,7 +98,7 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 		f = func() (string, bool, error) {
 			parentTask, ok := resource.ResolveTask(gFunc().GetParent(id))
 			if !ok {
-				return "", false, fmt.Errorf("parent node is not a valid task type")
+				return "", false, fmt.Errorf("expected `resource.Task` but parent node is of type %T", gFunc().GetParent(id))
 			}
 			parent, ok := parentTask.(*module.Module)
 			if !ok {

@@ -7,12 +7,13 @@ param "name" {
 }
 
 task "refgen" {
+  interpreter = "/bin/bash"
   check = "echo -n 'refgen: check'; [[ -f refgen.txt ]]"
   apply = "echo -n 'refgen: apply'; touch refgen.txt"
 }
 
 task "shellref" {
-  #  check = "echo 'stdout: {{lookup `task.refgen.Status.Stdout`}}'; [[ -f sr.txt ]]"
-  check = "echo 'check without xref' sr.txt ]]"
+  interpreter = "/bin/bash"
+  check = "echo 'shellref: {{lookup `task.refgen.Status.Stdout`}}'; [[ -f sr.txt ]]"
   apply = "echo 'stdout: {{lookup `task.refgen.Status.Stdout`}}' | tee sr.txt"
 }

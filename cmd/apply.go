@@ -24,7 +24,6 @@ import (
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
 )
 
@@ -56,17 +55,12 @@ real happens.`,
 				log.Fatalf("[FATAL] %s: could not parse file: %s\n", fname, err)
 			}
 
-			rendered, err := render.Render(ctx, loaded, params)
-			if err != nil {
-				log.Fatalf("[FATAL] %s: could not render: %s\n", fname, err)
-			}
-
-			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			merged, err := graph.MergeDuplicates(ctx, loaded, graph.SkipModuleAndParams)
 			if err != nil {
 				log.Fatalf("[FATAL] %s: could not merge duplicates: %s\n", fname, err)
 			}
 
-			results, err := apply.PlanAndApply(ctx, merged)
+			results, err := apply.PlanAndApply(ctx, merged, params)
 			if err != nil && err != apply.ErrTreeContainsErrors {
 				log.Fatalf("[FATAL] %s: applying failed: %s\n", fname, err)
 			}

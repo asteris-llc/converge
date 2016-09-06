@@ -80,14 +80,15 @@ type Preparer struct {
 
 // Prepare a new shell task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-
 	check, err := render.Render("check", p.Check)
 	if err != nil {
+		fmt.Printf("shell.Prepare on `%s` returned %s\n", p.Check, err)
 		return nil, err
 	}
 
 	apply, err := render.Render("apply", p.Apply)
 	if err != nil {
+		fmt.Printf("shell.Prepare on `%s` returned %s\n", p.Apply, err)
 		return nil, err
 	}
 

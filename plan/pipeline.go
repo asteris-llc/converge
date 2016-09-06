@@ -47,7 +47,6 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
-	fmt.Printf("%s starting plan with type %T\n", g.ID, idi)
 	if task, ok := idi.(resource.Task); ok {
 		return either.RightM(taskWrapper{Task: task})
 	}
@@ -69,7 +68,6 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 		elem := g.Graph.Get(depID)
 		dep, ok := elem.(executor.Status)
 		if !ok {
-			fmt.Printf("expected %s to be executor.Status but got %T\n", depID, elem)
 			return either.LeftM(fmt.Errorf("expected executor.Status but got %T", elem))
 		}
 		if err := dep.Error(); err != nil {

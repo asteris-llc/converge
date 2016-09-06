@@ -65,26 +65,67 @@ func (r *Renderer) param(name string) (string, error) {
 func (r *Renderer) lookup(name string) (string, error) {
 	g := r.Graph()
 	// fully-qualified graph name
-
 	fqgn := graph.SiblingID(r.ID, name)
 	vertexName, terms, found := preprocessor.VertexSplit(g, fqgn)
-
 	if !found {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
-
 	val, ok := resource.ResolveTask(g.Get(vertexName))
-
 	if !ok {
 		p := g.Get(vertexName)
 		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, p)
 	}
-
 	result, err := preprocessor.EvalTerms(val, preprocessor.SplitTerms(terms)...)
-
 	if err != nil {
-		return "", err
+		return "", ErrUnresolvable
 	}
-
 	return fmt.Sprintf("%v", result), nil
+}
+
+// RenderLater returns at render thunk
+func (r *Renderer) RenderLater(name, src string) *Thunk {
+	return &Thunk{RenderCtx: r, Src: src, Name: name}
+}
+
+// Thunk represents a rendered thunk that can be stored and evaluated at a
+// future time
+type Thunk struct {
+	RenderCtx *Renderer
+	Src       string
+	Name      string
+	value     interface{}
+}
+
+// Value gets the value from a thunk
+func (t *Thunk) Value() (interface{}, error) {
+	if t.value != nil {
+		return t.value, nil
+	}
+	t, err := t.eval()
+	return t.value, err
+}
+
+func (t *Thunk) eval() (*Thunk, error) {
+	result, err := t.RenderCtx.Render(t.Name, t.Src)
+	if err == nil {
+		t.value = result
+	}
+	return t, err
+}
+
+// Available returns true if a value is available, false if ErrUnresolvable, and
+// an error on some other error
+func (t *Thunk) Available() (bool, error) {
+	if t.value != nil {
+		return true, nil
+	}
+	val, err := t.Value()
+	if err == nil {
+		t.value = val
+		return true, nil
+	}
+	if err == ErrUnresolvable {
+		return false, nil
+	}
+	return false, err
 }

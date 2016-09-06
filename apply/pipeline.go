@@ -51,7 +51,6 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
-	fmt.Printf("%s starting apply with type %T\n", g.ID, idi)
 	if plan, ok := idi.(*plan.Result); ok {
 		return either.RightM(resultWrapper{Plan: plan})
 	}

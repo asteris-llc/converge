@@ -100,7 +100,6 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
-	fmt.Printf("looking up %s on %T\n", fieldName, obj)
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr {
 		if v.IsNil() {

@@ -22,14 +22,20 @@ import (
 	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/module"
 )
 
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph
 var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 
 // Plan the execution of a Graph of resource.Tasks
-func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+func Plan(ctx context.Context, in *graph.Graph, params render.Values) (*graph.Graph, error) {
 	var hasErrors error
+
+	if err := ensureRootModule(ctx, in, params); err != nil {
+		return nil, err
+	}
 
 	renderingPlant, err := render.NewFactory(ctx, in)
 	if err != nil {
@@ -39,7 +45,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
 		renderingPlant.Graph = out
 
-		pipeline := Pipeline(out, id, renderingPlant)
+		pipeline := render.Pipeline(ctx, out, id, params).Connect(Pipeline(out, id, renderingPlant))
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
 		val, isRight := result.FromEither()
 		if !isRight {
@@ -66,4 +72,31 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	}
 
 	return out, hasErrors
+}
+
+func ensureRootModule(ctx context.Context, g *graph.Graph, params render.Values) error {
+	grRoot, err := g.Root()
+	if err != nil {
+		return err
+	}
+	if grRoot != "root" {
+		fmt.Printf("[INFO] root node is '%s' not 'root', skipping\n", grRoot)
+		return nil
+	}
+	rootPreparer := module.NewPreparer(params)
+	renderingPlant, err := render.NewFactory(ctx, g)
+	if err != nil {
+		return err
+	}
+	renderer, err := renderingPlant.GetRenderer(grRoot)
+	if err != nil {
+		return err
+	}
+	rootTask, err := rootPreparer.Prepare(renderer)
+	if err != nil {
+		return err
+	}
+	wrapped := resource.WrapTask(rootTask)
+	g.Add(grRoot, wrapped)
+	return nil
 }

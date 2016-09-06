@@ -31,33 +31,29 @@ type Values map[string]interface{}
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
-	renderingPlant, err := NewFactory(ctx, g)
-	if err != nil {
-		return nil, err
-	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
-		pipeline := Pipeline(out, id, renderingPlant, top)
+		pipeline := Pipeline(ctx, out, id, top)
+		fmt.Printf("executing pipeline for %s\n", id)
 		result := pipeline.Exec(either.ReturnM(out.Get(id)))
 		value, isRight := result.FromEither()
 		if !isRight {
 			return fmt.Errorf("%v", value)
 		}
 		out.Add(id, value)
-		renderingPlant.Graph = out
 		return nil
 	})
 }
 
 type pipelineGen struct {
-	Graph          *graph.Graph
-	RenderingPlant *Factory
-	ID             string
-	Top            Values
+	Graph *graph.Graph
+	ID    string
+	Top   Values
+	Ctx   context.Context
 }
 
 // Pipeline generates a pipelined form of rendering
-func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.Pipeline {
-	p := pipelineGen{Graph: g, RenderingPlant: factory, Top: top, ID: id}
+func Pipeline(ctx context.Context, g *graph.Graph, id string, top Values) executor.Pipeline {
+	p := pipelineGen{Graph: g, Top: top, Ctx: ctx, ID: id}
 	return executor.NewPipeline().
 		AndThen(p.maybeTransformRoot).
 		AndThen(p.prepareNode).
@@ -84,10 +80,15 @@ func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
 	if !ok {
 		return either.LeftM(typeError("resource.Resource", idi))
 	}
-	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
+	renderingPlant, err := NewFactory(p.Ctx, p.Graph)
+	if err != nil {
+		return either.LeftM(fmt.Errorf("render factory returned %s", err))
+	}
+	renderer, err := renderingPlant.GetRenderer(p.ID)
 	if err != nil {
 		return either.LeftM(err)
 	}
+
 	prepared, err := res.Prepare(renderer)
 	if err != nil {
 		return either.LeftM(err)
