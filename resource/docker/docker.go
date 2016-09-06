@@ -30,12 +30,15 @@ type APIClient interface {
 	FindContainer(string) (*dc.Container, error)
 	CreateContainer(dc.CreateContainerOptions) (*dc.Container, error)
 	StartContainer(string, string) error
+	SetRetryOptions(timeout, retryInterval time.Duration)
 }
 
 // Client provides api access to Docker
 type Client struct {
 	*dc.Client
 	PullInactivityTimeout time.Duration
+	ConnectTimeout        time.Duration
+	RetryInterval         time.Duration
 }
 
 // NewDockerClient returns a docker client with the default configuration
@@ -44,11 +47,20 @@ func NewDockerClient() (*Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create docker client from environment")
 	}
-	return &Client{Client: c}, nil
+
+	return &Client{
+		Client:         c,
+		ConnectTimeout: (5 * time.Second),
+		RetryInterval:  (1 * time.Second),
+	}, nil
 }
 
 // FindImage finds a local docker image with the specified repo tag
 func (c *Client) FindImage(repoTag string) (*dc.Image, error) {
+	if err := c.verifyConnection(); err != nil {
+		return nil, err
+	}
+
 	// TODO: can I just call inspect with the repoTag?
 	images, err := c.Client.ListImages(dc.ListImagesOptions{All: true})
 	if err != nil {
@@ -96,6 +108,10 @@ func (c *Client) FindImage(repoTag string) (*dc.Image, error) {
 
 // PullImage pulls an image with the specified name and tag
 func (c *Client) PullImage(name, tag string) error {
+	if err := c.verifyConnection(); err != nil {
+		return err
+	}
+
 	log.WithFields(log.Fields{
 		"module": "docker",
 		"name":   name,
@@ -122,6 +138,10 @@ func (c *Client) PullImage(name, tag string) error {
 
 // FindContainer returns a container matching the specified name
 func (c *Client) FindContainer(name string) (*dc.Container, error) {
+	if err := c.verifyConnection(); err != nil {
+		return nil, err
+	}
+
 	opts := dc.ListContainersOptions{All: true}
 	containers, err := c.Client.ListContainers(opts)
 	if err != nil {
@@ -165,6 +185,10 @@ func (c *Client) FindContainer(name string) (*dc.Container, error) {
 
 // CreateContainer creates a container with the specified options
 func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container, error) {
+	if err := c.verifyConnection(); err != nil {
+		return nil, err
+	}
+
 	name := opts.Name
 
 	container, err := c.FindContainer(name)
@@ -206,10 +230,51 @@ func (c *Client) CreateContainer(opts dc.CreateContainerOptions) (*dc.Container,
 
 // StartContainer starts the container with the specified ID
 func (c *Client) StartContainer(name, containerID string) error {
+	if err := c.verifyConnection(); err != nil {
+		return err
+	}
+
 	log.WithField("module", "docker").WithFields(log.Fields{"name": name, "id": containerID}).Debug("starting container")
 	err := c.Client.StartContainer(containerID, nil)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to start container %s (%s)", name, containerID)
 	}
 	return err
+}
+
+func (c *Client) SetRetryOptions(timeout, retryInterval time.Duration) {
+	c.ConnectTimeout = timeout
+	c.RetryInterval = retryInterval
+}
+
+func (c *Client) verifyConnection() error {
+	log.WithField("module", "docker").Debug("connecting to docker daemon")
+	pingerr := c.Ping()
+	if pingerr != nil {
+		log.WithField("module", "docker").Debug("connection to docker daemon failed. will retry")
+		timeoutChan := time.After(c.ConnectTimeout)
+		retryChan := time.Tick(c.RetryInterval)
+
+		err := func() error {
+			for {
+				select {
+				case <-timeoutChan:
+					return errors.New("timed out while trying to ping docker daemon")
+				case <-retryChan:
+					log.WithField("module", "docker").Debug("retrying connection to docker daemon failed")
+					pingerr := c.Ping()
+					if pingerr == nil {
+						return nil
+					}
+				}
+			}
+		}()
+
+		if err != nil {
+			return errors.Wrap(err, "failed to ping docker daemon")
+		}
+	}
+
+	log.WithField("module", "docker").Debug("connection to docker daemon succeeded")
+	return nil
 }
