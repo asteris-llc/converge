@@ -161,5 +161,12 @@ func (f *Formatter) kv(key string, value interface{}) string {
 		return fmt.Sprintf("%s=%q", key, f.replacer.Replace(fmt.Sprint(value)))
 	}
 
-	return fmt.Sprintf("%s=%s", f.colors["blue"](key), value)
+	var color func(string) string
+	if key == "error" {
+		color = f.colors["red"]
+	} else {
+		color = f.colors["blue"]
+	}
+
+	return fmt.Sprintf("%s=%s", color(key), value)
 }
