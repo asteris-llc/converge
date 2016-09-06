@@ -93,7 +93,12 @@ service ResourceHost {
 message GraphComponent {
   message Vertex {
     string id = 1;
+
+    // the kind of node, specified as the type used to create a node of this
+    // type in the Converge DSL
     string kind = 2;
+
+    // detailed fields of this node, serialized as JSON
     bytes details = 3;
   }
 

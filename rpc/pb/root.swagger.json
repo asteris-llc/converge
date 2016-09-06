@@ -165,7 +165,8 @@
       "properties": {
         "details": {
           "type": "string",
-          "format": "byte"
+          "format": "byte",
+          "title": "detailed fields of this node, serialized as JSON"
         },
         "id": {
           "type": "string",
@@ -173,7 +174,8 @@
         },
         "kind": {
           "type": "string",
-          "format": "string"
+          "format": "string",
+          "title": "the kind of node, specified as the type used to create a node of this\ntype in the Converge DSL"
         }
       }
     },

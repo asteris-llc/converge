@@ -287,8 +287,11 @@ func _GraphComponent_OneofSizer(msg proto.Message) (n int) {
 }
 
 type GraphComponent_Vertex struct {
-	Id      string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Kind    string `protobuf:"bytes,2,opt,name=kind" json:"kind,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	// the kind of node, specified as the type used to create a node of this
+	// type in the Converge DSL
+	Kind string `protobuf:"bytes,2,opt,name=kind" json:"kind,omitempty"`
+	// detailed fields of this node, serialized as JSON
 	Details []byte `protobuf:"bytes,3,opt,name=details,proto3" json:"details,omitempty"`
 }
 
