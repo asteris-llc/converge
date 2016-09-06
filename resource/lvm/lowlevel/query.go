@@ -20,7 +20,7 @@ func (lvm *LVM) QueryDeviceMapperName(dmName string) (string, error) {
 
 func (lvm *LVM) Query(prog string, out string, extras []string) ([]map[string]interface{}, error) {
 	result := []map[string]interface{}{}
-	args := []string{"--nameprefix", "--noheadings", "--unquoted", "-o", out, "--separator", ";"}
+	args := []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", out, "--separator", ";"}
 	args = append(args, extras...)
 	output, err := lvm.Backend.Read(prog, args)
 	if err != nil {

@@ -11,7 +11,7 @@ type ResourceVG struct {
 	Exists          bool
 	DevicesToAdd    []string
 	DevicesToRemove []string
-	lvm             lowlevel.LVM
+	lvm             *lowlevel.LVM
 }
 
 func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
@@ -46,6 +46,7 @@ func (r *ResourceVG) Apply() error {
 }
 
 func (r *ResourceVG) Setup(devs []string) error {
+	r.lvm = lowlevel.MakeLvmBackend()
 	pvs, err := r.lvm.QueryPhysicalVolumes()
 	if err != nil {
 		return err

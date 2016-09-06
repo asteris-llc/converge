@@ -2,6 +2,7 @@ package lowlevel
 
 import (
 	"os/exec"
+	"strings"
 )
 
 type Exec interface {
@@ -13,7 +14,7 @@ type OsExec struct {
 }
 
 func (*OsExec) Run(prog string, args []string) error {
-	return exec.Command(prog, args...).Wait()
+	return exec.Command(prog, args...).Run()
 }
 
 func (*OsExec) Read(prog string, args []string) (stdout string, err error) {
@@ -21,5 +22,5 @@ func (*OsExec) Read(prog string, args []string) (stdout string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return string(out), err
+	return strings.Trim(string(out), "\n "), err
 }
