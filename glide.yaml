@@ -83,8 +83,6 @@ import:
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/objx
 - package: github.com/mitchellh/hashstructure
-- package: github.com/ttacon/chalk
-  version: ~0.1.0
 - package: github.com/fsouza/go-dockerclient
 - package: google.golang.org/grpc
   version: ~1.0.0

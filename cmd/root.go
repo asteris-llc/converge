@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -59,6 +60,16 @@ see "converge graph --help" for more details.`,
 		}
 
 		log.SetLevel(parsedLevel)
+
+		// set log formatter
+		nocolor, err := cmd.Flags().GetBool("nocolor")
+		if err != nil {
+			return err
+		}
+
+		log.SetFormatter(&logging.Formatter{
+			DisableColors: nocolor,
+		})
 
 		// bind pflags for active commands
 		sub := cmd

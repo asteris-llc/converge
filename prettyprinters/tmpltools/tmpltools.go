@@ -21,7 +21,6 @@ import (
 	"text/template"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/ttacon/chalk"
 )
 
 // ExtendedTemplate provides information about extended template rendering
@@ -31,15 +30,19 @@ type ExtendedTemplate struct {
 
 // New generates a new template.Template with the functions from the extended template
 func (tmpl *ExtendedTemplate) New(source string) (*template.Template, error) {
+	reset := "\x1b[0m"
 	funcs := map[string]interface{}{
 		// colors
-		"black":       tmpl.styled(chalk.Black.NewStyle().WithBackground(chalk.ResetColor)),
-		"red":         tmpl.styled(chalk.Red.NewStyle().WithBackground(chalk.ResetColor)),
-		"green":       tmpl.styled(chalk.Green.NewStyle().WithBackground(chalk.ResetColor)),
-		"yellow":      tmpl.styled(chalk.Yellow.NewStyle().WithBackground(chalk.ResetColor)),
-		"magenta":     tmpl.styled(chalk.Magenta.NewStyle().WithBackground(chalk.ResetColor)),
-		"cyan":        tmpl.styled(chalk.Cyan.NewStyle().WithBackground(chalk.ResetColor)),
-		"white":       tmpl.styled(chalk.White.NewStyle().WithBackground(chalk.ResetColor)),
+		"black":   tmpl.styled(func(in string) string { return "\x1b[30m" + in + reset }),
+		"red":     tmpl.styled(func(in string) string { return "\x1b[31m" + in + reset }),
+		"green":   tmpl.styled(func(in string) string { return "\x1b[32m" + in + reset }),
+		"yellow":  tmpl.styled(func(in string) string { return "\x1b[33m" + in + reset }),
+		"blue":    tmpl.styled(func(in string) string { return "\x1b[34m" + in + reset }),
+		"magenta": tmpl.styled(func(in string) string { return "\x1b[35m" + in + reset }),
+		"cyan":    tmpl.styled(func(in string) string { return "\x1b[36m" + in + reset }),
+		"white":   tmpl.styled(func(in string) string { return "\x1b[37m" + in + reset }),
+
+		// utils
 		"indent":      tmpl.indent,
 		"diff":        tmpl.diff,
 		"showWarning": showWarning,
@@ -47,12 +50,12 @@ func (tmpl *ExtendedTemplate) New(source string) (*template.Template, error) {
 	return template.New("").Funcs(funcs).Parse(source)
 }
 
-func (tmpl *ExtendedTemplate) styled(style chalk.Style) func(string) string {
+func (tmpl *ExtendedTemplate) styled(style func(string) string) func(string) string {
 	if !tmpl.Color {
 		return func(in string) string { return in }
 	}
 
-	return style.Style
+	return style
 }
 
 func (tmpl *ExtendedTemplate) diff(before, after string) (string, error) {
