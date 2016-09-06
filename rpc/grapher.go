@@ -19,7 +19,6 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/rpc/pb"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/pkg/errors"
 )
 
@@ -56,11 +55,9 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 
 		err = stream.Send(
 			pb.NewGraphComponent(&pb.GraphComponent_Vertex{
-				Id:   vertex,
-				Kind: kind,
-				Details: &any.Any{
-					Value: vbytes,
-				},
+				Id:      vertex,
+				Kind:    kind,
+				Details: vbytes,
 			}),
 		)
 		if err != nil {
