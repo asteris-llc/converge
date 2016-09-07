@@ -104,7 +104,15 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
-	v := reflect.TypeOf(obj)
+	var v reflect.Type
+	switch oType := obj.(type) {
+	case reflect.Type:
+		v = oType
+	case reflect.Value:
+		v = oType.Type()
+	default:
+		v = reflect.TypeOf(obj)
+	}
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -113,9 +121,17 @@ func HasField(obj interface{}, fieldName string) bool {
 }
 
 // ListFields returns a list of fields for the struct
-func ListFields(obj interface{}) (map[string]reflect.Type, error) {
-	results := make(map[string]reflect.Type)
-	v := reflect.TypeOf(obj)
+func ListFields(obj interface{}) ([]string, error) {
+	var results []string
+	var v reflect.Type
+	switch oType := obj.(type) {
+	case reflect.Type:
+		v = oType
+	case reflect.Value:
+		v = oType.Type()
+	default:
+		v = reflect.TypeOf(obj)
+	}
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -125,7 +141,7 @@ func ListFields(obj interface{}) (map[string]reflect.Type, error) {
 	}
 	for idx := 0; idx < e.Type().NumField(); idx++ {
 		field := e.Type().Field(idx)
-		results[field.Name] = field.Type
+		results = append(results, field.Name)
 	}
 	return results, nil
 }
@@ -139,7 +155,7 @@ func HasMethod(obj interface{}, methodName string) bool {
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
 func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	v := reflect.ValueOf(obj)
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
 		}
@@ -149,6 +165,7 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	if _, hasField := v.Type().FieldByName(name); !hasField {
 		return reflect.Zero(reflect.TypeOf(obj)), missingFieldError(name, v)
 	}
+
 	return v.FieldByName(name), nil
 }
 
@@ -160,9 +177,21 @@ func HasPath(obj interface{}, terms ...string) error {
 			t = t.Elem()
 		}
 
+		if k := t.Kind(); k == reflect.Interface {
+			fmt.Println("[INFO] encountered an inteface type; unable to validate lookup")
+			return nil
+		} else if k != reflect.Struct {
+			return errors.New("cannot access non-structure field")
+		}
+
 		field, ok := t.FieldByName(term)
 		if !ok {
-			return fmt.Errorf("%s no such field", term)
+			validFields, fieldErrs := ListFields(t)
+			if fieldErrs != nil {
+				return fieldErrs
+			}
+			return fmt.Errorf("term should be one of %v not %q", validFields, term)
+
 		}
 		t = field.Type
 	}
@@ -171,12 +200,13 @@ func HasPath(obj interface{}, terms ...string) error {
 
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
+
 	if err := HasPath(obj, terms...); err != nil {
 		return nil, err
 	}
 
 	v := reflect.ValueOf(obj)
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return reflect.Zero(reflect.TypeOf(obj)), ErrUnresolvable
 		}
