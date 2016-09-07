@@ -249,41 +249,33 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 // Compute the difference between desired and actual state
 func (desired *File) diffFile(actual *File, status *resource.Status) {
-	var willChange bool
-
-	status.AddDifference("destination", actual.Destination, desired.Destination, "")
 
 	if desired.State != actual.State {
-		willChange = true
 		status.AddDifference("state", actual.State, desired.State, "")
 	}
 
 	if desired.Type != actual.Type {
-		willChange = true
 		status.AddDifference("type", actual.Type, desired.Type, "")
 	}
 
 	if desired.Target != actual.Target {
-		willChange = true
 		status.AddDifference("target", actual.Target, desired.Target, "")
 	}
 
 	if desired.FileMode != actual.FileMode {
-		willChange = true
 		status.AddDifference("permissions", actual.FileMode.String(), desired.FileMode.String(), "")
 	}
 
 	if desired.User != actual.User {
-		willChange = true
 		status.AddDifference("user", actual.User, desired.User, "")
 	}
 
 	if desired.Group != actual.Group {
-		willChange = true
 		status.AddDifference("group", actual.Group, desired.Group, "")
 	}
 
-	if willChange {
+	if resource.AnyChanges(status.Differences) {
+		status.AddDifference("destination", actual.Destination, desired.Destination, "")
 		status.WillChange = true
 		status.WarningLevel = resource.StatusWillChange
 	}
