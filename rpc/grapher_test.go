@@ -15,7 +15,6 @@
 package rpc
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -33,9 +32,9 @@ import (
 func TestGrapherGraph(t *testing.T) {
 	g := grapher{auth: new(authorizer)}
 
-	logger := logrus.New()
-	logger.Out = new(bytes.Buffer)
-	ctx := logging.WithLogger(context.Background(), logger)
+	defer logging.HideLogs(t)()
+
+	ctx := logging.WithLogger(context.Background(), logrus.WithField("testing", true))
 
 	t.Run("good request", func(t *testing.T) {
 		stream := new(mocks.Grapher_GraphServer)

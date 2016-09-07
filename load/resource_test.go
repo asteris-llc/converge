@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource/file/content"
@@ -32,7 +32,7 @@ import (
 )
 
 func TestSetResourcesTask(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	resourced, err := getResourcesGraph(
 		t,
@@ -53,7 +53,7 @@ task x {
 }
 
 func TestSetResourcesContent(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	resourced, err := getResourcesGraph(
 		t,
@@ -75,7 +75,7 @@ file.content x {
 }
 
 func TestSetResourcesParam(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	resourced, err := getResourcesGraph(
 		t,
@@ -95,7 +95,7 @@ param x {
 }
 
 func TestSetResourcesModules(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	resourced, err := getResourcesGraph(
 		t,
@@ -117,7 +117,7 @@ module source x {
 }
 
 func TestSetResourcesBad(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	_, err := getResourcesGraph(t, []byte("x x {}"))
 	if assert.Error(t, err) {

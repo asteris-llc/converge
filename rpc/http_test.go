@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,7 +40,7 @@ func init() {
 }
 
 func TestContextServerListenAndServe(t *testing.T) {
-	defer (helpers.HideLogs(t))()
+	defer (logging.HideLogs(t))()
 
 	ctx, cancel := context.WithCancel(context.Background())
 

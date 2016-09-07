@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +32,7 @@ func TestNotifyTransform(t *testing.T) {
 	returnError := func(string, *graph.Graph) error { return errors.New("error") }
 
 	t.Run("pre", func(t *testing.T) {
-		defer helpers.HideLogs(t)()
+		defer logging.HideLogs(t)()
 
 		var ran bool
 
@@ -64,7 +64,7 @@ func TestNotifyTransform(t *testing.T) {
 		}
 
 		t.Run("no error", func(t *testing.T) {
-			defer helpers.HideLogs(t)()
+			defer logging.HideLogs(t)()
 			ran = false
 
 			_, err := g.Transform(
@@ -77,7 +77,7 @@ func TestNotifyTransform(t *testing.T) {
 		})
 
 		t.Run("error", func(t *testing.T) {
-			defer helpers.HideLogs(t)()
+			defer logging.HideLogs(t)()
 			ran = false
 
 			_, err := g.Transform(
