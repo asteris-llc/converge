@@ -105,11 +105,14 @@ func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	diffs[t.Destination] = resource.TextDiff{Values: [2]string{preChange, t.Content}}
 
 	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
-		return &resource.Status{
+		t.Status = &resource.Status{
 			Status:       fmt.Sprintf("%s", err),
 			WarningLevel: resource.StatusFatal,
 			Differences:  diffs,
-		}, err
+		}
+		return t, err
 	}
-	return &resource.Status{Differences: diffs}, nil
+
+	t.Status = &resource.Status{Differences: diffs}
+	return t, nil
 }
