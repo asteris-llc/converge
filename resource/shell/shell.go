@@ -31,6 +31,7 @@ type Shell struct {
 	Dir            string
 	Env            []string
 	Status         *CommandResults
+	CheckStatus    *CommandResults
 	HealthStatus   *resource.HealthStatus
 	Interpolations map[string]string
 	renderer       resource.Renderer
@@ -43,8 +44,9 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	if s.Status == nil {
-		s.Status = s.Status.Cons("check", results)
+	s.Status = s.Status.Cons("check", results)
+	if s.CheckStatus == nil {
+		s.CheckStatus = results
 	}
 	return s, nil
 }
