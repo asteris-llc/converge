@@ -1,6 +1,6 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
-TOLINT = $(shell find . -type f \( -not -ipath './vendor*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
+TOLINT = $(shell find . -type f \( -not -ipath './vendor*' -not -ipath './docs_source*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
