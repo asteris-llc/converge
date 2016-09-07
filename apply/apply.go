@@ -65,29 +65,31 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, renderingPlant *render.Factory, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
-	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
-		renderingPlant.Graph = out
-		pipeline := pipelineF(out, id)
-		result := pipeline.Exec(either.ReturnM(out.Get(id)))
-		val, isRight := result.FromEither()
-		if !isRight {
-			hasErrors = ErrTreeContainsErrors
-			if e, ok := val.(error); ok {
-				return e
+	out, err := in.Transform(ctx,
+		notify.Transform(func(id string, out *graph.Graph) error {
+			renderingPlant.Graph = out
+			pipeline := pipelineF(out, id)
+			result := pipeline.Exec(either.ReturnM(out.Get(id)))
+			val, isRight := result.FromEither()
+			if !isRight {
+				hasErrors = ErrTreeContainsErrors
+				if e, ok := val.(error); ok {
+					return e
+				}
 			}
-		}
-		asResult, ok := val.(*Result)
-		if !ok {
-			return fmt.Errorf("expected asResult but got %T", val)
-		}
+			asResult, ok := val.(*Result)
+			if !ok {
+				return fmt.Errorf("expected asResult but got %T", val)
+			}
 
-		if nil != asResult.Error() {
-			hasErrors = ErrTreeContainsErrors
-		}
+			if nil != asResult.Error() {
+				hasErrors = ErrTreeContainsErrors
+			}
 
-		out.Add(id, asResult)
-		return nil
-	})
+			out.Add(id, asResult)
+			return nil
+		}),
+	)
 
 	if err != nil {
 		return out, err
