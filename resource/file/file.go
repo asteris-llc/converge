@@ -52,25 +52,31 @@ func (f *File) Apply() error {
 // Check File settings
 func (f *File) Check() (resource.TaskStatus, error) {
 	status := &resource.Status{Status: f.Destination}
-
+	var actual *File
 	// Get information about the current file
 	stat, err := os.Lstat(f.Destination) //link aware
 
-	// if "absent" is set and the file doesn't exist, return with no changes
-	if os.IsNotExist(err) && f.State == "absent" {
-		status.WillChange = false
-		status.WarningLevel = resource.StatusNoChange
-		return status, nil
+	if os.IsNotExist(err) { //file not found
+		switch f.State {
+		case "absent": // if "absent" is set and the file doesn't exist, return with no changes
+			status.WillChange = false
+			status.WarningLevel = resource.StatusNoChange
+			return status, nil
+		case "present": //file doesn't exist, we need to create it
+			actual = &File{Destination: f.Destination, State: "absent"}
+			status.WillChange = true
+			status.WarningLevel = resource.StatusWillChange
+		}
+	} else { //file exists
+		actual = &File{Destination: f.Destination, State: "present"}
+		err = GetFileInfo(actual, stat)
+		if err != nil {
+			status.WarningLevel = resource.StatusFatal
+			return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
+		}
 	}
-
-	actual := &File{Destination: f.Destination, State: "present"}
-
-	err = GetFileInfo(actual, stat)
-
-	if err != nil {
-		return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
-	}
-
+	f.diffFile(actual, status)
+	fmt.Println(status.Differences)
 	return status, nil
 }
 
@@ -200,6 +206,41 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 }
 
 // Compute the difference between desired and actual state
-func (desired *File) diffFile(actual *File, status *resource.Status) error {
-	return nil
+func (desired *File) diffFile(actual *File, status *resource.Status) {
+	var willChange bool
+
+	if desired.State != actual.State {
+		willChange = true
+		status.AddDifference("state", actual.State, desired.State, "")
+	}
+
+	if desired.Type != actual.Type {
+		willChange = true
+		status.AddDifference("type", actual.Type, desired.Type, "")
+	}
+
+	if desired.Target != actual.Target {
+		willChange = true
+		status.AddDifference("target", actual.Target, desired.Target, "")
+	}
+
+	if desired.FileMode != actual.FileMode {
+		willChange = true
+		status.AddDifference("permissions", actual.FileMode.String(), desired.FileMode.String(), "")
+	}
+
+	if desired.User != actual.User {
+		willChange = true
+		status.AddDifference("user", actual.User, desired.User, "")
+	}
+
+	if desired.Group != actual.Group {
+		willChange = true
+		status.AddDifference("group", actual.Group, desired.Group, "")
+	}
+
+	if willChange {
+		status.WillChange = true
+		status.WarningLevel = resource.StatusWillChange
+	}
 }
