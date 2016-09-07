@@ -39,7 +39,7 @@ type resultWrapper struct {
 
 // Pipeline generates a pipeline to evaluate a single graph node
 func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
-	gen := pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
+	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
 		AndThen(gen.DependencyCheck).
@@ -50,7 +50,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
-func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
+func (g *pipelineGen) GetTask(idi interface{}) monad.Monad {
 	if plan, ok := idi.(*plan.Result); ok {
 		return either.RightM(resultWrapper{Plan: plan})
 	}
@@ -62,7 +62,7 @@ func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 // it returns `Right (Left apply.Result)` and otherwise returns `Right (Right
 // plan.Result)`. The return values are structured to short-circuit `PlanNode`
 // if we have failures.
-func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
+func (g *pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 	result, ok := taskI.(resultWrapper)
 	if !ok {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
@@ -86,7 +86,7 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 }
 
 // maybeSkipApplication :: Either *apply.Result *plan.Result -> Either *apply.Result resultWrapper
-func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
+func (g *pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 	// checkResult :: Either apply.Result Plan.Result
 	checkResult := func(plannerI interface{}) interface{} {
 		plan := plannerI.(resultWrapper)
@@ -107,7 +107,7 @@ func (g pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 // *plan.Result and, if the input value is Left, returns it as a Right value,
 // otherwise it attempts to run apply on the *plan.Result.Task and returns an
 // appropriate Left or Right value.
-func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
+func (g *pipelineGen) applyNode(taski interface{}) monad.Monad {
 	taskE, ok := taski.(either.EitherM)
 	if !ok {
 		return either.LeftM(fmt.Errorf("expected either.EitherM but got %T", taski))
@@ -140,7 +140,7 @@ func (g pipelineGen) applyNode(taski interface{}) monad.Monad {
 // maybeRunFinalCheck :: *Result -> Either error *Result; looks to see if the
 // current result ran, and if so it re-runs plan and sets PostCheck to the
 // resulting status.
-func (g pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
+func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
 	result, ok := resultI.(*Result)
 	if !ok {
 		return either.LeftM(fmt.Errorf("expected *Result but got %T", resultI))
@@ -164,6 +164,6 @@ func (g pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
 		})
 }
 
-func (g pipelineGen) Renderer(id string) (*render.Renderer, error) {
+func (g *pipelineGen) Renderer(id string) (*render.Renderer, error) {
 	return g.RenderingPlant.GetRenderer(id)
 }
