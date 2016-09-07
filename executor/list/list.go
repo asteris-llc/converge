@@ -14,10 +14,6 @@
 
 package list
 
-import "errors"
-
-var ErrOutOfRange = errors.New("out of range")
-
 type unit struct{}
 
 // List represents a lazily evaluated list type

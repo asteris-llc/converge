@@ -37,7 +37,6 @@ type Renderer struct {
 	DotValuePresent bool
 	resolverErr     bool
 	Language        *extensions.LanguageExtension
-	resolverErr     bool
 }
 
 // Value of this renderer
