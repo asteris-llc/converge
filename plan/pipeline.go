@@ -39,7 +39,7 @@ type taskWrapper struct {
 
 // Pipeline generates a pipeline to evaluate a single graph node
 func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
-	gen := pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
+	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
 		AndThen(gen.DependencyCheck).
@@ -47,7 +47,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 }
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
-func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
+func (g *pipelineGen) GetTask(idi interface{}) monad.Monad {
 	fmt.Printf("plan.GetTask : %s :: %T\n", g.ID, idi)
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
 		log.Println("[INFO] attempting to thunk deferred preparer")
@@ -70,7 +70,7 @@ func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 // it returns `Right (Left Status)` and otherwise returns `Right (Right
 // Task)`. The return values are structured to short-circuit `PlanNode` if we
 // have failures.
-func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
+func (g *pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 	task, ok := taskI.(taskWrapper)
 	if !ok {
 		return either.LeftM(errors.New("input node is not a task wrapper"))
@@ -98,7 +98,7 @@ func (g pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 // if the input value is Left, returns it as a Right value, otherwise it
 // attempts to run plan on the TaskWrapper and returns an appropriate Left or
 // Right value.
-func (g pipelineGen) PlanNode(taski interface{}) monad.Monad {
+func (g *pipelineGen) PlanNode(taski interface{}) monad.Monad {
 	taskE, ok := taski.(either.EitherM)
 	if !ok {
 		return either.LeftM(errors.New("plan node was expected to be EitherM"))
@@ -123,6 +123,6 @@ func (g pipelineGen) PlanNode(taski interface{}) monad.Monad {
 	})
 }
 
-func (g pipelineGen) Renderer(id string) (*render.Renderer, error) {
+func (g *pipelineGen) Renderer(id string) (*render.Renderer, error) {
 	return g.RenderingPlant.GetRenderer(id)
 }
