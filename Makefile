@@ -117,7 +117,7 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 
 docs: docs_source/**/*
 	rm -rf docs || true
-	cd docs_source; make
+	$(MAKE) -C docs_source
 	mv docs_source/public docs
 
 .PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
