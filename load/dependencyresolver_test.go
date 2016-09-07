@@ -19,14 +19,14 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDependencyResolverResolvesDependencies(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 }
 
 func TestDependencyResolverBadDependency(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	nodes, err := load.Nodes(context.Background(), "../samples/errors/bad_requirement.hcl")
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestDependencyResolverBadDependency(t *testing.T) {
 }
 
 func TestDependencyResolverResolvesParam(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl")
 	require.NoError(t, err)

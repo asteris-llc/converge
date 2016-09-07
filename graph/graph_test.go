@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -130,7 +130,7 @@ func TestDescendents(t *testing.T) {
 
 func TestWalkOrder(t *testing.T) {
 	// the walk order should start with leaves and head towards the root
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", nil)
@@ -159,7 +159,7 @@ func TestWalkOrderDiamond(t *testing.T) {
 		A proper dependency order search would always result in `d` being the first
 		element processed
 	*/
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("a", nil)
@@ -182,7 +182,7 @@ func TestWalkOrderDiamond(t *testing.T) {
 }
 
 func TestWalkOrderParentDependency(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", 1)
@@ -302,7 +302,7 @@ func TestValidateDanglingEdge(t *testing.T) {
 
 func TestTransform(t *testing.T) {
 	// Transforming in the same type should work
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("int", 1)
@@ -338,7 +338,7 @@ func TestParent(t *testing.T) {
 
 func TestRootFirstWalk(t *testing.T) {
 	// the graph should walk nodes root-to-leaf
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", nil)
@@ -362,7 +362,7 @@ func TestRootFirstWalk(t *testing.T) {
 
 func TestRootFirstWalkSiblingDep(t *testing.T) {
 	// the graph should resolve sibling dependencies before their dependers
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", nil)
@@ -394,7 +394,7 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 
 func TestRootFirstTransform(t *testing.T) {
 	// transforming depth first should work
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("int", 1)
