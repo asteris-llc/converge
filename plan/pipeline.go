@@ -49,7 +49,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
 		fmt.Println("[INFO] attempting to thunk deferred preparer")
-		thunked, err := thunk.Thunk()
+		thunked, err := thunk.Thunk(g.RenderingPlant)
 		if err != nil {
 			return either.LeftM(err)
 		}
