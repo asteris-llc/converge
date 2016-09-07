@@ -1,5 +1,4 @@
-Using: "---
-title Dependencies"
+title: "Using Dependencies"
 date: "2016-08-25T00:13:59-05:00"
 
 menu:
