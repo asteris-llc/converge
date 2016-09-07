@@ -243,6 +243,8 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 func (desired *File) diffFile(actual *File, status *resource.Status) {
 	var willChange bool
 
+	status.AddDifference("destination", actual.Destination, desired.Destination, "")
+
 	if desired.State != actual.State {
 		willChange = true
 		status.AddDifference("state", actual.State, desired.State, "")
