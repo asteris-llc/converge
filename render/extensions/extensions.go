@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"log"
 	"text/template"
+
+	"github.com/asteris-llc/converge/render/extensions/platform"
 )
 
 // RefFuncName is the name of the function to reference exported values from
@@ -30,10 +32,11 @@ const RefFuncName string = "lookup"
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"env":    {},
-	"param":  {},
-	"split":  {},
-	"lookup": {},
+	"env":      {},
+	"param":    {},
+	"split":    {},
+	"lookup":   {},
+	"platform": {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -62,6 +65,7 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
 	language.On("lookup", Unimplemented("lookup"))
+	language.On("platform", platform.DefaultPlatform)
 	language.On(RefFuncName, Unimplemented(RefFuncName))
 	language.Validate()
 	return language

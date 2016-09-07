@@ -14,28 +14,7 @@
 
 package executor
 
-import (
-	"context"
-
-	"github.com/asteris-llc/converge/graph"
-)
-
 // Status represents an executor node that can provide status
 type Status interface {
 	Error() error
-}
-
-// Result contains the results of execution
-type Result struct {
-	Prepared interface{}
-	Planned  interface{}
-	Applied  interface{}
-}
-
-// Execute executes a pipeline on each node
-func Execute(ctx context.Context, in *graph.Graph, pipeline Pipeline) (*graph.Graph, error) {
-	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
-		return nil
-	})
-	return out, err
 }

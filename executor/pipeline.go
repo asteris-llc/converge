@@ -27,20 +27,6 @@ type Pipeline struct {
 	CallStack list.List
 }
 
-// AccumulatingPipeline is a list of TaggedPipelines
-type AccumulatingPipeline struct {
-	Pipeline
-}
-
-// TaggedPipeline is a pipeline with tags associated with subphases
-type TaggedPipeline struct {
-	Tag string
-	Pipeline
-}
-
-// ResultAccumulator stores a list of results
-type ResultAccumulator map[string]interface{}
-
 // NewPipeline creats a new Pipeline with an empty call stack
 func NewPipeline() Pipeline {
 	return Pipeline{CallStack: list.Mzero()}
@@ -49,6 +35,16 @@ func NewPipeline() Pipeline {
 // AndThen pushes a function onto the pipeline call stack
 func (p Pipeline) AndThen(f func(interface{}) monad.Monad) Pipeline {
 	p.CallStack = list.Append(f, p.CallStack)
+	return p
+}
+
+// LogAndThen pushes a function onto the pipeline call stack
+func (p Pipeline) LogAndThen(f func(interface{}) monad.Monad, log func(interface{})) Pipeline {
+	logged := func(i interface{}) monad.Monad {
+		log(i)
+		return f(i)
+	}
+	p.CallStack = list.Append(logged, p.CallStack)
 	return p
 }
 
@@ -73,35 +69,6 @@ func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
 		return e.AndThen(f)
 	}
 	return list.Foldl(foldFunc, zeroValue, p.CallStack).(either.EitherM)
-}
-
-// NewAccumulatingPipeline returns a new accumulating pipeline
-func NewAccumulatingPipeline() AccumulatingPipeline {
-	return AccumulatingPipeline{Pipeline: NewPipeline()}
-}
-
-// AndThen adds a new pipeline into the accumulating pipeline with the
-// associated tag
-func (p AccumulatingPipeline) AndThen(tag string, pipeline Pipeline) AccumulatingPipeline {
-	tagged := TaggedPipeline{Tag: tag, Pipeline: pipeline}
-	p.CallStack = list.Append(tagged, p.CallStack)
-	return p
-}
-
-// Exec executes
-func (p AccumulatingPipeline) Exec(zeroValue interface{}) (ResultAccumulator, either.EitherM) {
-	acc := make(ResultAccumulator)
-	foldFunc := func(carry, elem interface{}) interface{} {
-		tagged, ok := elem.(TaggedPipeline)
-		if !ok {
-			return either.LeftM(badTypeError("TaggedPipeline", elem))
-		}
-		result := tagged.Pipeline.Exec(carry)
-		acc[tagged.Tag] = result
-		return result
-	}
-	val := list.Foldl(foldFunc, zeroValue, p.Pipeline.CallStack)
-	return acc, val.(either.EitherM)
 }
 
 func badTypeError(expected string, actual interface{}) error {
