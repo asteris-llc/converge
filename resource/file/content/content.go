@@ -96,7 +96,7 @@ func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		perm = stat.Mode()
 	}
 
-	if rawData, err := ioutil.ReadFile(t.Destination); err != nil {
+	if rawData, readErr := ioutil.ReadFile(t.Destination); readErr != nil {
 		preChange = "<file-missing>"
 	} else {
 		preChange = string(rawData)

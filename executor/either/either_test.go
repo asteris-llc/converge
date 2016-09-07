@@ -27,7 +27,7 @@ func show(a, b either.EitherM) {
 	fmt.Println(b)
 }
 
-func ExampleJoin() {
+func Example_join() {
 	a := either.RightM(either.RightM("foo"))
 	fmt.Println(a)
 	fmt.Println(monad.Join(a))
@@ -42,7 +42,7 @@ func ExampleJoin() {
 
 }
 
-func ExampleEither() {
+func Example_either() {
 	a := either.RightM(1)
 	b := either.LeftM("foo")
 	show(a, b)
@@ -56,7 +56,7 @@ func ExampleEither() {
 	// Left (foo)
 }
 
-func ExampleChainAndThen() {
+func Example_chainAndThen() {
 	plusOne := func(i interface{}) interface{} { return 1 + i.(int) }
 	a := either.RightM(1).AndThen(addOne).AndThen(addOne).AndThen(addOne)
 	fmt.Println(a)
@@ -67,7 +67,7 @@ func ExampleChainAndThen() {
 	// Right (5)
 }
 
-func ExampleEitherFMap() {
+func Example_eitherFMap() {
 	plusOne := func(i interface{}) interface{} { return 1 + i.(int) }
 	a := either.ReturnM(1)
 	b := monad.FMap(plusOne, a)
