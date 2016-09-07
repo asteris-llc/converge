@@ -48,6 +48,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
+	fmt.Printf("plan.GetTask : %s :: %T\n", g.ID, idi)
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
 		log.Println("[INFO] attempting to thunk deferred preparer")
 		thunked, err := thunk.Thunk(g.RenderingPlant)
@@ -56,6 +57,7 @@ func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 		}
 		return g.GetTask(thunked)
 	}
+
 	if task, ok := idi.(resource.Task); ok {
 		return either.RightM(taskWrapper{Task: task})
 	}

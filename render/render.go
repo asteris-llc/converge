@@ -18,12 +18,13 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"log"
+	"reflect"
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/pkg/errors"
@@ -95,8 +96,15 @@ func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
 	prepared, err := res.Prepare(renderer)
 	if err != nil {
 		if err == ErrUnresolvable {
-			log.Println("[INFO] Attempting to thunk unresolvable preparer " + p.ID)
-			return either.RightM(createThunk(nil, func(factory *Factory) (resource.Task, error) {
+
+			// Get a resource with a fake renderer so that we can have a stub value to
+			// track the expected return type of the thunk
+			fakePrep, fakePrepErr := getTypedResourcePointer(res)
+			if fakePrepErr != nil {
+				return either.RightM(fakePrepErr)
+			}
+
+			return either.RightM(createThunk(fakePrep, func(factory *Factory) (resource.Task, error) {
 				dynamicRenderer, rendErr := factory.GetRenderer(p.ID)
 				if rendErr != nil {
 					return nil, rendErr
@@ -107,7 +115,6 @@ func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
 		fmt.Printf("%s got a non-unresolvable error: %s", p.ID, errors.Cause(err))
 		return either.LeftM(err)
 	}
-
 	return either.RightM(prepared)
 }
 
@@ -142,4 +149,22 @@ func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *P
 		Thunk: f,
 		Data:  junk,
 	}
+}
+
+func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
+	fakeTask, err := r.Prepare(fakerenderer.New())
+	if err != nil {
+		return nil, err
+	}
+	val := reflect.ValueOf(fakeTask)
+	if val.Kind() != reflect.Ptr {
+		return fakeTask, nil
+	}
+
+	zero := reflect.Zero(val.Type())
+	asTask, ok := zero.Interface().(resource.Task)
+	if !ok {
+		return nil, fmt.Errorf("%s does not implement resource.Task", val.Type())
+	}
+	return asTask, nil
 }

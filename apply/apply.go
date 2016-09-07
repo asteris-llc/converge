@@ -41,11 +41,16 @@ func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
 		return Pipeline(g, id, renderingPlant)
 	}
-	return execPipeline(ctx, in, pipeline, renderingPlant)
+	return execPipeline(ctx, in, pipeline, renderingPlant, nil)
 }
 
 // PlanAndApply plans and applies each node
 func PlanAndApply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+	return WithNotify(ctx, in, nil)
+}
+
+// WithNotify calls PlanAndApply with a notifier
+func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	renderingPlant, err := render.NewFactory(ctx, in)
 	if err != nil {
 		return nil, err
@@ -53,11 +58,11 @@ func PlanAndApply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
 		return plan.Pipeline(g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant))
 	}
-	return execPipeline(ctx, in, pipeline, renderingPlant)
+	return execPipeline(ctx, in, pipeline, renderingPlant, notify)
 }
 
 // Apply the actions in a Graph of resource.Tasks
-func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, renderingPlant *render.Factory) (*graph.Graph, error) {
+func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, renderingPlant *render.Factory, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
 	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {

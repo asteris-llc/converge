@@ -57,6 +57,18 @@ func (m EitherM) AndThen(f func(interface{}) monad.Monad) monad.Monad {
 	return LeftM(errors.New("invalid either type"))
 }
 
+// LogAndThen wraps the underlying Either's AndThen and provides logging
+func (m EitherM) LogAndThen(f func(interface{}) monad.Monad, logger func(interface{})) monad.Monad {
+	logger(m)
+	switch t := m.Either.(type) {
+	case LeftType:
+		return m
+	case RightType:
+		return f(t.Val)
+	}
+	return LeftM(errors.New("invalid either type"))
+}
+
 // Show shows the string
 func (m EitherM) String() string {
 	val, isRight := m.FromEither()

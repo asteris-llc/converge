@@ -29,6 +29,11 @@ var ErrTreeContainsErrors = errors.New("plan has errors, check graph")
 
 // Plan the execution of a Graph of resource.Tasks
 func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+	return WithNotify(ctx, in, nil)
+}
+
+// WithNotify is plan, but with a notification feature
+func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
 	renderingPlant, err := render.NewFactory(ctx, in)
@@ -36,34 +41,34 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 		return nil, err
 	}
 
-	out, err := in.Transform(ctx, func(id string, out *graph.Graph) error {
-		renderingPlant.Graph = out
+	out, err := in.Transform(ctx,
+		notify.Transform(func(id string, out *graph.Graph) error {
+			fmt.Printf("plan running pipeline on %s :: %T\n", id, out.Get(id))
+			renderingPlant.Graph = out
+			pipeline := Pipeline(out, id, renderingPlant)
+			result := pipeline.Exec(either.ReturnM(out.Get(id)))
+			val, isRight := result.FromEither()
+			if !isRight {
+				fmt.Printf("pipeline returned Right %v\n", val)
+				return fmt.Errorf("%v", val)
+			}
 
-		pipeline := Pipeline(out, id, renderingPlant)
-		result := pipeline.Exec(either.ReturnM(out.Get(id)))
-		val, isRight := result.FromEither()
-		if !isRight {
-			fmt.Printf("pipeline returned Right %v\n", val)
-			return fmt.Errorf("%v", val)
-		}
+			asResult, ok := val.(*Result)
+			if !ok {
+				fmt.Printf("expected *Result but got %T\n", val)
+				return fmt.Errorf("expected asResult but got %T", val)
+			}
 
-		asResult, ok := val.(*Result)
-		if !ok {
-			fmt.Printf("expected *Result but got %T\n", val)
-			return fmt.Errorf("expected asResult but got %T", val)
-		}
+			if nil != asResult.Error() {
+				hasErrors = ErrTreeContainsErrors
+			}
 
-		if nil != asResult.Error() {
-			hasErrors = ErrTreeContainsErrors
-		}
-
-		out.Add(id, asResult)
-		return nil
-	})
-
+			out.Add(id, asResult)
+			return nil
+		}),
+	)
 	if err != nil {
 		return out, err
 	}
-
 	return out, hasErrors
 }

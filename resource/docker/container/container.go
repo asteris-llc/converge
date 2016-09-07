@@ -123,7 +123,7 @@ func (c *Container) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 
-	return c.Check(r)
+	return &resource.Status{Status: c.Name}, nil
 }
 
 // SetClient injects a docker api client

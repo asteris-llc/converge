@@ -16,8 +16,11 @@ package rpc
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/asteris-llc/converge/load/registry"
+	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
 )
@@ -43,12 +46,22 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 	}
 
 	for _, vertex := range loaded.Vertices() {
-		kind, ok := registry.NameForType(loaded.Get(vertex))
+		node, err := resolveVertex(vertex, loaded.Get(vertex))
+		logger.Printf("grapher vertex: %s :: %T\n", vertex, node)
+
+		if err != nil {
+			logger.Printf("resolveVertex returned an error: %s\n", err)
+			return errors.Wrapf(err, "%T is an unknown vertex type", loaded.Get(vertex))
+		}
+
+		logger.Printf("resolveVertex returned no error\n")
+
+		kind, ok := registry.NameForType(node)
 		if !ok {
 			kind = "unknown"
 		}
 
-		vbytes, err := json.Marshal(loaded.Get(vertex))
+		vbytes, err := json.Marshal(node)
 		if err != nil {
 			return errors.Wrap(err, "could not marshal vertex")
 		}
@@ -81,4 +94,19 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 	}
 
 	return nil
+}
+
+func resolveVertex(id string, vertex interface{}) (resource.Task, error) {
+	switch v := vertex.(type) {
+	case *render.PrepareThunk:
+		return resource.NewThunkedTask(id, v.Task), nil
+	case *resource.TaskWrapper:
+		if resolved, ok := resource.ResolveTask(v); ok {
+			return resolved, nil
+		}
+		return nil, errors.New("unable to resolve wrapped task")
+	case resource.Task:
+		return v, nil
+	}
+	return nil, fmt.Errorf("%T cannot be resolved into a Task", vertex)
 }
