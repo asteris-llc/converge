@@ -43,7 +43,6 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 
 	out, err := in.Transform(ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
-			fmt.Printf("plan running pipeline on %s :: %T\n", id, out.Get(id))
 			renderingPlant.Graph = out
 			pipeline := Pipeline(out, id, renderingPlant)
 			result := pipeline.Exec(either.ReturnM(out.Get(id)))
