@@ -65,9 +65,10 @@ func (f *File) Check() (resource.TaskStatus, error) {
 			status.WarningLevel = resource.StatusNoChange
 			return status, nil
 		case "present": //file doesn't exist, we need to create it
-			actual = &File{Destination: f.Destination, State: "absent"}
+			actual = &File{Destination: "<file does not exist>", State: "absent"}
 			status.WillChange = true
 			status.WarningLevel = resource.StatusWillChange
+			f.diffFile(actual, status)
 		}
 	} else { //file exists
 		actual = &File{Destination: f.Destination, State: "present"}
@@ -76,8 +77,15 @@ func (f *File) Check() (resource.TaskStatus, error) {
 			status.WarningLevel = resource.StatusFatal
 			return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
 		}
+		switch f.State {
+		case "absent": //remove file
+			f.Destination = "<file removed>"
+			f.diffFile(actual, status)
+		case "present": //modify file
+			f.diffFile(actual, status)
+		}
 	}
-	f.diffFile(actual, status)
+
 	fmt.Println(status.Differences)
 	return status, nil
 }
