@@ -17,6 +17,7 @@ package plan
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/executor/either"
@@ -48,7 +49,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 // GetTask returns Right Task if the value is a task, or Left Error if not
 func (g pipelineGen) GetTask(idi interface{}) monad.Monad {
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
-		fmt.Println("[INFO] attempting to thunk deferred preparer")
+		log.Println("[INFO] attempting to thunk deferred preparer")
 		thunked, err := thunk.Thunk(g.RenderingPlant)
 		if err != nil {
 			return either.LeftM(err)
