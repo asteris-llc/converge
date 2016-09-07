@@ -20,7 +20,7 @@ task "finish checkspace" {
 
 task "print file info" {
   interpreter = "/bin/bash"
-  check       = "[[ ! -f {{lookup `file.content.disk.Foo`}}]]"
+  check       = "[[ ! -f {{lookup `file.content.disk.Destination`}}]]"
   apply       = "rm -f {{param `dest`}}"
 }
 
