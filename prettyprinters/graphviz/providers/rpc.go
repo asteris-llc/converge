@@ -70,15 +70,10 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 		return pp.VisibleString(name), nil
 	}
 
-	var details []byte
-	if szd := val.GetDetails(); szd != nil {
-		details = szd.Value
-	}
-
 	switch val.Kind {
 	case "file.content":
 		var dest = new(content.Content)
-		if err := json.Unmarshal(details, dest); err != nil {
+		if err := json.Unmarshal(val.Details, dest); err != nil {
 			return nil, errors.Wrap(err, "could not unmarshal file content")
 		}
 
@@ -89,7 +84,7 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 
 	case "param":
 		var dest = new(param.Param)
-		if err := json.Unmarshal(details, dest); err != nil {
+		if err := json.Unmarshal(val.Details, dest); err != nil {
 			return nil, errors.Wrap(err, "could not unmarshal param")
 		}
 

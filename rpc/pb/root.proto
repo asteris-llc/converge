@@ -4,7 +4,6 @@ package pb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/any.proto";
 
 message LoadRequest {
   string location = 1;
@@ -94,8 +93,13 @@ service ResourceHost {
 message GraphComponent {
   message Vertex {
     string id = 1;
+
+    // the kind of node, specified as the type used to create a node of this
+    // type in the Converge DSL
     string kind = 2;
-    google.protobuf.Any details = 3;
+
+    // detailed fields of this node, serialized as JSON
+    bytes details = 3;
   }
 
   message Edge {
