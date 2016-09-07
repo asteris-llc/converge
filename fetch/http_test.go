@@ -23,6 +23,7 @@ import (
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/testing/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestHTTP(t *testing.T) {
 	// HTTP should load successfully
 	defer helpers.HideLogs(t)()
 
-	addr, cancel, err := helpers.HTTPServeFile(path.Join("..", "samples", "basic.hcl"))
+	addr, cancel, err := http.ServeFile(path.Join("..", "samples", "basic.hcl"))
 	defer cancel()
 	require.NoError(t, err)
 
@@ -43,7 +44,7 @@ func TestHTTPNotFound(t *testing.T) {
 	// HTTP should not succeed for a bad file
 	defer helpers.HideLogs(t)()
 
-	addr, cancel, err := helpers.HTTPServeFile(path.Join("..", "samples", "basic.hcl"))
+	addr, cancel, err := http.ServeFile(path.Join("..", "samples", "basic.hcl"))
 	defer cancel()
 	require.NoError(t, err)
 
