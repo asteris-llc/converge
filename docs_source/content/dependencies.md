@@ -1,5 +1,5 @@
----
-title: "Using Dependencies"
+Using: "---
+title Dependencies"
 date: "2016-08-25T00:13:59-05:00"
 
 menu:
@@ -43,6 +43,51 @@ $ converge graph --local yourModule.hcl | dot -Tpng > yourModule.png
 
 When you're developing modules, make a habit of rendering them as graphs. It
 makes it easier to think about how the graph will be executed.
+
+## Cross-Node References
+
+Resources may references one-another as long as the references do not introduce
+circular dependencies.  When creating a reference from one node to another we
+can use the `lookup` command to reference a specific field as shown in the
+following example:
+
+```hcl
+param "name" {
+  default="shouldrun.sample"
+}
+
+param "dest" {
+  default = "{{lookup `file.content.disk.Destination`}}"
+}
+
+task "checkspace" {
+  interpreter = "/bin/bash"
+  check = "[[ -f {{param `name`}} ]]"
+  apply = "df -h; date > {{param `name`}}"
+}
+
+task "finish checkspace" {
+  check = "[[ ! -f {{param `name`}} ]];"
+  apply = "rm -f {{param `name`}}"
+  depends = ["task.checkspace"]
+}
+
+task "print file info" {
+  interpreter = "/bin/bash"
+  check = "[[ ! -f {{lookup `file.content.disk.Destination`}}]]"
+  apply = "rm -f {{param `dest`}}"
+}
+
+file.content "disk" {
+  destination = "diskspace.txt"
+  content = "{{lookup `task.checkspace.Status.Stdout`}}"
+}
+```
+
+dependencies will be automatically identified for calls to `lookup`.
+
+
+`* root/task.print file info: template: check:1:10: executing "check" at <lookup `file.content...>: error calling lookup: term should be one of [Content Destination Status] not "Foo"`
 
 ## Explicit Dependencies
 
