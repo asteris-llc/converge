@@ -17,6 +17,8 @@ package file
 import (
 	"fmt"
 	"os"
+	"os/user"
+	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
@@ -102,6 +104,16 @@ func (f *File) Validate() error {
 		return err
 	}
 
+	err = f.validateUser()
+	if err != nil {
+		return err
+	}
+
+	err = f.validateGroup()
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -164,6 +176,28 @@ func (f *File) validateTarget() error {
 		}
 	}
 	return fmt.Errorf("unknown combination of type %q and target %q", f.Type, f.Target)
+}
+
+func (f *File) validateUser() error {
+	if f.User == "" {
+		u, err := user.LookupId(strconv.Itoa(os.Geteuid()))
+		if err != nil {
+			return fmt.Errorf("unable to set default username %s", err)
+		}
+		f.User = u.Username
+	}
+	return nil
+}
+
+func (f *File) validateGroup() error {
+	if f.Group == "" {
+		g, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
+		if err != nil {
+			return fmt.Errorf("unable to set default group %s", err)
+		}
+		f.Group = g.Name
+	}
+	return nil
 }
 
 // Populates a File struct with data from a file on the system
