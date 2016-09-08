@@ -16,16 +16,27 @@ package param
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"text/template"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load/registry"
-	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
 )
+
+const (
+	PASS int = iota
+	WARN
+	FAIL
+	OTHER_ERR
+)
+
+// Rule for Type Validation
+//
+// Rule holds a predicate for parameter validation. It takes a text/template
+// fragment as input. The validation logic then wraps the expression around a
+// different template fragment, then evals it to determine the outcome
 
 // Preparer for params
 //
@@ -33,143 +44,154 @@ import (
 // `{{param "name"}}` template call anywhere you need the value of a param
 // inside the current module.
 type Preparer struct {
-	// Default is an optional field that provides a default value if none is
-	// provided to this parameter. If this field is not set, this param will be
-	// treated as required.
+	// Default is an optional field that provides a default value if none
+	// is provided to this parameter. If this field is not set, this param
+	// will be treated as required. If this is provided, then Type is
+	// inferred
 	Default *string `hcl:"default"`
-	Type    string  `hcl:"type"`
-	Rules   []*Rule `hcl:"rule"`
-}
 
-type Rule struct {
-	Description string   `hcl:"description"`
-	Must        []string `hcl:"must"`
-	Should      []string `hcl:"should"`
-}
+	// Type is an optional field that is used for type checking. As of
+	// right now, it can either be "int" or "string" (the default). This
+	// is used with TypeCastValue.
+	Type string `hcl:"type"`
 
-type ParamTest struct {
-	level    int
-	template *template.Template
-	value    interface{}
+	Must []string `hcl:"must"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	val, present := render.Value()
+	value, present := render.Value()
 
 	if !present {
 		if p.Default == nil {
-			return nil, errors.New("param is required")
-		} else {
-			def, err := render.Render("default", *p.Default)
-			if err != nil {
-				return nil, err
-			}
-
-			if _, err := strconv.Atoi(def); err == nil {
-				p.Type = "int"
-			} else {
-				p.Type = "string"
-			}
-
-			val = def
+			return nil, fmt.Errorf("param is required")
 		}
-	} else {
-		if p.Type == "" {
-			p.Type = "string"
+		def, err := render.Render("default", *p.Default)
+		if err != nil {
+			return nil, err
 		}
+		value = def
 	}
 
-	var paramTests []*ParamTest
-	lang, err := ValidationLanguage(val, p.Type)
+	typedValue, err := TypeCastValue(value, p.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	for rNum, rule := range p.Rules {
-		pt := &ParamTest{value: val}
-		for mNum, must := range rule.Must {
-			must = "{{" + must + "}}"
-			pt.level = 1
-			name := fmt.Sprintf("rule-%d-must-%d", rNum, mNum)
-			pt.template, err = template.New(name).Funcs(lang.Funcs).Parse(must)
-			if err != nil {
-				return nil, err
-			}
-			paramTests = append(paramTests, pt)
-		}
-		for sNum, should := range rule.Should {
-			should = "{{" + should + "}}"
-			pt.level = 2
-			name := fmt.Sprintf("rule-%d-should-%d", rNum, sNum)
-			pt.template, err = template.New(name).Funcs(lang.Funcs).Parse(should)
-			if err != nil {
-				return nil, err
-			}
-			paramTests = append(paramTests, pt)
-		}
+	returnCode, err := TypeValidation(typedValue, p.Predicates())
+	if err != nil {
+		return nil, err
 	}
 
-	for _, pt := range paramTests {
-		if err = pt.Validate(); err != nil {
-			return nil, err
-		}
+	if returnCode != 0 {
+		return nil, fmt.Errorf("param failed validation, with return code %d", returnCode)
 	}
 
-	return &Param{Value: val}, nil
+	return &Param{Value: value}, nil
 }
 
-func (pt *ParamTest) Validate() error {
-	var buffer bytes.Buffer
-	if err := pt.template.Execute(&buffer, pt.value); err != nil {
-		return err
+func (p *Preparer) Predicates() map[string]string {
+
+	predicates := make(map[string]string)
+
+	closure := func(rule string, returnCode int) {
+		count := len(predicates)
+		name := fmt.Sprintf("pred#%d", count)
+		predicate := fmt.Sprintf("{{if %s }}0{{else}}%d{{end}}", rule, returnCode)
+		predicates[name] = predicate
 	}
 
-	if pass := buffer.String(); pass != "true" {
-		return fmt.Errorf("Expected true from %s, got %s", pt.template.Name(), pass)
+	for _, rule := range p.Must {
+		closure(rule, FAIL)
 	}
 
-	return nil
+	return predicates
 }
 
-func ValidationLanguage(val, vtype string) (*extensions.LanguageExtension, error) {
-	lang := extensions.DefaultLanguage()
-
-	switch vtype {
+func TypeCastValue(paramValue, paramType string) (interface{}, error) {
+	switch paramType {
 	case "int":
-		num, err := strconv.Atoi(val)
+		value, err := strconv.Atoi(paramValue)
 		if err != nil {
-			return lang, fmt.Errorf("vtype is \"int\", but converting \"%s\" failed", val)
+			return value, fmt.Errorf("paramType is \"int\", but converting \"%s\" failed", paramValue)
 		}
-		lang.On("min", func(min int) bool { return num >= min })
-		lang.On("max", func(max int) bool { return num <= max })
-		lang.On("range", func(min, max int) bool { return min <= num && num <= max })
-		lang.On("isEven", func() bool { return math.Mod(float64(num), 2) == 0 })
-		lang.On("isOdd", func() bool { return math.Mod(float64(num), 2) != 0 })
+		return value, nil
+
+	// this case is a nop, since string is the default type for parameters
 	case "string":
-		lang.On("empty", func() bool { return len(val) == 0 })
-		lang.On("oneOf", func(list ...string) bool {
-			isOneOf := false
-			for _, item := range list {
-				if val == item {
-					isOneOf = true
-				}
-			}
-			return isOneOf
-		})
-		lang.On("notIn", func(list ...string) bool {
-			for _, item := range list {
-				if val == item {
-					return false
-				}
-			}
-			return true
-		})
+		return paramValue, nil
+	case "":
+		// try to infer the type from the value
+		// the recursion is make the code DRYer, but is this the best way?
+		if value, err := TypeCastValue(paramValue, "int"); err == nil {
+			return value, nil
+		} else {
+			return TypeCastValue(paramValue, "string")
+		}
 	default:
-		return lang, fmt.Errorf("Unhandled case %T for %v", vtype, val)
+		return paramValue, fmt.Errorf("%s is not a supported param type", paramType)
+	}
+}
+
+func TypeValidation(value interface{}, predicates map[string]string) (int, error) {
+	// nop if no predicates to test
+	// this reduces boilerplate for callers
+	if len(predicates) == 0 {
+		return PASS, nil
 	}
 
-	return lang, nil
+	var funcMap template.FuncMap
+	switch value.(type) {
+	case int:
+		num := value.(int)
+		funcMap = template.FuncMap{
+			"min":    func(min int) bool { return num >= min },
+			"max":    func(max int) bool { return num <= max },
+			"isEven": func() bool { return num%2 == 0 },
+			"isOdd":  func() bool { return num%2 != 0 },
+		}
+
+	case string:
+		str := value.(string)
+		oneOfClosure := func(list ...string) bool {
+			for _, item := range list {
+				if str == item {
+					return true
+				}
+			}
+			return false
+		}
+
+		funcMap = template.FuncMap{
+			"empty":    func() bool { return len(str) == 0 },
+			"notEmpty": func() bool { return len(str) != 0 },
+			"oneOf":    oneOfClosure,
+			"notOneOf": func(list ...string) bool { return !oneOfClosure(list...) },
+		}
+	}
+
+	for name, predicate := range predicates {
+		tmpl, err := template.New(name).Funcs(funcMap).Parse(predicate)
+		if err != nil {
+			return OTHER_ERR, err
+		}
+
+		var buffer bytes.Buffer
+		if err = tmpl.Execute(&buffer, value); err != nil {
+			return OTHER_ERR, err
+		}
+
+		returnCode, err := strconv.Atoi(buffer.String())
+		if err != nil {
+			return OTHER_ERR, err
+		}
+
+		if returnCode != 0 {
+			log.Debug(fmt.Sprintf("%s", predicate))
+			return returnCode, fmt.Errorf("%s: expected 0, got %d", tmpl.Name(), returnCode)
+		}
+	}
+	return PASS, nil
 }
 
 func init() {
