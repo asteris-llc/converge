@@ -15,69 +15,28 @@
 package query_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/query"
 	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/resource/shell/query"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-var any = mock.Anything
 
 func Test_Query_ImplementsTaskInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(query.Query))
 }
 
-func Test_Check_WhenRunReturnsError_ReturnsError(t *testing.T) {
-	t.Parallel()
-	expected := errors.New("test error")
-	m := new(MockExecutor)
-	m.On("Run", any).Return(&shell.CommandResults{}, expected)
-	sh := testQuery(m)
-	_, actual := sh.Check(fakerenderer.New())
-	assert.Error(t, actual)
-}
-
 func Test_Apply_ReturnsError(t *testing.T) {
 	t.Parallel()
-	m := new(MockExecutor)
-	sh := testQuery(m)
+	sh := testQuery()
 	_, actual := sh.Apply(fakerenderer.New())
 	assert.Error(t, actual)
 }
 
 // Test Utils
-
-func testQuery(c shell.CommandExecutor) *query.Query {
-	return &query.Query{CmdGenerator: c}
-}
-
-func defaultTestQuery() *query.Query {
-	return testQuery(defaultExecutor())
-}
-
-type MockExecutor struct {
-	mock.Mock
-}
-
-func (m *MockExecutor) Run(script string) (*shell.CommandResults, error) {
-	args := m.Called(script)
-	return args.Get(0).(*shell.CommandResults), args.Error(1)
-}
-
-func defaultExecutor() *MockExecutor {
-	m := new(MockExecutor)
-	m.On("Run", any).Return(&shell.CommandResults{}, nil)
-	return m
-}
-
-func resultExecutor(r *shell.CommandResults) *MockExecutor {
-	m := new(MockExecutor)
-	m.On("Run", any).Return(r, nil)
-	return m
+func testQuery() *query.Query {
+	return &query.Query{Shell: &shell.Shell{}}
 }

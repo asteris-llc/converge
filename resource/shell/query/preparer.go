@@ -26,49 +26,39 @@ import (
 type Preparer struct {
 	Interpreter string            `hcl:"interpreter"`
 	Query       string            `hcl:"query"`
-	Flags       []string          `hcl:"flags"`
+	CheckFlags  []string          `hcl:"check_flags"`
+	ExecFlags   []string          `hcl:"exec_flags"`
+	Timeout     string            `hcl:"timeout" doc_type:"duration string"`
 	Dir         string            `hcl:"dir"`
 	Env         map[string]string `hcl:"env"`
 }
 
 // Prepare creates a new query type
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	interpreter, err := render.Render("interpreter", p.Interpreter)
-	if err != nil {
-		return nil, err
+	shPrep := &shell.Preparer{
+		Interpreter: p.Interpreter,
+		Check:       p.Query,
+		CheckFlags:  p.CheckFlags,
+		ExecFlags:   p.ExecFlags,
+		Timeout:     p.Timeout,
+		Dir:         p.Dir,
+		Env:         p.Env,
 	}
 
-	query, err := render.Render("query", p.Query)
-	if err != nil {
-		return nil, err
-	}
-
-	dir, err := render.Render("dir", p.Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	env, err := render.RenderStringMapToStringSlice("env", p.Env, func(k, v string) string {
-		return fmt.Sprintf("%s=%s", k, v)
-	})
+	task, err := shPrep.Prepare(render)
 
 	if err != nil {
-		return nil, err
+		return &Query{}, err
 	}
 
-	generator := &shell.CommandGenerator{
-		Interpreter: interpreter,
-		Dir:         dir,
-		Env:         env,
-		Flags:       p.Flags,
+	shell, ok := task.(*shell.Shell)
+	if !ok {
+		return &Query{}, fmt.Errorf("expected *shell.Shell but got %T", task)
 	}
 
-	return &Query{
-		CmdGenerator: generator,
-		Query:        query,
-	}, nil
+	return &Query{Shell: shell}, nil
 }
 
 func init() {
-	registry.Register("query", (*Preparer)(nil), (*Query)(nil))
+	registry.Register("task.query", (*Preparer)(nil), (*Query)(nil))
 }
