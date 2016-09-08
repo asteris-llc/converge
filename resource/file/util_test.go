@@ -43,7 +43,7 @@ func TestFileTypes(t *testing.T) {
 	for _, tt := range typeTests {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
-			ftype, ferr := file.FileType(fi)
+			ftype, ferr := file.Type(fi)
 			assert.Equal(t, ftype, tt.fileType)
 			assert.Equal(t, ferr, tt.err)
 		} else {
@@ -75,7 +75,7 @@ func TestFileUid(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			uid := file.FileUid(fi)
+			uid := file.UID(fi)
 			assert.Equal(t, tt.uid, uid)
 		} else {
 			assert.Equal(t, tt.err.(*os.PathError).Path, err.(*os.PathError).Path)
@@ -106,7 +106,7 @@ func TestFileGid(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			gid := file.FileGid(fi)
+			gid := file.GID(fi)
 			assert.Equal(t, tt.gid, gid)
 		} else {
 			assert.Equal(t, tt.err.(*os.PathError).Path, err.(*os.PathError).Path)
@@ -136,7 +136,7 @@ func TestFileUsername(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			username, ferr := file.FileOwner(fi)
+			username, ferr := file.Owner(fi)
 			if ferr == nil {
 				assert.Equal(t, tt.username, username)
 			}
@@ -168,7 +168,7 @@ func TestFileGroup(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			group, ferr := file.FileGroup(fi)
+			group, ferr := file.Group(fi)
 			if ferr == nil {
 				assert.Equal(t, tt.group, group)
 			}

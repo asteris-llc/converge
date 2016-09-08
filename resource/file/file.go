@@ -37,6 +37,7 @@ const defaultType = "file"
 var validFileTypes = []string{"directory", "file"}
 var validLinkTypes = []string{"hardlink", "symlink"}
 
+// File contains information for managing files
 type File struct {
 	Destination   string
 	State         string
@@ -51,6 +52,7 @@ type File struct {
 	modifyContent bool   // does content need to be changed
 }
 
+// Apply  changes to file resources
 func (f *File) Apply() error {
 	return nil
 }
@@ -88,7 +90,7 @@ func (f *File) Check() (resource.TaskStatus, error) {
 			f.diffFile(actual, status)
 			f.action = "remove"
 		case "present": //modify file
-			actual.Content, _ = fileContent(actual.Destination)
+			actual.Content, _ = Content(actual.Destination)
 			f.diffFile(actual, status)
 			if status.WillChange {
 				f.action = "modify"
@@ -100,6 +102,7 @@ func (f *File) Check() (resource.TaskStatus, error) {
 	return status, nil
 }
 
+// Validate runs checks against a File resource
 func (f *File) Validate() error {
 	var err error
 	if f.Destination == "" {
@@ -182,16 +185,14 @@ func (f *File) validateTarget() error {
 	case "":
 		if f.Type == "symlink" || f.Type == "hardlink" {
 			return fmt.Errorf("must define a target if you are using a %q", f.Type)
-		} else {
-			return nil
 		}
+		return nil
 	default:
 		// is target set for a file or directory type?
 		if f.Type == "symlink" || f.Type == "hardlink" {
 			return nil
-		} else {
-			return fmt.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
 		}
+		return fmt.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
 	}
 	return fmt.Errorf("unknown combination of type %q and target %q", f.Type, f.Target)
 }
@@ -218,7 +219,7 @@ func (f *File) validateGroup() error {
 	return nil
 }
 
-// Populates a File struct with data from a file on the system
+// GetFileInfo populates a File struct with data from a file on the system
 func GetFileInfo(f *File, stat os.FileInfo) error {
 	var err error
 
@@ -230,7 +231,7 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 		f.State = "present"
 	}
 
-	f.Type, err = FileType(stat)
+	f.Type, err = Type(stat)
 	if err != nil {
 		return fmt.Errorf("error determining type of %s : %s", f.Destination, err)
 	}
@@ -245,12 +246,12 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 	f.FileMode = stat.Mode() & os.ModePerm //strip out higher order bits from perms
 
-	f.User, err = FileOwner(stat)
+	f.User, err = Owner(stat)
 	if err != nil {
 		return fmt.Errorf("error determining owner of %s : %s", f.Destination, err)
 	}
 
-	f.Group, err = FileGroup(stat)
+	f.Group, err = Group(stat)
 	if err != nil {
 		return fmt.Errorf("error determining group of %s : %s", f.Destination, err)
 	}
@@ -258,43 +259,42 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 }
 
 // Compute the difference between desired and actual state
-func (desired *File) diffFile(actual *File, status *resource.Status) {
+func (f *File) diffFile(actual *File, status *resource.Status) {
 
-	if desired.State != actual.State {
-		status.AddDifference("state", actual.State, desired.State, "")
+	if f.State != actual.State {
+		status.AddDifference("state", actual.State, f.State, "")
 	}
 
-	if desired.Type != actual.Type {
-		status.AddDifference("type", actual.Type, desired.Type, "")
+	if f.Type != actual.Type {
+		status.AddDifference("type", actual.Type, f.Type, "")
 	}
 
-	if desired.Target != actual.Target {
-		status.AddDifference("target", actual.Target, desired.Target, "")
+	if f.Target != actual.Target {
+		status.AddDifference("target", actual.Target, f.Target, "")
 	}
 
-	if desired.FileMode != actual.FileMode {
-		status.AddDifference("permissions", actual.FileMode.String(), desired.FileMode.String(), "")
-		desired.modifyContent = true
+	if f.FileMode != actual.FileMode {
+		status.AddDifference("permissions", actual.FileMode.String(), f.FileMode.String(), "")
 	}
 
-	if desired.User != actual.User {
-		status.AddDifference("user", actual.User, desired.User, "")
+	if f.User != actual.User {
+		status.AddDifference("user", actual.User, f.User, "")
 	}
 
-	if desired.Group != actual.Group {
-		status.AddDifference("group", actual.Group, desired.Group, "")
+	if f.Group != actual.Group {
+		status.AddDifference("group", actual.Group, f.Group, "")
 	}
 
-	desiredHash := hash(desired.Content)
+	fHash := hash(f.Content)
 	actualHash := hash(actual.Content)
 
-	if desiredHash != actualHash {
-		status.AddDifference("content", actual.Content, desired.Content, "")
-		desired.modifyContent = true
+	if fHash != actualHash {
+		status.AddDifference("content", actual.Content, f.Content, "")
+		f.modifyContent = true
 	}
 
 	if resource.AnyChanges(status.Differences) {
-		status.AddDifference("destination", actual.Destination, desired.Destination, "")
+		status.AddDifference("destination", actual.Destination, f.Destination, "")
 		status.WillChange = true
 		status.WarningLevel = resource.StatusWillChange
 	}

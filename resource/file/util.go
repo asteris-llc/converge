@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Utilites for managing file resources
+// Package file utilites for managing file resources
 package file
 
 import (
@@ -24,8 +24,8 @@ import (
 	"syscall"
 )
 
-// Determines the file Type and returns a string {directory, file, symlink..}
-func FileType(fi os.FileInfo) (string, error) {
+// Type determines the file type and returns a string {directory, file, symlink..}
+func Type(fi os.FileInfo) (string, error) {
 
 	switch mode := fi.Mode(); {
 	case mode.IsRegular():
@@ -53,19 +53,19 @@ func UnixMode(permissions string) (os.FileMode, error) {
 	return os.FileMode(mode), err
 }
 
-// Returns the Unix Uid of a File
-func FileUid(fi os.FileInfo) int {
+// UID returns the Unix Uid of a File
+func UID(fi os.FileInfo) int {
 	return int(fi.Sys().(*syscall.Stat_t).Uid)
 }
 
-// Returns the Unix Gid of a File
-func FileGid(fi os.FileInfo) int {
+// GID returns the Unix Gid of a File
+func GID(fi os.FileInfo) int {
 	return int(fi.Sys().(*syscall.Stat_t).Gid)
 }
 
-// Returns the Unix username of a File
-func FileOwner(fi os.FileInfo) (string, error) {
-	uid := FileUid(fi)
+// Owner Returns the Unix username of a File
+func Owner(fi os.FileInfo) (string, error) {
+	uid := UID(fi)
 
 	user, err := user.LookupId(strconv.Itoa(uid))
 	if err != nil {
@@ -76,9 +76,9 @@ func FileOwner(fi os.FileInfo) (string, error) {
 
 }
 
-// Returns the Unix groupname of a File
-func FileGroup(fi os.FileInfo) (string, error) {
-	gid := FileGid(fi)
+// Group returns the Unix groupname of a File
+func Group(fi os.FileInfo) (string, error) {
+	gid := GID(fi)
 
 	group, err := user.LookupGroupId(strconv.Itoa(gid))
 	if err != nil {
@@ -89,7 +89,8 @@ func FileGroup(fi os.FileInfo) (string, error) {
 
 }
 
-func fileContent(filename string) (string, error) {
+// Content reads a file's contents
+func Content(filename string) (string, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return "", fmt.Errorf("unable to open %s: %s", filename, err)

@@ -59,6 +59,7 @@ type Preparer struct {
 	Content string `hcl:"content"`
 }
 
+// Prepare a file resource
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	// render Destination
@@ -131,9 +132,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 func setDefault(s string, def string) string {
 	if s != "" {
 		return s
-	} else {
-		return def
 	}
+	return def
 }
 
 func init() {
