@@ -17,8 +17,9 @@ package extensions
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"text/template"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/asteris-llc/converge/render/extensions/platform"
 )
@@ -32,11 +33,11 @@ const RefFuncName string = "lookup"
 // templating language.  This is stored as a map for quick lookup and is used
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
-	"env":      {},
-	"param":    {},
-	"split":    {},
-	"lookup":   {},
-	"platform": {},
+	"env":       {},
+	"param":     {},
+	"split":     {},
+	RefFuncName: {},
+	"platform":  {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -64,7 +65,6 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("param", Unimplemented("param"))
-	language.On("lookup", Unimplemented("lookup"))
 	language.On("platform", platform.DefaultPlatform)
 	language.On(RefFuncName, Unimplemented(RefFuncName))
 	language.Validate()
