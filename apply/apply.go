@@ -18,100 +18,75 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/asteris-llc/converge/executor"
+	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/render"
 	"github.com/pkg/errors"
 )
+
+// MkPipelineF is a function to generate a pipeline given an id
+type MkPipelineF func(*graph.Graph, string) executor.Pipeline
 
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph
 var ErrTreeContainsErrors = errors.New("apply had errors, check graph")
 
 // Apply the actions in a Graph of resource.Tasks
 func Apply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
+		return Pipeline(g, id, renderingPlant)
+	}
+	return execPipeline(ctx, in, pipeline, renderingPlant, nil)
+}
+
+// PlanAndApply plans and applies each node
+func PlanAndApply(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 	return WithNotify(ctx, in, nil)
 }
 
-// WithNotify is Apply, but with notification functions
+// WithNotify calls PlanAndApply with a notifier
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
+	renderingPlant, err := render.NewFactory(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
+		return plan.Pipeline(g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant))
+	}
+	return execPipeline(ctx, in, pipeline, renderingPlant, notify)
+}
+
+// Apply the actions in a Graph of resource.Tasks
+func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, renderingPlant *render.Factory, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
-	logger := logging.GetLogger(ctx).WithField("function", "Apply")
-
-	out, err := in.Transform(
-		ctx,
+	out, err := in.Transform(ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
-			val := out.Get(id)
-			result, ok := val.(*plan.Result)
+			renderingPlant.Graph = out
+			pipeline := pipelineF(out, id)
+			result := pipeline.Exec(either.ReturnM(out.Get(id)))
+			val, isRight := result.FromEither()
+			if !isRight {
+				hasErrors = ErrTreeContainsErrors
+				if e, ok := val.(error); ok {
+					return e
+				}
+			}
+			asResult, ok := val.(*Result)
 			if !ok {
-				return fmt.Errorf("%s: could not get *plan.Result, was %T", id, val)
+				return fmt.Errorf("expected asResult but got %T", val)
 			}
 
-			for _, depID := range graph.Targets(out.DownEdges(id)) {
-				dep, ok := out.Get(depID).(*Result)
-				if !ok {
-					return fmt.Errorf("graph walked out of order: %q before dependency %q", id, depID)
-				}
-
-				if err := dep.Error(); err != nil {
-					out.Add(
-						id,
-						&Result{
-							Ran:    false,
-							Status: &resource.Status{},
-							Plan:   result,
-							Err:    fmt.Errorf("error in dependency %q", depID),
-						},
-					)
-					// early return here after we set the signal error
-					hasErrors = ErrTreeContainsErrors
-					return nil
-				}
+			if nil != asResult.Error() {
+				hasErrors = ErrTreeContainsErrors
 			}
 
-			var newResult *Result
-
-			if result.Status.HasChanges() {
-				logger.WithField("id", id).Debug("applying")
-
-				err := result.Task.Apply()
-				if err != nil {
-					err = errors.Wrapf(err, "error applying %s", id)
-				}
-
-				var status resource.TaskStatus
-
-				if err == nil {
-					status, err = result.Task.Check()
-					if err != nil {
-						err = errors.Wrapf(err, "error checking %s", id)
-					} else if status.HasChanges() {
-						err = fmt.Errorf("%s still needs to be changed after application", id)
-					}
-				}
-
-				if err != nil {
-					hasErrors = ErrTreeContainsErrors
-				}
-
-				newResult = &Result{
-					Ran:    true,
-					Status: status,
-					Plan:   result,
-					Err:    err,
-				}
-			} else {
-				newResult = &Result{
-					Ran:    false,
-					Status: result.Status,
-					Plan:   result,
-					Err:    nil,
-				}
-			}
-
-			out.Add(id, newResult)
-
+			out.Add(id, asResult)
 			return nil
 		}),
 	)

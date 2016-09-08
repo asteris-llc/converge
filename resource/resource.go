@@ -14,11 +14,16 @@
 
 package resource
 
+// Tasker is a struct that is or contains an embedded resource.Task
+type Tasker interface {
+	GetTask() (Task, bool)
+}
+
 // Task does checking as Monitor does, but it can also make changes to make the
 // checks pass.
 type Task interface {
-	Check() (TaskStatus, error)
-	Apply() error
+	Check(Renderer) (TaskStatus, error)
+	Apply(Renderer) (TaskStatus, error)
 }
 
 // Resource adds metadata about the executed tasks
@@ -34,4 +39,36 @@ type Renderer interface {
 	RenderBool(name, content string) (bool, error)
 	RenderStringSlice(name string, content []string) ([]string, error)
 	RenderStringMapToStringSlice(name string, content map[string]string, toString func(string, string) string) ([]string, error)
+}
+
+// TaskWrapper provides an implementation of render.Tasker for tasks
+type TaskWrapper struct {
+	Task
+}
+
+// GetTask provides Tasker.GetTask ontop of a task
+func (t *TaskWrapper) GetTask() (Task, bool) {
+	return t.Task, true
+}
+
+// WrapTask creates a new TaskWrapper
+func WrapTask(t Task) *TaskWrapper {
+	return &TaskWrapper{t}
+}
+
+// ResolveTask unwraps Tasker layers until it finds an underlying Task or fails
+func ResolveTask(w interface{}) (Task, bool) {
+	if w == nil {
+		return nil, false
+	}
+	if tasker, ok := w.(Tasker); ok {
+		taskerTask, found := tasker.GetTask()
+		if !found {
+			return nil, false
+		}
+		return ResolveTask(taskerTask)
+	} else if task, ok := w.(Task); ok {
+		return task, true
+	}
+	return nil, false
 }

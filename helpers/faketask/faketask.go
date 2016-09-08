@@ -28,13 +28,13 @@ type FakeTask struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeTask) Check() (resource.TaskStatus, error) {
+func (ft *FakeTask) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
 }
 
 // Apply returns values set on struct
-func (ft *FakeTask) Apply() error {
-	return ft.Error
+func (ft *FakeTask) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	return ft.Check(r)
 }
 
 // NoOp returns a FakeTask that doesn't have to do anything
@@ -74,15 +74,15 @@ type FakeSwapper struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeSwapper) Check() (resource.TaskStatus, error) {
+func (ft *FakeSwapper) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{Output: []string{ft.Status}, Status: ft.Status, WillChange: ft.WillChange}, ft.Error
 }
 
 // Apply negates the current WillChange value set on struct and returns
 // configured error
-func (ft *FakeSwapper) Apply() error {
+func (ft *FakeSwapper) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	ft.WillChange = !ft.WillChange
-	return ft.Error
+	return ft.Check(r)
 }
 
 // Swapper creates a new stub swapper with an initial WillChange value of true

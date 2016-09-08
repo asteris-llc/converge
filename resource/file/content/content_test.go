@@ -20,6 +20,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func TestContentCheckEmptyFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check()
+	status, err := tmpl.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()[tmpfile.Name()]
 	assert.Equal(t, "", fileDiff.Original())
@@ -56,7 +57,7 @@ func TestContentCheckMissingFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check()
+	status, err := tmpl.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()["missing-file"]
 	assert.Equal(t, "<file-missing>", fileDiff.Original())
@@ -76,7 +77,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 
 	expected := tmpdir + " is a directory"
 
-	status, err := tmpl.Check()
+	status, err := tmpl.Check(fakerenderer.New())
 	assert.Equal(t, expected, status.Value())
 	assert.True(t, status.HasChanges())
 	if assert.Error(t, err) {
@@ -102,7 +103,7 @@ func TestContentCheckSetsValueToOKWhenEverythingIsOK(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check()
+	status, err := tmpl.Check(fakerenderer.New())
 	assert.Equal(t, "OK", status.Value())
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
@@ -125,7 +126,7 @@ func TestContentCheckSetsDiffs(t *testing.T) {
 		Content:     currentContent,
 	}
 
-	status, err := tmpl.Check()
+	status, err := tmpl.Check(fakerenderer.New())
 	diffs := status.Diffs()
 	fileDiff, ok := diffs[tmpfile.Name()]
 	assert.True(t, ok)
@@ -144,7 +145,8 @@ func TestContentApply(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	_, applyErr := tmpl.Apply(fakerenderer.New())
+	assert.NoError(t, applyErr)
 
 	// read the new file
 	content, err := ioutil.ReadFile(tmpfile.Name())
@@ -162,7 +164,8 @@ func TestContentApplyPermissionDefault(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	_, applyErr := tmpl.Apply(fakerenderer.New())
+	assert.NoError(t, applyErr)
 
 	// stat the new file
 	stat, err := os.Stat(tmpfile.Name())
@@ -185,7 +188,8 @@ func TestContentApplyKeepPermission(t *testing.T) {
 		Content:     "1",
 	}
 
-	assert.NoError(t, tmpl.Apply())
+	_, applyErr := tmpl.Apply(fakerenderer.New())
+	assert.NoError(t, applyErr)
 
 	// check permissions matched
 	stat, err := os.Stat(tmpfile.Name())

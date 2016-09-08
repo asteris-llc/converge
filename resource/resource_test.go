@@ -12,38 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package param_test
+package resource_test
 
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParamInterface(t *testing.T) {
-	t.Parallel()
-
-	assert.Implements(t, (*resource.Task)(nil), new(param.Param))
-}
-
-func TestParamCheck(t *testing.T) {
-	t.Parallel()
-
-	param := &param.Param{Value: "test"}
-
-	status, err := param.Check(fakerenderer.New())
-	assert.Equal(t, param.Value, status.Value())
-	assert.False(t, status.HasChanges())
-	assert.NoError(t, err)
-}
-
-func TestParamApply(t *testing.T) {
-	t.Parallel()
-
-	param := new(param.Param)
-	_, err := param.Apply(fakerenderer.New())
-	assert.NoError(t, err)
+func Test_TaskWrapper_ImplementsTask(t *testing.T) {
+	assert.Implements(t, (*resource.Task)(nil), new(resource.TaskWrapper))
 }

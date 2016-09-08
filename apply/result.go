@@ -21,11 +21,13 @@ import (
 
 // Result of application
 type Result struct {
-	Ran    bool
+	Task   resource.Task
 	Status resource.TaskStatus
 	Err    error
 
-	Plan *plan.Result
+	Ran       bool
+	Plan      *plan.Result
+	PostCheck resource.TaskStatus
 }
 
 // Messages returns any result status messages supplied by the task
@@ -38,7 +40,11 @@ func (r *Result) Messages() []string {
 
 // Changes returns the fields that changed
 func (r *Result) Changes() map[string]resource.Diff {
-	if r.Plan != nil {
+	if r.Status != nil {
+		return r.Status.Diffs()
+	} else if r.PostCheck != nil {
+		return r.PostCheck.Diffs()
+	} else if r.Plan != nil {
 		return r.Plan.Changes()
 	}
 	return nil
@@ -52,3 +58,11 @@ func (r *Result) Error() error { return r.Err }
 
 // GetStatus returns the current task status
 func (r *Result) GetStatus() resource.TaskStatus { return r.Status }
+
+// GetTask returns the task of the embedded plan, if there is one
+func (r *Result) GetTask() (resource.Task, bool) {
+	if r.Plan != nil {
+		return r.Plan.GetTask()
+	}
+	return nil, false
+}
