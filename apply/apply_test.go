@@ -20,8 +20,8 @@ import (
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/helpers/faketask"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ import (
 )
 
 func TestApplyNoOp(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	task := faketask.Swapper()
@@ -47,7 +47,7 @@ func TestApplyNoOp(t *testing.T) {
 }
 
 func TestApplyNoRun(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	task := faketask.NoOp()
@@ -64,7 +64,7 @@ func TestApplyNoRun(t *testing.T) {
 }
 
 func TestApplyErrorsBelow(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.NoOp()})
@@ -90,7 +90,7 @@ func TestApplyErrorsBelow(t *testing.T) {
 }
 
 func TestApplyStillChange(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.WillChange()})

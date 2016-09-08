@@ -19,13 +19,13 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := baseDupGraph()
 
@@ -45,7 +45,7 @@ func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {
 }
 
 func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := baseDupGraph()
 	g.Add("root/two", 2)
@@ -72,7 +72,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 }
 
 func TestMergeDuplicatesRemovesChildren(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := baseDupGraph()
 

@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/param"
@@ -29,7 +29,7 @@ import (
 )
 
 func TestRenderSingleNode(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root/file.content.x", &content.Preparer{Destination: "{{1}}", Content: "{{2}}"})
@@ -47,7 +47,7 @@ func TestRenderSingleNode(t *testing.T) {
 }
 
 func TestRenderParam(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", nil)
@@ -70,7 +70,7 @@ func TestRenderParam(t *testing.T) {
 }
 
 func TestRenderValues(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", nil)
