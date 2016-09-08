@@ -86,7 +86,6 @@ func (f *File) Check() (resource.TaskStatus, error) {
 		}
 	}
 
-	fmt.Println(status.Differences)
 	return status, nil
 }
 
