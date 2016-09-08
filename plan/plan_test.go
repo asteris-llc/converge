@@ -19,15 +19,15 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/helpers"
 	"github.com/asteris-llc/converge/helpers/faketask"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPlanNoOp(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	task := faketask.NoOp()
@@ -46,7 +46,7 @@ func TestPlanNoOp(t *testing.T) {
 }
 
 func TestPlanErrorsBelow(t *testing.T) {
-	defer helpers.HideLogs(t)()
+	defer logging.HideLogs(t)()
 
 	g := graph.New()
 	g.Add("root", faketask.NoOp())

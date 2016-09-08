@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helpers
+package http
 
 import (
 	"context"
@@ -28,9 +28,9 @@ import (
 	"github.com/asteris-llc/converge/rpc"
 )
 
-// HTTPServeFile constructs a SingleFileServer on a random port, returning that
+// ServeFile constructs a SingleFileServer on a random port, returning that
 // server.
-func HTTPServeFile(filePath string) (address string, stop func(), err error) {
+func ServeFile(filePath string) (address string, stop func(), err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	f, err := os.Open(filePath)
@@ -62,8 +62,7 @@ func HTTPServeFile(filePath string) (address string, stop func(), err error) {
 		dur, _ := time.ParseDuration(".1s")
 		select {
 		case err := <-errors:
-			log.WithError(err).Error("error in HTTPServeFile")
-			fmt.Println(err)
+			log.WithError(err).Error("error in ServeFile")
 		case <-time.After(dur):
 			return fmt.Sprintf("http://localhost:%d/%s", port, path.Base(filePath)), cancel, nil
 		}
