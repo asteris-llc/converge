@@ -18,7 +18,7 @@ docker.image "nginx" {
 
 docker.container "nginx" {
   name  = "{{param `container`}}"
-  image = "{{param `image`}}:{{param `image-tag`}}"
+  image = "{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}"
   force = "true"
 
   expose = [
@@ -38,6 +38,4 @@ docker.container "nginx" {
   }
 
   dns = ["8.8.8.8", "8.8.4.4"]
-
-  depends = ["docker.image.nginx"]
 }

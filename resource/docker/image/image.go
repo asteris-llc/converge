@@ -29,7 +29,7 @@ type Image struct {
 }
 
 // Check system for presence of docker image
-func (i *Image) Check() (resource.TaskStatus, error) {
+func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
 	status := &resource.Status{Status: repoTag}
 	image, err := i.client.FindImage(repoTag)
@@ -52,8 +52,14 @@ func (i *Image) Check() (resource.TaskStatus, error) {
 }
 
 // Apply pulls a docker image
-func (i *Image) Apply() (err error) {
-	return i.client.PullImage(i.Name, i.Tag)
+func (i *Image) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	if err := i.client.PullImage(i.Name, i.Tag); err != nil {
+		return &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       fmt.Sprintf("%s", err),
+		}, err
+	}
+	return &resource.Status{Status: i.RepoTag()}, nil
 }
 
 // SetClient injects a docker api client

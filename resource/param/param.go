@@ -22,13 +22,13 @@ type Param struct {
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
-func (p *Param) Check() (resource.TaskStatus, error) {
+func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{Status: p.String()}, nil
 }
 
 // Apply doesn't do anything since params are final values
-func (*Param) Apply() error {
-	return nil
+func (p *Param) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	return p.Check(r)
 }
 
 // String is the final value of thie Param

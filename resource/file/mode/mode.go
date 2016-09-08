@@ -28,7 +28,7 @@ type Mode struct {
 }
 
 // Check whether the Destination has the right Mode
-func (t *Mode) Check() (resource.TaskStatus, error) {
+func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
@@ -65,8 +65,16 @@ func (t *Mode) Check() (resource.TaskStatus, error) {
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply() error {
-	return os.Chmod(t.Destination, t.Mode.Perm())
+func (t *Mode) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	err := os.Chmod(t.Destination, t.Mode.Perm())
+	if err == nil {
+		return t.Check(r)
+	}
+	return &resource.Status{
+		WarningLevel: resource.StatusFatal,
+		Status:       fmt.Sprintf("%s", err),
+		Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
+	}, err
 }
 
 // Validate Mode

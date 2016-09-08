@@ -155,15 +155,8 @@ func (e *executor) Apply(in *pb.LoadRequest, stream pb.Executor_ApplyServer) err
 		return err
 	}
 
-	planned, err := e.sendPlan(ctx, stream, loaded)
+	_, err = e.sendApply(ctx, stream, loaded)
 	if err != nil {
-		logger.WithError(err).WithField("location", in.Location).Error("planning failed")
-		return errors.Wrapf(err, "planning %s", in.Location)
-	}
-
-	_, err = e.sendApply(ctx, stream, planned)
-	if err != nil {
-		logger.WithError(err).WithField("location", in.Location).Error("application failed")
 		return errors.Wrapf(err, "applying %s", in.Location)
 	}
 

@@ -31,26 +31,37 @@ type Shell struct {
 	Dir          string
 	Env          []string
 	Status       *CommandResults
+	CheckStatus  *CommandResults
 	HealthStatus *resource.HealthStatus
+	renderer     resource.Renderer
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
-func (s *Shell) Check() (resource.TaskStatus, error) {
+func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
+	s.renderer = r
 	results, err := s.CmdGenerator.Run(s.CheckStmt)
 	if err != nil {
 		return nil, err
 	}
-	s.Status = s.Status.Cons("check", results)
+	if s.Status == nil {
+		s.Status = s.Status.Cons("check", results)
+	}
+	if s.CheckStatus == nil {
+		s.CheckStatus = results
+	}
 	return s, nil
 }
 
 // Apply is a NOP for health checks
-func (s *Shell) Apply() (err error) {
+func (s *Shell) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	if cg, ok := s.CmdGenerator.(*CommandGenerator); ok {
+		s.CmdGenerator = cg
+	}
 	results, err := s.CmdGenerator.Run(s.ApplyStmt)
 	if err == nil {
 		s.Status = s.Status.Cons("apply", results)
 	}
-	return err
+	return s, err
 }
 
 // resource.TaskStatus functions
@@ -129,7 +140,7 @@ func (s *Shell) HealthCheck() (*resource.HealthStatus, error) {
 func (s *Shell) updateHealthStatus() error {
 	if s.Status == nil {
 		fmt.Println("[INFO] health status requested with no plan, running check")
-		if _, err := s.Check(); err != nil {
+		if _, err := s.Check(s.renderer); err != nil {
 			return err
 		}
 	}

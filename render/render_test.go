@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
@@ -39,8 +40,11 @@ func TestRenderSingleNode(t *testing.T) {
 
 	node := rendered.Get("root/file.content.x")
 
-	fileContent, ok := node.(*content.Content)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, node))
+	wrapper, ok := node.(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, node))
+
+	fileContent, ok := wrapper.Task.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, wrapper.Task))
 
 	assert.Equal(t, "1", fileContent.Destination)
 	assert.Equal(t, "2", fileContent.Content)
@@ -63,7 +67,10 @@ func TestRenderParam(t *testing.T) {
 
 	node := rendered.Get("root/file.content.x")
 
-	fileContent, ok := node.(*content.Content)
+	wrapper, ok := node.(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, node))
+
+	fileContent, ok := wrapper.Task.(*content.Content)
 	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, node))
 
 	assert.Equal(t, "1", fileContent.Destination)
@@ -86,8 +93,11 @@ func TestRenderValues(t *testing.T) {
 
 	node := rendered.Get("root/file.content.x")
 
-	content, ok := node.(*content.Content)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, node))
+	wrapper, ok := node.(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", wrapper, node))
+
+	content, ok := wrapper.Task.(*content.Content)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, wrapper.Task))
 
 	assert.Equal(t, "2", content.Destination)
 }

@@ -26,38 +26,43 @@ import (
 type Content struct {
 	Content     string
 	Destination string
+	*resource.Status
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check() (resource.TaskStatus, error) {
+func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	contentDiff := resource.TextDiff{Values: [2]string{"", t.Content}}
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusWillChange,
 			WillChange:   true,
 			Differences:  diffs,
 			Status:       t.Destination + ": File is missing",
-		}, nil
+		}
+		return t, nil
 	} else if err != nil {
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			Status:       "Cannot read `" + t.Destination + "`",
-		}, err
+		}
+		return t, err
 	} else if stat.IsDir() {
-		return &resource.Status{
+		t.Status = &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			WillChange:   true,
 			Status:       t.Destination + " is a directory",
-		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
+		}
+		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		return &resource.Status{}, err
+		t.Status = &resource.Status{}
+		return t, err
 	}
 
 	statusMessage := "OK"
@@ -67,25 +72,47 @@ func (t *Content) Check() (resource.TaskStatus, error) {
 		diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
 	}
 
-	return &resource.Status{
+	t.Status = &resource.Status{
 		Status:      statusMessage,
 		Differences: diffs,
 		WillChange:  resource.AnyChanges(diffs),
-	}, nil
+	}
+	return t, nil
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply() error {
+func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	var perm os.FileMode
+	var preChange string
+	diffs := make(map[string]resource.Diff)
 
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
+		diffs["mode"] = resource.TextDiff{Values: [2]string{"not set", "0600"}}
 		perm = 0600
 	} else if err != nil {
-		return err
+		return t.Check(r)
 	} else {
 		perm = stat.Mode()
 	}
 
-	return ioutil.WriteFile(t.Destination, []byte(t.Content), perm)
+	if rawData, readErr := ioutil.ReadFile(t.Destination); readErr != nil {
+		preChange = "<file-missing>"
+	} else {
+		preChange = string(rawData)
+	}
+
+	diffs[t.Destination] = resource.TextDiff{Values: [2]string{preChange, t.Content}}
+
+	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
+		t.Status = &resource.Status{
+			Status:       fmt.Sprintf("%s", err),
+			WarningLevel: resource.StatusFatal,
+			Differences:  diffs,
+		}
+		return t, err
+	}
+
+	t.Status = &resource.Status{Differences: diffs}
+	return t, nil
 }
