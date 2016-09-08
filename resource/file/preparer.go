@@ -129,13 +129,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	return fileTask, fileTask.Validate()
 }
 
-func setDefault(s string, def string) string {
-	if s != "" {
-		return s
-	}
-	return def
-}
-
 func init() {
 	registry.Register("file", (*Preparer)(nil), (*File)(nil))
 }
