@@ -44,7 +44,9 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Status = s.Status.Cons("check", results)
+	if s.Status == nil {
+		s.Status = s.Status.Cons("check", results)
+	}
 	if s.CheckStatus == nil {
 		s.CheckStatus = results
 	}
