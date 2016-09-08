@@ -17,6 +17,7 @@ package file
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"strconv"
@@ -86,4 +87,12 @@ func FileGroup(fi os.FileInfo) (string, error) {
 
 	return group.Name, nil
 
+}
+
+func fileContent(filename string) (string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", fmt.Errorf("unable to open %s: %s", filename, err)
+	}
+	return string(b), err
 }
