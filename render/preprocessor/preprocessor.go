@@ -192,7 +192,6 @@ func HasPath(obj interface{}, terms ...string) error {
 		}
 
 		if k := t.Kind(); k == reflect.Interface {
-			fmt.Println("[INFO] encountered an inteface type; unable to validate lookup")
 			return nil
 		} else if k != reflect.Struct {
 			return errors.New("cannot access non-structure field")
@@ -243,7 +242,7 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 
 func nilPtrError(v reflect.Value) error {
 	typeStr := v.Type().String()
-	return fmt.Errorf("cannot dereference nil pointer of type %T", typeStr)
+	return fmt.Errorf("cannot dereference nil pointer of type %s", typeStr)
 }
 
 func missingFieldError(name string, v reflect.Value) error {
