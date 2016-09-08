@@ -15,7 +15,7 @@ task "refgen" {
 }
 
 task "shellref" {
-  check = "echo 'shellref.check: {{lookup `task.refgen.CheckStatus.Stdout`}}'; [[ -f refgen.txt.2 ]]"
+  check = "echo 'shellref.check: {{lookup `task.refgen.Status.ExitStatus`}}'; [[ -f refgen.txt.2 ]]"
   apply = "echo 'shellref.apply: {{lookup `task.refgen.Status.Stdout`}}'; touch refgen.txt.2"
 }
 

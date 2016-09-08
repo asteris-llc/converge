@@ -47,46 +47,41 @@ makes it easier to think about how the graph will be executed.
 
 Resources may references one-another as long as the references do not introduce
 circular dependencies.  When creating a reference from one node to another we
-can use the `lookup` command to reference a specific field as shown in the
-following example:
+can use the `lookup` command to reference fields of an entry that are provided
+by that entries module.  The available fields will vary depending on the module
+and should be documented along with each module.  The example below illustrates
+using `lookup` to access fields from a `docker.image` node from within
+`docker.container`
 
 ```hcl
-param "name" {
-  default="shouldrun.sample"
+docker.image "nginx" {
+  name    = "nginx"
+  tag     = "1.10-alpine"
+  timeout = "60s"
 }
 
-param "dest" {
-  default = "{{lookup `file.content.disk.Destination`}}"
-}
-
-task "checkspace" {
-  interpreter = "/bin/bash"
-  check = "[[ -f {{param `name`}} ]]"
-  apply = "df -h; date > {{param `name`}}"
-}
-
-task "finish checkspace" {
-  check = "[[ ! -f {{param `name`}} ]];"
-  apply = "rm -f {{param `name`}}"
-  depends = ["task.checkspace"]
-}
-
-task "print file info" {
-  interpreter = "/bin/bash"
-  check = "[[ ! -f {{lookup `file.content.disk.Destination`}}]]"
-  apply = "rm -f {{param `dest`}}"
-}
-
-file.content "disk" {
-  destination = "diskspace.txt"
-  content = "{{lookup `task.checkspace.Status.Stdout`}}"
+docker.container "nginx" {
+  name  = "nginx-server"
+  image = "{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}"
+  force = "true"
+  expose = [
+    "80",
+    "443/tcp",
+    "8080",
+  ]
+  publish_all_ports = "false"
+  ports = [
+    "80",
+  ]
+  env {
+    "FOO" = "BAR"
+  }
+  dns = ["8.8.8.8", "8.8.4.4"]
 }
 ```
 
-dependencies will be automatically identified for calls to `lookup`.
-
-
-`* root/task.print file info: template: check:1:10: executing "check" at <lookup `file.content...>: error calling lookup: term should be one of [Content Destination Status] not "Foo"`
+As we can see, lookup syntax resembles that of parameters and add implicit
+dependencies between nodes.
 
 ## Explicit Dependencies
 
