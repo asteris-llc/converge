@@ -25,16 +25,15 @@ var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-or
 
 // Shell is a structure representing a task.
 type Shell struct {
-	CmdGenerator   CommandExecutor
-	CheckStmt      string
-	ApplyStmt      string
-	Dir            string
-	Env            []string
-	Status         *CommandResults
-	CheckStatus    *CommandResults
-	HealthStatus   *resource.HealthStatus
-	Interpolations map[string]string
-	renderer       resource.Renderer
+	CmdGenerator CommandExecutor
+	CheckStmt    string
+	ApplyStmt    string
+	Dir          string
+	Env          []string
+	Status       *CommandResults
+	CheckStatus  *CommandResults
+	HealthStatus *resource.HealthStatus
+	renderer     resource.Renderer
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
@@ -55,20 +54,7 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 
 // Apply is a NOP for health checks
 func (s *Shell) Apply(r resource.Renderer) (resource.TaskStatus, error) {
-	var extraEnv []string
-	for key, val := range s.Interpolations {
-		keyRendered, err := r.Render("interpolations", key)
-		if err != nil {
-			return s, err
-		}
-		valRendered, err := r.Render("interpolations", val)
-		if err != nil {
-			return s, err
-		}
-		extraEnv = append(extraEnv, fmt.Sprintf("%s=%s", keyRendered, valRendered))
-	}
 	if cg, ok := s.CmdGenerator.(*CommandGenerator); ok {
-		cg.Env = append(cg.Env, extraEnv...)
 		s.CmdGenerator = cg
 	}
 	results, err := s.CmdGenerator.Run(s.ApplyStmt)
