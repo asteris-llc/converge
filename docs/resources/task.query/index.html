@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>Converge</title>
+    <title>task.query - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="TODO: punchy description">
     
-    <link rel="canonical" href="http://converge.aster.is/">
+    <link rel="canonical" href="http://converge.aster.is/resources/task.query/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/">
+    <meta property="og:url" content="http://converge.aster.is/resources/task.query/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -69,9 +69,6 @@
     <script src="http://converge.aster.is/javascripts/modernizr.js"></script>
 
     
-    <link href="http://converge.aster.is/index.xml" rel="alternate" type="application/rss+xml" title="Converge" />
-    <link href="http://converge.aster.is/index.xml" rel="feed" type="application/rss+xml" title="Converge" />
-    
 
   </head>
   <body class="palette-primary-indigo palette-accent-teal">
@@ -100,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        Converge
+        task.query
       </div>
     </div>
 
@@ -186,7 +183,7 @@
 
 
 
-<a class="current" title="Converge" href="http://converge.aster.is/">
+<a  title="Converge" href="http://converge.aster.is/">
   
   Converge
 </a>
@@ -395,11 +392,14 @@
 
 
 
-<a  title="task.query" href="http://converge.aster.is/resources/task.query/">
+<a class="current" title="task.query" href="http://converge.aster.is/resources/task.query/">
   
   task.query
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -442,18 +442,152 @@
 
 	<article class="article">
 		<div class="wrapper">
-			
-				<h1>Converge </h1>
-
-				
-
-<h2 id="installation">Installation</h2>
-
-<h2 id="license">License</h2>
-
-<p>See <a href="http://converge.aster.is/license/">LICENSE</a>.</p>
+			<h1>task.query </h1>
 
 			
+
+<p>Task.query allows you to run arbitrary shell commands on your system and store
+the output without taking any actions that would have permanent effects.  It
+overlaps significantly with the Task module, differing in the use of a field,
+<code>query</code> in place of <code>check</code> and <code>apply</code>, and in the fact that there is never an
+application phase.</p>
+
+<h2 id="example">Example</h2>
+
+<pre><code class="language-hcl">task.query &quot;hostname&quot; {
+  query = &quot;hostname&quot;
+}
+
+file.content &quot;hostname data&quot; {
+  destination = &quot;hostname.txt&quot;
+  content     = &quot;{{lookup `task.query.hostname.Status.Stdout`}}&quot;
+}
+
+</code></pre>
+
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><code>interpreter</code> (string)</li>
+</ul>
+
+<p>the shell interpreter that will be used for your scripts. <code>/bin/sh</code> is
+used by default.</p>
+
+<ul>
+<li><code>check_flags</code> (list of strings)</li>
+</ul>
+
+<p>flags to pass to the <code>interpreter</code> binary to check validity. For
+<code>/bin/sh</code> this is <code>-n</code></p>
+
+<ul>
+<li><code>exec_flags</code> (list of strings)</li>
+</ul>
+
+<p>flags to pass to the interpreter at execution time</p>
+
+<ul>
+<li><code>query</code> (string)</li>
+</ul>
+
+<p>the script to run to query the system.  The output and exit status is saved to
+  be accessed by other modules.</p>
+
+<ul>
+<li><code>timeout</code> (duration string)</li>
+</ul>
+
+<p>the amount of time the command will wait before halting forcefully. The
+format is Go&rsquo;s duraction string. A duration string is a possibly signed
+sequence of decimal numbers, each with optional fraction and a unit
+suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;,
+&ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
+
+<ul>
+<li><code>dir</code> (string)</li>
+</ul>
+
+<p>the working directory this command should be run in</p>
+
+<ul>
+<li><code>env</code> (map of string to string)</li>
+</ul>
+
+<p>any environment variables that should be passed to the command</p>
+
+<h2 id="exported-fields">Exported Fields</h2>
+
+<p>The following fields are available from other modules via <code>lookup</code></p>
+
+<ul>
+<li><code>CheckStmt</code> (string)</li>
+</ul>
+
+<p>the script that will be executed during planning.  It is the script provided
+  to <code>check</code> with any template references resolved.</p>
+
+<ul>
+<li><code>ApplyStmt</code> (string)</li>
+</ul>
+
+<p>the script that will be executed during application.  It is the script
+  provided to <code>apply</code> with any template references resolved.</p>
+
+<ul>
+<li><code>Dir</code> (string)</li>
+</ul>
+
+<p>the working directory of the script.  It will be an empty string if unset.</p>
+
+<ul>
+<li><code>Env</code> (list of strings)</li>
+</ul>
+
+<p>a list of environment variables passed into the script with <code>env</code> in the form
+  of <code>key=value</code>. If no environment variables were set then it returns an empty
+  list.</p>
+
+<ul>
+<li><code>Status</code> (command results)</li>
+</ul>
+
+<p>the execution status of the last task that was run.  During planning this will
+  be the result of <code>check</code>, and during application it will be the result of
+  <code>apply</code>.</p>
+
+<ul>
+<li><code>CheckStatus</code> (command results)</li>
+</ul>
+
+<p>the status of the initial <code>check</code> run.  During planning this is equivivlent to
+  <code>Status</code>, during application this will provide access to the results of the
+  initial call to <code>check</code>.</p>
+
+<h3 id="command-results">Command Results</h3>
+
+<p>The command results structure provides fields related to the execution status of
+a task.  <code>Status</code> and <code>CheckStatus</code> both return command results type fields that
+allow you to access any of these defined fields.</p>
+
+<ul>
+<li><code>ExitStatus</code> (unsigned integer)</li>
+</ul>
+
+<p>the exit code of the process. The meaning of the fields is system dependent.</p>
+
+<ul>
+<li><code>Stdout</code> (string)</li>
+</ul>
+
+<p>contains all data written to stdout by the process.</p>
+
+<ul>
+<li><code>Stderr</code> (string)</li>
+</ul>
+
+<p>contains all data written to stderr by the process.</p>
+
 
 			<aside class="copyright" role="note">
 				
@@ -468,23 +602,37 @@
 			<footer class="footer">
 				
 
-
-
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
+  
+      <a href="http://converge.aster.is/resources/task/" title="task">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              task
+            </div>
+          </div>
+        </div>
+      </a>
+  
   </div>
 
-  
-  
   <div class="next">
-      <a href="http://converge.aster.is/resources/" title="Resource Reference">
+  
+      <a href="http://converge.aster.is/resources/file-content/" title="file.content">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Resource Reference
+              file.content
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
@@ -492,8 +640,11 @@
           </div>
         </div>
       </a>
+  
   </div>
 </nav>
+
+
 
 
 

@@ -274,6 +274,230 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
 &lt;/ul&gt;
 
 &lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;The following fields are available from other modules via &lt;code&gt;lookup&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;CheckStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script that will be executed during planning.  It is the script provided
+  to &lt;code&gt;check&lt;/code&gt; with any template references resolved.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ApplyStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script that will be executed during application.  It is the script
+  provided to &lt;code&gt;apply&lt;/code&gt; with any template references resolved.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory of the script.  It will be an empty string if unset.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Env&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;a list of environment variables passed into the script with &lt;code&gt;env&lt;/code&gt; in the form
+  of &lt;code&gt;key=value&lt;/code&gt;. If no environment variables were set then it returns an empty
+  list.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Status&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the execution status of the last task that was run.  During planning this will
+  be the result of &lt;code&gt;check&lt;/code&gt;, and during application it will be the result of
+  &lt;code&gt;apply&lt;/code&gt;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;CheckStatus&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the status of the initial &lt;code&gt;check&lt;/code&gt; run.  During planning this is equivivlent to
+  &lt;code&gt;Status&lt;/code&gt;, during application this will provide access to the results of the
+  initial call to &lt;code&gt;check&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;command-results&#34;&gt;Command Results&lt;/h3&gt;
+
+&lt;p&gt;The command results structure provides fields related to the execution status of
+a task.  &lt;code&gt;Status&lt;/code&gt; and &lt;code&gt;CheckStatus&lt;/code&gt; both return command results type fields that
+allow you to access any of these defined fields.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ExitStatus&lt;/code&gt; (unsigned integer)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the exit code of the process. The meaning of the fields is system dependent.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Stdout&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;contains all data written to stdout by the process.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Stderr&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;contains all data written to stderr by the process.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>task.query</title>
+      <link>http://converge.aster.is/resources/task.query/</link>
+      <pubDate>Wed, 31 Aug 2016 09:51:20 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/task.query/</guid>
+      <description>
+
+&lt;p&gt;Task.query allows you to run arbitrary shell commands on your system and store
+the output without taking any actions that would have permanent effects.  It
+overlaps significantly with the Task module, differing in the use of a field,
+&lt;code&gt;query&lt;/code&gt; in place of &lt;code&gt;check&lt;/code&gt; and &lt;code&gt;apply&lt;/code&gt;, and in the fact that there is never an
+application phase.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task.query &amp;quot;hostname&amp;quot; {
+  query = &amp;quot;hostname&amp;quot;
+}
+
+file.content &amp;quot;hostname data&amp;quot; {
+  destination = &amp;quot;hostname.txt&amp;quot;
+  content     = &amp;quot;{{lookup `task.query.hostname.Status.Stdout`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;query&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to query the system.  The output and exit status is saved to
+  be accessed by other modules.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully. The
+format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
+sequence of decimal numbers, each with optional fraction and a unit
+suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
+&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;The following fields are available from other modules via &lt;code&gt;lookup&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;CheckStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script that will be executed during planning.  It is the script provided
+  to &lt;code&gt;check&lt;/code&gt; with any template references resolved.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ApplyStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script that will be executed during application.  It is the script
+  provided to &lt;code&gt;apply&lt;/code&gt; with any template references resolved.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory of the script.  It will be an empty string if unset.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Env&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;a list of environment variables passed into the script with &lt;code&gt;env&lt;/code&gt; in the form
+  of &lt;code&gt;key=value&lt;/code&gt;. If no environment variables were set then it returns an empty
+  list.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Status&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the execution status of the last task that was run.  During planning this will
+  be the result of &lt;code&gt;check&lt;/code&gt;, and during application it will be the result of
+  &lt;code&gt;apply&lt;/code&gt;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;CheckStatus&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the status of the initial &lt;code&gt;check&lt;/code&gt; run.  During planning this is equivivlent to
+  &lt;code&gt;Status&lt;/code&gt;, during application this will provide access to the results of the
+  initial call to &lt;code&gt;check&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;command-results&#34;&gt;Command Results&lt;/h3&gt;
+
+&lt;p&gt;The command results structure provides fields related to the execution status of
+a task.  &lt;code&gt;Status&lt;/code&gt; and &lt;code&gt;CheckStatus&lt;/code&gt; both return command results type fields that
+allow you to access any of these defined fields.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ExitStatus&lt;/code&gt; (unsigned integer)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the exit code of the process. The meaning of the fields is system dependent.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Stdout&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;contains all data written to stdout by the process.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Stderr&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;contains all data written to stderr by the process.&lt;/p&gt;
 </description>
     </item>
     
@@ -588,153 +812,6 @@ connect over HTTPS.&lt;/p&gt;
       
       <guid>http://converge.aster.is/organization/</guid>
       <description>&lt;p&gt;TODO: when we have a better idea of the best ways to organize these&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Using Dependencies</title>
-      <link>http://converge.aster.is/dependencies/</link>
-      <pubDate>Thu, 25 Aug 2016 00:13:59 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/dependencies/</guid>
-      <description>
-
-&lt;p&gt;In the &lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt; we talked about
-dependencies, and briefly mentioned that they&amp;rsquo;re &lt;em&gt;super important&lt;/em&gt; for Converge
-to work properly. But we didn&amp;rsquo;t really go into them there&amp;hellip; so here we
-are!&lt;/p&gt;
-
-&lt;h2 id=&#34;graph-walking&#34;&gt;Graph Walking&lt;/h2&gt;
-
-&lt;p&gt;Briefly, Converge operates by thinking about your deployment as a graph of tasks
-that need to be done. It walks around the graph from the leaves (AKA tasks with
-no dependencies) all the way to to the root (AKA Rome, where all roads lead.)
-Let&amp;rsquo;s explore what that means with one of our graphs from before:&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;A graph with a parameter. The file hello.txt depends on the name parameter.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        A graph with a parameter. The file hello.txt depends on the name parameter.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;p&gt;What does Converge do when you ask it to apply this graph? When Converge loads
-this file, it will load then file and then start walking at the node that
-doesn&amp;rsquo;t have any dependencies. In this case, that&amp;rsquo;s &lt;code&gt;param.name = &amp;quot;World&amp;quot;&lt;/code&gt;. When
-&lt;code&gt;param.name&lt;/code&gt; has been successfully walked, it will move on to &lt;code&gt;File: hello.txt&lt;/code&gt;.
-If we&amp;rsquo;re successful, the root (&lt;code&gt;/&lt;/code&gt;) will be marked as successful, and our graph
-will be successful. Neat!&lt;/p&gt;
-
-&lt;h2 id=&#34;the-graph-command&#34;&gt;The Graph Command&lt;/h2&gt;
-
-&lt;p&gt;All the graphs we&amp;rsquo;ve been seeing so far have just been the output of Converge&amp;rsquo;s
-&lt;code&gt;graph&lt;/code&gt; command. When asked, Converge will load up any modules you specify and
-then render them as &lt;a href=&#34;http://graphviz.org/&#34;&gt;Graphviz&lt;/a&gt; dot output. You can render
-that like so:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge graph --local yourModule.hcl | dot -Tpng &amp;gt; yourModule.png
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;When you&amp;rsquo;re developing modules, make a habit of rendering them as graphs. It
-makes it easier to think about how the graph will be executed.&lt;/p&gt;
-
-&lt;h2 id=&#34;explicit-dependencies&#34;&gt;Explicit Dependencies&lt;/h2&gt;
-
-&lt;p&gt;When we&amp;rsquo;re walking our graph, there are a lot of operations that can be done in
-parallel. For this to work, you will need to specify dependencies between
-resources in the same file. Let&amp;rsquo;s take the following example:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
-  check = &amp;quot;test -d names&amp;quot;
-  apply = &amp;quot;mkdir names&amp;quot;
-}
-
-file.content &amp;quot;hello&amp;quot; {
-  destination = &amp;quot;names/hello.txt&amp;quot;
-  content     = &amp;quot;Hello, World!&amp;quot;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;As a human reading this, we can clearly see that &lt;code&gt;file.content.hello&lt;/code&gt; is
-dependent on &lt;code&gt;task.names&lt;/code&gt;, because the file needs the directory to be created
-before it can write files into it. But Converge doesn&amp;rsquo;t know that yet, so here&amp;rsquo;s
-how it looks:&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/dependencies/without-depends.png&#34; alt=&#34;The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;p&gt;To fix this, we&amp;rsquo;ll need to specify &lt;code&gt;depends&lt;/code&gt; on our &lt;code&gt;file.content&lt;/code&gt;. &lt;code&gt;depends&lt;/code&gt; is
-a list of resources in the current module that must be successfully walked
-before walking ours. They&amp;rsquo;re specified as the resource type, a dot, then the
-resource name. So &lt;code&gt;task &amp;quot;names&amp;quot;&lt;/code&gt; above becomes &lt;code&gt;task.names&lt;/code&gt;.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
-  check = &amp;quot;test -d names&amp;quot;
-  apply = &amp;quot;mkdir names&amp;quot;
-}
-
-file.content &amp;quot;hello&amp;quot; {
-  destination = &amp;quot;names/hello.txt&amp;quot;
-  content     = &amp;quot;Hello, World!&amp;quot;
-
-  depends = [&amp;quot;task.names&amp;quot;] # added in the resource that needs the dependency
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now Converge correctly sees that it needs to walk &lt;code&gt;task.names&lt;/code&gt; before
-&lt;code&gt;file.content.hello&lt;/code&gt;:&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/dependencies/with-depends.png&#34; alt=&#34;The graph output of the above module. Converge now sees the dependency between the directory and the file.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        The graph output of the above module. Converge now sees the dependency between the directory and the file.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;div class=&#34;admonition note&#34;&gt;
-&lt;p class=&#34;admonition-title&#34;&gt;Future Improvements&lt;/p&gt;
-&lt;p&gt;We&amp;rsquo;re working hard on making Converge better at detecting situations like this
-automatically. Ideally, you wouldn&amp;rsquo;t have to specify dependencies at all, and it
-would all work like &lt;a href=&#34;http://converge.aster.is/getting-started/#params&#34;&gt;the param example in the getting started guide&lt;/a&gt;. We&amp;rsquo;re not quite there yet, but keep an eye
-out!&lt;/p&gt;
-&lt;/div&gt;
 </description>
     </item>
     

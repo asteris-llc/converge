@@ -22,6 +22,11 @@
   </url>
   
   <url>
+    <loc>http://converge.aster.is/resources/task.query/</loc>
+    <lastmod>2016-08-31T09:51:20-05:00</lastmod>
+  </url>
+  
+  <url>
     <loc>http://converge.aster.is/resources/file-content/</loc>
     <lastmod>2016-08-30T15:12:06-05:00</lastmod>
   </url>
@@ -57,11 +62,6 @@
   </url>
   
   <url>
-    <loc>http://converge.aster.is/dependencies/</loc>
-    <lastmod>2016-08-25T00:13:59-05:00</lastmod>
-  </url>
-  
-  <url>
     <loc>http://converge.aster.is/getting-started/</loc>
     <lastmod>2016-08-24T23:49:44-05:00</lastmod>
   </url>
@@ -84,6 +84,10 @@
   <url>
     <loc>http://converge.aster.is/resources/</loc>
     <lastmod>2016-08-24T15:33:42-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/dependencies/</loc>
   </url>
   
 </urlset>

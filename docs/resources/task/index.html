@@ -224,19 +224,6 @@
 
 
 
-<a  title="Using Dependencies" href="http://converge.aster.is/dependencies/">
-  
-  Using Dependencies
-</a>
-
-
-
-        
-        
-        
-
-
-
 <a  title="Module Organization" href="http://converge.aster.is/organization/">
   
   Module Organization
@@ -403,6 +390,19 @@
 
 
         
+        
+        
+
+
+
+<a  title="task.query" href="http://converge.aster.is/resources/task.query/">
+  
+  task.query
+</a>
+
+
+
+        
     </ul>
     
 </li>
@@ -526,6 +526,78 @@ suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
 
 <p>any environment variables that should be passed to the command</p>
 
+<h2 id="exported-fields">Exported Fields</h2>
+
+<p>The following fields are available from other modules via <code>lookup</code></p>
+
+<ul>
+<li><code>CheckStmt</code> (string)</li>
+</ul>
+
+<p>the script that will be executed during planning.  It is the script provided
+  to <code>check</code> with any template references resolved.</p>
+
+<ul>
+<li><code>ApplyStmt</code> (string)</li>
+</ul>
+
+<p>the script that will be executed during application.  It is the script
+  provided to <code>apply</code> with any template references resolved.</p>
+
+<ul>
+<li><code>Dir</code> (string)</li>
+</ul>
+
+<p>the working directory of the script.  It will be an empty string if unset.</p>
+
+<ul>
+<li><code>Env</code> (list of strings)</li>
+</ul>
+
+<p>a list of environment variables passed into the script with <code>env</code> in the form
+  of <code>key=value</code>. If no environment variables were set then it returns an empty
+  list.</p>
+
+<ul>
+<li><code>Status</code> (command results)</li>
+</ul>
+
+<p>the execution status of the last task that was run.  During planning this will
+  be the result of <code>check</code>, and during application it will be the result of
+  <code>apply</code>.</p>
+
+<ul>
+<li><code>CheckStatus</code> (command results)</li>
+</ul>
+
+<p>the status of the initial <code>check</code> run.  During planning this is equivivlent to
+  <code>Status</code>, during application this will provide access to the results of the
+  initial call to <code>check</code>.</p>
+
+<h3 id="command-results">Command Results</h3>
+
+<p>The command results structure provides fields related to the execution status of
+a task.  <code>Status</code> and <code>CheckStatus</code> both return command results type fields that
+allow you to access any of these defined fields.</p>
+
+<ul>
+<li><code>ExitStatus</code> (unsigned integer)</li>
+</ul>
+
+<p>the exit code of the process. The meaning of the fields is system dependent.</p>
+
+<ul>
+<li><code>Stdout</code> (string)</li>
+</ul>
+
+<p>contains all data written to stdout by the process.</p>
+
+<ul>
+<li><code>Stderr</code> (string)</li>
+</ul>
+
+<p>contains all data written to stderr by the process.</p>
+
 
 			<aside class="copyright" role="note">
 				
@@ -563,14 +635,14 @@ suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/file-content/" title="file.content">
+      <a href="http://converge.aster.is/resources/task.query/" title="task.query">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              file.content
+              task.query
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
