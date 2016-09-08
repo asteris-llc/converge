@@ -43,7 +43,7 @@ samples/%.png: samples/% converge
 	@echo === rendering $@ ===
 	./converge graph --local $< | dot -Tpng -o$@
 
-lint: rpclint
+lint:
 	@echo '# golint'
 	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/lint/golint
 	@for file in ${RPCLINT}; do golint $${file}; done # github.com/golang/lint/golint
