@@ -15,6 +15,8 @@
 package file
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/user"
@@ -36,15 +38,17 @@ var validFileTypes = []string{"directory", "file"}
 var validLinkTypes = []string{"hardlink", "symlink"}
 
 type File struct {
-	Destination string
-	State       string
-	Type        string
-	Target      string
-	Force       bool
-	FileMode    os.FileMode
-	User        string
-	Group       string
-	Content     string
+	Destination   string
+	State         string
+	Type          string
+	Target        string
+	Force         bool //force replacement of symlinks, etc.
+	FileMode      os.FileMode
+	User          string
+	Group         string
+	Content       string
+	action        string //create, delete, modify
+	modifyContent bool   // does content need to be changed
 }
 
 func (f *File) Apply() error {
@@ -69,6 +73,7 @@ func (f *File) Check() (resource.TaskStatus, error) {
 			status.WillChange = true
 			status.WarningLevel = resource.StatusWillChange
 			f.diffFile(actual, status)
+			f.action = "create"
 		}
 	} else { //file exists
 		actual = &File{Destination: f.Destination, State: "present"}
@@ -81,8 +86,14 @@ func (f *File) Check() (resource.TaskStatus, error) {
 		case "absent": //remove file
 			f.Destination = "<file removed>"
 			f.diffFile(actual, status)
+			f.action = "remove"
 		case "present": //modify file
+			actual.Content, _ = fileContent(actual.Destination)
 			f.diffFile(actual, status)
+			if status.WillChange {
+				f.action = "modify"
+			}
+
 		}
 	}
 
@@ -263,6 +274,7 @@ func (desired *File) diffFile(actual *File, status *resource.Status) {
 
 	if desired.FileMode != actual.FileMode {
 		status.AddDifference("permissions", actual.FileMode.String(), desired.FileMode.String(), "")
+		desired.modifyContent = true
 	}
 
 	if desired.User != actual.User {
@@ -273,9 +285,22 @@ func (desired *File) diffFile(actual *File, status *resource.Status) {
 		status.AddDifference("group", actual.Group, desired.Group, "")
 	}
 
+	desiredHash := hash(desired.Content)
+	actualHash := hash(actual.Content)
+
+	if desiredHash != actualHash {
+		status.AddDifference("content", actual.Content, desired.Content, "")
+		desired.modifyContent = true
+	}
+
 	if resource.AnyChanges(status.Differences) {
 		status.AddDifference("destination", actual.Destination, desired.Destination, "")
 		status.WillChange = true
 		status.WarningLevel = resource.StatusWillChange
 	}
+}
+
+func hash(s string) string {
+	sha := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sha[:])
 }
