@@ -66,6 +66,12 @@ func (r *Renderer) param(name string) (string, error) {
 	if val == nil || !ok {
 		return "", errors.New("param not found")
 	}
+
+	if _, ok := val.(*PrepareThunk); ok {
+		r.resolverErr = true
+		return "", ErrUnresolvable
+	}
+
 	return fmt.Sprintf("%+v", val), nil
 }
 
