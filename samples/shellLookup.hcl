@@ -10,8 +10,8 @@ param "name" {
 
 task "refgen" {
   interpreter = "/bin/bash"
-  check = "echo -n '{{param `name`}}'; [[ -f refgen.txt ]]"
-  apply = "echo -n '{{param `name`}}.apply'; touch refgen.txt"
+  check       = "echo -n '{{param `name`}}'; [[ -f refgen.txt ]]"
+  apply       = "echo -n '{{param `name`}}.apply'; touch refgen.txt"
 }
 
 task "shellref" {
@@ -21,7 +21,7 @@ task "shellref" {
 
 task "cleanup" {
   interpreter = "/bin/bash"
-  check = " [[ ! ( -f refgen.txt || -f refgen.txt.2 ) ]] "
-  apply = "rm -f refgen.txt refgen.txt.2"
-  depends = ["task.refgen", "task.shellref"]
+  check       = " [[ ! ( -f refgen.txt || -f refgen.txt.2 ) ]] "
+  apply       = "rm -f refgen.txt refgen.txt.2"
+  depends     = ["task.refgen", "task.shellref"]
 }
