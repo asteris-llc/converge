@@ -70,6 +70,12 @@ func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "FieldB"))
 }
 
+func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrueI(t *testing.T) {
+	assert.True(t, preprocessor.HasField(&TestStruct{}, "fieldA"))
+	assert.False(t, preprocessor.HasField(&TestStruct{}, "fielda"))
+	assert.False(t, preprocessor.HasField(&TestStruct{}, "fieldB"))
+}
+
 func Test_HasField_WhenNilPtr_ReturnsTrue(t *testing.T) {
 	var test *TestStruct
 	assert.True(t, preprocessor.HasField(test, "FieldA"))
@@ -99,6 +105,14 @@ func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
 	actual, err := preprocessor.EvalMember("FieldA", test)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual.Interface().(string))
+}
+
+func Test_EvalMember_ReturnsValueWhenLowerCaseAndExists(t *testing.T) {
+	expected := "foo"
+	test := &TestStruct{FieldA: expected}
+	actual, err := preprocessor.EvalMember("fieldA", test)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual.Interface().(string))
 }
