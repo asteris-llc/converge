@@ -1,15 +1,18 @@
 ### Good HCL Examples
 
-param "name" {}
+param "name" {
+  default = "converge"
+}
 
 param "password" {
   # type defaults to string
-  must = ["len . | lt 5", "len . | gt 25"]
+  default = "password"
+  must    = ["len . | lt 5", "len . | gt 25"]
 }
 
 param "quorum" {
-  type = "int"
-  must = ["isOdd", "min 1"]
+  default = 3
+  must    = ["isOdd", "min 1"]
 }
 
 param "blocksize" {
@@ -19,7 +22,7 @@ param "blocksize" {
   must = ["min 50", "max 512"]
 }
 
-
 param "cipher" {
-  must = ["oneOf \"Rijndael\" \"Serpent\" \"Twofish\"", "notOneOf \"DES\" \"Blowfish\""]
+  default = "Twofish"
+  must    = ["oneOf \"Rijndael\" \"Serpent\" \"Twofish\"", "notOneOf \"DES\" \"Blowfish\""]
 }
