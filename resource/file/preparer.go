@@ -15,6 +15,8 @@
 package file
 
 import (
+	"os/user"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -99,12 +101,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	User, err := render.Render("user", p.User)
+	UserName, err := render.Render("user", p.User)
 	if err != nil {
 		return nil, err
 	}
 
-	Group, err := render.Render("group", p.Group)
+	GroupName, err := render.Render("group", p.Group)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +123,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Target:      Target,
 		Force:       Force,
 		FileMode:    FileMode,
-		User:        User,
-		Group:       Group,
+		UserInfo:    &user.User{Name: UserName},
+		GroupInfo:   &user.Group{Name: GroupName},
 		Content:     Content,
 	}
 

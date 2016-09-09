@@ -64,28 +64,28 @@ func GID(fi os.FileInfo) int {
 }
 
 // Owner Returns the Unix username of a File
-func Owner(fi os.FileInfo) (string, error) {
+func UserInfo(fi os.FileInfo) (*user.User, error) {
 	uid := UID(fi)
 
 	user, err := user.LookupId(strconv.Itoa(uid))
 	if err != nil {
-		return "", fmt.Errorf("unable to get username for uid %d", uid)
+		return nil, fmt.Errorf("unable to get username for uid %d", uid)
 	}
 
-	return user.Username, nil
+	return user, nil
 
 }
 
 // Group returns the Unix groupname of a File
-func Group(fi os.FileInfo) (string, error) {
+func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 	gid := GID(fi)
 
 	group, err := user.LookupGroupId(strconv.Itoa(gid))
 	if err != nil {
-		return "", fmt.Errorf("unable to get username for gid %d", gid)
+		return &user.Group{}, fmt.Errorf("unable to get username for gid %d", gid)
 	}
 
-	return group.Name, nil
+	return group, nil
 
 }
 

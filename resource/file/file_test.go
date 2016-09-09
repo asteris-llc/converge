@@ -16,6 +16,7 @@ package file_test
 
 import (
 	"os"
+	"os/user"
 	"runtime"
 	"testing"
 
@@ -31,10 +32,10 @@ func TestFileInfo(t *testing.T) {
 	switch goos := runtime.GOOS; goos {
 	case "darwin":
 		fileTests = []file.File{
-			{Destination: "/bin", State: "present", Type: "directory", FileMode: os.FileMode(0755), User: "root", Group: "wheel"},
-			{Destination: "/etc/sudoers", State: "present", Type: "file", FileMode: os.FileMode(0440), User: "root", Group: "wheel"},
-			{Destination: "/etc", State: "present", Type: "symlink", FileMode: os.FileMode(0755), User: "root", Group: "wheel"},
-			{Destination: "/var/run", State: "present", Type: "directory", FileMode: os.FileMode(0775), User: "root", Group: "daemon"},
+			{Destination: "/bin", State: "present", Type: "directory", FileMode: os.FileMode(0755), UserInfo: &user.User{Username: "root", Uid: "0"}, GroupInfo: &user.Group{Name: "wheel", Gid: "0"}},
+			{Destination: "/etc/sudoers", State: "present", Type: "file", FileMode: os.FileMode(0440), UserInfo: &user.User{Username: "root", Uid: "0"}, GroupInfo: &user.Group{Name: "wheel", Gid: "0"}},
+			{Destination: "/etc", State: "present", Type: "symlink", FileMode: os.FileMode(0755), UserInfo: &user.User{Username: "root", Uid: "0"}, GroupInfo: &user.Group{Name: "wheel", Gid: "0"}},
+			{Destination: "/var/run", State: "present", Type: "directory", FileMode: os.FileMode(0775), UserInfo: &user.User{Username: "root", Uid: "0"}, GroupInfo: &user.Group{Name: "daemon", Gid: "1"}},
 		}
 	}
 	for _, ft := range fileTests {
@@ -45,8 +46,10 @@ func TestFileInfo(t *testing.T) {
 			assert.Equal(t, ft.State, actual.State)
 			assert.Equal(t, ft.Type, actual.Type)
 			assert.Equal(t, ft.FileMode.String(), actual.FileMode.String())
-			assert.Equal(t, ft.User, actual.User)
-			assert.Equal(t, ft.Group, actual.Group)
+			assert.Equal(t, ft.UserInfo.Username, actual.UserInfo.Username)
+			assert.Equal(t, ft.UserInfo.Uid, actual.UserInfo.Uid)
+			assert.Equal(t, ft.GroupInfo.Name, actual.GroupInfo.Name)
+			assert.Equal(t, ft.GroupInfo.Gid, actual.GroupInfo.Gid)
 		}
 	}
 

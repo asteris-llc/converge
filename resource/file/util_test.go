@@ -16,6 +16,7 @@ package file_test
 
 import (
 	"os"
+	"os/user"
 	"runtime"
 	"testing"
 
@@ -114,10 +115,11 @@ func TestFileGid(t *testing.T) {
 	}
 }
 
-func TestFileUsername(t *testing.T) {
+// TestFileUserInfo test getting user/uid information from a file
+func TestFileUserInfo(t *testing.T) {
 	type usernameTest struct {
 		filename string
-		username string
+		userInfo *user.User
 		err      error
 	}
 	var usernameTests []usernameTest
@@ -125,10 +127,10 @@ func TestFileUsername(t *testing.T) {
 	switch goos := runtime.GOOS; goos {
 	case "darwin":
 		usernameTests = []usernameTest{
-			{"/bin", "root", nil},
-			{"/etc/group", "root", nil},
-			{"nofile", "", &os.PathError{Op: "lstat", Path: "nofile"}},
-			{"/var/at", "daemon", nil},
+			{"/bin", &user.User{Username: "root", Uid: "0"}, nil},
+			{"/etc/group", &user.User{Username: "root", Uid: "0"}, nil},
+			{"nofile", &user.User{}, &os.PathError{Op: "lstat", Path: "nofile"}},
+			{"/var/at", &user.User{Username: "daemon", Uid: "1"}, nil},
 		}
 	}
 
@@ -136,9 +138,10 @@ func TestFileUsername(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			username, ferr := file.Owner(fi)
+			username, ferr := file.UserInfo(fi)
 			if ferr == nil {
-				assert.Equal(t, tt.username, username)
+				assert.Equal(t, tt.userInfo.Username, username.Username, tt.filename)
+				assert.Equal(t, tt.userInfo.Uid, username.Uid, tt.filename)
 			}
 		} else {
 			assert.Equal(t, tt.err.(*os.PathError).Path, err.(*os.PathError).Path)
@@ -148,19 +151,19 @@ func TestFileUsername(t *testing.T) {
 
 func TestFileGroup(t *testing.T) {
 	type groupTest struct {
-		filename string
-		group    string
-		err      error
+		filename  string
+		groupInfo *user.Group
+		err       error
 	}
 	var groupTests []groupTest
 
 	switch goos := runtime.GOOS; goos {
 	case "darwin":
 		groupTests = []groupTest{
-			{"/bin", "wheel", nil},
-			{"/etc/group", "wheel", nil},
-			{"nofile", "", &os.PathError{Op: "lstat", Path: "nofile"}},
-			{"/var/empty", "sys", nil},
+			{"/bin", &user.Group{Name: "wheel", Gid: "0"}, nil},
+			{"/etc/group", &user.Group{Name: "wheel", Gid: "0"}, nil},
+			{"nofile", &user.Group{}, &os.PathError{Op: "lstat", Path: "nofile"}},
+			{"/var/empty", &user.Group{Name: "sys", Gid: "3"}, nil},
 		}
 	}
 
@@ -168,9 +171,10 @@ func TestFileGroup(t *testing.T) {
 		fi, err := os.Lstat(tt.filename)
 		if err == nil {
 			assert.Equal(t, tt.err, err)
-			group, ferr := file.Group(fi)
+			group, ferr := file.GroupInfo(fi)
 			if ferr == nil {
-				assert.Equal(t, tt.group, group)
+				assert.Equal(t, tt.groupInfo.Name, group.Name)
+				assert.Equal(t, tt.groupInfo.Gid, group.Gid)
 			}
 		} else {
 			assert.Equal(t, tt.err.(*os.PathError).Path, err.(*os.PathError).Path)

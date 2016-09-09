@@ -18,12 +18,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 const defaultPermissions = os.FileMode(0750)
@@ -45,8 +47,8 @@ type File struct {
 	Target        string
 	Force         bool //force replacement of symlinks, etc.
 	FileMode      os.FileMode
-	User          string
-	Group         string
+	UserInfo      *user.User
+	GroupInfo     *user.Group
 	Content       string
 	action        string //create, delete, modify
 	modifyContent bool   // does content need to be changed
@@ -54,7 +56,19 @@ type File struct {
 
 // Apply  changes to file resources
 func (f *File) Apply() error {
-	return nil
+	var err error
+	switch f.action {
+	case "delete":
+		err = f.Delete()
+	case "create":
+		err = f.Create()
+	case "modify":
+		err = f.Modify()
+	}
+	if err != nil {
+		return errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
+	}
+	return err
 }
 
 // Check File settings
@@ -71,7 +85,7 @@ func (f *File) Check() (resource.TaskStatus, error) {
 			status.WarningLevel = resource.StatusNoChange
 			return status, nil
 		case "present": //file doesn't exist, we need to create it
-			actual = &File{Destination: "<file does not exist>", State: "absent"}
+			actual = &File{Destination: "<file does not exist>", State: "absent", UserInfo: &user.User{}, GroupInfo: &user.Group{}}
 			status.WillChange = true
 			status.WarningLevel = resource.StatusWillChange
 			f.diffFile(actual, status)
@@ -79,17 +93,17 @@ func (f *File) Check() (resource.TaskStatus, error) {
 		}
 	} else { //file exists
 		actual = &File{Destination: f.Destination, State: "present"}
-		err = GetFileInfo(actual, stat)
-		if err != nil {
-			status.WarningLevel = resource.StatusFatal
-			return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
-		}
 		switch f.State {
 		case "absent": //remove file
-			f.Destination = "<file removed>"
-			f.diffFile(actual, status)
-			f.action = "remove"
+			status.AddDifference("destination", actual.Destination, "<removed>", "")
+			status.AddDifference("state", actual.State, f.State, "")
+			f.action = "delete"
 		case "present": //modify file
+			err = GetFileInfo(actual, stat)
+			if err != nil {
+				status.WarningLevel = resource.StatusFatal
+				return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
+			}
 			actual.Content, _ = Content(actual.Destination)
 			f.diffFile(actual, status)
 			if status.WillChange {
@@ -198,23 +212,23 @@ func (f *File) validateTarget() error {
 }
 
 func (f *File) validateUser() error {
-	if f.User == "" {
+	if f.UserInfo.Username == "" {
 		u, err := user.LookupId(strconv.Itoa(os.Geteuid()))
 		if err != nil {
 			return fmt.Errorf("unable to set default username %s", err)
 		}
-		f.User = u.Username
+		f.UserInfo.Username = u.Username
 	}
 	return nil
 }
 
 func (f *File) validateGroup() error {
-	if f.Group == "" {
+	if f.GroupInfo.Name == "" {
 		g, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
 		if err != nil {
 			return fmt.Errorf("unable to set default group %s", err)
 		}
-		f.Group = g.Name
+		f.GroupInfo.Name = g.Name
 	}
 	return nil
 }
@@ -246,12 +260,12 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 	f.FileMode = stat.Mode() & os.ModePerm //strip out higher order bits from perms
 
-	f.User, err = Owner(stat)
+	f.UserInfo, err = UserInfo(stat)
 	if err != nil {
 		return fmt.Errorf("error determining owner of %s : %s", f.Destination, err)
 	}
 
-	f.Group, err = Group(stat)
+	f.GroupInfo, err = GroupInfo(stat)
 	if err != nil {
 		return fmt.Errorf("error determining group of %s : %s", f.Destination, err)
 	}
@@ -277,12 +291,20 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 		status.AddDifference("permissions", actual.FileMode.String(), f.FileMode.String(), "")
 	}
 
-	if f.User != actual.User {
-		status.AddDifference("user", actual.User, f.User, "")
+	if f.UserInfo.Username != actual.UserInfo.Username {
+		status.AddDifference("username", actual.UserInfo.Username, f.UserInfo.Username, "")
 	}
 
-	if f.Group != actual.Group {
-		status.AddDifference("group", actual.Group, f.Group, "")
+	if f.UserInfo.Uid != actual.UserInfo.Uid {
+		status.AddDifference("uid", actual.UserInfo.Uid, f.UserInfo.Uid, "")
+	}
+
+	if f.GroupInfo.Name != actual.GroupInfo.Name {
+		status.AddDifference("group", actual.GroupInfo.Name, f.GroupInfo.Name, "")
+	}
+
+	if f.GroupInfo.Gid != actual.GroupInfo.Gid {
+		status.AddDifference("gid", actual.GroupInfo.Gid, f.GroupInfo.Gid, "")
 	}
 
 	fHash := hash(f.Content)
@@ -303,4 +325,55 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 func hash(s string) string {
 	sha := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sha[:])
+}
+
+// Create a file from File information
+func (f *File) Create() error {
+	var err error
+	switch f.Type {
+	case "file":
+		err = ioutil.WriteFile(f.Destination, []byte(f.Content), f.FileMode)
+		if err != nil {
+			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
+		}
+		uid, _ := strconv.Atoi(f.UserInfo.Uid)
+		gid, _ := strconv.Atoi(f.GroupInfo.Gid)
+		err = os.Chown(f.Destination, uid, gid)
+		if err != nil {
+			return fmt.Errorf("unable to change permissions on file %s: %s", f.Destination, err)
+		}
+	case "directory":
+		err = os.MkdirAll(f.Destination, f.FileMode)
+		if err != nil {
+			return fmt.Errorf("unable to create directory %s: %s", f.Destination, err)
+		}
+	case "symlink":
+		err := os.Symlink(f.Target, f.Destination)
+		if err != nil {
+			return fmt.Errorf("unable to create symlink %s: %s", f.Destination, err)
+		}
+	case "hardlink":
+		err := os.Link(f.Target, f.Destination)
+		if err != nil {
+			return fmt.Errorf("unable to create hardlink %s: %s", f.Destination, err)
+		}
+	}
+
+	return err
+}
+
+// Delete a file Listed by the File Resource
+func (f *File) Delete() error {
+	var err error
+	switch f.Type {
+	case "directory":
+		err = os.RemoveAll(f.Destination)
+	default:
+		err = os.Remove(f.Destination)
+	}
+	return err
+}
+
+func (f *File) Modify() error {
+	return errors.New("modify not implemented")
 }
