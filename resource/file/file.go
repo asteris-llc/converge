@@ -96,6 +96,7 @@ func (f *File) Check() (resource.TaskStatus, error) {
 		actual = &File{Destination: f.Destination, State: "present"}
 		switch f.State {
 		case "absent": //remove file
+			status.WillChange = true
 			status.AddDifference("destination", actual.Destination, "<removed>", "")
 			status.AddDifference("state", actual.State, f.State, "")
 			f.action = "delete"
