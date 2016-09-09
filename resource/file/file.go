@@ -74,6 +74,7 @@ func (f *File) Apply() error {
 // Check File settings
 func (f *File) Check() (resource.TaskStatus, error) {
 	status := &resource.Status{Status: f.Destination}
+	status.Output = append(status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
 	var actual *File
 	// Get information about the current file
 	stat, err := os.Lstat(f.Destination) //link aware
@@ -212,26 +213,38 @@ func (f *File) validateTarget() error {
 }
 
 func (f *File) validateUser() error {
-	if f.UserInfo.Username == "" {
-		u, err := user.LookupId(strconv.Itoa(os.Geteuid()))
+	if f.UserInfo.Username != "" {
+		u, err := user.Lookup(f.UserInfo.Username)
 		if err != nil {
-			return fmt.Errorf("unable to set default username %s", err)
+			return fmt.Errorf("unable to get user information for username %s:", f.UserInfo.Username, err)
 		}
 		f.UserInfo.Username = u.Username
 	}
 	return nil
 }
 
+//if a group is provided, make sure it exists on the system
 func (f *File) validateGroup() error {
-	if f.GroupInfo.Name == "" {
-		g, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
+	if f.GroupInfo.Name != "" {
+		g, err := user.LookupGroup(f.GroupInfo.Name)
 		if err != nil {
-			return fmt.Errorf("unable to set default group %s", err)
+			return fmt.Errorf("unable to get user information for username %s:", f.GroupInfo.Name, err)
 		}
-		f.GroupInfo.Name = g.Name
+		f.GroupInfo = g
 	}
 	return nil
 }
+
+// func (f *File) validateGroup() error {
+// 	if f.GroupInfo.Name = "" {
+// 		g, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
+// 		if err != nil {
+// 			return fmt.Errorf("unable to set default group %s", err)
+// 		}
+// 		f.GroupInfo.Name = g.Name
+// 	}
+// 	return nil
+// }
 
 // GetFileInfo populates a File struct with data from a file on the system
 func GetFileInfo(f *File, stat os.FileInfo) error {
@@ -287,24 +300,43 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 		status.AddDifference("target", actual.Target, f.Target, "")
 	}
 
-	if f.FileMode != actual.FileMode {
+	if f.Type == "hardlink" && !SameFile(f.Destination, actual.Target) {
+		status.AddDifference("hardlink inode", actual.Target, f.Target, "")
+	}
+
+	if f.FileMode != 0 && f.FileMode != actual.FileMode {
 		status.AddDifference("permissions", actual.FileMode.String(), f.FileMode.String(), "")
 	}
-
-	if f.UserInfo.Username != actual.UserInfo.Username {
-		status.AddDifference("username", actual.UserInfo.Username, f.UserInfo.Username, "")
+	// determine if the file owner needs to be changed
+	desired, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
+	if err != nil {
+		status.WarningLevel = resource.StatusFatal
 	}
 
-	if f.UserInfo.Uid != actual.UserInfo.Uid {
-		status.AddDifference("uid", actual.UserInfo.Uid, f.UserInfo.Uid, "")
+	if userChanges {
+		if desired.Username != actual.UserInfo.Username {
+			status.AddDifference("username", actual.UserInfo.Username, desired.Username, "")
+		}
+
+		if desired.Uid != actual.UserInfo.Uid {
+			status.AddDifference("uid", actual.UserInfo.Uid, desired.Uid, "")
+		}
 	}
 
-	if f.GroupInfo.Name != actual.GroupInfo.Name {
-		status.AddDifference("group", actual.GroupInfo.Name, f.GroupInfo.Name, "")
+	// determine if the file owner needs to be changed
+	desiredGrp, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
+	if err != nil {
+		status.WarningLevel = resource.StatusFatal
 	}
 
-	if f.GroupInfo.Gid != actual.GroupInfo.Gid {
-		status.AddDifference("gid", actual.GroupInfo.Gid, f.GroupInfo.Gid, "")
+	if groupChanges == true {
+		if desiredGrp.Name != actual.GroupInfo.Name {
+			status.AddDifference("group", actual.GroupInfo.Name, desiredGrp.Name, "")
+		}
+
+		if desiredGrp.Gid != actual.GroupInfo.Gid {
+			status.AddDifference("gid", actual.GroupInfo.Gid, desiredGrp.Gid, "")
+		}
 	}
 
 	fHash := hash(f.Content)
@@ -316,7 +348,6 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 	}
 
 	if resource.AnyChanges(status.Differences) {
-		status.AddDifference("destination", actual.Destination, f.Destination, "")
 		status.WillChange = true
 		status.WarningLevel = resource.StatusWillChange
 	}
@@ -336,12 +367,7 @@ func (f *File) Create() error {
 		if err != nil {
 			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
 		}
-		uid, _ := strconv.Atoi(f.UserInfo.Uid)
-		gid, _ := strconv.Atoi(f.GroupInfo.Gid)
-		err = os.Chown(f.Destination, uid, gid)
-		if err != nil {
-			return fmt.Errorf("unable to change permissions on file %s: %s", f.Destination, err)
-		}
+
 	case "directory":
 		err = os.MkdirAll(f.Destination, f.FileMode)
 		if err != nil {
@@ -359,6 +385,21 @@ func (f *File) Create() error {
 		}
 	}
 
+	tgtUser, _, err := desiredUser(f.UserInfo, &user.User{})
+	if err != nil {
+		return fmt.Errorf("unable to get file owner information %s: %s", f.Destination, err)
+	}
+	tgtGroup, _, err := desiredGroup(f.GroupInfo, &user.Group{})
+	if err != nil {
+		return fmt.Errorf("unable to get file group information %s: %s", f.Destination, err)
+	}
+	uid, _ := strconv.Atoi(tgtUser.Uid)
+	gid, _ := strconv.Atoi(tgtGroup.Gid)
+	err = os.Chown(f.Destination, uid, gid)
+	if err != nil {
+		return fmt.Errorf("unable to change permissions on file %s: %s", f.Destination, err)
+	}
+
 	return err
 }
 
@@ -374,6 +415,86 @@ func (f *File) Delete() error {
 	return err
 }
 
+// Modify a file based on a file resource
 func (f *File) Modify() error {
-	return errors.New("modify not implemented")
+	var err error
+
+	actual := &File{Destination: f.Destination}
+	stat, err := os.Lstat(f.Destination)
+	if err != nil {
+		return fmt.Errorf("apply: unable to get information about %s: %s", f.Destination, err)
+	}
+	err = GetFileInfo(actual, stat)
+	if err != nil {
+		return fmt.Errorf("apply: unable to get information about %s: %s", f.Destination, err)
+	}
+
+	// if the file type changes, delete and recreate
+	if f.Type != actual.Type {
+		err := f.Delete()
+		if err != nil {
+			return fmt.Errorf("apply: unable to recreate %s: %s", f.Destination, err)
+		}
+		err = f.Create()
+		if err != nil {
+			return fmt.Errorf("apply: unable to recreate %s: %s", f.Destination, err)
+		}
+		return nil
+
+		if f.Target != actual.Target {
+
+		}
+	}
+
+	if f.modifyContent && f.Type == "file" {
+		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
+		if err != nil {
+			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
+		}
+	}
+
+	//only modify gid/uid of a file if it has been requested
+	tgtUser, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
+	if err != nil {
+		return fmt.Errorf("unable to get file owner information %s: %s", f.Destination, err)
+	}
+	tgtGroup, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
+	if err != nil {
+		return fmt.Errorf("unable to get file group information %s: %s", f.Destination, err)
+	}
+
+	if userChanges || groupChanges {
+		uid, _ := strconv.Atoi(tgtUser.Uid)
+		gid, _ := strconv.Atoi(tgtGroup.Gid)
+		err = os.Chown(f.Destination, uid, gid)
+		if err != nil {
+			return fmt.Errorf("unable to change ownership on %s: %s", f.Destination, err)
+		}
+	}
+
+	if f.FileMode != actual.FileMode {
+		err = os.Chmod(f.Destination, f.FileMode)
+		if err != nil {
+			return fmt.Errorf("unable to change permissions on %s: %s", f.Destination, err)
+		}
+	}
+
+	if f.Target != actual.Target {
+		switch f.Type {
+		case "symlink":
+			err := os.Symlink(f.Target, f.Destination)
+			if err != nil {
+				return fmt.Errorf("unable to create symlink %s: %s", f.Destination, err)
+			}
+		case "hardlink":
+			if !SameFile(f.Destination, actual.Target) {
+				err := os.Link(f.Target, f.Destination)
+				if err != nil {
+					return fmt.Errorf("unable to create link %s: %s", f.Destination, err)
+				}
+			}
+		}
+	}
+
+	return err
 }

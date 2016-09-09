@@ -39,11 +39,11 @@ func Type(fi os.FileInfo) (string, error) {
 	}
 }
 
-// UnixMode takes a string and converts it to a FileMode suitable for use
-// in os.Chmod
+// UnixMode takes a string and converts it to a FileMode. If string is not set,
+// return -1
 func UnixMode(permissions string) (os.FileMode, error) {
 	if permissions == "" {
-		return defaultPermissions, nil
+		return os.FileMode(0), nil
 	}
 
 	mode, err := strconv.ParseUint(permissions, 8, 32)
@@ -82,11 +82,62 @@ func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 
 	group, err := user.LookupGroupId(strconv.Itoa(gid))
 	if err != nil {
-		return &user.Group{}, fmt.Errorf("unable to get username for gid %d", gid)
+		return &user.Group{}, fmt.Errorf("unable to get group name for gid %d", gid)
 	}
 
 	return group, nil
 
+}
+
+//given two users, decide which one to use
+//returns true if a change is required
+func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err error) {
+	switch f.Username {
+	case "":
+		if actual.Username == "" { // if neither is set, use the effective uid of the process
+			userInfo, err = user.LookupId(strconv.Itoa(os.Geteuid()))
+			if err != nil {
+				return &user.User{}, true, fmt.Errorf("unable to set default username %s", err)
+			}
+			return userInfo, true, err
+		}
+		if actual.Username != "" {
+			return &user.User{Username: actual.Username, Uid: actual.Uid}, true, err
+		}
+	default:
+		userInfo, err = user.Lookup(f.Username)
+		if err != nil {
+			return userInfo, true, fmt.Errorf("unable to get user information for username %s:", f.Username, err)
+		}
+		changed = true
+	}
+	return userInfo, changed, err
+}
+
+//given two users, decide which one to use
+//returns true if a change is required
+func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, err error) {
+	switch f.Name {
+	case "":
+		if actual.Name == "" { // if neither is set, use the effective uid of the process
+			groupInfo, err = user.LookupGroupId(strconv.Itoa(os.Getegid()))
+			if err != nil {
+				return &user.Group{}, true, fmt.Errorf("unable to set default group %s", err)
+			}
+			changed = true
+		}
+		if actual.Name != "" { //if we didn't request a group, use the file's information
+			return &user.Group{Name: actual.Name, Gid: actual.Gid}, false, nil
+		}
+	default: //we asked to set a group on the file
+		groupInfo, err = user.LookupGroup(f.Name)
+		if err != nil {
+			return groupInfo, true, fmt.Errorf("unable to get user information for username %s:", f.Name, err)
+		}
+		changed = true
+
+	}
+	return groupInfo, changed, err
 }
 
 // Content reads a file's contents
@@ -96,4 +147,18 @@ func Content(filename string) ([]byte, error) {
 		return nil, fmt.Errorf("unable to open %s: %s", filename, err)
 	}
 	return b, err
+}
+
+// SameLink checks if two files are the same inode
+func SameFile(file1, file2 string) bool {
+	fi1, err := os.Lstat(file1)
+	if err != nil {
+		return false
+	}
+	fi2, err := os.Lstat(file2)
+	if err != nil {
+		return false
+	}
+	return os.SameFile(fi1, fi2)
+
 }

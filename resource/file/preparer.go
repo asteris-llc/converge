@@ -125,7 +125,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Target:      Target,
 		Force:       Force,
 		FileMode:    FileMode,
-		UserInfo:    &user.User{Name: UserName},
+		UserInfo:    &user.User{Username: UserName},
 		GroupInfo:   &user.Group{Name: GroupName},
 		Content:     Content,
 	}
