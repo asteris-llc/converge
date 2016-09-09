@@ -111,10 +111,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	Content, err := render.Render("content", p.Content)
+	c, err := render.Render("content", p.Content)
 	if err != nil {
 		return nil, err
 	}
+
+	Content := []byte(c)
 
 	fileTask := &File{
 		Destination: Destination,

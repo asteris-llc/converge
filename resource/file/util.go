@@ -90,10 +90,10 @@ func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 }
 
 // Content reads a file's contents
-func Content(filename string) (string, error) {
+func Content(filename string) ([]byte, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return "", fmt.Errorf("unable to open %s: %s", filename, err)
+		return nil, fmt.Errorf("unable to open %s: %s", filename, err)
 	}
-	return string(b), err
+	return b, err
 }

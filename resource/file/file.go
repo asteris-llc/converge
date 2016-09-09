@@ -49,7 +49,7 @@ type File struct {
 	FileMode      os.FileMode
 	UserInfo      *user.User
 	GroupInfo     *user.Group
-	Content       string
+	Content       []byte
 	action        string //create, delete, modify
 	modifyContent bool   // does content need to be changed
 }
@@ -311,7 +311,7 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 	actualHash := hash(actual.Content)
 
 	if fHash != actualHash {
-		status.AddDifference("content", actual.Content, f.Content, "")
+		status.AddDifference("content", string(actual.Content), string(f.Content), "")
 		f.modifyContent = true
 	}
 
@@ -322,8 +322,8 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 	}
 }
 
-func hash(s string) string {
-	sha := sha256.Sum256([]byte(s))
+func hash(b []byte) string {
+	sha := sha256.Sum256(b)
 	return hex.EncodeToString(sha[:])
 }
 
@@ -332,7 +332,7 @@ func (f *File) Create() error {
 	var err error
 	switch f.Type {
 	case "file":
-		err = ioutil.WriteFile(f.Destination, []byte(f.Content), f.FileMode)
+		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
 		if err != nil {
 			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
 		}
