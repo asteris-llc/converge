@@ -118,6 +118,7 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
+	fieldName = toPublicFieldCase(fieldName)
 	var v reflect.Type
 	switch oType := obj.(type) {
 	case reflect.Type:
@@ -168,6 +169,7 @@ func HasMethod(obj interface{}, methodName string) bool {
 
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
 func EvalMember(name string, obj interface{}) (reflect.Value, error) {
+	name = toPublicFieldCase(name)
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		if v.IsNil() {
@@ -203,8 +205,7 @@ func HasPath(obj interface{}, terms ...string) error {
 			if fieldErrs != nil {
 				return fieldErrs
 			}
-			return fmt.Errorf("term should be one of %v not %q", validFields, term)
-
+			return fmt.Errorf("term should be one of %v not %q", mapToLower(validFields), term)
 		}
 		t = field.Type
 	}
@@ -213,6 +214,10 @@ func HasPath(obj interface{}, terms ...string) error {
 
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
+
+	for idx, term := range terms {
+		terms[idx] = toPublicFieldCase(term)
+	}
 
 	if err := HasPath(obj, terms...); err != nil {
 		return nil, err
@@ -238,6 +243,19 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 		}
 	}
 	return obj, nil
+}
+
+// mapToLower converts a string slice to all lower case
+func mapToLower(strs []string) []string {
+	for idx, str := range strs {
+		strs[idx] = strings.ToLower(str)
+	}
+	return strs
+}
+
+// toPublicFieldCase converts the first letter in the string to capital
+func toPublicFieldCase(s string) string {
+	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
 func nilPtrError(v reflect.Value) error {
