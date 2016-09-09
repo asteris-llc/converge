@@ -135,6 +135,40 @@ func HasField(obj interface{}, fieldName string) bool {
 	return hasField
 }
 
+// HasMethod returns true if the provided struct supports the defined method
+func HasMethod(obj interface{}, methodName string) bool {
+	methodName = toPublicFieldCase(methodName)
+	var v reflect.Type
+	switch oType := obj.(type) {
+	case reflect.Type:
+		v = oType
+	case reflect.Value:
+		v = oType.Type()
+	default:
+		v = reflect.TypeOf(obj)
+	}
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		if _, found := reflect.TypeOf(obj).MethodByName(methodName); found {
+			return true
+		}
+		v = v.Elem()
+	}
+	_, found := reflect.TypeOf(obj).MethodByName(methodName)
+	return found
+}
+
+// MethodReturnType returns a slice of the return types of the method
+func MethodReturnType(t reflect.Type) ([]reflect.Type, error) {
+	var types []reflect.Type
+	if t.Kind() != reflect.Func {
+		return types, fmt.Errorf("cannot get return values for non-function type %s", t)
+	}
+	for idx := 0; idx < t.NumOut(); idx++ {
+		types = append(types, t.Out(idx))
+	}
+	return types, nil
+}
+
 // ListFields returns a list of fields for the struct
 func ListFields(obj interface{}) ([]string, error) {
 	var results []string
@@ -161,12 +195,6 @@ func ListFields(obj interface{}) ([]string, error) {
 	return results, nil
 }
 
-// HasMethod returns true if the provided struct supports the defined method
-func HasMethod(obj interface{}, methodName string) bool {
-	_, found := reflect.TypeOf(obj).MethodByName(methodName)
-	return found
-}
-
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
 func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	name = toPublicFieldCase(name)
@@ -183,6 +211,60 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	}
 
 	return v.FieldByName(name), nil
+}
+
+// GetMethod returns a value for the method name on obj, or an error
+func GetMethod(name string, obj interface{}) (reflect.Value, error) {
+	name = toPublicFieldCase(name)
+
+	v := reflect.ValueOf(obj)
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+
+		// A method may be attached to a pointer type so check before dereferencing
+		if _, ok := v.Type().MethodByName(name); ok {
+			return v.MethodByName(name), nil
+		}
+
+		if v.IsNil() {
+			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+		}
+		v = v.Elem()
+	}
+
+	if _, hasMethod := v.Type().MethodByName(name); !hasMethod {
+		return reflect.Zero(reflect.TypeOf(obj)), missingFieldError(name, v)
+	}
+
+	return v.MethodByName(name), nil
+}
+
+// EvalMethod applies params to the provided method and returns a tuple of value
+// and error.  The function should return either a single value or a tuple of
+// value and an error.  Since we are looking specifically for methods attached
+// to obj, obj will be treated as an implicit first argument.
+func EvalMethod(name string, obj interface{}, params ...interface{}) (reflect.Value, error) {
+	nilVal := reflect.Zero(reflect.TypeOf((*error)(nil)))
+	valParams := make([]reflect.Value, len(params))
+	for idx, param := range params {
+		valParams[idx] = toValue(param)
+	}
+	method, err := GetMethod(name, obj)
+
+	if err != nil {
+		return nilVal, fmt.Errorf("unable to get method %s on type %T: %s", name, obj, err)
+	}
+
+	if method.Type().NumIn() != len(params) {
+		return nilVal,
+			fmt.Errorf(
+				"%s has arity %d but received %d params",
+				name,
+				method.Type().NumIn(),
+				len(params),
+			)
+	}
+
+	return normalizeResults(method.Call(valParams))
 }
 
 // HasPath returns true of the set of terms can resolve to a value
@@ -238,6 +320,8 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 				return nil, ErrUnresolvable
 			}
 			obj = val.Interface()
+		} else if HasMethod(obj, term) {
+
 		} else {
 			return nil, ErrUnresolvable
 		}
@@ -265,4 +349,59 @@ func nilPtrError(v reflect.Value) error {
 
 func missingFieldError(name string, v reflect.Value) error {
 	return fmt.Errorf("%s has no field named %s", v.Type().String(), name)
+}
+
+// toValue converts an interface type to a value representing the underlying
+// type, if it's already a value it returns it's parameter unmodified, and if
+// it's a reflect.Type it returns a zero value.
+func toValue(i interface{}) reflect.Value {
+	if asVal, ok := i.(reflect.Value); ok {
+		return asVal
+	}
+	if asType, ok := i.(reflect.Type); ok {
+		return reflect.Zero(asType)
+	}
+	return reflect.ValueOf(i)
+}
+
+// normalizeResult will convert a slice of return values from
+// reflet.Value.Call() into a tuple of a value and an error.
+func normalizeResults(vals []reflect.Value) (reflect.Value, error) {
+	nilVal := reflect.Zero(reflect.TypeOf((*error)(nil)))
+	errType := reflect.TypeOf((*error)(nil)).Elem()
+	len := len(vals)
+	if len == 0 {
+		return nilVal, nil
+	}
+	if len == 1 {
+		elem := vals[0]
+		if elem.Type().Implements(errType) {
+			return nilVal, elem.Interface().(error)
+		}
+		return elem, nil
+	}
+	if len == 2 {
+		fst := vals[0]
+		snd := vals[1]
+		if snd.Type().Implements(errType) {
+			return fst, snd.Interface().(error)
+		}
+	}
+	last := vals[len-1]
+	if last.Type().Implements(errType) {
+		var err error
+		if !last.IsNil() {
+			err = last.Interface().(error)
+		}
+		return reflect.ValueOf(valSliceToInterfaceSlice(vals[0 : len-1])), err
+	}
+	return reflect.ValueOf(valSliceToInterfaceSlice(vals)), nil
+}
+
+func valSliceToInterfaceSlice(vals []reflect.Value) []interface{} {
+	interfaces := make([]interface{}, len(vals))
+	for idx, val := range vals {
+		interfaces[idx] = val.Interface()
+	}
+	return interfaces
 }

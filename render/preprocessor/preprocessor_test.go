@@ -15,6 +15,8 @@
 package preprocessor_test
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -101,6 +103,37 @@ func Test_HasMethod_WhenNilPtr_ReturnsFalse(t *testing.T) {
 	assert.False(t, preprocessor.HasMethod(test, "NonExistantFunc"))
 }
 
+func Test_MethodReturnType_ReturnsErrorWhenNotFuncType(t *testing.T) {
+	_, err := preprocessor.MethodReturnType(reflect.TypeOf((*int)(nil)))
+	assert.Error(t, err)
+}
+
+func Test_MethodReturnType_ReturnsTypeSliceForReturnArity1(t *testing.T) {
+	expected := []reflect.Type{
+		reflect.TypeOf((*int)(nil)).Elem(),
+	}
+	methodType := reflect.TypeOf((&TestStruct{}).SingleReturnFunction)
+	actual, err := preprocessor.MethodReturnType(methodType)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_MethodReturnType_ReturnsTypeSliceForMultiReturn(t *testing.T) {
+	expected := []reflect.Type{
+		reflect.TypeOf((*int)(nil)).Elem(),
+		reflect.TypeOf((*error)(nil)).Elem(),
+	}
+	methodType := reflect.TypeOf((&TestStruct{}).MultiReturnFunction2)
+	actual, err := preprocessor.MethodReturnType(methodType)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+	expected = append([]reflect.Type{reflect.TypeOf((*int)(nil)).Elem()}, expected...)
+	methodType = reflect.TypeOf((&TestStruct{}).MutliReturnFunction3)
+	actual, err = preprocessor.MethodReturnType(methodType)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
 func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
@@ -123,10 +156,58 @@ func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func Test_EvalMethod_ReturnsErrorWhenNoMethod(t *testing.T) {
+	obj := &TestStruct{}
+	_, err := preprocessor.EvalMethod("DoesNotExist", obj)
+	assert.Error(t, err)
+}
+
+func Test_EvalMethod_ReturnsValueNoErrorWhenSingleReturn(t *testing.T) {
+	obj := &TestStruct{}
+	expectedValue := 1
+	result, err := preprocessor.EvalMethod("SingleReturnFunction", obj)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedValue, result.Interface().(int))
+}
+
+func Test_EvalMethod_ReturnsError_WhenSingleErrorReturn(t *testing.T) {
+	obj := &TestStruct{}
+	_, err := preprocessor.EvalMethod("SingleReturnError", obj)
+	assert.Error(t, err)
+	assert.Equal(t, errTestReturn, err)
+}
+
+func Test_EvalMethod_ReturnsValError_WhenMultiReturn2(t *testing.T) {
+	obj := &TestStruct{}
+	expectedVal := 1
+	val, err := preprocessor.EvalMethod("MultiReturnFunction2Err", obj)
+	assert.Error(t, err)
+	assert.Equal(t, errTestReturn, err)
+	assert.Equal(t, expectedVal, val.Interface().(int))
+}
+
+func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturn3(t *testing.T) {
+	obj := &TestStruct{}
+	expected := []interface{}{1, 2}
+	val, err := preprocessor.EvalMethod("MutliReturnFunction3", obj)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, val.Interface().([]interface{}))
+}
+
+func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturnErr3(t *testing.T) {
+	obj := &TestStruct{}
+	expected := []interface{}{1, 2}
+	val, err := preprocessor.EvalMethod("MutliReturnFunction3Err", obj)
+	assert.Error(t, err)
+	assert.Equal(t, errTestReturn, err)
+	assert.Equal(t, expected, val.Interface().([]interface{}))
+}
+
 func Test_EvalTerms(t *testing.T) {
 	type C struct {
 		CVal string
 	}
+
 	type B struct {
 		BVal string
 		BC   *C
@@ -148,9 +229,36 @@ func Test_EvalTerms(t *testing.T) {
 	assert.Equal(t, val, "a")
 }
 
+var errTestReturn = errors.New("returned error")
+
 type TestStruct struct {
 	FieldA string
 }
 
-func (t TestStruct) FunctionOnStruct()   {}
-func (t *TestStruct) FunctionOnPointer() {}
+func (t TestStruct) FunctionOnStruct() {
+}
+
+func (t *TestStruct) FunctionOnPointer() {
+}
+
+func (t *TestStruct) SingleReturnFunction() int {
+	return 1
+}
+func (t *TestStruct) MultiReturnFunction2() (int, error) {
+	return 1, nil
+}
+func (t *TestStruct) MultiReturnFunction2Err() (int, error) {
+	return 1, errTestReturn
+}
+
+func (t *TestStruct) MutliReturnFunction3() (int, int, error) {
+	return 1, 2, nil
+}
+
+func (t *TestStruct) MutliReturnFunction3Err() (int, int, error) {
+	return 1, 2, errTestReturn
+}
+
+func (t *TestStruct) SingleReturnError() error {
+	return errTestReturn
+}
