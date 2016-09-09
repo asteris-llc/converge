@@ -389,6 +389,192 @@ file must exist on the system (for example, having been created with
     </item>
     
     <item>
+      <title>Using Dependencies</title>
+      <link>http://converge.aster.is/dependencies/</link>
+      <pubDate>Fri, 09 Sep 2016 00:13:59 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/dependencies/</guid>
+      <description>
+
+&lt;p&gt;In the &lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt; we talked about
+dependencies, and briefly mentioned that they&amp;rsquo;re &lt;em&gt;super important&lt;/em&gt; for Converge
+to work properly. But we didn&amp;rsquo;t really go into them there&amp;hellip; so here we
+are!&lt;/p&gt;
+
+&lt;h2 id=&#34;graph-walking&#34;&gt;Graph Walking&lt;/h2&gt;
+
+&lt;p&gt;Briefly, Converge operates by thinking about your deployment as a graph of tasks
+that need to be done. It walks around the graph from the leaves (AKA tasks with
+no dependencies) all the way to to the root (AKA Rome, where all roads lead.)
+Let&amp;rsquo;s explore what that means with one of our graphs from before:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;A graph with a parameter. The file hello.txt depends on the name parameter.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        A graph with a parameter. The file hello.txt depends on the name parameter.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;What does Converge do when you ask it to apply this graph? When Converge loads
+this file, it will load then file and then start walking at the node that
+doesn&amp;rsquo;t have any dependencies. In this case, that&amp;rsquo;s &lt;code&gt;param.name = &amp;quot;World&amp;quot;&lt;/code&gt;. When
+&lt;code&gt;param.name&lt;/code&gt; has been successfully walked, it will move on to &lt;code&gt;File: hello.txt&lt;/code&gt;.
+If we&amp;rsquo;re successful, the root (&lt;code&gt;/&lt;/code&gt;) will be marked as successful, and our graph
+will be successful. Neat!&lt;/p&gt;
+
+&lt;h2 id=&#34;the-graph-command&#34;&gt;The Graph Command&lt;/h2&gt;
+
+&lt;p&gt;All the graphs we&amp;rsquo;ve been seeing so far have just been the output of Converge&amp;rsquo;s
+&lt;code&gt;graph&lt;/code&gt; command. When asked, Converge will load up any modules you specify and
+then render them as &lt;a href=&#34;http://graphviz.org/&#34;&gt;Graphviz&lt;/a&gt; dot output. You can render
+that like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge graph --local yourModule.hcl | dot -Tpng &amp;gt; yourModule.png
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When you&amp;rsquo;re developing modules, make a habit of rendering them as graphs. It
+makes it easier to think about how the graph will be executed.&lt;/p&gt;
+
+&lt;h2 id=&#34;cross-node-references&#34;&gt;Cross-Node References&lt;/h2&gt;
+
+&lt;p&gt;Resources may references one-another as long as the references do not introduce
+circular dependencies.  When creating a reference from one node to another we
+can use the &lt;code&gt;lookup&lt;/code&gt; command to reference fields of an entry that are provided
+by that entries module.  The available fields will vary depending on the module
+and should be documented along with each module.  The example below illustrates
+using &lt;code&gt;lookup&lt;/code&gt; to access fields from a &lt;code&gt;docker.image&lt;/code&gt; node from within
+&lt;code&gt;docker.container&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.image &amp;quot;nginx&amp;quot; {
+  name    = &amp;quot;nginx&amp;quot;
+  tag     = &amp;quot;1.10-alpine&amp;quot;
+  timeout = &amp;quot;60s&amp;quot;
+}
+
+docker.container &amp;quot;nginx&amp;quot; {
+  name  = &amp;quot;nginx-server&amp;quot;
+  image = &amp;quot;{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}&amp;quot;
+  force = &amp;quot;true&amp;quot;
+  expose = [
+    &amp;quot;80&amp;quot;,
+    &amp;quot;443/tcp&amp;quot;,
+    &amp;quot;8080&amp;quot;,
+  ]
+  publish_all_ports = &amp;quot;false&amp;quot;
+  ports = [
+    &amp;quot;80&amp;quot;,
+  ]
+  env {
+    &amp;quot;FOO&amp;quot; = &amp;quot;BAR&amp;quot;
+  }
+  dns = [&amp;quot;8.8.8.8&amp;quot;, &amp;quot;8.8.4.4&amp;quot;]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As we can see, lookup syntax resembles that of parameters and add implicit
+dependencies between nodes.&lt;/p&gt;
+
+&lt;h2 id=&#34;explicit-dependencies&#34;&gt;Explicit Dependencies&lt;/h2&gt;
+
+&lt;p&gt;When we&amp;rsquo;re walking our graph, there are a lot of operations that can be done in
+parallel. For this to work, you will need to specify dependencies between
+resources in the same file. Let&amp;rsquo;s take the following example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
+  check = &amp;quot;test -d names&amp;quot;
+  apply = &amp;quot;mkdir names&amp;quot;
+}
+
+file.content &amp;quot;hello&amp;quot; {
+  destination = &amp;quot;names/hello.txt&amp;quot;
+  content     = &amp;quot;Hello, World!&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As a human reading this, we can clearly see that &lt;code&gt;file.content.hello&lt;/code&gt; is
+dependent on &lt;code&gt;task.names&lt;/code&gt;, because the file needs the directory to be created
+before it can write files into it. But Converge doesn&amp;rsquo;t know that yet, so here&amp;rsquo;s
+how it looks:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/dependencies/without-depends.png&#34; alt=&#34;The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;To fix this, we&amp;rsquo;ll need to specify &lt;code&gt;depends&lt;/code&gt; on our &lt;code&gt;file.content&lt;/code&gt;. &lt;code&gt;depends&lt;/code&gt; is
+a list of resources in the current module that must be successfully walked
+before walking ours. They&amp;rsquo;re specified as the resource type, a dot, then the
+resource name. So &lt;code&gt;task &amp;quot;names&amp;quot;&lt;/code&gt; above becomes &lt;code&gt;task.names&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;names&amp;quot; {
+  check = &amp;quot;test -d names&amp;quot;
+  apply = &amp;quot;mkdir names&amp;quot;
+}
+
+file.content &amp;quot;hello&amp;quot; {
+  destination = &amp;quot;names/hello.txt&amp;quot;
+  content     = &amp;quot;Hello, World!&amp;quot;
+
+  depends = [&amp;quot;task.names&amp;quot;] # added in the resource that needs the dependency
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now Converge correctly sees that it needs to walk &lt;code&gt;task.names&lt;/code&gt; before
+&lt;code&gt;file.content.hello&lt;/code&gt;:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://converge.aster.is/images/dependencies/with-depends.png&#34; alt=&#34;The graph output of the above module. Converge now sees the dependency between the directory and the file.&#34; /&gt;
+    
+    
+    &lt;figcaption&gt;
+        &lt;p&gt;
+        The graph output of the above module. Converge now sees the dependency between the directory and the file.
+        
+            
+        
+        &lt;/p&gt; 
+    &lt;/figcaption&gt;
+    
+&lt;/figure&gt;
+
+
+&lt;div class=&#34;admonition note&#34;&gt;
+&lt;p class=&#34;admonition-title&#34;&gt;Future Improvements&lt;/p&gt;
+&lt;p&gt;We&amp;rsquo;re working hard on making Converge better at detecting situations like this
+automatically. Ideally, you wouldn&amp;rsquo;t have to specify dependencies at all, and it
+would all work like &lt;a href=&#34;http://converge.aster.is/getting-started/#params&#34;&gt;the param example in the getting started guide&lt;/a&gt;. We&amp;rsquo;re not quite there yet, but keep an eye
+out!&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>task</title>
       <link>http://converge.aster.is/resources/task/</link>
       <pubDate>Wed, 31 Aug 2016 09:51:20 -0500</pubDate>
@@ -1194,22 +1380,6 @@ could
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Converge</title>
-      <link>http://converge.aster.is/</link>
-      <pubDate>Wed, 24 Aug 2016 15:47:16 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/</guid>
-      <description>
-
-&lt;h2 id=&#34;installation&#34;&gt;Installation&lt;/h2&gt;
-
-&lt;h2 id=&#34;license&#34;&gt;License&lt;/h2&gt;
-
-&lt;p&gt;See &lt;a href=&#34;http://converge.aster.is/license/&#34;&gt;LICENSE&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
     
