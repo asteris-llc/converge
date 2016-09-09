@@ -25,16 +25,19 @@ import (
 )
 
 func Test_Inits_WhenEmptySlice(t *testing.T) {
+	t.Parallel()
 	assert.Nil(t, preprocessor.Inits([]string{}))
 }
 
 func Test_HasField_WhenStruct_ReturnsFieldPresentWhenPresent(t *testing.T) {
+	t.Parallel()
 	assert.True(t, preprocessor.HasField(TestStruct{}, "FieldA"))
 	assert.False(t, preprocessor.HasField(TestStruct{}, "FieldB"))
 
 }
 
 func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
+	t.Parallel()
 	s := "a.b.c.d.e"
 	g := graph.New()
 	g.Add("a", "a")
@@ -48,6 +51,7 @@ func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
 }
 
 func Test_VertexSplit_WhenExactMatch_ReturnsPrefix(t *testing.T) {
+	t.Parallel()
 	s := "a.b.c"
 	g := graph.New()
 	g.Add("a.b.c", "a.b.c")
@@ -58,6 +62,7 @@ func Test_VertexSplit_WhenExactMatch_ReturnsPrefix(t *testing.T) {
 }
 
 func Test_VertexSplit_WhenNoMatch_ReturnsRest(t *testing.T) {
+	t.Parallel()
 	s := "x.y.z"
 	g := graph.New()
 	g.Add("a.b.c", "a.b.c")
@@ -68,35 +73,41 @@ func Test_VertexSplit_WhenNoMatch_ReturnsRest(t *testing.T) {
 }
 
 func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
+	t.Parallel()
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "FieldA"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "FieldB"))
 }
 
 func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrueI(t *testing.T) {
+	t.Parallel()
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fieldA"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "fielda"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "fieldB"))
 }
 
 func Test_HasField_WhenNilPtr_ReturnsTrue(t *testing.T) {
+	t.Parallel()
 	var test *TestStruct
 	assert.True(t, preprocessor.HasField(test, "FieldA"))
 	assert.False(t, preprocessor.HasField(test, "FieldB"))
 }
 
 func Test_HasMethod_WhenStruct(t *testing.T) {
+	t.Parallel()
 	assert.True(t, preprocessor.HasMethod(TestStruct{}, "FunctionOnStruct"))
 	assert.False(t, preprocessor.HasMethod(TestStruct{}, "FunctionOnPointer"))
 	assert.False(t, preprocessor.HasMethod(TestStruct{}, "NonExistantFunc"))
 }
 
 func Test_HasMethod_WhenStructPtr(t *testing.T) {
+	t.Parallel()
 	assert.True(t, preprocessor.HasMethod(&TestStruct{}, "FunctionOnStruct"))
 	assert.True(t, preprocessor.HasMethod(&TestStruct{}, "FunctionOnPointer"))
 	assert.False(t, preprocessor.HasMethod(&TestStruct{}, "NonExistantFunc"))
 }
 
 func Test_HasMethod_WhenNilPtr_ReturnsFalse(t *testing.T) {
+	t.Parallel()
 	var test *TestStruct
 	assert.True(t, preprocessor.HasMethod(test, "FunctionOnStruct"))
 	assert.True(t, preprocessor.HasMethod(test, "FunctionOnPointer"))
@@ -104,11 +115,13 @@ func Test_HasMethod_WhenNilPtr_ReturnsFalse(t *testing.T) {
 }
 
 func Test_MethodReturnType_ReturnsErrorWhenNotFuncType(t *testing.T) {
+	t.Parallel()
 	_, err := preprocessor.MethodReturnType(reflect.TypeOf((*int)(nil)))
 	assert.Error(t, err)
 }
 
 func Test_MethodReturnType_ReturnsTypeSliceForReturnArity1(t *testing.T) {
+	t.Parallel()
 	expected := []reflect.Type{
 		reflect.TypeOf((*int)(nil)).Elem(),
 	}
@@ -119,6 +132,7 @@ func Test_MethodReturnType_ReturnsTypeSliceForReturnArity1(t *testing.T) {
 }
 
 func Test_MethodReturnType_ReturnsTypeSliceForMultiReturn(t *testing.T) {
+	t.Parallel()
 	expected := []reflect.Type{
 		reflect.TypeOf((*int)(nil)).Elem(),
 		reflect.TypeOf((*error)(nil)).Elem(),
@@ -135,6 +149,7 @@ func Test_MethodReturnType_ReturnsTypeSliceForMultiReturn(t *testing.T) {
 }
 
 func Test_NormalizedReturnType_WhenSingleValue_ReturnsValueType(t *testing.T) {
+	t.Parallel()
 	expected := reflect.TypeOf((*int)(nil)).Elem()
 	method := reflect.TypeOf((&TestStruct{}).SingleReturnFunction)
 	actual, err := preprocessor.NormalizedReturnType(method)
@@ -143,6 +158,7 @@ func Test_NormalizedReturnType_WhenSingleValue_ReturnsValueType(t *testing.T) {
 }
 
 func Test_NormalizedReturnType_WhenTupleValue_ReturnsValueType(t *testing.T) {
+	t.Parallel()
 	expected := reflect.TypeOf((*int)(nil)).Elem()
 	method := reflect.TypeOf((&TestStruct{}).MultiReturnFunction2)
 	actual, err := preprocessor.NormalizedReturnType(method)
@@ -157,6 +173,7 @@ func Test_NormalizedReturnType_WhenNonTupleValue_ReturnsError(t *testing.T) {
 }
 
 func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
+	t.Parallel()
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
 	actual, err := preprocessor.EvalMember("FieldA", test)
@@ -165,6 +182,7 @@ func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
 }
 
 func Test_EvalMember_ReturnsValueWhenLowerCaseAndExists(t *testing.T) {
+	t.Parallel()
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
 	actual, err := preprocessor.EvalMember("fieldA", test)
@@ -173,12 +191,14 @@ func Test_EvalMember_ReturnsValueWhenLowerCaseAndExists(t *testing.T) {
 }
 
 func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
+	t.Parallel()
 	test := &TestStruct{}
 	_, err := preprocessor.EvalMember("MissingField", test)
 	assert.Error(t, err)
 }
 
 func Test_MethodReturnType_ReturnsSliceOfReturnTypes(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 
 	intType := reflect.TypeOf((*int)(nil)).Elem()
@@ -201,12 +221,14 @@ func Test_MethodReturnType_ReturnsSliceOfReturnTypes(t *testing.T) {
 }
 
 func Test_EvalMethod_ReturnsErrorWhenNoMethod(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	_, err := preprocessor.EvalMethod("DoesNotExist", obj)
 	assert.Error(t, err)
 }
 
 func Test_EvalMethod_ReturnsValueNoErrorWhenSingleReturn(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	expectedValue := 1
 	result, err := preprocessor.EvalMethod("SingleReturnFunction", obj)
@@ -215,6 +237,7 @@ func Test_EvalMethod_ReturnsValueNoErrorWhenSingleReturn(t *testing.T) {
 }
 
 func Test_EvalMethod_ReturnsError_WhenSingleErrorReturn(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	_, err := preprocessor.EvalMethod("SingleReturnError", obj)
 	assert.Error(t, err)
@@ -222,6 +245,7 @@ func Test_EvalMethod_ReturnsError_WhenSingleErrorReturn(t *testing.T) {
 }
 
 func Test_EvalMethod_ReturnsValError_WhenMultiReturn2(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	expectedVal := 1
 	val, err := preprocessor.EvalMethod("MultiReturnFunction2Err", obj)
@@ -231,6 +255,7 @@ func Test_EvalMethod_ReturnsValError_WhenMultiReturn2(t *testing.T) {
 }
 
 func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturn3(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	expected := []interface{}{1, 2}
 	val, err := preprocessor.EvalMethod("MultiReturnFunction3", obj)
@@ -239,6 +264,7 @@ func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturn3(t *testing.T) {
 }
 
 func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturnErr3(t *testing.T) {
+	t.Parallel()
 	obj := &TestStruct{}
 	expected := []interface{}{1, 2}
 	val, err := preprocessor.EvalMethod("MultiReturnFunction3Err", obj)
@@ -247,30 +273,50 @@ func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturnErr3(t *testing.T) {
 	assert.Equal(t, expected, val.Interface().([]interface{}))
 }
 
+func Test_HasPath(t *testing.T) {
+	t.Parallel()
+	c := &C{CVal: "cval"}
+	b := &B{BVal: "bval", BC: c}
+	a := &A{AVal: "aval", AB: b, AZ: b}
+	assert.NoError(t, preprocessor.HasPath(a, "AVal"))
+	assert.NoError(t, preprocessor.HasPath(a, "AB", "BC"))
+	assert.NoError(t, preprocessor.HasPath(a, "AB", "BC", "CVal"))
+	assert.NoError(t, preprocessor.HasPath(a, "AB", "BVal"))
+	assert.NoError(t, preprocessor.HasPath(a, "AC"))
+	assert.NoError(t, preprocessor.HasPath(a, "AC", "CVal"))
+	assert.NoError(t, preprocessor.HasPath(a, "AZ", "ZVal", "BC"))
+	assert.Error(t, preprocessor.HasPath(a, "ZVal", "BC"))
+	assert.Error(t, preprocessor.HasPath(a, "ZVal", "BC", "AZ"))
+}
+
+func Test_HasPath_ReturnsTrueWheNonInterfaceFunction(t *testing.T) {
+	t.Parallel()
+	c := &C{CVal: "cval"}
+	b := &B{BVal: "bval", BC: c}
+	a := &A{AVal: "aval", AB: b, AZ: b}
+	assert.NoError(t, preprocessor.HasPath(a, "AB", "Bar"))
+}
+
 func Test_EvalTerms(t *testing.T) {
-	type C struct {
-		CVal string
-	}
-
-	type B struct {
-		BVal string
-		BC   *C
-	}
-
-	type A struct {
-		AVal string
-		AB   *B
-	}
-	a := &A{AVal: "a", AB: &B{BVal: "b", BC: &C{CVal: "c"}}}
+	t.Parallel()
+	c := &C{CVal: "cval"}
+	b := &B{BVal: "bval", BC: c}
+	a := &A{AVal: "aval", AB: b, AZ: b}
 	val, err := preprocessor.EvalTerms(a, "AB", "BVal")
 	assert.NoError(t, err)
-	assert.Equal(t, val, "b")
+	assert.Equal(t, val, "bval")
 	val, err = preprocessor.EvalTerms(a, "AB", "BC", "CVal")
 	assert.NoError(t, err)
-	assert.Equal(t, val, "c")
+	assert.Equal(t, val, "cval")
 	val, err = preprocessor.EvalTerms(a, "AVal")
 	assert.NoError(t, err)
-	assert.Equal(t, val, "a")
+	assert.Equal(t, val, "aval")
+	val, err = preprocessor.EvalTerms(a, "AB", "BC", "Foo")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "foo")
+	val, err = preprocessor.EvalTerms(a, "AZ", "ZVal", "Bar")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "bar")
 }
 
 var errTestReturn = errors.New("returned error")
@@ -306,3 +352,25 @@ func (t *TestStruct) MultiReturnFunction3Err() (int, int, error) {
 func (t *TestStruct) SingleReturnError() error {
 	return errTestReturn
 }
+
+type C struct{ CVal string }
+
+type B struct {
+	BVal string
+	BC   *C
+}
+
+type Z interface {
+	ZVal() *B
+}
+
+type A struct {
+	AVal string
+	AB   *B
+	AZ   Z
+}
+
+func (b *B) ZVal() *B    { return b }
+func (b *B) Bar() string { return "bar" }
+func (a *A) AC() *C      { return a.AB.BC }
+func (c *C) Foo() string { return "foo" }

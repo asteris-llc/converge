@@ -135,8 +135,8 @@ func HasField(obj interface{}, fieldName string) bool {
 	return hasField
 }
 
-// HasMethod returns true if the provided struct supports the defined method
-func HasMethod(obj interface{}, methodName string) bool {
+// MethodType gets the type of a method based on the object and method name
+func MethodType(obj interface{}, methodName string) (reflect.Type, bool) {
 	methodName = toPublicFieldCase(methodName)
 	var v reflect.Type
 	switch oType := obj.(type) {
@@ -147,13 +147,31 @@ func HasMethod(obj interface{}, methodName string) bool {
 	default:
 		v = reflect.TypeOf(obj)
 	}
+
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		if _, found := reflect.TypeOf(obj).MethodByName(methodName); found {
-			return true
+		if methodType, found := v.MethodByName(methodName); found {
+			return methodType.Type, true
 		}
 		v = v.Elem()
 	}
-	_, found := reflect.TypeOf(obj).MethodByName(methodName)
+	methodType, found := v.MethodByName(methodName)
+	return methodType.Type, found
+}
+
+// LookupMethodReturnType does a lookup for a method on an object, and if it's
+// found gets it's normalized return type.  If the method doesn't exit or an
+// error occurs it returns an error
+func LookupMethodReturnType(obj interface{}, methodName string) (reflect.Type, error) {
+	methodType, ok := MethodType(obj, methodName)
+	if !ok {
+		return nil, fmt.Errorf("cannot get method return type for non-existant method %s", methodName)
+	}
+	return NormalizedReturnType(methodType)
+}
+
+// HasMethod returns true if the provided struct supports the defined method
+func HasMethod(obj interface{}, methodName string) bool {
+	_, found := MethodType(obj, methodName)
 	return found
 }
 
@@ -205,12 +223,18 @@ func ListFields(obj interface{}) ([]string, error) {
 		v = v.Elem()
 	}
 	e := reflect.Zero(v)
-	if reflect.Struct != e.Kind() {
-		return results, fmt.Errorf("element is %s, not a struct", e.Type())
+
+	if reflect.Struct == e.Kind() {
+		for idx := 0; idx < e.Type().NumField(); idx++ {
+			field := e.Type().Field(idx)
+			results = append(results, field.Name)
+		}
 	}
-	for idx := 0; idx < e.Type().NumField(); idx++ {
-		field := e.Type().Field(idx)
-		results = append(results, field.Name)
+	if reflect.Struct == e.Kind() || reflect.Interface == e.Kind() {
+		for idx := 0; idx < e.Type().NumMethod(); idx++ {
+			method := e.Type().Method(idx)
+			results = append(results, method.Name)
+		}
 	}
 	return results, nil
 }
@@ -233,8 +257,8 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	return v.FieldByName(name), nil
 }
 
-// GetMethod returns a value for the method name on obj, or an error
-func GetMethod(name string, obj interface{}) (reflect.Value, error) {
+// MethodValue returns a value for the method name on obj, or an error
+func MethodValue(name string, obj interface{}) (reflect.Value, error) {
 	name = toPublicFieldCase(name)
 
 	v := reflect.ValueOf(obj)
@@ -268,7 +292,7 @@ func EvalMethod(name string, obj interface{}, params ...interface{}) (reflect.Va
 	for idx, param := range params {
 		valParams[idx] = toValue(param)
 	}
-	method, err := GetMethod(name, obj)
+	method, err := MethodValue(name, obj)
 
 	if err != nil {
 		return nilVal, fmt.Errorf("unable to get method %s on type %T: %s", name, obj, err)
@@ -291,14 +315,32 @@ func EvalMethod(name string, obj interface{}, params ...interface{}) (reflect.Va
 func HasPath(obj interface{}, terms ...string) error {
 	t := reflect.TypeOf(obj)
 	for _, term := range terms {
+		if returnType, err := LookupMethodReturnType(t, term); err == nil {
+			t = returnType
+			continue
+		}
+
 		for t.Kind() == reflect.Ptr {
+			if returnType, err := LookupMethodReturnType(t, term); err == nil {
+				t = returnType
+				continue
+			}
 			t = t.Elem()
 		}
 
 		if k := t.Kind(); k == reflect.Interface {
+			if returnType, err := LookupMethodReturnType(t, term); err == nil {
+				t = returnType
+				continue
+			}
 			return nil
 		} else if k != reflect.Struct {
 			return errors.New("cannot access non-structure field")
+		}
+
+		if returnType, err := LookupMethodReturnType(t, term); err == nil {
+			t = returnType
+			continue
 		}
 
 		field, ok := t.FieldByName(term)
@@ -316,7 +358,6 @@ func HasPath(obj interface{}, terms ...string) error {
 
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
-
 	for idx, term := range terms {
 		terms[idx] = toPublicFieldCase(term)
 	}
@@ -341,7 +382,11 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 			}
 			obj = val.Interface()
 		} else if HasMethod(obj, term) {
-
+			val, err := EvalMethod(term, obj)
+			if err != nil {
+				return nil, ErrUnresolvable
+			}
+			obj = val.Interface()
 		} else {
 			return nil, ErrUnresolvable
 		}
