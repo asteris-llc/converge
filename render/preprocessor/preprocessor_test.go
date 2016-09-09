@@ -128,7 +128,7 @@ func Test_MethodReturnType_ReturnsTypeSliceForMultiReturn(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 	expected = append([]reflect.Type{reflect.TypeOf((*int)(nil)).Elem()}, expected...)
-	methodType = reflect.TypeOf((&TestStruct{}).MutliReturnFunction3)
+	methodType = reflect.TypeOf((&TestStruct{}).MultiReturnFunction3)
 	actual, err = preprocessor.MethodReturnType(methodType)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
@@ -154,6 +154,28 @@ func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
 	test := &TestStruct{}
 	_, err := preprocessor.EvalMember("MissingField", test)
 	assert.Error(t, err)
+}
+
+func Test_MethodReturnType_ReturnsSliceOfReturnTypes(t *testing.T) {
+	obj := &TestStruct{}
+
+	intType := reflect.TypeOf((*int)(nil)).Elem()
+	errType := reflect.TypeOf((*error)(nil)).Elem()
+
+	method := reflect.TypeOf(obj.SingleReturnFunction)
+	types, err := preprocessor.MethodReturnType(method)
+	assert.NoError(t, err)
+	assert.Equal(t, []reflect.Type{intType}, types)
+
+	method = reflect.TypeOf(obj.SingleReturnError)
+	types, err = preprocessor.MethodReturnType(method)
+	assert.NoError(t, err)
+	assert.Equal(t, []reflect.Type{errType}, types)
+
+	method = reflect.TypeOf(obj.MultiReturnFunction3)
+	types, err = preprocessor.MethodReturnType(method)
+	assert.NoError(t, err)
+	assert.Equal(t, []reflect.Type{intType, intType, errType}, types)
 }
 
 func Test_EvalMethod_ReturnsErrorWhenNoMethod(t *testing.T) {
@@ -189,7 +211,7 @@ func Test_EvalMethod_ReturnsValError_WhenMultiReturn2(t *testing.T) {
 func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturn3(t *testing.T) {
 	obj := &TestStruct{}
 	expected := []interface{}{1, 2}
-	val, err := preprocessor.EvalMethod("MutliReturnFunction3", obj)
+	val, err := preprocessor.EvalMethod("MultiReturnFunction3", obj)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, val.Interface().([]interface{}))
 }
@@ -197,7 +219,7 @@ func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturn3(t *testing.T) {
 func Test_EvalMethod_ReturnsValueSlice_WhenMultiReturnErr3(t *testing.T) {
 	obj := &TestStruct{}
 	expected := []interface{}{1, 2}
-	val, err := preprocessor.EvalMethod("MutliReturnFunction3Err", obj)
+	val, err := preprocessor.EvalMethod("MultiReturnFunction3Err", obj)
 	assert.Error(t, err)
 	assert.Equal(t, errTestReturn, err)
 	assert.Equal(t, expected, val.Interface().([]interface{}))
@@ -251,11 +273,11 @@ func (t *TestStruct) MultiReturnFunction2Err() (int, error) {
 	return 1, errTestReturn
 }
 
-func (t *TestStruct) MutliReturnFunction3() (int, int, error) {
+func (t *TestStruct) MultiReturnFunction3() (int, int, error) {
 	return 1, 2, nil
 }
 
-func (t *TestStruct) MutliReturnFunction3Err() (int, int, error) {
+func (t *TestStruct) MultiReturnFunction3Err() (int, int, error) {
 	return 1, 2, errTestReturn
 }
 
