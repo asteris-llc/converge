@@ -1,7 +1,7 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-08-30T15:12:06-05:00"
+date: "2016-09-08T23:18:02-07:00"
 menu:
   main:
     parent: resources
@@ -15,7 +15,7 @@ Content renders content to disk
 
 ```hcl
 param "message" {
-  default = "Hello, World"
+  default = "Hello, World in {{param `filename`}}"
 }
 
 param "filename" {

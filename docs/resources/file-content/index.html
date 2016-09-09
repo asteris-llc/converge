@@ -395,7 +395,7 @@
 
 
 
-<a  title="task.query" href="http://converge.aster.is/resources/task.query/">
+<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
   
   task.query
 </a>
@@ -451,7 +451,7 @@
 <h2 id="example">Example</h2>
 
 <pre><code class="language-hcl">param &quot;message&quot; {
-  default = &quot;Hello, World&quot;
+  default = &quot;Hello, World in {{param `filename`}}&quot;
 }
 
 param &quot;filename&quot; {
@@ -496,7 +496,7 @@ file.content &quot;render&quot; {
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/resources/task.query/" title="task.query">
+      <a href="http://converge.aster.is/resources/param/" title="param">
         <span class="direction">
           Previous
         </span>
@@ -506,7 +506,7 @@ file.content &quot;render&quot; {
           </div>
           <div class="stretch">
             <div class="title">
-              task.query
+              param
             </div>
           </div>
         </div>
