@@ -169,6 +169,26 @@ func MethodReturnType(t reflect.Type) ([]reflect.Type, error) {
 	return types, nil
 }
 
+// NormalizedReturnType returns a type if the return type is a type or (type,
+// error), and an error otherwise.
+func NormalizedReturnType(t reflect.Type) (reflect.Type, error) {
+	badReturnTypeError := errors.New("return type should be a single value or tuple of (value, error)")
+	errType := reflect.TypeOf((*error)(nil)).Elem()
+	returns, err := MethodReturnType(t)
+	if err != nil {
+		return nil, err
+	}
+	if len(returns) == 1 {
+		return returns[0], nil
+	}
+	if len(returns) == 2 {
+		if returns[1].Implements(errType) {
+			return returns[0], nil
+		}
+	}
+	return nil, badReturnTypeError
+}
+
 // ListFields returns a list of fields for the struct
 func ListFields(obj interface{}) ([]string, error) {
 	var results []string

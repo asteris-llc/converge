@@ -134,6 +134,28 @@ func Test_MethodReturnType_ReturnsTypeSliceForMultiReturn(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func Test_NormalizedReturnType_WhenSingleValue_ReturnsValueType(t *testing.T) {
+	expected := reflect.TypeOf((*int)(nil)).Elem()
+	method := reflect.TypeOf((&TestStruct{}).SingleReturnFunction)
+	actual, err := preprocessor.NormalizedReturnType(method)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_NormalizedReturnType_WhenTupleValue_ReturnsValueType(t *testing.T) {
+	expected := reflect.TypeOf((*int)(nil)).Elem()
+	method := reflect.TypeOf((&TestStruct{}).MultiReturnFunction2)
+	actual, err := preprocessor.NormalizedReturnType(method)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_NormalizedReturnType_WhenNonTupleValue_ReturnsError(t *testing.T) {
+	method := reflect.TypeOf((&TestStruct{}).MultiReturnFunction3)
+	_, err := preprocessor.NormalizedReturnType(method)
+	assert.Error(t, err)
+}
+
 func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
