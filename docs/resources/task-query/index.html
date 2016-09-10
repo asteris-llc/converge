@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>Module Organization - Converge</title>
+    <title>task.query - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="TODO: punchy description">
     
-    <link rel="canonical" href="http://converge.aster.is/organization/">
+    <link rel="canonical" href="http://converge.aster.is/resources/task-query/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/organization/">
+    <meta property="og:url" content="http://converge.aster.is/resources/task-query/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        Module Organization
+        task.query
       </div>
     </div>
 
@@ -237,14 +237,11 @@
 
 
 
-<a class="current" title="Module Organization" href="http://converge.aster.is/organization/">
+<a  title="Module Organization" href="http://converge.aster.is/organization/">
   
   Module Organization
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -408,11 +405,14 @@
 
 
 
-<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
+<a class="current" title="task.query" href="http://converge.aster.is/resources/task-query/">
   
   task.query
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -455,9 +455,40 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>Module Organization </h1>
+			<h1>task.query </h1>
 
-			<p>TODO: when we have a better idea of the best ways to organize these</p>
+			
+
+<h2 id="example">Example</h2>
+
+<pre><code class="language-hcl">task.query &quot;hostname&quot; {
+  query = &quot;hostname&quot;
+}
+
+file.content &quot;hostname data&quot; {
+  destination = &quot;hostname.txt&quot;
+  content     = &quot;{{lookup `task.query.hostname.Status.Stdout`}}&quot;
+}
+
+</code></pre>
+
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><p><code>interpreter</code> (string)</p></li>
+
+<li><p><code>query</code> (string)</p></li>
+
+<li><p><code>check_flags</code> (list of strings)</p></li>
+
+<li><p><code>exec_flags</code> (list of strings)</p></li>
+
+<li><p><code>timeout</code> (duration string)</p></li>
+
+<li><p><code>dir</code> (string)</p></li>
+
+<li><p><code>env</code> (map of string to string)</p></li>
+</ul>
 
 
 			<aside class="copyright" role="note">
@@ -476,34 +507,18 @@
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/server/" title="Server">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              Server
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/getting-started/" title="Getting Started">
+      <a href="http://converge.aster.is/resources/docker-container/" title="docker.container">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Getting Started
+              docker.container
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
