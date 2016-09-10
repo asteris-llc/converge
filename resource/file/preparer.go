@@ -48,7 +48,7 @@ type Preparer struct {
 	// Force on a symlink will remove the previous symlink
 	Force string `hcl:"force" doc_type:"bool"`
 
-	// Mode is the mode of the file, specified in octal.
+	// Mode is the mode of the file, specified in octal (like 0755).
 	Mode string `hcl:"mode" doc_type:"octal string"`
 
 	// User is the user name of the file owner
@@ -96,7 +96,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	FileMode, err := UnixMode(Mode)
+	fileMode, err := UnixMode(Mode)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Type:        Type,
 		Target:      Target,
 		Force:       Force,
-		FileMode:    FileMode,
+		Mode:        Mode,
+		FileMode:    fileMode,
 		UserInfo:    &user.User{Username: UserName},
 		GroupInfo:   &user.Group{Name: GroupName},
 		Content:     Content,

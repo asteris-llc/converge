@@ -43,12 +43,12 @@ func Type(fi os.FileInfo) (string, error) {
 // return -1
 func UnixMode(permissions string) (os.FileMode, error) {
 	if permissions == "" {
-		return os.FileMode(0), nil
+		return os.FileMode(defaultPermissions), nil
 	}
 
 	mode, err := strconv.ParseUint(permissions, 8, 32)
 	if err != nil {
-		return os.FileMode(0), fmt.Errorf("%q is not a valid file mode", permissions)
+		return os.FileMode(defaultPermissions), fmt.Errorf("%q is not a valid file mode", permissions)
 	}
 	return os.FileMode(mode), err
 }
@@ -87,6 +87,18 @@ func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 
 	return group, nil
 
+}
+
+// given two File structs, decide which permsissions to use
+// since go sets default values to 0, we use the Mode field to
+// determine if a Mode was configured by the user
+func desiredMode(f, actual *File) os.FileMode {
+	switch f.Mode {
+	case "": //user did not request permissions
+		return actual.FileMode
+	default:
+		return f.FileMode
+	}
 }
 
 //given two users, decide which one to use

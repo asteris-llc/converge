@@ -45,13 +45,15 @@ type File struct {
 	State         string
 	Type          string
 	Target        string
-	Force         bool //force replacement of symlinks, etc.
-	FileMode      os.FileMode
+	Force         bool        //force replacement of symlinks, etc
+	Mode          string      //requested permissions from Prepare
+	FileMode      os.FileMode //calculated permissions
 	UserInfo      *user.User
 	GroupInfo     *user.Group
 	Content       []byte
 	action        string //create, delete, modify
 	modifyContent bool   // does content need to be changed
+
 }
 
 // Apply  changes to file resources
@@ -236,17 +238,6 @@ func (f *File) validateGroup() error {
 	return nil
 }
 
-// func (f *File) validateGroup() error {
-// 	if f.GroupInfo.Name = "" {
-// 		g, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
-// 		if err != nil {
-// 			return fmt.Errorf("unable to set default group %s", err)
-// 		}
-// 		f.GroupInfo.Name = g.Name
-// 	}
-// 	return nil
-// }
-
 // GetFileInfo populates a File struct with data from a file on the system
 func GetFileInfo(f *File, stat os.FileInfo) error {
 	var err error
@@ -305,38 +296,39 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 		status.AddDifference("hardlink inode", actual.Target, f.Target, "")
 	}
 
-	if f.FileMode != 0 && f.FileMode != actual.FileMode {
-		status.AddDifference("permissions", actual.FileMode.String(), f.FileMode.String(), "")
+	mode := desiredMode(f, actual)
+	if mode != actual.FileMode {
+		status.AddDifference("permissions", actual.FileMode.String(), mode.String(), "")
 	}
 	// determine if the file owner needs to be changed
-	desired, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
+	user, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
 	if err != nil {
 		status.WarningLevel = resource.StatusFatal
 	}
 
 	if userChanges {
-		if desired.Username != actual.UserInfo.Username {
-			status.AddDifference("username", actual.UserInfo.Username, desired.Username, "")
+		if user.Username != actual.UserInfo.Username {
+			status.AddDifference("username", actual.UserInfo.Username, user.Username, "")
 		}
 
-		if desired.Uid != actual.UserInfo.Uid {
-			status.AddDifference("uid", actual.UserInfo.Uid, desired.Uid, "")
+		if user.Uid != actual.UserInfo.Uid {
+			status.AddDifference("uid", actual.UserInfo.Uid, user.Uid, "")
 		}
 	}
 
 	// determine if the file owner needs to be changed
-	desiredGrp, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
+	group, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
 	if err != nil {
 		status.WarningLevel = resource.StatusFatal
 	}
 
 	if groupChanges == true {
-		if desiredGrp.Name != actual.GroupInfo.Name {
-			status.AddDifference("group", actual.GroupInfo.Name, desiredGrp.Name, "")
+		if group.Name != actual.GroupInfo.Name {
+			status.AddDifference("group", actual.GroupInfo.Name, group.Name, "")
 		}
 
-		if desiredGrp.Gid != actual.GroupInfo.Gid {
-			status.AddDifference("gid", actual.GroupInfo.Gid, desiredGrp.Gid, "")
+		if group.Gid != actual.GroupInfo.Gid {
+			status.AddDifference("gid", actual.GroupInfo.Gid, group.Gid, "")
 		}
 	}
 
@@ -473,8 +465,9 @@ func (f *File) Modify() error {
 		}
 	}
 
-	if f.FileMode != actual.FileMode {
-		err = os.Chmod(f.Destination, f.FileMode)
+	mode := desiredMode(f, actual)
+	if mode != actual.FileMode {
+		err = os.Chmod(f.Destination, mode.Perm())
 		if err != nil {
 			return fmt.Errorf("unable to change permissions on %s: %s", f.Destination, err)
 		}
