@@ -1,5 +1,6 @@
+---
 title: "Using Dependencies"
-date: "2016-08-25T00:13:59-05:00"
+date: "2016-09-09T00:13:59-05:00"
 
 menu:
   main:

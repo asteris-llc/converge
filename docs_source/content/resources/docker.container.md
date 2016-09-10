@@ -1,7 +1,7 @@
 ---
 title: "docker.container"
 slug: "docker-container"
-date: "2016-09-01T13:37:54-04:00"
+date: "2016-09-08T23:18:03-07:00"
 menu:
   main:
     parent: resources

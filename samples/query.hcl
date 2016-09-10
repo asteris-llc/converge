@@ -1,8 +1,8 @@
-query "hostname" {
+task.query "hostname" {
   query = "hostname"
 }
 
 file.content "hostname data" {
   destination = "hostname.txt"
-  content     = "{{lookup `query.hostname.Status.Stdout`}}"
+  content     = "{{lookup `task.query.hostname.Status.Stdout`}}"
 }

@@ -403,6 +403,19 @@
 
 
         
+        
+        
+
+
+
+<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
+  
+  task.query
+</a>
+
+
+
+        
     </ul>
     
 </li>
@@ -495,6 +508,45 @@ that like so:</p>
 
 <p>When you&rsquo;re developing modules, make a habit of rendering them as graphs. It
 makes it easier to think about how the graph will be executed.</p>
+
+<h2 id="cross-node-references">Cross-Node References</h2>
+
+<p>Resources may references one-another as long as the references do not introduce
+circular dependencies.  When creating a reference from one node to another we
+can use the <code>lookup</code> command to reference fields of an entry that are provided
+by that entries module.  The available fields will vary depending on the module
+and should be documented along with each module.  The example below illustrates
+using <code>lookup</code> to access fields from a <code>docker.image</code> node from within
+<code>docker.container</code></p>
+
+<pre><code class="language-hcl">docker.image &quot;nginx&quot; {
+  name    = &quot;nginx&quot;
+  tag     = &quot;1.10-alpine&quot;
+  timeout = &quot;60s&quot;
+}
+
+docker.container &quot;nginx&quot; {
+  name  = &quot;nginx-server&quot;
+  image = &quot;{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}&quot;
+  force = &quot;true&quot;
+  expose = [
+    &quot;80&quot;,
+    &quot;443/tcp&quot;,
+    &quot;8080&quot;,
+  ]
+  publish_all_ports = &quot;false&quot;
+  ports = [
+    &quot;80&quot;,
+  ]
+  env {
+    &quot;FOO&quot; = &quot;BAR&quot;
+  }
+  dns = [&quot;8.8.8.8&quot;, &quot;8.8.4.4&quot;]
+}
+</code></pre>
+
+<p>As we can see, lookup syntax resembles that of parameters and add implicit
+dependencies between nodes.</p>
 
 <h2 id="explicit-dependencies">Explicit Dependencies</h2>
 
@@ -600,7 +652,7 @@ out!</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/organization/" title="Module Organization">
+      <a href="http://converge.aster.is/resources/file-mode/" title="file.mode">
         <span class="direction">
           Previous
         </span>
@@ -610,7 +662,7 @@ out!</p>
           </div>
           <div class="stretch">
             <div class="title">
-              Module Organization
+              file.mode
             </div>
           </div>
         </div>
@@ -620,14 +672,14 @@ out!</p>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/getting-started/" title="Getting Started">
+      <a href="http://converge.aster.is/resources/task/" title="task">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Getting Started
+              task
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
