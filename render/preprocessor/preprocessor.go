@@ -118,6 +118,7 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
+	fmt.Printf("checking for field %s on %T\n", fieldName, obj)
 	fieldName = toPublicFieldCase(fieldName)
 	var v reflect.Type
 	switch oType := obj.(type) {
@@ -128,10 +129,19 @@ func HasField(obj interface{}, fieldName string) bool {
 	default:
 		v = reflect.TypeOf(obj)
 	}
+
+	fmt.Printf("iterating over kind %v\n", v.Kind())
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	fmt.Printf("finished iterating, ensuring is struct\n")
+	if v.Kind() != reflect.Struct {
+		fmt.Printf("is not a struct, instead %v\n", v.Kind())
+		return false
+	}
+	fmt.Printf("is a struct, getting field by name...\n")
 	_, hasField := v.FieldByName(fieldName)
+	fmt.Printf("hasfield: %v\n", hasField)
 	return hasField
 }
 
@@ -171,6 +181,7 @@ func LookupMethodReturnType(obj interface{}, methodName string) (reflect.Type, e
 
 // HasMethod returns true if the provided struct supports the defined method
 func HasMethod(obj interface{}, methodName string) bool {
+	fmt.Println("\ttrying to see if has method is true...")
 	_, found := MethodType(obj, methodName)
 	return found
 }
@@ -263,7 +274,9 @@ func MethodValue(name string, obj interface{}) (reflect.Value, error) {
 
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-
+		if v.IsNil() {
+			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+		}
 		// A method may be attached to a pointer type so check before dereferencing
 		if _, ok := v.Type().MethodByName(name); ok {
 			return v.MethodByName(name), nil
@@ -287,17 +300,45 @@ func MethodValue(name string, obj interface{}) (reflect.Value, error) {
 // value and an error.  Since we are looking specifically for methods attached
 // to obj, obj will be treated as an implicit first argument.
 func EvalMethod(name string, obj interface{}, params ...interface{}) (reflect.Value, error) {
+	fmt.Printf("calling EvalMethod (%s) on type %T", name, obj)
 	nilVal := reflect.Zero(reflect.TypeOf((*error)(nil)))
+
+	if _, ok := obj.(reflect.Type); ok {
+		fmt.Println("... it's a type, not trying to do anything")
+		return reflect.Zero(reflect.TypeOf(obj)), errors.New("cannot eval method on nil pointer")
+	}
+
+	if v, ok := obj.(reflect.Value); ok {
+		fmt.Println("... it's a value, checking for nil-ness")
+		if v.IsNil() {
+			fmt.Println("it's nil, stopping")
+			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+		}
+	}
+
+	fmt.Println("checking for nil-ness...")
+	if obj == nil {
+		fmt.Println("it's nil")
+		return reflect.Zero(reflect.TypeOf(obj)), errors.New("cannot eval method on nil pointer")
+	}
+	fmt.Println("it's not nil")
+
 	valParams := make([]reflect.Value, len(params))
 	for idx, param := range params {
 		valParams[idx] = toValue(param)
 	}
+
+	fmt.Println("finished converting params")
+
 	method, err := MethodValue(name, obj)
+
+	fmt.Println("got method value")
 
 	if err != nil {
 		return nilVal, fmt.Errorf("unable to get method %s on type %T: %s", name, obj, err)
 	}
 
+	fmt.Println("checking field count")
 	if method.Type().NumIn() != len(params) {
 		return nilVal,
 			fmt.Errorf(
@@ -307,8 +348,10 @@ func EvalMethod(name string, obj interface{}, params ...interface{}) (reflect.Va
 				len(params),
 			)
 	}
-
-	return normalizeResults(method.Call(valParams))
+	fmt.Println("calling...")
+	unnormalized := method.Call(valParams)
+	fmt.Println("normalizing...")
+	return normalizeResults(unnormalized)
 }
 
 // HasPath returns true of the set of terms can resolve to a value
@@ -375,6 +418,7 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 	}
 
 	for _, term := range terms {
+		fmt.Println("trying to look up term ", term, "...")
 		if HasField(obj, term) {
 			val, err := EvalMember(term, obj)
 			if err != nil {
@@ -432,6 +476,7 @@ func toValue(i interface{}) reflect.Value {
 // normalizeResult will convert a slice of return values from
 // reflet.Value.Call() into a tuple of a value and an error.
 func normalizeResults(vals []reflect.Value) (reflect.Value, error) {
+	fmt.Println("calling normalize results...")
 	nilVal := reflect.Zero(reflect.TypeOf((*error)(nil)))
 	errType := reflect.TypeOf((*error)(nil)).Elem()
 	len := len(vals)

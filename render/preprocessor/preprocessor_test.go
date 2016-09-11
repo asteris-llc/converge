@@ -220,6 +220,12 @@ func Test_MethodReturnType_ReturnsSliceOfReturnTypes(t *testing.T) {
 	assert.Equal(t, []reflect.Type{intType, intType, errType}, types)
 }
 
+func Test_EvalMethod_WhenNilEmbedded(t *testing.T) {
+	x := &X{}
+	_, err := preprocessor.EvalMethod("Buzz", x)
+	assert.NoError(t, err)
+}
+
 func Test_EvalMethod_ReturnsErrorWhenNoMethod(t *testing.T) {
 	t.Parallel()
 	obj := &TestStruct{}
@@ -370,7 +376,16 @@ type A struct {
 	AZ   Z
 }
 
-func (b *B) ZVal() *B    { return b }
-func (b *B) Bar() string { return "bar" }
-func (a *A) AC() *C      { return a.AB.BC }
-func (c *C) Foo() string { return "foo" }
+type X struct {
+	*B
+	*C
+}
+
+func (b *B) ZVal() *B     { return b }
+func (b *B) Bar() string  { return "bar" }
+func (b *B) BFoo() string { return b.BVal + " - foo" }
+func (b *B) Bazz() string { return b.BVal + "  - bazz" }
+func (x *X) BFoo() string { return "x.Foo" }
+func (a *A) AC() *C       { return a.AB.BC }
+func (c *C) Foo() string  { return "foo" }
+func (c *C) Buzz() string { return c.CVal }
