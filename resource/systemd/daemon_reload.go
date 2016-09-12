@@ -2,7 +2,6 @@ package systemd
 
 import (
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/coreos/go-systemd/dbus"
 )
 
@@ -16,9 +15,11 @@ func CheckDaemonReload(conn *dbus.Conn, unit string) (bool, error) {
 }
 
 func ApplyDaemonReload() error {
-	script := "systemctl daemon-reload"
-	generator := &shell.CommandGenerator{Interpreter: "/bin/bash"}
-	_, err := generator.Run(script)
+	conn, err := GetDbusConnection()
+	if err != nil {
+		return err
+	}
+	err = conn.Connection.Reload()
 	return err
 }
 

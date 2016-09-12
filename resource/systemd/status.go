@@ -26,14 +26,20 @@ func AppendStatus(a, b *resource.Status) *resource.Status {
 	if b == nil {
 		return a
 	}
-
-	for key, value := range b.Differences {
-		a.Differences[key] = value
+	if a.Differences == nil {
+		a.Differences = b.Differences
+	} else {
+		for key, value := range b.Differences {
+			a.Differences[key] = value
+		}
 	}
 	a.Output = append(a.Output, b.Output...)
-	a.WillChange = a.WillChange || b.WillChange
 	if b.WarningLevel > a.WarningLevel {
 		a.WarningLevel = b.WarningLevel
+		a.Status = b.Status
+	}
+	if b.WillChange && !a.WillChange {
+		a.WillChange = b.WillChange
 		a.Status = b.Status
 	}
 	a.FailingDeps = append(a.FailingDeps, b.FailingDeps...)

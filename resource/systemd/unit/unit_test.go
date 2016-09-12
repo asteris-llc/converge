@@ -25,6 +25,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/asteris-llc/converge/resource/systemd/unit"
@@ -54,6 +55,30 @@ func TestInactiveToActiveUnit(t *testing.T) {
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name), status.Value())
 	assert.False(t, status.HasChanges())
+}
+
+func TestContentCheck(t *testing.T) {
+	// t.Parallel()
+	fr := fakerenderer.FakeRenderer{}
+
+	if !IsRoot() || !HasSystemd() {
+		return
+	}
+	svc, err := NewTmpService("/run", false)
+	assert.NoError(t, err)
+	defer svc.Remove()
+
+	foo := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "disabled", StartMode: "replace", Content: &content.Content{Content: HelloUnitStatic}}
+	status, err := foo.Check(&fr)
+	assert.NoError(t, err)
+	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+	assert.Equal(t, "contents differ", status.Value())
+	assert.True(t, status.HasChanges())
+	status, err = foo.Apply(&fr)
+	assert.NoError(t, err)
+	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+	assert.False(t, status.HasChanges())
+
 }
 
 func TestDisabledtoEnabledUnit(t *testing.T) {

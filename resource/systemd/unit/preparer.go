@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/systemd"
 )
 
@@ -71,6 +72,9 @@ type Preparer struct {
 	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	// "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout string `hcl:"timeout" doc_type:"duration string"`
+
+	// The content of the unit file
+	Content string `hcl:"content"`
 }
 
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
@@ -103,6 +107,10 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 			return nil, err
 		}
 	}
+	contentStr, err := render.Render("content", p.Content)
+	if err != nil {
+		return nil, err
+	}
 
 	// Handle Defaults
 	if ufs == "invalid" {
@@ -111,6 +119,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	if sm == "" {
 		sm = string(systemd.SMReplace)
 	}
+	var contentTask *content.Content
+	if contentStr != "" {
+		contentTask = &content.Content{
+			Content: contentStr,
+		}
+	}
 
 	unit := &Unit{
 		Name:          name,
@@ -118,6 +132,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		UnitFileState: systemd.UnitFileState(ufs),
 		StartMode:     systemd.StartMode(sm),
 		Timeout:       t,
+
+		Content: contentTask,
 	}
 	return unit, unit.Validate()
 }
