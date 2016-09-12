@@ -1,4 +1,7 @@
-### Good HCL Examples
+/*
+These are examples of how you can validate your parameters. This includes a simple type checking system, and user-defined constraints.
+The constraints are evaulated as text/template fragments, with a small set of funcs included.
+*/
 
 param "name" {
   default = "converge"
@@ -24,5 +27,5 @@ param "blocksize" {
 
 param "cipher" {
   default = "Twofish"
-  must    = ["oneOf \"Rijndael\" \"Serpent\" \"Twofish\"", "notOneOf \"DES\" \"Blowfish\""]
+  must    = ["oneOf `Rijndael Serpent Twofish`", "notOneOf `DES Blowfish`"]
 }

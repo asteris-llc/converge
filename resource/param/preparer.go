@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 	"text/template"
 
 	log "github.com/Sirupsen/logrus"
@@ -25,11 +26,17 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
+type ParamType string
+
 const (
-	PASS int = iota
-	WARN
-	FAIL
-	OTHER_ERR
+	ParamTypeString   ParamType = "string"
+	ParamTypeInt      ParamType = "int"
+	ParamTypeInferred ParamType = ""
+)
+
+const (
+	ValidatePass int = 0
+	ValidateFail int = 2
 )
 
 // Rule for Type Validation
@@ -51,9 +58,9 @@ type Preparer struct {
 	Default *string `hcl:"default"`
 
 	// Type is an optional field that is used for type checking. As of
-	// right now, it can either be "int" or "string" (the default). This
-	// is used with TypeCastValue.
-	Type string `hcl:"type"`
+	// right now, it can either be ParamTypeString or ParamTypeInt. It
+	// is used with typeCastValue.
+	Type ParamType `hcl:"type"`
 
 	Must []string `hcl:"must"`
 }
@@ -73,18 +80,14 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		value = def
 	}
 
-	typedValue, err := TypeCastValue(value, p.Type)
+	typedValue, err := typeCastValue(value, p.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	returnCode, err := TypeValidation(typedValue, p.Predicates())
+	err = ValidateType(typedValue, p.Predicates())
 	if err != nil {
 		return nil, err
-	}
-
-	if returnCode != 0 {
-		return nil, fmt.Errorf("param failed validation, with return code %d", returnCode)
 	}
 
 	return &Param{Value: value}, nil
@@ -94,23 +97,19 @@ func (p *Preparer) Predicates() map[string]string {
 
 	predicates := make(map[string]string)
 
-	closure := func(rule string, returnCode int) {
+	for _, rule := range p.Must {
 		count := len(predicates)
 		name := fmt.Sprintf("pred#%d", count)
-		predicate := fmt.Sprintf("{{if %s }}0{{else}}%d{{end}}", rule, returnCode)
+		predicate := fmt.Sprintf("{{if %s }}%d{{else}}%d{{end}}", rule, ValidatePass, ValidateFail)
 		predicates[name] = predicate
-	}
-
-	for _, rule := range p.Must {
-		closure(rule, FAIL)
 	}
 
 	return predicates
 }
 
-func TypeCastValue(paramValue, paramType string) (interface{}, error) {
+func typeCastValue(paramValue string, paramType ParamType) (interface{}, error) {
 	switch paramType {
-	case "int":
+	case ParamTypeInt:
 		value, err := strconv.Atoi(paramValue)
 		if err != nil {
 			return value, fmt.Errorf("paramType is \"int\", but converting \"%s\" failed", paramValue)
@@ -118,26 +117,26 @@ func TypeCastValue(paramValue, paramType string) (interface{}, error) {
 		return value, nil
 
 	// this case is a nop, since string is the default type for parameters
-	case "string":
+	case ParamTypeString:
 		return paramValue, nil
-	case "":
+	case ParamTypeInferred:
 		// try to infer the type from the value
 		// the recursion is make the code DRYer, but is this the best way?
-		if value, err := TypeCastValue(paramValue, "int"); err == nil {
+		if value, err := typeCastValue(paramValue, ParamTypeInt); err == nil {
 			return value, nil
 		} else {
-			return TypeCastValue(paramValue, "string")
+			return typeCastValue(paramValue, ParamTypeString)
 		}
 	default:
 		return paramValue, fmt.Errorf("%s is not a supported param type", paramType)
 	}
 }
 
-func TypeValidation(value interface{}, predicates map[string]string) (int, error) {
+func ValidateType(value interface{}, predicates map[string]string) error {
 	// nop if no predicates to test
 	// this reduces boilerplate for callers
 	if len(predicates) == 0 {
-		return PASS, nil
+		return nil
 	}
 
 	var funcMap template.FuncMap
@@ -153,45 +152,46 @@ func TypeValidation(value interface{}, predicates map[string]string) (int, error
 
 	case string:
 		str := value.(string)
-		oneOfClosure := func(list ...string) bool {
-			for _, item := range list {
-				if str == item {
-					return true
-				}
-			}
-			return false
-		}
 
 		funcMap = template.FuncMap{
 			"empty":    func() bool { return len(str) == 0 },
 			"notEmpty": func() bool { return len(str) != 0 },
-			"oneOf":    oneOfClosure,
-			"notOneOf": func(list ...string) bool { return !oneOfClosure(list...) },
+			"oneOf": func(list string) bool {
+				for _, item := range strings.Split(list, " ") {
+					if str == item {
+						return true
+					}
+				}
+				return false
+			},
+			"notOneOf": func(list string) bool {
+				return !funcMap["oneOf"].(func(list string) bool)(list)
+			},
 		}
 	}
 
 	for name, predicate := range predicates {
 		tmpl, err := template.New(name).Funcs(funcMap).Parse(predicate)
 		if err != nil {
-			return OTHER_ERR, err
+			return err
 		}
 
 		var buffer bytes.Buffer
 		if err = tmpl.Execute(&buffer, value); err != nil {
-			return OTHER_ERR, err
+			return err
 		}
 
 		returnCode, err := strconv.Atoi(buffer.String())
 		if err != nil {
-			return OTHER_ERR, err
+			return err
 		}
 
 		if returnCode != 0 {
 			log.Debug(fmt.Sprintf("%s", predicate))
-			return returnCode, fmt.Errorf("%s: expected 0, got %d", tmpl.Name(), returnCode)
+			return fmt.Errorf("%s: expected %d, got %d", tmpl.Name(), ValidatePass, returnCode)
 		}
 	}
-	return PASS, nil
+	return nil
 }
 
 func init() {
