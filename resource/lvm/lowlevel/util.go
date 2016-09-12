@@ -25,3 +25,18 @@ func (lvm *LVM) ReduceVolumeGroup(vg string, dev string) error {
 func (lvm *LVM) CreatePhysicalVolume(dev string) error {
 	return lvm.Backend.Run("pvcreate", []string{dev})
 }
+
+func (lvm *LVM) Mkfs(dev string, fstype string) error {
+	return lvm.Backend.Run("mkfs", []string{"-t", fstype, dev})
+}
+
+func (lvm *LVM) Mountpoint(path string) (bool, error) {
+	rc, err := lvm.Backend.RunExitCode("mountpoint", []string{"-q", path})
+	if err != nil {
+		return false, err
+	}
+	if rc == 1 {
+		return true, nil
+	}
+	return false, nil
+}
