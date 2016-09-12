@@ -79,11 +79,15 @@ type Unit struct {
 // 1. Checks if the unit is currently loading, if so waits Default 5 seconds
 // 2. Checks if the unit is in the active state
 // 3. Check if the unit is in the unit file state
-func (t *Unit) Check() (resource.TaskStatus, error) {
+func (t *Unit) Check(resource.Renderer) (resource.TaskStatus, error) {
 	// Get the connection from the pool
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {
-		return nil, err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 	defer conn.Return()
 	dbusConn := conn.Connection
@@ -101,7 +105,11 @@ func (t *Unit) Check() (resource.TaskStatus, error) {
 
 	err = systemd.WaitToLoad(ctx, dbusConn, t.Name)
 	if err != nil {
-		return nil, err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 
 	// First check that the ActiveState property matches
@@ -147,11 +155,15 @@ func (t *Unit) Check() (resource.TaskStatus, error) {
 2. Apply UFS
 TODO linking and masking units
 */
-func (t *Unit) Apply() error {
+func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	// Get the connection from the pool
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {
-		return err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 	defer conn.Return()
 	dbusConn := conn.Connection
@@ -169,18 +181,28 @@ func (t *Unit) Apply() error {
 
 	err = systemd.WaitToLoad(ctx, dbusConn, t.Name)
 	if err != nil {
-		return err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 
 	// Determine if unit was enabled-runtime or not
 	prop, err := dbusConn.GetUnitProperty(t.Name, "UnitFileState")
 	if err != nil {
-		return err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 	state := systemd.UnitFileState(prop.Value.String())
 
+	/////////////////////////////////////////
 	// Defer daemon reload
 	defer systemd.ApplyDaemonReload()
+	/////////////////////////////////////////
 
 	// Apply the activeState
 	job := make(chan string)
@@ -190,7 +212,11 @@ func (t *Unit) Apply() error {
 		_, err = dbusConn.StopUnit(t.Name, string(t.StartMode), job)
 	}
 	if err != nil {
-		return err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
 	<-job
 	systemd.ApplyDaemonReload()
@@ -198,10 +224,6 @@ func (t *Unit) Apply() error {
 	//////////////////////////
 	// Apply the UnitFileState
 	//////////////////////////
-	if t.UnitFileState == systemd.UFSDisabled {
-		_, err = dbusConn.DisableUnitFiles([]string{t.Name}, state.IsRuntimeState())
-		return err
-	}
 
 	// Before manking further changes, unmask unit file
 	status, err := systemd.CheckProperty(
@@ -214,21 +236,54 @@ func (t *Unit) Apply() error {
 		},
 	)
 	if err != nil {
-		return err
+		status := &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			Status:       err.Error(),
+		}
+		return status, err
 	}
-	if status.StatusCode() == resource.StatusNoChange {
+	// If unit is maksed, and user does not want it masked, unmask it.
+	if status.StatusCode() == resource.StatusNoChange && !(t.UnitFileState.Equal(systemd.UFSMasked) || t.UnitFileState.Equal(systemd.UFSMaskedRuntime)) {
 		_, err := dbusConn.UnmaskUnitFiles([]string{t.Name}, state.IsRuntimeState())
 		if err != nil {
-			return err
+			status := &resource.Status{
+				WarningLevel: resource.StatusFatal,
+				Status:       err.Error(),
+			}
+			return status, err
 		}
 	}
 
+	// Now that the unit is unmasked continue.
+
+	////////////////////////////
+	//Disabling
+	////////////////////////////
+	if t.UnitFileState.Equal(systemd.UFSDisabled) {
+		_, err = dbusConn.DisableUnitFiles([]string{t.Name}, state.IsRuntimeState())
+		if err != nil {
+			status := &resource.Status{
+				WarningLevel: resource.StatusFatal,
+				Status:       err.Error(),
+			}
+			return status, err
+		}
+		systemd.ApplyDaemonReload()
+		return t.Check(r)
+	}
 	// If unit file should be enabled or not
 	if t.UnitFileState.IsEnabled() {
 		_, _, err := dbusConn.EnableUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
-		return err
+		if err != nil {
+			status := &resource.Status{
+				WarningLevel: resource.StatusFatal,
+				Status:       err.Error(),
+			}
+			return status, err
+		}
 	}
-	return nil
+	systemd.ApplyDaemonReload()
+	return t.Check(r)
 }
 
 func (t *Unit) Validate() error {
