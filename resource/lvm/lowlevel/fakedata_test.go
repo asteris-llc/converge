@@ -23,6 +23,11 @@ func (e *FakeDataExecutor) Run(prog string, args []string) error {
 	return c.Error(0)
 }
 
+func (e *FakeDataExecutor) RunExitCode(prog string, args []string) (int, error) {
+	c := e.Called(prog, args)
+	return c.Int(0), c.Error(1)
+}
+
 func (e *FakeDataExecutor) Read(prog string, args []string) (string, error) {
 	if len(args) == 0 {
 		return "", fmt.Errorf("Bad arguments: %s", prog)

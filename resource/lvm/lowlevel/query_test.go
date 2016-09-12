@@ -17,6 +17,11 @@ func (me *MockExecutor) Run(prog string, args []string) error {
 	return c.Error(0)
 }
 
+func (e *MockExecutor) RunExitCode(prog string, args []string) (int, error) {
+	c := e.Called(prog, args)
+	return c.Int(0), c.Error(1)
+}
+
 func (me *MockExecutor) Read(prog string, args []string) (string, error) {
 	c := me.Called(prog, args)
 	return c.String(0), c.Error(1)
