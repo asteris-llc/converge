@@ -6,6 +6,7 @@ TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vend
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
 BENCH = .
+DOCKER_IMAGES = centos debian ubuntu
 
 converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
 	go build -ldflags="-s -w" .
@@ -129,4 +130,35 @@ docs: docs_source/**/*
 	$(MAKE) -C docs_source
 	mv docs_source/public docs
 
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+docker: build/$(NAME)_$(VERSION)_linux_amd64/$(NAME)
+	@echo
+	for IMAGE in $(DOCKER_IMAGES); do \
+		echo === docker test for $$IMAGE ===;\
+		TOKEN=`uuid`;\
+		docker run -d \
+			--name integration-test-$$IMAGE \
+			--expose 4774 -P \
+			--volume $(shell pwd):/converge \
+			--volume $(shell pwd)/samples:/samples \
+			$$IMAGE:latest /converge/$< server --rpc-token $$TOKEN; \
+		sleep 10; \
+		PORT=`docker inspect --format='{{(index (index .NetworkSettings.Ports "4774/tcp") 0).HostPort}}' integration-test-$$IMAGE`;\
+		./converge apply --rpc-addr=:$$PORT --rpc-token=$$TOKEN /samples/basic.hcl;\
+	done
+
+docker-clean:
+	for IMAGE in $(DOCKER_IMAGES); do docker rm -f integration-test-$$IMAGE; done
+
+vagrant: Vagrantfile
+	@echo
+	@echo === vagrant test ===
+	vagrant up --provision
+
+vagrant-clean:
+	vagrant destroy --force
+
+integration: docker vagrant
+
+integration-clean: docker-clean vagrant-clean
+
+.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check docker docker-clean vagrant vagrant-clean integration integration-clean
