@@ -48,6 +48,8 @@ type SystemUtils interface {
 	LookupGroupID(string) (*user.Group, error)
 }
 
+var ErrUnsupported = fmt.Errorf("group: not supported on this system")
+
 // NewGroup constructs and returns a new Group
 func NewGroup(system SystemUtils) *Group {
 	return &Group{
@@ -58,11 +60,18 @@ func NewGroup(system SystemUtils) *Group {
 // Check if a user group exists
 func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 	// lookup the group by name and lookup the group by gid
-	// the lookup returns an error if the group is not found
+	// the lookups return ErrUnsupported if the system is not supported
+	// LookupGroup returns user.UnknownGroupError if the group is not found
+	// LookupGroupID returns user.UnknownGroupIdError if the gid is not found
 	groupByName, nameErr := g.system.LookupGroup(g.Name)
 	groupByGid, gidErr := g.system.LookupGroupID(g.GID)
 
 	status := &resource.Status{}
+
+	if nameErr == ErrUnsupported || gidErr == ErrUnsupported {
+		status.WarningLevel = resource.StatusFatal
+		return status, ErrUnsupported
+	}
 
 	switch g.State {
 	case StatePresent:
@@ -81,7 +90,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 		case gidNotFound:
 			status.WarningLevel = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s already exists", g.Name))
-		case groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
+		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
 			status.WarningLevel = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
@@ -101,7 +110,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 		case gidNotFound:
 			status.WarningLevel = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", g.GID))
-		case groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
+		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
 			status.WarningLevel = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
@@ -110,7 +119,8 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, g.GID), string(StateAbsent), "")
 		}
 	default:
-		return nil, fmt.Errorf("group: unrecognized state %v", g.State)
+		status.WarningLevel = resource.StatusFatal
+		return status, fmt.Errorf("group: unrecognized state %v", g.State)
 	}
 
 	return status, nil
@@ -119,11 +129,18 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 // Apply changes for group
 func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
 	// lookup the group by name and lookup the group by gid
-	// the lookup returns an error if the group is not found
+	// the lookups return ErrUnsupported if the system is not supported
+	// LookupGroup returns user.UnknownGroupError if the group is not found
+	// LookupGroupID returns user.UnknownGroupIdError if the gid is not found
 	groupByName, nameErr := g.system.LookupGroup(g.Name)
 	groupByGid, gidErr := g.system.LookupGroupID(g.GID)
 
 	status := &resource.Status{}
+
+	if nameErr == ErrUnsupported || gidErr == ErrUnsupported {
+		status.WarningLevel = resource.StatusFatal
+		return status, ErrUnsupported
+	}
 
 	switch g.State {
 	case StatePresent:
