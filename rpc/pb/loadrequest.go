@@ -28,7 +28,7 @@ import (
 func (lr *LoadRequest) Load(ctx context.Context) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("location", lr.Location)
 
-	loaded, err := load.Load(ctx, lr.Location)
+	loaded, err := load.Load(ctx, lr.Location, lr.Verify)
 	if err != nil {
 		logger.WithError(err).Error("could not load")
 		return nil, errors.Wrapf(err, "loading %s", lr.Location)
