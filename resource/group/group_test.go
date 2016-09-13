@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math"
 	"os/user"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -87,9 +88,13 @@ func TestCheckFoundGidFoundNameStatePresent(t *testing.T) {
 	g.State = group.StatePresent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckFoundGidFoundNameStateAbsent(t *testing.T) {
@@ -101,11 +106,15 @@ func TestCheckFoundGidFoundNameStateAbsent(t *testing.T) {
 	g.State = group.StateAbsent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Original())
-	assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Current())
-	assert.True(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Original())
+		assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Current())
+		assert.True(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckFoundGidNotNameStatePresent(t *testing.T) {
@@ -117,10 +126,14 @@ func TestCheckFoundGidNotNameStatePresent(t *testing.T) {
 	g.State = group.StatePresent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group gid %s already exists", g.GID), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group gid %s already exists", g.GID), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckFoundGidNotNameStateAbsent(t *testing.T) {
@@ -132,10 +145,14 @@ func TestCheckFoundGidNotNameStateAbsent(t *testing.T) {
 	g.State = group.StateAbsent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckFoundNameNotGidStatePresent(t *testing.T) {
@@ -147,10 +164,14 @@ func TestCheckFoundNameNotGidStatePresent(t *testing.T) {
 	g.State = group.StatePresent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckFoundNameNotGidStateAbsent(t *testing.T) {
@@ -162,10 +183,14 @@ func TestCheckFoundNameNotGidStateAbsent(t *testing.T) {
 	g.State = group.StateAbsent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group gid %s does not exist", g.GID), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group gid %s does not exist", g.GID), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckNameAndGidMismatchStatePresent(t *testing.T) {
@@ -181,10 +206,14 @@ func TestCheckNameAndGidMismatchStatePresent(t *testing.T) {
 	g.State = group.StatePresent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckNameAndGidMismatchStateAbsent(t *testing.T) {
@@ -200,10 +229,14 @@ func TestCheckNameAndGidMismatchStateAbsent(t *testing.T) {
 	g.State = group.StateAbsent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckNameAndGidNotFoundStatePresent(t *testing.T) {
@@ -215,12 +248,16 @@ func TestCheckNameAndGidNotFoundStatePresent(t *testing.T) {
 	g.State = group.StatePresent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-	assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
-	assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
-	assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
-	assert.True(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+		assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
+		assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
+		assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
+		assert.True(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckNameAndGidNotFoundStateAbsent(t *testing.T) {
@@ -232,10 +269,14 @@ func TestCheckNameAndGidNotFoundStateAbsent(t *testing.T) {
 	g.State = group.StateAbsent
 	status, err := g.Check(fakerenderer.New())
 
-	assert.NoError(t, err)
-	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
-	assert.False(t, status.HasChanges())
+	if runtime.GOOS == "linux" {
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
+		assert.False(t, status.HasChanges())
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestCheckStateUnknown(t *testing.T) {
@@ -247,7 +288,11 @@ func TestCheckStateUnknown(t *testing.T) {
 	g.State = "test"
 	_, err := g.Check(fakerenderer.New())
 
-	assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
+	if runtime.GOOS == "linux" {
+		assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
+	} else {
+		assert.EqualError(t, err, "group: not supported on this system")
+	}
 }
 
 func TestApplyAddGroup(t *testing.T) {
