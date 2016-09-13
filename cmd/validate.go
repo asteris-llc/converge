@@ -21,6 +21,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // validateCmd represents the validate command
@@ -38,10 +39,15 @@ var validateCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
+		verifyModules := viper.GetBool("verify-modules")
+		if !verifyModules {
+			log.WithField("component", "client").Warn("skipping module verfiction")
+		}
+
 		for _, fname := range args {
 			flog := log.WithField("file", fname)
 
-			_, err := load.Load(ctx, fname, false)
+			_, err := load.Load(ctx, fname, verifyModules)
 			if err != nil {
 				flog.WithError(err).Fatal("could not parse file")
 			}
@@ -52,5 +58,6 @@ var validateCmd = &cobra.Command{
 }
 
 func init() {
+	validateCmd.Flags().Bool("verify-modules", false, "verify module signatures")
 	RootCmd.AddCommand(validateCmd)
 }
