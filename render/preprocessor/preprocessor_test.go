@@ -33,6 +33,19 @@ func Test_HasField_WhenStruct_ReturnsFieldPresentWhenPresent(t *testing.T) {
 
 }
 
+func Test_HasField_WhenEmbeddedStruct_ReturnsEmbeddedFieldPresent(t *testing.T) {
+	type Embedded struct {
+		A struct{}
+	}
+
+	type Embedding struct {
+		*Embedded
+		B struct{}
+	}
+	assert.True(t, preprocessor.HasField(Embedding{}, "B"))
+	assert.True(t, preprocessor.HasField(Embedding{}, "A"))
+}
+
 func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
 	s := "a.b.c.d.e"
 	g := graph.New()
@@ -71,7 +84,7 @@ func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "FieldB"))
 }
 
-func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrueI(t *testing.T) {
+func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrue(t *testing.T) {
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fieldA"))
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fielda"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "fieldB"))

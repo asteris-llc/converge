@@ -278,21 +278,33 @@ func fieldMap(val interface{}) (map[string]string, error) {
 	if t.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("cannot access fields of non-struct type %T", val)
 	}
+	return addFieldsToMap(fieldMap, t)
+}
 
+func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, error) {
 	if cached, ok := FieldMapCache[t]; ok {
 		return cached, nil
 	}
 
 	for idx := 0; idx < t.NumField(); idx++ {
-		name := t.Field(idx).Name
+		field := t.Field(idx)
+		if field.Anonymous {
+			var err error
+			if m, err = addFieldsToMap(m, interfaceToConcreteType(field.Type)); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		name := field.Name
 		lower := strings.ToLower(name)
-		if _, ok := fieldMap[lower]; ok {
+		if _, ok := m[lower]; ok {
 			return nil, fmt.Errorf("multiple potential matches for %s", name)
 		}
-		fieldMap[lower] = name
+		m[lower] = name
 	}
-	FieldMapCache[t] = fieldMap
-	return fieldMap, nil
+	FieldMapCache[t] = m
+	return m, nil
 }
 
 // LookupCanonicalFieldName takes a type and an arbitrarily cased field name and
