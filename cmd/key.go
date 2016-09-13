@@ -32,6 +32,12 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
+var keyCmd = &cobra.Command{
+	Use:   "key",
+	Short: "work with gpg keys",
+	Long:  `A suite of commands for working with gpg keys.`,
+}
+
 var trustCmd = &cobra.Command{
 	Use:   "trust",
 	Short: "Trust a key for module verification",
@@ -135,5 +141,6 @@ func init() {
 	trustCmd.Flags().Bool("skip-review", false, "accept key without fingerprint confirmation")
 	trustCmd.Flags().String("fingerprint", "", "provide a fingerprint instead of prompting")
 
-	RootCmd.AddCommand(trustCmd)
+	keyCmd.AddCommand(trustCmd)
+	RootCmd.AddCommand(keyCmd)
 }
