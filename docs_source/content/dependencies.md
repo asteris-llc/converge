@@ -63,7 +63,7 @@ docker.image "nginx" {
 
 docker.container "nginx" {
   name  = "nginx-server"
-  image = "{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}"
+  image = "{{lookup `docker.image.nginx.name`}}:{{lookup `docker.image.nginx.tag`}}"
   force = "true"
   expose = [
     "80",

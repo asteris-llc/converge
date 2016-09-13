@@ -467,7 +467,7 @@
 
 file.content &quot;hostname data&quot; {
   destination = &quot;hostname.txt&quot;
-  content     = &quot;{{lookup `task.query.hostname.Status.Stdout`}}&quot;
+  content     = &quot;{{lookup `task.query.hostname.status.stdout`}}&quot;
 }
 
 </code></pre>
