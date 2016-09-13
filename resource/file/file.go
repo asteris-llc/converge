@@ -41,23 +41,27 @@ var validLinkTypes = []string{"hardlink", "symlink"}
 
 // File contains information for managing files
 type File struct {
-	Destination   string
-	State         string
-	Type          string
-	Target        string
-	Force         bool        //force replacement of symlinks, etc
-	Mode          string      //requested permissions from Prepare
-	FileMode      os.FileMode //calculated permissions
-	UserInfo      *user.User
-	GroupInfo     *user.Group
-	Content       []byte
+	Destination string
+	State       string
+	Type        string
+	Target      string
+	Force       bool        //force replacement of symlinks, etc
+	Mode        string      //requested permissions from Prepare
+	FileMode    os.FileMode //calculated permissions
+	UserInfo    *user.User
+	GroupInfo   *user.Group
+	Content     []byte
+
 	action        string //create, delete, modify
 	modifyContent bool   // does content need to be changed
 
+	*resource.Status
+	renderer resource.Renderer
 }
 
 // Apply  changes to file resources
-func (f *File) Apply() error {
+func (f *File) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+
 	var err error
 	switch f.action {
 	case "delete":
@@ -68,56 +72,59 @@ func (f *File) Apply() error {
 		err = f.Modify()
 	}
 	if err != nil {
-		return errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
+		return f.Status, errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
 	}
-	return err
+	return f.Status, err
 }
 
 // Check File settings
-func (f *File) Check() (resource.TaskStatus, error) {
-	status := &resource.Status{Status: f.Destination}
-	status.Output = append(status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
+func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
+	f.renderer = r
+	f.Status = &resource.Status{}
+	f.Status.Output = append(f.Status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
+
 	var actual *File
+
 	// Get information about the current file
 	stat, err := os.Lstat(f.Destination) //link aware
 
 	if os.IsNotExist(err) { //file not found
 		switch f.State {
 		case "absent": // if "absent" is set and the file doesn't exist, return with no changes
-			status.WillChange = false
-			status.WarningLevel = resource.StatusNoChange
-			return status, nil
+			return f, nil
 		case "present": //file doesn't exist, we need to create it
-			actual = &File{Destination: "<file does not exist>", State: "absent", UserInfo: &user.User{}, GroupInfo: &user.Group{}}
-			status.WillChange = true
-			status.WarningLevel = resource.StatusWillChange
-			f.diffFile(actual, status)
+			actual = &File{Destination: "<file does not exist>",
+				State:     "absent",
+				UserInfo:  &user.User{},
+				GroupInfo: &user.Group{},
+				Status:    &resource.Status{}}
+			f.diffFile(actual)
 			f.action = "create"
 		}
 	} else { //file exists
-		actual = &File{Destination: f.Destination, State: "present"}
+		actual = &File{
+			Destination: f.Destination,
+			State:       "present"}
 		switch f.State {
 		case "absent": //remove file
-			status.WillChange = true
-			status.AddDifference("destination", actual.Destination, "<removed>", "")
-			status.AddDifference("state", actual.State, f.State, "")
+			f.Status.WillChange = true
+			f.Status.WarningLevel = resource.StatusWillChange
 			f.action = "delete"
 		case "present": //modify file
 			err = GetFileInfo(actual, stat)
 			if err != nil {
-				status.WarningLevel = resource.StatusFatal
-				return status, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
+				f.Status.WarningLevel = resource.StatusFatal
+				return f, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
 			}
 			actual.Content, _ = Content(actual.Destination)
-			f.diffFile(actual, status)
-			if status.WillChange {
+			f.diffFile(actual)
+			if f.Status.WillChange {
 				f.action = "modify"
 			}
-
 		}
 	}
 
-	return status, nil
+	return f, nil
 }
 
 // Validate runs checks against a File resource
@@ -219,7 +226,7 @@ func (f *File) validateUser() error {
 	if f.UserInfo.Username != "" {
 		u, err := user.Lookup(f.UserInfo.Username)
 		if err != nil {
-			return fmt.Errorf("unable to get user information for username %s:", f.UserInfo.Username, err)
+			return fmt.Errorf("unable to get user information for username %s: %s", f.UserInfo.Username, err)
 		}
 		f.UserInfo.Username = u.Username
 	}
@@ -231,7 +238,7 @@ func (f *File) validateGroup() error {
 	if f.GroupInfo.Name != "" {
 		g, err := user.LookupGroup(f.GroupInfo.Name)
 		if err != nil {
-			return fmt.Errorf("unable to get user information for username %s:", f.GroupInfo.Name, err)
+			return fmt.Errorf("unable to get user information for username %s: %s", f.GroupInfo.Name, err)
 		}
 		f.GroupInfo = g
 	}
@@ -278,7 +285,8 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 }
 
 // Compute the difference between desired and actual state
-func (f *File) diffFile(actual *File, status *resource.Status) {
+func (f *File) diffFile(actual *File) {
+	status := f.Status
 
 	if f.State != actual.State {
 		status.AddDifference("state", actual.State, f.State, "")
@@ -340,12 +348,15 @@ func (f *File) diffFile(actual *File, status *resource.Status) {
 		f.modifyContent = true
 	}
 
-	if resource.AnyChanges(status.Differences) {
+	if len(status.Differences) > 0 && status.WarningLevel != resource.StatusFatal {
 		status.WillChange = true
 		status.WarningLevel = resource.StatusWillChange
 	}
+
+	f.Status = status
 }
 
+// hash is used to compare file content
 func hash(b []byte) string {
 	sha := sha256.Sum256(b)
 	return hex.EncodeToString(sha[:])
