@@ -2,6 +2,7 @@ package vg
 
 import (
 	"fmt"
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
@@ -84,4 +85,8 @@ func (r *ResourceVG) Setup(devs []string) error {
 		r.Exists = true
 	}
 	return nil
+}
+
+func init() {
+	registry.Register("lvm.vg", (*Preparer)(nil), (*ResourceVG)(nil))
 }

@@ -2,6 +2,7 @@ package lv
 
 import (
 	"fmt"
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
@@ -54,4 +55,8 @@ func (r *ResourceLV) Setup(sizeToParse string) error {
 
 func (r *ResourceLV) devicePath() string {
 	return fmt.Sprintf("/dev/mapper/%s", r.name)
+}
+
+func init() {
+	registry.Register("lvm.lv", (*Preparer)(nil), (*ResourceLV)(nil))
 }

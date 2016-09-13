@@ -3,6 +3,7 @@ package fs
 import (
 	"bytes"
 	"fmt"
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"io/ioutil"
@@ -131,4 +132,8 @@ func (r *ResourceFS) renderUnitFile() (string, error) {
 		return "", err
 	}
 	return b.String(), nil
+}
+
+func init() {
+	registry.Register("lvm.fs", (*Preparer)(nil), (*ResourceFS)(nil))
 }
