@@ -28,6 +28,10 @@ import (
 // references
 var ErrUnresolvable = errors.New("field is unresolvable")
 
+// FieldMapCache caches the results of field map generation to avoid
+// recalculating it during execution.
+var FieldMapCache = make(map[reflect.Type]map[string]string)
+
 // Preprocessor is a template preprocessor
 type Preprocessor struct {
 	vertices map[string]struct{}
@@ -131,6 +135,10 @@ func HasField(obj interface{}, fieldName string) bool {
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	fieldName, err := LookupCanonicalFieldName(v, fieldName)
+	if err != nil {
+		return false
+	}
 	_, hasField := v.FieldByName(fieldName)
 	return hasField
 }
@@ -169,7 +177,11 @@ func HasMethod(obj interface{}, methodName string) bool {
 
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
 func EvalMember(name string, obj interface{}) (reflect.Value, error) {
-	name = toPublicFieldCase(name)
+	name, err := LookupCanonicalFieldName(interfaceToConcreteType(obj), name)
+
+	if err != nil {
+		return reflect.Zero(reflect.TypeOf(obj)), err
+	}
 	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		if v.IsNil() {
@@ -199,6 +211,11 @@ func HasPath(obj interface{}, terms ...string) error {
 			return errors.New("cannot access non-structure field")
 		}
 
+		term, err := LookupCanonicalFieldName(t, term)
+		if err != nil {
+			return err
+		}
+
 		field, ok := t.FieldByName(term)
 		if !ok {
 			validFields, fieldErrs := ListFields(t)
@@ -214,11 +231,6 @@ func HasPath(obj interface{}, terms ...string) error {
 
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
-
-	for idx, term := range terms {
-		terms[idx] = toPublicFieldCase(term)
-	}
-
 	if err := HasPath(obj, terms...); err != nil {
 		return nil, err
 	}
@@ -243,6 +255,79 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 		}
 	}
 	return obj, nil
+}
+
+// For a given interface, fieldMap returns a map with keys being the lowercase
+// versions of the string, and values being the correct version.  It returns an
+// error if the interface is not a struct, or a reflect.Type or reflect.Value of
+// a struct.
+func fieldMap(val interface{}) (map[string]string, error) {
+	fieldMap := make(map[string]string)
+	var t reflect.Type
+	switch val.(type) {
+	case reflect.Type:
+		t = val.(reflect.Type)
+	case reflect.Value:
+		t = val.(reflect.Value).Type()
+	default:
+		t = reflect.TypeOf(val)
+	}
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("cannot access fields of non-struct type %T", val)
+	}
+
+	if cached, ok := FieldMapCache[t]; ok {
+		return cached, nil
+	}
+
+	for idx := 0; idx < t.NumField(); idx++ {
+		name := t.Field(idx).Name
+		lower := strings.ToLower(name)
+		if _, ok := fieldMap[lower]; ok {
+			return nil, fmt.Errorf("multiple potential matches for %s", name)
+		}
+		fieldMap[lower] = name
+	}
+	FieldMapCache[t] = fieldMap
+	return fieldMap, nil
+}
+
+// LookupCanonicalFieldName takes a type and an arbitrarily cased field name and
+// returns the field name with a case that matches the actual field.
+func LookupCanonicalFieldName(t reflect.Type, term string) (string, error) {
+	term = strings.ToLower(term)
+	m, err := fieldMap(t)
+	if err != nil {
+		return "", err
+	}
+	correctCase, found := m[term]
+	if found {
+		return correctCase, nil
+	}
+	var fields []string
+	for key := range m {
+		fields = append(fields, key)
+	}
+	return "", fmt.Errorf("%s has no field that matches %s, should be one of %v", t, term, fields)
+}
+
+func interfaceToConcreteType(i interface{}) reflect.Type {
+	var t reflect.Type
+	switch i.(type) {
+	case reflect.Type:
+		t = i.(reflect.Type)
+	case reflect.Value:
+		t = i.(reflect.Value).Type()
+	default:
+		t = reflect.TypeOf(i)
+	}
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t
 }
 
 // mapToLower converts a string slice to all lower case
