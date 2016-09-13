@@ -122,7 +122,6 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
-	fieldName = toPublicFieldCase(fieldName)
 	var v reflect.Type
 	switch oType := obj.(type) {
 	case reflect.Type:
@@ -348,11 +347,6 @@ func mapToLower(strs []string) []string {
 		strs[idx] = strings.ToLower(str)
 	}
 	return strs
-}
-
-// toPublicFieldCase converts the first letter in the string to capital
-func toPublicFieldCase(s string) string {
-	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
 func nilPtrError(v reflect.Value) error {
