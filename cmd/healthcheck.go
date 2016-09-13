@@ -54,7 +54,7 @@ not display healthy checks.`,
 			flog := log.WithField("file", fname)
 			flog.Info("checking health")
 
-			loaded, err := load.Load(ctx, fname)
+			loaded, err := load.Load(ctx, fname, false)
 			if err != nil {
 				flog.WithError(err).Fatal("could not parse file")
 			}

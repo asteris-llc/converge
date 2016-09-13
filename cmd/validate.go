@@ -41,7 +41,7 @@ var validateCmd = &cobra.Command{
 		for _, fname := range args {
 			flog := log.WithField("file", fname)
 
-			_, err := load.Load(ctx, fname)
+			_, err := load.Load(ctx, fname, false)
 			if err != nil {
 				flog.WithError(err).Fatal("could not parse file")
 			}

@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // planCmd represents the plan command
@@ -73,6 +74,11 @@ can be done separately to see what needs to be changed before execution.`,
 
 		rpcParams := getParamsRPC(cmd)
 
+		verifyModules := viper.GetBool("verify-modules")
+		if !verifyModules {
+			clog.Warn("skipping module verfiction")
+		}
+
 		// execute files
 		for _, fname := range args {
 			flog := clog.WithField("file", fname)
@@ -84,6 +90,7 @@ can be done separately to see what needs to be changed before execution.`,
 				&pb.LoadRequest{
 					Location:   fname,
 					Parameters: rpcParams,
+					Verify:     verifyModules,
 				},
 			)
 			if err != nil {
@@ -148,6 +155,7 @@ can be done separately to see what needs to be changed before execution.`,
 func init() {
 	planCmd.Flags().Bool("show-meta", false, "show metadata (params and modules)")
 	planCmd.Flags().Bool("only-show-changes", false, "only show changes")
+	planCmd.Flags().Bool("verify-modules", false, "verify module signatures")
 	registerRPCFlags(planCmd.Flags())
 	registerLocalRPCFlags(planCmd.Flags())
 	registerSSLFlags(planCmd.Flags())
