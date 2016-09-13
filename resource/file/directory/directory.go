@@ -26,6 +26,8 @@ import (
 
 // Directory makes sure a directory is present on disk
 type Directory struct {
+	resource.TaskStatus
+
 	Destination string
 	CreateAll   bool
 }
@@ -94,6 +96,7 @@ func (d *Directory) Apply(resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	status.RaiseLevel(resource.StatusWillChange)
 	status.AddMessage(fmt.Sprintf("%q exists", d.Destination))
+	d.TaskStatus = status
 
-	return status, err
+	return d, err
 }
