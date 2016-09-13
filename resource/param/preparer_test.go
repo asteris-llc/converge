@@ -74,6 +74,7 @@ func TestPreparerRequired(t *testing.T) {
 func TestTable_PreparerValidate(t *testing.T) {
 	t.Parallel()
 
+	err := errors.New("pred#0: expected 0, got 1")
 	test_table := []struct {
 		paramType param.ParamType
 		expected  error
@@ -85,21 +86,21 @@ func TestTable_PreparerValidate(t *testing.T) {
 		// type check only
 		{param.ParamTypeString, nil, "password", nil},
 
-		// rule checking with only default text/template funcs
-		{param.ParamTypeString, nil, "password", []string{"len . | le 4"}},
-		{param.ParamTypeString, errors.New("pred#0: expected 0, got 2"), "password", []string{"len . | ge 4"}},
+		// length func
+		{param.ParamTypeString, nil, "password", []string{"le 4 length"}},
+		{param.ParamTypeString, err, "password", []string{"ge 4 length"}},
 
-		// rule checking for empty func
+		// empty func
 		{param.ParamTypeString, nil, "", []string{"empty"}},
-		{param.ParamTypeString, errors.New("pred#0: expected 0, got 2"), "password", []string{"empty"}},
+		{param.ParamTypeString, err, "password", []string{"empty"}},
 
-		// rule checking for oneOf func
+		// oneOf func
 		{param.ParamTypeString, nil, "password", []string{"oneOf `password`"}},
-		{param.ParamTypeString, errors.New("pred#0: expected 0, got 2"), "password", []string{"oneOf `correthorsebatterystaple`"}},
+		{param.ParamTypeString, err, "password", []string{"oneOf `correthorsebatterystaple`"}},
 
-		// rule checking for notOneOf func
+		// notOneOf func
 		{param.ParamTypeString, nil, "correcthorsebatterystaple", []string{"notOneOf `password hunter2`"}},
-		{param.ParamTypeString, errors.New("pred#0: expected 0, got 2"), "password", []string{"notOneOf `password hunter2`"}},
+		{param.ParamTypeString, err, "password", []string{"notOneOf `password hunter2`"}},
 
 		// ParamTypeInt checks, with pass/fail pairs
 
@@ -107,15 +108,16 @@ func TestTable_PreparerValidate(t *testing.T) {
 		{param.ParamTypeInt, nil, "12", nil},
 		{param.ParamTypeInt, errors.New(`paramType is "int", but converting "twelve" failed`), "twelve", nil},
 
-		// rule checking for min func
+		// min func
 		{param.ParamTypeInt, nil, "12", []string{"min 3"}},
-		{param.ParamTypeInt, errors.New("pred#0: expected 0, got 2"), "12", []string{"min 48"}},
+		{param.ParamTypeInt, err, "12", []string{"min 48"}},
 
-		// rule checking for max func
+		// max func
 		{param.ParamTypeInt, nil, "12", []string{"max 48"}},
-		{param.ParamTypeInt, errors.New("pred#0: expected 0, got 2"), "12", []string{"max 3"}},
+		{param.ParamTypeInt, err, "12", []string{"max 3"}},
 
 		// ParamTypeInferred checks
+
 		{param.ParamTypeInferred, nil, "hello", nil},
 		{param.ParamTypeInferred, nil, "123", nil},
 	}

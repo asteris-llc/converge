@@ -35,8 +35,8 @@ const (
 )
 
 const (
-	ValidatePass int = 0
-	ValidateFail int = 2
+	ValidatePass int = iota
+	ValidateFail
 )
 
 // Rule for Type Validation
@@ -154,6 +154,7 @@ func ValidateType(value interface{}, predicates map[string]string) error {
 		str := value.(string)
 
 		funcMap = template.FuncMap{
+			"length":   func() int { return len(str) },
 			"empty":    func() bool { return len(str) == 0 },
 			"notEmpty": func() bool { return len(str) != 0 },
 			"oneOf": func(list string) bool {
@@ -181,14 +182,15 @@ func ValidateType(value interface{}, predicates map[string]string) error {
 			return err
 		}
 
-		returnCode, err := strconv.Atoi(buffer.String())
+		failed, err := strconv.ParseBool(buffer.String())
 		if err != nil {
 			return err
 		}
 
-		if returnCode != 0 {
-			log.Debug(fmt.Sprintf("%s", predicate))
-			return fmt.Errorf("%s: expected %d, got %d", tmpl.Name(), ValidatePass, returnCode)
+		if failed {
+			err = fmt.Errorf("%s: expected %d, got %d", tmpl.Name(), ValidatePass, ValidateFail)
+			log.WithField("predicate", predicate).Debug(err.Error())
+			return err
 		}
 	}
 	return nil
