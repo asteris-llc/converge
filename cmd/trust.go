@@ -38,7 +38,7 @@ var trustCmd = &cobra.Command{
 	Long:  `Add keys to the local keystore for use in verifying signed modules.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return errors.New("Need at least one key path as argument, got 0")
+			return errors.New("Need one key path as argument, got 0")
 		}
 		return nil
 	},
@@ -52,57 +52,52 @@ var trustCmd = &cobra.Command{
 		clog := log.WithField("component", "client")
 		ctx = logging.WithLogger(ctx, clog)
 
-		// iterate over key paths
+		path := args[0]
 		ks := keystore.Default()
-		for _, path := range args {
-			url, err := fetch.ResolveInContext(path, "")
-			if err != nil {
-				clog.WithError(err).Fatal("could not get url")
-			}
 
-			ulog := clog.WithField("url", url)
-
-			ulog.Debug("fetching")
-			key, err := fetch.Any(ctx, url)
-			if err != nil {
-				ulog.WithError(err).Fatal("could not retrieve key")
-			}
-
-			if viper.GetBool("skip-review") {
-				ulog.Warn("skipping fingerprint review")
-			} else {
-				accepted, err := reviewFingerprint(key)
-				if err != nil {
-					ulog.WithError(err).Fatal("error reviewing key")
-				}
-				if !accepted {
-					ulog.Warn("key not trusted")
-					continue
-				}
-			}
-
-			keypath, err := ks.StoreTrustedKey(key)
-			if err != nil {
-				ulog.WithError(err).Fatal("could not add key")
-			}
-
-			ulog.Info("stored key at %s", keypath)
+		url, err := fetch.ResolveInContext(path, "")
+		if err != nil {
+			clog.WithError(err).Fatal("could not get url")
 		}
+
+		ulog := clog.WithField("url", url)
+
+		ulog.Debug("fetching")
+		key, err := fetch.Any(ctx, url)
+		if err != nil {
+			ulog.WithError(err).Fatal("could not retrieve key")
+		}
+
+		if viper.GetBool("skip-review") {
+			ulog.Warn("skipping fingerprint review")
+		} else {
+			keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(key))
+			if err != nil {
+				ulog.WithError(err).Fatal("error reviewing key")
+			}
+
+			if len(keyring) < 1 {
+				ulog.Fatal("keyring is empty")
+			}
+
+			accepted := fingerprintPrompt(keyring[0].PrimaryKey.Fingerprint)
+			if !accepted {
+				ulog.Warn("fingerprint does not match")
+				return
+			}
+		}
+
+		keypath, err := ks.StoreTrustedKey(key)
+		if err != nil {
+			ulog.WithError(err).Fatal("could not add key")
+		}
+
+		ulog.Info("stored key at %s", keypath)
 	},
 }
 
-func reviewFingerprint(armoredKey []byte) (bool, error) {
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(armoredKey))
-	if err != nil {
-		return false, err
-	}
-
-	if len(keyring) < 1 {
-		return false, errors.New("keyring is empty")
-	}
-
-	key := keyring[0].PrimaryKey
-	fmt.Printf("The gpg key fingerprint is %s\n", fmt.Sprintf("%x", key.Fingerprint))
+func fingerprintPrompt(fingerprint [20]byte) bool {
+	fmt.Printf("The gpg key fingerprint is %s\n", fmt.Sprintf("%x", fingerprint))
 
 	in := bufio.NewReader(os.Stdin)
 	for {
@@ -110,16 +105,16 @@ func reviewFingerprint(armoredKey []byte) (bool, error) {
 
 		response, err := in.ReadString('\n')
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		response = strings.ToLower(strings.TrimSpace(response))
 
 		switch response {
 		case "yes":
-			return true, nil
+			return true
 		case "no":
-			return false, nil
+			return false
 		default:
 			fmt.Printf("Please enter 'yes' or 'no'\n")
 		}
