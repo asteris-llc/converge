@@ -527,7 +527,7 @@ using <code>lookup</code> to access fields from a <code>docker.image</code> node
 
 docker.container &quot;nginx&quot; {
   name  = &quot;nginx-server&quot;
-  image = &quot;{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}&quot;
+  image = &quot;{{lookup `docker.image.nginx.name`}}:{{lookup `docker.image.nginx.tag`}}&quot;
   force = &quot;true&quot;
   expose = [
     &quot;80&quot;,

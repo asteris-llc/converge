@@ -19,7 +19,7 @@ task.query "hostname" {
 
 file.content "hostname data" {
   destination = "hostname.txt"
-  content     = "{{lookup `task.query.hostname.Status.Stdout`}}"
+  content     = "{{lookup `task.query.hostname.status.stdout`}}"
 }
 
 ```
@@ -29,23 +29,20 @@ file.content "hostname data" {
 
 - `interpreter` (string)
 
-  
+
 - `query` (string)
 
-  
+
 - `check_flags` (list of strings)
 
-  
+
 - `exec_flags` (list of strings)
 
-  
+
 - `timeout` (duration string)
 
-  
+
 - `dir` (string)
 
-  
+
 - `env` (map of string to string)
-
-  
-
