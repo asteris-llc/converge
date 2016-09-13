@@ -34,6 +34,7 @@ type Keystore struct {
 	LocalPath  string
 	UserPath   string
 	SystemPath string
+	keyring    openpgp.KeyRing
 }
 
 // New returns a new Keystore backed by the provided paths.
@@ -45,20 +46,26 @@ func New(localPath, userPath, systemPath string) *Keystore {
 	}
 }
 
+var defaultKeystore *Keystore
+
 // Default returns a keystore backed by the default local, user, and system paths.
 func Default() *Keystore {
-	userPath := ""
+	if defaultKeystore == nil {
+		userPath := ""
 
-	usr, err := user.Current()
-	if err == nil {
-		userPath = filepath.Join(usr.HomeDir, ".converge/trustedkeys")
+		usr, err := user.Current()
+		if err == nil {
+			userPath = filepath.Join(usr.HomeDir, ".converge/trustedkeys")
+		}
+
+		defaultKeystore = &Keystore{
+			LocalPath:  "./trustedkeys",
+			UserPath:   userPath,
+			SystemPath: "/usr/lib/converge/trustedkeys",
+		}
 	}
 
-	return &Keystore{
-		LocalPath:  "./trustedkeys",
-		UserPath:   userPath,
-		SystemPath: "/usr/lib/converge/trustedkeys",
-	}
+	return defaultKeystore
 }
 
 // StoreTrustedKey stores the contents of the public key.
@@ -97,12 +104,15 @@ func (ks *Keystore) MaskTrustedSystemKey(fingerprint string) (string, error) {
 
 // CheckSignature takes a signed file and a detached signature and verifies if it is signed by a trusted signer.
 func (ks *Keystore) CheckSignature(signed, signature io.Reader) error {
-	keyring, err := ks.loadKeyring()
-	if err != nil {
-		return errors.Wrap(err, "error loading keyring")
+	if ks.keyring == nil {
+		keyring, err := loadKeyring(ks)
+		if err != nil {
+			return errors.Wrap(err, "error loading keyring")
+		}
+		ks.keyring = keyring
 	}
 
-	signer, err := openpgp.CheckArmoredDetachedSignature(keyring, signed, signature)
+	signer, err := openpgp.CheckArmoredDetachedSignature(ks.keyring, signed, signature)
 
 	// openpgp has a weird api so we do some custom error handling.
 	if err != nil {
@@ -120,7 +130,7 @@ func (ks *Keystore) CheckSignature(signed, signature io.Reader) error {
 	return nil
 }
 
-func (ks *Keystore) loadKeyring() (openpgp.KeyRing, error) {
+func loadKeyring(ks *Keystore) (openpgp.KeyRing, error) {
 	var keyring openpgp.EntityList
 	trustedKeys := make(map[string]*openpgp.Entity)
 

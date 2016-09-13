@@ -76,9 +76,7 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 				return nil, errors.Wrap(err, signatureURL)
 			}
 
-			ks := keystore.Default()
-			err = ks.CheckSignature(bytes.NewBuffer(content), bytes.NewBuffer(signature))
-
+			err = keystore.Default().CheckSignature(bytes.NewBuffer(content), bytes.NewBuffer(signature))
 			if err != nil {
 				return nil, errors.Wrap(err, signatureURL)
 			}
