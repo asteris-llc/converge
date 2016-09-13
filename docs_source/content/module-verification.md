@@ -8,15 +8,11 @@ menu:
     weight: 20
 ---
 
-This guide will walk you through signing, distributing, and verifying a converge module.
-
-## Signing Modules
-
 In the future, converge will require modules to be signed using a gpg detached signature.
 The following steps will walk you through the creation of a gpg keypair suitable for signing a module.
-If you have an existing gpg signing key skip to the [Signing the Module](#signing-the-module) step. There is a test key `samples/pubkey.gpg` that is used with testing converge.
+If you have an existing gpg signing key skip to the [Signing modules](#signing-modules) step.
 
-### Generate a gpg signing key
+## Generate a gpg signing key
 
 Create a file named `gpg-batch` with the following content.
 
@@ -37,28 +33,25 @@ Passphrase: asteris
 %echo done
 ```
 
-#### Generate the key using batch mode
+We can use this to quickly generate a key pair using batch mode.
 
 ```
 $ gpg --batch --gen-key gpg-batch
 ```
 
-#### List the keys
+We can verify this worked by listing the keys.
 
 ```
 $ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --list-keys
 ./test.pub
-```
 
-```
 ----------
 pub   2048R/475CC928 2016-08-07
 uid       [ unknown] Test Asteris (Test signing key) <test@aster.is>
 sub   2048R/1327D89C 2016-08-07
 ```
 
-From the output above, the level of trust for the signing key is unknown.
-This will cause the following warning if we attempt to validate a module signed with this key using the gpg cli:
+We can tell from the output above, that the level of trust for the signing key is unknown. This will cause the following warning if we attempt to validate a module signed with this key using the gpg cli:
 
 ```
 gpg: WARNING: This key is not certified with a trusted signature!
@@ -68,9 +61,7 @@ Since we know exactly where this key came from let's trust it:
 
 ```
 $ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --edit-key 475CC928
-```
 
-```
 gpg (GnuPG) 1.4.20; Copyright (C) 2015 Free Software Foundation, Inc.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -105,109 +96,64 @@ unless you restart the program.
 gpg> quit
 ```
 
-#### Export the public key
+## Signing modules
+
+Now you can start signing modules with the key. The following command will produce a signature file called `basic.hcl.asc`.
+
+```
+$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --output basic.hcl.asc --detach-sig basic.hcl
+```
+
+This file should be shipped along side the module so that the converge tool can download it and use it to verify that the module has not been modified after the signature was created.
+
+## Public keystore
+
+In order to verify a module's signature against its signature file, converge needs access to our public key. This can be exported with the following command.
 
 ```
 $ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --export test@aster.is > pubkeys.gpg
 ```
 
-### Signing the module
+Now we must add the key to the converge's public key database. The following directories make up the default converge keystore layout:
 
 ```
-$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --output base.hcl.asc --detach-sig basic.hcl
+sytem: /usr/lib/converge/trustedkeys/
+user: ~/.converge/trustedkeys/
+local: $(pwd)/trustedkeys/
 ```
 
-#### Verify the module using gpg
+The system path is designed to be used by system administrators. The user path is where converge stores keys that are added through the `converge key trust` command. Finally, the local path can be used for keys that you do not want stored globally or managed by converge.
+
+Trusted keys are saved in the desired directory named after the fingerprint of the public key. For global and local keys, we will need to manually create this file.
+
+We do this by downloading the key, capturing its fingerprint, and storing it in the database using the fingerprint as the filename.
 
 ```
-$ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --verify basic.hcl.asc basic.hcl
+$ curl -O https://example.com/pubkeys.gpg
+
+$ gpg --no-default-keyring --with-fingerprint pubkeys.gpg
+pub  2048R/475CC928 2016-08-07 Test Asteris (Test signing key) <test@aster.is>
+     Key fingerprint = 74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928
+	 sub  2048R/1327D89C 2016-08-07
+
+$ echo "74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928" | tr -d "[:space:]" | tr '[:upper:]' '[:lower:]'
+74fdf669f18d59f92b0aaccd720351ff475cc928
+
+mkdir -p trustedkeys
+mv pubkeys.gpg trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
 ```
 
-```
-gpg: Signature made Sun Aug  7 14:02:17 2016 CDT using RSA key ID 1327D89C
-gpg: Good signature from "Test Asteris (Test signing key) <test@aster.is>"
-```
+You can disable a key stored in the global system path by creating an empty file in the user or local paths with the same name. Keys stored in the local path will also mask keys in the user path.
 
-At this point you should have the following three files:
+## Trusting keys
 
-```
-basic.hcl.asc
-basic.hcl
-pubkeys.gpg
-```
-
-## Distributing Modules
-
-Serve the following files.
+There is an easier way to add a key to the user keystore, using the `converge key trust` subcommand.
 
 ```
-https://example.com/modules/basic.hcl.asc
-https://example.com/modules/basic.hcl
-https://example.com/pubkeys.gpg
+$ converge key trust pubkeys.gpg
 ```
 
-### converge Integration
-
-Let's walk through the steps converge takes when fetching modules.
-
-The following converge command:
-
-```
-$ converge plan https://example.com/modules/basic.hcl
-```
-
-results in converge retrieving the following URIs:
-
-```
-https://example.com/modules/basic.hcl
-https://example.com/modules/basic.hcl.asc
-```
-
-Then it verifies the signature of the module with the public keys in its database.
-
-## Verifying modules with converge
-
-### Establishing Trust
-
-By default converge does not trust any signing keys.
-Trust is established by storing public keys in the converge keystore.
-This can be done using `converge trust` or manually, using the procedures described in the next section.
-
-The following directories make up the default converge keystore layout:
-
-```
-/urs/lib/converge/trustedkeys/
-~/.converge/trustedkeys/
-$(pwd)/trustedkeys/
-```
-
-Trusted keys are saved in the desired directory named after the fingerprint of the public key.
-The `/usr/lib/converge` path is designed to be used by the OS distribution.
-You can "disable" a trusted key by writing an empty file under `~/.converge/trutedkeys` or `$(pwd)/trustedkeys)`.
-For example, if your OS distribution shipped with the following trusted key:
-
-```
-/usr/lib/converge/trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
-```
-
-you can disable it by writing the following empty file:
-
-```
-~/.converge/trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
-```
-
-### Trusting a key
-
-As an example, let's look at how we can trust a key used to sign modules.
-
-#### Using converge trust
-
-The easiest way to trust a key is to use the `converge trust` subcommand.
-In this case, we directly pass it the URI containing the public key we wish to trust:
-
-```
-$ converge trust https://example.com/pubkeys.gpg
-```
+The command will ask you to verify that the fingerprint matches the fingerprint you expected for the key.
 
 ```
 The gpg key fingerprint is 74fdf669f18d59f92b0aaccd720351ff475cc928
@@ -215,52 +161,19 @@ Are you sure you want to trust this key (yes/no)? yes
 Trusting key "https://example.com/pubkeys.gpg".
 ```
 
-#### Manually adding keys
+## Converge integration
 
-An alternative to using `converge trust` is to manually trust keys by adding them to converge's database.
-We do this by downloading the key, capturing its fingerprint, and storing it in the database using the fingerprint as filename
-
-##### Download the public key
+Now let's walk through the steps converge takes when fetching modules. For now, converge will not attempt to download the detached signature and verify the module. You can enable module verification with the `--verify-modules` flag.
 
 ```
-$ curl -O https://example.com/pubkeys.gpg
+$ converge plan --verify-modules https://example.com/modules/basic.hcl
 ```
 
-###### Capture the public key fingerprint
+This will result in converge retrieving the following URIs.
 
 ```
-$ gpg --no-default-keyring --with-fingerprint pubkeys.gpg
+https://example.com/modules/basic.hcl
+https://example.com/modules/basic.hcl.asc
 ```
 
-```
-pub  2048R/475CC928 2016-08-07 Test Asteris (Test signing key) <test@aster.is>
-     Key fingerprint = 74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928
-sub  2048R/1327D89C 2016-08-07
-```
-
-Remove white spaces and convert to lowercase:
-
-```
-$ echo "74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928" | tr -d "[:space:]" | tr '[:upper:]' '[:lower:]'
-```
-
-```
-74fdf669f18d59f92b0aaccd720351ff475cc928
-```
-
-##### Trust the key globally
-
-```
-mkdir -p ~/.converge/trustedkeys/
-mv pubkeys.gpg ~/.converge/trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
-```
-
-### Example Usage
-
-#### Download, verify and plan a module
-
-For now, converge will not attempt to download the detached signature and verify the module. You can enable module verification with the `--verify-modules` flag.
-
-```
-$ converge apply --verify-modules https://example.com/modules/basic.hcl
-```
+Then it verifies the signature of the module using the public keys in the key database.
