@@ -17,6 +17,7 @@ package directory
 import (
 	"strconv"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -28,7 +29,7 @@ type Preparer struct {
 	Destination string `hcl:"destination"`
 
 	// whether or not to create all parent directories on the way up
-	CreateAll string `hcl:"create_all" doc_type:"bool"`
+	CreateAll interface{} `hcl:"create_all" doc_type:"bool"`
 }
 
 // Prepare the new directory
@@ -38,17 +39,29 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	createAllRaw, err := render.Render("create_all", p.CreateAll)
-	if err != nil {
-		return nil, err
-	}
-	createAll, err := strconv.ParseBool(createAllRaw)
-	if err != nil {
-		return nil, err
+	var createAll bool
+	switch val := p.CreateAll.(type) {
+	case bool:
+		createAll = val
+
+	case string:
+		createAllRaw, err := render.Render("create_all", val)
+		if err != nil {
+			return nil, err
+		}
+		parsed, err := strconv.ParseBool(createAllRaw)
+		if err != nil {
+			return nil, err
+		}
+		createAll = parsed
 	}
 
 	return &Directory{
 		Destination: destination,
 		CreateAll:   createAll,
 	}, nil
+}
+
+func init() {
+	registry.Register("file.directory", (*Preparer)(nil), (*Directory)(nil))
 }
