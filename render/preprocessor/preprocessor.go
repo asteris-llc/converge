@@ -28,9 +28,9 @@ import (
 // references
 var ErrUnresolvable = errors.New("field is unresolvable")
 
-// FieldMapCache caches the results of field map generation to avoid
+// fieldMapCache caches the results of field map generation to avoid
 // recalculating it during execution.
-var FieldMapCache = make(map[reflect.Type]map[string]string)
+var fieldMapCache = make(map[reflect.Type]map[string]string)
 
 // Preprocessor is a template preprocessor
 type Preprocessor struct {
@@ -263,11 +263,11 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 func fieldMap(val interface{}) (map[string]string, error) {
 	fieldMap := make(map[string]string)
 	var t reflect.Type
-	switch val.(type) {
+	switch typed := val.(type) {
 	case reflect.Type:
-		t = val.(reflect.Type)
+		t = typed
 	case reflect.Value:
-		t = val.(reflect.Value).Type()
+		t = typed.Type()
 	default:
 		t = reflect.TypeOf(val)
 	}
@@ -281,7 +281,7 @@ func fieldMap(val interface{}) (map[string]string, error) {
 }
 
 func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, error) {
-	if cached, ok := FieldMapCache[t]; ok {
+	if cached, ok := fieldMapCache[t]; ok {
 		return cached, nil
 	}
 
@@ -302,7 +302,7 @@ func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, err
 		}
 		m[lower] = name
 	}
-	FieldMapCache[t] = m
+	fieldMapCache[t] = m
 	return m, nil
 }
 
@@ -327,11 +327,11 @@ func LookupCanonicalFieldName(t reflect.Type, term string) (string, error) {
 
 func interfaceToConcreteType(i interface{}) reflect.Type {
 	var t reflect.Type
-	switch i.(type) {
+	switch typed := i.(type) {
 	case reflect.Type:
-		t = i.(reflect.Type)
+		t = typed
 	case reflect.Value:
-		t = i.(reflect.Value).Type()
+		t = typed.Type()
 	default:
 		t = reflect.TypeOf(i)
 	}
