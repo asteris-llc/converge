@@ -118,7 +118,7 @@ func TestValidConfig1(t *testing.T) {
 		Type:        "file",
 		Force:       "true",
 		User:        "root",
-		Group:       "root",
+		Group:       "wheel",
 	}
 	_, err := p.Prepare(fakerenderer.New())
 	if !assert.Nil(t, err) {
@@ -133,7 +133,7 @@ func TestValidConfig2(t *testing.T) {
 		Type:        "directory",
 		Force:       "false",
 		User:        "root",
-		Group:       "root",
+		Group:       "wheel",
 	}
 	_, err := p.Prepare(fakerenderer.New())
 	if !assert.Nil(t, err) {
