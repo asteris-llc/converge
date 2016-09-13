@@ -80,11 +80,21 @@ var trustCmd = &cobra.Command{
 				ulog.Fatal("keyring is empty")
 			}
 
-			accepted := fingerprintPrompt(keyring[0].PrimaryKey.Fingerprint)
+			providedFingerprint := viper.GetString("fingerprint")
+			fingerprint := fmt.Sprintf("%x", keyring[0].PrimaryKey.Fingerprint)
+			accepted := false
+
+			if providedFingerprint == "" {
+				accepted = fingerprintPrompt(fingerprint)
+			} else {
+				accepted = providedFingerprint == fingerprint
+			}
+
 			if !accepted {
 				ulog.Warn("fingerprint does not match")
 				return
 			}
+
 		}
 
 		keypath, err := ks.StoreTrustedKey(key)
@@ -92,12 +102,12 @@ var trustCmd = &cobra.Command{
 			ulog.WithError(err).Fatal("could not add key")
 		}
 
-		ulog.Info("stored key at %s", keypath)
+		ulog.Info("stored key at ", keypath)
 	},
 }
 
-func fingerprintPrompt(fingerprint [20]byte) bool {
-	fmt.Printf("The gpg key fingerprint is %s\n", fmt.Sprintf("%x", fingerprint))
+func fingerprintPrompt(fingerprint string) bool {
+	fmt.Printf("The gpg key fingerprint is %s\n", fingerprint)
 
 	in := bufio.NewReader(os.Stdin)
 	for {
@@ -123,6 +133,7 @@ func fingerprintPrompt(fingerprint [20]byte) bool {
 
 func init() {
 	trustCmd.Flags().Bool("skip-review", false, "accept key without fingerprint confirmation")
+	trustCmd.Flags().String("fingerprint", "", "provide a fingerprint instead of prompting")
 
 	RootCmd.AddCommand(trustCmd)
 }
