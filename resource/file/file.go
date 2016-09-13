@@ -114,7 +114,7 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 			err = GetFileInfo(actual, stat)
 			if err != nil {
 				f.Status.WarningLevel = resource.StatusFatal
-				return f, fmt.Errorf("unable to get file info for %s: %s", f.Destination, err)
+				return f, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
 			}
 			actual.Content, _ = Content(actual.Destination)
 			f.diffFile(actual)
@@ -131,7 +131,7 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 func (f *File) Validate() error {
 	var err error
 	if f.Destination == "" {
-		return fmt.Errorf("file requires a destination parameter")
+		return errors.New("file requires a destination parameter")
 	}
 
 	err = f.validateState()
@@ -226,7 +226,7 @@ func (f *File) validateUser() error {
 	if f.UserInfo.Username != "" {
 		u, err := user.Lookup(f.UserInfo.Username)
 		if err != nil {
-			return fmt.Errorf("unable to get user information for username %s: %s", f.UserInfo.Username, err)
+			return errors.Wrapf(err, "unable to get user information for username %s: %s", f.UserInfo.Username, err)
 		}
 		f.UserInfo.Username = u.Username
 	}
@@ -238,7 +238,7 @@ func (f *File) validateGroup() error {
 	if f.GroupInfo.Name != "" {
 		g, err := user.LookupGroup(f.GroupInfo.Name)
 		if err != nil {
-			return fmt.Errorf("unable to get user information for username %s: %s", f.GroupInfo.Name, err)
+			return errors.Wrapf(err, "unable to get user information for username %s: %s", f.GroupInfo.Name)
 		}
 		f.GroupInfo = g
 	}
@@ -259,14 +259,14 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 	f.Type, err = Type(stat)
 	if err != nil {
-		return fmt.Errorf("error determining type of %s : %s", f.Destination, err)
+		return errors.Wrapf(err, "error determining type of %s : %s", f.Destination)
 	}
 
 	// follow symlinks
 	if f.Type == "symlink" {
 		f.Target, err = os.Readlink(f.Destination)
 		if err != nil {
-			return fmt.Errorf("error determining target of symlink %s : %s", f.Destination, err)
+			return errors.Wrapf(err, "error determining target of symlink %s : %s", f.Destination)
 		}
 	}
 
@@ -274,12 +274,12 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 	f.UserInfo, err = UserInfo(stat)
 	if err != nil {
-		return fmt.Errorf("error determining owner of %s : %s", f.Destination, err)
+		return errors.Wrapf(err, "error determining owner of %s : %s", f.Destination)
 	}
 
 	f.GroupInfo, err = GroupInfo(stat)
 	if err != nil {
-		return fmt.Errorf("error determining group of %s : %s", f.Destination, err)
+		return errors.Wrapf(err, "error determining group of %s : %s", f.Destination)
 	}
 	return err
 }
@@ -369,39 +369,39 @@ func (f *File) Create() error {
 	case "file":
 		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
 		if err != nil {
-			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to write file %s", f.Destination)
 		}
 
 	case "directory":
 		err = os.MkdirAll(f.Destination, f.FileMode)
 		if err != nil {
-			return fmt.Errorf("unable to create directory %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to create directory %s", f.Destination)
 		}
 	case "symlink":
 		err := os.Symlink(f.Target, f.Destination)
 		if err != nil {
-			return fmt.Errorf("unable to create symlink %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to create symlink %s", f.Destination)
 		}
 	case "hardlink":
 		err := os.Link(f.Target, f.Destination)
 		if err != nil {
-			return fmt.Errorf("unable to create hardlink %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to create hardlink %s", f.Destination)
 		}
 	}
 
 	tgtUser, _, err := desiredUser(f.UserInfo, &user.User{})
 	if err != nil {
-		return fmt.Errorf("unable to get file owner information %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "unable to get file owner information %s", f.Destination)
 	}
 	tgtGroup, _, err := desiredGroup(f.GroupInfo, &user.Group{})
 	if err != nil {
-		return fmt.Errorf("unable to get file group information %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "unable to get file group information %s", f.Destination)
 	}
 	uid, _ := strconv.Atoi(tgtUser.Uid)
 	gid, _ := strconv.Atoi(tgtGroup.Gid)
 	err = os.Chown(f.Destination, uid, gid)
 	if err != nil {
-		return fmt.Errorf("unable to change permissions on file %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "unable to change permissions on file %s: %s", f.Destination)
 	}
 
 	return err
@@ -426,22 +426,22 @@ func (f *File) Modify() error {
 	actual := &File{Destination: f.Destination}
 	stat, err := os.Lstat(f.Destination)
 	if err != nil {
-		return fmt.Errorf("apply: unable to get information about %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "apply: unable to get information about %s: %s", f.Destination)
 	}
 	err = GetFileInfo(actual, stat)
 	if err != nil {
-		return fmt.Errorf("apply: unable to get information about %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "apply: unable to get information about %s: %s", f.Destination)
 	}
 
 	// if the file type changes, delete and recreate
 	if f.Type != actual.Type {
 		err := f.Delete()
 		if err != nil {
-			return fmt.Errorf("apply: unable to recreate %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "apply: unable to recreate %s: %s", f.Destination)
 		}
 		err = f.Create()
 		if err != nil {
-			return fmt.Errorf("apply: unable to recreate %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "apply: unable to recreate %s: %s", f.Destination)
 		}
 		return nil
 
@@ -453,18 +453,18 @@ func (f *File) Modify() error {
 	if f.modifyContent && f.Type == "file" {
 		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
 		if err != nil {
-			return fmt.Errorf("unable to write file %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to write file %s: %s", f.Destination)
 		}
 	}
 
 	//only modify gid/uid of a file if it has been requested
 	tgtUser, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
 	if err != nil {
-		return fmt.Errorf("unable to get file owner information %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "unable to get file owner information %s: %s", f.Destination)
 	}
 	tgtGroup, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
 	if err != nil {
-		return fmt.Errorf("unable to get file group information %s: %s", f.Destination, err)
+		return errors.Wrapf(err, "unable to get file group information %s: %s", f.Destination)
 	}
 
 	if userChanges || groupChanges {
@@ -472,7 +472,7 @@ func (f *File) Modify() error {
 		gid, _ := strconv.Atoi(tgtGroup.Gid)
 		err = os.Chown(f.Destination, uid, gid)
 		if err != nil {
-			return fmt.Errorf("unable to change ownership on %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to change ownership on %s", f.Destination)
 		}
 	}
 
@@ -480,7 +480,7 @@ func (f *File) Modify() error {
 	if mode != actual.FileMode {
 		err = os.Chmod(f.Destination, mode.Perm())
 		if err != nil {
-			return fmt.Errorf("unable to change permissions on %s: %s", f.Destination, err)
+			return errors.Wrapf(err, "unable to change permissions on %s", f.Destination)
 		}
 	}
 
@@ -489,13 +489,13 @@ func (f *File) Modify() error {
 		case "symlink":
 			err := os.Symlink(f.Target, f.Destination)
 			if err != nil {
-				return fmt.Errorf("unable to create symlink %s: %s", f.Destination, err)
+				return errors.Wrapf(err, "unable to create symlink %s", f.Destination)
 			}
 		case "hardlink":
 			if !SameFile(f.Destination, actual.Target) {
 				err := os.Link(f.Target, f.Destination)
 				if err != nil {
-					return fmt.Errorf("unable to create link %s: %s", f.Destination, err)
+					return errors.Wrapf(err, "unable to create link %s", f.Destination)
 				}
 			}
 		}
