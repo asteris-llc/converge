@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>Server - Converge</title>
+    <title>file.directory - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="TODO: punchy description">
     
-    <link rel="canonical" href="http://converge.aster.is/server/">
+    <link rel="canonical" href="http://converge.aster.is/resources/file-directory/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/server/">
+    <meta property="og:url" content="http://converge.aster.is/resources/file-directory/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        Server
+        file.directory
       </div>
     </div>
 
@@ -250,14 +250,11 @@
 
 
 
-<a class="current" title="Server" href="http://converge.aster.is/server/">
+<a  title="Server" href="http://converge.aster.is/server/">
   
   Server
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -356,11 +353,14 @@
 
 
 
-<a  title="file.directory" href="http://converge.aster.is/resources/file-directory/">
+<a class="current" title="file.directory" href="http://converge.aster.is/resources/file-directory/">
   
   file.directory
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -468,104 +468,40 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>Server </h1>
+			<h1>file.directory </h1>
 
 			
 
-<p>Converge comes with a server that can:</p>
+<p>Directory makes sure a directory is present on disk</p>
+
+<h2 id="example">Example</h2>
+
+<pre><code class="language-hcl"># file.directory will create or ensure a directory is present
+file.directory &quot;hello&quot; {
+  destination = &quot;hello&quot;
+}
+
+# it can also accept a &quot;create_all&quot; parameter to do the equivalent of &quot;mkdir -p&quot;
+file.directory &quot;deeper&quot; {
+  destination = &quot;deeper/a/b/c&quot;
+  create_all  = true
+}
+
+</code></pre>
+
+<h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>run <code>plan</code> and <code>apply</code> and stream the results (using
-<a href="http://www.grpc.io/">gRPC</a>)</li>
-<li>serve modules from a given root</li>
-<li>serve the Converge binary itself, for bootstrapping new systems inside your
-network</li>
+<li><code>destination</code> (string)</li>
 </ul>
 
-<h2 id="https">HTTPS</h2>
+<p>the location on disk to make the directory</p>
 
-<p>You can run the server over HTTPS. If you don&rsquo;t have your own certificates, you
-can use <a href="https://github.com/square/certstrap">certstrap</a> to get some with the
-following commands:</p>
+<ul>
+<li><code>create_all</code> (bool)</li>
+</ul>
 
-<pre><code class="language-shell">$ certstrap init --common-name your-company
-$ certstrap request-cert --ip 127.0.0.1
-$ certstrap sign 127.0.0.1 --CA your-company
-</code></pre>
-
-<p>Of course, replace <code>your-company</code> and <code>127.0.0.1</code> with your company&rsquo;s name and
-the your server&rsquo;s IP address, respectively (but those defaults will work fine
-for trying it out locally.) The certificates will be placed in <code>out</code> in the
-directory you run the command from.</p>
-
-<p>Afterwards, reference these files like so:</p>
-
-<pre><code class="language-shell">converge server --cert-file out/127.0.0.1.crt \
-                --key-file out/127.0.0.1.crt \
-                --ca-file out/your-company.crt \
-                --use-ssl \
-                --rpc-token your-token
-</code></pre>
-
-<p>You&rsquo;ll also need to pass the <code>--ca-file</code> flag to commands like <code>plan</code> and
-<code>apply</code>, in order to trust your new CA (or put it in the system roots.)</p>
-
-<h2 id="apis">APIs</h2>
-
-<p>Using the Converge command-line interface is good enough for most cases. If you
-want to integrate Converge into your system in novel ways, however, an API is
-available.</p>
-
-<h3 id="authentication">Authentication</h3>
-
-<p>Authentication happens with <a href="https://jwt.io/">JSON Web Tokens</a>. The only
-currently supported algorithm is HS512, and issued tokens must have a 30 second
-expiration. Tokens are set using the <code>--rpc-token</code> <a href="http://converge.aster.is/configuration/">configuration flag</a> to all subcommands that use the API.</p>
-
-<h3 id="http-2-0-and-grpc">HTTP/2.0 And gRPC</h3>
-
-<p>If you want to create your own client for Converge, you&rsquo;ll probably want to use
-gRPC. You can get instructions for your chosen langauge in
-<a href="http://www.grpc.io/docs/">the gRPC docs</a>, and the protobuf file is
-<code>rpc/pb/root.proto</code> in the Converge source. If you&rsquo;re using Go, the client
-implementations in <code>rpc/client.go</code> are your friends.</p>
-
-<p>When using the RPC interface, the JWT token should be sent in the request
-metadata&rsquo;s <code>authorization</code> field with the prefix <code>BEARER</code>.</p>
-
-<h3 id="http-1-1-and-json">HTTP/1.1 And JSON</h3>
-
-<p>A pseudo-RESTful interface is available to do the same things the gRPC interface
-can do. See the protobuf file for the most up-to-date endpoints and payload
-information.</p>
-
-<p>When using the HTTP/1.1 interface, the JWT token should be sent in the
-<code>Authorization</code> header with the prefix <code>BEARER</code>. You can also set the <code>jwt</code>
-querystring var, or send it in the <code>jwt</code> cookie.</p>
-
-<h2 id="standalone-server-for-the-command-line">Standalone Server For The Command-Line</h2>
-
-<p>The main Converge commands (like <code>plan</code> and <code>apply</code>) will take a <code>--local</code>
-argument (or set <code>CONVERGE_LOCAL=1</code>.) This will:</p>
-
-<ol>
-<li>Start a local RPC server</li>
-<li>Perform the requested action against the RPC server</li>
-<li>Shut down the RPC server</li>
-</ol>
-
-<p>During this process, a port (<code>localhost:26930</code>) will be opened and RPC will be
-running on it. This interface will be protected with an randomly-generated
-token, unless you specify <code>--no-token</code></p>
-
-<div class="admonition warning">
-<p class="admonition-title">Don&#39;t Disable Tokens</p>
-<p>Please don&rsquo;t disable token generation with <code>--no-token</code>. I know we just said you
-can, but don&rsquo;t do it. This will open up remote execution of arbitrary
-instructions to whoever can reach that port. You can make this process <em>more</em>
-secure by specifying <code>--cert-file</code>, <code>--key-file</code>, and optionally <code>--ca-file</code> to
-connect over HTTPS.</p>
-</div>
+<p>whether or not to create all parent directories on the way up</p>
 
 
 			<aside class="copyright" role="note">
@@ -584,34 +520,18 @@ connect over HTTPS.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/configuration/" title="Configuration">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              Configuration
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/organization/" title="Module Organization">
+      <a href="http://converge.aster.is/resources/task-query/" title="task.query">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Module Organization
+              task.query
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

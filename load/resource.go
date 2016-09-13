@@ -28,6 +28,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/docker/container"
 	_ "github.com/asteris-llc/converge/resource/docker/image"
 	_ "github.com/asteris-llc/converge/resource/file/content"
+	_ "github.com/asteris-llc/converge/resource/file/directory"
 	_ "github.com/asteris-llc/converge/resource/file/mode"
 	_ "github.com/asteris-llc/converge/resource/group"
 	_ "github.com/asteris-llc/converge/resource/module"
