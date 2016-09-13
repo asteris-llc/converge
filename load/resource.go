@@ -29,6 +29,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/docker/image"
 	_ "github.com/asteris-llc/converge/resource/file/content"
 	_ "github.com/asteris-llc/converge/resource/file/mode"
+	_ "github.com/asteris-llc/converge/resource/group"
 	_ "github.com/asteris-llc/converge/resource/module"
 	_ "github.com/asteris-llc/converge/resource/param"
 	_ "github.com/asteris-llc/converge/resource/shell"
