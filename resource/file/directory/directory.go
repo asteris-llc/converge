@@ -76,7 +76,8 @@ func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
 		dest = path.Dir(dest)
 	}
 
-	return status, nil
+	d.TaskStatus = status
+	return d, nil
 }
 
 // Apply creates the directory
