@@ -1,5 +1,9 @@
 package lowlevel
 
+import (
+	"fmt"
+)
+
 type LVM struct {
 	Backend Exec
 }
@@ -24,6 +28,12 @@ func (lvm *LVM) ReduceVolumeGroup(vg string, dev string) error {
 
 func (lvm *LVM) CreatePhysicalVolume(dev string) error {
 	return lvm.Backend.Run("pvcreate", []string{dev})
+}
+
+func (lvm *LVM) CreateLogicalVolume(group string, volume string, size int64, sizeOption string, sizeUnit string) error {
+	sizeStr := fmt.Sprintf("%d%s", size, sizeUnit)
+	option := fmt.Sprintf("-%s", sizeOption)
+	return lvm.Backend.Run("lvcreate", []string{"-n", volume, option, sizeStr, group})
 }
 
 func (lvm *LVM) Mkfs(dev string, fstype string) error {
