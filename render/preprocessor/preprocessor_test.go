@@ -15,6 +15,7 @@
 package preprocessor_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -72,7 +73,7 @@ func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
 
 func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrueI(t *testing.T) {
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fieldA"))
-	assert.False(t, preprocessor.HasField(&TestStruct{}, "fielda"))
+	assert.True(t, preprocessor.HasField(&TestStruct{}, "fielda"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "fieldB"))
 }
 
@@ -123,6 +124,86 @@ func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func Test_LookupCanonicalFieldName_ReturnsCanonicalFieldName_WhenStructOkay(t *testing.T) {
+	type TestStruct struct {
+		ABC struct{} // All upper
+		aaa struct{} // all lower
+
+		AcB struct{} // mixed case, initial capital
+		bAc struct{} // mixed case, initial lower
+
+		A struct{} // single letter  upper
+		b struct{} // single letter lower
+	}
+	testType := reflect.TypeOf(TestStruct{})
+
+	actual, err := preprocessor.LookupCanonicalFieldName(testType, "ABC")
+	assert.NoError(t, err)
+	assert.Equal(t, "ABC", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "AbC")
+	assert.NoError(t, err)
+	assert.Equal(t, "ABC", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "abc")
+	assert.NoError(t, err)
+	assert.Equal(t, "ABC", actual)
+
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "aaa")
+	assert.NoError(t, err)
+	assert.Equal(t, "aaa", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "aAa")
+	assert.NoError(t, err)
+	assert.Equal(t, "aaa", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "AAA")
+	assert.NoError(t, err)
+	assert.Equal(t, "aaa", actual)
+
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "acb")
+	assert.NoError(t, err)
+	assert.Equal(t, "AcB", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "AcB")
+	assert.NoError(t, err)
+	assert.Equal(t, "AcB", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "aCb")
+	assert.NoError(t, err)
+	assert.Equal(t, "AcB", actual)
+
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "bac")
+	assert.NoError(t, err)
+	assert.Equal(t, "bAc", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "BaC")
+	assert.NoError(t, err)
+	assert.Equal(t, "bAc", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "BAC")
+	assert.NoError(t, err)
+	assert.Equal(t, "bAc", actual)
+
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "A")
+	assert.NoError(t, err)
+	assert.Equal(t, "A", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "a")
+	assert.NoError(t, err)
+	assert.Equal(t, "A", actual)
+
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "b")
+	assert.NoError(t, err)
+	assert.Equal(t, "b", actual)
+	actual, err = preprocessor.LookupCanonicalFieldName(testType, "B")
+	assert.NoError(t, err)
+	assert.Equal(t, "b", actual)
+
+}
+
+func Test_LookupCanonicalFieldName_ReturnsError_WhenOverlappingFieldNames(t *testing.T) {
+	type TestStruct struct {
+		Xyz struct{} // collision initial upper
+		XYz struct{} // collision first two upper
+	}
+
+	testType := reflect.TypeOf(TestStruct{})
+	_, err := preprocessor.LookupCanonicalFieldName(testType, "xyz")
+	assert.Error(t, err)
+}
+
 func Test_EvalTerms(t *testing.T) {
 	type C struct {
 		CVal string
@@ -140,9 +221,15 @@ func Test_EvalTerms(t *testing.T) {
 	val, err := preprocessor.EvalTerms(a, "AB", "BVal")
 	assert.NoError(t, err)
 	assert.Equal(t, val, "b")
+
 	val, err = preprocessor.EvalTerms(a, "AB", "BC", "CVal")
 	assert.NoError(t, err)
 	assert.Equal(t, val, "c")
+
+	val, err = preprocessor.EvalTerms(a, "ab", "bc", "cval")
+	assert.NoError(t, err)
+	assert.Equal(t, val, "c")
+
 	val, err = preprocessor.EvalTerms(a, "AVal")
 	assert.NoError(t, err)
 	assert.Equal(t, val, "a")
