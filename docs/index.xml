@@ -25,7 +25,7 @@
 
 file.content &amp;quot;hostname data&amp;quot; {
   destination = &amp;quot;hostname.txt&amp;quot;
-  content     = &amp;quot;{{lookup `task.query.hostname.Status.Stdout`}}&amp;quot;
+  content     = &amp;quot;{{lookup `task.query.hostname.status.stdout`}}&amp;quot;
 }
 
 &lt;/code&gt;&lt;/pre&gt;
@@ -464,7 +464,7 @@ using &lt;code&gt;lookup&lt;/code&gt; to access fields from a &lt;code&gt;docker
 
 docker.container &amp;quot;nginx&amp;quot; {
   name  = &amp;quot;nginx-server&amp;quot;
-  image = &amp;quot;{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}&amp;quot;
+  image = &amp;quot;{{lookup `docker.image.nginx.name`}}:{{lookup `docker.image.nginx.tag`}}&amp;quot;
   force = &amp;quot;true&amp;quot;
   expose = [
     &amp;quot;80&amp;quot;,
@@ -667,27 +667,27 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
 &lt;p&gt;The following fields are available from other modules via &lt;code&gt;lookup&lt;/code&gt;&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;CheckStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;checkStmt&lt;/code&gt; (string)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the script that will be executed during planning.  It is the script provided
   to &lt;code&gt;check&lt;/code&gt; with any template references resolved.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ApplyStmt&lt;/code&gt; (string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;applyStmt&lt;/code&gt; (string)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the script that will be executed during application.  It is the script
   provided to &lt;code&gt;apply&lt;/code&gt; with any template references resolved.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;Dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the working directory of the script.  It will be an empty string if unset.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;Env&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (list of strings)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;a list of environment variables passed into the script with &lt;code&gt;env&lt;/code&gt; in the form
@@ -695,7 +695,7 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
   list.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;Status&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;status&lt;/code&gt; (command results)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the execution status of the last task that was run.  During planning this will
@@ -703,11 +703,11 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
   &lt;code&gt;apply&lt;/code&gt;.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;CheckStatus&lt;/code&gt; (command results)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;checkStatus&lt;/code&gt; (command results)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the status of the initial &lt;code&gt;check&lt;/code&gt; run.  During planning this is equivivlent to
-  &lt;code&gt;Status&lt;/code&gt;, during application this will provide access to the results of the
+  &lt;code&gt;status&lt;/code&gt;, during application this will provide access to the results of the
   initial call to &lt;code&gt;check&lt;/code&gt;.&lt;/p&gt;
 
 &lt;h3 id=&#34;command-results&#34;&gt;Command Results&lt;/h3&gt;
@@ -717,19 +717,19 @@ a task.  &lt;code&gt;Status&lt;/code&gt; and &lt;code&gt;CheckStatus&lt;/code&gt
 allow you to access any of these defined fields.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ExitStatus&lt;/code&gt; (unsigned integer)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;exitStatus&lt;/code&gt; (unsigned integer)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the exit code of the process. The meaning of the fields is system dependent.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;Stdout&lt;/code&gt; (string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;stdout&lt;/code&gt; (string)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;contains all data written to stdout by the process.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;Stderr&lt;/code&gt; (string)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;stderr&lt;/code&gt; (string)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;contains all data written to stderr by the process.&lt;/p&gt;

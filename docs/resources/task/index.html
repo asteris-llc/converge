@@ -544,27 +544,27 @@ suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
 <p>The following fields are available from other modules via <code>lookup</code></p>
 
 <ul>
-<li><code>CheckStmt</code> (string)</li>
+<li><code>checkStmt</code> (string)</li>
 </ul>
 
 <p>the script that will be executed during planning.  It is the script provided
   to <code>check</code> with any template references resolved.</p>
 
 <ul>
-<li><code>ApplyStmt</code> (string)</li>
+<li><code>applyStmt</code> (string)</li>
 </ul>
 
 <p>the script that will be executed during application.  It is the script
   provided to <code>apply</code> with any template references resolved.</p>
 
 <ul>
-<li><code>Dir</code> (string)</li>
+<li><code>dir</code> (string)</li>
 </ul>
 
 <p>the working directory of the script.  It will be an empty string if unset.</p>
 
 <ul>
-<li><code>Env</code> (list of strings)</li>
+<li><code>env</code> (list of strings)</li>
 </ul>
 
 <p>a list of environment variables passed into the script with <code>env</code> in the form
@@ -572,7 +572,7 @@ suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
   list.</p>
 
 <ul>
-<li><code>Status</code> (command results)</li>
+<li><code>status</code> (command results)</li>
 </ul>
 
 <p>the execution status of the last task that was run.  During planning this will
@@ -580,11 +580,11 @@ suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;.
   <code>apply</code>.</p>
 
 <ul>
-<li><code>CheckStatus</code> (command results)</li>
+<li><code>checkStatus</code> (command results)</li>
 </ul>
 
 <p>the status of the initial <code>check</code> run.  During planning this is equivivlent to
-  <code>Status</code>, during application this will provide access to the results of the
+  <code>status</code>, during application this will provide access to the results of the
   initial call to <code>check</code>.</p>
 
 <h3 id="command-results">Command Results</h3>
@@ -594,19 +594,19 @@ a task.  <code>Status</code> and <code>CheckStatus</code> both return command re
 allow you to access any of these defined fields.</p>
 
 <ul>
-<li><code>ExitStatus</code> (unsigned integer)</li>
+<li><code>exitStatus</code> (unsigned integer)</li>
 </ul>
 
 <p>the exit code of the process. The meaning of the fields is system dependent.</p>
 
 <ul>
-<li><code>Stdout</code> (string)</li>
+<li><code>stdout</code> (string)</li>
 </ul>
 
 <p>contains all data written to stdout by the process.</p>
 
 <ul>
-<li><code>Stderr</code> (string)</li>
+<li><code>stderr</code> (string)</li>
 </ul>
 
 <p>contains all data written to stderr by the process.</p>
