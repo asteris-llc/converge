@@ -59,7 +59,7 @@ func Default() *Keystore {
 		}
 
 		defaultKeystore = &Keystore{
-			LocalPath:  "./trustedkeys",
+			LocalPath:  "trustedkeys",
 			UserPath:   userPath,
 			SystemPath: "/usr/lib/converge/trustedkeys",
 		}
@@ -134,7 +134,7 @@ func loadKeyring(ks *Keystore) (openpgp.KeyRing, error) {
 	var keyring openpgp.EntityList
 	trustedKeys := make(map[string]*openpgp.Entity)
 
-	for _, p := range []string{ks.SystemPath, ks.UserPath, ks.UserPath} {
+	for _, p := range []string{ks.SystemPath, ks.UserPath, ks.LocalPath} {
 		files, err := ioutil.ReadDir(p)
 		if err != nil {
 			if os.IsNotExist(err) {
