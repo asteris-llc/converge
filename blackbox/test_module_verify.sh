@@ -18,10 +18,6 @@ cp $KEY trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
 
 $ROOT/converge plan --local --verify-modules $SOURCE
 
-status=$?
-if [ $status -ne 0 ]; then
-	echo "module verification should have succeeded"
-	exit 1
-fi
+echo "success: no errors during module verification"
 
 popd
