@@ -75,7 +75,7 @@ func Test_Validate_ReturnsEmptySlicesWhenValidDSL(t *testing.T) {
 
 func Test_Validate_ReturnsSlicesOfMissingWhenMissingL(t *testing.T) {
 	expected := []string{"env", "param", "split", "lookup", "platform"}
-	l := &extensions.LanguageExtension{}
+	l := extensions.EmptyLanguage()
 	missing, _, ok := l.Validate()
 	assert.False(t, ok)
 
