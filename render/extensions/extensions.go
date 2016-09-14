@@ -17,6 +17,7 @@ package extensions
 import (
 	"bytes"
 	"fmt"
+	"sync"
 	"text/template"
 
 	log "github.com/Sirupsen/logrus"
@@ -44,6 +45,8 @@ var languageKeywords = map[string]struct{}{
 // encapsulate more context in the future.
 type LanguageExtension struct {
 	Funcs template.FuncMap
+
+	innerLock *sync.RWMutex
 }
 
 // MakeLanguage provides an empty language that implements a nil operation for
@@ -53,7 +56,7 @@ func MakeLanguage() *LanguageExtension {
 	for keyword := range languageKeywords {
 		funcs[keyword] = StubTemplateFunc
 	}
-	return &LanguageExtension{Funcs: funcs}
+	return &LanguageExtension{Funcs: funcs, innerLock: new(sync.RWMutex)}
 }
 
 // DefaultLanguage provides a default language extension.  It creates default
@@ -77,15 +80,21 @@ func DefaultLanguage() *LanguageExtension {
 // returned version is simply to allow method chaning, e.g.:
 //   language = MakeLanguage().On("foo", foo).On("bar", bar).On("baz", baz)
 func (l *LanguageExtension) On(keyword string, action interface{}) *LanguageExtension {
+	l.innerLock.Lock()
+	defer l.innerLock.Unlock()
+
 	l.Funcs[keyword] = action
 	return l
 }
 
 // Join adds the keywords from toAdd that do not exist in l and adds them
 func (l *LanguageExtension) Join(toAdd *LanguageExtension) *LanguageExtension {
+	l.innerLock.Lock()
+	defer l.innerLock.Unlock()
+
 	for keyword, f := range toAdd.Funcs {
 		if _, found := l.Funcs[keyword]; !found {
-			l = l.On(keyword, f)
+			l.Funcs[keyword] = f
 		}
 	}
 	return l
@@ -95,6 +104,9 @@ func (l *LanguageExtension) Join(toAdd *LanguageExtension) *LanguageExtension {
 // the deltas, if any.  It returns true if the language exactly matches the
 // known keyword list and false, with deltas, otherwise.
 func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords []string, valid bool) {
+	l.innerLock.Lock()
+	defer l.innerLock.Unlock()
+
 	var missing []string
 	var extra []string
 	ok := true
@@ -125,6 +137,8 @@ func (l *LanguageExtension) Validate() (missingKeywords []string, extraKeywords 
 // output into the provided io.Writer.  If any error is returned at any point it
 // is passed on to the user.
 func (l *LanguageExtension) Render(dotValues interface{}, name, toRender string) (bytes.Buffer, error) {
+	l.innerLock.Lock()
+	defer l.innerLock.Unlock()
 	var output bytes.Buffer
 	tmpl, err := template.New(name).Funcs(l.Funcs).Parse(toRender)
 	if err != nil {
