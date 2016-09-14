@@ -49,6 +49,11 @@ type LanguageExtension struct {
 	innerLock *sync.RWMutex
 }
 
+// EmptyLanguage will create an empty language
+func EmptyLanguage() *LanguageExtension {
+	return &LanguageExtension{innerLock: new(sync.RWMutex)}
+}
+
 // MakeLanguage provides an empty language that implements a nil operation for
 // all known keywords.
 func MakeLanguage() *LanguageExtension {
