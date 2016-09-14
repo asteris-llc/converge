@@ -47,12 +47,36 @@ type TaskStatus interface {
 
 // Status is the default TaskStatus implementation
 type Status struct {
-	Differences  map[string]Diff
+	// FailingDeps is constructed automatically; you don't need to do anything
+	// with it.
+	// TODO(brianhicks): make private and accessible only through a method on TaskStatus?
+	FailingDeps []badDep
+
+	// Differences contains the things that will change as a part of this
+	// Status. This will be used almost exclusively in the Check phase of
+	// operations on resources. Use `NewStatus` to get a Status with this
+	// initialized properly.
+	Differences map[string]Diff
+
+	// Output and Status are the human-consumable fields on this struct. Output
+	// will be returned as the Status' messages, and Status will be returned as
+	// the Value.
+	Output []string
+	Status string // TODO(brianhicks): this is kind of a vestigal tail... remove?
+
+	// WarningLevel and WillChange indicate the change level of the status.
+	// WillChange is a binary value, while WarningLevel is a gradation (see the
+	// Status* contsts above.) Resources should set both for now, if they're
+	// relevant.
 	WarningLevel int
-	Output       []string
 	WillChange   bool
-	Status       string
-	FailingDeps  []badDep
+}
+
+// NewStatus returns a Status with all fields initialized
+func NewStatus() *Status {
+	return &Status{
+		Differences: map[string]Diff{},
+	}
 }
 
 // Value returns the status value
@@ -70,7 +94,7 @@ func (t *Status) StatusCode() int {
 	return t.WarningLevel
 }
 
-// Messages returns the current outpt slice
+// Messages returns the current output slice
 func (t *Status) Messages() []string {
 	return t.Output
 }
@@ -115,6 +139,18 @@ func (t *Status) FailingDep(id string, stat TaskStatus) {
 // AddDifference adds a TextDiff to the Differences map
 func (t *Status) AddDifference(name, original, current, defaultVal string) {
 	t.Differences = AddTextDiff(t.Differences, name, original, current, defaultVal)
+}
+
+// AddMessage adds a human-readable message(s) to the output
+func (t *Status) AddMessage(message ...string) {
+	t.Output = append(t.Output, message...)
+}
+
+// RaiseLevel raises the status level to the given level
+func (t *Status) RaiseLevel(level int) {
+	if level > t.WarningLevel {
+		t.WarningLevel = level
+	}
 }
 
 // Diff represents a difference

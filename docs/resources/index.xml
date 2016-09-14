@@ -6,8 +6,49 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 08 Sep 2016 23:26:25 -0700</lastBuildDate>
+    <lastBuildDate>Tue, 13 Sep 2016 11:04:59 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>file.directory</title>
+      <link>http://converge.aster.is/resources/file-directory/</link>
+      <pubDate>Tue, 13 Sep 2016 11:04:59 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/file-directory/</guid>
+      <description>
+
+&lt;p&gt;Directory makes sure a directory is present on disk&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# file.directory will create or ensure a directory is present
+file.directory &amp;quot;hello&amp;quot; {
+  destination = &amp;quot;hello&amp;quot;
+}
+
+# it can also accept a &amp;quot;create_all&amp;quot; parameter to do the equivalent of &amp;quot;mkdir -p&amp;quot;
+file.directory &amp;quot;deeper&amp;quot; {
+  destination = &amp;quot;deeper/a/b/c&amp;quot;
+  create_all  = true
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;destination&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the location on disk to make the directory&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;create_all&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;whether or not to create all parent directories on the way up&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>task.query</title>
