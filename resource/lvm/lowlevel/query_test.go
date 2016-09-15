@@ -29,12 +29,13 @@ func (me *MockExecutor) Read(prog string, args []string) (string, error) {
 
 func TestBlkid(t *testing.T) {
 	e := &MockExecutor{}
-	e.On("Read", "blkid", mock.Anything).Return("xfs", nil)
+	expected := []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/sda1"}
+	e.On("Read", "blkid", expected).Return("xfs", nil)
 	lvm := &lowlevel.LVM{Backend: e}
 	fs, err := lvm.Blkid("/dev/sda1")
 	assert.Equal(t, "xfs", fs)
 	assert.NoError(t, err)
-	e.AssertCalled(t, "Read", "blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/sda1"})
+	e.AssertCalled(t, "Read", "blkid", expected)
 }
 
 func TestBlkidError(t *testing.T) {
