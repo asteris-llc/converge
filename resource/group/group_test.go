@@ -454,6 +454,8 @@ func TestApplyStateUnknown(t *testing.T) {
 
 	m.On("LookupGroup", g.Name).Return(grp, nil)
 	m.On("LookupGroupID", g.GID).Return(grp, nil)
+	m.On("AddGroup", g.Name, g.GID)
+	m.On("DelGroup", g.Name)
 	_, err := g.Apply(fakerenderer.New())
 
 	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
