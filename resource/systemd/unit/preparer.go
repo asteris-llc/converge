@@ -20,7 +20,6 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/systemd"
 )
 
@@ -73,8 +72,8 @@ type Preparer struct {
 	// "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout string `hcl:"timeout" doc_type:"duration string"`
 
-	// The content of the unit file
-	Content string `hcl:"content"`
+	// The location of the original uit file.
+	Destination string `hcl:destination"`
 }
 
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
@@ -107,23 +106,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 			return nil, err
 		}
 	}
-	contentStr, err := render.Render("content", p.Content)
-	if err != nil {
-		return nil, err
-	}
-
 	// Handle Defaults
 	if ufs == "invalid" {
 		return nil, fmt.Errorf("task %q parameter cannot be %q", "UnitFileState", "invalid")
 	}
 	if sm == "" {
 		sm = string(systemd.SMReplace)
-	}
-	var contentTask *content.Content
-	if contentStr != "" {
-		contentTask = &content.Content{
-			Content: contentStr,
-		}
 	}
 
 	unit := &Unit{
@@ -132,8 +120,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		UnitFileState: systemd.UnitFileState(ufs),
 		StartMode:     systemd.StartMode(sm),
 		Timeout:       t,
-
-		Content: contentTask,
 	}
 	return unit, unit.Validate()
 }

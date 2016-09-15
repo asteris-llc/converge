@@ -17,11 +17,9 @@ package unit
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/coreos/go-systemd/dbus"
 )
@@ -75,9 +73,6 @@ type Unit struct {
 	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	// "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout time.Duration // how long to wait for the load state to resolve
-
-	// Composed Tasks
-	Content *content.Content
 }
 
 // Check if all the properties for the unit are correct
@@ -118,24 +113,6 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 		return status, err
 	}
 
-	// First check if the content matches
-	var contentStatus *resource.Status
-	var contentError error
-	if t.Content != nil {
-		err := t.loadContent(dbusConn)
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return status, err
-		}
-		// Don't return immediately if there was a content error.
-		taskStatus, err := t.Content.Check(r)
-		contentError = err
-		contentStatus = taskStatus.(*content.Content).Status
-	}
-
 	// Next check that the ActiveState property matches
 	activeState := systemd.ASActive
 	if !t.Active {
@@ -145,8 +122,6 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 		systemd.PropActiveState(activeState),
 	}
 	asStatus, asErr := systemd.CheckProperty(dbusConn, t.Name, "ActiveState", validActiveStates)
-	asStatus = systemd.AppendStatus(asStatus, contentStatus)
-	asErr = systemd.MultiErrorAppend(contentError, asErr)
 
 	// Then check that there is a valid ufs state
 	validUnitFileStates := []*dbus.Property{
@@ -214,34 +189,6 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		return status, err
 	}
 
-	// First Apply Content
-	var contentStatus *resource.Status
-	if t.Content != nil {
-		err := t.loadContent(dbusConn)
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return status, err
-		}
-		taskStatus, err := t.Content.Apply(r)
-		contentStatus = taskStatus.(*content.Content).Status
-
-		if err != nil {
-			return contentStatus, err
-		}
-		// reload daemon as file changed on disk
-		err = systemd.ApplyDaemonReload()
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return systemd.AppendStatus(status, contentStatus), err
-		}
-	}
-
 	// Determine if unit was enabled-runtime or not
 	prop, err := dbusConn.GetUnitProperty(t.Name, "UnitFileState")
 	if err != nil {
@@ -249,7 +196,7 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 			WarningLevel: resource.StatusFatal,
 			Status:       err.Error(),
 		}
-		return systemd.AppendStatus(status, contentStatus), err
+		return status, err
 	}
 	state := systemd.UnitFileState(prop.Value.String())
 
@@ -265,7 +212,7 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 			WarningLevel: resource.StatusFatal,
 			Status:       err.Error(),
 		}
-		return systemd.AppendStatus(status, contentStatus), err
+		return status, err
 	}
 	<-job
 
@@ -288,7 +235,7 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 			WarningLevel: resource.StatusFatal,
 			Status:       err.Error(),
 		}
-		return systemd.AppendStatus(status, contentStatus), err
+		return status, err
 	}
 	// If unit is maksed, and user does not want it masked, unmask it.
 	if status.StatusCode() == resource.StatusNoChange && !(t.UnitFileState.Equal(systemd.UFSMasked) || t.UnitFileState.Equal(systemd.UFSMaskedRuntime)) {
@@ -298,7 +245,7 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 				WarningLevel: resource.StatusFatal,
 				Status:       err.Error(),
 			}
-			return systemd.AppendStatus(status, contentStatus), err
+			return status, err
 		}
 	}
 
@@ -308,6 +255,7 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	//Disabling
 	////////////////////////////
 	if t.UnitFileState.Equal(systemd.UFSDisabled) {
+
 		_, err = dbusConn.DisableUnitFiles([]string{t.Name}, state.IsRuntimeState())
 		if err != nil {
 			status := &resource.Status{
@@ -316,7 +264,12 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 			}
 			return status, err
 		}
-		return t.Check(r)
+		statusMsg := fmt.Sprintf("unit %q was disabled", t.Name)
+		return &resource.Status{
+			Status:       statusMsg,
+			WarningLevel: resource.StatusNoChange,
+			Output:       []string{statusMsg},
+		}, nil
 	}
 	// If unit file should be enabled or not
 	if t.UnitFileState.IsEnabled() {
@@ -326,10 +279,15 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 				WarningLevel: resource.StatusFatal,
 				Status:       err.Error(),
 			}
-			return systemd.AppendStatus(status, contentStatus), err
+			return status, err
 		}
 	}
-	return t.Check(r)
+	statusMsg := fmt.Sprintf("unit %q was enabled", t.Name)
+	return &resource.Status{
+		Status:       statusMsg,
+		WarningLevel: resource.StatusNoChange,
+		Output:       []string{statusMsg},
+	}, nil
 }
 
 func (t *Unit) Validate() error {
@@ -342,22 +300,5 @@ func (t *Unit) Validate() error {
 	if !systemd.IsValidStartMode(t.StartMode) {
 		return fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, t.StartMode)
 	}
-	return nil
-}
-
-//loadContent fills in the Destination parameter of the Content parameter.
-func (t *Unit) loadContent(dbusConn *dbus.Conn) error {
-	if t.Content.Destination != "" {
-		return nil
-	}
-	prop, err := dbusConn.GetUnitProperty(t.Name, "FragmentPath")
-	if err != nil {
-		return err
-	}
-	str := strings.Replace(prop.Value.String(), "\"", "", -1)
-	if str == "" {
-		return fmt.Errorf("Could not find unit %q", t.Name)
-	}
-	t.Content.Destination = str
 	return nil
 }
