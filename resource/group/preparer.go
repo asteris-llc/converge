@@ -63,7 +63,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, fmt.Errorf("group requires a \"name\" parameter")
 	}
 
-	sstate, err := render.Render("name", p.State)
+	sstate, err := render.Render("state", p.State)
 	state := State(sstate)
 	if err != nil {
 		return nil, err
