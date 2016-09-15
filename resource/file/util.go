@@ -162,15 +162,15 @@ func Content(filename string) ([]byte, error) {
 }
 
 // SameLink checks if two files are the same inode
-func SameFile(file1, file2 string) bool {
+func SameFile(file1, file2 string) (bool, error) {
 	fi1, err := os.Lstat(file1)
 	if err != nil {
-		return false
+		return false, err
 	}
 	fi2, err := os.Lstat(file2)
 	if err != nil {
-		return false
+		return false, err
 	}
-	return os.SameFile(fi1, fi2)
 
+	return os.SameFile(fi1, fi2), nil
 }

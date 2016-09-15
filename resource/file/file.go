@@ -79,6 +79,7 @@ func (f *File) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 
 // Check File settings
 func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
+	var err error
 	f.renderer = r
 	f.Status = &resource.Status{}
 	f.Status.Output = append(f.Status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
@@ -87,8 +88,7 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 
 	// Get information about the current file
 	stat, err := os.Lstat(f.Destination) //link aware
-
-	if os.IsNotExist(err) { //file not found
+	if os.IsNotExist(err) {              //file not found
 		switch f.State {
 		case "absent": // if "absent" is set and the file doesn't exist, return with no changes
 			return f, nil
@@ -98,33 +98,51 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 				UserInfo:  &user.User{},
 				GroupInfo: &user.Group{},
 				Status:    &resource.Status{}}
-			f.diffFile(actual)
+			err = f.diffFile(actual)
+			if err != nil {
+				f.Status.WarningLevel = resource.StatusFatal
+				return f, errors.Wrapf(err, "check")
+			}
 			f.action = "create"
+			return f, nil
+		default:
+			return f, fmt.Errorf("unknown state %s", f.State)
 		}
 	} else { //file exists
 		actual = &File{
 			Destination: f.Destination,
 			State:       "present"}
+		err = GetFileInfo(actual, stat)
+		if err != nil {
+			f.Status.WarningLevel = resource.StatusFatal
+			return f, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
+		}
+		actual.Content, err = Content(actual.Destination)
+		if err != nil {
+			return f, errors.Wrap(err, "unable to get content")
+		}
+
+		err = f.diffFile(actual)
+		if err != nil {
+			return f, errors.Wrap(err, "check")
+		}
 		switch f.State {
-		case "absent": //remove file
+		case "absent": //file exists -> absent
 			f.Status.WillChange = true
 			f.Status.WarningLevel = resource.StatusWillChange
 			f.action = "delete"
-		case "present": //modify file
-			err = GetFileInfo(actual, stat)
-			if err != nil {
-				f.Status.WarningLevel = resource.StatusFatal
-				return f, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
-			}
-			actual.Content, _ = Content(actual.Destination)
-			f.diffFile(actual)
+		case "present": //file exists -> modified file
 			if f.Status.WillChange {
 				f.action = "modify"
 			}
 		}
 	}
 
-	return f, nil
+	if f.Status.WarningLevel == resource.StatusFatal {
+		return f, errors.New("failure during check")
+	} else {
+		return f, nil
+	}
 }
 
 // Validate runs checks against a File resource
@@ -285,23 +303,54 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 }
 
 // Compute the difference between desired and actual state
-func (f *File) diffFile(actual *File) {
+func (f *File) diffFile(actual *File) error {
 	status := f.Status
 
 	if f.State != actual.State {
 		status.AddDifference("state", actual.State, f.State, "")
 	}
 
-	if f.Type != actual.Type {
+	if f.Type != actual.Type && f.Type != "hardlink" {
 		status.AddDifference("type", actual.Type, f.Type, "")
 	}
 
-	if f.Target != actual.Target {
-		status.AddDifference("target", actual.Target, f.Target, "")
-	}
+	switch f.Type {
+	case "symlink":
+		if f.Target != actual.Target {
+			status.AddDifference("target", actual.Target, f.Target, "")
+			return nil
+		}
 
-	if f.Type == "hardlink" && !SameFile(f.Destination, actual.Target) {
-		status.AddDifference("hardlink inode", actual.Target, f.Target, "")
+	case "hardlink":
+		//check to see if target exists
+		_, err := os.Stat(f.Target)
+		if os.IsNotExist(err) {
+			status.WarningLevel = resource.StatusFatal
+			return errors.Wrap(err, "hardlink target does not exist")
+		}
+		if err != nil {
+			status.WarningLevel = resource.StatusFatal
+			return errors.Wrap(err, "error looking up link target")
+		}
+
+		switch f.action {
+		case "modify":
+			same, err := SameFile(f.Destination, f.Target)
+
+			if err != nil {
+				status.WarningLevel = resource.StatusFatal
+				return errors.Wrapf(err, "failed to check link status of %s -> %s", f.Destination, f.Target)
+			}
+
+			if !same {
+				actual.Type = "hardlink"
+				status.AddDifference("hardlink", f.Destination, f.Target, "")
+				return err
+			}
+		case "create":
+			status.AddDifference("hardlink", f.Destination, f.Target, "")
+			return err
+		}
 	}
 
 	mode := desiredMode(f, actual)
@@ -312,6 +361,7 @@ func (f *File) diffFile(actual *File) {
 	user, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
 	if err != nil {
 		status.WarningLevel = resource.StatusFatal
+		return err
 	}
 
 	if userChanges {
@@ -340,20 +390,30 @@ func (f *File) diffFile(actual *File) {
 		}
 	}
 
-	fHash := hash(f.Content)
-	actualHash := hash(actual.Content)
+	// only check content on file types
+	if f.Type == "file" {
+		fHash := hash(f.Content)
+		actualHash := hash(actual.Content)
 
-	if fHash != actualHash {
-		status.AddDifference("content", string(actual.Content), string(f.Content), "")
-		f.modifyContent = true
+		if fHash != actualHash {
+			status.AddDifference("content", string(actual.Content), string(f.Content), "")
+			f.modifyContent = true
+		}
 	}
 
-	if len(status.Differences) > 0 && status.WarningLevel != resource.StatusFatal {
+	if len(status.Differences) > 0 {
 		status.WillChange = true
-		status.WarningLevel = resource.StatusWillChange
+		switch status.WarningLevel {
+		case resource.StatusFatal:
+		default:
+			status.WarningLevel = resource.StatusWillChange
+		}
+
 	}
 
 	f.Status = status
+
+	return err
 }
 
 // hash is used to compare file content
@@ -484,19 +544,22 @@ func (f *File) Modify() error {
 		}
 	}
 
-	if f.Target != actual.Target {
-		switch f.Type {
-		case "symlink":
-			err := os.Symlink(f.Target, f.Destination)
+	// handle links
+	switch f.Type {
+	case "symlink":
+		err := os.Symlink(f.Target, f.Destination)
+		if err != nil {
+			return errors.Wrapf(err, "unable to create symlink %s -> %s", f.Destination, f.Target)
+		}
+	case "hardlink":
+		same, err := SameFile(f.Destination, f.Target)
+		if err != nil {
+			return errors.Wrapf(err, "unable to check hardlink status %s -> %s", f.Destination, f.Target)
+		}
+		if !same {
+			err := os.Link(actual.Target, f.Destination)
 			if err != nil {
-				return errors.Wrapf(err, "unable to create symlink %s", f.Destination)
-			}
-		case "hardlink":
-			if !SameFile(f.Destination, actual.Target) {
-				err := os.Link(f.Target, f.Destination)
-				if err != nil {
-					return errors.Wrapf(err, "unable to create link %s", f.Destination)
-				}
+				return errors.Wrapf(err, "unable to create hardlink %s -> %s", f.Destination, f.Target)
 			}
 		}
 	}
