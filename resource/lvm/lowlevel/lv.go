@@ -6,7 +6,7 @@ type LogicalVolume struct {
 
 func (lvm *LVM) QueryLogicalVolumes(vg string) (map[string]*LogicalVolume, error) {
 	result := map[string]*LogicalVolume{}
-	lvs, err := lvm.Query("lvs", "all", []string{})
+	lvs, err := lvm.Query("lvs", "all", []string{vg})
 	if err != nil {
 		return nil, err
 	}
