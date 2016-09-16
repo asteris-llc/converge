@@ -63,7 +63,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, fmt.Errorf("group requires a \"name\" parameter")
 	}
 
-	sstate, err := render.Render("name", p.State)
+	sstate, err := render.Render("state", p.State)
 	state := State(sstate)
 	if err != nil {
 		return nil, err
@@ -82,5 +82,5 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func init() {
-	registry.Register("group.group", (*Preparer)(nil), (*Group)(nil))
+	registry.Register("user.group", (*Preparer)(nil), (*Group)(nil))
 }

@@ -6,8 +6,111 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 13 Sep 2016 11:04:59 -0500</lastBuildDate>
+    <lastBuildDate>Fri, 16 Sep 2016 15:32:02 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>user.group</title>
+      <link>http://converge.aster.is/resources/user-group/</link>
+      <pubDate>Fri, 16 Sep 2016 15:32:02 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-group/</guid>
+      <description>
+
+&lt;p&gt;Group renders group data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a group, only works on linux
+user.group &amp;quot;group&amp;quot; {
+  gid   = &amp;quot;123&amp;quot;
+  name  = &amp;quot;test&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the group gid.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the group name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the group should be present.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>user.user</title>
+      <link>http://converge.aster.is/resources/user-user/</link>
+      <pubDate>Fri, 16 Sep 2016 15:26:27 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <description>
+
+&lt;p&gt;User renders user data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
+user.user &amp;quot;user&amp;quot; {
+  username = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID is the user ID.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the primary group ID for user.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username is the user login name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the user description.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
+name is appended to the home directory.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the user should be present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>file.directory</title>
