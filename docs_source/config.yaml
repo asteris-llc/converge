@@ -11,7 +11,7 @@ googleAnalytics: ""
 params:
   # General information
   author: Converge
-  description: "TODO: punchy description"
+  description: "graph your configurations!"
   copyright: Released under the Apache 2.0 license
 
   # Repository
