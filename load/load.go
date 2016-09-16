@@ -22,8 +22,8 @@ import (
 )
 
 // Load produces a fully-formed graph from the given root
-func Load(ctx context.Context, root string) (*graph.Graph, error) {
-	base, err := Nodes(ctx, root)
+func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
+	base, err := Nodes(ctx, root, verify)
 	if err != nil {
 		return nil, errors.Wrap(err, "loading failed")
 	}

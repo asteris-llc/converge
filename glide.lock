@@ -1,5 +1,5 @@
-hash: 9fc310506982944d66fede877931e56e1110444089687e608d1f281d0f8b1b1c
-updated: 2016-08-30T18:05:47.325583678-05:00
+hash: e78ce8449b12d65358c2b5a7fd3fa8475a777b29173f0185845cd983b4d0a2d8
+updated: 2016-09-13T11:27:40.835135-05:00
 imports:
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
@@ -131,6 +131,10 @@ imports:
   - require
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
+- name: golang.org/x/crypto
+  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
+  subpackages:
+  - openpgp
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:

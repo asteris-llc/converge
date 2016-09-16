@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 message LoadRequest {
   string location = 1;
   map<string, string> parameters = 2;
+  bool verify = 3;
 }
 
 message ContentResponse {
