@@ -152,16 +152,16 @@ func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) monad.Monad {
 	return plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).
 		Exec(either.ReturnM(task)).
 		AndThen(func(planI interface{}) monad.Monad {
-		plan, ok := planI.(*plan.Result)
-		if !ok {
-			return either.LeftM(fmt.Errorf("expected *plan.Result but got %T", planI))
-		}
-		result.PostCheck = plan.Status
-		if plan.HasChanges() {
-			result.Err = fmt.Errorf("%s still has changes after apply", g.ID)
-		}
-		return either.RightM(result)
-	})
+			plan, ok := planI.(*plan.Result)
+			if !ok {
+				return either.LeftM(fmt.Errorf("expected *plan.Result but got %T", planI))
+			}
+			result.PostCheck = plan.Status
+			if plan.HasChanges() {
+				result.Err = fmt.Errorf("%s still has changes after apply", g.ID)
+			}
+			return either.RightM(result)
+		})
 }
 
 func (g *pipelineGen) Renderer(id string) (*render.Renderer, error) {
