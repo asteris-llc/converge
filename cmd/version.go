@@ -21,7 +21,7 @@ import (
 )
 
 // Version describes the version for packaging
-const Version = "0.1.1"
+const Version = "0.2.0-beta1"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
