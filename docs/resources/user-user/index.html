@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>task.query - Converge</title>
+    <title>user.user - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/resources/task-query/">
+    <link rel="canonical" href="http://converge.aster.is/resources/user-user/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/resources/task-query/">
+    <meta property="og:url" content="http://converge.aster.is/resources/user-user/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        task.query
+        user.user
       </div>
     </div>
 
@@ -418,14 +418,11 @@
 
 
 
-<a class="current" title="task.query" href="http://converge.aster.is/resources/task-query/">
+<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
   
   task.query
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -447,11 +444,14 @@
 
 
 
-<a  title="user.user" href="http://converge.aster.is/resources/user-user/">
+<a class="current" title="user.user" href="http://converge.aster.is/resources/user-user/">
   
   user.user
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -494,19 +494,17 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>task.query </h1>
+			<h1>user.user </h1>
 
 			
 
+<p>User renders user data</p>
+
 <h2 id="example">Example</h2>
 
-<pre><code class="language-hcl">task.query &quot;hostname&quot; {
-  query = &quot;hostname&quot;
-}
-
-file.content &quot;hostname data&quot; {
-  destination = &quot;hostname.txt&quot;
-  content     = &quot;{{lookup `task.query.hostname.status.stdout`}}&quot;
+<pre><code class="language-hcl"># create a user, only works on linux
+user.user &quot;user&quot; {
+  username = &quot;test&quot;
 }
 
 </code></pre>
@@ -514,20 +512,41 @@ file.content &quot;hostname data&quot; {
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><p><code>interpreter</code> (string)</p></li>
-
-<li><p><code>query</code> (string)</p></li>
-
-<li><p><code>check_flags</code> (list of strings)</p></li>
-
-<li><p><code>exec_flags</code> (list of strings)</p></li>
-
-<li><p><code>timeout</code> (duration string)</p></li>
-
-<li><p><code>dir</code> (string)</p></li>
-
-<li><p><code>env</code> (map of string to string)</p></li>
+<li><code>uid</code> (string)</li>
 </ul>
+
+<p>UID is the user ID.</p>
+
+<ul>
+<li><code>gid</code> (string)</li>
+</ul>
+
+<p>Gid is the primary group ID for user.</p>
+
+<ul>
+<li><code>username</code> (string)</li>
+</ul>
+
+<p>Username is the user login name.</p>
+
+<ul>
+<li><code>name</code> (string)</li>
+</ul>
+
+<p>Name is the user description.</p>
+
+<ul>
+<li><code>home_dir</code> (string)</li>
+</ul>
+
+<p>HomeDir is the user&rsquo;s login directory. By default,  the login
+name is appended to the home directory.</p>
+
+<ul>
+<li><code>state</code> (string)</li>
+</ul>
+
+<p>State is whether the user should be present.</p>
 
 
 			<aside class="copyright" role="note">
@@ -546,7 +565,7 @@ file.content &quot;hostname data&quot; {
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/module-verification/" title="Module Verification">
+      <a href="http://converge.aster.is/resources/user-group/" title="user.group">
         <span class="direction">
           Previous
         </span>
@@ -556,7 +575,7 @@ file.content &quot;hostname data&quot; {
           </div>
           <div class="stretch">
             <div class="title">
-              Module Verification
+              user.group
             </div>
           </div>
         </div>
@@ -566,14 +585,14 @@ file.content &quot;hostname data&quot; {
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/docker-container/" title="docker.container">
+      <a href="http://converge.aster.is/resources/file-directory/" title="file.directory">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              docker.container
+              file.directory
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
