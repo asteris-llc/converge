@@ -27,6 +27,7 @@ import (
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // healthcheckCmd represents the 'healthcheck' command
@@ -50,11 +51,16 @@ not display healthy checks.`,
 		// params
 		params := getParams(cmd)
 
+		verifyModules := viper.GetBool("verify-modules")
+		if !verifyModules {
+			log.WithField("component", "client").Warn("skipping module verfiction")
+		}
+
 		for _, fname := range args {
 			flog := log.WithField("file", fname)
 			flog.Info("checking health")
 
-			loaded, err := load.Load(ctx, fname)
+			loaded, err := load.Load(ctx, fname, verifyModules)
 			if err != nil {
 				flog.WithError(err).Fatal("could not parse file")
 			}
@@ -95,6 +101,7 @@ not display healthy checks.`,
 
 func init() {
 	healthcheckCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
+	healthcheckCmd.Flags().Bool("verify-modules", false, "verify module signatures")
 	registerParamsFlags(healthcheckCmd.Flags())
 
 	RootCmd.AddCommand(healthcheckCmd)
