@@ -48,6 +48,7 @@ type SystemUtils interface {
 	LookupGroupID(string) (*user.Group, error)
 }
 
+// ErrUnsupported is used when a system is not supported
 var ErrUnsupported = fmt.Errorf("group: not supported on this system")
 
 // NewGroup constructs and returns a new Group
