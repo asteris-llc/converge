@@ -92,10 +92,10 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@mkdir -p build/
 	gox \
     -ldflags="-s -w" \
-		-os="darwin" \
+		-osarch="darwin/386" \
+		-osarch="darwin/amd64" \
 		-os="linux" \
 		-os="freebsd" \
-		-os="openbsd" \
 		-os="solaris" \
 		-output="build/$(NAME)_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
 
