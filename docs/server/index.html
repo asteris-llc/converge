@@ -580,7 +580,7 @@ argument (or set <code>CONVERGE_LOCAL=1</code>.) This will:</p>
 <li>Shut down the RPC server</li>
 </ol>
 
-<p>During this process, a port (<code>localhost:26930</code>) will be opened and RPC will be
+<p>During this process, a port (<code>localhost:47740</code>) will be opened and RPC will be
 running on it. This interface will be protected with an randomly-generated
 token, unless you specify <code>--no-token</code></p>
 
@@ -592,6 +592,11 @@ instructions to whoever can reach that port. You can make this process <em>more<
 secure by specifying <code>--cert-file</code>, <code>--key-file</code>, and optionally <code>--ca-file</code> to
 connect over HTTPS.</p>
 </div>
+
+<h2 id="address">Address</h2>
+
+<p>Converge has been assigned
+<a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774">port 4774 by the Internet Assigned Numbers Authority</a>.</p>
 
 
 			<aside class="copyright" role="note">
