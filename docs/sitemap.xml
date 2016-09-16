@@ -12,6 +12,11 @@
   </url>
   
   <url>
+    <loc>http://converge.aster.is/module-verification/</loc>
+    <lastmod>2016-09-13T00:13:59-05:00</lastmod>
+  </url>
+  
+  <url>
     <loc>http://converge.aster.is/resources/task-query/</loc>
     <lastmod>2016-09-08T23:26:25-07:00</lastmod>
   </url>
@@ -64,11 +69,6 @@
   <url>
     <loc>http://converge.aster.is/server/</loc>
     <lastmod>2016-08-29T16:49:53-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/organization/</loc>
-    <lastmod>2016-08-25T07:53:04-05:00</lastmod>
   </url>
   
   <url>

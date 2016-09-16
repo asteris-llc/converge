@@ -51,6 +51,173 @@ file.directory &amp;quot;deeper&amp;quot; {
     </item>
     
     <item>
+      <title>Module Verification</title>
+      <link>http://converge.aster.is/module-verification/</link>
+      <pubDate>Tue, 13 Sep 2016 00:13:59 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/module-verification/</guid>
+      <description>
+
+&lt;p&gt;In the future, converge will require modules to be signed using a gpg detached signature.
+The following steps will walk you through the creation of a gpg keypair suitable for signing a module.
+If you have an existing gpg signing key skip to the &lt;a href=&#34;#signing-modules&#34;&gt;Signing modules&lt;/a&gt; step.&lt;/p&gt;
+
+&lt;h2 id=&#34;generate-a-gpg-signing-key&#34;&gt;Generate a gpg signing key&lt;/h2&gt;
+
+&lt;p&gt;Create a file named &lt;code&gt;gpg-batch&lt;/code&gt; with the following content.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;%echo Generating a default key
+Key-Type: RSA
+Key-Length: 2048
+Subkey-Type: RSA
+Subkey-Length: 2048
+Name-Real: Test Asteris
+Name-Comment: Test Key
+Name-Email: test@aster.is
+Expire-Date: 0
+Passphrase: asteris
+%pubring test.pub
+%secring test.sec
+%commit
+%echo done
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can use this to quickly generate a key pair using batch mode.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ gpg --batch --gen-key gpg-batch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can verify this worked by listing the keys.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --list-keys
+./test.pub
+
+----------
+pub   2048R/475CC928 2016-08-07
+uid       [ unknown] Test Asteris (Test signing key) &amp;lt;test@aster.is&amp;gt;
+sub   2048R/1327D89C 2016-08-07
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can tell from the output above, that the level of trust for the signing key is unknown. This will cause the following warning if we attempt to validate a module signed with this key using the gpg cli:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gpg: WARNING: This key is not certified with a trusted signature!
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since we know exactly where this key came from let&amp;rsquo;s trust it:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --edit-key 475CC928
+
+gpg (GnuPG) 1.4.20; Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Secret key is available.
+
+pub  2048R/475CC928  created: 2016-08-07  expires: never       usage: SCEA
+                     trust: unknown      validity: unknown
+sub  2048R/1327D89C  created: 2016-08-07  expires: never       usage: SEA
+[ unknown] (1). Test Asteris (Test signing key) &amp;lt;test@aster.is&amp;gt;
+
+Please decide how far you trust this user to correctly verify other users&#39; keys
+(by looking at passports, checking fingerprints from different sources, etc.)
+
+  1 = I don&#39;t know or won&#39;t say
+  2 = I do NOT trust
+  3 = I trust marginally
+  4 = I trust fully
+  5 = I trust ultimately
+  m = back to the main menu
+
+Your decision? 5
+Do you really want to set this key to ultimate trust? (y/N) y
+
+pub  2048R/475CC928  created: 2016-08-07  expires: never       usage: SCEA
+                     trust: ultimate      validity: ultimate
+sub  2048R/1327D89C  created: 2016-08-07  expires: never       usage: SEA
+[ultimate] (1). Test Asteris (Test signing key) &amp;lt;test@aster.is&amp;gt;
+Please note that the shown key validity is not necessarily correct
+unless you restart the program.
+
+gpg&amp;gt; quit
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;signing-modules&#34;&gt;Signing modules&lt;/h2&gt;
+
+&lt;p&gt;Now you can start signing modules with the key. The following command will produce a signature file called &lt;code&gt;basic.hcl.asc&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --output basic.hcl.asc --detach-sig basic.hcl
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This file should be shipped along side the module so that the converge tool can download it and use it to verify that the module has not been modified after the signature was created.&lt;/p&gt;
+
+&lt;h2 id=&#34;public-keystore&#34;&gt;Public keystore&lt;/h2&gt;
+
+&lt;p&gt;In order to verify a module&amp;rsquo;s signature against its signature file, converge needs access to our public key. This can be exported with the following command.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --export test@aster.is &amp;gt; pubkeys.gpg
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we must add the key to the converge&amp;rsquo;s public key database. The following directories make up the default converge keystore layout:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sytem: /usr/lib/converge/trustedkeys/
+user: ~/.converge/trustedkeys/
+local: $(pwd)/trustedkeys/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The system path is designed to be used by system administrators. The user path is where converge stores keys that are added through the &lt;code&gt;converge key trust&lt;/code&gt; command. Finally, the local path can be used for keys that you do not want stored globally or managed by converge.&lt;/p&gt;
+
+&lt;p&gt;Trusted keys are saved in the desired directory named after the fingerprint of the public key. For global and local keys, we will need to manually create this file.&lt;/p&gt;
+
+&lt;p&gt;We do this by downloading the key, capturing its fingerprint, and storing it in the database using the fingerprint as the filename.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ curl -O https://example.com/pubkeys.gpg
+
+$ gpg --no-default-keyring --with-fingerprint pubkeys.gpg
+pub  2048R/475CC928 2016-08-07 Test Asteris (Test signing key) &amp;lt;test@aster.is&amp;gt;
+     Key fingerprint = 74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928
+	 sub  2048R/1327D89C 2016-08-07
+
+$ echo &amp;quot;74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928&amp;quot; | tr -d &amp;quot;[:space:]&amp;quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39;
+74fdf669f18d59f92b0aaccd720351ff475cc928
+
+mkdir -p trustedkeys
+mv pubkeys.gpg trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can disable a key stored in the global system path by creating an empty file in the user or local paths with the same name. Keys stored in the local path will also mask keys in the user path.&lt;/p&gt;
+
+&lt;h2 id=&#34;trusting-keys&#34;&gt;Trusting keys&lt;/h2&gt;
+
+&lt;p&gt;There is an easier way to add a key to the user keystore, using the &lt;code&gt;converge key trust&lt;/code&gt; subcommand.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ converge key trust pubkeys.gpg
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The command will ask you to verify that the fingerprint matches the fingerprint you expected for the key.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;The gpg key fingerprint is 74fdf669f18d59f92b0aaccd720351ff475cc928
+Are you sure you want to trust this key (yes/no)? yes
+Trusting key &amp;quot;https://example.com/pubkeys.gpg&amp;quot;.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;converge-integration&#34;&gt;Converge integration&lt;/h2&gt;
+
+&lt;p&gt;Now let&amp;rsquo;s walk through the steps converge takes when fetching modules. For now, converge will not attempt to download the detached signature and verify the module. You can enable module verification with the &lt;code&gt;--verify-modules&lt;/code&gt; flag.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ converge plan --verify-modules https://example.com/modules/basic.hcl
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will result in converge retrieving the following URIs.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;https://example.com/modules/basic.hcl
+https://example.com/modules/basic.hcl.asc
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then it verifies the signature of the module using the public keys in the key database.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>task.query</title>
       <link>http://converge.aster.is/resources/task-query/</link>
       <pubDate>Thu, 08 Sep 2016 23:26:25 -0700</pubDate>
@@ -922,16 +1089,6 @@ connect over HTTPS.&lt;/p&gt;
     </item>
     
     <item>
-      <title>Module Organization</title>
-      <link>http://converge.aster.is/organization/</link>
-      <pubDate>Thu, 25 Aug 2016 07:53:04 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/organization/</guid>
-      <description>&lt;p&gt;TODO: when we have a better idea of the best ways to organize these&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Getting Started</title>
       <link>http://converge.aster.is/getting-started/</link>
       <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
@@ -1192,11 +1349,12 @@ will walk over them as nodes.&lt;/p&gt;
 
 &lt;h2 id=&#34;what-s-next&#34;&gt;What&amp;rsquo;s Next?&lt;/h2&gt;
 
-&lt;p&gt;If you&amp;rsquo;ve made it this far, you&amp;rsquo;ve got a decision to make! What to read next?
-The road diverges in this wood, so you&amp;rsquo;ve got two choices: you could
-&lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;read about how all those neat little dependencies &lt;em&gt;actually work&lt;/em&gt;&lt;/a&gt;, or now that you know how to link modules together you
-could
-&lt;a href=&#34;http://converge.aster.is/organization/&#34;&gt;learn about how to keep everything from becoming a sprawling mess of files&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;A great next step is to try and make something simple with Converge! Try
+installing something from Brew, if you&amp;rsquo;re running on OSX, or symlinking a
+dotfile into place.&lt;/p&gt;
+
+&lt;p&gt;If you&amp;rsquo;re ready, you can
+&lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;read about how all those dependencies &lt;em&gt;actually work&lt;/em&gt;&lt;/a&gt;!&lt;/p&gt;
 </description>
     </item>
     
@@ -1206,7 +1364,12 @@ could
       <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
       
       <guid>http://converge.aster.is/install/</guid>
-      <description>&lt;p&gt;TODO: Installation instructions!&lt;/p&gt;
+      <description>&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;go get github.com/asteris-llc/converge
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or download a release for your platform from the
+&lt;a href=&#34;https://github.com/asteris-llc/converge/releases&#34;&gt;releases page on Github&lt;/a&gt; and
+put it somewhere on your &lt;code&gt;$PATH&lt;/code&gt;.&lt;/p&gt;
 </description>
     </item>
     

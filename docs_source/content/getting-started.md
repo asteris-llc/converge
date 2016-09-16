@@ -225,10 +225,10 @@ will walk over them as nodes.
 
 ## What's Next?
 
-If you've made it this far, you've got a decision to make! What to read next?
-The road diverges in this wood, so you've got two choices: you could
-[read about how all those neat little dependencies *actually work*]({{< ref
-"dependencies.md" >}}), or now that you know how to link modules together you
-could
-[learn about how to keep everything from becoming a sprawling mess of files]({{<
-ref "organization.md" >}})
+A great next step is to try and make something simple with Converge! Try
+installing something from Brew, if you're running on OSX, or symlinking a
+dotfile into place.
+
+If you're ready, you can
+[read about how all those dependencies *actually work*]({{< ref
+"dependencies.md" >}})!
