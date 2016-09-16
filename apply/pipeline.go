@@ -95,7 +95,7 @@ func (g *pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
 				Ran:  false,
 				Task: plan.Plan.Task,
 				Plan: plan.Plan,
-				Err:  nil,
+				Err:  plan.Plan.Err,
 			})
 		}
 		return either.RightM(plan)
