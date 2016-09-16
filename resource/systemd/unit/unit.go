@@ -17,6 +17,8 @@ package unit
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/asteris-llc/converge/resource"
@@ -81,6 +83,18 @@ type Unit struct {
 // 3. Check if the unit is in the unit file state
 func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	systemd.ApplyDaemonReload()
+	/*////////////////////////////////////////////////////
+	First thing to do is to check if the Name given is outside
+	the normal search path of systemd. If so it should be linked
+	*/ ////////////////////////////////////////////////////
+	dir, unitName := filepath.Split(t.Name)
+	var shouldBeLinked = false
+	if dir != "" && t.UnitFileState.IsLinked() {
+		// The fullpath to a unit was given. Assume that this isn't in the
+		// normal search paths
+		shouldBeLinked = true
+	}
+
 	// Get the connection from the pool
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {
@@ -104,13 +118,49 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	ctx, cancel = context.WithTimeout(context.Background(), t.Timeout)
 	defer cancel()
 
-	err = systemd.WaitToLoad(ctx, dbusConn, t.Name)
+	// Waits for the daemon to finish loading.
+	// After check for unit linking
+	err = systemd.WaitToLoad(ctx, dbusConn, unitName)
+
 	if err != nil {
+		// Unit doesn't exist should be linked
+		if err.Error() == "LoadError: \"[\\\"org.freedesktop.DBus.Error.FileNotFound\\\", \\\"No such file or directory\\\"]\"" {
+			if shouldBeLinked {
+				// Check if file to be linked exist on disk
+				_, statErr := os.Stat(t.Name)
+				if statErr != nil {
+					return &resource.Status{
+						Status:       err.Error(),
+						WarningLevel: resource.StatusFatal,
+						Output:       []string{err.Error()},
+					}, err
+				}
+				statusMsg := fmt.Sprintf("unit %q does not exist, will be linked", unitName)
+				diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
+				diff := resource.TextDiff{Default: diffMsg, Values: [2]string{diffMsg, fmt.Sprintf("unit %q is linked", unitName)}}
+				return &resource.Status{
+					Status:       statusMsg,
+					WarningLevel: resource.StatusWillChange,
+					WillChange:   true,
+					Differences:  map[string]resource.Diff{unitName: diff},
+					Output:       []string{statusMsg, err.Error()},
+				}, nil
+			} else if t.UnitFileState.Equal(systemd.UFSDisabled) {
+				// Consider it the same as it being disabled.
+				statusMsg := fmt.Sprintf("unit %q does not exist, considered disabled", unitName)
+				return &resource.Status{
+					Status:       statusMsg,
+					WarningLevel: resource.StatusWontChange,
+					Output:       []string{statusMsg},
+				}, nil
+			}
+		}
 		status := &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			Status:       err.Error(),
 		}
 		return status, err
+
 	}
 
 	// Next check that the ActiveState property matches
@@ -121,30 +171,23 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	validActiveStates := []*dbus.Property{
 		systemd.PropActiveState(activeState),
 	}
-	asStatus, asErr := systemd.CheckProperty(dbusConn, t.Name, "ActiveState", validActiveStates)
+	asStatus, asErr := systemd.CheckProperty(dbusConn, unitName, "ActiveState", validActiveStates)
 
 	// Then check that there is a valid ufs state
 	validUnitFileStates := []*dbus.Property{
 		systemd.PropUnitFileState(t.UnitFileState),
 	}
-	// If the user wants unit file to be linked or linked-runtime, then it may also be in an enabled state
-	if t.UnitFileState.IsLinked() {
-		if t.UnitFileState.IsRuntimeState() {
-			validUnitFileStates = append(validUnitFileStates, systemd.PropUnitFileState(systemd.UFSEnabledRuntime))
-		} else {
-			validUnitFileStates = append(validUnitFileStates, systemd.PropUnitFileState(systemd.UFSEnabled))
-		}
-	}
-	// if a unit is static, you CANNOT change the ufs state except to mask it
-	if t.UnitFileState != systemd.UFSStatic && t.UnitFileState != systemd.UFSMasked && t.UnitFileState != systemd.UFSMaskedRuntime {
+
+	// if a unit is static, consider it enabled
+	if t.UnitFileState.IsEnabled() {
 		validUnitFileStates = append(validUnitFileStates, systemd.PropUnitFileState(systemd.UFSStatic))
 	}
 
 	// a masked unit may have the "bad" ufs
-	if t.UnitFileState.IsMaskedState() {
+	if t.UnitFileState.Equal(systemd.UFSDisabled) {
 		validUnitFileStates = append(validUnitFileStates, systemd.PropUnitFileState(systemd.UFSBad))
 	}
-	ufsStatus, ufsErr := systemd.CheckProperty(dbusConn, t.Name, "UnitFileState", validUnitFileStates)
+	ufsStatus, ufsErr := systemd.CheckProperty(dbusConn, unitName, "UnitFileState", validUnitFileStates)
 	ufsStatus = systemd.AppendStatus(ufsStatus, asStatus)
 
 	err = systemd.MultiErrorAppend(asErr, ufsErr)
@@ -154,9 +197,20 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 /* Apply sets the properties
 1. Apply active state
 2. Apply UFS
-TODO linking and masking units
 */
 func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+	/*////////////////////////////////////////////////////
+	First thing to do is to check if the Name given is outside
+	the normal search path of systemd. If so it should be linked
+	*/ ////////////////////////////////////////////////////
+	dir, unitName := filepath.Split(t.Name)
+	var shouldBeLinked = false
+	if dir != "" && t.UnitFileState.IsLinked() {
+		// The fullpath to a unit was given. Assume that this isn't in the
+		// normal search paths
+		shouldBeLinked = true
+	}
+
 	// Get the connection from the pool
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {
@@ -180,8 +234,48 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	ctx, cancel = context.WithTimeout(context.Background(), t.Timeout)
 	defer cancel()
 
-	err = systemd.WaitToLoad(ctx, dbusConn, t.Name)
+	err = systemd.WaitToLoad(ctx, dbusConn, unitName)
 	if err != nil {
+		// Unit doesn't exist should be linked
+		if err.Error() == "LoadError: \"[\\\"org.freedesktop.DBus.Error.FileNotFound\\\", \\\"No such file or directory\\\"]\"" {
+			if shouldBeLinked {
+				// Check if file to be linked exist on disk
+				_, statErr := os.Stat(t.Name)
+				if statErr != nil {
+					return &resource.Status{
+						Status:       err.Error(),
+						WarningLevel: resource.StatusFatal,
+						Output:       []string{err.Error()},
+					}, err
+				}
+				// Link the Unit
+				changes, e := dbusConn.LinkUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
+				if e != nil {
+					status := &resource.Status{
+						WarningLevel: resource.StatusFatal,
+						Status:       e.Error(),
+					}
+					return status, e
+				}
+				startStatus, e := t.StartOrStop(dbusConn)
+				if e != nil {
+					return startStatus, e
+				}
+				statusMsg := fmt.Sprintf("unit %q has been linked", unitName)
+				diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
+				diff := resource.TextDiff{Default: diffMsg, Values: [2]string{diffMsg, fmt.Sprintf("unit %q is linked", unitName)}}
+				return &resource.Status{
+					Status:       statusMsg,
+					WarningLevel: resource.StatusNoChange,
+					WillChange:   false,
+					Differences:  map[string]resource.Diff{unitName: diff},
+					Output: []string{
+						statusMsg,
+						fmt.Sprintf("file %q has been linkded to %q", changes[0].Filename, changes[0].Destination),
+					},
+				}, nil
+			}
+		}
 		status := &resource.Status{
 			WarningLevel: resource.StatusFatal,
 			Status:       err.Error(),
@@ -189,8 +283,14 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		return status, err
 	}
 
-	// Determine if unit was enabled-runtime or not
-	prop, err := dbusConn.GetUnitProperty(t.Name, "UnitFileState")
+	// Start the unit
+	startStatus, err := t.StartOrStop(dbusConn)
+	systemd.ApplyDaemonReload()
+	if err != nil {
+		return startStatus, err
+	}
+	// Get the current UnitFileState
+	prop, err := dbusConn.GetUnitProperty(unitName, "UnitFileState")
 	if err != nil {
 		status := &resource.Status{
 			WarningLevel: resource.StatusFatal,
@@ -200,12 +300,213 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 	}
 	state := systemd.UnitFileState(prop.Value.String())
 
+	//////////////////////////
+	// Apply the UnitFileState
+	//////////////////////////
+
+	// First thing first, if the state you want is the state you have, quit.
+	if t.UnitFileState.Equal(state) {
+		statusMsg := fmt.Sprintf("unit %q is %s", unitName, state)
+		status := &resource.Status{
+			WarningLevel: resource.StatusNoChange,
+			Status:       statusMsg,
+			Output:       []string{statusMsg},
+		}
+		return status, err
+	}
+
+	switch t.UnitFileState {
+	/*///////////////////////////////////
+	*ENABLING
+	 */ ///////////////////////////////////
+	case systemd.UFSEnabled:
+		fallthrough
+	case systemd.UFSEnabledRuntime:
+		// treate enabled and enabled runtime as the same thing
+		if state.IsEnabled() {
+			statusMsg := fmt.Sprintf("unit %q is enabled, cannot switch between enabled-runtime and enabled", unitName)
+			status := &resource.Status{
+				Status: statusMsg,
+				Output: []string{statusMsg},
+			}
+			return status, nil
+		}
+		// check if unit is in a state that cannot be enabled
+		if state.IsLinked() || state.Equal(systemd.UFSInvalid) || state.Equal(systemd.UFSBad) {
+			statusMsg := fmt.Sprintf("unit %q cannot be enabled. state is %s", unitName, state)
+			status := &resource.Status{
+				Status:       statusMsg,
+				WarningLevel: resource.StatusFatal,
+				WillChange:   false,
+				Output: []string{
+					statusMsg,
+				},
+			}
+			return status, fmt.Errorf(statusMsg)
+		}
+		// At this point state must be disabled, static, or masked
+		if state.Equal(systemd.UFSStatic) { // If static do nothing
+			statusMsg := fmt.Sprintf("uint %q does not need to be enabled. state is static", unitName)
+			status := &resource.Status{
+				Status: statusMsg,
+				Output: []string{
+					statusMsg,
+				},
+			}
+			return status, err
+		}
+		if state.IsMaskedState() { // If masked unmask
+			changes, err := dbusConn.UnmaskUnitFiles([]string{unitName}, state.IsRuntimeState())
+			if err != nil {
+				status := &resource.Status{
+					WarningLevel: resource.StatusFatal,
+					Status:       err.Error(),
+					Output:       []string{err.Error()},
+				}
+				return status, err
+			}
+			statusMsg := fmt.Sprintf("unit %q is unmasked", unitName)
+			status := &resource.Status{
+				Status: statusMsg,
+				Output: []string{
+					statusMsg,
+					fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
+				},
+			}
+			return status, nil
+		}
+		// if hasEnaablementInfo is false then the unit will become static
+		hasEnaablementInfo, changes, err := dbusConn.EnableUnitFiles([]string{unitName}, t.UnitFileState.IsRuntimeState(), true)
+		if err != nil {
+			status := &resource.Status{
+				WarningLevel: resource.StatusFatal,
+				Status:       err.Error(),
+				Output:       []string{err.Error()},
+			}
+			return status, err
+		}
+		ufs := t.UnitFileState
+		if hasEnaablementInfo {
+			ufs = "static"
+		}
+		statusMsg := fmt.Sprintf("unit %q is %s", unitName, ufs)
+		status := &resource.Status{
+			Status: statusMsg,
+			Output: []string{
+				statusMsg,
+				fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
+			},
+		}
+		return status, nil
+
+	/*///////////////////////////////////
+	*Disabling
+	 */ ///////////////////////////////////
+	case systemd.UFSDisabled:
+		if state.IsMaskedState() {
+			statusMsg := fmt.Sprintf("unit %q is maked", unitName)
+			return &resource.Status{
+				Status: statusMsg,
+				Output: []string{statusMsg},
+			}, nil
+		}
+		if state.Equal(systemd.UFSStatic) {
+			changes, err := dbusConn.MaskUnitFiles([]string{unitName}, false, true)
+			if err != nil {
+				status := &resource.Status{
+					WarningLevel: resource.StatusFatal,
+					Status:       err.Error(),
+					Output:       []string{err.Error()},
+				}
+				return status, err
+			}
+			statusMsg := fmt.Sprintf("unit %q is maksed", unitName)
+			status := &resource.Status{
+				Status: statusMsg,
+				Output: []string{
+					statusMsg,
+					fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
+				},
+			}
+			return status, err
+		}
+
+		_, err := dbusConn.DisableUnitFiles([]string{unitName}, state.IsRuntimeState())
+		if err != nil {
+			status := &resource.Status{
+				WarningLevel: resource.StatusFatal,
+				Status:       err.Error(),
+				Output:       []string{err.Error()},
+			}
+			return status, err
+		}
+		statusMsg := fmt.Sprintf("unit %q has been disabled", unitName)
+		return &resource.Status{
+			Status: statusMsg,
+			Output: []string{
+				statusMsg,
+			},
+		}, nil
+	/*///////////////////////////////////
+	*Linking
+	 */ ///////////////////////////////////
+	case systemd.UFSLinked:
+		fallthrough
+	case systemd.UFSLinkedRuntime:
+		// must change from linked to linked-runtime or vice versa
+		if state.IsLinked() {
+			_, err := dbusConn.DisableUnitFiles([]string{unitName}, state.IsRuntimeState())
+			if err != nil {
+				status := &resource.Status{
+					WarningLevel: resource.StatusFatal,
+					Status:       err.Error(),
+					Output:       []string{err.Error()},
+				}
+				return status, err
+			}
+
+			changes, e := dbusConn.LinkUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
+			if e != nil {
+				status := &resource.Status{
+					WarningLevel: resource.StatusFatal,
+					Status:       e.Error(),
+				}
+				return status, e
+			}
+			statusMsg := fmt.Sprintf("unit %q has been linked", unitName)
+			diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
+			diff := resource.TextDiff{Default: diffMsg, Values: [2]string{diffMsg, fmt.Sprintf("unit %q is linked", unitName)}}
+			return &resource.Status{
+				Status:       statusMsg,
+				WarningLevel: resource.StatusNoChange,
+				WillChange:   false,
+				Differences:  map[string]resource.Diff{unitName: diff},
+				Output: []string{
+					statusMsg,
+					fmt.Sprintf("file %q has been linkded to %q", changes[0].Filename, changes[0].Destination),
+				},
+			}, nil
+		}
+
+	}
+
+	statusMsg := fmt.Sprintf("unit %q is in unknown state, %s", unitName, state)
+	return &resource.Status{
+		Status:       statusMsg,
+		WarningLevel: resource.StatusFatal,
+		Output:       []string{statusMsg},
+	}, fmt.Errorf(statusMsg)
+}
+
+func (t *Unit) StartOrStop(dbusConn *dbus.Conn) (*resource.Status, error) {
+	var err error
+	_, unitName := filepath.Split(t.Name)
 	// Apply the activeState
 	job := make(chan string)
 	if t.Active {
-		_, err = dbusConn.ReloadOrRestartUnit(t.Name, string(t.StartMode), job)
+		_, err = dbusConn.ReloadOrRestartUnit(unitName, string(t.StartMode), job)
 	} else {
-		_, err = dbusConn.StopUnit(t.Name, string(t.StartMode), job)
+		_, err = dbusConn.StopUnit(unitName, string(t.StartMode), job)
 	}
 	if err != nil {
 		status := &resource.Status{
@@ -215,87 +516,25 @@ func (t *Unit) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		return status, err
 	}
 	<-job
-
-	//////////////////////////
-	// Apply the UnitFileState
-	//////////////////////////
-
-	// Before manking further changes, unmask unit file
-	status, err := systemd.CheckProperty(
-		dbusConn,
-		t.Name,
-		"UnitFileState",
-		[]*dbus.Property{
-			systemd.PropUnitFileState(systemd.UFSMasked),
-			systemd.PropUnitFileState(systemd.UFSMaskedRuntime),
-		},
-	)
-	if err != nil {
-		status := &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Status:       err.Error(),
-		}
-		return status, err
+	activeMsg := "inactive"
+	if t.Active {
+		activeMsg = "active"
 	}
-	// If unit is maksed, and user does not want it masked, unmask it.
-	if status.StatusCode() == resource.StatusNoChange && !(t.UnitFileState.Equal(systemd.UFSMasked) || t.UnitFileState.Equal(systemd.UFSMaskedRuntime)) {
-		_, err := dbusConn.UnmaskUnitFiles([]string{t.Name}, state.IsRuntimeState())
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return status, err
-		}
-	}
-
-	// Now that the unit is unmasked continue.
-
-	////////////////////////////
-	//Disabling
-	////////////////////////////
-	if t.UnitFileState.Equal(systemd.UFSDisabled) {
-
-		_, err = dbusConn.DisableUnitFiles([]string{t.Name}, state.IsRuntimeState())
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return status, err
-		}
-		statusMsg := fmt.Sprintf("unit %q was disabled", t.Name)
-		return &resource.Status{
-			Status:       statusMsg,
-			WarningLevel: resource.StatusNoChange,
-			Output:       []string{statusMsg},
-		}, nil
-	}
-	// If unit file should be enabled or not
-	if t.UnitFileState.IsEnabled() {
-		_, _, err := dbusConn.EnableUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
-		if err != nil {
-			status := &resource.Status{
-				WarningLevel: resource.StatusFatal,
-				Status:       err.Error(),
-			}
-			return status, err
-		}
-	}
-	statusMsg := fmt.Sprintf("unit %q was enabled", t.Name)
+	statusMsg := fmt.Sprintf("unit %q is %s", unitName, activeMsg)
 	return &resource.Status{
-		Status:       statusMsg,
-		WarningLevel: resource.StatusNoChange,
-		Output:       []string{statusMsg},
+		Status: statusMsg,
+		Output: []string{statusMsg},
 	}, nil
 }
+
+var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSDisabled}
 
 func (t *Unit) Validate() error {
 	if t.Name == "" {
 		return fmt.Errorf("task requires a %q parameter", "name")
 	}
 	if !systemd.IsValidUnitFileState(t.UnitFileState) {
-		return fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", systemd.ValidUnitFileStatesWithoutInvalid)
+		return fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
 	}
 	if !systemd.IsValidStartMode(t.StartMode) {
 		return fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, t.StartMode)

@@ -125,26 +125,22 @@ func (state UnitFileState) Equal(state2 UnitFileState) bool {
 
 // Determines whether unit should be enabled
 func (state UnitFileState) IsEnabled() bool {
-	state = UnitFileState(strings.Replace(string(state), "\"", "", -1))
-	return state == UFSEnabled || state == UFSEnabledRuntime
+	return state.Equal(UFSEnabled) || state.Equal(UFSEnabledRuntime)
 }
 
 // Determines whether service should be linked to usual locations
 func (state UnitFileState) IsLinked() bool {
-	state = UnitFileState(strings.Replace(string(state), "\"", "", -1))
-	return state == UFSLinked || state == UFSLinkedRuntime
+	return state.Equal(UFSLinked) || state.Equal(UFSLinkedRuntime)
 }
 
 // IsRuntimeState returns true if unit should be in the /run folder
 func (state UnitFileState) IsRuntimeState() bool {
-	state = UnitFileState(strings.Replace(string(state), "\"", "", -1))
-	return state == UFSEnabledRuntime || state == UFSLinkedRuntime || state == UFSMaskedRuntime
+	return state.Equal(UFSEnabledRuntime) || state.Equal(UFSLinkedRuntime) || state.Equal(UFSMaskedRuntime)
 }
 
 // IsMaskedState
 func (state UnitFileState) IsMaskedState() bool {
-	state = UnitFileState(strings.Replace(string(state), "\"", "", -1))
-	return state == UFSMasked || state == UFSMaskedRuntime
+	return state.Equal(UFSMasked) || state.Equal(UFSMaskedRuntime)
 }
 
 var ValidUnitFileStates = UnitFileStates{UFSEnabled, UFSEnabledRuntime, UFSLinked, UFSLinkedRuntime, UFSMasked, UFSMaskedRuntime, UFSStatic, UFSDisabled, UFSInvalid}
