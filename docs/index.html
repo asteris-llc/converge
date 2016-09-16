@@ -473,11 +473,116 @@
 
 				
 
+<p>Converge is a configuration management tool.</p>
+
+<p><a href="http://converge-slack.aster.is"><img src="http://converge-slack.aster.is/badge.svg" alt="Slack Status" /></a></p>
+
 <h2 id="installation">Installation</h2>
+
+<p><a href="http://converge.aster.is/install/">See the installation documentation.</a></p>
+
+<h2 id="usage">Usage</h2>
+
+<p>See <a href="http://converge.aster.is">the docs</a>! It&rsquo;s pretty reasonable, though. Here&rsquo;s
+a summary:</p>
+
+<p>Converge uses <a href="https://github.com/hashicorp/hcl">HCL</a> for syntax. HCL is a
+superset of JSON that looks (and acts) quite a bit nicer.</p>
+
+<p>The basic unit of composition in converge is the module. Modules have parameters
+and contain resources. Creating a module looks something like this:</p>
+
+<pre><code class="language-hcl"># write &quot;hello world&quot; to disk
+param &quot;message&quot; {
+  default = &quot;Hello, World in {{param `filename`}}&quot;
+}
+
+param &quot;filename&quot; {
+  default = &quot;test.txt&quot;
+}
+
+file.content &quot;render&quot; {
+  destination = &quot;{{param `filename`}}&quot;
+  content     = &quot;{{param `message`}}&quot;
+}
+</code></pre>
+
+<p>Invoke this with <code>converge apply --local samples/fileContent.hcl</code> to install
+Traefik from yum on your system. You can also <code>converge plan --local
+samples/fileContent.hcl</code> to see what changes will be made before you apply them.</p>
+
+<h2 id="development">Development</h2>
+
+<h3 id="tools">Tools</h3>
+
+<p>For linting, you&rsquo;ll need:</p>
+
+<table>
+<thead>
+<tr>
+<th>tool</th>
+<th><code>go get</code></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>golint</code></td>
+<td>github.com/golang/lint/golint</td>
+</tr>
+
+<tr>
+<td><code>go tool vet</code></td>
+<td>(built in)</td>
+</tr>
+
+<tr>
+<td><code>gosimple</code></td>
+<td>honnef.co/go/simple/cmd/gosimple</td>
+</tr>
+
+<tr>
+<td><code>unconvert</code></td>
+<td>github.com/mdempsky/unconvert</td>
+</tr>
+
+<tr>
+<td><code>structcheck</code></td>
+<td>github.com/opennota/check/cmd/structcheck</td>
+</tr>
+
+<tr>
+<td><code>varcheck</code></td>
+<td>github.com/opennota/check/cmd/varcheck</td>
+</tr>
+
+<tr>
+<td><code>aligncheck</code></td>
+<td>github.com/opennota/check/cmd/aligncheck</td>
+</tr>
+
+<tr>
+<td><code>gas</code></td>
+<td>github.com/HewlettPackard/gas</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="rpc">RPC</h3>
+
+<p>You&rsquo;ll need:</p>
+
+<ul>
+<li><a href="https://github.com/google/protobuf/releases">Google&rsquo;s protobuf compiler</a>, 3.0
+or above.</li>
+<li>The go protoc plugin: <code>go get -a github.com/golang/protobuf/protoc-gen-go</code></li>
+<li>The grpc gateway plugin(s): <code>go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger</code></li>
+</ul>
 
 <h2 id="license">License</h2>
 
-<p>See <a href="http://converge.aster.is/license/">LICENSE</a>.</p>
+<p>Converge is licensed under the Apache 2.0 license. See <a href="LICENSE">LICENSE</a> for
+full details.</p>
 
 			
 
