@@ -89,7 +89,7 @@ argument (or set `CONVERGE_LOCAL=1`.) This will:
 2. Perform the requested action against the RPC server
 3. Shut down the RPC server
 
-During this process, a port (`localhost:26930`) will be opened and RPC will be
+During this process, a port (`localhost:47740`) will be opened and RPC will be
 running on it. This interface will be protected with an randomly-generated
 token, unless you specify `--no-token`
 
@@ -100,3 +100,8 @@ instructions to whoever can reach that port. You can make this process *more*
 secure by specifying `--cert-file`, `--key-file`, and optionally `--ca-file` to
 connect over HTTPS.
 {{< /warning >}}
+
+## Address
+
+Converge has been assigned
+[port 4774 by the Internet Assigned Numbers Authority](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774).
