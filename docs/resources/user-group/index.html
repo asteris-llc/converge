@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>task.query - Converge</title>
+    <title>user.group - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/resources/task-query/">
+    <link rel="canonical" href="http://converge.aster.is/resources/user-group/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/resources/task-query/">
+    <meta property="og:url" content="http://converge.aster.is/resources/user-group/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        task.query
+        user.group
       </div>
     </div>
 
@@ -418,15 +418,12 @@
 
 
 
-<a class="current" title="task.query" href="http://converge.aster.is/resources/task-query/">
+<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
   
   task.query
 </a>
 
 
-<ul id="scrollspy">
-</ul>
-
 
         
         
@@ -434,11 +431,14 @@
 
 
 
-<a  title="user.group" href="http://converge.aster.is/resources/user-group/">
+<a class="current" title="user.group" href="http://converge.aster.is/resources/user-group/">
   
   user.group
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -494,19 +494,19 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>task.query </h1>
+			<h1>user.group </h1>
 
 			
 
+<p>Group renders group data</p>
+
 <h2 id="example">Example</h2>
 
-<pre><code class="language-hcl">task.query &quot;hostname&quot; {
-  query = &quot;hostname&quot;
-}
-
-file.content &quot;hostname data&quot; {
-  destination = &quot;hostname.txt&quot;
-  content     = &quot;{{lookup `task.query.hostname.status.stdout`}}&quot;
+<pre><code class="language-hcl"># create a group, only works on linux
+user.group &quot;group&quot; {
+  gid   = &quot;123&quot;
+  name  = &quot;test&quot;
+  state = &quot;present&quot;
 }
 
 </code></pre>
@@ -514,20 +514,22 @@ file.content &quot;hostname data&quot; {
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><p><code>interpreter</code> (string)</p></li>
-
-<li><p><code>query</code> (string)</p></li>
-
-<li><p><code>check_flags</code> (list of strings)</p></li>
-
-<li><p><code>exec_flags</code> (list of strings)</p></li>
-
-<li><p><code>timeout</code> (duration string)</p></li>
-
-<li><p><code>dir</code> (string)</p></li>
-
-<li><p><code>env</code> (map of string to string)</p></li>
+<li><code>gid</code> (string)</li>
 </ul>
+
+<p>Gid is the group gid.</p>
+
+<ul>
+<li><code>name</code> (string)</li>
+</ul>
+
+<p>Name is the group name.</p>
+
+<ul>
+<li><code>state</code> (string)</li>
+</ul>
+
+<p>State is whether the group should be present.</p>
 
 
 			<aside class="copyright" role="note">
@@ -546,34 +548,18 @@ file.content &quot;hostname data&quot; {
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/module-verification/" title="Module Verification">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              Module Verification
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/docker-container/" title="docker.container">
+      <a href="http://converge.aster.is/resources/user-user/" title="user.user">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              docker.container
+              user.user
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
