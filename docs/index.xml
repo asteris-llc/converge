@@ -1176,7 +1176,7 @@ argument (or set &lt;code&gt;CONVERGE_LOCAL=1&lt;/code&gt;.) This will:&lt;/p&gt
 &lt;li&gt;Shut down the RPC server&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;During this process, a port (&lt;code&gt;localhost:26930&lt;/code&gt;) will be opened and RPC will be
+&lt;p&gt;During this process, a port (&lt;code&gt;localhost:47740&lt;/code&gt;) will be opened and RPC will be
 running on it. This interface will be protected with an randomly-generated
 token, unless you specify &lt;code&gt;--no-token&lt;/code&gt;&lt;/p&gt;
 
