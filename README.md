@@ -2,6 +2,8 @@
 
 Converge is a configuration management tool.
 
+[![Slack Status](http://converge-slack.aster.is/badge.svg)](http://converge-slack.aster.is)
+
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
 
