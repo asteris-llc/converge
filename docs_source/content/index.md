@@ -9,7 +9,16 @@ menu:
     weight: 0
 ---
 
-Converge is a configuration management tool.
+Converge is a configuration management tool that makes it easy to manage servers,
+laptops and other devices.
+
+Key features:
+
+- Easy to install and run. A single binary and configuration file is all you need.
+- A powerful graph engine that automatically generates dependencies and
+runs tasks in parallel.
+- API-first communication using [grpc](http://grpc.io).
+- Module verification: only run trusted modules.
 
 [![Slack Status](http://converge-slack.aster.is/badge.svg)](http://converge-slack.aster.is)
 
