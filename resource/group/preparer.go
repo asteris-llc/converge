@@ -82,5 +82,5 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func init() {
-	registry.Register("group.group", (*Preparer)(nil), (*Group)(nil))
+	registry.Register("user.group", (*Preparer)(nil), (*Group)(nil))
 }

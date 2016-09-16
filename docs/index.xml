@@ -6,8 +6,111 @@
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 13 Sep 2016 11:04:59 -0500</lastBuildDate>
+    <lastBuildDate>Fri, 16 Sep 2016 15:32:02 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>user.group</title>
+      <link>http://converge.aster.is/resources/user-group/</link>
+      <pubDate>Fri, 16 Sep 2016 15:32:02 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-group/</guid>
+      <description>
+
+&lt;p&gt;Group renders group data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a group, only works on linux
+user.group &amp;quot;group&amp;quot; {
+  gid   = &amp;quot;123&amp;quot;
+  name  = &amp;quot;test&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the group gid.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the group name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the group should be present.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>user.user</title>
+      <link>http://converge.aster.is/resources/user-user/</link>
+      <pubDate>Fri, 16 Sep 2016 15:26:27 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <description>
+
+&lt;p&gt;User renders user data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
+user.user &amp;quot;user&amp;quot; {
+  username = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID is the user ID.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the primary group ID for user.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username is the user login name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the user description.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
+name is appended to the home directory.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the user should be present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>file.directory</title>
@@ -1085,291 +1188,6 @@ instructions to whoever can reach that port. You can make this process &lt;em&gt
 secure by specifying &lt;code&gt;--cert-file&lt;/code&gt;, &lt;code&gt;--key-file&lt;/code&gt;, and optionally &lt;code&gt;--ca-file&lt;/code&gt; to
 connect over HTTPS.&lt;/p&gt;
 &lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Getting Started</title>
-      <link>http://converge.aster.is/getting-started/</link>
-      <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/getting-started/</guid>
-      <description>
-
-&lt;p&gt;In this tutorial we&amp;rsquo;re going to step through basic Converge usage by creating a
-small &amp;ldquo;hello world&amp;rdquo; module. Before beginning, please make sure to
-&lt;a href=&#34;http://converge.aster.is/install/&#34;&gt;install Converge&lt;/a&gt;. You can test your installation by
-issuing &lt;code&gt;converge version&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&#34;hello-world&#34;&gt;Hello World!&lt;/h2&gt;
-
-&lt;p&gt;We&amp;rsquo;ll begin by writing a small module using the &lt;a href=&#34;http://converge.aster.is/resources/file-content/&#34;&gt;file.content&lt;/a&gt; resource. Put the following into
-&lt;code&gt;helloWorld.hcl&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;file.content &amp;quot;render&amp;quot; {
-  destination = &amp;quot;hello.txt&amp;quot;
-  content     = &amp;quot;Hello, World!&amp;quot;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;planning&#34;&gt;Planning&lt;/h2&gt;
-
-&lt;p&gt;This is our first module! Let&amp;rsquo;s plan out our execution first by running
-&lt;code&gt;converge plan helloWorld.hcl&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=7671639d-b007-4145-994b-0765080bd82c
-INFO[0000] serving                                       addr=:26930 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] loading resources                             component=rpc function=SetResources runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] rendering                                     component=rpc function=Render runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-
-root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: &amp;quot;&amp;lt;file-missing&amp;gt;&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
-
-Summary: 0 errors, 1 changes
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;You can see our single file is going to be rendered at &amp;ldquo;hello.txt&amp;rdquo;, and the file
-will be created. When created, it will say &amp;ldquo;Hello, World!&amp;rdquo; Planning out your
-changes is usually a good idea; all of Converge&amp;rsquo;s resource types support planned
-output.&lt;/p&gt;
-
-&lt;h2 id=&#34;applying&#34;&gt;Applying&lt;/h2&gt;
-
-&lt;p&gt;Next, let&amp;rsquo;s actually make the changes, using &lt;code&gt;converge apply&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge apply --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=4ffe080e-bc6b-4655-b7d5-e5456beb1e67
-INFO[0000] serving                                       addr=:26930 component=rpc
-INFO[0000] applying                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] loading resources                             component=rpc function=SetResources runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] rendering                                     component=rpc function=Render runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=APPLY
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=APPLY
-
-root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: &amp;quot;&amp;lt;file-missing&amp;gt;&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
-
-Summary: 0 errors, 1 changes
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This looks &lt;em&gt;suspiciously&lt;/em&gt; similar to the output from before. That&amp;rsquo;s good,
-because it means Converge made exactly (and only) the changes that it planned
-out. If we check by opening &amp;ldquo;hello.txt&amp;rdquo; in an editor, we&amp;rsquo;ll see that it says
-&amp;ldquo;Hello, World!&amp;rdquo;&lt;/p&gt;
-
-&lt;h2 id=&#34;the-graph&#34;&gt;The Graph&lt;/h2&gt;
-
-&lt;p&gt;So what&amp;rsquo;s actually going on here? Converge is taking your module file and
-turning it into a graph, then walking over the graph in order to make changes.
-Right now we only have one resource, so the graph is pretty simple:&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world.png&#34; alt=&#34;The graph of our hello world module. Root (represented as /) depends on the file we defined.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        The graph of our hello world module. Root (represented as /) depends on the file we defined.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;p&gt;(By the way, you can find more information about this in &lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;Dependencies&lt;/a&gt;)&lt;/p&gt;
-
-&lt;h2 id=&#34;divergence&#34;&gt;Divergence!&lt;/h2&gt;
-
-&lt;p&gt;Converge doesn&amp;rsquo;t just create resources, though: it also makes sure they stay up
-to date. While you&amp;rsquo;re in your editor, go ahead and change the message to
-something else. I changed mine to &amp;ldquo;LOL World!&amp;rdquo; Once you&amp;rsquo;ve done that, run the
-plan again.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=2157f1e9-6ca9-4e6f-a203-096608c9adcd
-INFO[0000] serving                                       addr=:26930 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] loading resources                             component=rpc function=SetResources runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] rendering                                     component=rpc function=Render runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-
-root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: &amp;quot;LOL World!&amp;quot; =&amp;gt; &amp;quot;Hello, World!&amp;quot;
-
-Summary: 0 errors, 1 changes
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;We see that we&amp;rsquo;re going to change our message back to what&amp;rsquo;s specified in the
-module. Handy! A quick &lt;code&gt;converge apply helloWorld.hcl&lt;/code&gt; and we&amp;rsquo;re back to normal.&lt;/p&gt;
-
-&lt;h2 id=&#34;params&#34;&gt;Params&lt;/h2&gt;
-
-&lt;p&gt;Now let&amp;rsquo;s add the ability to greet someone in particular, instead of the whole
-world. We&amp;rsquo;re going to use &lt;a href=&#34;http://converge.aster.is/resources/param/&#34;&gt;params&lt;/a&gt; for this.
-Change your &lt;code&gt;helloWorld.hcl&lt;/code&gt; to look like this:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;name&amp;quot; {
-  default = &amp;quot;World&amp;quot;
-}
-
-file.content &amp;quot;render&amp;quot; {
-  destination = &amp;quot;hello.txt&amp;quot;
-  content     = &amp;quot;Hello, {{param `name`}}!&amp;quot;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This &lt;a href=&#34;http://converge.aster.is/resources/param/&#34;&gt;param&lt;/a&gt; allows us to add a parameter to
-our module when we call it. (Notice that we&amp;rsquo;re using the result of our parameter
-in a template block in the &lt;code&gt;content&lt;/code&gt; stanza of &lt;code&gt;file.content.render&lt;/code&gt;.)&lt;/p&gt;
-
-&lt;div class=&#34;admonition note&#34;&gt;
-&lt;p class=&#34;admonition-title&#34;&gt;Templates&lt;/p&gt;
-&lt;p&gt;Converge uses Go&amp;rsquo;s &lt;code&gt;text/template&lt;/code&gt; library. You can template most stanzas in
-your resources. The
-&lt;a href=&#34;https://golang.org/pkg/text/template/&#34;&gt;Go Documentation on &lt;code&gt;text/template&lt;/code&gt;&lt;/a&gt; is
-a handy reference to keep around as you&amp;rsquo;re finding your feet with these
-templates.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;p&gt;Let&amp;rsquo;s change the name in the template to your name (I&amp;rsquo;m going to assume it&amp;rsquo;s
-&amp;ldquo;Spartacus&amp;rdquo;.) We&amp;rsquo;ll use the &lt;code&gt;-p&lt;/code&gt; flag to &lt;code&gt;converge plan&lt;/code&gt; to see what&amp;rsquo;ll happen:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;$ converge plan --local -p name=Spartacus content/helloWorld.hcl
-WARN[0000] setting session-local token                   token=dc73ca2e-d5dc-46d6-a2e4-81b848e7309c
-INFO[0000] serving                                       addr=:26930 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] loading resources                             component=rpc function=SetResources runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] rendering                                     component=rpc function=Render runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-
-root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: &amp;quot;LOL World!&amp;quot; =&amp;gt; &amp;quot;Hello, Spartacus!&amp;quot;
-
-Summary: 0 errors, 1 changes
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Makes sense, right? When we provide the param, it&amp;rsquo;s value is used instead of the
-default of &amp;ldquo;World&amp;rdquo;.&lt;/p&gt;
-
-&lt;p&gt;By the way, how does this effect our graph? Well, we&amp;rsquo;ve added a new resource.
-Normally, you&amp;rsquo;d have to &lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;explicitly specify dependencies&lt;/a&gt;, but Converge will look inside our template strings for
-references to Params. That means our graph is all hooked up, and looks like
-this:&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;Our graph with parameter. The file now depends on the name parameter.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        Our graph with parameter. The file now depends on the name parameter.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;h2 id=&#34;modules-calling-modules&#34;&gt;Modules Calling Modules&lt;/h2&gt;
-
-&lt;p&gt;This is all well and good, but we don&amp;rsquo;t want to have to write things the same
-&lt;em&gt;every time&lt;/em&gt; right? Well, good news: that&amp;rsquo;s what modules are for! Now that
-you&amp;rsquo;ve written a module, you can require it from any other module to add it to
-your tree. Create a new module, let&amp;rsquo;s call it &lt;code&gt;helloYou.hcl&lt;/code&gt;:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;module &amp;quot;helloWorld.hcl&amp;quot; &amp;quot;hello&amp;quot; {
-  params {
-    name = &amp;quot;Spartacus&amp;quot;
-  }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now try running &lt;code&gt;converge plan helloYou.hcl&lt;/code&gt;. The same thing happens as if you
-had called the module yourself!&lt;/p&gt;
-
-&lt;p&gt;But once again, how does this effect our graph? You remember before that we had
-a root, a file resource, and a param resource. We still have all those things,
-but with a wrinkle: we&amp;rsquo;ve seen &lt;code&gt;/&lt;/code&gt; as our root module in all the previous
-diagrams, but &lt;code&gt;/&lt;/code&gt; is really just an alias for the root. Since we&amp;rsquo;re not
-requiring &lt;code&gt;helloWorld.hcl&lt;/code&gt; from &lt;code&gt;helloYou.hcl&lt;/code&gt;, Converge will reason about it as
-a separate module. But really, these are all part of the same tree, and Converge
-will walk over them as nodes.&lt;/p&gt;
-
-
-&lt;figure &gt;
-    
-        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-you.png&#34; alt=&#34;Our graph, but with our original module as a dependent module.&#34; /&gt;
-    
-    
-    &lt;figcaption&gt;
-        &lt;p&gt;
-        Our graph, but with our original module as a dependent module.
-        
-            
-        
-        &lt;/p&gt; 
-    &lt;/figcaption&gt;
-    
-&lt;/figure&gt;
-
-
-&lt;h2 id=&#34;what-s-next&#34;&gt;What&amp;rsquo;s Next?&lt;/h2&gt;
-
-&lt;p&gt;A great next step is to try and make something simple with Converge! Try
-installing something from Brew, if you&amp;rsquo;re running on OSX, or symlinking a
-dotfile into place.&lt;/p&gt;
-
-&lt;p&gt;If you&amp;rsquo;re ready, you can
-&lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;read about how all those dependencies &lt;em&gt;actually work&lt;/em&gt;&lt;/a&gt;!&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Install</title>
-      <link>http://converge.aster.is/install/</link>
-      <pubDate>Wed, 24 Aug 2016 23:49:44 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/install/</guid>
-      <description>&lt;pre&gt;&lt;code class=&#34;language-sh&#34;&gt;go get github.com/asteris-llc/converge
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;or download a release for your platform from the
-&lt;a href=&#34;https://github.com/asteris-llc/converge/releases&#34;&gt;releases page on Github&lt;/a&gt; and
-put it somewhere on your &lt;code&gt;$PATH&lt;/code&gt;.&lt;/p&gt;
 </description>
     </item>
     
