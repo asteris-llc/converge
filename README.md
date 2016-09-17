@@ -62,8 +62,8 @@ file.content "render" {
 }
 ```
 
-Invoke this with `converge apply --local samples/fileContent.hcl` to install
-Traefik from yum on your system. You can also `converge plan --local
+Invoke this with `converge apply --local samples/fileContent.hcl` to place
+a test file on your system. You can also `converge plan --local
 samples/fileContent.hcl` to see what changes will be made before you apply them.
 
 ## Development
