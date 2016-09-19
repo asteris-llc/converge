@@ -197,7 +197,7 @@ resource "aws_instance" "manager" {
 
   provisioner "converge" {
     params = {
-      docker-group-user-name = "${var.ssh_user_name}"
+      user-name = "${var.ssh_user_name}"
       swarm-manager-ip = "${aws_instance.manager.private_ip}"
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
@@ -238,7 +238,7 @@ resource "aws_instance" "worker" {
 
   provisioner "converge" {
     params = {
-      docker-group-user-name = "${var.ssh_user_name}",
+      user-name = "${var.ssh_user_name}",
     }
     modules = [
       "converge/main.hcl"
