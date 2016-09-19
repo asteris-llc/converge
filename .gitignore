@@ -24,7 +24,7 @@ _testmain.go
 *.prof
 
 # binaries
-converge
+/converge
 *.dot
 *.ps
 samples/**/*.png
