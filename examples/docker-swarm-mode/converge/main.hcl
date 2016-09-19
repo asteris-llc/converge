@@ -1,8 +1,8 @@
-param "docker-group-user-name" {}
+param "user-name" {}
 
 module "docker.hcl" "docker" {
   params = {
-    user-name = "{{param `docker-group-user-name`}}"
+    user-name = "{{param `user-name`}}"
   }
 }
 
