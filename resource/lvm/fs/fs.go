@@ -13,7 +13,7 @@ import (
 
 type ResourceFS struct {
 	mount           *Mount
-	lvm             *lowlevel.LVM
+	lvm             lowlevel.LVM
 	unitFileName    string
 	unitFileContent string
 	unitNeedUpdate  bool
@@ -43,7 +43,7 @@ Type={{.Type}}
 WantedBy=local-fs.target {{.WantedBy}}
 RequiredBy={{.RequiredBy}}`
 
-func (r *ResourceFS) Check() (status resource.TaskStatus, err error) {
+func (r *ResourceFS) Check(resource.Renderer) (status resource.TaskStatus, err error) {
 	if fs, err := r.lvm.Blkid(r.mount.What); err != nil {
 		return nil, err
 	} else {
@@ -75,26 +75,33 @@ func (r *ResourceFS) Check() (status resource.TaskStatus, err error) {
 	}, nil
 }
 
-func (r *ResourceFS) Apply() error {
+func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 	if r.needMkfs {
 		if err := r.lvm.Mkfs(r.mount.What, r.mount.Type); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if r.unitNeedUpdate {
 		if err := ioutil.WriteFile(r.unitFileName, []byte(r.unitFileContent), 0644); err != nil {
-			return err
+			return nil, err
 		}
-		if err := r.lvm.Backend.Run("systemctl", []string{"daemon-reload"}); err != nil {
-			return err
+		// FIXME: abstraction leak
+		if err := r.lvm.GetBackend().Run("systemctl", []string{"daemon-reload"}); err != nil {
+			return nil, err
 		}
 	}
 	if r.mountNeedUpdate {
-		if err := r.lvm.Backend.Run("systemctl", []string{"start", r.unitServiceName()}); err != nil {
-			return err
+		// FIXME: abstraction leak
+		if err := r.lvm.GetBackend().Run("systemctl", []string{"start", r.unitServiceName()}); err != nil {
+			return nil, err
 		}
 	}
-	return nil
+
+	// FIXME
+	return &resource.Status{
+		WillChange: r.needMkfs && r.unitNeedUpdate && r.mountNeedUpdate,
+		Status:     "",
+	}, nil
 }
 
 func (r *ResourceFS) Setup() error {

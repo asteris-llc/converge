@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-func (lvm *LVM) Blkid(dev string) (string, error) {
+func (lvm *RealLVM) Blkid(dev string) (string, error) {
 	return lvm.Backend.Read("blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", dev})
 }
 
-func (lvm *LVM) QueryDeviceMapperName(dmName string) (string, error) {
+func (lvm *RealLVM) QueryDeviceMapperName(dmName string) (string, error) {
 	out, err := lvm.Backend.Read("dmsetup", []string{"info", "-C", "--noheadings", "-o", "name", dmName})
 	if err != nil {
 		return "", err
@@ -18,7 +18,7 @@ func (lvm *LVM) QueryDeviceMapperName(dmName string) (string, error) {
 	return fmt.Sprintf("/dev/mapper/%s", out), nil
 }
 
-func (lvm *LVM) Query(prog string, out string, extras []string) ([]map[string]interface{}, error) {
+func (lvm *RealLVM) Query(prog string, out string, extras []string) ([]map[string]interface{}, error) {
 	result := []map[string]interface{}{}
 	args := []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", out, "--separator", ";"}
 	args = append(args, extras...)
@@ -37,6 +37,6 @@ func (lvm *LVM) Query(prog string, out string, extras []string) ([]map[string]in
 	return result, nil
 }
 
-func (lvm *LVM) parse(values interface{}, dest interface{}) error {
+func (lvm *RealLVM) parse(values interface{}, dest interface{}) error {
 	return mapstructure.Decode(values, dest)
 }

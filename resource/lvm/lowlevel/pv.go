@@ -10,7 +10,7 @@ type PhysicalVolume struct {
 	Device string
 }
 
-func (lvm *LVM) QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
+func (lvm *RealLVM) QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
 	result := map[string]*PhysicalVolume{}
 	pvs, err := lvm.Query("pvs", "pv_all,vg_name", []string{})
 	if err != nil {
