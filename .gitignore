@@ -24,7 +24,7 @@ _testmain.go
 *.prof
 
 # binaries
-converge
+/converge
 *.dot
 *.ps
 samples/**/*.png
@@ -38,3 +38,6 @@ build
 docs_source/extract
 docs_source/resources.mk
 docs_source/public
+
+# examples
+terraform.tfstate*
