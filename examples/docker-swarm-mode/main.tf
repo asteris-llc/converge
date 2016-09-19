@@ -191,8 +191,8 @@ resource "aws_instance" "manager" {
   }
 
   provisioner "file" {
-    source = "./converge-hcl"
-    destination = "/home/${var.ssh_user_name}/converge-hcl"
+    source = "./converge"
+    destination = "/home/${var.ssh_user_name}/converge"
   }
 
   provisioner "converge" {
@@ -202,8 +202,8 @@ resource "aws_instance" "manager" {
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
     modules = [
-      "converge-hcl/main.hcl",
-      "converge-hcl/manager.hcl"
+      "converge/main.hcl",
+      "converge/manager.hcl"
     ]
     download_binary = true
     prevent_sudo = false
@@ -232,8 +232,8 @@ resource "aws_instance" "worker" {
   }
 
   provisioner "file" {
-    source = "./converge-hcl"
-    destination = "/home/${var.ssh_user_name}/converge-hcl"
+    source = "./converge"
+    destination = "/home/${var.ssh_user_name}/converge"
   }
 
   provisioner "converge" {
@@ -241,7 +241,7 @@ resource "aws_instance" "worker" {
       docker-group-user-name = "${var.ssh_user_name}",
     }
     modules = [
-      "converge-hcl/main.hcl"
+      "converge/main.hcl"
     ]
     download_binary = true
     prevent_sudo = false
@@ -266,7 +266,7 @@ resource "null_resource" "worker-join" {
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
     modules = [
-      "converge-hcl/worker.hcl"
+      "converge/worker.hcl"
     ]
     download_binary = true
     prevent_sudo = false
