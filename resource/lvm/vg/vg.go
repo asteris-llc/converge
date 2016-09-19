@@ -12,10 +12,10 @@ type ResourceVG struct {
 	Exists          bool
 	DevicesToAdd    []string
 	DevicesToRemove []string
-	lvm             *lowlevel.LVM
+	lvm             lowlevel.LVM
 }
 
-func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
+func (r *ResourceVG) Check(resource.Renderer) (status resource.TaskStatus, err error) {
 	var wc bool
 	if r.Exists && len(r.DevicesToAdd) == 0 && len(r.DevicesToRemove) == 0 {
 		wc = false
@@ -28,22 +28,28 @@ func (r *ResourceVG) Check() (status resource.TaskStatus, err error) {
 	}, nil
 }
 
-func (r *ResourceVG) Apply() error {
+func (r *ResourceVG) Apply(resource.Renderer) (status resource.TaskStatus, err error) {
 	if r.Exists {
 		for _, d := range r.DevicesToAdd {
 			if err := r.lvm.ExtendVolumeGroup(r.Name, d); err != nil {
-				return err
+				return nil, err
 			}
 		}
 		for _, d := range r.DevicesToRemove {
 			if err := r.lvm.ReduceVolumeGroup(r.Name, d); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	} else {
-		return r.lvm.CreateVolumeGroup(r.Name, r.DevicesToAdd)
+		if err := r.lvm.CreateVolumeGroup(r.Name, r.DevicesToAdd); err != nil {
+			return nil, err
+		}
 	}
-	return nil
+
+	return &resource.Status{
+		WillChange: false,
+		Status:     "",
+	}, nil
 }
 
 func (r *ResourceVG) Setup(devs []string) error {

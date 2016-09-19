@@ -13,12 +13,12 @@ type ResourceLV struct {
 	size       int64
 	sizeOption string
 	sizeUnit   string
-	lvm        *lowlevel.LVM
+	lvm        lowlevel.LVM
 	lvs        map[string]*lowlevel.LogicalVolume
 	needCreate bool
 }
 
-func (r *ResourceLV) Check() (status resource.TaskStatus, err error) {
+func (r *ResourceLV) Check(resource.Renderer) (status resource.TaskStatus, err error) {
 	if _, ok := r.lvs[r.name]; !ok {
 		r.needCreate = true
 	} else {
@@ -32,13 +32,17 @@ func (r *ResourceLV) Check() (status resource.TaskStatus, err error) {
 	return ts, nil
 }
 
-func (r *ResourceLV) Apply() error {
+func (r *ResourceLV) Apply(resource.Renderer) (status resource.TaskStatus, err error) {
 	if r.needCreate {
 		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size, r.sizeOption, r.sizeUnit); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	ts := &resource.Status{
+		Status:     "",
+		WillChange: r.needCreate,
+	}
+	return ts, nil
 }
 
 func (r *ResourceLV) Setup(sizeToParse string) error {
