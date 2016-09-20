@@ -29,7 +29,7 @@ type Param struct {
 
 // Check just returns the current value of the parameter. It should never have to change.
 func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
-	p.Status = resource.Status{Status: p.String()}
+	p.Status = resource.Status{Output: []string{p.String()}}
 
 	return p, nil
 }
