@@ -74,11 +74,6 @@ type TaskStatus interface {
 
 // Status is the default TaskStatus implementation
 type Status struct {
-	// FailingDeps is constructed automatically; you don't need to do anything
-	// with it.
-	// TODO(brianhicks): make private and accessible only through a method on TaskStatus?
-	FailingDeps []badDep
-
 	// Differences contains the things that will change as a part of this
 	// Status. This will be used almost exclusively in the Check phase of
 	// operations on resources. Use `NewStatus` to get a Status with this
@@ -92,6 +87,8 @@ type Status struct {
 	// Level indicates the change level of the status. Level is a gradation (see
 	// the Status* contsts above.)
 	Level StatusLevel
+
+	failingDeps []badDep
 }
 
 // NewStatus returns a Status with all fields initialized
@@ -134,7 +131,7 @@ func (t *Status) HasChanges() bool {
 // HealthCheck provides a default health check implementation for statuses
 func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	status = &HealthStatus{TaskStatus: t, FailingDeps: make(map[string]string)}
-	if !t.HasChanges() && len(t.FailingDeps) == 0 {
+	if !t.HasChanges() && len(t.failingDeps) == 0 {
 		return
 	}
 
@@ -142,7 +139,7 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	// at a warning status.
 	status.UpgradeWarning(StatusWarning)
 
-	for _, failingDep := range t.FailingDeps {
+	for _, failingDep := range t.failingDeps {
 		status.FailingDeps[failingDep.ID] = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
 	}
 	if t.StatusCode() >= 2 {
@@ -153,7 +150,7 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 
 // FailingDep tracks a new failing dependency
 func (t *Status) FailingDep(id string, stat TaskStatus) {
-	t.FailingDeps = append(t.FailingDeps, badDep{ID: id, Status: stat})
+	t.failingDeps = append(t.failingDeps, badDep{ID: id, Status: stat})
 }
 
 // AddDifference adds a TextDiff to the Differences map
