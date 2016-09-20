@@ -43,7 +43,7 @@ func TestCheck(t *testing.T) {
 
 	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
+	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.True(t, status.HasChanges())
 }
 
@@ -58,6 +58,6 @@ func TestApply(t *testing.T) {
 	require.NoError(t, err)
 	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
+	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.False(t, status.HasChanges())
 }

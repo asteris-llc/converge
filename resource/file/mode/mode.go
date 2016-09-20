@@ -37,7 +37,6 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 		diffs[t.Destination] = &FileModeDiff{Expected: t.Mode}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
 		return &resource.Status{
-			Status:       status,
 			WarningLevel: resource.StatusFatal,
 			WillChange:   false,
 			Differences:  diffs,
@@ -56,7 +55,6 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	t.Status = resource.Status{
-		Status:       status,
 		WarningLevel: warningLevel,
 		WillChange:   modeDiff.Changes(),
 		Differences:  diffs,
