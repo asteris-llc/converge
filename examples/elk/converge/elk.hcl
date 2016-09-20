@@ -8,7 +8,7 @@ module "docker.hcl" "docker" {
   params = {
     user-name = "{{param `user-name`}}"
   }
-  depends = ["module.packages/task.epel-install"]
+  depends = ["module.packages"]
 }
 
 param "elasticsearch-data-directory" {
@@ -22,7 +22,7 @@ param "filebeat-service" {
 task "filebeat-install" {
   check   = "yum list installed filebeat"
   apply   = "rpm -ivh https://download.elastic.co/beats/filebeat/filebeat-1.3.0-x86_64.rpm"
-  depends = ["module.docker/task.docker-install"]
+  depends = ["module.docker"]
 }
 
 file.content "filebeat-yml" {
@@ -86,7 +86,7 @@ file.directory "elasticsearch-data-directory" {
 docker.image "elasticsearch-image" {
   name    = "elasticsearch"
   tag     = "2.4.0"
-  depends = ["module.docker/task.docker-start"]
+  depends = ["module.docker"]
 }
 
 docker.container "elasticsearch-container" {
@@ -102,7 +102,7 @@ docker.container "elasticsearch-container" {
 docker.image "kibana-image" {
   name    = "kibana"
   tag     = "4.6.0"
-  depends = ["module.docker/task.docker-start"]
+  depends = ["module.docker"]
 }
 
 docker.container "kibana-container" {
