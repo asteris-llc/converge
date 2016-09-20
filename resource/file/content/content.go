@@ -38,23 +38,21 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusWillChange,
-			WillChange:   true,
-			Differences:  diffs,
-			Status:       t.Destination + ": File is missing",
+			Level:       resource.StatusWillChange,
+			Differences: diffs,
+			Output:      []string{t.Destination + ": File is missing"},
 		}
 		return t, nil
 	} else if err != nil {
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Status:       "Cannot read `" + t.Destination + "`",
+			Level:  resource.StatusFatal,
+			Output: []string{"Cannot read `" + t.Destination + "`"},
 		}
 		return t, err
 	} else if stat.IsDir() {
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			WillChange:   true,
-			Status:       t.Destination + " is a directory",
+			Level:  resource.StatusCantChange,
+			Output: []string{t.Destination + " is a directory"},
 		}
 		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
@@ -73,15 +71,14 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	t.Status = &resource.Status{
-		Status:      statusMessage,
+		Output:      []string{statusMessage},
 		Differences: diffs,
-		WillChange:  resource.AnyChanges(diffs),
 	}
 	return t, nil
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (t *Content) Apply() (resource.TaskStatus, error) {
 	var perm os.FileMode
 	var preChange string
 	diffs := make(map[string]resource.Diff)
@@ -91,7 +88,10 @@ func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		diffs["mode"] = resource.TextDiff{Values: [2]string{"not set", "0600"}}
 		perm = 0600
 	} else if err != nil {
-		return t.Check(r)
+		return &resource.Status{
+			Level:  resource.StatusFatal,
+			Output: []string{err.Error()},
+		}, err
 	} else {
 		perm = stat.Mode()
 	}
@@ -106,9 +106,9 @@ func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 
 	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
 		t.Status = &resource.Status{
-			Status:       fmt.Sprintf("%s", err),
-			WarningLevel: resource.StatusFatal,
-			Differences:  diffs,
+			Output:      []string{err.Error()},
+			Level:       resource.StatusFatal,
+			Differences: diffs,
 		}
 		return t, err
 	}

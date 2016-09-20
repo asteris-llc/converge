@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateInterface(t *testing.T) {
@@ -42,7 +43,7 @@ func TestCheck(t *testing.T) {
 
 	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
+	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.True(t, status.HasChanges())
 }
 
@@ -53,10 +54,10 @@ func TestApply(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
-	_, err = mode.Apply(fakerenderer.New())
-	assert.NoError(t, err)
+	_, err = mode.Apply()
+	require.NoError(t, err)
 	status, err := mode.Check(fakerenderer.New())
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()), status.Value())
+	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.False(t, status.HasChanges())
 }
