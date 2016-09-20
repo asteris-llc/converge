@@ -78,7 +78,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 	expected := tmpdir + " is a directory"
 
 	status, err := tmpl.Check(fakerenderer.New())
-	assert.Equal(t, expected, status.Value())
+	assert.Contains(t, status.Messages(), expected)
 	assert.True(t, status.HasChanges())
 	if assert.Error(t, err) {
 		assert.EqualError(
@@ -104,7 +104,7 @@ func TestContentCheckSetsValueToOKWhenEverythingIsOK(t *testing.T) {
 	}
 
 	status, err := tmpl.Check(fakerenderer.New())
-	assert.Equal(t, "OK", status.Value())
+	assert.Contains(t, status.Messages(), "OK")
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
 }
