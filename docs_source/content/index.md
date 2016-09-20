@@ -21,6 +21,7 @@ runs tasks in parallel.
 - Module verification: only run trusted modules.
 
 [![Slack Status](http://converge-slack.aster.is/badge.svg)](http://converge-slack.aster.is)
+[![Code Climate](https://codeclimate.com/github/asteris-llc/converge/badges/gpa.svg)](https://codeclimate.com/github/asteris-llc/converge)
 
 ## Installation
 
