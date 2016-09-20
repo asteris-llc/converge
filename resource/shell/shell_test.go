@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
@@ -132,16 +133,18 @@ func Test_Diffs_ReturnsEmptyMap(t *testing.T) {
 // StatusCode
 
 func Test_StatusCode_WhenNoStatus_ReturnsFatal(t *testing.T) {
+	defer logging.HideLogs(t)()
+
 	sh := defaultTestShell()
 	assert.Equal(t, resource.StatusFatal, sh.StatusCode())
 }
 
-func Test_StatusCode_WhenMultipleStatus_ReturnsMostRecentSTatus(t *testing.T) {
-	var expected uint32 = 7
+func Test_StatusCode_WhenMultipleStatus_ReturnsMostRecentStatus(t *testing.T) {
+	var expected resource.StatusLevel = 7
 	status := &shell.CommandResults{ExitStatus: 0}
-	status = status.Cons("", &shell.CommandResults{ExitStatus: expected})
+	status = status.Cons("", &shell.CommandResults{ExitStatus: uint32(expected)})
 	sh := &shell.Shell{Status: status}
-	assert.Equal(t, int(expected), sh.StatusCode())
+	assert.Equal(t, expected, sh.StatusCode())
 }
 
 // Shell context

@@ -39,7 +39,6 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 		diffs[t.Destination] = contentDiff
 		t.Status = &resource.Status{
 			WarningLevel: resource.StatusWillChange,
-			WillChange:   true,
 			Differences:  diffs,
 			Output:       []string{t.Destination + ": File is missing"},
 		}
@@ -52,8 +51,7 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 		return t, err
 	} else if stat.IsDir() {
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			WillChange:   true,
+			WarningLevel: resource.StatusCantChange,
 			Output:       []string{t.Destination + " is a directory"},
 		}
 		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
@@ -75,7 +73,6 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 	t.Status = &resource.Status{
 		Output:      []string{statusMessage},
 		Differences: diffs,
-		WillChange:  resource.AnyChanges(diffs),
 	}
 	return t, nil
 }
@@ -93,7 +90,6 @@ func (t *Content) Apply() (resource.TaskStatus, error) {
 	} else if err != nil {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
-			WillChange:   true,
 			Output:       []string{err.Error()},
 		}, err
 	} else {

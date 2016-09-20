@@ -46,7 +46,6 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	i.Status.AddDifference("image", original, repoTag, "<image-missing>")
 	if resource.AnyChanges(i.Status.Differences) {
-		i.Status.WillChange = true
 		i.Status.WarningLevel = resource.StatusWillChange
 	}
 	return i, nil

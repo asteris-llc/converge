@@ -84,7 +84,6 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.WarningLevel = resource.StatusWillChange
 			status.Output = append(status.Output, "group name and gid do not exist")
 			status.AddDifference("group", string(StateAbsent), fmt.Sprintf("group %s with gid %s", g.Name, g.GID), "")
-			status.WillChange = true
 		case nameNotFound:
 			status.WarningLevel = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group gid %s already exists", g.GID))
@@ -116,7 +115,6 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
 			status.WarningLevel = resource.StatusWillChange
-			status.WillChange = true
 			status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, g.GID), string(StateAbsent), "")
 		}
 	default:

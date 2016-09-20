@@ -45,12 +45,10 @@ func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
 			return status, errors.Wrapf(err, "could not stat %q")
 
 		case os.IsNotExist(err):
-			status.WillChange = true
-
 			// if we aren't told to create everything, we should fail early
 			// since we can't create the parent directories
 			if !d.CreateAll && dest != d.Destination {
-				status.RaiseLevel(resource.StatusFatal)
+				status.RaiseLevel(resource.StatusCantChange)
 				status.AddMessage(fmt.Sprintf("%q does not exist and will not be created (enable create_all to do this)", dest))
 				status.Differences = nil
 				return status, nil
@@ -60,7 +58,7 @@ func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.AddDifference(dest, "<absent>", "<present>", "<absent>")
 
 		case !stat.IsDir():
-			status.RaiseLevel(resource.StatusFatal)
+			status.RaiseLevel(resource.StatusCantChange)
 			status.AddMessage(fmt.Sprintf("%q already exists and is not a directory", dest))
 			return status, nil
 

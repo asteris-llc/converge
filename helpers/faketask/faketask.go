@@ -22,27 +22,27 @@ import (
 
 // FakeTask for testing things that require real tasks
 type FakeTask struct {
-	Status     string
-	WillChange bool
-	Error      error
+	Status string
+	Level  resource.StatusLevel
+	Error  error
 }
 
 // Check returns values set on struct
 func (ft *FakeTask) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WillChange: ft.WillChange}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.Level}, ft.Error
 }
 
 // Apply returns values set on struct
 func (ft *FakeTask) Apply() (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WillChange: ft.WillChange}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.Level}, ft.Error
 }
 
 // NoOp returns a FakeTask that doesn't have to do anything
 func NoOp() *FakeTask {
 	return &FakeTask{
-		Status:     "all good",
-		WillChange: false,
-		Error:      nil,
+		Status: "all good",
+		Level:  resource.StatusWontChange,
+		Error:  nil,
 	}
 }
 
@@ -50,18 +50,18 @@ func NoOp() *FakeTask {
 // applying
 func Error() *FakeTask {
 	return &FakeTask{
-		Status:     "error",
-		WillChange: false,
-		Error:      errors.New("error"),
+		Status: "error",
+		Level:  resource.StatusFatal,
+		Error:  errors.New("error"),
 	}
 }
 
 // WillChange returns a FakeTask that will always change
 func WillChange() *FakeTask {
 	return &FakeTask{
-		Status:     "changed",
-		WillChange: true,
-		Error:      nil,
+		Status: "changed",
+		Level:  resource.StatusWillChange,
+		Error:  nil,
 	}
 }
 
@@ -75,14 +75,22 @@ type FakeSwapper struct {
 
 // Check returns values set on struct
 func (ft *FakeSwapper) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WillChange: ft.WillChange}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.level()}, ft.Error
 }
 
 // Apply negates the current WillChange value set on struct and returns
 // configured error
 func (ft *FakeSwapper) Apply() (resource.TaskStatus, error) {
 	ft.WillChange = !ft.WillChange
-	return &resource.Status{Output: []string{ft.Status}, WillChange: ft.WillChange}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.level()}, ft.Error
+}
+
+func (ft *FakeSwapper) level() resource.StatusLevel {
+	if ft.WillChange {
+		return resource.StatusWillChange
+	}
+
+	return resource.StatusNoChange
 }
 
 // Swapper creates a new stub swapper with an initial WillChange value of true

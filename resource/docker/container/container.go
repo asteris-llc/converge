@@ -76,7 +76,6 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	if resource.AnyChanges(c.Status.Differences) {
-		c.Status.WillChange = true
 		c.Status.WarningLevel = resource.StatusWillChange
 	}
 
