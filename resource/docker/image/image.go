@@ -33,7 +33,6 @@ type Image struct {
 // Check system for presence of docker image
 func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
-	i.Status.Status = repoTag
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
 		i.Status.WarningLevel = resource.StatusFatal
@@ -58,10 +57,9 @@ func (i *Image) Apply() (resource.TaskStatus, error) {
 	if err := i.client.PullImage(i.Name, i.Tag); err != nil {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
-			Status:       fmt.Sprintf("%s", err),
+			Output:       []string{err.Error()},
 		}, err
 	}
-	i.Status = resource.Status{Status: i.RepoTag()}
 	return i, nil
 }
 

@@ -66,7 +66,6 @@ func TestImageCheckImageNeedsChange(t *testing.T) {
 	assert.True(t, status.HasChanges())
 	assert.Equal(t, "<image-missing>", status.Diffs()["image"].Original())
 	assert.Equal(t, "ubuntu:precise", status.Diffs()["image"].Current())
-	assert.Equal(t, "ubuntu:precise", status.Value())
 }
 
 func TestImageCheckImageNoChange(t *testing.T) {
@@ -85,7 +84,6 @@ func TestImageCheckImageNoChange(t *testing.T) {
 	assert.False(t, status.HasChanges())
 	assert.Equal(t, "ubuntu:precise", status.Diffs()["image"].Original())
 	assert.Equal(t, "ubuntu:precise", status.Diffs()["image"].Current())
-	assert.Equal(t, "ubuntu:precise", status.Value())
 }
 
 func TestImageCheckFailed(t *testing.T) {
