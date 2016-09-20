@@ -29,24 +29,21 @@ file.content "render" {
 ## Planning
 
 This is our first module! Let's plan out our execution first by running
-`converge plan helloWorld.hcl`:
+`converge plan --local helloWorld.hcl`:
 
 ```sh
 $ converge plan --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=7671639d-b007-4145-994b-0765080bd82c
-INFO[0000] serving                                       addr=:47740 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] loading resources                             component=rpc function=SetResources runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] rendering                                     component=rpc function=Render runID=7ab3e976-8922-4df8-93ef-afd89cf0823c
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+2016-09-20T08:05:31-05:00 |WARN| setting session-local token	token=309b7660-a0b1-4a88-9fa4-d5f2a139b8de
+2016-09-20T08:05:31-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:05:31-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: "<file-missing>" => "Hello, World!"
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: "<file-missing>" => "Hello, World!"
 
 Summary: 0 errors, 1 changes
 ```
@@ -58,26 +55,20 @@ output.
 
 ## Applying
 
-Next, let's actually make the changes, using `converge apply`:
+Next, let's actually make the changes, using `converge apply --local helloWorld.hcl`:
 
 ```sh
 $ converge apply --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=4ffe080e-bc6b-4655-b7d5-e5456beb1e67
-INFO[0000] serving                                       addr=:47740 component=rpc
-INFO[0000] applying                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] loading resources                             component=rpc function=SetResources runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] rendering                                     component=rpc function=Render runID=56d53bc1-6fe5-4e17-a8a0-9ba97fd0c65c
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=APPLY
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=APPLY
+2016-09-20T08:06:21-05:00 |WARN| setting session-local token	token=4d9f2774-8ed1-4dc4-8db5-a359b275b3b5
+2016-09-20T08:06:21-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:06:21-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=APPLY
+2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=APPLY
 
 root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: "<file-missing>" => "Hello, World!"
+    Messages:
+    Has Changes: yes
+    Changes: No changes
 
 Summary: 0 errors, 1 changes
 ```
@@ -108,20 +99,17 @@ plan again.
 
 ```sh
 $ converge plan --local helloWorld.hcl
-WARN[0000] setting session-local token                   token=2157f1e9-6ca9-4e6f-a203-096608c9adcd
-INFO[0000] serving                                       addr=:47740 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] loading resources                             component=rpc function=SetResources runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] rendering                                     component=rpc function=Render runID=5ca7bb15-c4b2-4453-b065-ac5cba288c82
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+2016-09-20T08:07:02-05:00 |WARN| setting session-local token	token=c61a0f03-2f4d-43cd-9722-1482e6396b70
+2016-09-20T08:07:02-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:07:02-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: "LOL World!" => "Hello, World!"
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: "LOL World!" => "Hello, World!"
 
 Summary: 0 errors, 1 changes
 ```
@@ -162,22 +150,19 @@ Let's change the name in the template to your name (I'm going to assume it's
 "Spartacus".) We'll use the `-p` flag to `converge plan` to see what'll happen:
 
 ```sh
-$ converge plan --local -p name=Spartacus content/helloWorld.hcl
-WARN[0000] setting session-local token                   token=dc73ca2e-d5dc-46d6-a2e4-81b848e7309c
-INFO[0000] serving                                       addr=:47740 component=rpc
-INFO[0000] planning                                      component=client file=hello.hcl
-INFO[0000] resolving dependencies                        component=rpc function=ResolveDependencies runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] loading resources                             component=rpc function=SetResources runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] rendering                                     component=rpc function=Render runID=91562f11-df7b-4e8e-8fda-d341531afe92
-INFO[0000] got status                                    component=client file=hello.hcl id=root/param.name run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root/file.content.render run=STARTED stage=PLAN
-INFO[0000] got status                                    component=client file=hello.hcl id=root run=STARTED stage=PLAN
+$ converge plan --local -p name=Spartacus helloWorld.hcl
+2016-09-20T08:07:51-05:00 |WARN| setting session-local token	token=376ae4d9-8c7a-4581-be05-4c3cb8401798
+2016-09-20T08:07:51-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:07:51-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/param.name run=STARTED stage=PLAN
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
 
 root/file.content.render:
-        Messages:
-        Has Changes: yes
-        Changes:
-            hello.txt: "LOL World!" => "Hello, Spartacus!"
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: "Hello, World!" => "Hello, Spartacus!"
 
 Summary: 0 errors, 1 changes
 ```
