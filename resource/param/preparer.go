@@ -16,6 +16,7 @@ package param
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -30,7 +31,7 @@ type Preparer struct {
 	// Default is an optional field that provides a default value if none is
 	// provided to this parameter. If this field is not set, this param will be
 	// treated as required.
-	Default *string `hcl:"default"`
+	Default interface{} `hcl:"default"`
 }
 
 // Prepare a new task
@@ -43,9 +44,18 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, errors.New("param is required")
 	}
 
-	def, err := render.Render("default", *p.Default)
-	if err != nil {
-		return nil, err
+	var def string
+
+	switch v := p.Default.(type) {
+	case string:
+		var err error
+		def, err = render.Render("default", v)
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		def = fmt.Sprintf("%v", v)
 	}
 
 	return &Param{Value: def}, nil
