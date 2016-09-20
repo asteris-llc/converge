@@ -60,8 +60,6 @@ type Container struct {
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
-	c.Status.Status = c.Name
-
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
 		c.Status.WarningLevel = resource.StatusFatal
