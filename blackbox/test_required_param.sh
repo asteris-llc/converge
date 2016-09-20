@@ -5,15 +5,15 @@ ROOT=$(pwd)
 
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
-    rm -rf ${TMP}
+    rm -rf "$TMP"
 }
 trap finish EXIT
 
-pushd ${TMP}
+pushd "$TMP"
 
 echo 'param "test" {}' > required_param.hcl
 
-if ${ROOT}/converge apply --local required_param.hcl; then
+if "$ROOT"/converge apply --local required_param.hcl; then
     echo "failed: apply without required param succeeded"
     exit 1
 else
