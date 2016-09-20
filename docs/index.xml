@@ -6,13 +6,13 @@
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 19 Sep 2016 19:45:28 -0500</lastBuildDate>
+    <lastBuildDate>Mon, 19 Sep 2016 19:45:54 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>param</title>
       <link>http://converge.aster.is/resources/param/</link>
-      <pubDate>Mon, 19 Sep 2016 19:45:28 -0500</pubDate>
+      <pubDate>Mon, 19 Sep 2016 19:45:54 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/param/</guid>
       <description>
@@ -41,7 +41,7 @@ task &amp;quot;render&amp;quot; {
 &lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (anything)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (anything scalar)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;Default is an optional field that provides a default value if none is
