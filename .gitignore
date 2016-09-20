@@ -41,3 +41,4 @@ docs_source/public
 
 # examples
 terraform.tfstate*
+.vagrant
