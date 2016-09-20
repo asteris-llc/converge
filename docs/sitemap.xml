@@ -3,7 +3,12 @@
   
   <url>
     <loc>http://converge.aster.is/</loc>
-    <lastmod>2016-09-16T15:32:02-05:00</lastmod>
+    <lastmod>2016-09-19T19:45:28-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/param/</loc>
+    <lastmod>2016-09-19T19:45:28-05:00</lastmod>
   </url>
   
   <url>
@@ -43,11 +48,6 @@
   
   <url>
     <loc>http://converge.aster.is/resources/module/</loc>
-    <lastmod>2016-09-08T23:18:03-07:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/param/</loc>
     <lastmod>2016-09-08T23:18:03-07:00</lastmod>
   </url>
   

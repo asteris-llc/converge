@@ -6,8 +6,49 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 16 Sep 2016 15:32:02 -0500</lastBuildDate>
+    <lastBuildDate>Mon, 19 Sep 2016 19:45:28 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>param</title>
+      <link>http://converge.aster.is/resources/param/</link>
+      <pubDate>Mon, 19 Sep 2016 19:45:28 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/param/</guid>
+      <description>
+
+&lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
+&lt;code&gt;{{param &amp;quot;name&amp;quot;}}&lt;/code&gt; template call anywhere you need the value of a param
+inside the current module.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (anything)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Default is an optional field that provides a default value if none is
+provided to this parameter. If this field is not set, this param will be
+treated as required.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>user.group</title>
@@ -404,47 +445,6 @@ module &amp;quot;basic.hcl&amp;quot; &amp;quot;basic&amp;quot; {
 
 &lt;p&gt;Params is a map of strings to anything you&amp;rsquo;d like. It will be passed to
 the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s there.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>param</title>
-      <link>http://converge.aster.is/resources/param/</link>
-      <pubDate>Thu, 08 Sep 2016 23:18:03 -0700</pubDate>
-      
-      <guid>http://converge.aster.is/resources/param/</guid>
-      <description>
-
-&lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
-&lt;code&gt;{{param &amp;quot;name&amp;quot;}}&lt;/code&gt; template call anywhere you need the value of a param
-inside the current module.&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
-  default = &amp;quot;Hello, World!&amp;quot;
-}
-
-param &amp;quot;filename&amp;quot; {
-  default = &amp;quot;test.txt&amp;quot;
-}
-
-task &amp;quot;render&amp;quot; {
-  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
-  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (optional string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Default is an optional field that provides a default value if none is
-provided to this parameter. If this field is not set, this param will be
-treated as required.&lt;/p&gt;
 </description>
     </item>
     

@@ -1,7 +1,7 @@
 ---
 title: "param"
 slug: "param"
-date: "2016-09-08T23:18:03-07:00"
+date: "2016-09-19T19:45:54-05:00"
 menu:
   main:
     parent: resources
@@ -34,7 +34,7 @@ task "render" {
 
 ## Parameters
 
-- `default` (optional string)
+- `default` (anything scalar)
 
   Default is an optional field that provides a default value if none is
 provided to this parameter. If this field is not set, this param will be
