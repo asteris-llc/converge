@@ -40,7 +40,7 @@ func TestGroupInterface(t *testing.T) {
 var (
 	currUser      *os.User
 	currUsername  string
-	currUid       string
+	currUID       string
 	currGroup     *os.Group
 	currGroupName string
 	currGid       string
@@ -48,7 +48,7 @@ var (
 	groupErr      error
 	tempUsername  []string
 	fakeUsername  string
-	fakeUid       string
+	fakeUID       string
 	fakeGroupName string
 	fakeGid       string
 	gidErr        error
@@ -56,15 +56,15 @@ var (
 )
 
 const (
-	// Valid GID range varies based on system
+	// GIDMin and GIDMax designate valid GID range varies based on system
 	// At a minimum, 0-32676 is valid
-	GID_MIN = 0
-	GID_MAX = math.MaxInt16
+	GIDMin = 0
+	GIDMax = math.MaxInt16
 
-	// Valid UID range varies based on system
+	// UIDMin and UIDMax designate valid UID range varies based on system
 	// At a minimum, 0-32676 is valid
-	UID_MIN = 0
-	UID_MAX = math.MaxInt16
+	UIDMin = 0
+	UIDMax = math.MaxInt16
 )
 
 func init() {
@@ -74,7 +74,7 @@ func init() {
 	}
 
 	currUsername = currUser.Username
-	currUid = currUser.Uid
+	currUID = currUser.Uid
 
 	currGid = currUser.Gid
 	currGroup, groupErr = os.LookupGroupId(currGid)
@@ -82,7 +82,7 @@ func init() {
 		panic(groupErr)
 	}
 
-	fakeUid, uidErr = setFakeUid()
+	fakeUID, uidErr = setFakeUid()
 	if uidErr != nil {
 		panic(uidErr)
 	}
@@ -187,7 +187,7 @@ func TestCheckPresentWithUidWithGidFails(t *testing.T) {
 	}
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.GID = gid
 	u.State = user.StatePresent
 	status, err := u.Check(fakerenderer.New())
@@ -211,7 +211,7 @@ func TestCheckPresentWithUidWithGidAddUser(t *testing.T) {
 	}
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.GID = gid
 	u.State = user.StatePresent
 	status, err := u.Check(fakerenderer.New())
@@ -233,7 +233,7 @@ func TestCheckPresentWithUidNoGidAddUser(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.State = user.StatePresent
 	status, err := u.Check(fakerenderer.New())
 
@@ -254,7 +254,7 @@ func TestCheckPresentUidExists(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = currUid
+	u.UID = currUID
 	u.State = user.StatePresent
 	status, err := u.Check(fakerenderer.New())
 
@@ -351,7 +351,7 @@ func TestCheckAbsentWithUidUserNotFound(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.State = user.StateAbsent
 	status, err := u.Check(fakerenderer.New())
 
@@ -370,7 +370,7 @@ func TestCheckAbsentWithUidUsernameNotFound(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = currUid
+	u.UID = currUID
 	u.State = user.StateAbsent
 	status, err := u.Check(fakerenderer.New())
 
@@ -389,7 +389,7 @@ func TestCheckAbsentWithUid_UidNotFound(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = currUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.State = user.StateAbsent
 	status, err := u.Check(fakerenderer.New())
 
@@ -431,7 +431,7 @@ func TestCheckAbsentWithUidDeleteUser(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = currUsername
-	u.UID = currUid
+	u.UID = currUID
 	u.State = user.StateAbsent
 	status, err := u.Check(fakerenderer.New())
 
@@ -451,7 +451,7 @@ func TestCheckStateUnknown(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = currUsername
-	u.UID = currUid
+	u.UID = currUID
 	u.State = "test"
 	_, err := u.Check(fakerenderer.New())
 
@@ -531,7 +531,7 @@ func TestApplyPresentWithUidAddUser(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -555,7 +555,7 @@ func TestApplyPresentWithUidAddUserError(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -580,7 +580,7 @@ func TestApplyPresentWithUidNotAdded(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -665,7 +665,7 @@ func TestApplyAbsentWithUidDeleteUser(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -688,7 +688,7 @@ func TestApplyAbsentWithUidDeleteUserError(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -712,7 +712,7 @@ func TestApplyAbsentWithUidNotDeleted(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -735,7 +735,7 @@ func TestApplyStateUnknown(t *testing.T) {
 
 	usr := &os.User{
 		Username: fakeUsername,
-		Uid:      fakeUid,
+		Uid:      fakeUID,
 	}
 	m := &MockSystem{}
 	u := user.NewUser(m)
@@ -760,7 +760,7 @@ func TestSetUserOptionsAll(t *testing.T) {
 
 	u := user.NewUser(new(user.System))
 	u.Username = fakeUsername
-	u.UID = fakeUid
+	u.UID = fakeUID
 	u.GID = fakeGid
 	u.Name = "test"
 	u.HomeDir = "testDir"
@@ -795,7 +795,7 @@ func TestSetUserOptionsNone(t *testing.T) {
 // setUid is used to find a uid that exists, but is not
 // a match for the current user name (currUsername).
 func setUid() (string, error) {
-	for i := 0; i <= UID_MAX; i++ {
+	for i := 0; i <= UIDMax; i++ {
 		uid := strconv.Itoa(i)
 		user, err := os.LookupId(uid)
 		if err == nil && user.Username != currUsername {
@@ -807,7 +807,7 @@ func setUid() (string, error) {
 
 // setFakeUid is used to set a uid that does not exist.
 func setFakeUid() (string, error) {
-	for i := UID_MIN; i <= UID_MAX; i++ {
+	for i := UIDMin; i <= UIDMax; i++ {
 		uid := strconv.Itoa(i)
 		_, err := os.LookupId(uid)
 		if err != nil {
@@ -820,7 +820,7 @@ func setFakeUid() (string, error) {
 // setGid is used to find a gid that exists, but is not
 // a match for the current user group name (currGroupName).
 func setGid() (string, error) {
-	for i := 0; i <= GID_MAX; i++ {
+	for i := 0; i <= GIDMax; i++ {
 		gid := strconv.Itoa(i)
 		group, err := os.LookupGroupId(gid)
 		if err == nil && group.Name != currGroupName {
@@ -832,7 +832,7 @@ func setGid() (string, error) {
 
 // setFakeGid is used to set a gid that does not exist.
 func setFakeGid() (string, error) {
-	for i := GID_MIN; i <= GID_MAX; i++ {
+	for i := GIDMin; i <= GIDMax; i++ {
 		gid := strconv.Itoa(i)
 		_, err := os.LookupGroupId(gid)
 		if err != nil {
@@ -842,30 +842,36 @@ func setFakeGid() (string, error) {
 	return "", fmt.Errorf("setFakeGid: could not set gid")
 }
 
+// MockSystem is a mock implementation of user.System
 type MockSystem struct {
 	mock.Mock
 }
 
+// AddUser adds a user
 func (m *MockSystem) AddUser(name string, options map[string]string) error {
 	args := m.Called(name, options)
 	return args.Error(0)
 }
 
+// DelUser deletes a user
 func (m *MockSystem) DelUser(name string) error {
 	args := m.Called(name)
 	return args.Error(0)
 }
 
+// Lookup looks up a user by name
 func (m *MockSystem) Lookup(name string) (*os.User, error) {
 	args := m.Called(name)
 	return args.Get(0).(*os.User), args.Error(1)
 }
 
+// LookupID looks up a user by ID
 func (m *MockSystem) LookupID(uid string) (*os.User, error) {
 	args := m.Called(uid)
 	return args.Get(0).(*os.User), args.Error(1)
 }
 
+// LookupGroupID looks up a group by ID
 func (m *MockSystem) LookupGroupID(gid string) (*os.Group, error) {
 	args := m.Called(gid)
 	return args.Get(0).(*os.Group), args.Error(1)
