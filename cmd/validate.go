@@ -41,7 +41,7 @@ var validateCmd = &cobra.Command{
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			log.WithField("component", "client").Warn("skipping module verfication")
+			log.WithField("component", "client").Warn("skipping module verification")
 		}
 
 		for _, fname := range args {

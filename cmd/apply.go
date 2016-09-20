@@ -76,7 +76,7 @@ real happens.`,
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			clog.Warn("skipping module verfication")
+			clog.Warn("skipping module verification")
 		}
 
 		// execute files
