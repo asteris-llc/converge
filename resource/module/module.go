@@ -30,7 +30,7 @@ type Module struct {
 
 // Check just returns the current value of the moduleeter. It should never have to change.
 func (m *Module) Check(resource.Renderer) (resource.TaskStatus, error) {
-	m.Status = resource.Status{Status: m.String(), WillChange: false}
+	m.Status = resource.Status{Output: []string{m.String()}, WillChange: false}
 
 	return m, nil
 }
