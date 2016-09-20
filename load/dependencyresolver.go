@@ -92,7 +92,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 	}
 
 	type stub struct{}
-	language := extensions.MakeLanguage()
+	language := extensions.MinimalLanguage()
 	language.On("param", extensions.RememberCalls(&out, 0))
 	for _, s := range strings {
 		useless := stub{}
@@ -116,7 +116,7 @@ func getXrefs(g *graph.Graph, node *parse.Node) (out []string, err error) {
 	if err != nil {
 		return nil, err
 	}
-	language := extensions.MakeLanguage()
+	language := extensions.MinimalLanguage()
 	language.On(extensions.RefFuncName, extensions.RememberCalls(&calls, 0))
 	for _, s := range strings {
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)

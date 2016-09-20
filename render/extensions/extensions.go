@@ -64,9 +64,23 @@ func MakeLanguage() *LanguageExtension {
 	return &LanguageExtension{Funcs: funcs, innerLock: new(sync.RWMutex)}
 }
 
+// MinimalLanguage provides a language extension where all known extensions are
+// associated with NOP functions- as with MakeLanguage()- except that arity,
+// input, and output types are respected and pure transformations are
+// implemented.  It is less featureful than DefaultLanguage but will not
+// introduce template errors that may be present when using an unmodified
+// MakeLanguage.
+func MinimalLanguage() *LanguageExtension {
+	language := MakeLanguage()
+	language.On("platform", newStub(&platform.Platform{}))
+	language.On("param", newStub(""))
+	language.On(RefFuncName, newStub(""))
+	return language
+}
+
 // DefaultLanguage provides a default language extension.  It creates default
 // implementations of context-free and non-dependency-generating functions
-// (e.g. split) and provides a unimplemented function for functions that must be
+// (e.g. split) and provides a unimplemented function for functions that must bes
 // supplied with context or which may register dependencies.
 func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
@@ -156,6 +170,12 @@ func (l *LanguageExtension) Render(dotValues interface{}, name, toRender string)
 // StubTemplateFunc is the NOP function for template parsing
 func StubTemplateFunc(...string) (string, error) {
 	return "", nil
+}
+
+func newStub(returnVal interface{}) func(...string) (interface{}, error) {
+	return func(...string) (interface{}, error) {
+		return returnVal, nil
+	}
 }
 
 // RememberCalls is a utility function to instert calls into a list.
