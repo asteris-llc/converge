@@ -26,80 +26,73 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPreparerInterface tests that the Preparer interface is properly implemeted
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(group.Preparer))
 }
 
-func TestValidPreparer(t *testing.T) {
+// TestPrepare tests the valid and invalid cases of Prepare
+func TestPrepare(t *testing.T) {
 	t.Parallel()
 
 	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: "123", Name: "test", State: string(group.StateAbsent)}
-	_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
+	t.Run("valid", func(t *testing.T) {
+		t.Run("all parameters", func(t *testing.T) {
+			// fr := fakerenderer.FakeRenderer{}
+			p := group.Preparer{GID: "123", Name: "test", State: string(group.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-func TestValidPreparerNoState(t *testing.T) {
-	t.Parallel()
+			assert.NoError(t, err)
+		})
 
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: "123", Name: "test"}
-	_, err := p.Prepare(&fr)
+		t.Run("no state parameter", func(t *testing.T) {
+			// fr := fakerenderer.FakeRenderer{}
+			p := group.Preparer{GID: "123", Name: "test"}
+			_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
+			assert.NoError(t, err)
+		})
 
-func TestInvalidPreparerNoGid(t *testing.T) {
-	t.Parallel()
+		t.Run("no gid parameter", func(t *testing.T) {
+			p := group.Preparer{Name: "test"}
+			_, err := p.Prepare(&fr)
 
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{Name: "test"}
-	_, err := p.Prepare(&fr)
+			assert.NoError(t, err)
+		})
 
-	assert.EqualError(t, err, fmt.Sprintf("group requires a \"gid\" parameter"))
-}
+		t.Run("max allowable gid", func(t *testing.T) {
+			gid := strconv.Itoa(math.MaxUint32 - 1)
+			p := group.Preparer{GID: gid, Name: "test"}
+			_, err := p.Prepare(&fr)
 
-func TestInvalidPreparerInvalidGid(t *testing.T) {
-	t.Parallel()
+			assert.NoError(t, err)
+		})
+	})
 
-	gid := strconv.Itoa(math.MaxUint32)
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: gid, Name: "test"}
-	_, err := p.Prepare(&fr)
+	t.Run("invalid", func(t *testing.T) {
+		t.Run("no name parameter", func(t *testing.T) {
+			p := group.Preparer{GID: "123"}
+			_, err := p.Prepare(&fr)
 
-	assert.EqualError(t, err, fmt.Sprintf("group \"gid\" parameter out of range"))
-}
+			assert.EqualError(t, err, fmt.Sprintf("group requires a \"name\" parameter"))
+		})
 
-func TestInvalidPreparerMaxGid(t *testing.T) {
-	t.Parallel()
+		t.Run("gid out of range", func(t *testing.T) {
+			gid := strconv.Itoa(math.MaxUint32)
+			p := group.Preparer{GID: gid, Name: "test"}
+			_, err := p.Prepare(&fr)
 
-	gid := strconv.Itoa(math.MaxUint32 - 1)
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: gid, Name: "test"}
-	_, err := p.Prepare(&fr)
+			assert.EqualError(t, err, fmt.Sprintf("group \"gid\" parameter out of range"))
+		})
 
-	assert.NoError(t, err)
-}
+		t.Run("invalid state", func(t *testing.T) {
+			p := group.Preparer{GID: "123", Name: "test", State: "test"}
+			_, err := p.Prepare(&fr)
 
-func TestInvalidPreparerNoName(t *testing.T) {
-	t.Parallel()
-
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: "123"}
-	_, err := p.Prepare(&fr)
-
-	assert.EqualError(t, err, fmt.Sprintf("group requires a \"name\" parameter"))
-}
-
-func TestInvalidPreparerInvalidState(t *testing.T) {
-	t.Parallel()
-
-	fr := fakerenderer.FakeRenderer{}
-	p := group.Preparer{GID: "123", Name: "test", State: "test"}
-	_, err := p.Prepare(&fr)
-
-	assert.EqualError(t, err, fmt.Sprintf("group \"state\" parameter invalid, use present or absent"))
+			assert.EqualError(t, err, fmt.Sprintf("group \"state\" parameter invalid, use present or absent"))
+		})
+	})
 }
