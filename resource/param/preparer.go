@@ -16,6 +16,7 @@ package param
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -53,8 +54,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 			return nil, err
 		}
 
-	default:
+	case bool, int, float32, float64:
 		def = p.Default
+
+	default:
+		return nil, fmt.Errorf("composite values are not allowed in params, but got %T", v)
 	}
 
 	return &Param{Value: def}, nil
