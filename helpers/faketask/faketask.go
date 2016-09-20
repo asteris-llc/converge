@@ -29,12 +29,12 @@ type FakeTask struct {
 
 // Check returns values set on struct
 func (ft *FakeTask) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.Level}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, Level: ft.Level}, ft.Error
 }
 
 // Apply returns values set on struct
 func (ft *FakeTask) Apply() (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.Level}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, Level: ft.Level}, ft.Error
 }
 
 // NoOp returns a FakeTask that doesn't have to do anything
@@ -75,14 +75,14 @@ type FakeSwapper struct {
 
 // Check returns values set on struct
 func (ft *FakeSwapper) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.level()}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, Level: ft.level()}, ft.Error
 }
 
 // Apply negates the current WillChange value set on struct and returns
 // configured error
 func (ft *FakeSwapper) Apply() (resource.TaskStatus, error) {
 	ft.WillChange = !ft.WillChange
-	return &resource.Status{Output: []string{ft.Status}, WarningLevel: ft.level()}, ft.Error
+	return &resource.Status{Output: []string{ft.Status}, Level: ft.level()}, ft.Error
 }
 
 func (ft *FakeSwapper) level() resource.StatusLevel {

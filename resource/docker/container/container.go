@@ -62,7 +62,7 @@ type Container struct {
 func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
-		c.Status.WarningLevel = resource.StatusFatal
+		c.Status.Level = resource.StatusFatal
 		return c, err
 	}
 
@@ -76,7 +76,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	if resource.AnyChanges(c.Status.Differences) {
-		c.Status.WarningLevel = resource.StatusWillChange
+		c.Status.Level = resource.StatusWillChange
 	}
 
 	return c, nil
@@ -157,7 +157,7 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 
 	image, err := c.client.FindImage(container.Image)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return errors.Wrapf(err, "failed to find image %s for container %s", container.Image, container.Name)
 	}
 
