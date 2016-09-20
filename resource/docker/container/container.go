@@ -38,6 +38,8 @@ var engineEnvVars = []string{"https_proxy", "http_proxy", "no_proxy", "ftp_proxy
 
 // Container is responsible for creating docker containers
 type Container struct {
+	resource.Status
+
 	Name            string
 	Image           string
 	Entrypoint      []string
@@ -51,40 +53,37 @@ type Container struct {
 	Volumes         []string
 	VolumesFrom     []string
 	PublishAllPorts bool
-	Status          string
+	CStatus         string
 	Force           bool
 	client          docker.APIClient
 }
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
-	status := &resource.Status{Status: c.Name}
-
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
-		return status, err
+		c.Status.Level = resource.StatusFatal
+		return c, err
 	}
 
 	if container != nil {
-		status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
+		c.Status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 		if c.Force {
-			c.diffContainer(container, status)
+			c.diffContainer(container, &c.Status)
 		}
 	} else {
-		status.AddDifference("name", "", c.Name, "<container-missing>")
+		c.Status.AddDifference("name", "", c.Name, "<container-missing>")
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.WillChange = true
-		status.WarningLevel = resource.StatusWillChange
+	if resource.AnyChanges(c.Status.Differences) {
+		c.Status.Level = resource.StatusWillChange
 	}
 
-	return status, nil
+	return c, nil
 }
 
 // Apply starts a docker container with the specified configuration
-func (c *Container) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (c *Container) Apply() (resource.TaskStatus, error) {
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
@@ -116,14 +115,14 @@ func (c *Container) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		return nil, errors.Wrapf(err, "failed to run container %s", c.Name)
 	}
 
-	if c.Status == "" || c.Status == containerStatusRunning {
+	if c.CStatus == "" || c.CStatus == containerStatusRunning {
 		err = c.client.StartContainer(c.Name, container.ID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to start container %s", c.Name)
 		}
 	}
 
-	return &resource.Status{Status: c.Name}, nil
+	return c, nil
 }
 
 // SetClient injects a docker api client
@@ -132,7 +131,7 @@ func (c *Container) SetClient(client docker.APIClient) {
 }
 
 func (c *Container) diffContainer(container *dc.Container, status *resource.Status) error {
-	expectedStatus := strings.ToLower(c.Status)
+	expectedStatus := strings.ToLower(c.CStatus)
 	if expectedStatus == "" {
 		expectedStatus = containerStatusRunning
 	}
@@ -158,7 +157,7 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 
 	image, err := c.client.FindImage(container.Image)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return errors.Wrapf(err, "failed to find image %s for container %s", container.Image, container.Name)
 	}
 

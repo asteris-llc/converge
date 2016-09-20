@@ -80,7 +80,7 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 		}
 		if err := dep.Error(); err != nil {
 			errResult := &Result{
-				Status: &resource.Status{WillChange: true},
+				Status: &resource.Status{Level: resource.StatusWillChange},
 				Task:   task.Task,
 				Err:    fmt.Errorf("error in dependency %q", depID),
 			}

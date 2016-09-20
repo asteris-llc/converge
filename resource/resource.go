@@ -23,7 +23,7 @@ type Tasker interface {
 // checks pass.
 type Task interface {
 	Check(Renderer) (TaskStatus, error)
-	Apply(Renderer) (TaskStatus, error)
+	Apply() (TaskStatus, error)
 }
 
 // Resource adds metadata about the executed tasks

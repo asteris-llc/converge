@@ -29,15 +29,15 @@ func (t *ThunkTask) Check(Renderer) (TaskStatus, error) {
 }
 
 // Apply returns a task status with thunk information
-func (t *ThunkTask) Apply(Renderer) (TaskStatus, error) {
+func (t *ThunkTask) Apply() (TaskStatus, error) {
 	return t.ToStatus(), nil
 }
 
 // ToStatus converts a ThunkStatus to a *Status
 func (t *ThunkTask) ToStatus() *Status {
 	return &Status{
-		WarningLevel: StatusWillChange,
-		Status:       fmt.Sprintf("%s depends on external node execution", t.Name),
+		Level:  StatusWillChange,
+		Output: []string{fmt.Sprintf("%s depends on external node execution", t.Name)},
 	}
 }
 
