@@ -1,18 +1,14 @@
 # converge-elk
 
-A Converge example that sets up a single node docker-based [ELK](https://www.elastic.co/webinars/introduction-elk-stack) stack.
-
-[Filebeat](https://www.elastic.co/products/beats/filebeat) is used instead of [Logstash](https://www.elastic.co/products/logstash) for the log collection component.
+The [ELK stack](https://www.elastic.co/webinars/introduction-elk-stack) is traditionally composed of [Elasticsearch](https://www.elastic.co/products/elasticsearch), [Logstash](https://www.elastic.co/products/logstash), and [Kibana](https://www.elastic.co/products/kibana) and is a great solution for collecting, searching, and visualizing logs. In this example, we are configuring a docker-based ELK stack. However, since this is a single-node demonstration, we are using [Filebeat](https://www.elastic.co/products/beats/filebeat) instead of Logstash for the log collection component.
 
 ## Usage
 
 ### Vagrant
 
-In the [Vagrantfile](./Vagrantfile), change the file provisioner source to point to a version of the converge binary built with the `linux/amd64` OS architecture.
+Just run `vagrant up`!
 
-After running `vagrant up`, you should have a working [Kibana](https://www.elastic.co/products/kibana) instance backed by [Elasticsearch](https://www.elastic.co/products/elasticsearch). Filebeat is installed on the Vagrant host and is configured to send logs to Elasticsearch.
-
-After Vagrant provisioning is complete, you should be able to access the Kibana web interface at [http://localhost:5601](http://localhost:5601).
+After Vagrant provisioning completes, you should have a working Kibana instance backed by Elasticsearch. Filebeat is installed on the Vagrant host and is configured to send logs to Elasticsearch. You should be able to access the Kibana web interface at [http://localhost:5601](http://localhost:5601).
 
 ### Terraform (AWS)
 
@@ -31,13 +27,15 @@ You must have also set valid [AWS credentials](https://www.terraform.io/docs/pro
 terraform apply
 ```
 
-After provisioning completes, you should be able to access the url for the Kibana interface by running:
+After provisioning completes, you should be able to retrieve the url for the Kibana interface by running:
 
 ```shell
 echo "http://$(terraform output ip):5601/"
 ```
 
 ## Graphs
+
+This is the visualization of the graph that Converge applies to the system.
 
 ![elk graph](./graphs/elk.png)
 

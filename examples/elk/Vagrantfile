@@ -1,13 +1,20 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+converge_version = "0.2.0-beta1"
+release_url = "https://github.com/asteris-llc/converge/releases/download/#{converge_version}/converge_#{converge_version}_linux_amd64.tar.gz"
+
+converge_script = <<SCRIPT
+cd /tmp
+curl -SL #{release_url} -o converge.tar.gz
+tar -xzvf converge.tar.gz
+mv converge /usr/local/bin
+sudo /usr/local/bin/converge apply --local --log-level=info /vagrant/converge/elk.hcl
+SCRIPT
+
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
   config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ".git/"
   config.vm.network "forwarded_port", guest: 5601, host: 5601
-
-  # change the source to a linux_amd64 converge binary
-  config.vm.provision "file", source: "~/Projects/golang/src/github.com/asteris-llc/converge/build/converge_0.2.0-beta1_linux_amd64/converge", destination: "converge"
-
-  config.vm.provision "shell", inline: "mv converge /usr/local/bin; sudo /usr/local/bin/converge apply --local --log-level=info /vagrant/converge/elk.hcl"
+  config.vm.provision "shell", inline: converge_script
 end
