@@ -56,14 +56,20 @@ var (
 )
 
 const (
-	// GIDMin and GIDMax designate valid GID range varies based on system
+	// GIDMin designates the smallest valid GID
 	// At a minimum, 0-32676 is valid
 	GIDMin = 0
+
+	// GIDMax designates the largest valid GID
+	// At a minimum, 0-32676 is valid
 	GIDMax = math.MaxInt16
 
-	// UIDMin and UIDMax designate valid UID range varies based on system
+	// UIDMin designates the smallest valid UID
 	// At a minimum, 0-32676 is valid
 	UIDMin = 0
+
+	// UIDMax designates the largest valid UID
+	// At a minimum, 0-32676 is valid
 	UIDMax = math.MaxInt16
 )
 
