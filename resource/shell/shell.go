@@ -125,7 +125,7 @@ func (s *Shell) FailingDep(name string, task resource.TaskStatus) {
 		s.HealthStatus = new(resource.HealthStatus)
 		s.HealthStatus.FailingDeps = make(map[string]string)
 	}
-	s.HealthStatus.FailingDeps[name] = task.Value()
+	s.HealthStatus.FailingDeps[name] = name
 }
 
 // HealthCheck performs a health check

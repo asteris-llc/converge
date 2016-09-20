@@ -38,7 +38,6 @@ type badDep struct {
 // TaskStatus represents the results of Check called during planning or
 // application.
 type TaskStatus interface {
-	Value() string
 	Diffs() map[string]Diff
 	StatusCode() int
 	Messages() []string
@@ -58,11 +57,9 @@ type Status struct {
 	// initialized properly.
 	Differences map[string]Diff
 
-	// Output and Status are the human-consumable fields on this struct. Output
-	// will be returned as the Status' messages, and Status will be returned as
-	// the Value.
+	// Output is the human-consumable fields on this struct. Output will be
+	// returned as the Status' messages
 	Output []string
-	Status string // TODO(brianhicks): this is kind of a vestigal tail... remove?
 
 	// WarningLevel and WillChange indicate the change level of the status.
 	// WillChange is a binary value, while WarningLevel is a gradation (see the
@@ -77,11 +74,6 @@ func NewStatus() *Status {
 	return &Status{
 		Differences: map[string]Diff{},
 	}
-}
-
-// Value returns the status value
-func (t *Status) Value() string {
-	return t.Status
 }
 
 // Diffs returns the internal differences
@@ -116,14 +108,7 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	status.UpgradeWarning(StatusWarning)
 
 	for _, failingDep := range t.FailingDeps {
-		var depMessage string
-		if msg := failingDep.Status.Value(); msg != "" {
-			depMessage = msg
-		} else {
-			depMessage = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
-		}
-
-		status.FailingDeps[failingDep.ID] = depMessage
+		status.FailingDeps[failingDep.ID] = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
 	}
 	if t.StatusCode() >= 2 {
 		status.UpgradeWarning(StatusError)
