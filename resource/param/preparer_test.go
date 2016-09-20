@@ -45,7 +45,7 @@ func TestPreparerDefault(t *testing.T) {
 		require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
 
 		require.Nil(t, err)
-		assert.Equal(t, fmt.Sprintf("%v", prep.Default), resultParam.Value)
+		assert.Equal(t, prep.Default, resultParam.Value)
 	}
 }
 
