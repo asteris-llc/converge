@@ -80,7 +80,7 @@ func MinimalLanguage() *LanguageExtension {
 
 // DefaultLanguage provides a default language extension.  It creates default
 // implementations of context-free and non-dependency-generating functions
-// (e.g. split) and provides a unimplemented function for functions that must bes
+// (e.g. split) and provides a unimplemented function for functions that must be
 // supplied with context or which may register dependencies.
 func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
@@ -172,6 +172,11 @@ func StubTemplateFunc(...string) (string, error) {
 	return "", nil
 }
 
+// newStub generates a stub function that always returns returnVal when called,
+// and supports a variadic number of arguments.  It is used to generate stubs
+// that need to return a specific value or real data type (e.g. stubs for
+// `platform` which must return a valid `*platform.Platform` to prevent template
+// execution errors).
 func newStub(returnVal interface{}) func(...string) (interface{}, error) {
 	return func(...string) (interface{}, error) {
 		return returnVal, nil
