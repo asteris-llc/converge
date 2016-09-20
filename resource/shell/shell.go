@@ -21,8 +21,6 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-var outOfOrderMessage = "[WARNING] shell has no status code (maybe ran out-of-order)"
-
 // Shell is a structure representing a task.
 type Shell struct {
 	CmdGenerator CommandExecutor
@@ -79,19 +77,17 @@ func (s *Shell) Diffs() map[string]resource.Diff {
 }
 
 // StatusCode returns the status code of the most recently executed command
-func (s *Shell) StatusCode() int {
+func (s *Shell) StatusCode() resource.StatusLevel {
 	if s.Status == nil {
-		fmt.Println(outOfOrderMessage)
 		return resource.StatusFatal
 	}
-	return int(s.Status.ExitStatus)
+	return resource.StatusLevel(s.Status.ExitStatus)
 }
 
 // Messages returns a summary of the first execution of check and/or apply.
 // Subsequent runs are surpressed.
 func (s *Shell) Messages() (messages []string) {
 	if s.Status == nil {
-		fmt.Println(outOfOrderMessage)
 		return
 	}
 
@@ -111,7 +107,6 @@ func (s *Shell) Messages() (messages []string) {
 // recent run of check.
 func (s *Shell) HasChanges() bool {
 	if s.Status == nil {
-		fmt.Println(outOfOrderMessage)
 		return false
 	}
 	return (s.Status.ExitStatus != 0)

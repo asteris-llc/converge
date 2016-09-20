@@ -107,7 +107,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				status.WarningLevel = resource.StatusWillChange
 				status.Output = append(status.Output, "user does not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s", u.Username), "")
-				status.WillChange = true
 			}
 		case u.UID != "":
 			_, nameNotFound := nameErr.(user.UnknownUserError)
@@ -126,7 +125,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				status.WarningLevel = resource.StatusWillChange
 				status.Output = append(status.Output, "user name and uid do not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s with uid %s", u.Username, u.UID), "")
-				status.WillChange = true
 			case nameNotFound:
 				status.WarningLevel = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user uid %s already exists", u.UID))
@@ -151,7 +149,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
 			case userByName != nil:
 				status.WarningLevel = resource.StatusWillChange
-				status.WillChange = true
 				status.AddDifference("user", fmt.Sprintf("user %s", u.Username), string(StateAbsent), "")
 			}
 		case u.UID != "":
@@ -173,7 +170,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
 			case userByName != nil && userByID != nil && *userByName == *userByID:
 				status.WarningLevel = resource.StatusWillChange
-				status.WillChange = true
 				status.AddDifference("user", fmt.Sprintf("user %s with uid %s", u.Username, u.UID), string(StateAbsent), "")
 			}
 		}

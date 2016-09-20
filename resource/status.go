@@ -16,19 +16,47 @@ package resource
 
 import "fmt"
 
+// StatusLevel will be used
+type StatusLevel uint32
+
 const (
 	// StatusNoChange means no changes are necessary
-	StatusNoChange int = 0
+	StatusNoChange StatusLevel = iota
 
 	// StatusWontChange indicates an acceptable delta that wont be corrected
-	StatusWontChange int = iota
+	StatusWontChange
 
 	// StatusWillChange indicates an unacceptable delta that will be corrected
 	StatusWillChange
 
-	// StatusFatal indicates an unacceptable delta that cannot be corrected
+	// StatusCantChange indicates an unacceptable delta that can't be corrected
+	StatusCantChange
+
+	// StatusFatal indicates an error. This is just like StatusCantChange except
+	// it does not imply that there are changes to be made.
 	StatusFatal
 )
+
+func (l StatusLevel) String() string {
+	switch l {
+	case StatusNoChange:
+		return "no change"
+
+	case StatusWontChange:
+		return "won't change"
+
+	case StatusWillChange:
+		return "will change"
+
+	case StatusCantChange:
+		return "can't change"
+
+	case StatusFatal:
+		return "fatal"
+	}
+
+	return "invalid status level"
+}
 
 type badDep struct {
 	ID     string
@@ -39,7 +67,7 @@ type badDep struct {
 // application.
 type TaskStatus interface {
 	Diffs() map[string]Diff
-	StatusCode() int
+	StatusCode() StatusLevel
 	Messages() []string
 	HasChanges() bool
 }
@@ -65,8 +93,7 @@ type Status struct {
 	// WillChange is a binary value, while WarningLevel is a gradation (see the
 	// Status* contsts above.) Resources should set both for now, if they're
 	// relevant.
-	WarningLevel int
-	WillChange   bool
+	WarningLevel StatusLevel
 }
 
 // NewStatus returns a Status with all fields initialized
@@ -82,7 +109,7 @@ func (t *Status) Diffs() map[string]Diff {
 }
 
 // StatusCode returns the current warning level
-func (t *Status) StatusCode() int {
+func (t *Status) StatusCode() StatusLevel {
 	return t.WarningLevel
 }
 
@@ -93,7 +120,17 @@ func (t *Status) Messages() []string {
 
 // HasChanges returns the WillChange value
 func (t *Status) HasChanges() bool {
-	return t.WillChange
+	if t.WarningLevel == StatusWillChange || t.WarningLevel == StatusCantChange {
+		return true
+	}
+
+	for _, diff := range t.Diffs() {
+		if diff.Changes() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // HealthCheck provides a default health check implementation for statuses
@@ -132,7 +169,7 @@ func (t *Status) AddMessage(message ...string) {
 }
 
 // RaiseLevel raises the status level to the given level
-func (t *Status) RaiseLevel(level int) {
+func (t *Status) RaiseLevel(level StatusLevel) {
 	if level > t.WarningLevel {
 		t.WarningLevel = level
 	}

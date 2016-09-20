@@ -38,7 +38,6 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 		status := fmt.Sprintf("%q does not exist", t.Destination)
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
-			WillChange:   false,
 			Differences:  diffs,
 			Output:       []string{status},
 		}, nil
@@ -56,7 +55,6 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	t.Status = resource.Status{
 		WarningLevel: warningLevel,
-		WillChange:   modeDiff.Changes(),
 		Differences:  diffs,
 		Output: []string{
 			fmt.Sprintf("%q exist", t.Destination),
@@ -73,7 +71,6 @@ func (t *Mode) Apply() (resource.TaskStatus, error) {
 	if err != nil {
 		return &resource.Status{
 			WarningLevel: resource.StatusFatal,
-			WillChange:   true,
 			Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
 		}, err
 	}

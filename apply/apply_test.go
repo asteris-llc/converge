@@ -33,7 +33,7 @@ func TestApplyNoOp(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.Swapper()
-	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: task})
+	g.Add("root", &plan.Result{Status: &resource.Status{WarningLevel: resource.StatusWillChange}, Task: task})
 
 	require.NoError(t, g.Validate())
 
@@ -51,7 +51,7 @@ func TestApplyNoRun(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.NoOp()
-	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: false}, Task: task})
+	g.Add("root", &plan.Result{Status: &resource.Status{WarningLevel: resource.StatusWontChange}, Task: task})
 
 	require.NoError(t, g.Validate())
 
@@ -67,8 +67,8 @@ func TestApplyErrorsBelow(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.NoOp()})
-	g.Add("root/err", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.Error()})
+	g.Add("root", &plan.Result{Status: &resource.Status{WarningLevel: resource.StatusWillChange}, Task: faketask.NoOp()})
+	g.Add("root/err", &plan.Result{Status: &resource.Status{WarningLevel: resource.StatusWillChange}, Task: faketask.Error()})
 
 	g.ConnectParent("root", "root/err")
 
@@ -93,7 +93,7 @@ func TestApplyStillChange(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{Status: &resource.Status{WillChange: true}, Task: faketask.WillChange()})
+	g.Add("root", &plan.Result{Status: &resource.Status{WarningLevel: resource.StatusWillChange}, Task: faketask.WillChange()})
 
 	require.NoError(t, g.Validate())
 
