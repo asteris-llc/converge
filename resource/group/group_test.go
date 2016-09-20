@@ -385,7 +385,7 @@ func TestApplyAddGroupNotAdded(t *testing.T) {
 
 	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s with gid %s", g.Name, g.GID))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
+	assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 }
 
 func TestApplyDeleteGroupErrorDeleting(t *testing.T) {
@@ -436,7 +436,7 @@ func TestApplyDeleteGroupNotDeleted(t *testing.T) {
 
 	m.AssertNotCalled(t, "DelGroup", g.Name)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s with gid %s", g.Name, g.GID))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
+	assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 }
 
 func TestApplyStateUnknown(t *testing.T) {

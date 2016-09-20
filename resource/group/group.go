@@ -91,7 +91,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s already exists", g.Name))
 		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
-			status.Level = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
 			status.Level = resource.StatusNoChange
@@ -111,7 +111,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", g.GID))
 		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
-			status.Level = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
 			status.Level = resource.StatusWillChange
@@ -156,7 +156,7 @@ func (g *Group) Apply() (resource.TaskStatus, error) {
 			}
 			status.Output = append(status.Output, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID))
 		default:
-			status.Level = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			return status, fmt.Errorf("will not attempt add: group %s with gid %s", g.Name, g.GID)
 		}
 	case StateAbsent:
@@ -170,7 +170,7 @@ func (g *Group) Apply() (resource.TaskStatus, error) {
 			}
 			status.Output = append(status.Output, fmt.Sprintf("deleted group %s with gid %s", g.Name, g.GID))
 		default:
-			status.Level = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			return status, fmt.Errorf("will not attempt delete: group %s with gid %s", g.Name, g.GID)
 		}
 	default:
