@@ -139,7 +139,9 @@ func Test_StatusCode_WhenNoStatus_ReturnsFatal(t *testing.T) {
 	assert.Equal(t, resource.StatusFatal, sh.StatusCode())
 }
 
-func Test_StatusCode_WhenMultipleStatus_ReturnsMostRecentStatus(t *testing.T) {
+// TestStatusCodeWhenMultipleStatusReturnsMostRecentStatus tests what happens
+// when there are multiple status returns
+func TestStatusCodeWhenMultipleStatusReturnsMostRecentStatus(t *testing.T) {
 	var expected resource.StatusLevel = 7
 	status := &shell.CommandResults{ExitStatus: 0}
 	status = status.Cons("", &shell.CommandResults{ExitStatus: uint32(expected)})

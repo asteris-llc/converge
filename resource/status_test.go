@@ -27,6 +27,7 @@ func Test_Status_ImplementsCheck(t *testing.T) {
 	assert.Implements(t, (*healthcheck.Check)(nil), new(resource.Status))
 }
 
+// TestHasChanges exercises all the cases of HasChanges
 func TestHasChanges(t *testing.T) {
 	t.Parallel()
 
