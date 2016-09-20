@@ -89,7 +89,7 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 		}
 
 		return pp.RenderableString(
-			fmt.Sprintf("%s: %s", name, dest.Value),
+			fmt.Sprintf("%s: %s", name, dest.Val),
 			p.ShowParams,
 		), nil
 
