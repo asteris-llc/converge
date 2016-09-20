@@ -81,7 +81,7 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (t *Content) Apply() (resource.TaskStatus, error) {
 	var perm os.FileMode
 	var preChange string
 	diffs := make(map[string]resource.Diff)
@@ -91,7 +91,11 @@ func (t *Content) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		diffs["mode"] = resource.TextDiff{Values: [2]string{"not set", "0600"}}
 		perm = 0600
 	} else if err != nil {
-		return t.Check(r)
+		return &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			WillChange:   true,
+			Output:       []string{err.Error()},
+		}, err
 	} else {
 		perm = stat.Mode()
 	}

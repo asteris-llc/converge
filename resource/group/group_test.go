@@ -311,7 +311,7 @@ func TestApplyAddGroup(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
 	m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
 	m.On("AddGroup", g.Name, g.GID).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 	assert.NoError(t, err)
@@ -334,7 +334,7 @@ func TestApplyDeleteGroup(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp, nil)
 	m.On("LookupGroupID", g.GID).Return(grp, nil)
 	m.On("DelGroup", g.Name).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertCalled(t, "DelGroup", g.Name)
 	assert.NoError(t, err)
@@ -357,7 +357,7 @@ func TestApplyAddGroupErrorAdding(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
 	m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
 	m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -381,7 +381,7 @@ func TestApplyAddGroupNotAdded(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp, nil)
 	m.On("LookupGroupID", g.GID).Return(grp, nil)
 	m.On("AddGroup", g.Name, g.GID).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s with gid %s", g.Name, g.GID))
@@ -404,7 +404,7 @@ func TestApplyDeleteGroupErrorDeleting(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp, nil)
 	m.On("LookupGroupID", g.GID).Return(grp, nil)
 	m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertCalled(t, "DelGroup", g.Name)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -432,7 +432,7 @@ func TestApplyDeleteGroupNotDeleted(t *testing.T) {
 	m.On("LookupGroup", g.Name).Return(grp1, nil)
 	m.On("LookupGroupID", g.GID).Return(grp2, nil)
 	m.On("DelGroup", g.Name).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
+	status, err := g.Apply()
 
 	m.AssertNotCalled(t, "DelGroup", g.Name)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s with gid %s", g.Name, g.GID))
@@ -456,7 +456,7 @@ func TestApplyStateUnknown(t *testing.T) {
 	m.On("LookupGroupID", g.GID).Return(grp, nil)
 	m.On("AddGroup", g.Name, g.GID)
 	m.On("DelGroup", g.Name)
-	_, err := g.Apply(fakerenderer.New())
+	_, err := g.Apply()
 
 	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 	m.AssertNotCalled(t, "DelGroup", g.Name)

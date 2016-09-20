@@ -29,7 +29,7 @@ func (t *ThunkTask) Check(Renderer) (TaskStatus, error) {
 }
 
 // Apply returns a task status with thunk information
-func (t *ThunkTask) Apply(Renderer) (TaskStatus, error) {
+func (t *ThunkTask) Apply() (TaskStatus, error) {
 	return t.ToStatus(), nil
 }
 

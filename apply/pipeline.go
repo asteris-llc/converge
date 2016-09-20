@@ -120,11 +120,7 @@ func (g *pipelineGen) applyNode(taski interface{}) monad.Monad {
 	if !ok {
 		return either.LeftM(fmt.Errorf("apply expected a resultWrappert but got %T", val))
 	}
-	renderer, err := g.Renderer(g.ID)
-	if err != nil {
-		return either.LeftM(fmt.Errorf("unable to get renderer for %s", g.ID))
-	}
-	applyStatus, err := twrapper.Plan.Task.Apply(renderer)
+	applyStatus, err := twrapper.Plan.Task.Apply()
 	if err != nil {
 		err = fmt.Errorf("error applying %s: %s", g.ID, err)
 	}

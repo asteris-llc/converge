@@ -145,7 +145,7 @@ func TestContentApply(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply(fakerenderer.New())
+	_, applyErr := tmpl.Apply()
 	assert.NoError(t, applyErr)
 
 	// read the new file
@@ -164,7 +164,7 @@ func TestContentApplyPermissionDefault(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply(fakerenderer.New())
+	_, applyErr := tmpl.Apply()
 	assert.NoError(t, applyErr)
 
 	// stat the new file
@@ -188,7 +188,7 @@ func TestContentApplyKeepPermission(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply(fakerenderer.New())
+	_, applyErr := tmpl.Apply()
 	assert.NoError(t, applyErr)
 
 	// check permissions matched

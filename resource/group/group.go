@@ -128,7 +128,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply changes for group
-func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (g *Group) Apply() (resource.TaskStatus, error) {
 	// lookup the group by name and lookup the group by gid
 	// the lookups return ErrUnsupported if the system is not supported
 	// LookupGroup returns user.UnknownGroupError if the group is not found

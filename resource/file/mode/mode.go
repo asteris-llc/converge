@@ -23,6 +23,8 @@ import (
 
 // Mode monitors the mode of a file
 type Mode struct {
+	resource.Status
+
 	Destination string
 	Mode        os.FileMode
 }
@@ -52,7 +54,8 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if modeDiff.Changes() {
 		warningLevel = resource.StatusWillChange
 	}
-	return &resource.Status{
+
+	t.Status = resource.Status{
 		Status:       status,
 		WarningLevel: warningLevel,
 		WillChange:   modeDiff.Changes(),
@@ -61,20 +64,23 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 			fmt.Sprintf("%q exist", t.Destination),
 			status,
 		},
-	}, nil
+	}
+	return t, nil
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (t *Mode) Apply() (resource.TaskStatus, error) {
 	err := os.Chmod(t.Destination, t.Mode.Perm())
-	if err == nil {
-		return t.Check(r)
+
+	if err != nil {
+		return &resource.Status{
+			WarningLevel: resource.StatusFatal,
+			WillChange:   true,
+			Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
+		}, err
 	}
-	return &resource.Status{
-		WarningLevel: resource.StatusFatal,
-		Status:       fmt.Sprintf("%s", err),
-		Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
-	}, err
+
+	return t, nil
 }
 
 // Validate Mode
