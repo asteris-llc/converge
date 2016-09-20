@@ -1,0 +1,24 @@
+---
+engines:
+  gofmt:
+    enabled: true
+
+  golint:
+    enabled: true
+
+  govet:
+    enabled: true
+
+  markdownlint:
+    enabled: true
+
+  fixme:
+    enabled: true
+
+ratings:
+  paths:
+    - "**.go"
+    - "**.md"
+
+exclude_paths:
+  - vendor/
