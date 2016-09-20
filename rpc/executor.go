@@ -106,7 +106,7 @@ func (e *executor) Plan(in *pb.LoadRequest, stream pb.Executor_PlanServer) error
 	logger = logger.WithField("function", "executor.Plan")
 
 	if err := e.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Info("authorization failed")
+		logger.WithError(err).Warning("authorization failed")
 		return errors.Wrap(err, "authorization failed")
 	}
 
@@ -142,7 +142,7 @@ func (e *executor) Apply(in *pb.LoadRequest, stream pb.Executor_ApplyServer) err
 	logger = logger.WithField("function", "executor.Apply")
 
 	if err := e.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Info("authorization failed")
+		logger.WithError(err).Warning("authorization failed")
 		return errors.Wrap(err, "authorization failed")
 	}
 
