@@ -355,7 +355,7 @@ func stripQuotes(s string) string {
 	return s
 }
 
-func get_kv(attr string) (string, string) {
+func getKV(attr string) (string, string) {
 	pair := strings.Split(attr, "=")
 	key := stripQuotes(strings.TrimSpace(pair[0]))
 	val := stripQuotes(strings.TrimSpace(pair[1]))
@@ -374,7 +374,7 @@ func getDotAttributes(r pp.Renderable) map[string]string {
 	attributePairs := strings.Split(attributes, ",")
 
 	for pair := range attributePairs {
-		key, value := get_kv(attributePairs[pair])
+		key, value := getKV(attributePairs[pair])
 		results[key] = value
 	}
 	return results

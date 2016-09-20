@@ -23,6 +23,8 @@ import (
 
 // Image is responsible for pulling docker images
 type Image struct {
+	resource.Status
+
 	Name   string
 	Tag    string
 	client docker.APIClient
@@ -31,11 +33,10 @@ type Image struct {
 // Check system for presence of docker image
 func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
-	status := &resource.Status{Status: repoTag}
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
-		return status, err
+		i.Status.Level = resource.StatusFatal
+		return i, err
 	}
 
 	var original string
@@ -43,23 +44,22 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 		original = repoTag
 	}
 
-	status.AddDifference("image", original, repoTag, "<image-missing>")
-	if resource.AnyChanges(status.Differences) {
-		status.WillChange = true
-		status.WarningLevel = resource.StatusWillChange
+	i.Status.AddDifference("image", original, repoTag, "<image-missing>")
+	if resource.AnyChanges(i.Status.Differences) {
+		i.Status.Level = resource.StatusWillChange
 	}
-	return status, nil
+	return i, nil
 }
 
 // Apply pulls a docker image
-func (i *Image) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (i *Image) Apply() (resource.TaskStatus, error) {
 	if err := i.client.PullImage(i.Name, i.Tag); err != nil {
 		return &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Status:       fmt.Sprintf("%s", err),
+			Level:  resource.StatusFatal,
+			Output: []string{err.Error()},
 		}, err
 	}
-	return &resource.Status{Status: i.RepoTag()}, nil
+	return i, nil
 }
 
 // SetClient injects a docker api client

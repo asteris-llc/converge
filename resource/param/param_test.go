@@ -32,10 +32,10 @@ func TestParamInterface(t *testing.T) {
 func TestParamCheck(t *testing.T) {
 	t.Parallel()
 
-	param := &param.Param{Value: "test"}
+	param := &param.Param{Val: "test"}
 
 	status, err := param.Check(fakerenderer.New())
-	assert.Equal(t, param.Value, status.Value())
+	assert.Contains(t, status.Messages(), param.Val)
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
 }
@@ -44,6 +44,6 @@ func TestParamApply(t *testing.T) {
 	t.Parallel()
 
 	param := new(param.Param)
-	_, err := param.Apply(fakerenderer.New())
+	_, err := param.Apply()
 	assert.NoError(t, err)
 }
