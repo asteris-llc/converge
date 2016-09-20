@@ -47,7 +47,6 @@ func TestContainerCheckContainerNotFound(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assert.Equal(t, name, status.Value())
 	assertDiff(t, status.Diffs(), "name", "<container-missing>", name)
 }
 
