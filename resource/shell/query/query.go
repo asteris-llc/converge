@@ -28,7 +28,7 @@ type Query struct {
 
 // Apply is a nop for queries.  Because HasChanges always returns false this
 // should never be executed.
-func (q *Query) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (q *Query) Apply() (resource.TaskStatus, error) {
 	return nil, errors.New("query apply called but it should never have changes")
 }
 

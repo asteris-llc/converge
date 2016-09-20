@@ -2,17 +2,17 @@
 set -eo pipefail
 
 ROOT=$(pwd)
-SOURCE=${1:-${ROOT}/samples/sourceFile.hcl}
+SOURCE=${1:-"$ROOT"/samples/sourceFile.hcl}
 
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
-    rm -rf $TMP
+    rm -rf "$TMP"
 }
 trap finish EXIT
 
-pushd $TMP
+pushd "$TMP"
 
-$ROOT/converge apply --local --rpc-addr=:8002 -p "message=x" $SOURCE
+"$ROOT"/converge apply --local --rpc-addr=:8002 -p "message=x" "$SOURCE"
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"

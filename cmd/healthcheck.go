@@ -53,12 +53,12 @@ not display healthy checks.`,
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			log.WithField("component", "client").Warn("skipping module verfiction")
+			log.WithField("component", "client").Warn("skipping module verfiaction")
 		}
 
 		for _, fname := range args {
 			flog := log.WithField("file", fname)
-			flog.Info("checking health")
+			flog.Debug("checking health")
 
 			loaded, err := load.Load(ctx, fname, verifyModules)
 			if err != nil {
