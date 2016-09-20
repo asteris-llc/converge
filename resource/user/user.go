@@ -81,7 +81,7 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if nameErr == ErrUnsupported {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, ErrUnsupported
 	}
 
@@ -93,18 +93,18 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case userByName != nil:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s already exists", u.Username))
 			case nameNotFound:
 				if u.GID != "" {
 					_, err := u.system.LookupGroupID(u.GID)
 					if err != nil {
-						status.WarningLevel = resource.StatusFatal
+						status.Level = resource.StatusFatal
 						status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", u.GID))
 						return status, fmt.Errorf("will not add user %s", u.Username)
 					}
 				}
-				status.WarningLevel = resource.StatusWillChange
+				status.Level = resource.StatusWillChange
 				status.Output = append(status.Output, "user does not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s", u.Username), "")
 			}
@@ -117,25 +117,25 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				if u.GID != "" {
 					_, err := u.system.LookupGroupID(u.GID)
 					if err != nil {
-						status.WarningLevel = resource.StatusFatal
+						status.Level = resource.StatusFatal
 						status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", u.GID))
 						return status, fmt.Errorf("will not add user %s with uid %s", u.Username, u.UID)
 					}
 				}
-				status.WarningLevel = resource.StatusWillChange
+				status.Level = resource.StatusWillChange
 				status.Output = append(status.Output, "user name and uid do not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s with uid %s", u.Username, u.UID), "")
 			case nameNotFound:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user uid %s already exists", u.UID))
 			case uidNotFound:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s already exists", u.Username))
 			case userByName != nil && userByID != nil && userByName.Name != userByID.Name || userByName.Uid != userByID.Uid:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
 			case userByName != nil && userByID != nil && *userByName == *userByID:
-				status.WarningLevel = resource.StatusNoChange
+				status.Level = resource.StatusNoChange
 			}
 		}
 	case StateAbsent:
@@ -145,10 +145,10 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
 			case userByName != nil:
-				status.WarningLevel = resource.StatusWillChange
+				status.Level = resource.StatusWillChange
 				status.AddDifference("user", fmt.Sprintf("user %s", u.Username), string(StateAbsent), "")
 			}
 		case u.UID != "":
@@ -157,24 +157,24 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				status.WarningLevel = resource.StatusNoChange
+				status.Level = resource.StatusNoChange
 				status.Output = append(status.Output, "user name and uid do not exist")
 			case nameNotFound:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
 			case uidNotFound:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user uid %s does not exist", u.UID))
 			case userByName != nil && userByID != nil && userByName.Name != userByID.Name || userByName.Uid != userByID.Uid:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
 			case userByName != nil && userByID != nil && *userByName == *userByID:
-				status.WarningLevel = resource.StatusWillChange
+				status.Level = resource.StatusWillChange
 				status.AddDifference("user", fmt.Sprintf("user %s with uid %s", u.Username, u.UID), string(StateAbsent), "")
 			}
 		}
 	default:
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, fmt.Errorf("user: unrecognized state %v", u.State)
 	}
 
@@ -200,7 +200,7 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if nameErr == ErrUnsupported {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, ErrUnsupported
 	}
 
@@ -215,13 +215,13 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				userAddOptions := SetUserAddOptions(u)
 				err := u.system.AddUser(u.Username, userAddOptions)
 				if err != nil {
-					status.WarningLevel = resource.StatusFatal
+					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error adding user %s", u.Username))
 					return status, err
 				}
 				status.Output = append(status.Output, fmt.Sprintf("added user %s", u.Username))
 			default:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				return status, fmt.Errorf("will not attempt add: user %s", u.Username)
 			}
 		case u.UID != "":
@@ -233,13 +233,13 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				userAddOptions := SetUserAddOptions(u)
 				err := u.system.AddUser(u.Username, userAddOptions)
 				if err != nil {
-					status.WarningLevel = resource.StatusFatal
+					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error adding user %s with uid %s", u.Username, u.UID))
 					return status, err
 				}
 				status.Output = append(status.Output, fmt.Sprintf("added user %s with uid %s", u.Username, u.UID))
 			default:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				return status, fmt.Errorf("will not attempt add: user %s with uid %s", u.Username, u.UID)
 			}
 		}
@@ -252,13 +252,13 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 			case !nameNotFound && userByName != nil:
 				err := u.system.DelUser(u.Username)
 				if err != nil {
-					status.WarningLevel = resource.StatusFatal
+					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error deleting user %s", u.Username))
 					return status, err
 				}
 				status.Output = append(status.Output, fmt.Sprintf("deleted user %s", u.Username))
 			default:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				return status, fmt.Errorf("will not attempt delete: user %s", u.Username)
 			}
 		case u.UID != "":
@@ -269,18 +269,18 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 			case !nameNotFound && !uidNotFound && userByName != nil && userByID != nil && *userByName == *userByID:
 				err := u.system.DelUser(u.Username)
 				if err != nil {
-					status.WarningLevel = resource.StatusFatal
+					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID))
 					return status, err
 				}
 				status.Output = append(status.Output, fmt.Sprintf("deleted user %s with uid %s", u.Username, u.UID))
 			default:
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				return status, fmt.Errorf("will not attempt delete: user %s with uid %s", u.Username, u.UID)
 			}
 		}
 	default:
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, fmt.Errorf("user: unrecognized state %s", u.State)
 	}
 

@@ -38,21 +38,21 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusWillChange,
-			Differences:  diffs,
-			Output:       []string{t.Destination + ": File is missing"},
+			Level:       resource.StatusWillChange,
+			Differences: diffs,
+			Output:      []string{t.Destination + ": File is missing"},
 		}
 		return t, nil
 	} else if err != nil {
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Output:       []string{"Cannot read `" + t.Destination + "`"},
+			Level:  resource.StatusFatal,
+			Output: []string{"Cannot read `" + t.Destination + "`"},
 		}
 		return t, err
 	} else if stat.IsDir() {
 		t.Status = &resource.Status{
-			WarningLevel: resource.StatusCantChange,
-			Output:       []string{t.Destination + " is a directory"},
+			Level:  resource.StatusCantChange,
+			Output: []string{t.Destination + " is a directory"},
 		}
 		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
@@ -89,8 +89,8 @@ func (t *Content) Apply() (resource.TaskStatus, error) {
 		perm = 0600
 	} else if err != nil {
 		return &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Output:       []string{err.Error()},
+			Level:  resource.StatusFatal,
+			Output: []string{err.Error()},
 		}, err
 	} else {
 		perm = stat.Mode()
@@ -106,9 +106,9 @@ func (t *Content) Apply() (resource.TaskStatus, error) {
 
 	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
 		t.Status = &resource.Status{
-			Output:       []string{err.Error()},
-			WarningLevel: resource.StatusFatal,
-			Differences:  diffs,
+			Output:      []string{err.Error()},
+			Level:       resource.StatusFatal,
+			Differences: diffs,
 		}
 		return t, err
 	}

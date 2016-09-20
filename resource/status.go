@@ -89,11 +89,9 @@ type Status struct {
 	// returned as the Status' messages
 	Output []string
 
-	// WarningLevel and WillChange indicate the change level of the status.
-	// WillChange is a binary value, while WarningLevel is a gradation (see the
-	// Status* contsts above.) Resources should set both for now, if they're
-	// relevant.
-	WarningLevel StatusLevel
+	// Level indicates the change level of the status. Level is a gradation (see
+	// the Status* contsts above.)
+	Level StatusLevel
 }
 
 // NewStatus returns a Status with all fields initialized
@@ -110,7 +108,7 @@ func (t *Status) Diffs() map[string]Diff {
 
 // StatusCode returns the current warning level
 func (t *Status) StatusCode() StatusLevel {
-	return t.WarningLevel
+	return t.Level
 }
 
 // Messages returns the current output slice
@@ -120,7 +118,7 @@ func (t *Status) Messages() []string {
 
 // HasChanges returns the WillChange value
 func (t *Status) HasChanges() bool {
-	if t.WarningLevel == StatusWillChange || t.WarningLevel == StatusCantChange {
+	if t.Level == StatusWillChange || t.Level == StatusCantChange {
 		return true
 	}
 
@@ -170,8 +168,8 @@ func (t *Status) AddMessage(message ...string) {
 
 // RaiseLevel raises the status level to the given level
 func (t *Status) RaiseLevel(level StatusLevel) {
-	if level > t.WarningLevel {
-		t.WarningLevel = level
+	if level > t.Level {
+		t.Level = level
 	}
 }
 

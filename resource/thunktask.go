@@ -36,8 +36,8 @@ func (t *ThunkTask) Apply() (TaskStatus, error) {
 // ToStatus converts a ThunkStatus to a *Status
 func (t *ThunkTask) ToStatus() *Status {
 	return &Status{
-		WarningLevel: StatusWillChange,
-		Output:       []string{fmt.Sprintf("%s depends on external node execution", t.Name)},
+		Level:  StatusWillChange,
+		Output: []string{fmt.Sprintf("%s depends on external node execution", t.Name)},
 	}
 }
 

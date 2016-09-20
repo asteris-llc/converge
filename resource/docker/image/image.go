@@ -35,7 +35,7 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 	repoTag := i.RepoTag()
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
-		i.Status.WarningLevel = resource.StatusFatal
+		i.Status.Level = resource.StatusFatal
 		return i, err
 	}
 
@@ -46,7 +46,7 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	i.Status.AddDifference("image", original, repoTag, "<image-missing>")
 	if resource.AnyChanges(i.Status.Differences) {
-		i.Status.WarningLevel = resource.StatusWillChange
+		i.Status.Level = resource.StatusWillChange
 	}
 	return i, nil
 }
@@ -55,8 +55,8 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 func (i *Image) Apply() (resource.TaskStatus, error) {
 	if err := i.client.PullImage(i.Name, i.Tag); err != nil {
 		return &resource.Status{
-			WarningLevel: resource.StatusFatal,
-			Output:       []string{err.Error()},
+			Level:  resource.StatusFatal,
+			Output: []string{err.Error()},
 		}, err
 	}
 	return i, nil

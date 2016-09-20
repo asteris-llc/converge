@@ -61,7 +61,7 @@ func TestHasChanges(t *testing.T) {
 			fmt.Sprintf("status-%s", row.level),
 			func(t *testing.T) {
 				status := &resource.Status{
-					WarningLevel: row.level,
+					Level: row.level,
 				}
 
 				assert.Equal(t, row.willChange, status.HasChanges())
