@@ -81,7 +81,7 @@ func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply creates the directory
-func (d *Directory) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (d *Directory) Apply() (resource.TaskStatus, error) {
 	var err error
 
 	if d.CreateAll {

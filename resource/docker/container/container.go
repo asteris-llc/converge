@@ -84,7 +84,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply starts a docker container with the specified configuration
-func (c *Container) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (c *Container) Apply() (resource.TaskStatus, error) {
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,

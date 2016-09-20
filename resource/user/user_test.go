@@ -482,7 +482,7 @@ func TestApplyPresentNoUidAddUser(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("AddUser", u.Username, options).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "AddUser", u.Username, options)
 	assert.NoError(t, err)
@@ -503,7 +503,7 @@ func TestApplyPresentNoUidAddUserError(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("AddUser", u.Username, options).Return(fmt.Errorf(""))
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "AddUser", u.Username, options)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -525,7 +525,7 @@ func TestApplyPresentNoUidNotAdded(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("AddUser", u.Username, options).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertNotCalled(t, "AddUser", u.Username, options)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
@@ -549,7 +549,7 @@ func TestApplyPresentWithUidAddUser(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
 	m.On("AddUser", u.Username, options).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "AddUser", u.Username, options)
 	assert.NoError(t, err)
@@ -573,7 +573,7 @@ func TestApplyPresentWithUidAddUserError(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
 	m.On("AddUser", u.Username, options).Return(fmt.Errorf(""))
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "AddUser", u.Username, options)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -598,7 +598,7 @@ func TestApplyPresentWithUidNotAdded(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("LookupID", u.UID).Return(usr, nil)
 	m.On("AddUser", u.Username, options).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertNotCalled(t, "AddUser", u.Username, options)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s with uid %s", u.Username, u.UID))
@@ -618,7 +618,7 @@ func TestApplyAbsentNoUidDeleteUser(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("DelUser", u.Username).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "DelUser", u.Username)
 	assert.NoError(t, err)
@@ -638,7 +638,7 @@ func TestApplyAbsentNoUidDeleteUserError(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "DelUser", u.Username)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -659,7 +659,7 @@ func TestApplyAbsentNoUidNotDeleted(t *testing.T) {
 
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("DelUser", u.Username).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertNotCalled(t, "DelUser", u.Username)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s", u.Username))
@@ -682,7 +682,7 @@ func TestApplyAbsentWithUidDeleteUser(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("LookupID", u.UID).Return(usr, nil)
 	m.On("DelUser", u.Username).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "DelUser", u.Username)
 	assert.NoError(t, err)
@@ -705,7 +705,7 @@ func TestApplyAbsentWithUidDeleteUserError(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, nil)
 	m.On("LookupID", u.UID).Return(usr, nil)
 	m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertCalled(t, "DelUser", u.Username)
 	assert.EqualError(t, err, fmt.Sprintf(""))
@@ -729,7 +729,7 @@ func TestApplyAbsentWithUidNotDeleted(t *testing.T) {
 	m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 	m.On("LookupID", u.UID).Return(usr, nil)
 	m.On("DelUser", u.Username).Return(nil)
-	status, err := u.Apply(fakerenderer.New())
+	status, err := u.Apply()
 
 	m.AssertNotCalled(t, "DelUser", u.Username)
 	assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s with uid %s", u.Username, u.UID))
@@ -754,7 +754,7 @@ func TestApplyStateUnknown(t *testing.T) {
 	m.On("LookupID", u.UID).Return(usr, nil)
 	m.On("AddUser", u.Username, mock.Anything).Return(nil)
 	m.On("DelUser", u.Username).Return(nil)
-	_, err := u.Apply(fakerenderer.New())
+	_, err := u.Apply()
 
 	m.AssertNotCalled(t, "AddUser", u.Username, options)
 	m.AssertNotCalled(t, "DelUser", u.Username)

@@ -80,7 +80,7 @@ func Test_Apply_WhenRunReturnsError_ReturnsError(t *testing.T) {
 	m := new(MockExecutor)
 	m.On("Run", any).Return(&shell.CommandResults{}, expected)
 	sh := testShell(m)
-	_, actual := sh.Apply(fakerenderer.New())
+	_, actual := sh.Apply()
 	assert.Error(t, actual)
 }
 
@@ -91,7 +91,7 @@ func Test_Apply_WhenRunReturnsResults_PrependsResutsToStatus(t *testing.T) {
 	m.On("Run", any).Return(expectedResult, nil)
 	sh := testShell(m)
 	sh.Status = firstResult
-	_, actual := sh.Apply(fakerenderer.New())
+	_, actual := sh.Apply()
 	assert.NoError(t, actual)
 	assert.Equal(t, expectedResult, sh.Status)
 }
@@ -100,7 +100,7 @@ func Test_Apply_SetsStatusOperationToApply(t *testing.T) {
 	result := &shell.CommandResults{}
 	m := resultExecutor(result)
 	sh := testShell(m)
-	sh.Apply(fakerenderer.New())
+	sh.Apply()
 	assert.Equal(t, "apply", result.ResultsContext.Operation)
 }
 
@@ -108,7 +108,7 @@ func Test_Apply_CallsRunWithApplyStatement(t *testing.T) {
 	statement := "test statement"
 	m := defaultExecutor()
 	sh := &shell.Shell{ApplyStmt: statement, CmdGenerator: m}
-	sh.Apply(fakerenderer.New())
+	sh.Apply()
 	m.AssertCalled(t, "Run", statement)
 }
 

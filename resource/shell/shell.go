@@ -53,7 +53,7 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply is a NOP for health checks
-func (s *Shell) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (s *Shell) Apply() (resource.TaskStatus, error) {
 	if cg, ok := s.CmdGenerator.(*CommandGenerator); ok {
 		s.CmdGenerator = cg
 	}

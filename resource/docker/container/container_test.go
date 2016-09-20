@@ -638,7 +638,7 @@ func TestContainerApply(t *testing.T) {
 	container := &container.Container{Force: true, Name: "nginx", Image: "nginx:latest"}
 	container.SetClient(c)
 
-	_, err := container.Apply(fakerenderer.New())
+	_, err := container.Apply()
 	assert.NoError(t, err)
 }
 

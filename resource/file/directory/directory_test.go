@@ -143,7 +143,7 @@ func TestDirectoryApply(t *testing.T) {
 		dest := path.Join(tmpDir, "one-level")
 		dir := directory.Directory{Destination: dest}
 
-		apply, err := dir.Apply(fakerenderer.New())
+		apply, err := dir.Apply()
 		require.NoError(t, err)
 
 		assert.Equal(
@@ -161,7 +161,7 @@ func TestDirectoryApply(t *testing.T) {
 			CreateAll:   true,
 		}
 
-		apply, err := dir.Apply(fakerenderer.New())
+		apply, err := dir.Apply()
 		require.NoError(t, err)
 
 		assert.Equal(
@@ -179,7 +179,7 @@ func TestDirectoryApply(t *testing.T) {
 
 		dir := directory.Directory{Destination: dest}
 
-		_, err := dir.Apply(fakerenderer.New())
+		_, err := dir.Apply()
 		require.Error(t, err)
 	})
 }

@@ -186,7 +186,7 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply changes for user
-func (u *User) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (u *User) Apply() (resource.TaskStatus, error) {
 	var (
 		userByID *user.User
 		uidErr   error
