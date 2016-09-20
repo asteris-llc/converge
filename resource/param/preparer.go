@@ -31,7 +31,7 @@ type Preparer struct {
 	// Default is an optional field that provides a default value if none is
 	// provided to this parameter. If this field is not set, this param will be
 	// treated as required.
-	Default interface{} `hcl:"default"`
+	Default interface{} `hcl:"default" doc_type:"anything scalar"`
 }
 
 // Prepare a new task
