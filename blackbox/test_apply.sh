@@ -6,13 +6,13 @@ SOURCE=${1:-${ROOT}/samples/basic.hcl}
 
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
-    rm -rf $TMP
+    rm -rf ${TMP}
 }
 trap finish EXIT
 
-pushd $TMP
+pushd ${TMP}
 
-$ROOT/converge apply --local -p filename=test.txt -p "message=x" $SOURCE
+${ROOT}/converge apply --local -p filename=test.txt -p "message=x" ${SOURCE}
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"

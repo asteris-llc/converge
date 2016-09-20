@@ -4,11 +4,11 @@ set -eo pipefail
 ROOT=$(pwd)
 TMP=$(mktemp -d -t converge.graphviz.XXXXXXXXXX)
 function finish {
-    rm -fr $TMP
+    rm -fr ${TMP}
 }
 trap finish EXIT
 
-pushd $TMP
+pushd ${TMP}
 
 for i in ${ROOT}/samples/*.hcl; do
     b=$(basename $i)
