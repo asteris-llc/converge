@@ -16,7 +16,6 @@ package param
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -44,7 +43,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, errors.New("param is required")
 	}
 
-	var def string
+	var def interface{}
 
 	switch v := p.Default.(type) {
 	case string:
@@ -55,7 +54,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		}
 
 	default:
-		def = fmt.Sprintf("%v", v)
+		def = p.Default
 	}
 
 	return &Param{Value: def}, nil
