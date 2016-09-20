@@ -34,21 +34,25 @@ func TestPreparerInterface(t *testing.T) {
 func TestPreparerDefault(t *testing.T) {
 	t.Parallel()
 
-	prep := &param.Preparer{Default: newDefault("x")}
+	vals := []interface{}{"x", true}
 
-	result, err := prep.Prepare(fakerenderer.New())
+	for _, val := range vals {
+		prep := &param.Preparer{Default: val}
 
-	resultParam, ok := result.(*param.Param)
-	require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
+		result, err := prep.Prepare(fakerenderer.New())
 
-	require.Nil(t, err)
-	assert.Equal(t, *prep.Default, resultParam.Value)
+		resultParam, ok := result.(*param.Param)
+		require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
+
+		require.Nil(t, err)
+		assert.Equal(t, fmt.Sprintf("%v", prep.Default), resultParam.Value)
+	}
 }
 
 func TestPreparerProvided(t *testing.T) {
 	t.Parallel()
 
-	prep := &param.Preparer{Default: newDefault("x")}
+	prep := &param.Preparer{Default: "x"}
 
 	result, err := prep.Prepare(fakerenderer.NewWithValue("y"))
 
@@ -68,8 +72,4 @@ func TestPreparerRequired(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "param is required")
 	}
-}
-
-func newDefault(x string) *string {
-	return &x
 }
