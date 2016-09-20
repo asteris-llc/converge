@@ -142,7 +142,7 @@ func checkSyntax(interpreter string, flags []string, script string) error {
 	} else {
 		if len(flags) == 0 {
 			// TODO: add ID in here somehow
-			log.Info("no check_flags specified for interpeter, skipping syntax validation")
+			log.Debug("no check_flags specified for interpeter, skipping syntax validation")
 			return nil
 		}
 	}

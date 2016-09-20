@@ -33,7 +33,7 @@ type dependencyGenerator func(node *parse.Node) ([]string, error)
 // the graph and creates edges to fit them
 func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
-	logger.Info("resolving dependencies")
+	logger.Debug("resolving dependencies")
 
 	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // skip root
