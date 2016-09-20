@@ -16,6 +16,32 @@ Converge comes with a server that can:
 - serve the Converge binary itself, for bootstrapping new systems inside your
   network
 
+## Basic Usage
+
+Install the converge binary to your server or device and run the `server` command.
+
+```shell
+converge server --rpc-token "YOLO security"
+```
+
+This will spin up a gRPC server on port 4774, with `YOLO security` set as the
+token string. You should see messages streaming from the server. If you run the
+server command without `--rpc-token`, then the output will include the
+generated token, and you can use that in place of `YOLO security` in future
+invocations.
+
+The next step is to run the converge binary in client mode. This can be on
+the same machine, or a different machine in your network. This example assumes
+that you have a HCL file called `your.hcl` that you wish to configure the
+server or device with.
+
+```shell
+converge plan --rpc-token "YOLO security" your.hcl
+```
+
+If your converge server is running on a different machine, then you will need
+to add a `--rpc-addr` flag with the IP address of that machine.
+
 ## HTTPS
 
 You can run the server over HTTPS. If you don't have your own certificates, you
