@@ -208,9 +208,9 @@ func TestCheckNameAndGidMismatchStatePresent(t *testing.T) {
 
 	if runtime.GOOS == "linux" {
 		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
+		assert.True(t, status.HasChanges())
 	} else {
 		assert.EqualError(t, err, "group: not supported on this system")
 	}
@@ -231,9 +231,9 @@ func TestCheckNameAndGidMismatchStateAbsent(t *testing.T) {
 
 	if runtime.GOOS == "linux" {
 		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
+		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
+		assert.True(t, status.HasChanges())
 	} else {
 		assert.EqualError(t, err, "group: not supported on this system")
 	}
