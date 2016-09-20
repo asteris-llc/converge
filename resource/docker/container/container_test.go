@@ -139,7 +139,7 @@ func TestContainerCheckStatusNoChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Force: true, Name: "nginx", Status: "created"}
+	container := &container.Container{Force: true, Name: "nginx", CStatus: "created"}
 	container.SetClient(c)
 
 	status, err := container.Check(fakerenderer.New())
