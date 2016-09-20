@@ -6,13 +6,234 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 19 Sep 2016 19:45:54 -0500</lastBuildDate>
+    <lastBuildDate>Tue, 20 Sep 2016 14:45:56 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>task</title>
+      <link>http://converge.aster.is/resources/task/</link>
+      <pubDate>Tue, 20 Sep 2016 14:45:56 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/task/</guid>
+      <description>
+
+&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
+checking if the command should be run.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to check if a resource needs to be changed. It should
+exit with exit code 0 if the resource does not need to be changed, and
+1 (or above) otherwise.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to apply the resource. Normal shell exit code
+expectations apply (that is, exit code 0 for success, 1 or above for
+failure.)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully. The
+format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
+sequence of decimal numbers, each with optional fraction and a unit
+suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
+&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>docker.container</title>
+      <link>http://converge.aster.is/resources/docker-container/</link>
+      <pubDate>Tue, 20 Sep 2016 14:45:55 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/docker-container/</guid>
+      <description>
+
+&lt;p&gt;Container is responsible for creating docker containers. It assumes that
+there is already a Docker daemon running on the system.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.container &amp;quot;nginx&amp;quot; {
+  name  = &amp;quot;nginx&amp;quot;
+  image = &amp;quot;nginx:1.10-alpine&amp;quot;
+  force = &amp;quot;true&amp;quot;
+
+  ports = [
+    &amp;quot;80&amp;quot;,
+  ]
+
+  env {
+    &amp;quot;FOO&amp;quot; = &amp;quot;BAR&amp;quot;
+  }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;name of the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;image&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the image name or ID to use for the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;entrypoint&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the container entrypoint&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;command&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the container command&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;working_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;override the working directory of the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;set environmnet variables in the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;expose&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;additional ports to expose in the container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;links&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;A list of links for the container. Each link entry should be in the form of
+container_name:alias&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ports&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;publish container ports to the host. Each item should be in the following
+format:
+ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
+Ports can be specified in the format: portnum/proto. If proto is not
+specified, &amp;ldquo;tcp&amp;rdquo; is assumed&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dns&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;list of DNS servers for the container to use&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;volumes&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;bind mounts volumes&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;volumes_from&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;mounts all volumes from the specified container&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;publish_all_ports&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;allocates a random host port for all of a container’s exposed ports.
+Specified as a boolean value&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;status&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the desired status of the container. running|created&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;force&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;indicates whether or not the container will be recreated if the state is
+not what is expected. By default, the module will only check to see if the
+container exists. Specified as a boolean value&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>param</title>
       <link>http://converge.aster.is/resources/param/</link>
-      <pubDate>Mon, 19 Sep 2016 19:45:54 -0500</pubDate>
+      <pubDate>Tue, 20 Sep 2016 14:45:55 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/param/</guid>
       <description>
@@ -236,137 +457,6 @@ file.content &amp;quot;hostname data&amp;quot; {
     </item>
     
     <item>
-      <title>docker.container</title>
-      <link>http://converge.aster.is/resources/docker-container/</link>
-      <pubDate>Thu, 08 Sep 2016 23:18:03 -0700</pubDate>
-      
-      <guid>http://converge.aster.is/resources/docker-container/</guid>
-      <description>
-
-&lt;p&gt;Container is responsible for creating docker containers. It assumes that
-there is already a Docker daemon running on the system.&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;docker.container &amp;quot;nginx&amp;quot; {
-  name  = &amp;quot;nginx&amp;quot;
-  image = &amp;quot;nginx:1.10-alpine&amp;quot;
-  force = &amp;quot;true&amp;quot;
-
-  ports = [
-    &amp;quot;80&amp;quot;,
-  ]
-
-  env {
-    &amp;quot;FOO&amp;quot; = &amp;quot;BAR&amp;quot;
-  }
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;name of the container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;image&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the image name or ID to use for the container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;entrypoint&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;override the container entrypoint&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;command&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;override the container command&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;working_dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;override the working directory of the container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;set environmnet variables in the container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;expose&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;additional ports to expose in the container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;links&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;A list of links for the container. Each link entry should be in the form of
-container_name:alias&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ports&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;publish container ports to the host. Each item should be in the following
-format:
-ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
-Ports can be specified in the format: portnum/proto. If proto is not
-specified, &amp;ldquo;tcp&amp;rdquo; is assumed&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;dns&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;list of DNS servers for the container to use&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;volumes&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;bind mounts volumes&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;volumes_from&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;mounts all volumes from the specified container&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;publish_all_ports&lt;/code&gt; (bool)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;allocates a random host port for all of a container’s exposed ports.
-Specified as a boolean value&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;status&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the desired status of the container. running|created&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;force&lt;/code&gt; (bool)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;indicates whether or not the container will be recreated if the state is
-not what is expected. By default, the module will only check to see if the
-container exists. Specified as a boolean value&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>docker.image</title>
       <link>http://converge.aster.is/resources/docker-image/</link>
       <pubDate>Thu, 08 Sep 2016 23:18:03 -0700</pubDate>
@@ -529,168 +619,6 @@ file must exist on the system (for example, having been created with
 &lt;/ul&gt;
 
 &lt;p&gt;Mode is the mode of the file, specified in octal.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>task</title>
-      <link>http://converge.aster.is/resources/task/</link>
-      <pubDate>Wed, 31 Aug 2016 09:51:20 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/task/</guid>
-      <description>
-
-&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
-checking if the command should be run.&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
-  default = &amp;quot;Hello, World!&amp;quot;
-}
-
-param &amp;quot;filename&amp;quot; {
-  default = &amp;quot;test.txt&amp;quot;
-}
-
-task &amp;quot;render&amp;quot; {
-  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
-  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
-used by default.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
-&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script to run to check if a resource needs to be changed. It should
-exit with exit code 0 if the resource does not need to be changed, and
-1 (or above) otherwise.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script to run to apply the resource. Normal shell exit code
-expectations apply (that is, exit code 0 for success, 1 or above for
-failure.)&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (duration string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the amount of time the command will wait before halting forcefully. The
-format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
-&amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
-
-&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
-
-&lt;p&gt;The following fields are available from other modules via &lt;code&gt;lookup&lt;/code&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;checkStmt&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script that will be executed during planning.  It is the script provided
-  to &lt;code&gt;check&lt;/code&gt; with any template references resolved.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;applyStmt&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the script that will be executed during application.  It is the script
-  provided to &lt;code&gt;apply&lt;/code&gt; with any template references resolved.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the working directory of the script.  It will be an empty string if unset.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (list of strings)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;a list of environment variables passed into the script with &lt;code&gt;env&lt;/code&gt; in the form
-  of &lt;code&gt;key=value&lt;/code&gt;. If no environment variables were set then it returns an empty
-  list.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;status&lt;/code&gt; (command results)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the execution status of the last task that was run.  During planning this will
-  be the result of &lt;code&gt;check&lt;/code&gt;, and during application it will be the result of
-  &lt;code&gt;apply&lt;/code&gt;.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;checkStatus&lt;/code&gt; (command results)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the status of the initial &lt;code&gt;check&lt;/code&gt; run.  During planning this is equivivlent to
-  &lt;code&gt;status&lt;/code&gt;, during application this will provide access to the results of the
-  initial call to &lt;code&gt;check&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h3 id=&#34;command-results&#34;&gt;Command Results&lt;/h3&gt;
-
-&lt;p&gt;The command results structure provides fields related to the execution status of
-a task.  &lt;code&gt;Status&lt;/code&gt; and &lt;code&gt;CheckStatus&lt;/code&gt; both return command results type fields that
-allow you to access any of these defined fields.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;exitStatus&lt;/code&gt; (unsigned integer)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;the exit code of the process. The meaning of the fields is system dependent.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;stdout&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;contains all data written to stdout by the process.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;stderr&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;contains all data written to stderr by the process.&lt;/p&gt;
 </description>
     </item>
     
