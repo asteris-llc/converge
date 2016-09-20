@@ -33,15 +33,16 @@ type dependencyGenerator func(node *parse.Node) ([]string, error)
 // the graph and creates edges to fit them
 func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
-	logger.Debug("resolving dependencies")
+	logger.Info("resolving dependencies")
 
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
+	r, e := g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // skip root
 			return nil
 		}
 
 		node, ok := out.Get(id).(*parse.Node)
 		if !ok {
+			fmt.Println("cannot get node")
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
@@ -49,7 +50,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			getDepends,
 			getParams,
 			func(node *parse.Node) (out []string, err error) {
-				return getXrefs(g, node)
+				return getXrefs(g, id, node)
 			},
 		}
 
@@ -58,8 +59,10 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		for _, source := range depGenerators {
 			deps, err := source(node)
 			if err != nil {
+				fmt.Println("dependency generator failed with: ", err)
 				return err
 			}
+
 			for _, dep := range deps {
 
 				out.Connect(id, graph.SiblingID(id, dep))
@@ -67,6 +70,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		}
 		return nil
 	})
+	return r, e
 }
 
 func getDepends(node *parse.Node) ([]string, error) {
@@ -108,7 +112,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 	return out, err
 }
 
-func getXrefs(g *graph.Graph, node *parse.Node) (out []string, err error) {
+func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err error) {
 	var strings []string
 	var calls []string
 	nodeRefs := make(map[string]struct{})
@@ -121,20 +125,34 @@ func getXrefs(g *graph.Graph, node *parse.Node) (out []string, err error) {
 	for _, s := range strings {
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
 		if tmplErr != nil {
+			fmt.Println("\tgetXrefs: template error: ", tmplErr)
 			return out, tmplErr
 		}
 		tmpl.Execute(ioutil.Discard, &struct{}{})
 	}
 	for _, call := range calls {
-		vertex, _, found := preprocessor.VertexSplit(g, "root/"+call)
+		fqgn := graph.SiblingID(id, call)
+		vertex, _, found := preprocessor.VertexSplit(g, fqgn)
+		fmt.Printf("getXrefs vertex split:\n\tfqgn: %s\n\tcall: %s\n\tvertex: %s\n\tfound: %v\n", fqgn, call, vertex, found)
 		if !found {
+			fmt.Printf("\tgetXrefs error: reference to vertex %s but it doesn't exist\n", call)
 			return []string{}, fmt.Errorf("unresolvable call to %s", call)
 		}
-		vertex = vertex[len("root/"):]
-		if _, ok := nodeRefs[vertex]; !ok {
-			nodeRefs[vertex] = struct{}{}
-			out = append(out, vertex)
+		modulePrefix, pfxError := inferVertexPrefix(g, vertex)
+		if pfxError != nil {
+			return out, pfxError
+		}
+		vertex = vertex[len(modulePrefix):]
+		fmt.Printf("\tafter processing:\n\t\tvertex = %s\n\t\tcall:%s\n", vertex, call)
+		if _, ok := nodeRefs[call]; !ok {
+			nodeRefs[call] = struct{}{}
+			out = append(out, call)
 		}
 	}
 	return out, err
+}
+
+func inferVertexPrefix(g *graph.Graph, name string) (string, error) {
+
+	return "", nil
 }
