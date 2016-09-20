@@ -76,7 +76,7 @@ can be done separately to see what needs to be changed before execution.`,
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			clog.Warn("skipping module verfication")
+			clog.Warn("skipping module verification")
 		}
 
 		// execute files

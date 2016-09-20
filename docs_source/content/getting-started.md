@@ -35,7 +35,7 @@ This is our first module! Let's plan out our execution first by running
 $ converge plan --local helloWorld.hcl
 2016-09-20T08:05:31-05:00 |WARN| setting session-local token	token=309b7660-a0b1-4a88-9fa4-d5f2a139b8de
 2016-09-20T08:05:31-05:00 |INFO| serving	addr=:47740 component=rpc
-2016-09-20T08:05:31-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:05:31-05:00 |WARN| skipping module verification	component=client
 2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
 2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
 
@@ -61,7 +61,7 @@ Next, let's actually make the changes, using `converge apply --local helloWorld.
 $ converge apply --local helloWorld.hcl
 2016-09-20T08:06:21-05:00 |WARN| setting session-local token	token=4d9f2774-8ed1-4dc4-8db5-a359b275b3b5
 2016-09-20T08:06:21-05:00 |INFO| serving	addr=:47740 component=rpc
-2016-09-20T08:06:21-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:06:21-05:00 |WARN| skipping module verification	component=client
 2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=APPLY
 2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=APPLY
 
@@ -101,7 +101,7 @@ plan again.
 $ converge plan --local helloWorld.hcl
 2016-09-20T08:07:02-05:00 |WARN| setting session-local token	token=c61a0f03-2f4d-43cd-9722-1482e6396b70
 2016-09-20T08:07:02-05:00 |INFO| serving	addr=:47740 component=rpc
-2016-09-20T08:07:02-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:07:02-05:00 |WARN| skipping module verification	component=client
 2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
 2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
 
@@ -153,7 +153,7 @@ Let's change the name in the template to your name (I'm going to assume it's
 $ converge plan --local -p name=Spartacus helloWorld.hcl
 2016-09-20T08:07:51-05:00 |WARN| setting session-local token	token=376ae4d9-8c7a-4581-be05-4c3cb8401798
 2016-09-20T08:07:51-05:00 |INFO| serving	addr=:47740 component=rpc
-2016-09-20T08:07:51-05:00 |WARN| skipping module verfiction	component=client
+2016-09-20T08:07:51-05:00 |WARN| skipping module verification	component=client
 2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/param.name run=STARTED stage=PLAN
 2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
 2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
