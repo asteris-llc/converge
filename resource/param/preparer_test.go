@@ -34,21 +34,49 @@ func TestPreparerInterface(t *testing.T) {
 func TestPreparerDefault(t *testing.T) {
 	t.Parallel()
 
-	prep := &param.Preparer{Default: newDefault("x")}
+	vals := []interface{}{"x", true, 1, 1.0}
 
-	result, err := prep.Prepare(fakerenderer.New())
+	for _, val := range vals {
+		prep := &param.Preparer{Default: val}
 
-	resultParam, ok := result.(*param.Param)
-	require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
+		result, err := prep.Prepare(fakerenderer.New())
+		assert.NoError(t, err)
 
-	require.Nil(t, err)
-	assert.Equal(t, *prep.Default, resultParam.Value)
+		resultParam, ok := result.(*param.Param)
+		require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
+
+		require.Nil(t, err)
+		assert.Equal(t, prep.Default, resultParam.Value)
+	}
+}
+
+func TestPreparerCompositeValues(t *testing.T) {
+	t.Parallel()
+
+	vals := []interface{}{
+		[]string{},
+		map[string]string{},
+	}
+
+	for _, val := range vals {
+		prep := &param.Preparer{Default: val}
+		_, err := prep.Prepare(fakerenderer.New())
+
+		if assert.Error(t, err, fmt.Sprintf("No error from %T", val)) {
+			assert.EqualError(
+				t,
+				err,
+				fmt.Sprintf("composite values are not allowed in params, but got %T", val),
+				fmt.Sprintf("Wrong error for %T", val),
+			)
+		}
+	}
 }
 
 func TestPreparerProvided(t *testing.T) {
 	t.Parallel()
 
-	prep := &param.Preparer{Default: newDefault("x")}
+	prep := &param.Preparer{Default: "x"}
 
 	result, err := prep.Prepare(fakerenderer.NewWithValue("y"))
 
@@ -68,8 +96,4 @@ func TestPreparerRequired(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "param is required")
 	}
-}
-
-func newDefault(x string) *string {
-	return &x
 }
