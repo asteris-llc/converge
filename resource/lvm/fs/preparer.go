@@ -2,6 +2,7 @@ package fs
 
 import (
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
 type Preparer struct {
@@ -36,6 +37,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		},
 	}
 
-	err = r.Setup()
+	err = r.Setup(lowlevel.MakeLvmBackend())
 	return r, err
 }

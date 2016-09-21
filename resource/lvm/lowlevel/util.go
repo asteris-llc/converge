@@ -17,6 +17,10 @@ type LVM interface {
 	Mountpoint(path string) (bool, error)
 	Blkid(dev string) (string, error)
 
+	// systemd units
+	CheckUnit(filename string, content string) (bool, error)
+	UpdateUnit(filename string, content string) error
+
 	// FIXME: possible unneeded
 	QueryDeviceMapperName(dmName string) (string, error)
 

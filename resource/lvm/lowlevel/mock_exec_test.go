@@ -1,12 +1,19 @@
 package lowlevel_test
 
 import (
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/stretchr/testify/mock"
 	"os"
 )
 
 type MockExecutor struct {
 	mock.Mock
+}
+
+func makeLvmWithMockExec() (lowlevel.LVM, *MockExecutor) {
+	me := &MockExecutor{}
+	lvm := &lowlevel.RealLVM{Backend: me}
+	return lvm, me
 }
 
 func (me *MockExecutor) Run(prog string, args []string) error {
