@@ -49,6 +49,7 @@ var (
 	tempUsername  []string
 	fakeUsername  string
 	fakeUID       string
+	tempGroupName []string
 	fakeGroupName string
 	fakeGid       string
 	gidErr        error
@@ -100,6 +101,8 @@ func init() {
 	currUsername = currUser.Username
 	tempUsername = strings.Split(uuid.NewV4().String(), "-")
 	fakeUsername = strings.Join(tempUsername[0:], "")
+	tempGroupName = strings.Split(uuid.NewV4().String(), "-")
+	fakeGroupName = strings.Join(tempUsername[0:], "")
 }
 
 func TestCheckPresentNoUidUserExists(t *testing.T) {
@@ -774,9 +777,22 @@ func TestSetUserOptionsAll(t *testing.T) {
 	options := user.SetUserAddOptions(u)
 
 	assert.Equal(t, u.UID, options["uid"])
-	assert.Equal(t, u.GID, options["gid"])
+	assert.Equal(t, u.GID, options["group"])
 	assert.Equal(t, u.Name, options["comment"])
 	assert.Equal(t, u.HomeDir, options["directory"])
+}
+
+func TestSetUserOptionsGroup(t *testing.T) {
+	t.Parallel()
+
+	u := user.NewUser(new(user.System))
+	u.Username = fakeUsername
+	u.GroupName = fakeGroupName
+	u.GID = fakeGid
+
+	options := user.SetUserAddOptions(u)
+
+	assert.Equal(t, u.GroupName, options["group"])
 }
 
 func TestSetUserOptionsNone(t *testing.T) {
@@ -788,12 +804,12 @@ func TestSetUserOptionsNone(t *testing.T) {
 	options := user.SetUserAddOptions(u)
 
 	_, uidOk := options["uid"]
-	_, gidOk := options["gid"]
+	_, groupOk := options["group"]
 	_, commentOk := options["comment"]
 	_, directoryOk := options["directory"]
 
 	assert.False(t, uidOk)
-	assert.False(t, gidOk)
+	assert.False(t, groupOk)
 	assert.False(t, commentOk)
 	assert.False(t, directoryOk)
 }
@@ -875,6 +891,12 @@ func (m *MockSystem) Lookup(name string) (*os.User, error) {
 func (m *MockSystem) LookupID(uid string) (*os.User, error) {
 	args := m.Called(uid)
 	return args.Get(0).(*os.User), args.Error(1)
+}
+
+// LookupGroup looks up a group by name
+func (m *MockSystem) LookupGroup(name string) (*os.Group, error) {
+	args := m.Called(name)
+	return args.Get(0).(*os.Group), args.Error(1)
 }
 
 // LookupGroupID looks up a group by ID
