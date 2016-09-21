@@ -16,6 +16,35 @@ Converge comes with a server that can:
 - serve the Converge binary itself, for bootstrapping new systems inside your
   network
 
+## Basic Usage
+
+To run converge in server mode with easy configuration, you just need
+the binary installed on your device, and a token to use for authenticating over
+RPC. In this example, we'll use the `uuid` utility to generate this token.
+
+```shell
+TOKEN=`uuid`
+converge server --rpc-token $TOKEN
+```
+
+This will spin up a gRPC server on port 4774, with `$token` set as the RPC
+token. You should see messages streaming from the server.
+
+If you run the server command without `--rpc-token`, then the output will
+include the generated token. While this token is valid during the whole
+session, a new one is generated each time you start a new session. If you want
+to use the same token across sessions, you will need to pass it in.
+
+The next step is to run the converge binary in client mode. This can be on
+the same machine, or a different machine in your network. This example assumes
+that you have a HCL file called `your.hcl` that you wish to configure the
+server or device with.
+
+```shell
+TOKEN="the pasted contents of that token from earlier"
+converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
+```
+
 ## HTTPS
 
 You can run the server over HTTPS. If you don't have your own certificates, you
