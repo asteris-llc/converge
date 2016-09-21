@@ -1,6 +1,8 @@
 package lowlevel
 
 import (
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -12,8 +14,8 @@ type Exec interface {
 	Read(prog string, args []string) (stdout string, err error)
 
 	// unit read/write injection
-	//    ReadFile(fn string) (string, error)
-	//    WriteFile(fn string, c string) error
+	ReadFile(fn string) ([]byte, error)
+	WriteFile(fn string, c []byte, p os.FileMode) error
 }
 
 type OsExec struct {
@@ -48,4 +50,12 @@ func exitStatus(err error) (int, error) {
 		}
 	}
 	return 0, err
+}
+
+func (*OsExec) ReadFile(fn string) ([]byte, error) {
+	return ioutil.ReadFile(fn)
+}
+
+func (*OsExec) WriteFile(fn string, content []byte, perm os.FileMode) error {
+	return ioutil.WriteFile(fn, content, perm)
 }
