@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/rpc/pb"
@@ -124,6 +125,48 @@ func (e *executor) Plan(in *pb.LoadRequest, stream pb.Executor_PlanServer) error
 	if err != nil {
 		logger.WithError(err).WithField("location", in.Location).Error("planning failed")
 		return errors.Wrapf(err, "planning %s", in.Location)
+	}
+
+	return nil
+}
+
+func (e *executor) sendHealthCheck(ctx context.Context, stream statusResponseStream, in *graph.Graph) (*graph.Graph, error) {
+	out, err := healthcheck.WithNotify(ctx, in, e.stageNotifier(pb.StatusResponse_PLAN, stream))
+	if err != nil && err != plan.ErrTreeContainsErrors {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (e *executor) HealthCheck(in *pb.LoadRequest, stream pb.Executor_HealthCheckServer) error {
+	logger, ctx := setIDLogger(stream.Context())
+	logger = logger.WithField("function", "executor.Plan")
+
+	if err := e.auth.authorize(ctx); err != nil {
+		logger.WithError(err).Warning("authorization failed")
+		return errors.Wrap(err, "authorization failed")
+	}
+
+	loaded, err := in.Load(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = e.sendMeta(ctx, loaded, stream); err != nil {
+		return err
+	}
+
+	// send the plan
+	planned, err := e.sendPlan(ctx, stream, loaded)
+	if err != nil {
+		logger.WithError(err).WithField("location", in.Location).Error("planning failed")
+		return errors.Wrapf(err, "planning %s", in.Location)
+	}
+
+	_, err = e.sendHealthCheck(ctx, stream, planned)
+	if err != nil {
+		logger.WithError(err).WithField("location", in.Location).Error("health check failed")
+		return errors.Wrapf(err, "health check %s", in.Location)
 	}
 
 	return nil

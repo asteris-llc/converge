@@ -28,6 +28,27 @@ var _ io.Reader
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
+func request_Executor_HealthCheck_0(ctx context.Context, marshaler runtime.Marshaler, client ExecutorClient, req *http.Request, pathParams map[string]string) (Executor_HealthCheckClient, runtime.ServerMetadata, error) {
+	var protoReq LoadRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	stream, err := client.HealthCheck(ctx, &protoReq)
+	if err != nil {
+		return nil, metadata, err
+	}
+	header, err := stream.Header()
+	if err != nil {
+		return nil, metadata, err
+	}
+	metadata.HeaderMD = header
+	return stream, metadata, nil
+
+}
+
 func request_Executor_Plan_0(ctx context.Context, marshaler runtime.Marshaler, client ExecutorClient, req *http.Request, pathParams map[string]string) (Executor_PlanClient, runtime.ServerMetadata, error) {
 	var protoReq LoadRequest
 	var metadata runtime.ServerMetadata
@@ -165,6 +186,34 @@ func RegisterExecutorHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 func RegisterExecutorHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
 	client := NewExecutorClient(conn)
 
+	mux.Handle("POST", pattern_Executor_HealthCheck_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Executor_HealthCheck_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Executor_HealthCheck_0(ctx, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_Executor_Plan_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -225,12 +274,16 @@ func RegisterExecutorHandler(ctx context.Context, mux *runtime.ServeMux, conn *g
 }
 
 var (
+	pattern_Executor_HealthCheck_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "machine", "plan"}, ""))
+
 	pattern_Executor_Plan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "machine", "plan"}, ""))
 
 	pattern_Executor_Apply_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "machine", "apply"}, ""))
 )
 
 var (
+	forward_Executor_HealthCheck_0 = runtime.ForwardResponseStream
+
 	forward_Executor_Plan_0 = runtime.ForwardResponseStream
 
 	forward_Executor_Apply_0 = runtime.ForwardResponseStream
