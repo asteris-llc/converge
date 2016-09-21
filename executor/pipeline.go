@@ -18,23 +18,25 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor/either"
-	"github.com/asteris-llc/converge/executor/list"
 	"github.com/asteris-llc/converge/executor/monad"
 )
 
+// MonadicPipelineFunc represents a monadic pipeline function
+type MonadicPipelineFunc func(i interface{}) monad.Monad
+
 // Pipeline is a type alias for a lazy list of pipeline functions
 type Pipeline struct {
-	CallStack list.List
+	CallStack []MonadicPipelineFunc
 }
 
 // NewPipeline creats a new Pipeline with an empty call stack
 func NewPipeline() Pipeline {
-	return Pipeline{CallStack: list.Mzero()}
+	return Pipeline{[]MonadicPipelineFunc{}}
 }
 
 // AndThen pushes a function onto the pipeline call stack
 func (p Pipeline) AndThen(f func(interface{}) monad.Monad) Pipeline {
-	p.CallStack = list.Append(f, p.CallStack)
+	p.CallStack = append(p.CallStack, f)
 	return p
 }
 
@@ -44,31 +46,24 @@ func (p Pipeline) LogAndThen(f func(interface{}) monad.Monad, log func(interface
 		log(i)
 		return f(i)
 	}
-	p.CallStack = list.Append(logged, p.CallStack)
+	p.CallStack = append(p.CallStack, logged)
 	return p
 }
 
 // Connect adds a pipeline to the end of the current pipeline.
 // E.g. {a,b,c}.Connect({d,e,f}) = {a,b,c,d,e.f}
 func (p Pipeline) Connect(end Pipeline) Pipeline {
-	p.CallStack = list.Concat(p.CallStack, end.CallStack)
+	p.CallStack = append(p.CallStack, end.CallStack...)
 	return p
 }
 
 // Exec executes the pipeline
 func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
-	foldFunc := func(carry, elem interface{}) interface{} {
-		f, ok := elem.(func(interface{}) monad.Monad)
-		if !ok {
-			return either.LeftM(badTypeError("func(interface{}) monad.Monad", elem))
-		}
-		e, ok := carry.(either.EitherM)
-		if !ok {
-			return either.LeftM(badTypeError("EitherM", carry))
-		}
-		return e.AndThen(f)
+	val := zeroValue.(either.EitherM)
+	for _, f := range p.CallStack {
+		val = val.AndThen(f).(either.EitherM)
 	}
-	return list.Foldl(foldFunc, zeroValue, p.CallStack).(either.EitherM)
+	return val
 }
 
 func badTypeError(expected string, actual interface{}) error {
