@@ -6,7 +6,6 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
-	"io/ioutil"
 	"strings"
 	"text/template"
 )
@@ -56,7 +55,7 @@ func (r *ResourceFS) Check(resource.Renderer) (status resource.TaskStatus, err e
 		}
 	}
 
-	if unit, err := ioutil.ReadFile(r.unitFileName); err != nil {
+	if unit, err := r.lvm.GetBackend().ReadFile(r.unitFileName); err != nil {
 		return nil, err
 	} else {
 		r.unitNeedUpdate = string(unit) != r.unitFileContent
@@ -82,7 +81,7 @@ func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 	if r.unitNeedUpdate {
-		if err := ioutil.WriteFile(r.unitFileName, []byte(r.unitFileContent), 0644); err != nil {
+		if err := r.lvm.GetBackend().WriteFile(r.unitFileName, []byte(r.unitFileContent), 0644); err != nil {
 			return nil, err
 		}
 		// FIXME: abstraction leak

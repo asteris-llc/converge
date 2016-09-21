@@ -3,29 +3,9 @@ package lowlevel_test
 import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
-
-type FakeDataExecutor struct {
-	mock.Mock
-	Pvs     string
-	Vgs     string
-	Lvs     map[string]string
-	Blkid   map[string]string
-	Dmsetup map[string]string
-}
-
-func (e *FakeDataExecutor) Run(prog string, args []string) error {
-	c := e.Called(prog, args)
-	return c.Error(0)
-}
-
-func (e *FakeDataExecutor) RunExitCode(prog string, args []string) (int, error) {
-	c := e.Called(prog, args)
-	return c.Int(0), c.Error(1)
-}
 
 // real data from avn@bulldozer (uuids mangled for secutiry consideration)
 const TESTDATA_PVS = "LVM2_PV_FMT=lvm2;LVM2_PV_UUID=5uADPK-2pG5-ryrX-tn87-BgtO-ZvV4-rm7J7t;LVM2_DEV_SIZE=999941799936;LVM2_PV_NAME=/dev/md127;LVM2_PV_MDA_FREE=516608;LVM2_PV_MDA_SIZE=1044480;LVM2_PE_START=1048576;LVM2_PV_SIZE=999938850816;LVM2_PV_FREE=149795373056;LVM2_PV_USED=850143477760;LVM2_PV_ATTR=a--;LVM2_PV_ALLOCATABLE=allocatable;LVM2_PV_EXPORTED=;LVM2_PV_MISSING=;LVM2_PV_PE_COUNT=238404;LVM2_PV_PE_ALLOC_COUNT=202690;LVM2_PV_TAGS=;LVM2_PV_MDA_COUNT=1;LVM2_PV_MDA_USED_COUNT=1;LVM2_PV_BA_START=0;LVM2_PV_BA_SIZE=0;LVM2_VG_NAME=vg0"
@@ -46,7 +26,7 @@ const TESTDATA_LVS = `LVM2_LV_UUID=1v0Eub-b6s9-HL2F-KUfm-EHZt-D3uE-jmKid3;LVM2_L
 
 func TestQueryPhysicalVolumes(t *testing.T) {
 	e := &MockExecutor{}
-	lvm := &lowlevel.LVM{Backend: e}
+	lvm := &lowlevel.RealLVM{Backend: e}
 	e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(TESTDATA_PVS, nil)
 	pvs, err := lvm.QueryPhysicalVolumes()
 	require.NoError(t, err)
@@ -59,7 +39,7 @@ func TestQueryPhysicalVolumes(t *testing.T) {
 
 func TestQueryVolumeGroups(t *testing.T) {
 	e := &MockExecutor{}
-	lvm := &lowlevel.LVM{Backend: e}
+	lvm := &lowlevel.RealLVM{Backend: e}
 	e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(TESTDATA_PVS, nil)
 	vgs, err := lvm.QueryVolumeGroups()
 	require.NoError(t, err)
@@ -68,7 +48,7 @@ func TestQueryVolumeGroups(t *testing.T) {
 
 func TestQueryLogicalVolume(t *testing.T) {
 	e := &MockExecutor{}
-	lvm := &lowlevel.LVM{Backend: e}
+	lvm := &lowlevel.RealLVM{Backend: e}
 	e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(TESTDATA_LVS, nil)
 	lvs, err := lvm.QueryLogicalVolumes("vg0")
 	require.NoError(t, err)
