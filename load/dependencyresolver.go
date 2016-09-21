@@ -16,8 +16,10 @@ package load
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -42,7 +44,6 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 
 		node, ok := out.Get(id).(*parse.Node)
 		if !ok {
-			fmt.Println("cannot get node")
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
 		}
 
@@ -59,7 +60,6 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		for _, source := range depGenerators {
 			deps, err := source(node)
 			if err != nil {
-				fmt.Println("dependency generator failed with: ", err)
 				return err
 			}
 
@@ -89,8 +89,8 @@ func getDepends(node *parse.Node) ([]string, error) {
 }
 
 func getParams(node *parse.Node) (out []string, err error) {
-	var strings []string
-	strings, err = node.GetStrings()
+	var nodeStrings []string
+	nodeStrings, err = node.GetStrings()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 	type stub struct{}
 	language := extensions.MinimalLanguage()
 	language.On("param", extensions.RememberCalls(&out, 0))
-	for _, s := range strings {
+	for _, s := range nodeStrings {
 		useless := stub{}
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
 		if tmplErr != nil {
@@ -113,19 +113,18 @@ func getParams(node *parse.Node) (out []string, err error) {
 }
 
 func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err error) {
-	var strings []string
+	var nodeStrings []string
 	var calls []string
 	nodeRefs := make(map[string]struct{})
-	strings, err = node.GetStrings()
+	nodeStrings, err = node.GetStrings()
 	if err != nil {
 		return nil, err
 	}
 	language := extensions.MinimalLanguage()
 	language.On(extensions.RefFuncName, extensions.RememberCalls(&calls, 0))
-	for _, s := range strings {
+	for _, s := range nodeStrings {
 		tmpl, tmplErr := template.New("DependencyTemplate").Funcs(language.Funcs).Parse(s)
 		if tmplErr != nil {
-			fmt.Println("\tgetXrefs: template error: ", tmplErr)
 			return out, tmplErr
 		}
 		tmpl.Execute(ioutil.Discard, &struct{}{})
@@ -133,26 +132,32 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 	for _, call := range calls {
 		fqgn := graph.SiblingID(id, call)
 		vertex, _, found := preprocessor.VertexSplit(g, fqgn)
-		fmt.Printf("getXrefs vertex split:\n\tfqgn: %s\n\tcall: %s\n\tvertex: %s\n\tfound: %v\n", fqgn, call, vertex, found)
 		if !found {
-			fmt.Printf("\tgetXrefs error: reference to vertex %s but it doesn't exist\n", call)
 			return []string{}, fmt.Errorf("unresolvable call to %s", call)
 		}
-		modulePrefix, pfxError := inferVertexPrefix(g, vertex)
+
+		vertex, pfxError := stringIntersection(vertex, call)
 		if pfxError != nil {
 			return out, pfxError
 		}
-		vertex = vertex[len(modulePrefix):]
-		fmt.Printf("\tafter processing:\n\t\tvertex = %s\n\t\tcall:%s\n", vertex, call)
-		if _, ok := nodeRefs[call]; !ok {
-			nodeRefs[call] = struct{}{}
-			out = append(out, call)
+		if _, ok := nodeRefs[vertex]; !ok {
+			nodeRefs[vertex] = struct{}{}
+			out = append(out, vertex)
 		}
 	}
 	return out, err
 }
 
-func inferVertexPrefix(g *graph.Graph, name string) (string, error) {
-
-	return "", nil
+// stringIntersection will find the intersection of two strings that overlap in
+// the middle; we use this to remove the module portion of the node when we have
+// modules by first getting the fully qualified node name from the calling id
+// then finding the interesection with the lookup.
+func stringIntersection(front, back string) (string, error) {
+	for len(back) > 0 {
+		if strings.HasSuffix(front, back) {
+			return back, nil
+		}
+		back = back[0 : len(back)-1]
+	}
+	return "", errors.New("no string intersection found")
 }
