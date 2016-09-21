@@ -34,33 +34,36 @@ type Preparer struct {
 	Name string `hcl:"name"`
 
 	// State is whether the group should be present.
+	// Options are present and absent; default is present.
 	State string `hcl:"state"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	gid, err := render.Render("gid", p.GID)
-	if err != nil {
-		return nil, err
-	}
-	if gid == "" {
-		return nil, fmt.Errorf("group requires a \"gid\" parameter")
-	}
-	gidVal, err := strconv.ParseUint(gid, 10, 32)
-	if err != nil {
-		return nil, err
-	}
-	if gidVal == math.MaxUint32 {
-		// the maximum gid on linux is MaxUint32 - 1
-		return nil, fmt.Errorf("group \"gid\" parameter out of range")
-	}
-
 	name, err := render.Render("name", p.Name)
 	if err != nil {
 		return nil, err
 	}
 	if name == "" {
 		return nil, fmt.Errorf("group requires a \"name\" parameter")
+	}
+	grp := NewGroup(new(System))
+	grp.Name = name
+
+	gid, err := render.Render("gid", p.GID)
+	if err != nil {
+		return nil, err
+	}
+	if gid != "" {
+		gidVal, err := strconv.ParseUint(gid, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		if gidVal == math.MaxUint32 {
+			// the maximum gid on linux is MaxUint32 - 1
+			return nil, fmt.Errorf("group \"gid\" parameter out of range")
+		}
+		grp.GID = gid
 	}
 
 	sstate, err := render.Render("state", p.State)
@@ -73,11 +76,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	} else if state != StatePresent && state != StateAbsent {
 		return nil, fmt.Errorf("group \"state\" parameter invalid, use present or absent")
 	}
-
-	grp := NewGroup(new(System))
-	grp.GID = gid
-	grp.Name = name
 	grp.State = state
+
 	return grp, nil
 }
 
