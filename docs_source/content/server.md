@@ -23,8 +23,8 @@ the binary installed on your device, and a token to use for authenticating over
 RPC. In this example, we'll use the `uuid` utility to generate this token.
 
 ```shell
-token=`uuid`
-converge server --rpc-token $token
+TOKEN=`uuid`
+converge server --rpc-token $TOKEN
 ```
 
 This will spin up a gRPC server on port 4774, with `$token` set as the RPC
@@ -41,8 +41,8 @@ that you have a HCL file called `your.hcl` that you wish to configure the
 server or device with.
 
 ```shell
-token="the pasted contents of that token from earlier"
-converge plan --rpc-token $token --rpc-addr 1.2.3.4:4774 your.hcl
+TOKEN="the pasted contents of that token from earlier"
+converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
 ```
 
 ## HTTPS
