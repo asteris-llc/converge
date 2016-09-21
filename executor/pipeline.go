@@ -35,13 +35,13 @@ func NewPipeline() Pipeline {
 }
 
 // AndThen pushes a function onto the pipeline call stack
-func (p Pipeline) AndThen(f func(interface{}) monad.Monad) Pipeline {
+func (p Pipeline) AndThen(f MonadicPipelineFunc) Pipeline {
 	p.CallStack = append(p.CallStack, f)
 	return p
 }
 
 // LogAndThen pushes a function onto the pipeline call stack
-func (p Pipeline) LogAndThen(f func(interface{}) monad.Monad, log func(interface{})) Pipeline {
+func (p Pipeline) LogAndThen(f MonadicPipelineFunc, log func(interface{})) Pipeline {
 	logged := func(i interface{}) monad.Monad {
 		log(i)
 		return f(i)
