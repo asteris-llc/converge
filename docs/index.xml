@@ -6,8 +6,150 @@
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 20 Sep 2016 14:45:56 -0500</lastBuildDate>
+    <lastBuildDate>Wed, 21 Sep 2016 10:55:55 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Resource Authors Guide</title>
+      <link>http://converge.aster.is/resource-authors-guide/</link>
+      <pubDate>Wed, 21 Sep 2016 10:55:55 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resource-authors-guide/</guid>
+      <description>
+
+&lt;div class=&#34;admonition warning&#34;&gt;
+&lt;p class=&#34;admonition-title&#34;&gt;Advanced Topic&lt;/p&gt;
+&lt;p&gt;This is something most people will never have to do. That said, if you know why
+you&amp;rsquo;re here, read on&amp;hellip;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&#34;contributing-resources&#34;&gt;Contributing Resources&lt;/h2&gt;
+
+&lt;p&gt;We welcome external resource contributions, and can help you plan out how your
+resource will work. If you have an idea for a new module, please open an issue
+on Converge and we&amp;rsquo;ll help you figure out exactly how to develop it. We&amp;rsquo;ll also
+gladly help you with documentation and getting everything imported in the right
+places. Converge modules must currently be included in the main source of
+Converge, we hope to be able to make them external at some point in the future
+(at which point external contributions become even easier!)&lt;/p&gt;
+
+&lt;h2 id=&#34;check-and-apply&#34;&gt;Check and Apply&lt;/h2&gt;
+
+&lt;p&gt;Converge resources have a basic pattern: two operations, check and apply. This
+pattern is most obvious in the shell task resource:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;example&amp;quot; {
+  check = &amp;quot;test -f hello.txt&amp;quot;
+  apply = &amp;quot;touch hello.txt&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When Converge applies this resource, the check statement is run first. If the
+exit code is non-zero, Converge then runs the apply statement. Afterwards, it
+runs the check statement again to see if the application was successful.&lt;/p&gt;
+
+&lt;p&gt;To implement something like the shell task, you would start by implementing a
+struct and it&amp;rsquo;s corresponding methods.
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#Task&#34;&gt;&lt;code&gt;resource.Task&lt;/code&gt;&lt;/a&gt;
+is the interface you&amp;rsquo;ll need to implement.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;struct MyShellTask struct {
+    resource.Status
+
+    CheckStmt string
+    ApplyStmt string
+}
+
+func (t *MyShellTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+    // your check implementation, returning t (which embeds a TaskStatus)
+}
+
+func (t *MyShellTask) Apply() (resource.TaskStatus, error) {
+    // your apply implementation, returning t (which embeds a TaskStatus)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;task-status&#34;&gt;Task Status&lt;/h3&gt;
+
+&lt;p&gt;Check and Apply both return
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#TaskStatus&#34;&gt;&lt;code&gt;TaskStatus&lt;/code&gt;&lt;/a&gt;.
+You can implement that interface yourself, but the most common pattern is to
+embed
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#Status&#34;&gt;&lt;code&gt;Status&lt;/code&gt;&lt;/a&gt; in
+the task itself. This is good for two reasons: first, this makes the fields on
+your struct available for lookups. Second, and more importantly, &lt;code&gt;Status&lt;/code&gt;
+provides a number of helper methods to make your integration go more smoothly.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Status&lt;/code&gt; has three fields: &lt;code&gt;Differences&lt;/code&gt;, &lt;code&gt;Output&lt;/code&gt;, and &lt;code&gt;Level&lt;/code&gt;. They all have
+accurate documentation on their fields, which we will not repeat here. However,
+the interaction between &lt;code&gt;Differences&lt;/code&gt; and &lt;code&gt;Level&lt;/code&gt; deserves special mention.
+These two fields are how you control execution of your Apply method. They follow
+these rules:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;If the level is equal to
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel&#34;&gt;&lt;code&gt;resource.StatusWillChange&lt;/code&gt;&lt;/a&gt;
+or
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel&#34;&gt;&lt;code&gt;resource.StatusCantChange&lt;/code&gt;&lt;/a&gt;,
+the Status will always show up as having changes.&lt;/li&gt;
+&lt;li&gt;Otherwise, if there are any diffs which say that they contain a difference,
+the Status will always show as having changes.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;preparer&#34;&gt;Preparer&lt;/h2&gt;
+
+&lt;p&gt;Before you can use your resource, it has to be deserialized from HCL. For this,
+we will write a
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/resource#Resource&#34;&gt;&lt;code&gt;resource.Resource&lt;/code&gt;&lt;/a&gt;.
+Resource exists to render a Task&amp;rsquo;s fields and return it in it&amp;rsquo;s executable
+state. In our case, our Resource would look like this (they&amp;rsquo;re typically called
+&lt;code&gt;Preparer&lt;/code&gt;).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type Preparer struct {
+    Check string `hcl:&amp;quot;check&amp;quot;`
+    Apply string `hcl:&amp;quot;apply&amp;quot;`
+}
+
+func (p *Preparer) Render(r *resource.Renderer) (resource.Task, error) {
+    check, err := render.Render(&amp;quot;check&amp;quot;, p.Check)
+    if err != nil {
+        return nil, err
+    }
+
+    apply, err := render.Render(&amp;quot;apply&amp;quot;, p.Apply)
+    if err != nil {
+        return nil, err
+    }
+
+    return &amp;amp;MyShellTask{CheckStmt: check, ApplyStmt: apply}, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&amp;ldquo;What&amp;rsquo;s the renderer doing there,&amp;rdquo; you may ask, &amp;ldquo;and how can I accept non-string
+values?&amp;rdquo; If you need to accept non-string parameters directly, the fields should
+be &lt;code&gt;interface{}&lt;/code&gt;s, and you should do all your type casting, conversion, and
+validation in Prepare before the values are passed down to your Task.&lt;/p&gt;
+
+&lt;p&gt;The renderer is what allows your values to take input from the environment (like
+calls to &lt;code&gt;param&lt;/code&gt; or &lt;code&gt;lookup&lt;/code&gt;.) Normally you&amp;rsquo;ll get a string value back, but when
+you get an error it is very important to return it exactly as received. Converge
+will automatically wrap the errors from Render to provide context to the user
+and to defer rendering of lookup nodes until they&amp;rsquo;re resolved.&lt;/p&gt;
+
+&lt;h2 id=&#34;registering&#34;&gt;Registering&lt;/h2&gt;
+
+&lt;p&gt;The last thing you&amp;rsquo;ll need to do is register your new resource with the loader
+under it&amp;rsquo;s HCL-usable name. To do so, call
+&lt;a href=&#34;https://godoc.org/github.com/asteris-llc/converge/load/registry#Register&#34;&gt;&lt;code&gt;registry.Register&lt;/code&gt;&lt;/a&gt;
+with both the preparer and task, then empty-import your new module in
+&lt;code&gt;load/resource.go&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func init() {
+    registry.Register(&amp;quot;mytask&amp;quot;, (*Preparer)(nil), (*MyShellTask)(nil))
+}
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
     
     <item>
       <title>task</title>
@@ -1011,116 +1153,6 @@ JSON, TOML, YAML, HCL, or a Java properties file (this is detected by file
 extension.) The keys of this file are the same as the command-line flags.
 Converge looks in &lt;code&gt;/etc/converge/config.{ext}&lt;/code&gt; by default, but you can change
 this with the global &lt;code&gt;--config&lt;/code&gt; flag.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Server</title>
-      <link>http://converge.aster.is/server/</link>
-      <pubDate>Mon, 29 Aug 2016 16:49:53 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/server/</guid>
-      <description>
-
-&lt;p&gt;Converge comes with a server that can:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;run &lt;code&gt;plan&lt;/code&gt; and &lt;code&gt;apply&lt;/code&gt; and stream the results (using
-&lt;a href=&#34;http://www.grpc.io/&#34;&gt;gRPC&lt;/a&gt;)&lt;/li&gt;
-&lt;li&gt;serve modules from a given root&lt;/li&gt;
-&lt;li&gt;serve the Converge binary itself, for bootstrapping new systems inside your
-network&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;https&#34;&gt;HTTPS&lt;/h2&gt;
-
-&lt;p&gt;You can run the server over HTTPS. If you don&amp;rsquo;t have your own certificates, you
-can use &lt;a href=&#34;https://github.com/square/certstrap&#34;&gt;certstrap&lt;/a&gt; to get some with the
-following commands:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;$ certstrap init --common-name your-company
-$ certstrap request-cert --ip 127.0.0.1
-$ certstrap sign 127.0.0.1 --CA your-company
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Of course, replace &lt;code&gt;your-company&lt;/code&gt; and &lt;code&gt;127.0.0.1&lt;/code&gt; with your company&amp;rsquo;s name and
-the your server&amp;rsquo;s IP address, respectively (but those defaults will work fine
-for trying it out locally.) The certificates will be placed in &lt;code&gt;out&lt;/code&gt; in the
-directory you run the command from.&lt;/p&gt;
-
-&lt;p&gt;Afterwards, reference these files like so:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;converge server --cert-file out/127.0.0.1.crt \
-                --key-file out/127.0.0.1.crt \
-                --ca-file out/your-company.crt \
-                --use-ssl \
-                --rpc-token your-token
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;You&amp;rsquo;ll also need to pass the &lt;code&gt;--ca-file&lt;/code&gt; flag to commands like &lt;code&gt;plan&lt;/code&gt; and
-&lt;code&gt;apply&lt;/code&gt;, in order to trust your new CA (or put it in the system roots.)&lt;/p&gt;
-
-&lt;h2 id=&#34;apis&#34;&gt;APIs&lt;/h2&gt;
-
-&lt;p&gt;Using the Converge command-line interface is good enough for most cases. If you
-want to integrate Converge into your system in novel ways, however, an API is
-available.&lt;/p&gt;
-
-&lt;h3 id=&#34;authentication&#34;&gt;Authentication&lt;/h3&gt;
-
-&lt;p&gt;Authentication happens with &lt;a href=&#34;https://jwt.io/&#34;&gt;JSON Web Tokens&lt;/a&gt;. The only
-currently supported algorithm is HS512, and issued tokens must have a 30 second
-expiration. Tokens are set using the &lt;code&gt;--rpc-token&lt;/code&gt; &lt;a href=&#34;http://converge.aster.is/configuration/&#34;&gt;configuration flag&lt;/a&gt; to all subcommands that use the API.&lt;/p&gt;
-
-&lt;h3 id=&#34;http-2-0-and-grpc&#34;&gt;HTTP/2.0 And gRPC&lt;/h3&gt;
-
-&lt;p&gt;If you want to create your own client for Converge, you&amp;rsquo;ll probably want to use
-gRPC. You can get instructions for your chosen langauge in
-&lt;a href=&#34;http://www.grpc.io/docs/&#34;&gt;the gRPC docs&lt;/a&gt;, and the protobuf file is
-&lt;code&gt;rpc/pb/root.proto&lt;/code&gt; in the Converge source. If you&amp;rsquo;re using Go, the client
-implementations in &lt;code&gt;rpc/client.go&lt;/code&gt; are your friends.&lt;/p&gt;
-
-&lt;p&gt;When using the RPC interface, the JWT token should be sent in the request
-metadata&amp;rsquo;s &lt;code&gt;authorization&lt;/code&gt; field with the prefix &lt;code&gt;BEARER&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h3 id=&#34;http-1-1-and-json&#34;&gt;HTTP/1.1 And JSON&lt;/h3&gt;
-
-&lt;p&gt;A pseudo-RESTful interface is available to do the same things the gRPC interface
-can do. See the protobuf file for the most up-to-date endpoints and payload
-information.&lt;/p&gt;
-
-&lt;p&gt;When using the HTTP/1.1 interface, the JWT token should be sent in the
-&lt;code&gt;Authorization&lt;/code&gt; header with the prefix &lt;code&gt;BEARER&lt;/code&gt;. You can also set the &lt;code&gt;jwt&lt;/code&gt;
-querystring var, or send it in the &lt;code&gt;jwt&lt;/code&gt; cookie.&lt;/p&gt;
-
-&lt;h2 id=&#34;standalone-server-for-the-command-line&#34;&gt;Standalone Server For The Command-Line&lt;/h2&gt;
-
-&lt;p&gt;The main Converge commands (like &lt;code&gt;plan&lt;/code&gt; and &lt;code&gt;apply&lt;/code&gt;) will take a &lt;code&gt;--local&lt;/code&gt;
-argument (or set &lt;code&gt;CONVERGE_LOCAL=1&lt;/code&gt;.) This will:&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Start a local RPC server&lt;/li&gt;
-&lt;li&gt;Perform the requested action against the RPC server&lt;/li&gt;
-&lt;li&gt;Shut down the RPC server&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;During this process, a port (&lt;code&gt;localhost:47740&lt;/code&gt;) will be opened and RPC will be
-running on it. This interface will be protected with an randomly-generated
-token, unless you specify &lt;code&gt;--no-token&lt;/code&gt;&lt;/p&gt;
-
-&lt;div class=&#34;admonition warning&#34;&gt;
-&lt;p class=&#34;admonition-title&#34;&gt;Don&amp;#39;t Disable Tokens&lt;/p&gt;
-&lt;p&gt;Please don&amp;rsquo;t disable token generation with &lt;code&gt;--no-token&lt;/code&gt;. I know we just said you
-can, but don&amp;rsquo;t do it. This will open up remote execution of arbitrary
-instructions to whoever can reach that port. You can make this process &lt;em&gt;more&lt;/em&gt;
-secure by specifying &lt;code&gt;--cert-file&lt;/code&gt;, &lt;code&gt;--key-file&lt;/code&gt;, and optionally &lt;code&gt;--ca-file&lt;/code&gt; to
-connect over HTTPS.&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;h2 id=&#34;address&#34;&gt;Address&lt;/h2&gt;
-
-&lt;p&gt;Converge has been assigned
-&lt;a href=&#34;http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774&#34;&gt;port 4774 by the Internet Assigned Numbers Authority&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
     

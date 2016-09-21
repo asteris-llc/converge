@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>module - Converge</title>
+    <title>Resource Authors Guide - Converge</title>
     <meta name="generator" content="Hugo 0.16" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/resources/module/">
+    <link rel="canonical" href="http://converge.aster.is/resource-authors-guide/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/resources/module/">
+    <meta property="og:url" content="http://converge.aster.is/resource-authors-guide/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        module
+        Resource Authors Guide
       </div>
     </div>
 
@@ -276,11 +276,14 @@
 
 
 
-<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+<a class="current" title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
   
   Resource Authors Guide
 </a>
 
+
+<ul id="scrollspy">
+</ul>
 
 
         
@@ -392,14 +395,11 @@
 
 
 
-<a class="current" title="module" href="http://converge.aster.is/resources/module/">
+<a  title="module" href="http://converge.aster.is/resources/module/">
   
   module
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -507,34 +507,141 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>module </h1>
+			<h1>Resource Authors Guide </h1>
 
 			
 
-<p>Module remotely sources other modules and adds them to the tree</p>
+<div class="admonition warning">
+<p class="admonition-title">Advanced Topic</p>
+<p>This is something most people will never have to do. That said, if you know why
+you&rsquo;re here, read on&hellip;</p>
+</div>
 
-<h2 id="example">Example</h2>
+<h2 id="contributing-resources">Contributing Resources</h2>
 
-<pre><code class="language-hcl">param &quot;message&quot; {
-  default = &quot;Hello from another module!&quot;
+<p>We welcome external resource contributions, and can help you plan out how your
+resource will work. If you have an idea for a new module, please open an issue
+on Converge and we&rsquo;ll help you figure out exactly how to develop it. We&rsquo;ll also
+gladly help you with documentation and getting everything imported in the right
+places. Converge modules must currently be included in the main source of
+Converge, we hope to be able to make them external at some point in the future
+(at which point external contributions become even easier!)</p>
+
+<h2 id="check-and-apply">Check and Apply</h2>
+
+<p>Converge resources have a basic pattern: two operations, check and apply. This
+pattern is most obvious in the shell task resource:</p>
+
+<pre><code class="language-hcl">task &quot;example&quot; {
+  check = &quot;test -f hello.txt&quot;
+  apply = &quot;touch hello.txt&quot;
 }
-
-module &quot;basic.hcl&quot; &quot;basic&quot; {
-  params = {
-    message = &quot;{{param `message`}}&quot;
-  }
-}
-
 </code></pre>
 
-<h2 id="parameters">Parameters</h2>
+<p>When Converge applies this resource, the check statement is run first. If the
+exit code is non-zero, Converge then runs the apply statement. Afterwards, it
+runs the check statement again to see if the application was successful.</p>
 
-<ul>
-<li><code>params</code> (map of string to anything)</li>
-</ul>
+<p>To implement something like the shell task, you would start by implementing a
+struct and it&rsquo;s corresponding methods.
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Task"><code>resource.Task</code></a>
+is the interface you&rsquo;ll need to implement.</p>
 
-<p>Params is a map of strings to anything you&rsquo;d like. It will be passed to
-the called module as the default values for the <code>param</code>s there.</p>
+<pre><code class="language-go">struct MyShellTask struct {
+    resource.Status
+
+    CheckStmt string
+    ApplyStmt string
+}
+
+func (t *MyShellTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+    // your check implementation, returning t (which embeds a TaskStatus)
+}
+
+func (t *MyShellTask) Apply() (resource.TaskStatus, error) {
+    // your apply implementation, returning t (which embeds a TaskStatus)
+}
+</code></pre>
+
+<h3 id="task-status">Task Status</h3>
+
+<p>Check and Apply both return
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#TaskStatus"><code>TaskStatus</code></a>.
+You can implement that interface yourself, but the most common pattern is to
+embed
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Status"><code>Status</code></a> in
+the task itself. This is good for two reasons: first, this makes the fields on
+your struct available for lookups. Second, and more importantly, <code>Status</code>
+provides a number of helper methods to make your integration go more smoothly.</p>
+
+<p><code>Status</code> has three fields: <code>Differences</code>, <code>Output</code>, and <code>Level</code>. They all have
+accurate documentation on their fields, which we will not repeat here. However,
+the interaction between <code>Differences</code> and <code>Level</code> deserves special mention.
+These two fields are how you control execution of your Apply method. They follow
+these rules:</p>
+
+<ol>
+<li>If the level is equal to
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel"><code>resource.StatusWillChange</code></a>
+or
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel"><code>resource.StatusCantChange</code></a>,
+the Status will always show up as having changes.</li>
+<li>Otherwise, if there are any diffs which say that they contain a difference,
+the Status will always show as having changes.</li>
+</ol>
+
+<h2 id="preparer">Preparer</h2>
+
+<p>Before you can use your resource, it has to be deserialized from HCL. For this,
+we will write a
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Resource"><code>resource.Resource</code></a>.
+Resource exists to render a Task&rsquo;s fields and return it in it&rsquo;s executable
+state. In our case, our Resource would look like this (they&rsquo;re typically called
+<code>Preparer</code>).</p>
+
+<pre><code class="language-go">type Preparer struct {
+    Check string `hcl:&quot;check&quot;`
+    Apply string `hcl:&quot;apply&quot;`
+}
+
+func (p *Preparer) Render(r *resource.Renderer) (resource.Task, error) {
+    check, err := render.Render(&quot;check&quot;, p.Check)
+    if err != nil {
+        return nil, err
+    }
+
+    apply, err := render.Render(&quot;apply&quot;, p.Apply)
+    if err != nil {
+        return nil, err
+    }
+
+    return &amp;MyShellTask{CheckStmt: check, ApplyStmt: apply}, nil
+}
+</code></pre>
+
+<p>&ldquo;What&rsquo;s the renderer doing there,&rdquo; you may ask, &ldquo;and how can I accept non-string
+values?&rdquo; If you need to accept non-string parameters directly, the fields should
+be <code>interface{}</code>s, and you should do all your type casting, conversion, and
+validation in Prepare before the values are passed down to your Task.</p>
+
+<p>The renderer is what allows your values to take input from the environment (like
+calls to <code>param</code> or <code>lookup</code>.) Normally you&rsquo;ll get a string value back, but when
+you get an error it is very important to return it exactly as received. Converge
+will automatically wrap the errors from Render to provide context to the user
+and to defer rendering of lookup nodes until they&rsquo;re resolved.</p>
+
+<h2 id="registering">Registering</h2>
+
+<p>The last thing you&rsquo;ll need to do is register your new resource with the loader
+under it&rsquo;s HCL-usable name. To do so, call
+<a href="https://godoc.org/github.com/asteris-llc/converge/load/registry#Register"><code>registry.Register</code></a>
+with both the preparer and task, then empty-import your new module in
+<code>load/resource.go</code>.</p>
+
+<pre><code class="language-go">func init() {
+    registry.Register(&quot;mytask&quot;, (*Preparer)(nil), (*MyShellTask)(nil))
+}
+</code></pre>
 
 
 			<aside class="copyright" role="note">
@@ -553,34 +660,18 @@ the called module as the default values for the <code>param</code>s there.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/resources/docker-image/" title="docker.image">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              docker.image
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/file-content/" title="file.content">
+      <a href="http://converge.aster.is/resources/task/" title="task">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              file.content
+              task
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">
