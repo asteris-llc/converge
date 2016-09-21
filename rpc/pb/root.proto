@@ -55,7 +55,7 @@ service Executor {
   // Healthcheck a module given by the location
   rpc HealthCheck (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
-      post: "/api/v1/machine/plan"
+      post: "/api/v1/machine/healthcheck"
       body: "*"
     };
   }
