@@ -37,7 +37,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
 	logger.Info("resolving dependencies")
 
-	r, e := g.Transform(ctx, func(id string, out *graph.Graph) error {
+	return g.Transform(ctx, func(id string, out *graph.Graph) error {
 		if id == "root" { // skip root
 			return nil
 		}
@@ -70,7 +70,6 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		}
 		return nil
 	})
-	return r, e
 }
 
 func getDepends(node *parse.Node) ([]string, error) {
