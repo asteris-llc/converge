@@ -57,6 +57,8 @@ var serverCmd = &cobra.Command{
 		var running sync.WaitGroup
 		running.Add(2)
 
+		setLocal(true) // so we generate a token
+
 		// set up our client and server security options
 		maybeSetToken()
 

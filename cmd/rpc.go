@@ -176,7 +176,7 @@ func maybeSetToken() {
 		return
 	}
 
-	if getToken() == "" {
+	if getToken() == "" && getLocal() {
 		viper.Set(rpcTokenFlagName, uuid.NewV4().String())
 		log.WithField("token", getToken()).Warn("setting session-local token")
 	}
@@ -184,6 +184,7 @@ func maybeSetToken() {
 
 // More getters
 
+func setLocal(local bool)  { viper.Set(rpcLocalAddrName, local) }
 func getLocal() bool       { return viper.GetBool(rpcLocalAddrName) }
 func getRPCAddr() string   { return viper.GetString(rpcAddrFlagName) }
 func getLocalAddr() string { return viper.GetString(rpcLocalAddrName) }
