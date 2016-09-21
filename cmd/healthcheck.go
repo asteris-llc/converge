@@ -18,14 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/healthcheck"
-	"github.com/asteris-llc/converge/load"
-	"github.com/asteris-llc/converge/plan"
-	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/asteris-llc/converge/rpc"
+	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,55 +44,111 @@ not display healthy checks.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// set up execution context
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		GracefulExit(cancel)
 
-		// params
-		params := getParams(cmd)
+		// logging
+		clog := log.WithField("component", "client")
+		ctx = logging.WithLogger(ctx, clog)
+
+		maybeSetToken()
+
+		ssl, err := getSSLConfig(getServerName())
+		if err != nil {
+			clog.WithError(err).Fatal("could not get SSL config")
+		}
+
+		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+			clog.WithError(err).Fatal("could not start RPC")
+		}
+
+		client, err := getRPCExecutorClient(
+			ctx,
+			&rpc.ClientOpts{
+				Token: getToken(),
+				SSL:   ssl,
+			},
+		)
+		if err != nil {
+			clog.WithError(err).Fatal("could not get client")
+		}
+
+		rpcParams := getParamsRPC(cmd)
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			log.WithField("component", "client").Warn("skipping module verfiaction")
+			clog.Warn("skipping module verification")
 		}
 
+		// execute files
 		for _, fname := range args {
-			flog := log.WithField("file", fname)
-			flog.Debug("checking health")
+			flog := clog.WithField("file", fname)
 
-			loaded, err := load.Load(ctx, fname, verifyModules)
+			flog.Debug("running healthcheck")
+
+			stream, err := client.HealthCheck(
+				ctx,
+				&pb.LoadRequest{
+					Location:   fname,
+					Parameters: rpcParams,
+					Verify:     verifyModules,
+				},
+			)
 			if err != nil {
-				flog.WithError(err).Fatal("could not parse file")
+				flog.WithError(err).Fatal("error getting RPC stream")
 			}
 
-			rendered, err := render.Render(ctx, loaded, params)
+			g := graph.New()
+
+			// get edges
+			edges, err := getMeta(stream)
 			if err != nil {
-				flog.WithError(err).Fatal("could not render")
+				flog.WithError(err).Fatal("error getting RPC metadata")
+			}
+			for _, edge := range edges {
+				g.Connect(edge.Source, edge.Dest)
 			}
 
-			merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
+			// get vertices
+			err = iterateOverStream(
+				stream,
+				func(resp *pb.StatusResponse) {
+					slog := flog.WithFields(log.Fields{
+						"stage": resp.Stage,
+						"run":   resp.Run,
+						"id":    resp.Id,
+					})
+					if resp.Run == pb.StatusResponse_STARTED {
+						slog.Info("got status")
+					} else {
+						slog.Debug("got status")
+					}
+
+					if resp.Run == pb.StatusResponse_FINISHED {
+						details := resp.GetDetails()
+						if details != nil {
+							g.Add(resp.Id, details.ToPrintable())
+						}
+					}
+				},
+			)
 			if err != nil {
-				flog.WithError(err).Fatal("could not merge duplicates")
+				flog.WithError(err).Fatal("could not get responses")
 			}
 
-			planned, err := plan.Plan(ctx, merged)
-			if err != nil && err != plan.ErrTreeContainsErrors {
-				flog.WithError(err).Fatal("planning failed")
+			// validate resulting graph
+			if err := g.Validate(); err != nil {
+				flog.WithError(err).Warning("graph is not valid")
 			}
 
-			results, err := healthcheck.CheckGraph(ctx, planned)
+			// print results
+			out, err := healthPrinter().Show(ctx, g)
 			if err != nil {
-				flog.WithError(err).Fatal("checking failed")
-			}
-
-			out, perr := healthPrinter().Show(ctx, results)
-			if perr != nil {
-				flog.WithError(perr).Fatal("failed printing results")
+				flog.WithError(err).Fatal("failed to print results")
 			}
 
 			fmt.Print("\n")
 			fmt.Print(out)
-			if err != nil {
-				os.Exit(1)
-			}
 		}
 	},
 }
@@ -102,6 +156,9 @@ not display healthy checks.`,
 func init() {
 	healthcheckCmd.Flags().Bool("quiet", false, "show only a short summary of the status")
 	healthcheckCmd.Flags().Bool("verify-modules", false, "verify module signatures")
+	registerRPCFlags(healthcheckCmd.Flags())
+	registerLocalRPCFlags(healthcheckCmd.Flags())
+	registerSSLFlags(healthcheckCmd.Flags())
 	registerParamsFlags(healthcheckCmd.Flags())
 
 	RootCmd.AddCommand(healthcheckCmd)

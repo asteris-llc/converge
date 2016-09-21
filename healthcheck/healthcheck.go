@@ -30,34 +30,41 @@ type Check interface {
 
 // CheckGraph walks a graph and runs health checks on each health-checkable node
 func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
-	return in.Transform(ctx, func(id string, out *graph.Graph) error {
-		task, err := unboxNode(out.Get(id))
-		if err != nil {
-			return err
-		}
-		asCheck, ok := task.(Check)
-		if !ok {
-			return nil
-		}
-		for _, dep := range out.Dependencies(id) {
-			depStatus, ok := out.Get(dep).(resource.TaskStatus)
-			if !ok {
-				continue
-			}
+	return WithNotify(ctx, in, nil)
+}
 
-			if isFailure, failErr := isFailingStatus(depStatus); failErr != nil {
-				return failErr
-			} else if isFailure {
-				asCheck.FailingDep(dep, depStatus)
+// WithNotify is CheckGraph, but with notification features
+func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
+
+	return in.Transform(ctx,
+		notify.Transform(func(id string, out *graph.Graph) error {
+			task, err := unboxNode(out.Get(id))
+			if err != nil {
+				return err
 			}
-		}
-		status, err := asCheck.HealthCheck()
-		if err != nil {
-			return err
-		}
-		out.Add(id, status)
-		return nil
-	})
+			asCheck, ok := task.(Check)
+			if !ok {
+				return nil
+			}
+			for _, dep := range out.Dependencies(id) {
+				depStatus, ok := out.Get(dep).(resource.TaskStatus)
+				if !ok {
+					continue
+				}
+
+				if isFailure, failErr := isFailingStatus(depStatus); failErr != nil {
+					return failErr
+				} else if isFailure {
+					asCheck.FailingDep(dep, depStatus)
+				}
+			}
+			status, err := asCheck.HealthCheck()
+			if err != nil {
+				return err
+			}
+			out.Add(id, status)
+			return nil
+		}))
 }
 
 // unboxNode will remove a resource.TaskStatus from a plan.Result or apply.Result
