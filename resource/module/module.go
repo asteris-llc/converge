@@ -23,17 +23,21 @@ import (
 
 // Module holds stringified values for parameters
 type Module struct {
+	resource.Status
+
 	Params map[string]string
 }
 
 // Check just returns the current value of the moduleeter. It should never have to change.
 func (m *Module) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Status: m.String(), WillChange: false}, nil
+	m.Status = resource.Status{Output: []string{m.String()}}
+
+	return m, nil
 }
 
 // Apply doesn't do anything since modules are final values
-func (m *Module) Apply(r resource.Renderer) (resource.TaskStatus, error) {
-	return m.Check(r)
+func (m *Module) Apply() (resource.TaskStatus, error) {
+	return m, nil
 }
 
 // String is the final value of thie Module

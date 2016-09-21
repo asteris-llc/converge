@@ -3,12 +3,22 @@
   
   <url>
     <loc>http://converge.aster.is/</loc>
-    <lastmod>2016-09-19T19:45:54-05:00</lastmod>
+    <lastmod>2016-09-20T14:45:56-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/task/</loc>
+    <lastmod>2016-09-20T14:45:56-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/docker-container/</loc>
+    <lastmod>2016-09-20T14:45:55-05:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/resources/param/</loc>
-    <lastmod>2016-09-19T19:45:54-05:00</lastmod>
+    <lastmod>2016-09-20T14:45:55-05:00</lastmod>
   </url>
   
   <url>
@@ -37,11 +47,6 @@
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/docker-container/</loc>
-    <lastmod>2016-09-08T23:18:03-07:00</lastmod>
-  </url>
-  
-  <url>
     <loc>http://converge.aster.is/resources/docker-image/</loc>
     <lastmod>2016-09-08T23:18:03-07:00</lastmod>
   </url>
@@ -64,11 +69,6 @@
   <url>
     <loc>http://converge.aster.is/dependencies/</loc>
     <lastmod>2016-09-09T00:13:59-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/task/</loc>
-    <lastmod>2016-08-31T09:51:20-05:00</lastmod>
   </url>
   
   <url>

@@ -76,14 +76,14 @@ real happens.`,
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			clog.Warn("skipping module verfiction")
+			clog.Warn("skipping module verification")
 		}
 
 		// execute files
 		for _, fname := range args {
 			flog := clog.WithField("file", fname)
 
-			flog.Info("applying")
+			flog.Debug("applying")
 
 			stream, err := client.Apply(
 				ctx,

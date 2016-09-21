@@ -37,7 +37,7 @@ type Preparer struct {
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	if val, present := render.Value(); present {
-		return &Param{Value: val}, nil
+		return &Param{Val: val}, nil
 	}
 
 	if p.Default == nil {
@@ -61,7 +61,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, fmt.Errorf("composite values are not allowed in params, but got %T", v)
 	}
 
-	return &Param{Value: def}, nil
+	return &Param{Val: def}, nil
 }
 
 func init() {
