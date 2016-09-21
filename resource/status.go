@@ -16,7 +16,8 @@ package resource
 
 import "fmt"
 
-// StatusLevel will be used
+// StatusLevel will be used as a level in Status. It indicates if a resource
+// needs to be changed, as well as fatal conditions.
 type StatusLevel uint32
 
 const (

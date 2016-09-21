@@ -19,8 +19,10 @@ type Tasker interface {
 	GetTask() (Task, bool)
 }
 
-// Task does checking as Monitor does, but it can also make changes to make the
-// checks pass.
+// Task controls checks and application inside the system. Check will be called
+// first; if it indicates changes will be made then Apply will also be called.
+// Check will be called again if Apply succeeds with no error to get the final
+// status of the resource.
 type Task interface {
 	Check(Renderer) (TaskStatus, error)
 	Apply() (TaskStatus, error)
