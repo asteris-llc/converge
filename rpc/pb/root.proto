@@ -52,6 +52,14 @@ message DiffResponse {
 
 // Executor is responsible for remote execution on the machine
 service Executor {
+  // Healthcheck a module given by the location
+  rpc HealthCheck (LoadRequest) returns (stream StatusResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/machine/healthcheck"
+      body: "*"
+    };
+  }
+
   // Plan out the execution of a module given by the location
   rpc Plan (LoadRequest) returns (stream StatusResponse) {
     option (google.api.http) = {
