@@ -70,7 +70,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if nameErr == ErrUnsupported || gidErr == ErrUnsupported {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, ErrUnsupported
 	}
 
@@ -81,21 +81,20 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 		switch {
 		case nameNotFound && gidNotFound:
-			status.WarningLevel = resource.StatusWillChange
+			status.Level = resource.StatusWillChange
 			status.Output = append(status.Output, "group name and gid do not exist")
 			status.AddDifference("group", string(StateAbsent), fmt.Sprintf("group %s with gid %s", g.Name, g.GID), "")
-			status.WillChange = true
 		case nameNotFound:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group gid %s already exists", g.GID))
 		case gidNotFound:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s already exists", g.Name))
 		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
-			status.WarningLevel = resource.StatusNoChange
+			status.Level = resource.StatusNoChange
 		}
 	case StateAbsent:
 		_, nameNotFound := nameErr.(user.UnknownGroupError)
@@ -103,24 +102,23 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 		switch {
 		case nameNotFound && gidNotFound:
-			status.WarningLevel = resource.StatusNoChange
+			status.Level = resource.StatusNoChange
 			status.Output = append(status.Output, "group name and gid do not exist")
 		case nameNotFound:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group %s does not exist", g.Name))
 		case gidNotFound:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", g.GID))
 		case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			status.Output = append(status.Output, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID))
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
-			status.WarningLevel = resource.StatusWillChange
-			status.WillChange = true
+			status.Level = resource.StatusWillChange
 			status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, g.GID), string(StateAbsent), "")
 		}
 	default:
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, fmt.Errorf("group: unrecognized state %v", g.State)
 	}
 
@@ -128,7 +126,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply changes for group
-func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (g *Group) Apply() (resource.TaskStatus, error) {
 	// lookup the group by name and lookup the group by gid
 	// the lookups return ErrUnsupported if the system is not supported
 	// LookupGroup returns user.UnknownGroupError if the group is not found
@@ -139,7 +137,7 @@ func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if nameErr == ErrUnsupported || gidErr == ErrUnsupported {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, ErrUnsupported
 	}
 
@@ -152,13 +150,13 @@ func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		case nameNotFound && gidNotFound:
 			err := g.system.AddGroup(g.Name, g.GID)
 			if err != nil {
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("error adding group %s with gid %s", g.Name, g.GID))
 				return status, err
 			}
 			status.Output = append(status.Output, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID))
 		default:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			return status, fmt.Errorf("will not attempt add: group %s with gid %s", g.Name, g.GID)
 		}
 	case StateAbsent:
@@ -166,17 +164,17 @@ func (g *Group) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
 			err := g.system.DelGroup(g.Name)
 			if err != nil {
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("error deleting group %s with gid %s", g.Name, g.GID))
 				return status, err
 			}
 			status.Output = append(status.Output, fmt.Sprintf("deleted group %s with gid %s", g.Name, g.GID))
 		default:
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusCantChange
 			return status, fmt.Errorf("will not attempt delete: group %s with gid %s", g.Name, g.GID)
 		}
 	default:
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return status, fmt.Errorf("group: unrecognized state %s", g.State)
 	}
 

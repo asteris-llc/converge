@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/healthcheck"
@@ -24,4 +25,48 @@ import (
 
 func Test_Status_ImplementsCheck(t *testing.T) {
 	assert.Implements(t, (*healthcheck.Check)(nil), new(resource.Status))
+}
+
+// TestHasChanges exercises all the cases of HasChanges
+func TestHasChanges(t *testing.T) {
+	t.Parallel()
+
+	// by default, statuses will not change
+	t.Run("default", func(t *testing.T) {
+		status := new(resource.Status)
+
+		assert.False(t, status.HasChanges())
+	})
+
+	// Any diffs imply that this resource will change
+	t.Run("diffs", func(t *testing.T) {
+		status := new(resource.Status)
+		status.AddDifference("x", "a", "b", "c")
+
+		assert.True(t, status.HasChanges())
+	})
+
+	// Status level implies changes as well
+	caseTable := []struct {
+		level      resource.StatusLevel
+		willChange bool
+	}{
+		{resource.StatusNoChange, false},
+		{resource.StatusWontChange, false},
+		{resource.StatusWillChange, true},
+		{resource.StatusFatal, false},
+		{resource.StatusCantChange, true},
+	}
+	for _, row := range caseTable {
+		t.Run(
+			fmt.Sprintf("status-%s", row.level),
+			func(t *testing.T) {
+				status := &resource.Status{
+					Level: row.level,
+				}
+
+				assert.Equal(t, row.willChange, status.HasChanges())
+			},
+		)
+	}
 }

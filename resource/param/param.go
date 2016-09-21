@@ -22,20 +22,24 @@ import (
 
 // Param controls parameter flow inside execution
 type Param struct {
-	Value interface{}
+	resource.Status
+
+	Val interface{}
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
 func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Status: p.String()}, nil
+	p.Status = resource.Status{Output: []string{p.String()}}
+
+	return p, nil
 }
 
 // Apply doesn't do anything since params are final values
-func (p *Param) Apply(r resource.Renderer) (resource.TaskStatus, error) {
-	return p.Check(r)
+func (p *Param) Apply() (resource.TaskStatus, error) {
+	return p, nil
 }
 
 // String is the final value of this Param
 func (p *Param) String() string {
-	return fmt.Sprintf("%v", p.Value)
+	return fmt.Sprintf("%v", p.Val)
 }

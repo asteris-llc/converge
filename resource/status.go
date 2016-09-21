@@ -16,19 +16,47 @@ package resource
 
 import "fmt"
 
+// StatusLevel will be used
+type StatusLevel uint32
+
 const (
 	// StatusNoChange means no changes are necessary
-	StatusNoChange int = 0
+	StatusNoChange StatusLevel = iota
 
 	// StatusWontChange indicates an acceptable delta that wont be corrected
-	StatusWontChange int = iota
+	StatusWontChange
 
 	// StatusWillChange indicates an unacceptable delta that will be corrected
 	StatusWillChange
 
-	// StatusFatal indicates an unacceptable delta that cannot be corrected
+	// StatusCantChange indicates an unacceptable delta that can't be corrected
+	StatusCantChange
+
+	// StatusFatal indicates an error. This is just like StatusCantChange except
+	// it does not imply that there are changes to be made.
 	StatusFatal
 )
+
+func (l StatusLevel) String() string {
+	switch l {
+	case StatusNoChange:
+		return "no change"
+
+	case StatusWontChange:
+		return "won't change"
+
+	case StatusWillChange:
+		return "will change"
+
+	case StatusCantChange:
+		return "can't change"
+
+	case StatusFatal:
+		return "fatal"
+	}
+
+	return "invalid status level"
+}
 
 type badDep struct {
 	ID     string
@@ -38,38 +66,29 @@ type badDep struct {
 // TaskStatus represents the results of Check called during planning or
 // application.
 type TaskStatus interface {
-	Value() string
 	Diffs() map[string]Diff
-	StatusCode() int
+	StatusCode() StatusLevel
 	Messages() []string
 	HasChanges() bool
 }
 
 // Status is the default TaskStatus implementation
 type Status struct {
-	// FailingDeps is constructed automatically; you don't need to do anything
-	// with it.
-	// TODO(brianhicks): make private and accessible only through a method on TaskStatus?
-	FailingDeps []badDep
-
 	// Differences contains the things that will change as a part of this
 	// Status. This will be used almost exclusively in the Check phase of
 	// operations on resources. Use `NewStatus` to get a Status with this
 	// initialized properly.
 	Differences map[string]Diff
 
-	// Output and Status are the human-consumable fields on this struct. Output
-	// will be returned as the Status' messages, and Status will be returned as
-	// the Value.
+	// Output is the human-consumable fields on this struct. Output will be
+	// returned as the Status' messages
 	Output []string
-	Status string // TODO(brianhicks): this is kind of a vestigal tail... remove?
 
-	// WarningLevel and WillChange indicate the change level of the status.
-	// WillChange is a binary value, while WarningLevel is a gradation (see the
-	// Status* contsts above.) Resources should set both for now, if they're
-	// relevant.
-	WarningLevel int
-	WillChange   bool
+	// Level indicates the change level of the status. Level is a gradation (see
+	// the Status* contsts above.)
+	Level StatusLevel
+
+	failingDeps []badDep
 }
 
 // NewStatus returns a Status with all fields initialized
@@ -79,19 +98,14 @@ func NewStatus() *Status {
 	}
 }
 
-// Value returns the status value
-func (t *Status) Value() string {
-	return t.Status
-}
-
 // Diffs returns the internal differences
 func (t *Status) Diffs() map[string]Diff {
 	return t.Differences
 }
 
 // StatusCode returns the current warning level
-func (t *Status) StatusCode() int {
-	return t.WarningLevel
+func (t *Status) StatusCode() StatusLevel {
+	return t.Level
 }
 
 // Messages returns the current output slice
@@ -101,13 +115,23 @@ func (t *Status) Messages() []string {
 
 // HasChanges returns the WillChange value
 func (t *Status) HasChanges() bool {
-	return t.WillChange
+	if t.Level == StatusWillChange || t.Level == StatusCantChange {
+		return true
+	}
+
+	for _, diff := range t.Diffs() {
+		if diff.Changes() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // HealthCheck provides a default health check implementation for statuses
 func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	status = &HealthStatus{TaskStatus: t, FailingDeps: make(map[string]string)}
-	if !t.HasChanges() && len(t.FailingDeps) == 0 {
+	if !t.HasChanges() && len(t.failingDeps) == 0 {
 		return
 	}
 
@@ -115,15 +139,8 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 	// at a warning status.
 	status.UpgradeWarning(StatusWarning)
 
-	for _, failingDep := range t.FailingDeps {
-		var depMessage string
-		if msg := failingDep.Status.Value(); msg != "" {
-			depMessage = msg
-		} else {
-			depMessage = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
-		}
-
-		status.FailingDeps[failingDep.ID] = depMessage
+	for _, failingDep := range t.failingDeps {
+		status.FailingDeps[failingDep.ID] = fmt.Sprintf("returned %d", failingDep.Status.StatusCode())
 	}
 	if t.StatusCode() >= 2 {
 		status.UpgradeWarning(StatusError)
@@ -133,7 +150,7 @@ func (t *Status) HealthCheck() (status *HealthStatus, err error) {
 
 // FailingDep tracks a new failing dependency
 func (t *Status) FailingDep(id string, stat TaskStatus) {
-	t.FailingDeps = append(t.FailingDeps, badDep{ID: id, Status: stat})
+	t.failingDeps = append(t.failingDeps, badDep{ID: id, Status: stat})
 }
 
 // AddDifference adds a TextDiff to the Differences map
@@ -147,9 +164,9 @@ func (t *Status) AddMessage(message ...string) {
 }
 
 // RaiseLevel raises the status level to the given level
-func (t *Status) RaiseLevel(level int) {
-	if level > t.WarningLevel {
-		t.WarningLevel = level
+func (t *Status) RaiseLevel(level StatusLevel) {
+	if level > t.Level {
+		t.Level = level
 	}
 }
 

@@ -76,14 +76,14 @@ can be done separately to see what needs to be changed before execution.`,
 
 		verifyModules := viper.GetBool("verify-modules")
 		if !verifyModules {
-			clog.Warn("skipping module verfiction")
+			clog.Warn("skipping module verification")
 		}
 
 		// execute files
 		for _, fname := range args {
 			flog := clog.WithField("file", fname)
 
-			flog.Info("planning")
+			flog.Debug("planning")
 
 			stream, err := client.Plan(
 				ctx,

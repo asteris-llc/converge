@@ -37,7 +37,7 @@ func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.Cont
 	logger := getLogger(ctx).WithField("function", "resourceHost.GetBinary")
 
 	if err := rh.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Info("failed authorization")
+		logger.WithError(err).Warning("failed authorization")
 		return nil, err
 	}
 

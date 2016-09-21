@@ -170,7 +170,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	container := &Container{
 		Force:           force,
 		Name:            name,
-		Status:          status,
+		CStatus:         status,
 		Image:           image,
 		Entrypoint:      renderedEntrypoint,
 		Command:         renderedCommand,
@@ -189,9 +189,9 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func validateContainer(container *Container) error {
-	if container.Status != "" {
-		if !strings.EqualFold(container.Status, containerStatusRunning) &&
-			!strings.EqualFold(container.Status, containerStatusCreated) {
+	if container.CStatus != "" {
+		if !strings.EqualFold(container.CStatus, containerStatusRunning) &&
+			!strings.EqualFold(container.CStatus, containerStatusCreated) {
 			return errors.New("status must be 'running' or 'created'")
 		}
 	}

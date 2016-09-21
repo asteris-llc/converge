@@ -35,7 +35,7 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 	logger = logger.WithField("function", "grapher.Graph")
 
 	if err := g.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Info("authorization failed")
+		logger.WithError(err).Warning("authorization failed")
 		return errors.Wrap(err, "authorization failed")
 	}
 

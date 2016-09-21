@@ -26,3 +26,7 @@ ratings:
 
 exclude_paths:
   - vendor/
+
+  # generated files
+  - rpc/pb/root.pb.go
+  - rpc/pb/root.pb.gw.go
