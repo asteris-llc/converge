@@ -116,6 +116,17 @@ func (p *Preparer) Render(r *resource.Renderer) (resource.Task, error) {
 }
 ```
 
+"What's the renderer doing there," you may ask, "and how can I accept non-string
+values?" If you need to accept non-string parameters directly, the fields should
+be `interface{}`s, and you should do all your type casting, conversion, and
+validation in Prepare before the values are passed down to your Task.
+
+The renderer is what allows your values to take input from the environment (like
+calls to `param` or `lookup`.) Normally you'll get a string value back, but when
+you get an error it is very important to return it exactly as received. Converge
+will automatically wrap the errors from Render to provide context to the user
+and to defer rendering of lookup nodes until they're resolved.
+
 ## Registering
 
 The last thing you'll need to do is register your new resource with the loader
