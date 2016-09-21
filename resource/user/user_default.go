@@ -47,6 +47,12 @@ func (s *System) LookupID(userID string) (*user.User, error) {
 	return nil, ErrUnsupported
 }
 
+// LookupGroup
+// Implementation for systems which are not supported
+func (s *System) LookupGroup(groupName string) (*user.Group, error) {
+	return nil, ErrUnsupported
+}
+
 // LookupGroupID
 // Implementation for systems which are not supported
 func (s *System) LookupGroupID(groupID string) (*user.Group, error) {

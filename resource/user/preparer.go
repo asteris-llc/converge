@@ -27,14 +27,19 @@ import (
 //
 // User renders user data
 type Preparer struct {
+	// Username is the user login name.
+	Username string `hcl:"username"`
+
 	// UID is the user ID.
 	UID string `hcl:"uid"`
 
-	// Gid is the primary group ID for user.
-	GID string `hcl:"gid"`
+	// Groupname is the primary group for user and must already exist.
+	// Only one of GID or Groupname may be indicated.
+	Groupname string `hcl:"groupname"`
 
-	// Username is the user login name.
-	Username string `hcl:"username"`
+	// Gid is the primary group ID for user and must refer to an existing group.
+	// Only one of GID or Groupname may be indicated.
+	GID string `hcl:"gid"`
 
 	// Name is the user description.
 	Name string `hcl:"name"`
@@ -44,6 +49,7 @@ type Preparer struct {
 	HomeDir string `hcl:"home_dir"`
 
 	// State is whether the user should be present.
+	// Options are present and absent; default is present.
 	State string `hcl:"state"`
 }
 
@@ -75,11 +81,20 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		usr.UID = uid
 	}
 
+	groupName, err := render.Render("groupname", p.Groupname)
+	if err != nil {
+		return nil, err
+	}
 	gid, err := render.Render("gid", p.GID)
 	if err != nil {
 		return nil, err
 	}
-	if gid != "" {
+	if groupName != "" && gid != "" {
+		return nil, fmt.Errorf("user \"groupname\" and \"gid\" both indicated, choose one")
+	}
+	if groupName != "" {
+		usr.GroupName = groupName
+	} else if gid != "" {
 		gidVal, err := strconv.ParseUint(gid, 10, 32)
 		if err != nil {
 			return nil, err

@@ -24,7 +24,7 @@ import (
 
 var linuxOpts = map[string]string{
 	"uid":       "-u",
-	"gid":       "-g",
+	"group":     "-g",
 	"comment":   "-c",
 	"directory": "-d",
 }
@@ -67,6 +67,12 @@ func (s *System) Lookup(userName string) (*user.User, error) {
 // If the user cannot be found an error is returned
 func (s *System) LookupID(userID string) (*user.User, error) {
 	return user.LookupId(userID)
+}
+
+// LookupGroup looks up a group by name
+// If the group cannot be found an error is returned
+func (s *System) LookupGroup(groupName string) (*user.Group, error) {
+	return user.LookupGroup(groupName)
 }
 
 // LookupGroupID looks up a group by gid
