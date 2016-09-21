@@ -42,7 +42,9 @@ Type={{.Type}}
 WantedBy=local-fs.target {{.WantedBy}}
 RequiredBy={{.RequiredBy}}`
 
-func (r *ResourceFS) Check(resource.Renderer) (status resource.TaskStatus, err error) {
+func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
+	status := &resource.Status{Status: r.mount.What}
+
 	if fs, err := r.lvm.Blkid(r.mount.What); err != nil {
 		return nil, err
 	} else {
@@ -50,15 +52,17 @@ func (r *ResourceFS) Check(resource.Renderer) (status resource.TaskStatus, err e
 			r.needMkfs = false
 		} else if fs == "" {
 			r.needMkfs = true
+			status.AddDifference("format", fs, r.mount.Type, "")
 		} else {
-			return nil, fmt.Errorf("%s already contain filesystem %s", r.mount.What, fs)
+			return nil, fmt.Errorf("%s already contain other filesystem with different type %s", r.mount.What, fs)
 		}
 	}
 
-	if unit, err := r.lvm.GetBackend().ReadFile(r.unitFileName); err != nil {
+	if ok, err := r.lvm.CheckUnit(r.unitFileName, r.unitFileContent); err != nil {
 		return nil, err
-	} else {
-		r.unitNeedUpdate = string(unit) != r.unitFileContent
+	} else if ok {
+		r.unitNeedUpdate = true
+		status.AddDifference(r.unitFileName, "<none>", r.unitFileContent, "")
 	}
 
 	// FIXME: check what device mounted to Where
@@ -67,11 +71,11 @@ func (r *ResourceFS) Check(resource.Renderer) (status resource.TaskStatus, err e
 	} else {
 		r.mountNeedUpdate = r.unitNeedUpdate && !ok
 	}
+	if r.mountNeedUpdate {
+		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
+	}
 
-	return &resource.Status{
-		WillChange: r.needMkfs && r.unitNeedUpdate && r.mountNeedUpdate,
-		Status:     "",
-	}, nil
+	return status, nil
 }
 
 func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
@@ -81,14 +85,12 @@ func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 	if r.unitNeedUpdate {
-		if err := r.lvm.GetBackend().WriteFile(r.unitFileName, []byte(r.unitFileContent), 0644); err != nil {
-			return nil, err
-		}
-		// FIXME: abstraction leak
-		if err := r.lvm.GetBackend().Run("systemctl", []string{"daemon-reload"}); err != nil {
+		if err := r.lvm.UpdateUnit(r.unitFileName, r.unitFileContent); err != nil {
 			return nil, err
 		}
 	}
+
+	// FIXME: need mkdir
 	if r.mountNeedUpdate {
 		// FIXME: abstraction leak
 		if err := r.lvm.GetBackend().Run("systemctl", []string{"start", r.unitServiceName()}); err != nil {
@@ -96,16 +98,14 @@ func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 
-	// FIXME
 	return &resource.Status{
-		WillChange: r.needMkfs && r.unitNeedUpdate && r.mountNeedUpdate,
-		Status:     "",
+		Status: r.mount.What,
 	}, nil
 }
 
-func (r *ResourceFS) Setup() error {
+func (r *ResourceFS) Setup(lvm lowlevel.LVM) error {
 	var err error
-	r.lvm = lowlevel.MakeLvmBackend()
+	r.lvm = lvm
 	r.unitFileName = r.unitName()
 	r.unitFileContent, err = r.renderUnitFile()
 	if err != nil {
