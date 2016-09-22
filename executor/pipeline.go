@@ -24,6 +24,10 @@ import (
 // MonadicPipelineFunc represents a monadic pipeline function
 type MonadicPipelineFunc func(i interface{}) monad.Monad
 
+// PipelineFunc represents a pipelined function that uses multi-return instead
+// of either.
+type PipelineFunc func(interface{}) (interface{}, error)
+
 // Pipeline is a type alias for a lazy list of pipeline functions
 type Pipeline struct {
 	CallStack []MonadicPipelineFunc
@@ -38,6 +42,13 @@ func NewPipeline() Pipeline {
 func (p Pipeline) AndThen(f MonadicPipelineFunc) Pipeline {
 	p.CallStack = append(p.CallStack, f)
 	return p
+}
+
+// AndThen2 is a utility function that converts a PipelineFunc into a
+// MonadicPipelineFunc before adding it to the execution list as part of the
+// refactor to remove Either from pipeline processing.
+func (p Pipeline) AndThen2(f PipelineFunc) Pipeline {
+	return p.AndThen(MultiReturnToEither(f))
 }
 
 // LogAndThen pushes a function onto the pipeline call stack
@@ -64,6 +75,19 @@ func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
 		val = val.AndThen(f).(either.EitherM)
 	}
 	return val
+}
+
+// MultiReturnToEither adapts a PipelineFunc to a MonadicPipelineFunc.  It's use
+// is limited to intermediate refactoring to remove EitherM from the pipeline
+// execution code.
+func MultiReturnToEither(f PipelineFunc) MonadicPipelineFunc {
+	return func(i interface{}) monad.Monad {
+		val, err := f(i)
+		if err == nil {
+			return either.RightM(val)
+		}
+		return either.LeftM(err)
+	}
 }
 
 func badTypeError(expected string, actual interface{}) error {
