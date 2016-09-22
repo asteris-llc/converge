@@ -366,16 +366,3 @@ func nilPtrError(v reflect.Value) error {
 func missingFieldError(name string, v reflect.Value) error {
 	return fmt.Errorf("%s has no field named %s", v.Type().String(), name)
 }
-
-func mergeMaps(src, dest map[string]string) map[string]string {
-	merged := make(map[string]string)
-	for k, v := range src {
-		merged[k] = v
-	}
-	for k, v := range dest {
-		if _, ok := merged[k]; !ok {
-			merged[k] = v
-		}
-	}
-	return merged
-}
