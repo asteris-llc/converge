@@ -206,7 +206,7 @@ func Test_LookupCanonicalFieldName_ReturnsCanonicalFieldName_WhenStructOkay(t *t
 
 }
 
-func Test_LookupCanonicalFieldName_ReturnsError_WhenOverlappingFieldNames(t *testing.T) {
+func Test_LookupCanonicalFieldName_ReturnsNoError_WhenOverlappingFieldNames(t *testing.T) {
 	type TestStruct struct {
 		Xyz struct{} // collision initial upper
 		XYz struct{} // collision first two upper
@@ -214,7 +214,26 @@ func Test_LookupCanonicalFieldName_ReturnsError_WhenOverlappingFieldNames(t *tes
 
 	testType := reflect.TypeOf(TestStruct{})
 	_, err := preprocessor.LookupCanonicalFieldName(testType, "xyz")
-	assert.Error(t, err)
+	assert.NoError(t, err)
+}
+
+func Test_LookupCanonicalFieldName_ReturnsCorrectNameWhenAnonymousField(t *testing.T) {
+	type A struct {
+		Foo string
+		Bar string
+	}
+	type B struct {
+		A
+		Foo string
+		Baz string
+	}
+	testType := reflect.TypeOf(B{})
+	_, err := preprocessor.LookupCanonicalFieldName(testType, "bar")
+	assert.NoError(t, err)
+	_, err = preprocessor.LookupCanonicalFieldName(testType, "baz")
+	assert.NoError(t, err)
+	_, err = preprocessor.LookupCanonicalFieldName(testType, "foo")
+	assert.NoError(t, err)
 }
 
 func Test_EvalTerms(t *testing.T) {
@@ -246,6 +265,182 @@ func Test_EvalTerms(t *testing.T) {
 	val, err = preprocessor.EvalTerms(a, "AVal")
 	assert.NoError(t, err)
 	assert.Equal(t, val, "a")
+}
+
+func Test_EvalTerms_WhenAnonymousEmbeddedStructs(t *testing.T) {
+	type A struct {
+		AOnly  string
+		ACOnly string
+		ABOnly string
+	}
+	type B struct {
+		A
+		ABOnly string
+		BOnly  string
+		BCOnly string
+	}
+	type C struct {
+		A
+		B
+		COnly  string
+		BCOnly string
+		ACOnly string
+	}
+
+	val := C{
+		B: B{
+			A: A{
+				AOnly:  "c.b.a.aonly",
+				ABOnly: "c.b.a.abonly",
+				ACOnly: "c.b.a.aconly",
+			},
+			ABOnly: "c.b.abonly",
+			BOnly:  "c.b.bonly",
+			BCOnly: "c.b.bconly",
+		},
+		A: A{
+			AOnly:  "c.a.aonly",
+			ABOnly: "c.a.abonly",
+			ACOnly: "c.a.aconly",
+		},
+		COnly:  "c.conly",
+		BCOnly: "c.bconly",
+		ACOnly: "c.aconly",
+	}
+
+	result, err := preprocessor.EvalTerms(val, "conly")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c.conly")
+
+	result, err = preprocessor.EvalTerms(val, "bconly")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c.bconly")
+
+	result, err = preprocessor.EvalTerms(val, "aconly")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c.aconly")
+
+	_, err = preprocessor.EvalTerms(val, "abonly")
+	assert.Error(t, err)
+
+	result, err = preprocessor.EvalTerms(val, "b", "abonly")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c.b.abonly")
+}
+
+func Test_EvalTerms_WithAnonymousFields(t *testing.T) {
+	type A struct {
+		AField string
+	}
+	type B struct {
+		BField string
+	}
+	type C struct {
+		B
+		CField string
+	}
+	type D struct {
+		A
+		C
+		DField string
+	}
+	val := D{
+		A: A{
+			AField: "afield",
+		},
+		C: C{
+			B: B{
+				BField: "bfield",
+			},
+			CField: "cfield",
+		},
+		DField: "dfield",
+	}
+
+	result, err := preprocessor.EvalTerms(val, "dfield")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "dfield")
+
+	result, err = preprocessor.EvalTerms(val, "cfield")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "cfield")
+
+	result, err = preprocessor.EvalTerms(val, "bfield")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "bfield")
+
+	result, err = preprocessor.EvalTerms(val, "afield")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "afield")
+
+}
+
+func Test_EvalTerms_HandlesOverlappingFieldsNames(t *testing.T) {
+	type A struct {
+		Foo     string
+		FooA    string
+		Overlap string
+	}
+	type B struct {
+		Foo     string
+		FooB    string
+		Overlap string
+	}
+	type C struct {
+		A
+		B
+		FooC    string
+		Overlap string
+	}
+	val := C{
+		A:       A{Foo: "a.foo", FooA: "a.fooa", Overlap: "a"},
+		B:       B{Foo: "b.foo", FooB: "b.foob", Overlap: "b"},
+		FooC:    "c.fooc",
+		Overlap: "c",
+	}
+
+	_, err := preprocessor.EvalTerms(val, "foo")
+	assert.Error(t, err)
+
+	result, err := preprocessor.EvalTerms(val, "fooc")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c.fooc")
+
+	result, err = preprocessor.EvalTerms(val, "fooa")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "a.fooa")
+
+	result, err = preprocessor.EvalTerms(val, "a", "fooa")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "a.fooa")
+
+	result, err = preprocessor.EvalTerms(val, "foob")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "b.foob")
+
+	result, err = preprocessor.EvalTerms(val, "b", "foob")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "b.foob")
+
+	result, err = preprocessor.EvalTerms(val, "a", "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "a.foo")
+
+	result, err = preprocessor.EvalTerms(val, "b", "foo")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "b.foo")
+
+	result, err = preprocessor.EvalTerms(val, "overlap")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "c")
+
+	result, err = preprocessor.EvalTerms(val, "a", "overlap")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "a")
+
+	result, err = preprocessor.EvalTerms(val, "b", "overlap")
+	assert.NoError(t, err)
+	assert.Equal(t, result, "b")
 }
 
 type TestStruct struct {
