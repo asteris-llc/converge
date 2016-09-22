@@ -24,6 +24,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 type ParamType string
@@ -71,23 +72,23 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	if !present {
 		if p.Default == nil {
-			return nil, fmt.Errorf("param is required")
+			return nil, errors.Errorf("param is required")
 		}
 		def, err := render.Render("default", *p.Default)
 		if err != nil {
-			return nil, err
+			return nil, err //errors.Wrap(err, "rendering default failed")
 		}
 		value = def
 	}
 
 	typedValue, err := typeCastValue(value, p.Type)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "typecasting value failed")
 	}
 
 	err = ValidateType(typedValue, p.Predicates())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "param validation failed")
 	}
 
 	return &Param{Value: value}, nil
@@ -112,7 +113,7 @@ func typeCastValue(paramValue string, paramType ParamType) (interface{}, error) 
 	case ParamTypeInt:
 		value, err := strconv.Atoi(paramValue)
 		if err != nil {
-			return value, fmt.Errorf("paramType is \"int\", but converting \"%s\" failed", paramValue)
+			return value, errors.Wrapf(err, `paramType is "int", but converting "%s" failed`, paramValue)
 		}
 		return value, nil
 
@@ -128,7 +129,7 @@ func typeCastValue(paramValue string, paramType ParamType) (interface{}, error) 
 			return typeCastValue(paramValue, ParamTypeString)
 		}
 	default:
-		return paramValue, fmt.Errorf("%s is not a supported param type", paramType)
+		return paramValue, errors.Errorf("%s is not a supported param type", paramType)
 	}
 }
 
@@ -174,21 +175,21 @@ func ValidateType(value interface{}, predicates map[string]string) error {
 	for name, predicate := range predicates {
 		tmpl, err := template.New(name).Funcs(funcMap).Parse(predicate)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "text/template parsing failed")
 		}
 
 		var buffer bytes.Buffer
 		if err = tmpl.Execute(&buffer, value); err != nil {
-			return err
+			return errors.Wrap(err, "text/template execution failed")
 		}
 
 		failed, err := strconv.ParseBool(buffer.String())
 		if err != nil {
-			return err
+			return errors.Wrap(err, "buffer can't be parsed as a boolean")
 		}
 
 		if failed {
-			err = fmt.Errorf("%s: expected %d, got %d", tmpl.Name(), ValidatePass, ValidateFail)
+			err = errors.Errorf("%s: expected %d, got %d", tmpl.Name(), ValidatePass, ValidateFail)
 			log.WithField("predicate", predicate).Debug(err.Error())
 			return err
 		}

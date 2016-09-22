@@ -19,8 +19,7 @@ import "fmt"
 // ThunkTask represents an abstract task over a thunk, used when we need to
 // serialized a thunked value.
 type ThunkTask struct {
-	Name        string
-	ThunkedType Task
+	Name string
 }
 
 // Check returns a task status with thunk information
@@ -42,9 +41,8 @@ func (t *ThunkTask) ToStatus() *Status {
 }
 
 // NewThunkedTask generates a ThunkTask from a PrepareThunk
-func NewThunkedTask(name string, thunkedType Task) *ThunkTask {
+func NewThunkedTask(name string) *ThunkTask {
 	return &ThunkTask{
-		ThunkedType: thunkedType,
-		Name:        name,
+		Name: name,
 	}
 }

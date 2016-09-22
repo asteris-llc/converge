@@ -15,7 +15,6 @@
 package param_test
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -71,63 +70,66 @@ func TestPreparerRequired(t *testing.T) {
 	}
 }
 
-func TestTable_PreparerValidate(t *testing.T) {
+func TestPreparerValidate(t *testing.T) {
 	t.Parallel()
 
-	err := errors.New("pred#0: expected 0, got 1")
 	test_table := []struct {
 		paramType param.ParamType
-		expected  error
+		assertion func(t assert.TestingT, object interface{}, msgAndArgs ...interface{}) bool
 		value     string
 		musts     []string
 	}{
 		// ParamTypeString checks, with pass/fail pairs
 
 		// type check only
-		{param.ParamTypeString, nil, "password", nil},
+		{param.ParamTypeString, assert.Nil, "password", nil},
 
 		// length func
-		{param.ParamTypeString, nil, "password", []string{"le 4 length"}},
-		{param.ParamTypeString, err, "password", []string{"ge 4 length"}},
+		{param.ParamTypeString, assert.Nil, "password", []string{"le 4 length"}},
+		{param.ParamTypeString, assert.NotNil, "password", []string{"ge 4 length"}},
 
 		// empty func
-		{param.ParamTypeString, nil, "", []string{"empty"}},
-		{param.ParamTypeString, err, "password", []string{"empty"}},
+		{param.ParamTypeString, assert.Nil, "", []string{"empty"}},
+		{param.ParamTypeString, assert.NotNil, "password", []string{"empty"}},
 
 		// oneOf func
-		{param.ParamTypeString, nil, "password", []string{"oneOf `password`"}},
-		{param.ParamTypeString, err, "password", []string{"oneOf `correthorsebatterystaple`"}},
+		{param.ParamTypeString, assert.Nil, "password", []string{"oneOf `password`"}},
+		{param.ParamTypeString, assert.NotNil, "password", []string{"oneOf `correthorsebatterystaple`"}},
 
 		// notOneOf func
-		{param.ParamTypeString, nil, "correcthorsebatterystaple", []string{"notOneOf `password hunter2`"}},
-		{param.ParamTypeString, err, "password", []string{"notOneOf `password hunter2`"}},
+		{param.ParamTypeString, assert.Nil, "correcthorsebatterystaple", []string{"notOneOf `password hunter2`"}},
+		{param.ParamTypeString, assert.NotNil, "password", []string{"notOneOf `password hunter2`"}},
 
 		// ParamTypeInt checks, with pass/fail pairs
 
 		// type checking only
-		{param.ParamTypeInt, nil, "12", nil},
-		{param.ParamTypeInt, errors.New(`paramType is "int", but converting "twelve" failed`), "twelve", nil},
+		{param.ParamTypeInt, assert.Nil, "12", nil},
+		{param.ParamTypeInt, assert.NotNil, "twelve", nil},
 
 		// min func
-		{param.ParamTypeInt, nil, "12", []string{"min 3"}},
-		{param.ParamTypeInt, err, "12", []string{"min 48"}},
+		{param.ParamTypeInt, assert.Nil, "12", []string{"min 3"}},
+		{param.ParamTypeInt, assert.NotNil, "12", []string{"min 48"}},
 
 		// max func
-		{param.ParamTypeInt, nil, "12", []string{"max 48"}},
-		{param.ParamTypeInt, err, "12", []string{"max 3"}},
+		{param.ParamTypeInt, assert.Nil, "12", []string{"max 48"}},
+		{param.ParamTypeInt, assert.NotNil, "12", []string{"max 3"}},
 
 		// ParamTypeInferred checks
 
-		{param.ParamTypeInferred, nil, "hello", nil},
-		{param.ParamTypeInferred, nil, "123", nil},
+		{param.ParamTypeInferred, assert.Nil, "hello", nil},
+		{param.ParamTypeInferred, assert.Nil, "123", nil},
 	}
 
 	for index, test := range test_table {
+		failureMsg := fmt.Sprintf("Test #%d failed\n", index)
 		prep := &param.Preparer{Type: test.paramType, Must: test.musts}
-
 		_, actual := prep.Prepare(fakerenderer.NewWithValue(test.value))
-		assert.Equal(t, test.expected, actual, fmt.Sprintf("Test #%d failed\n", index))
+		test.assertion(t, actual, failureMsg)
 	}
+}
+
+func TestParamValidationErrorMessages(t *testing.T) {
+	// Asserts that parameter validation error messages match up with the specification
 }
 
 func newDefault(x string) *string {

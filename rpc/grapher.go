@@ -95,7 +95,7 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 func resolveVertex(id string, vertex interface{}) (resource.Task, error) {
 	switch v := vertex.(type) {
 	case *render.PrepareThunk:
-		return resource.NewThunkedTask(id, v.Task), nil
+		return resource.NewThunkedTask(id), nil
 	case *resource.TaskWrapper:
 		if resolved, ok := resource.ResolveTask(v); ok {
 			return resolved, nil

@@ -25,6 +25,16 @@ param "blocksize" {
   must = ["min 50", "max 512"]
 }
 
+task.query "sayconverge" {
+  interpreter = "/bin/bash"
+  query = "echo -n converge"
+}
+
+param "converge" {
+  default = "{{lookup `task.query.sayconverge.checkstatus.stdout`}}"
+  must = ["oneOf `converge`"]
+}
+
 param "cipher" {
   default = "Twofish"
   must    = ["oneOf `Rijndael Serpent Twofish`", "notOneOf `DES Blowfish`"]

@@ -99,12 +99,8 @@ func (p pipelineGen) prepareNode(idi interface{}) monad.Monad {
 
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
-			fakePrep, fakePrepErr := getTypedResourcePointer(res)
-			if fakePrepErr != nil {
-				return either.RightM(fakePrepErr)
-			}
 
-			return either.RightM(createThunk(fakePrep, func(factory *Factory) (resource.Task, error) {
+			return either.RightM(createThunk(func(factory *Factory) (resource.Task, error) {
 				dynamicRenderer, rendErr := factory.GetRenderer(p.ID)
 				if rendErr != nil {
 					return nil, rendErr
@@ -141,11 +137,11 @@ type PrepareThunk struct {
 	Thunk func(*Factory) (resource.Task, error) `hash:"ignore"`
 }
 
-func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *PrepareThunk {
+func createThunk(f func(*Factory) (resource.Task, error)) *PrepareThunk {
 	junk := make([]byte, 32)
 	rand.Read(junk)
 	return &PrepareThunk{
-		Task:  task,
+		Task:  &resource.ThunkTask{},
 		Thunk: f,
 		Data:  junk,
 	}
