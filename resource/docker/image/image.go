@@ -23,7 +23,7 @@ import (
 
 // Image is responsible for pulling docker images
 type Image struct {
-	resource.Status
+	*resource.Status
 
 	Name   string
 	Tag    string
@@ -32,6 +32,7 @@ type Image struct {
 
 // Check system for presence of docker image
 func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
+	i.Status = resource.NewStatus()
 	repoTag := i.RepoTag()
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
