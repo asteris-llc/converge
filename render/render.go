@@ -21,7 +21,6 @@ import (
 	"reflect"
 
 	"github.com/asteris-llc/converge/executor"
-	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
@@ -40,7 +39,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		pipeline := Pipeline(out, id, renderingPlant, top)
-		value, err := pipeline.Exec(either.ReturnM(out.Get(id)))
+		value, err := pipeline.Exec(out.Get(id))
 		if err != nil {
 			return err
 		}

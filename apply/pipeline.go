@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor"
-	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
@@ -143,7 +142,7 @@ func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) (interface{}, erro
 		return result, nil
 	}
 	task := result.Plan.Task
-	val, pipelineError := plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).Exec(either.ReturnM(task))
+	val, pipelineError := plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).Exec(task)
 	if pipelineError != nil {
 		return nil, val.(error)
 	}
