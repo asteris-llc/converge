@@ -23,17 +23,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Inits_WhenEmptySlice(t *testing.T) {
+func TestInitsWhenEmptySlice(t *testing.T) {
 	assert.Nil(t, preprocessor.Inits([]string{}))
 }
 
-func Test_HasField_WhenStruct_ReturnsFieldPresentWhenPresent(t *testing.T) {
+func TestHasFieldWhenStructReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.True(t, preprocessor.HasField(TestStruct{}, "FieldA"))
 	assert.False(t, preprocessor.HasField(TestStruct{}, "FieldB"))
 
 }
 
-func Test_HasField_WhenEmbeddedStruct_ReturnsEmbeddedFieldPresent(t *testing.T) {
+func TestHasFieldWhenEmbeddedStructReturnsEmbeddedFieldPresent(t *testing.T) {
 	type Embedded struct {
 		A struct{}
 	}
@@ -46,7 +46,7 @@ func Test_HasField_WhenEmbeddedStruct_ReturnsEmbeddedFieldPresent(t *testing.T) 
 	assert.True(t, preprocessor.HasField(Embedding{}, "A"))
 }
 
-func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
+func TestVertexSplitWhenMatchingSubstringReturnsPrefixAndRest(t *testing.T) {
 	s := "a.b.c.d.e"
 	g := graph.New()
 	g.Add("a", "a")
@@ -59,7 +59,7 @@ func Test_VertexSplit_WhenMatchingSubstring_ReturnsPrefixAndRest(t *testing.T) {
 	assert.True(t, found)
 }
 
-func Test_VertexSplit_WhenExactMatch_ReturnsPrefix(t *testing.T) {
+func TestVertexSplitWhenExactMatchReturnsPrefix(t *testing.T) {
 	s := "a.b.c"
 	g := graph.New()
 	g.Add("a.b.c", "a.b.c")
@@ -69,7 +69,7 @@ func Test_VertexSplit_WhenExactMatch_ReturnsPrefix(t *testing.T) {
 	assert.True(t, found)
 }
 
-func Test_VertexSplit_WhenNoMatch_ReturnsRest(t *testing.T) {
+func TestVertexSplitWhenNoMatchReturnsRest(t *testing.T) {
 	s := "x.y.z"
 	g := graph.New()
 	g.Add("a.b.c", "a.b.c")
@@ -79,43 +79,43 @@ func Test_VertexSplit_WhenNoMatch_ReturnsRest(t *testing.T) {
 	assert.False(t, found)
 }
 
-func Test_HasField_WhenStructPtr_ReturnsFieldPresentWhenPresent(t *testing.T) {
+func TestHasFieldWhenStructPtrReturnsFieldPresentWhenPresent(t *testing.T) {
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "FieldA"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "FieldB"))
 }
 
-func Test_HasField_WhenGivenAsLowerCaseAndIsCapital_ReturnsTrue(t *testing.T) {
+func TestHasFieldWhenGivenAsLowerCaseAndIsCapitalReturnsTrue(t *testing.T) {
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fieldA"))
 	assert.True(t, preprocessor.HasField(&TestStruct{}, "fielda"))
 	assert.False(t, preprocessor.HasField(&TestStruct{}, "fieldB"))
 }
 
-func Test_HasField_WhenNilPtr_ReturnsTrue(t *testing.T) {
+func TestHasFieldWhenNilPtrReturnsTrue(t *testing.T) {
 	var test *TestStruct
 	assert.True(t, preprocessor.HasField(test, "FieldA"))
 	assert.False(t, preprocessor.HasField(test, "FieldB"))
 }
 
-func Test_HasMethod_WhenStruct(t *testing.T) {
+func TestHasMethodWhenStruct(t *testing.T) {
 	assert.True(t, preprocessor.HasMethod(TestStruct{}, "FunctionOnStruct"))
 	assert.False(t, preprocessor.HasMethod(TestStruct{}, "FunctionOnPointer"))
 	assert.False(t, preprocessor.HasMethod(TestStruct{}, "NonExistantFunc"))
 }
 
-func Test_HasMethod_WhenStructPtr(t *testing.T) {
+func TestHasMethodWhenStructPtr(t *testing.T) {
 	assert.True(t, preprocessor.HasMethod(&TestStruct{}, "FunctionOnStruct"))
 	assert.True(t, preprocessor.HasMethod(&TestStruct{}, "FunctionOnPointer"))
 	assert.False(t, preprocessor.HasMethod(&TestStruct{}, "NonExistantFunc"))
 }
 
-func Test_HasMethod_WhenNilPtr_ReturnsFalse(t *testing.T) {
+func TestHasMethodWhenNilPtrReturnsFalse(t *testing.T) {
 	var test *TestStruct
 	assert.True(t, preprocessor.HasMethod(test, "FunctionOnStruct"))
 	assert.True(t, preprocessor.HasMethod(test, "FunctionOnPointer"))
 	assert.False(t, preprocessor.HasMethod(test, "NonExistantFunc"))
 }
 
-func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
+func TestEvalMemberReturnsValueWhenExists(t *testing.T) {
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
 	actual, err := preprocessor.EvalMember("FieldA", test)
@@ -123,7 +123,7 @@ func Test_EvalMember_ReturnsValueWhenExists(t *testing.T) {
 	assert.Equal(t, expected, actual.Interface().(string))
 }
 
-func Test_EvalMember_ReturnsValueWhenLowerCaseAndExists(t *testing.T) {
+func TestEvalMemberReturnsValueWhenLowerCaseAndExists(t *testing.T) {
 	expected := "foo"
 	test := &TestStruct{FieldA: expected}
 	actual, err := preprocessor.EvalMember("fieldA", test)
@@ -131,13 +131,13 @@ func Test_EvalMember_ReturnsValueWhenLowerCaseAndExists(t *testing.T) {
 	assert.Equal(t, expected, actual.Interface().(string))
 }
 
-func Test_EvalMember_ReturnsError_WhenNotExists(t *testing.T) {
+func TestEvalMemberReturnsErrorWhenNotExists(t *testing.T) {
 	test := &TestStruct{}
 	_, err := preprocessor.EvalMember("MissingField", test)
 	assert.Error(t, err)
 }
 
-func Test_LookupCanonicalFieldName_ReturnsCanonicalFieldName_WhenStructOkay(t *testing.T) {
+func TestLookupCanonicalFieldNameReturnsCanonicalFieldNameWhenStructOkay(t *testing.T) {
 	type TestStruct struct {
 		ABC struct{} // All upper
 		aaa struct{} // all lower
@@ -206,7 +206,7 @@ func Test_LookupCanonicalFieldName_ReturnsCanonicalFieldName_WhenStructOkay(t *t
 
 }
 
-func Test_LookupCanonicalFieldName_ReturnsNoError_WhenOverlappingFieldNames(t *testing.T) {
+func TestLookupCanonicalFieldNameReturnsNoErrorWhenOverlappingFieldNames(t *testing.T) {
 	type TestStruct struct {
 		Xyz struct{} // collision initial upper
 		XYz struct{} // collision first two upper
@@ -217,7 +217,7 @@ func Test_LookupCanonicalFieldName_ReturnsNoError_WhenOverlappingFieldNames(t *t
 	assert.NoError(t, err)
 }
 
-func Test_LookupCanonicalFieldName_ReturnsCorrectNameWhenAnonymousField(t *testing.T) {
+func TestLookupCanonicalFieldNameReturnsCorrectNameWhenAnonymousField(t *testing.T) {
 	type A struct {
 		Foo string
 		Bar string
@@ -236,7 +236,7 @@ func Test_LookupCanonicalFieldName_ReturnsCorrectNameWhenAnonymousField(t *testi
 	assert.NoError(t, err)
 }
 
-func Test_EvalTerms(t *testing.T) {
+func TestEvalTerms(t *testing.T) {
 	type C struct {
 		CVal string
 	}
@@ -267,7 +267,7 @@ func Test_EvalTerms(t *testing.T) {
 	assert.Equal(t, val, "a")
 }
 
-func Test_EvalTerms_WhenAnonymousEmbeddedStructs(t *testing.T) {
+func TestEvalTermsWhenAnonymousEmbeddedStructs(t *testing.T) {
 	type A struct {
 		AOnly  string
 		ACOnly string
@@ -328,7 +328,7 @@ func Test_EvalTerms_WhenAnonymousEmbeddedStructs(t *testing.T) {
 	assert.Equal(t, result, "c.b.abonly")
 }
 
-func Test_EvalTerms_WithAnonymousFields(t *testing.T) {
+func TestEvalTermsWithAnonymousFields(t *testing.T) {
 	type A struct {
 		AField string
 	}
@@ -375,7 +375,7 @@ func Test_EvalTerms_WithAnonymousFields(t *testing.T) {
 
 }
 
-func Test_EvalTerms_HandlesOverlappingFieldsNames(t *testing.T) {
+func TestEvalTermsHandlesOverlappingFieldsNames(t *testing.T) {
 	type A struct {
 		Foo     string
 		FooA    string
