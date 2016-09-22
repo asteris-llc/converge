@@ -30,51 +30,19 @@ type PipelineFunc func(interface{}) (interface{}, error)
 
 // Pipeline is a type alias for a lazy list of pipeline functions
 type Pipeline struct {
-	CallStack []MonadicPipelineFunc
+	CallStack []PipelineFunc
 }
 
 // NewPipeline creats a new Pipeline with an empty call stack
 func NewPipeline() Pipeline {
-	return Pipeline{[]MonadicPipelineFunc{}}
+	return Pipeline{[]PipelineFunc{}}
 }
 
-// AndThen pushes a function onto the pipeline call stack
-func (p Pipeline) AndThen(f interface{}) Pipeline {
-	switch f1 := f.(type) {
-	case MonadicPipelineFunc:
-		return p.AndThenMonad(f1)
-	case func(interface{}) monad.Monad:
-		return p.AndThenMonad(f1)
-	case PipelineFunc:
-		return p.AndThenMultiReturn(f1)
-	case func(interface{}) (interface{}, error):
-		return p.AndThenMultiReturn(f1)
-	default:
-		fmt.Printf("AndThen got a function of type: %T\n", f)
-		return p
-	}
-}
-
-// AndThenMonad pushes a monadic function onto the pipeline call stack
-func (p Pipeline) AndThenMonad(f MonadicPipelineFunc) Pipeline {
-	p.CallStack = append(p.CallStack, f)
-	return p
-}
-
-// AndThenMultiReturn is a utility function that converts a PipelineFunc into a
+// AndThen is a utility function that converts a PipelineFunc into a
 // MonadicPipelineFunc before adding it to the execution list as part of the
 // refactor to remove Either from pipeline processing.
-func (p Pipeline) AndThenMultiReturn(f PipelineFunc) Pipeline {
-	return p.AndThen(MultiReturnToEither(f))
-}
-
-// LogAndThen pushes a function onto the pipeline call stack
-func (p Pipeline) LogAndThen(f MonadicPipelineFunc, log func(interface{})) Pipeline {
-	logged := func(i interface{}) monad.Monad {
-		log(i)
-		return f(i)
-	}
-	p.CallStack = append(p.CallStack, logged)
+func (p Pipeline) AndThen(f PipelineFunc) Pipeline {
+	p.CallStack = append(p.CallStack, f)
 	return p
 }
 
@@ -89,7 +57,7 @@ func (p Pipeline) Connect(end Pipeline) Pipeline {
 func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
 	val := zeroValue.(either.EitherM)
 	for _, f := range p.CallStack {
-		val = val.AndThen(f).(either.EitherM)
+		val = val.AndThen(MultiReturnToEither(f)).(either.EitherM)
 	}
 	result, isRight := val.FromEither()
 	if isRight {
