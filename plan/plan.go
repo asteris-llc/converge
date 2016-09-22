@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
 )
@@ -45,7 +44,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 		notify.Transform(func(id string, out *graph.Graph) error {
 			renderingPlant.Graph = out
 			pipeline := Pipeline(out, id, renderingPlant)
-			val, pipelineErr := pipeline.Exec(either.ReturnM(out.Get(id)))
+			val, pipelineErr := pipeline.Exec(out.Get(id))
 			if pipelineErr != nil {
 				fmt.Printf("pipeline returned Right %v\n", val)
 				return pipelineErr

@@ -56,12 +56,7 @@ func (p Pipeline) Connect(end Pipeline) Pipeline {
 // Exec executes the pipeline
 func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
 	var err error
-	val, isRight := zeroValue.(either.EitherM).FromEither()
-
-	if !isRight {
-		return nil, val.(error)
-	}
-
+	var val = zeroValue
 	for _, f := range p.CallStack {
 		val, err = f(val)
 		if err != nil {
