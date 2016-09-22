@@ -262,6 +262,7 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 // a struct.
 func fieldMap(val interface{}) (map[string]string, error) {
 	fieldMap := make(map[string]string)
+	conflictMap := make(map[string]struct{})
 	var t reflect.Type
 	switch typed := val.(type) {
 	case reflect.Type:
@@ -277,33 +278,38 @@ func fieldMap(val interface{}) (map[string]string, error) {
 	if t.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("cannot access fields of non-struct type %T", val)
 	}
-	return addFieldsToMap(fieldMap, t)
+	return addFieldsToMap(fieldMap, conflictMap, t)
 }
 
-func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, error) {
+func addFieldsToMap(m map[string]string, conflicts map[string]struct{}, t reflect.Type) (map[string]string, error) {
 	if cached, ok := fieldMapCache[t]; ok {
 		return cached, nil
 	}
-
 	for idx := 0; idx < t.NumField(); idx++ {
 		field := t.Field(idx)
 		if field.Anonymous {
+			lower := strings.ToLower(field.Name)
+			if _, ok := m[lower]; !ok {
+				m[lower] = field.Name
+			}
 			var err error
 			anonType := interfaceToConcreteType(field.Type)
 			if anonType.Kind() == reflect.Struct {
-				if m, err = addFieldsToMap(m, anonType); err != nil {
+				if m, err = addFieldsToMap(m, conflicts, anonType); err != nil {
 					return nil, err
 				}
 			}
 			continue
 		}
-
 		name := field.Name
 		lower := strings.ToLower(name)
 		if _, ok := m[lower]; ok {
-			return nil, fmt.Errorf("multiple potential matches for %s", name)
+			conflicts[lower] = struct{}{}
+		} else {
+			if _, ok := conflicts[lower]; !ok {
+				m[lower] = name
+			}
 		}
-		m[lower] = name
 	}
 	fieldMapCache[t] = m
 	return m, nil
