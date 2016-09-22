@@ -38,7 +38,7 @@ var engineEnvVars = []string{"https_proxy", "http_proxy", "no_proxy", "ftp_proxy
 
 // Container is responsible for creating docker containers
 type Container struct {
-	resource.Status
+	*resource.Status
 
 	Name            string
 	Image           string
@@ -60,6 +60,7 @@ type Container struct {
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
+	c.Status = resource.NewStatus()
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
 		c.Status.Level = resource.StatusFatal
@@ -69,7 +70,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if container != nil {
 		c.Status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 		if c.Force {
-			c.diffContainer(container, &c.Status)
+			c.diffContainer(container, c.Status)
 		}
 	} else {
 		c.Status.AddDifference("name", "", c.Name, "<container-missing>")
