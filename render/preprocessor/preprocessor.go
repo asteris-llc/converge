@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/asteris-llc/converge/graph"
 )
@@ -30,7 +31,29 @@ var ErrUnresolvable = errors.New("field is unresolvable")
 
 // fieldMapCache caches the results of field map generation to avoid
 // recalculating it during execution.
-var fieldMapCache = make(map[reflect.Type]map[string]string)
+type lockedFieldMapCache struct {
+	innerLock *sync.RWMutex
+	vals      map[reflect.Type]map[string]string
+}
+
+var fieldMapCache = makeCache()
+
+func makeCache() *lockedFieldMapCache {
+	return &lockedFieldMapCache{innerLock: new(sync.RWMutex), vals: make(map[reflect.Type]map[string]string)}
+}
+
+func (f *lockedFieldMapCache) Get(t reflect.Type) (map[string]string, bool) {
+	f.innerLock.Lock()
+	defer f.innerLock.Unlock()
+	val, ok := f.vals[t]
+	return val, ok
+}
+
+func (f *lockedFieldMapCache) Put(t reflect.Type, m map[string]string) {
+	f.innerLock.Lock()
+	defer f.innerLock.Unlock()
+	f.vals[t] = m
+}
 
 // Preprocessor is a template preprocessor
 type Preprocessor struct {
@@ -282,7 +305,7 @@ func fieldMap(val interface{}) (map[string]string, error) {
 }
 
 func addFieldsToMap(m map[string]string, conflicts map[string]struct{}, t reflect.Type) (map[string]string, error) {
-	if cached, ok := fieldMapCache[t]; ok {
+	if cached, ok := fieldMapCache.Get(t); ok {
 		return cached, nil
 	}
 	for idx := 0; idx < t.NumField(); idx++ {
@@ -311,7 +334,7 @@ func addFieldsToMap(m map[string]string, conflicts map[string]struct{}, t reflec
 			}
 		}
 	}
-	fieldMapCache[t] = m
+	fieldMapCache.Put(t, m)
 	return m, nil
 }
 
