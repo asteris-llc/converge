@@ -27,12 +27,12 @@ param "blocksize" {
 
 task.query "sayconverge" {
   interpreter = "/bin/bash"
-  query = "echo -n converge"
+  query       = "echo -n converge"
 }
 
 param "converge" {
   default = "{{lookup `task.query.sayconverge.checkstatus.stdout`}}"
-  must = ["oneOf `converge`"]
+  must    = ["oneOf `converge`"]
 }
 
 param "cipher" {
