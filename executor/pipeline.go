@@ -55,15 +55,20 @@ func (p Pipeline) Connect(end Pipeline) Pipeline {
 
 // Exec executes the pipeline
 func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
-	val := zeroValue.(either.EitherM)
+	var err error
+	val, isRight := zeroValue.(either.EitherM).FromEither()
+
+	if !isRight {
+		return nil, val.(error)
+	}
+
 	for _, f := range p.CallStack {
-		val = val.AndThen(MultiReturnToEither(f)).(either.EitherM)
+		val, err = f(val)
+		if err != nil {
+			return nil, err
+		}
 	}
-	result, isRight := val.FromEither()
-	if isRight {
-		return result, nil
-	}
-	return nil, result.(error)
+	return val, nil
 }
 
 // MultiReturnToEither adapts a PipelineFunc to a MonadicPipelineFunc.  It's use
