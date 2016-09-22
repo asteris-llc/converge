@@ -55,14 +55,15 @@ type File struct {
 	action        string //create, delete, modify
 	modifyContent bool   // does content need to be changed
 
-	*resource.Status
 	renderer resource.Renderer
 }
 
 // Apply  changes to file resources
-func (f *File) Apply(r resource.Renderer) (resource.TaskStatus, error) {
-
+func (f *File) Apply() (resource.TaskStatus, error) {
 	var err error
+
+	status := &resource.Status{}
+
 	switch f.action {
 	case "delete":
 		err = f.Delete()
@@ -72,41 +73,41 @@ func (f *File) Apply(r resource.Renderer) (resource.TaskStatus, error) {
 		err = f.Modify()
 	}
 	if err != nil {
-		return f.Status, errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
+		return status, errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
 	}
-	return f.Status, err
+	return status, err
 }
 
 // Check File settings
 func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	var err error
-	f.renderer = r
-	f.Status = &resource.Status{}
-	f.Status.Output = append(f.Status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
 
+	status := &resource.Status{}
+	f.renderer = r
 	var actual *File
+
+	status.Output = append(status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
 
 	// Get information about the current file
 	stat, err := os.Lstat(f.Destination) //link aware
 	if os.IsNotExist(err) {              //file not found
 		switch f.State {
 		case "absent": // if "absent" is set and the file doesn't exist, return with no changes
-			return f, nil
+			return status, nil
 		case "present": //file doesn't exist, we need to create it
 			actual = &File{Destination: "<file does not exist>",
 				State:     "absent",
 				UserInfo:  &user.User{},
-				GroupInfo: &user.Group{},
-				Status:    &resource.Status{}}
+				GroupInfo: &user.Group{}}
 			err = f.diffFile(actual)
 			if err != nil {
-				f.Status.WarningLevel = resource.StatusFatal
-				return f, errors.Wrapf(err, "check")
+				status.Level = resource.StatusFatal
+				return status, errors.Wrapf(err, "check")
 			}
 			f.action = "create"
-			return f, nil
+			return status, nil
 		default:
-			return f, fmt.Errorf("unknown state %s", f.State)
+			return status, errors.Errorf("unknown state %s", f.State)
 		}
 	} else { //file exists
 		actual = &File{
@@ -114,35 +115,34 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 			State:       "present"}
 		err = GetFileInfo(actual, stat)
 		if err != nil {
-			f.Status.WarningLevel = resource.StatusFatal
-			return f, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
+			status.Level = resource.StatusFatal
+			return status, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
 		}
 		actual.Content, err = Content(actual.Destination)
 		if err != nil {
-			return f, errors.Wrap(err, "unable to get content")
+			return status, errors.Wrap(err, "unable to get content")
 		}
 
 		err = f.diffFile(actual)
 		if err != nil {
-			return f, errors.Wrap(err, "check")
+			return status, errors.Wrap(err, "check")
 		}
 		switch f.State {
 		case "absent": //file exists -> absent
-			f.Status.WillChange = true
-			f.Status.WarningLevel = resource.StatusWillChange
+			status.Level = resource.StatusWillChange
 			f.action = "delete"
 		case "present": //file exists -> modified file
-			if f.Status.WillChange {
+			if status.Level == resource.StatusWillChange {
 				f.action = "modify"
 			}
 		}
 	}
 
-	if f.Status.WarningLevel == resource.StatusFatal {
-		return f, errors.New("failure during check")
-	} else {
-		return f, nil
+	if status.Level == resource.StatusFatal {
+		return status, errors.New("failure during check")
 	}
+	return status, nil
+
 }
 
 // Validate runs checks against a File resource
@@ -183,7 +183,6 @@ func (f *File) Validate() error {
 
 // Validate the state or set default value
 func (f *File) validateState() error {
-	var err error
 
 	switch f.State {
 	case "": //nothing set, use default
@@ -195,9 +194,8 @@ func (f *File) validateState() error {
 				return nil
 			}
 		}
-		return fmt.Errorf("state should be one of %s, got %q", strings.Join(validStates, ", "), f.State)
+		return errors.Errorf("state should be one of %s, got %q", strings.Join(validStates, ", "), f.State)
 	}
-	return err
 }
 
 // Validate the type or set default value
@@ -217,8 +215,6 @@ func (f *File) validateType() error {
 		}
 		return fmt.Errorf("type should be one of %s, got %q", strings.Join(allTypes, ", "), f.Type)
 	}
-	return nil
-
 }
 
 // A target needs to be set if you are creating a link
@@ -235,9 +231,8 @@ func (f *File) validateTarget() error {
 		if f.Type == "symlink" || f.Type == "hardlink" {
 			return nil
 		}
-		return fmt.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
+		return errors.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
 	}
-	return fmt.Errorf("unknown combination of type %q and target %q", f.Type, f.Target)
 }
 
 func (f *File) validateUser() error {
@@ -304,7 +299,7 @@ func GetFileInfo(f *File, stat os.FileInfo) error {
 
 // Compute the difference between desired and actual state
 func (f *File) diffFile(actual *File) error {
-	status := f.Status
+	status := &resource.Status{}
 
 	if f.State != actual.State {
 		status.AddDifference("state", actual.State, f.State, "")
@@ -325,11 +320,11 @@ func (f *File) diffFile(actual *File) error {
 		//check to see if target exists
 		_, err := os.Stat(f.Target)
 		if os.IsNotExist(err) {
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			return errors.Wrap(err, "hardlink target does not exist")
 		}
 		if err != nil {
-			status.WarningLevel = resource.StatusFatal
+			status.Level = resource.StatusFatal
 			return errors.Wrap(err, "error looking up link target")
 		}
 
@@ -338,7 +333,7 @@ func (f *File) diffFile(actual *File) error {
 			same, err := SameFile(f.Destination, f.Target)
 
 			if err != nil {
-				status.WarningLevel = resource.StatusFatal
+				status.Level = resource.StatusFatal
 				return errors.Wrapf(err, "failed to check link status of %s -> %s", f.Destination, f.Target)
 			}
 
@@ -360,7 +355,7 @@ func (f *File) diffFile(actual *File) error {
 	// determine if the file owner needs to be changed
 	user, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 		return err
 	}
 
@@ -377,7 +372,7 @@ func (f *File) diffFile(actual *File) error {
 	// determine if the file owner needs to be changed
 	group, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
 	if err != nil {
-		status.WarningLevel = resource.StatusFatal
+		status.Level = resource.StatusFatal
 	}
 
 	if groupChanges == true {
@@ -402,16 +397,13 @@ func (f *File) diffFile(actual *File) error {
 	}
 
 	if len(status.Differences) > 0 {
-		status.WillChange = true
-		switch status.WarningLevel {
+		switch status.Level {
 		case resource.StatusFatal:
 		default:
-			status.WarningLevel = resource.StatusWillChange
+			status.Level = resource.StatusWillChange
 		}
 
 	}
-
-	f.Status = status
 
 	return err
 }
