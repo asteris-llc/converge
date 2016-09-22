@@ -289,8 +289,11 @@ func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, err
 		field := t.Field(idx)
 		if field.Anonymous {
 			var err error
-			if m, err = addFieldsToMap(m, interfaceToConcreteType(field.Type)); err != nil {
-				return nil, err
+			anonType := interfaceToConcreteType(field.Type)
+			if anonType.Kind() == reflect.Struct {
+				if m, err = addFieldsToMap(m, anonType); err != nil {
+					return nil, err
+				}
 			}
 			continue
 		}
