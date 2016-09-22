@@ -22,6 +22,8 @@ import (
 	"os/user"
 	"strconv"
 	"syscall"
+
+	"github.com/pkg/errors"
 )
 
 // Type determines the file type and returns a string {directory, file, symlink..}
@@ -63,7 +65,7 @@ func GID(fi os.FileInfo) int {
 	return int(fi.Sys().(*syscall.Stat_t).Gid)
 }
 
-// Owner Returns the Unix username of a File
+// UserInfo Returns the Unix username of a File
 func UserInfo(fi os.FileInfo) (*user.User, error) {
 	uid := UID(fi)
 
@@ -76,7 +78,7 @@ func UserInfo(fi os.FileInfo) (*user.User, error) {
 
 }
 
-// Group returns the Unix groupname of a File
+// GroupInfo returns the Unix groupname of a File
 func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 	gid := GID(fi)
 
@@ -109,7 +111,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 		if actual.Username == "" { // if neither is set, use the effective uid of the process
 			userInfo, err = user.LookupId(strconv.Itoa(os.Geteuid()))
 			if err != nil {
-				return &user.User{}, true, fmt.Errorf("unable to set default username %s", err)
+				return &user.User{}, true, errors.Wrapf(err, "unable to set default username %s", f.Name)
 			}
 			return userInfo, true, err
 		}
@@ -119,7 +121,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 	default:
 		userInfo, err = user.Lookup(f.Username)
 		if err != nil {
-			return userInfo, true, fmt.Errorf("unable to get user information for username %s:", f.Username, err)
+			return userInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
 		}
 		changed = true
 	}
@@ -134,7 +136,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 		if actual.Name == "" { // if neither is set, use the effective uid of the process
 			groupInfo, err = user.LookupGroupId(strconv.Itoa(os.Getegid()))
 			if err != nil {
-				return &user.Group{}, true, fmt.Errorf("unable to set default group %s", err)
+				return &user.Group{}, true, errors.Wrapf(err, "unable to set default group")
 			}
 			changed = true
 		}
@@ -144,7 +146,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 	default: //we asked to set a group on the file
 		groupInfo, err = user.LookupGroup(f.Name)
 		if err != nil {
-			return groupInfo, true, fmt.Errorf("unable to get user information for username %s:", f.Name, err)
+			return groupInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Name)
 		}
 		changed = true
 
@@ -156,12 +158,12 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 func Content(filename string) ([]byte, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open %s: %s", filename, err)
+		return nil, errors.Errorf("unable to open %s: %s", filename, err)
 	}
 	return b, err
 }
 
-// SameLink checks if two files are the same inode
+// SameFile checks if two files are the same inode
 func SameFile(file1, file2 string) (bool, error) {
 	fi1, err := os.Lstat(file1)
 	if err != nil {
