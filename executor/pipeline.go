@@ -14,16 +14,6 @@
 
 package executor
 
-import (
-	"fmt"
-
-	"github.com/asteris-llc/converge/executor/either"
-	"github.com/asteris-llc/converge/executor/monad"
-)
-
-// MonadicPipelineFunc represents a monadic pipeline function
-type MonadicPipelineFunc func(i interface{}) monad.Monad
-
 // PipelineFunc represents a pipelined function that uses multi-return instead
 // of either.
 type PipelineFunc func(interface{}) (interface{}, error)
@@ -64,21 +54,4 @@ func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
 		}
 	}
 	return val, nil
-}
-
-// MultiReturnToEither adapts a PipelineFunc to a MonadicPipelineFunc.  It's use
-// is limited to intermediate refactoring to remove EitherM from the pipeline
-// execution code.
-func MultiReturnToEither(f PipelineFunc) MonadicPipelineFunc {
-	return func(i interface{}) monad.Monad {
-		val, err := f(i)
-		if err == nil {
-			return either.RightM(val)
-		}
-		return either.LeftM(err)
-	}
-}
-
-func badTypeError(expected string, actual interface{}) error {
-	return fmt.Errorf("expected type `%s' but actual value is of type %T", expected, actual)
 }
