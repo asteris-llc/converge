@@ -86,12 +86,16 @@ func (p Pipeline) Connect(end Pipeline) Pipeline {
 }
 
 // Exec executes the pipeline
-func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
+func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
 	val := zeroValue.(either.EitherM)
 	for _, f := range p.CallStack {
 		val = val.AndThen(f).(either.EitherM)
 	}
-	return val
+	result, isRight := val.FromEither()
+	if isRight {
+		return result, nil
+	}
+	return nil, result.(error)
 }
 
 // MultiReturnToEither adapts a PipelineFunc to a MonadicPipelineFunc.  It's use

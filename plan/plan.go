@@ -45,11 +45,10 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 		notify.Transform(func(id string, out *graph.Graph) error {
 			renderingPlant.Graph = out
 			pipeline := Pipeline(out, id, renderingPlant)
-			result := pipeline.Exec(either.ReturnM(out.Get(id)))
-			val, isRight := result.FromEither()
-			if !isRight {
+			val, pipelineErr := pipeline.Exec(either.ReturnM(out.Get(id)))
+			if pipelineErr != nil {
 				fmt.Printf("pipeline returned Right %v\n", val)
-				return fmt.Errorf("%v", val)
+				return pipelineErr
 			}
 
 			asResult, ok := val.(*Result)

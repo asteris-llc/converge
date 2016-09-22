@@ -69,13 +69,10 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 		notify.Transform(func(id string, out *graph.Graph) error {
 			renderingPlant.Graph = out
 			pipeline := pipelineF(out, id)
-			result := pipeline.Exec(either.ReturnM(out.Get(id)))
-			val, isRight := result.FromEither()
-			if !isRight {
+			val, pipelineError := pipeline.Exec(either.ReturnM(out.Get(id)))
+			if pipelineError != nil {
 				hasErrors = ErrTreeContainsErrors
-				if e, ok := val.(error); ok {
-					return e
-				}
+				return pipelineError
 			}
 			asResult, ok := val.(*Result)
 			if !ok {

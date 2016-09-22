@@ -40,10 +40,9 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		pipeline := Pipeline(out, id, renderingPlant, top)
-		result := pipeline.Exec(either.ReturnM(out.Get(id)))
-		value, isRight := result.FromEither()
-		if !isRight {
-			return fmt.Errorf("%v", value)
+		value, err := pipeline.Exec(either.ReturnM(out.Get(id)))
+		if err != nil {
+			return err
 		}
 		out.Add(id, value)
 		renderingPlant.Graph = out
