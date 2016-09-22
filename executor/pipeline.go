@@ -39,15 +39,32 @@ func NewPipeline() Pipeline {
 }
 
 // AndThen pushes a function onto the pipeline call stack
-func (p Pipeline) AndThen(f MonadicPipelineFunc) Pipeline {
+func (p Pipeline) AndThen(f interface{}) Pipeline {
+	switch f1 := f.(type) {
+	case MonadicPipelineFunc:
+		return p.AndThenMonad(f1)
+	case func(interface{}) monad.Monad:
+		return p.AndThenMonad(f1)
+	case PipelineFunc:
+		return p.AndThenMultiReturn(f1)
+	case func(interface{}) (interface{}, error):
+		return p.AndThenMultiReturn(f1)
+	default:
+		fmt.Printf("AndThen got a function of type: %T\n", f)
+		return p
+	}
+}
+
+// AndThenMonad pushes a monadic function onto the pipeline call stack
+func (p Pipeline) AndThenMonad(f MonadicPipelineFunc) Pipeline {
 	p.CallStack = append(p.CallStack, f)
 	return p
 }
 
-// AndThen2 is a utility function that converts a PipelineFunc into a
+// AndThenMultiReturn is a utility function that converts a PipelineFunc into a
 // MonadicPipelineFunc before adding it to the execution list as part of the
 // refactor to remove Either from pipeline processing.
-func (p Pipeline) AndThen2(f PipelineFunc) Pipeline {
+func (p Pipeline) AndThenMultiReturn(f PipelineFunc) Pipeline {
 	return p.AndThen(MultiReturnToEither(f))
 }
 
