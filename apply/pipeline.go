@@ -79,28 +79,30 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
 				Status: &resource.Status{Level: resource.StatusWillChange},
 				Err:    fmt.Errorf("error in dependency %q", depID),
 			}
-			return either.LeftM(errResult), nil
+			return errResult, nil
 		}
 	}
-	return either.RightM(result), nil
+	return result, nil
 }
 
 // maybeSkipApplication :: Either *apply.Result *plan.Result -> Either *apply.Result resultWrapper
-func (g *pipelineGen) maybeSkipApplication(resultI interface{}) monad.Monad {
-	// checkResult :: Either apply.Result Plan.Result
-	checkResult := func(plannerI interface{}) interface{} {
-		plan := plannerI.(resultWrapper)
-		if !plan.Plan.Status.HasChanges() {
-			return either.LeftM(&Result{
-				Ran:  false,
-				Task: plan.Plan.Task,
-				Plan: plan.Plan,
-				Err:  plan.Plan.Err,
-			})
-		}
-		return either.RightM(plan)
+func (g *pipelineGen) maybeSkipApplication(resultI interface{}) (interface{}, error) {
+	if asResult, ok := resultI.(*Result); ok {
+		return either.LeftM(asResult), nil
 	}
-	return monad.FMap(checkResult, resultI.(either.EitherM))
+	asPlan, ok := resultI.(resultWrapper)
+	if !ok {
+		return nil, fmt.Errorf("expected *Result or *resultWrapper but got type %T", resultI)
+	}
+	if !asPlan.Plan.Status.HasChanges() {
+		return either.LeftM(&Result{
+			Ran:  false,
+			Task: asPlan.Plan.Task,
+			Plan: asPlan.Plan,
+			Err:  asPlan.Plan.Err,
+		}), nil
+	}
+	return either.RightM(asPlan), nil
 }
 
 // applyNode runs apply on the node, it takes an Either *apply.Result
