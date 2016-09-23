@@ -201,7 +201,7 @@ resource "aws_instance" "manager" {
       swarm-manager-ip = "${aws_instance.manager.private_ip}"
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
-    modules = [
+    hcl = [
       "converge/main.hcl",
       "converge/manager.hcl"
     ]
@@ -240,7 +240,7 @@ resource "aws_instance" "worker" {
     params = {
       user-name = "${var.ssh_user_name}",
     }
-    modules = [
+    hcl = [
       "converge/main.hcl"
     ]
     download_binary = true
@@ -265,7 +265,7 @@ resource "null_resource" "worker-join" {
       swarm-manager-ip = "${aws_instance.manager.private_ip}"
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
-    modules = [
+    hcl = [
       "converge/worker.hcl"
     ]
     download_binary = true

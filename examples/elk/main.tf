@@ -126,7 +126,7 @@ resource "aws_instance" "elk" {
     params = {
       user-name = "${var.ssh_user_name}"
     }
-    modules = [
+    hcl = [
       "converge/elk.hcl"
     ]
     download_binary = true
