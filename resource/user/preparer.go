@@ -122,7 +122,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		usr.HomeDir = homeDir
 	}
 
-	sstate, err := render.Render("name", p.State)
+	sstate, err := render.Render("state", p.State)
 	state := State(sstate)
 	if err != nil {
 		return nil, err
