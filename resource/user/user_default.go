@@ -25,7 +25,7 @@ type System struct{}
 
 // AddUser
 // Implementation for systems which are not supported
-func (s *System) AddUser(userName string, args map[string]string) error {
+func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	return ErrUnsupported
 }
 
