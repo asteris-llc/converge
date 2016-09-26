@@ -144,7 +144,7 @@ func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) (interface{}, erro
 	task := result.Plan.Task
 	val, pipelineError := plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).Exec(task)
 	if pipelineError != nil {
-		return nil, val.(error)
+		return nil, pipelineError
 	}
 	planned, ok := val.(*plan.Result)
 	if !ok {
