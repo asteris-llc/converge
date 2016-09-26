@@ -23,10 +23,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/resource/file/content"
-	"github.com/asteris-llc/converge/resource/module"
-	"github.com/asteris-llc/converge/resource/param"
-	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,75 +42,11 @@ task x {
 	assert.NoError(t, err)
 
 	item := resourced.Get("root/task.x")
-	preparer, ok := item.(*shell.Preparer)
-
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not *shell.Preparer", item))
-	assert.Equal(t, "check", preparer.Check)
-	assert.Equal(t, "apply", preparer.Apply)
-}
-
-func TestSetResourcesContent(t *testing.T) {
-	defer logging.HideLogs(t)()
-
-	resourced, err := getResourcesGraph(
-		t,
-		[]byte(`
-file.content x {
-  destination = "destination"
-  content = "content"
-}
-`),
-	)
-	assert.NoError(t, err)
-
-	item := resourced.Get("root/file.content.x")
-	preparer, ok := item.(*content.Preparer)
+	preparer, ok := item.(*resource.Preparer)
 
 	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", item, preparer))
-	assert.Equal(t, "destination", preparer.Destination)
-	assert.Equal(t, "content", preparer.Content)
-}
-
-func TestSetResourcesParam(t *testing.T) {
-	defer logging.HideLogs(t)()
-
-	resourced, err := getResourcesGraph(
-		t,
-		[]byte(`
-param x {
-  default = "default"
-}
-`),
-	)
-	assert.NoError(t, err)
-
-	item := resourced.Get("root/param.x")
-	preparer, ok := item.(*param.Preparer)
-
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not *param.Preparer", item))
-	assert.Equal(t, "default", preparer.Default)
-}
-
-func TestSetResourcesModules(t *testing.T) {
-	defer logging.HideLogs(t)()
-
-	resourced, err := getResourcesGraph(
-		t,
-		[]byte(`
-module source x {
-	params = {
-	  key = "value"
-  }
-}
-`),
-	)
-	assert.NoError(t, err)
-
-	item := resourced.Get("root/module.x")
-	preparer, ok := item.(*module.Preparer)
-
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", item, preparer))
-	assert.Equal(t, "value", preparer.Params["key"])
+	assert.Equal(t, "check", preparer.Source["check"])
+	assert.Equal(t, "apply", preparer.Source["apply"])
 }
 
 func TestSetResourcesBad(t *testing.T) {

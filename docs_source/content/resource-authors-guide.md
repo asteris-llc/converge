@@ -101,31 +101,55 @@ type Preparer struct {
     Apply string `hcl:"apply"`
 }
 
-func (p *Preparer) Render(r *resource.Renderer) (resource.Task, error) {
-    check, err := render.Render("check", p.Check)
-    if err != nil {
-        return nil, err
-    }
-
-    apply, err := render.Render("apply", p.Apply)
-    if err != nil {
-        return nil, err
-    }
-
+func (p *Preparer) Prepare(resource.Renderer) (resource.Task, error) {
     return &MyShellTask{CheckStmt: check, ApplyStmt: apply}, nil
 }
 ```
 
-"What's the renderer doing there," you may ask, "and how can I accept non-string
-values?" If you need to accept non-string parameters directly, the fields should
-be `interface{}`s, and you should do all your type casting, conversion, and
-validation in Prepare before the values are passed down to your Task.
+To get values other than strings (bools, ints, et cetera), you just need to
+specify them. Converge will render the values and parse them from strings, if
+necessary.
+
+### Struct Tags
+
+Other than `hcl` (which is used to specify the field name you'll accept) the
+following struct tags control the values you get:
+
+- `doc_type`: control the exact printed type in the documentation. Example:
+  fields that accept
+  a [duration string](https://golang.org/pkg/time/#ParseDuration) (such
+  as [task.timeout]({{< ref "resources/task.md" >}})) are commonly strings
+  with a `doc_type` of "duration string"
+
+- `base`: used with numeric types to indicate a base for parsing. Does not work
+  with floats. Example: [file.mode]({{< ref "resources/file.mode.md" >}})
+  needs an octal number, and specifies that in this tag.
+
+We can also do some basic validation tasks with tags:
+
+- `required`: one valid value: `true`. If set, this field must be set in the
+  HCL, but may still have a zero value (for example, `int` can still be `0`.)
+  Example: [docker.container]{{< ref "resources/docker.container.md" >}} uses
+  this to require an image for the container.
+
+- `mutually_exclusive`: a comma-separated list of fields that cannot be set
+  together. Example: [user]({{< ref "resources/user.user.md" >}}) uses this
+  to disallow setting both `groupname` and `gid`.
+
+- `valid_values`: a comma-separated list of values that will be accepted for
+  this field.
+  Example: [docker.container]({{< ref "resources/docker.container.md" >}}) uses
+  this to enforce status is only `running` or `created`.
+
+### The Renderer
 
 The renderer is what allows your values to take input from the environment (like
-calls to `param` or `lookup`.) Normally you'll get a string value back, but when
-you get an error it is very important to return it exactly as received. Converge
-will automatically wrap the errors from Render to provide context to the user
-and to defer rendering of lookup nodes until they're resolved.
+calls to `param` or `lookup`.) Normally you won't need to use this, but if
+you're doing something extremely custom it will be handy. If you get an error
+while using the `Renderer`, return it exactly as received or wrap it with
+[`errors.Wrap` or `errors.Wrapf`](https://github.com/pkg/errors). Converge uses
+these signals to calculate execution order, so it needs to be able to inspect
+the returned error value.
 
 ## Registering
 

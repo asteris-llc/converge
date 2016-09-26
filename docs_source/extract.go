@@ -25,6 +25,8 @@ import (
 	"strings"
 	"text/template"
 
+	"reflect"
+
 	"github.com/spf13/pflag"
 )
 
@@ -35,7 +37,27 @@ var (
 	resourceName  string
 	stripDocLines int
 
-	tmpl = template.Must(template.New("").Funcs(template.FuncMap{"fencedCode": fencedCode}).Parse(`
+	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
+		"fencedCode": fencedCode,
+		"code":       func(x string) string { return "`" + x + "`" },
+		"codeCommaJoin": func(items []string, terminal string) string {
+			var out string
+			if len(items) == 2 && terminal != "" {
+				return fmt.Sprintf("`%s` %s `%s`", items[0], terminal, items[1])
+			}
+			for i, item := range items {
+				out += "`" + item + "`"
+				if i+1 != len(items) {
+					out += ", "
+				}
+				if i == len(items)-2 {
+					out += terminal + " "
+				}
+			}
+
+			return out
+		},
+	}).Parse(`
 {{.TopDoc}}
 
 ## Example
@@ -44,9 +66,15 @@ var (
 
 ## Parameters
 {{ range .Fields}}
-- {{.Name}} ({{.Type}})
+- {{.Name}} ({{if .Required}}required {{end}}{{if ne .Base ""}}base {{.Base}} {{end}}{{.Type}})
 
-  {{.Doc}}{{end}}
+{{ if .MutuallyExclusive}}
+  Only one of {{codeCommaJoin .MutuallyExclusive "or"}} may be set.
+
+{{end}}{{ if .ValidValues}}
+  Valid values: {{codeCommaJoin .ValidValues "and"}}
+
+{{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}{{end}}
 `))
 )
 
@@ -92,7 +120,13 @@ func main() {
 
 // Field represents a documentation field
 type Field struct {
-	Name, Type, Doc string
+	Name              string
+	Type              string
+	Doc               string
+	Required          bool
+	Base              string
+	MutuallyExclusive []string
+	ValidValues       []string
 }
 
 // TypeExtractor extracts documentation information
@@ -157,14 +191,29 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		}
 
 		if n.Tag != nil {
-			for k, v := range parseTag(strings.Trim(n.Tag.Value, "`")) {
-				switch k {
-				case "hcl":
-					field.Name = fmt.Sprintf("`%s`", v[0])
+			tag := reflect.StructTag(strings.Trim(n.Tag.Value, "`"))
+			if hcl, ok := tag.Lookup("hcl"); ok {
+				field.Name = fmt.Sprintf("`%s`", strings.SplitN(hcl, ",", 1)[0])
+			}
 
-				case "doc_type":
-					field.Type = v[0]
-				}
+			if docType, ok := tag.Lookup("doc_type"); ok {
+				field.Type = docType
+			}
+
+			if base, ok := tag.Lookup("base"); ok {
+				field.Base = base
+			}
+
+			if required, ok := tag.Lookup("required"); ok && required == "true" {
+				field.Required = true
+			}
+
+			if mutuallyexclusive, ok := tag.Lookup("mutually_exclusive"); ok {
+				field.MutuallyExclusive = strings.Split(mutuallyexclusive, ",")
+			}
+
+			if validvalues, ok := tag.Lookup("valid_values"); ok {
+				field.ValidValues = strings.Split(validvalues, ",")
 			}
 		}
 
@@ -203,51 +252,6 @@ func (te *TypeExtractor) String() string {
 func stripLines(doc string) string {
 	lines := strings.Split(doc, "\n")
 	return strings.Join(lines[stripDocLines:], "\n")
-}
-
-func parseTag(tag string) map[string][]string {
-	out := map[string][]string{}
-
-	for len(tag) > 0 {
-		var key bytes.Buffer
-
-		// consume whitespace
-		tag = strings.TrimLeft(tag, " ")
-
-		// parse tag
-		for _, b := range tag {
-			tag = tag[1:]
-
-			if b == ':' {
-				break
-			}
-			key.WriteRune(b)
-		}
-
-		// consume quote
-		tag = strings.TrimLeft(tag, "\"")
-
-		// start consuming keys
-		var value bytes.Buffer
-		for _, b := range tag {
-			tag = tag[1:]
-
-			if b == '"' || b == ',' {
-				out[key.String()] = append(out[key.String()], value.String())
-				value.Reset()
-			}
-
-			if b == '"' {
-				break
-			} else if b == ',' {
-				continue
-			}
-
-			value.WriteRune(b)
-		}
-	}
-
-	return out
 }
 
 func fencedCode(in string) string {

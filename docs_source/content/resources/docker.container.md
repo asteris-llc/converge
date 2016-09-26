@@ -1,7 +1,7 @@
 ---
 title: "docker.container"
 slug: "docker-container"
-date: "2016-09-20T14:45:55-05:00"
+date: "2016-09-28T10:46:11-05:00"
 menu:
   main:
     parent: resources
@@ -34,11 +34,11 @@ docker.container "nginx" {
 
 ## Parameters
 
-- `name` (string)
+- `name` (required string)
 
   name of the container
 
-- `image` (string)
+- `image` (required string)
 
   the image name or ID to use for the container
 
@@ -56,7 +56,7 @@ docker.container "nginx" {
 
 - `env` (map of string to string)
 
-  set environmnet variables in the container
+  set environment variables in the container
 
 - `expose` (list of strings)
 
@@ -94,7 +94,10 @@ Specified as a boolean value
 
 - `status` (string)
 
-  the desired status of the container. running|created
+
+  Valid values: `running` and `created`
+
+  the desired status of the container.
 
 - `force` (bool)
 
