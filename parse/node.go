@@ -181,7 +181,8 @@ func (n *Node) GetStrings() (vals []string, err error) {
 			}
 
 		case map[string]interface{}:
-			for _, value := range val.(map[string]interface{}) {
+			for key, value := range val.(map[string]interface{}) {
+				toConsider = append(toConsider, key)
 				toConsider = append(toConsider, value)
 			}
 
