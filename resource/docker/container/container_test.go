@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/comparsion"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/container"
@@ -47,7 +48,7 @@ func TestContainerCheckContainerNotFound(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "name", "<container-missing>", name)
+	comparsion.AssertDiff(t, status.Diffs(), "name", "<container-missing>", name)
 }
 
 func TestContainerCheckContainerFindContainerError(t *testing.T) {
@@ -119,7 +120,7 @@ func TestContainerCheckStatusNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "status", "exited", "running")
+	comparsion.AssertDiff(t, status.Diffs(), "status", "exited", "running")
 }
 
 func TestContainerCheckStatusNoChange(t *testing.T) {
@@ -144,7 +145,7 @@ func TestContainerCheckStatusNoChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.False(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "status", "created", "created")
+	comparsion.AssertDiff(t, status.Diffs(), "status", "created", "created")
 }
 
 func TestContainerCheckCommandNeedsChange(t *testing.T) {
@@ -177,7 +178,7 @@ func TestContainerCheckCommandNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
+	comparsion.AssertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
 }
 
 func TestContainerCheckEmptyCommandNeedsChange(t *testing.T) {
@@ -218,7 +219,7 @@ func TestContainerCheckEmptyCommandNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
+	comparsion.AssertDiff(t, status.Diffs(), "command", "nginx", "nginx -g daemon off;")
 }
 
 func TestContainerCheckImageNeedsChange(t *testing.T) {
@@ -252,7 +253,7 @@ func TestContainerCheckImageNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "image", "nginx", "busybox")
+	comparsion.AssertDiff(t, status.Diffs(), "image", "nginx", "busybox")
 }
 
 func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
@@ -285,7 +286,7 @@ func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "entrypoint", "start", "/bin/bash start")
+	comparsion.AssertDiff(t, status.Diffs(), "entrypoint", "start", "/bin/bash start")
 }
 
 func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
@@ -311,7 +312,7 @@ func TestContainerCheckWorkingDirNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "working_dir", "/tmp", "/tmp/working")
+	comparsion.AssertDiff(t, status.Diffs(), "working_dir", "/tmp", "/tmp/working")
 }
 
 func TestContainerCheckEnvNeedsChange(t *testing.T) {
@@ -359,7 +360,7 @@ func TestContainerCheckEnvNeedsChange(t *testing.T) {
 	assert.True(t, status.HasChanges())
 	// diff should include the new BAR var and the overridden PATH and NO_PROXY
 	// vars. The EXTRA var should not be included in the desired state either
-	assertDiff(
+	comparsion.AssertDiff(
 		t,
 		status.Diffs(),
 		"env",
@@ -401,7 +402,7 @@ func TestContainerCheckExposeNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "expose", "443/tcp, 80/tcp", "443/tcp, 80/tcp, 8001/tcp, 8002/udp")
+	comparsion.AssertDiff(t, status.Diffs(), "expose", "443/tcp, 80/tcp", "443/tcp, 80/tcp, 8001/tcp, 8002/udp")
 }
 
 func TestContainerCheckPortsNeedsChange(t *testing.T) {
@@ -448,7 +449,7 @@ func TestContainerCheckPortsNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "ports", ":8003:80/tcp", "127.0.0.1:8000:80/tcp, 127.0.0.1::80/tcp, :443:443/tcp, :8003:80/tcp, :8004:80/tcp, ::80/tcp, ::8085/udp")
+	comparsion.AssertDiff(t, status.Diffs(), "ports", ":8003:80/tcp", "127.0.0.1:8000:80/tcp, 127.0.0.1::80/tcp, :443:443/tcp, :8003:80/tcp, :8004:80/tcp, ::80/tcp, ::8085/udp")
 }
 
 func TestContainerCheckLinksNeedsChange(t *testing.T) {
@@ -483,7 +484,7 @@ func TestContainerCheckLinksNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "links",
+	comparsion.AssertDiff(t, status.Diffs(), "links",
 		"redis-server",
 		"memcached, postgresql:db, redis-server:redis")
 }
@@ -519,7 +520,7 @@ func TestContainerCheckDNSNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "dns", "", "8.8.8.8, 8.8.4.4")
+	comparsion.AssertDiff(t, status.Diffs(), "dns", "", "8.8.8.8, 8.8.4.4")
 }
 
 func TestContainerCheckVolumesNeedsChange(t *testing.T) {
@@ -551,7 +552,7 @@ func TestContainerCheckVolumesNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/html, /var/log")
+	comparsion.AssertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/html, /var/log")
 }
 
 func TestContainerCheckBindsNeedsChange(t *testing.T) {
@@ -590,8 +591,8 @@ func TestContainerCheckBindsNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/db, /var/log")
-	assertDiff(t, status.Diffs(), "binds", "", "/var/db:/var/db:ro, /var/log:/var/log")
+	comparsion.AssertDiff(t, status.Diffs(), "volumes", "/var/log", "/var/db, /var/log")
+	comparsion.AssertDiff(t, status.Diffs(), "binds", "", "/var/db:/var/db:ro, /var/log:/var/log")
 }
 
 func TestContainerCheckVolumesFromNeedsChange(t *testing.T) {
@@ -622,7 +623,7 @@ func TestContainerCheckVolumesFromNeedsChange(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assertDiff(t, status.Diffs(), "volumes_from", "", "dbvol, webvol:ro,z")
+	comparsion.AssertDiff(t, status.Diffs(), "volumes_from", "", "dbvol, webvol:ro,z")
 }
 
 func TestContainerApply(t *testing.T) {
@@ -639,28 +640,6 @@ func TestContainerApply(t *testing.T) {
 
 	_, err := container.Apply()
 	assert.NoError(t, err)
-}
-
-func assertDiff(t *testing.T, diffs map[string]resource.Diff, name, original, current string) bool {
-	var ok bool
-
-	if ok = assert.NotEmpty(t, diffs); !ok {
-		return false
-	}
-
-	if ok = assert.NotNil(t, diffs[name]); !ok {
-		return false
-	}
-
-	if ok = assert.Equal(t, original, diffs[name].Original()); !ok {
-		return false
-	}
-
-	if ok = assert.Equal(t, current, diffs[name].Current()); !ok {
-		return false
-	}
-
-	return true
 }
 
 type fakeAPIClient struct {
