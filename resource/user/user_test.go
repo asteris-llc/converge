@@ -775,7 +775,7 @@ func TestApply(t *testing.T) {
 	})
 }
 
-// TestSetUserOptions tests options provided for adding a user
+// TestSetAddUserOptions tests options provided for adding a user
 // are properly set
 func TestSetAddUserOptions(t *testing.T) {
 	t.Parallel()
