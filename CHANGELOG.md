@@ -4,8 +4,8 @@
 
 ### Enhancements
 
-
 ### Bug fixes
+
 - Fix #225 pipeline function refactor (#307)
 
 ### Documentation/Examples
