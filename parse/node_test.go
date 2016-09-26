@@ -240,8 +240,8 @@ module x y {
 	assert.Equal(t, []string{"fst", "snd"}, vals)
 }
 
-// Handle the special case of a node with a map to ensure the keys are also
-// considered valid strings
+// TestNodeGetStringsWithMap will test the special case of a node with a map to
+// ensure the keys are also considered valid strings
 func TestNodeGetStringsWithMap(t *testing.T) {
 	t.Parallel()
 	node, err := fromString(`
