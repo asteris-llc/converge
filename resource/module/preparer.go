@@ -40,14 +40,9 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	module := &Module{Params: map[string]string{}}
 
 	for key, value := range p.Params {
-		switch value.(type) {
+		switch v := value.(type) {
 		case string:
-			rendered, err := render.Render(key, value.(string))
-			if err != nil {
-				return nil, err
-			}
-
-			module.Params[key] = rendered
+			module.Params[key] = v
 
 		default:
 			module.Params[key] = fmt.Sprintf("%v", value)

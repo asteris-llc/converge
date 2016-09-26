@@ -92,7 +92,7 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 
 	prepared, err := res.Prepare(renderer)
 	if err != nil {
-		if err == ErrUnresolvable {
+		if _, ok := errors.Cause(err).(ErrUnresolvable); ok {
 
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
@@ -109,7 +109,6 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 				return res.Prepare(dynamicRenderer)
 			}), nil
 		}
-		fmt.Printf("%s got a non-unresolvable error: %s", p.ID, errors.Cause(err))
 		return nil, err
 	}
 	return prepared, nil

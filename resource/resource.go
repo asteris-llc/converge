@@ -37,10 +37,6 @@ type Resource interface {
 type Renderer interface {
 	Value() (value string, present bool)
 	Render(name, content string) (string, error)
-	RequiredRender(name, content string) (string, error)
-	RenderBool(name, content string) (bool, error)
-	RenderStringSlice(name string, content []string) ([]string, error)
-	RenderStringMapToStringSlice(name string, content map[string]string, toString func(string, string) string) ([]string, error)
 }
 
 // TaskWrapper provides an implementation of render.Tasker for tasks

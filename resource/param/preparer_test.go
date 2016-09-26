@@ -50,29 +50,6 @@ func TestPreparerDefault(t *testing.T) {
 	}
 }
 
-func TestPreparerCompositeValues(t *testing.T) {
-	t.Parallel()
-
-	vals := []interface{}{
-		[]string{},
-		map[string]string{},
-	}
-
-	for _, val := range vals {
-		prep := &param.Preparer{Default: val}
-		_, err := prep.Prepare(fakerenderer.New())
-
-		if assert.Error(t, err, fmt.Sprintf("No error from %T", val)) {
-			assert.EqualError(
-				t,
-				err,
-				fmt.Sprintf("composite values are not allowed in params, but got %T", val),
-				fmt.Sprintf("Wrong error for %T", val),
-			)
-		}
-	}
-}
-
 func TestPreparerProvided(t *testing.T) {
 	t.Parallel()
 

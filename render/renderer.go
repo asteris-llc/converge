@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
@@ -28,7 +27,9 @@ import (
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
 // unaccesible node properties.
-var ErrUnresolvable = errors.New("node is unresolvable")
+type ErrUnresolvable struct{}
+
+func (ErrUnresolvable) Error() string { return "node is unresolvable" }
 
 // Renderer to be passed to preparers, which will render strings
 type Renderer struct {
@@ -53,7 +54,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 	out, err := r.Language.Render(r.DotValue, name, src)
 	if err != nil {
 		if r.resolverErr {
-			return "", ErrUnresolvable
+			return "", ErrUnresolvable{}
 		}
 		return "", err
 	}
@@ -69,7 +70,7 @@ func (r *Renderer) param(name string) (string, error) {
 
 	if _, ok := val.(*PrepareThunk); ok {
 		r.resolverErr = true
-		return "", ErrUnresolvable
+		return "", ErrUnresolvable{}
 	}
 
 	return fmt.Sprintf("%+v", val), nil
@@ -89,7 +90,7 @@ func (r *Renderer) lookup(name string) (string, error) {
 	if _, isThunk := g.Get(vertexName).(*PrepareThunk); isThunk {
 		log.Println("[INFO] node is unresolvable by proxy-reference to ", vertexName)
 		r.resolverErr = true
-		return "", ErrUnresolvable
+		return "", ErrUnresolvable{}
 	}
 
 	val, ok := resource.ResolveTask(g.Get(vertexName))
@@ -104,74 +105,10 @@ func (r *Renderer) lookup(name string) (string, error) {
 	if err != nil {
 		if err == preprocessor.ErrUnresolvable {
 			r.resolverErr = true
-			return "", ErrUnresolvable
+			return "", ErrUnresolvable{}
 		}
 		return "", err
 	}
 
 	return fmt.Sprintf("%v", result), nil
-}
-
-// RequiredRender will return an error if rendered value is an empty string
-func (r *Renderer) RequiredRender(name, src string) (string, error) {
-	rendered, err := r.Render(name, src)
-	if err != nil {
-		return "", err
-	}
-
-	if rendered == "" {
-		return "", fmt.Errorf("%s is required", name)
-	}
-
-	return rendered, nil
-}
-
-// RenderBool renders a boolean value
-func (r *Renderer) RenderBool(name, src string) (bool, error) {
-	var b bool
-	rendered, err := r.Render(name, src)
-	if err != nil {
-		return b, err
-	}
-
-	if rendered == "" {
-		return b, nil
-	}
-
-	return strconv.ParseBool(rendered)
-}
-
-// RenderStringSlice renders a slice of strings
-func (r *Renderer) RenderStringSlice(name string, src []string) ([]string, error) {
-	renderedSlice := make([]string, len(src))
-	for i, val := range src {
-		rendered, err := r.Render(fmt.Sprintf("%s[%d]", name, i), val)
-		if err != nil {
-			return nil, err
-		}
-		renderedSlice[i] = rendered
-	}
-	return renderedSlice, nil
-}
-
-// RenderStringMapToStringSlice renders a map of strings to strings as a string
-// slice
-func (r *Renderer) RenderStringMapToStringSlice(name string, src map[string]string, toString func(string, string) string) ([]string, error) {
-	if toString == nil {
-		toString = func(k, v string) string { return k + " " + v }
-	}
-
-	renderedSlice := make([]string, len(src))
-	idx := 0
-	for key, val := range src {
-		pair := toString(key, val)
-		rendered, err := r.Render(fmt.Sprintf("%s[%s]", name, val), pair)
-		if err != nil {
-			return nil, err
-		}
-		renderedSlice[idx] = rendered
-		idx++
-	}
-
-	return renderedSlice, nil
 }

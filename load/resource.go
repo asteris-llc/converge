@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/hashicorp/hcl"
 
 	// import empty to register types for SetResources
@@ -58,12 +59,19 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
 		}
 
-		err := hcl.DecodeObject(dest, node.ObjectItem)
+		res, ok := dest.(resource.Resource)
+		if !ok {
+			return fmt.Errorf("%q is not a valid resource, got %T", node.Kind(), dest)
+		}
+
+		preparer := resource.NewPreparer(res)
+
+		err := hcl.DecodeObject(&preparer.Source, node.ObjectItem.Val)
 		if err != nil {
 			return err
 		}
 
-		out.Add(id, dest)
+		out.Add(id, preparer)
 
 		return nil
 	})

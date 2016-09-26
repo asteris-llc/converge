@@ -17,7 +17,6 @@ package group
 import (
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -28,55 +27,30 @@ import (
 // Group renders group data
 type Preparer struct {
 	// Gid is the group gid.
-	GID string `hcl:"gid"`
+	GID uint32 `hcl:"gid"`
 
 	// Name is the group name.
-	Name string `hcl:"name"`
+	Name string `hcl:"name" required:"true"`
 
 	// State is whether the group should be present.
-	// Options are present and absent; default is present.
-	State string `hcl:"state"`
+	State State `hcl:"state" valid_values:"present,absent"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
+	if p.GID == math.MaxUint32 {
+		// the maximum gid on linux is MaxUint32 - 1
+		return nil, fmt.Errorf("group \"gid\" parameter out of range")
 	}
-	if name == "" {
-		return nil, fmt.Errorf("group requires a \"name\" parameter")
+
+	if p.State == "" {
+		p.State = StatePresent
 	}
+
 	grp := NewGroup(new(System))
-	grp.Name = name
-
-	gid, err := render.Render("gid", p.GID)
-	if err != nil {
-		return nil, err
-	}
-	if gid != "" {
-		gidVal, err := strconv.ParseUint(gid, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		if gidVal == math.MaxUint32 {
-			// the maximum gid on linux is MaxUint32 - 1
-			return nil, fmt.Errorf("group \"gid\" parameter out of range")
-		}
-		grp.GID = gid
-	}
-
-	sstate, err := render.Render("state", p.State)
-	state := State(sstate)
-	if err != nil {
-		return nil, err
-	}
-	if state == "" {
-		state = StatePresent
-	} else if state != StatePresent && state != StateAbsent {
-		return nil, fmt.Errorf("group \"state\" parameter invalid, use present or absent")
-	}
-	grp.State = state
+	grp.Name = p.Name
+	grp.GID = fmt.Sprintf("%v", p.GID)
+	grp.State = p.State
 
 	return grp, nil
 }
