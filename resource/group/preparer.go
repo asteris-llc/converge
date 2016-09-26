@@ -32,6 +32,10 @@ type Preparer struct {
 	// Name is the group name.
 	Name string `hcl:"name" required:"true"`
 
+	// NewName is used when modifying a group.
+	// The group Name will be changed to NewName.
+	NewName string `hcl:"new_name"`
+
 	// State is whether the group should be present.
 	State State `hcl:"state" valid_values:"present,absent"`
 }
@@ -49,6 +53,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	grp := NewGroup(new(System))
 	grp.Name = p.Name
+	grp.NewName = p.NewName
 	grp.State = p.State
 
 	if p.GID != nil {
