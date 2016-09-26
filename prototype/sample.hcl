@@ -1,40 +1,15 @@
-switch {
-  "1 == 2" {
+switch "named-switch" {
+  case "a" "eq 1 0" {
     task.query "foo" {
       query = "echo foo"
     }
   }
-  "2 == 2" {
+  case "b" "eq 1 0" {
     task.query "bar" {
       query = "echo bar"
     }
   }
-  "3 == 3" {
-    task.query "baz" {
-      query = "echo baz"
-    }
-  }
-}
-
-task.query "foo" {
-  query = "bar"
-}
-
-module "foo" "bar.hcl" {
-}
-
-switch {
-  "1 == 2" {
-    task.query "foo" {
-      query = "echo foo"
-    }
-  }
-  "2 == 2" {
-    task.query "bar" {
-      query = "echo bar"
-    }
-  }
-  "3 == 3" {
+  case "c" "eq 0 1" {
     task.query "baz" {
       query = "echo baz"
     }
