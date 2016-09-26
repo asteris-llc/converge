@@ -1,7 +1,7 @@
 package lowlevel_test
 
 import (
-	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -25,8 +25,7 @@ const TESTDATA_LVS = `LVM2_LV_UUID=1v0Eub-b6s9-HL2F-KUfm-EHZt-D3uE-jmKid3;LVM2_L
   LVM2_LV_UUID=ScocFS-DUGG-x6Mn-f8F2-nPLj-Ree3-M56uzA;LVM2_LV_NAME=video;LVM2_LV_FULL_NAME=vg0/video;LVM2_LV_PATH=/dev/vg0/video;LVM2_LV_DM_PATH=/dev/mapper/vg0-video;LVM2_LV_PARENT=;LVM2_LV_ATTR=-wi-ao----;LVM2_LV_LAYOUT=linear;LVM2_LV_ROLE=public;LVM2_LV_INITIAL_IMAGE_SYNC=;LVM2_LV_IMAGE_SYNCED=;LVM2_LV_MERGING=;LVM2_LV_CONVERTING=;LVM2_LV_ALLOCATION_POLICY=inherit;LVM2_LV_ALLOCATION_LOCKED=;LVM2_LV_FIXED_MINOR=;LVM2_LV_MERGE_FAILED=unknown;LVM2_LV_SNAPSHOT_INVALID=unknown;LVM2_LV_SKIP_ACTIVATION=;LVM2_LV_WHEN_FULL=;LVM2_LV_ACTIVE=active;LVM2_LV_ACTIVE_LOCALLY=active locally;LVM2_LV_ACTIVE_REMOTELY=;LVM2_LV_ACTIVE_EXCLUSIVELY=active exclusively;LVM2_LV_MAJOR=-1;LVM2_LV_MINOR=-1;LVM2_LV_READ_AHEAD=auto;LVM2_LV_SIZE=268435456000;LVM2_LV_METADATA_SIZE=;LVM2_SEG_COUNT=2;LVM2_ORIGIN=;LVM2_ORIGIN_UUID=;LVM2_ORIGIN_SIZE=;LVM2_LV_ANCESTORS=;LVM2_LV_DESCENDANTS=;LVM2_DATA_PERCENT=;LVM2_SNAP_PERCENT=;LVM2_METADATA_PERCENT=;LVM2_COPY_PERCENT=;LVM2_SYNC_PERCENT=;LVM2_RAID_MISMATCH_COUNT=;LVM2_RAID_SYNC_ACTION=;LVM2_RAID_WRITE_BEHIND=;LVM2_RAID_MIN_RECOVERY_RATE=;LVM2_RAID_MAX_RECOVERY_RATE=;LVM2_MOVE_PV=;LVM2_MOVE_PV_UUID=;LVM2_CONVERT_LV=;LVM2_CONVERT_LV_UUID=;LVM2_MIRROR_LOG=;LVM2_MIRROR_LOG_UUID=;LVM2_DATA_LV=;LVM2_DATA_LV_UUID=;LVM2_METADATA_LV=;LVM2_METADATA_LV_UUID=;LVM2_POOL_LV=;LVM2_POOL_LV_UUID=;LVM2_LV_TAGS=;LVM2_LV_PROFILE=;LVM2_LV_LOCKARGS=;LVM2_LV_TIME=2013-11-06 00:54:48 +0200;LVM2_LV_HOST=bulldozer;LVM2_LV_MODULES=;LVM2_LV_KERNEL_MAJOR=254;LVM2_LV_KERNEL_MINOR=5;LVM2_LV_KERNEL_READ_AHEAD=131072;LVM2_LV_PERMISSIONS=writeable;LVM2_LV_SUSPENDED=;LVM2_LV_LIVE_TABLE=live table present;LVM2_LV_INACTIVE_TABLE=;LVM2_LV_DEVICE_OPEN=open;LVM2_CACHE_TOTAL_BLOCKS=;LVM2_CACHE_USED_BLOCKS=;LVM2_CACHE_DIRTY_BLOCKS=;LVM2_CACHE_READ_HITS=;LVM2_CACHE_READ_MISSES=;LVM2_CACHE_WRITE_HITS=;LVM2_CACHE_WRITE_MISSES=;LVM2_LV_HEALTH_STATUS=;LVM2_KERNEL_DISCARDS=;LVM2_VG_FMT=lvm2;LVM2_VG_UUID=3UVZM0-42jt-qlbl-FGUH-XhD0-n2IL-D5b19F;LVM2_VG_NAME=vg0;LVM2_VG_ATTR=wz--n-;LVM2_VG_PERMISSIONS=writeable;LVM2_VG_EXTENDABLE=extendable;LVM2_VG_EXPORTED=;LVM2_VG_PARTIAL=;LVM2_VG_ALLOCATION_POLICY=normal;LVM2_VG_CLUSTERED=;LVM2_VG_SIZE=999938850816;LVM2_VG_FREE=149795373056;LVM2_VG_SYSID=;LVM2_VG_SYSTEMID=;LVM2_VG_LOCKTYPE=;LVM2_VG_LOCKARGS=;LVM2_VG_EXTENT_SIZE=4194304;LVM2_VG_EXTENT_COUNT=238404;LVM2_VG_FREE_COUNT=35714;LVM2_MAX_LV=0;LVM2_MAX_PV=0;LVM2_PV_COUNT=1;LVM2_VG_MISSING_PV_COUNT=0;LVM2_LV_COUNT=11;LVM2_SNAP_COUNT=0;LVM2_VG_SEQNO=20;LVM2_VG_TAGS=;LVM2_VG_PROFILE=;LVM2_VG_MDA_COUNT=1;LVM2_VG_MDA_USED_COUNT=1;LVM2_VG_MDA_FREE=516608;LVM2_VG_MDA_SIZE=1044480;LVM2_VG_MDA_COPIES=unmanaged`
 
 func TestQueryPhysicalVolumes(t *testing.T) {
-	e := &MockExecutor{}
-	lvm := &lowlevel.RealLVM{Backend: e}
+    lvm, e := testhelpers.MakeLvmWithMockExec()
 	e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(TESTDATA_PVS, nil)
 	pvs, err := lvm.QueryPhysicalVolumes()
 	require.NoError(t, err)
@@ -38,8 +37,7 @@ func TestQueryPhysicalVolumes(t *testing.T) {
 }
 
 func TestQueryVolumeGroups(t *testing.T) {
-	e := &MockExecutor{}
-	lvm := &lowlevel.RealLVM{Backend: e}
+    lvm, e := testhelpers.MakeLvmWithMockExec()
 	e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(TESTDATA_PVS, nil)
 	vgs, err := lvm.QueryVolumeGroups()
 	require.NoError(t, err)
@@ -47,8 +45,7 @@ func TestQueryVolumeGroups(t *testing.T) {
 }
 
 func TestQueryLogicalVolume(t *testing.T) {
-	e := &MockExecutor{}
-	lvm := &lowlevel.RealLVM{Backend: e}
+    lvm, e := testhelpers.MakeLvmWithMockExec()
 	e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(TESTDATA_LVS, nil)
 	lvs, err := lvm.QueryLogicalVolumes("vg0")
 	require.NoError(t, err)

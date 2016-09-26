@@ -2,6 +2,7 @@ package lowlevel_test
 
 import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestUnitFileUpdate(t *testing.T) {
 	currentContent := "this is a test"
 	filename := "/systemd/test.unit"
 
-	lvm, me := makeLvmWithMockExec()
+	lvm, me := testhelpers.MakeLvmWithMockExec()
 
 	// FIXME:   should be 0644 here, but call mismatch. Looks like BUG
 	me.On("WriteFile", filename, []byte(currentContent), mock.Anything).Return(nil)
