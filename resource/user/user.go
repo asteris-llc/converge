@@ -34,22 +34,33 @@ const (
 
 // User manages user users
 type User struct {
-	UID      string
-	GID      string
-	Username string
-	Name     string
-	HomeDir  string
-	State    State
-	system   SystemUtils
+	Username  string
+	UID       string
+	GroupName string
+	GID       string
+	Name      string
+	HomeDir   string
+	State     State
+	system    SystemUtils
+}
+
+// AddUserOptions are the options specified in the configuration to be used
+// when adding a user
+type AddUserOptions struct {
+	UID       string
+	Group     string
+	Comment   string
+	Directory string
 }
 
 // SystemUtils provides system utilities for user
 type SystemUtils interface {
-	AddUser(string, map[string]string) error
-	DelUser(string) error
-	Lookup(string) (*user.User, error)
-	LookupID(string) (*user.User, error)
-	LookupGroupID(string) (*user.Group, error)
+	AddUser(userName string, options *AddUserOptions) error
+	DelUser(userName string) error
+	Lookup(userName string) (*user.User, error)
+	LookupID(userID string) (*user.User, error)
+	LookupGroup(groupName string) (*user.Group, error)
+	LookupGroupID(groupID string) (*user.Group, error)
 }
 
 // ErrUnsupported is used when a system is not supported
@@ -93,10 +104,17 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case userByName != nil:
-				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s already exists", u.Username))
 			case nameNotFound:
-				if u.GID != "" {
+				switch {
+				case u.GroupName != "":
+					_, err := u.system.LookupGroup(u.GroupName)
+					if err != nil {
+						status.Level = resource.StatusFatal
+						status.Output = append(status.Output, fmt.Sprintf("group %s does not exist", u.GroupName))
+						return status, fmt.Errorf("will not add user %s", u.Username)
+					}
+				case u.GID != "":
 					_, err := u.system.LookupGroupID(u.GID)
 					if err != nil {
 						status.Level = resource.StatusFatal
@@ -114,7 +132,15 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				if u.GID != "" {
+				switch {
+				case u.GroupName != "":
+					_, err := u.system.LookupGroup(u.GroupName)
+					if err != nil {
+						status.Level = resource.StatusFatal
+						status.Output = append(status.Output, fmt.Sprintf("group %s does not exist", u.GroupName))
+						return status, fmt.Errorf("will not add user %s with uid %s", u.Username, u.UID)
+					}
+				case u.GID != "":
 					_, err := u.system.LookupGroupID(u.GID)
 					if err != nil {
 						status.Level = resource.StatusFatal
@@ -135,7 +161,7 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
 			case userByName != nil && userByID != nil && *userByName == *userByID:
-				status.Level = resource.StatusNoChange
+				status.Output = append(status.Output, fmt.Sprintf("user %s with uid %s already exists", u.Username, u.UID))
 			}
 		}
 	case StateAbsent:
@@ -145,7 +171,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound:
-				status.Level = resource.StatusFatal
 				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
 			case userByName != nil:
 				status.Level = resource.StatusWillChange
@@ -157,7 +182,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				status.Level = resource.StatusNoChange
 				status.Output = append(status.Output, "user name and uid do not exist")
 			case nameNotFound:
 				status.Level = resource.StatusFatal
@@ -212,8 +236,8 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound:
-				userAddOptions := SetUserAddOptions(u)
-				err := u.system.AddUser(u.Username, userAddOptions)
+				options := SetAddUserOptions(u)
+				err := u.system.AddUser(u.Username, options)
 				if err != nil {
 					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error adding user %s", u.Username))
@@ -230,8 +254,8 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				userAddOptions := SetUserAddOptions(u)
-				err := u.system.AddUser(u.Username, userAddOptions)
+				options := SetAddUserOptions(u)
+				err := u.system.AddUser(u.Username, options)
 				if err != nil {
 					status.Level = resource.StatusFatal
 					status.Output = append(status.Output, fmt.Sprintf("error adding user %s with uid %s", u.Username, u.UID))
@@ -287,26 +311,29 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 	return status, nil
 }
 
-// SetUserAddOptions populates a map with options specified
-// in the configuration to use in the userAdd command
-func SetUserAddOptions(u *User) map[string]string {
-	var userAddOptions = map[string]string{}
+// SetAddUserOptions returns a AddUserOptions struct with the options
+// specified in the configuration for adding a user
+func SetAddUserOptions(u *User) *AddUserOptions {
+	options := new(AddUserOptions)
 
 	if u.UID != "" {
-		userAddOptions["uid"] = u.UID
+		options.UID = u.UID
 	}
 
-	if u.GID != "" {
-		userAddOptions["gid"] = u.GID
+	switch {
+	case u.GroupName != "":
+		options.Group = u.GroupName
+	case u.GID != "":
+		options.Group = u.GID
 	}
 
 	if u.Name != "" {
-		userAddOptions["comment"] = u.Name
+		options.Comment = u.Name
 	}
 
 	if u.HomeDir != "" {
-		userAddOptions["directory"] = u.HomeDir
+		options.Directory = u.HomeDir
 	}
 
-	return userAddOptions
+	return options
 }
