@@ -1,5 +1,15 @@
 # Converge Changelog
 
+## 0.3.0 (Unreleased)
+
+### Enhancements
+
+
+### Bug fixes
+- Fix #225 pipeline function refactor (#307)
+
+### Documentation/Examples
+
 ## 0.2.0 (September 26, 2016)
 
 ### Enhancements
