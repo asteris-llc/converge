@@ -19,8 +19,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor"
-	"github.com/asteris-llc/converge/executor/either"
-	"github.com/asteris-llc/converge/executor/monad"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
@@ -46,20 +44,20 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 }
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
-func (g *pipelineGen) GetTask(idi interface{}) monad.Monad {
+func (g *pipelineGen) GetTask(idi interface{}) (interface{}, error) {
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
 		thunked, err := thunk.Thunk(g.RenderingPlant)
 		if err != nil {
-			return either.LeftM(err)
+			return nil, err
 		}
 		return g.GetTask(thunked)
 	}
 
 	if task, ok := idi.(resource.Task); ok {
-		return either.RightM(taskWrapper{Task: task})
+		return taskWrapper{Task: task}, nil
 	}
 
-	return either.LeftM(fmt.Errorf("expected resource.Task but got %T", idi))
+	return nil, fmt.Errorf("expected resource.Task but got %T", idi)
 }
 
 // DependencyCheck looks for failing dependency nodes.  If an error is
@@ -67,16 +65,16 @@ func (g *pipelineGen) GetTask(idi interface{}) monad.Monad {
 // it returns `Right (Left Status)` and otherwise returns `Right (Right
 // Task)`. The return values are structured to short-circuit `PlanNode` if we
 // have failures.
-func (g *pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
+func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
 	task, ok := taskI.(taskWrapper)
 	if !ok {
-		return either.LeftM(errors.New("input node is not a task wrapper"))
+		return nil, errors.New("input node is not a task wrapper")
 	}
 	for _, depID := range graph.Targets(g.Graph.DownEdges(g.ID)) {
 		elem := g.Graph.Get(depID)
 		dep, ok := elem.(executor.Status)
 		if !ok {
-			return either.LeftM(fmt.Errorf("expected executor.Status but got %T", elem))
+			return nil, fmt.Errorf("expected executor.Status but got %T", elem)
 		}
 		if err := dep.Error(); err != nil {
 			errResult := &Result{
@@ -84,39 +82,36 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) monad.Monad {
 				Task:   task.Task,
 				Err:    fmt.Errorf("error in dependency %q", depID),
 			}
-			return either.RightM(either.LeftM(errResult))
+			return errResult, nil
 		}
 	}
-	return either.RightM(either.RightM(task))
+	return task, nil
 }
 
 // PlanNode runs plan on the node, it takes an Either *Result TaskWrapper and,
 // if the input value is Left, returns it as a Right value, otherwise it
 // attempts to run plan on the TaskWrapper and returns an appropriate Left or
 // Right value.
-func (g *pipelineGen) PlanNode(taski interface{}) monad.Monad {
-	taskE, ok := taski.(either.EitherM)
+func (g *pipelineGen) PlanNode(taski interface{}) (interface{}, error) {
+	twrapper, ok := taski.(taskWrapper)
 	if !ok {
-		return either.LeftM(errors.New("plan node was expected to be EitherM"))
+		asResult, ok := taski.(*Result)
+		if ok {
+			return asResult, nil
+		}
+		return nil, fmt.Errorf("expected type *Result or taskWrapper but got %T", taski)
 	}
-	val, isRight := taskE.FromEither()
-	if !isRight {
-		return either.RightM(val)
-	}
-	twrapper, ok := val.(taskWrapper)
-	if !ok {
-		return either.LeftM(fmt.Errorf("plan expected a taskWrapper but got %T", val))
-	}
+
 	renderer, err := g.Renderer(g.ID)
 	if err != nil {
-		return either.LeftM(fmt.Errorf("unable to get renderer for %s", g.ID))
+		return nil, fmt.Errorf("unable to get renderer for %s", g.ID)
 	}
 	status, err := twrapper.Task.Check(renderer)
-	return either.RightM(&Result{
+	return &Result{
 		Status: status,
 		Task:   twrapper.Task,
 		Err:    err,
-	})
+	}, nil
 }
 
 func (g *pipelineGen) Renderer(id string) (*render.Renderer, error) {

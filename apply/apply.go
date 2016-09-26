@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor"
-	"github.com/asteris-llc/converge/executor/either"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
@@ -69,13 +68,10 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 		notify.Transform(func(id string, out *graph.Graph) error {
 			renderingPlant.Graph = out
 			pipeline := pipelineF(out, id)
-			result := pipeline.Exec(either.ReturnM(out.Get(id)))
-			val, isRight := result.FromEither()
-			if !isRight {
+			val, pipelineError := pipeline.Exec(out.Get(id))
+			if pipelineError != nil {
 				hasErrors = ErrTreeContainsErrors
-				if e, ok := val.(error); ok {
-					return e
-				}
+				return pipelineError
 			}
 			asResult, ok := val.(*Result)
 			if !ok {
