@@ -2,7 +2,7 @@ package vg
 
 import (
 	"fmt"
-    "strings"
+	"strings"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -15,25 +15,25 @@ type ResourceVG struct {
 	DevicesToAdd    []string
 	DevicesToRemove []string
 	lvm             lowlevel.LVM
-    DeviceList      []string
+	DeviceList      []string
 }
 
 func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
-    status := &resource.Status{Status: r.Name}
+	status := &resource.Status{Status: r.Name}
 
-    pvs, err := r.lvm.QueryPhysicalVolumes()
+	pvs, err := r.lvm.QueryPhysicalVolumes()
 	if err != nil {
 		return nil, err
 	}
 
-    // check if group exists
-    if vgs, err := r.lvm.QueryVolumeGroups();  err != nil {
+	// check if group exists
+	if vgs, err := r.lvm.QueryVolumeGroups(); err != nil {
 		return nil, err
 	} else {
-        _, r.Exists = vgs[r.Name]
-    }
+		_, r.Exists = vgs[r.Name]
+	}
 
-    // process new devices
+	// process new devices
 	for _, dev := range r.DeviceList {
 		if pv, ok := pvs[dev]; ok {
 			if pv.Group != r.Name {
@@ -41,11 +41,11 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 			}
 		} else {
 			r.DevicesToAdd = append(r.DevicesToAdd, dev)
-            status.AddDifference(dev, "<none>", fmt.Sprintf("member of volume group %s", r.Name), "")
+			status.AddDifference(dev, "<none>", fmt.Sprintf("member of volume group %s", r.Name), "")
 		}
 	}
 
-    // process removed devices
+	// process removed devices
 	for d, _ := range pvs {
 		found := false
 		for _, d2 := range r.DeviceList {
@@ -55,19 +55,19 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 		}
 		if !found {
 			r.DevicesToRemove = append(r.DevicesToRemove, d)
-            status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.Name), "<removed>", "")
+			status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.Name), "<removed>", "")
 		}
 	}
 
-    if !r.Exists {
-        status.AddDifference(r.Name, "<not exists>", strings.Join(r.DevicesToAdd, ", "), "")
-    }
+	if !r.Exists {
+		status.AddDifference(r.Name, "<not exists>", strings.Join(r.DevicesToAdd, ", "), "")
+	}
 
-    if resource.AnyChanges(status.Differences) {
-       status.WillChange = true
-       status.WarningLevel = resource.StatusWillChange
-    }
-    return status, nil
+	if resource.AnyChanges(status.Differences) {
+		status.WillChange = true
+		status.WarningLevel = resource.StatusWillChange
+	}
+	return status, nil
 }
 
 func (r *ResourceVG) Apply(resource.Renderer) (status resource.TaskStatus, err error) {
@@ -89,13 +89,13 @@ func (r *ResourceVG) Apply(resource.Renderer) (status resource.TaskStatus, err e
 	}
 
 	return &resource.Status{
-		Status:     r.Name,
+		Status: r.Name,
 	}, nil
 }
 
-func (r *ResourceVG) Setup(lvm lowlevel.LVM, devs []string)  {
+func (r *ResourceVG) Setup(lvm lowlevel.LVM, devs []string) {
 	r.lvm = lvm
-    r.DeviceList = devs
+	r.DeviceList = devs
 }
 
 func init() {

@@ -74,6 +74,10 @@ func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if r.mountNeedUpdate {
 		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
 	}
+	if resource.AnyChanges(status.Differences) {
+		status.WillChange = true
+		status.WarningLevel = resource.StatusWillChange
+	}
 
 	return status, nil
 }
@@ -103,9 +107,10 @@ func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 	}, nil
 }
 
-func (r *ResourceFS) Setup(lvm lowlevel.LVM) error {
+func (r *ResourceFS) Setup(lvm lowlevel.LVM, m *Mount) error {
 	var err error
 	r.lvm = lvm
+	r.mount = m
 	r.unitFileName = r.unitName()
 	r.unitFileContent, err = r.renderUnitFile()
 	if err != nil {
@@ -116,7 +121,7 @@ func (r *ResourceFS) Setup(lvm lowlevel.LVM) error {
 
 func (r *ResourceFS) escapedMountpoint() string {
 	// FIXME: proper systemd' escaping of r.mountpoint should be
-	return strings.Replace(r.mount.Where, "/", "-", -1)
+	return strings.Replace(strings.Trim(r.mount.Where, "/"), "/", "-", -1)
 }
 
 func (r *ResourceFS) unitServiceName() string {

@@ -30,14 +30,14 @@ func (lvm *RealLVM) Query(prog string, out string, extras []string) ([]map[strin
 		values := map[string]interface{}{}
 		for _, field := range strings.Split(line, ";") {
 			parts := strings.Split(field, "=")
-            if len(parts) == 1 {
-                continue
-            }
+			if len(parts) == 1 {
+				continue
+			}
 			values[parts[0]] = parts[1]
 		}
-        if len(values) > 0 {
-            result = append(result, values)
-        }
+		if len(values) > 0 {
+			result = append(result, values)
+		}
 	}
 	return result, nil
 }
