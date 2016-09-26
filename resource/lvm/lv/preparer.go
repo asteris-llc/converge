@@ -2,6 +2,7 @@ package lv
 
 import (
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
 type Preparer struct {
@@ -25,11 +26,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	r := &ResourceLV{
-		group: group,
-		name:  name,
-	}
-
-	err = r.Setup(size)
+	r := &ResourceLV{}
+	err = r.Setup(lowlevel.MakeLvmBackend(), group, name, size)
 	return r, err
 }

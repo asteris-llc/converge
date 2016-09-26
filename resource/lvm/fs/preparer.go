@@ -26,17 +26,16 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	r := &ResourceFS{
-		mount: &Mount{
-			What:       device,
-			Where:      mount,
-			Type:       fstype,
-			RequiredBy: "", // FIXME: render it
-			WantedBy:   "", // FIXME: render it
-			Before:     "", // FIXME: render it
-		},
+	r := &ResourceFS{}
+	m := &Mount{
+		What:       device,
+		Where:      mount,
+		Type:       fstype,
+		RequiredBy: "", // FIXME: render it
+		WantedBy:   "", // FIXME: render it
+		Before:     "", // FIXME: render it
 	}
 
-	err = r.Setup(lowlevel.MakeLvmBackend())
+	err = r.Setup(lowlevel.MakeLvmBackend(), m)
 	return r, err
 }

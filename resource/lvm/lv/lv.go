@@ -26,7 +26,7 @@ func (r *ResourceLV) Check(resource.Renderer) (status resource.TaskStatus, err e
 	}
 
 	ts := &resource.Status{
-		Status:     "",
+		Status:     r.name,
 		WillChange: r.needCreate,
 	}
 	return ts, nil
@@ -39,15 +39,18 @@ func (r *ResourceLV) Apply(resource.Renderer) (status resource.TaskStatus, err e
 		}
 	}
 	ts := &resource.Status{
-		Status:     "",
+		Status:     r.name,
 		WillChange: r.needCreate,
 	}
 	return ts, nil
 }
 
-func (r *ResourceLV) Setup(sizeToParse string) error {
+func (r *ResourceLV) Setup(lvm lowlevel.LVM, group string, name string, sizeToParse string) error {
+	r.group = group
+	r.name = name
+	r.lvm = lvm
+
 	var err error
-	r.lvm = lowlevel.MakeLvmBackend()
 	r.lvs, err = r.lvm.QueryLogicalVolumes(r.group)
 	if err != nil {
 		return err

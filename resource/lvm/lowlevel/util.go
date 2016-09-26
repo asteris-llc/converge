@@ -72,7 +72,7 @@ func (lvm *RealLVM) Mountpoint(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if rc == 1 {
+	if rc == 0 {
 		return true, nil
 	}
 	return false, nil
