@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -124,7 +125,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
-		{{cyan $key}}:{{diff ($values.Original) ($values.Current)}}
+		{{cyan $key}}:	{{diff ($values.Original) ($values.Current)}}
 		{{- else}} No changes {{- end}}
 
 `)
@@ -132,8 +133,14 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), err
 	}
 
-	var out bytes.Buffer
-	err = tmpl.Execute(&out, &printerNode{ID: id, Printable: printable})
+	var intermediate, out bytes.Buffer
+	err = tmpl.Execute(&intermediate, &printerNode{ID: id, Printable: printable})
+	if err != nil {
+		return pp.HiddenString(), err
+	}
+
+	tabWriter := tabwriter.NewWriter(&out, 8, 8, 0, ' ', 0)
+	_, err = tabWriter.Write(intermediate.Bytes())
 
 	return &out, err
 }
