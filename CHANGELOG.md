@@ -1,4 +1,6 @@
-# 0.2.0 (September 26, 2016)
+# Converge Changelog
+
+## 0.2.0 (September 26, 2016)
 
 ### Enhancements
 
