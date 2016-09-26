@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-09-16T15:26:27-05:00"
+date: "2016-09-26T09:00:07-05:00"
 menu:
   main:
     parent: resources
@@ -24,17 +24,23 @@ user.user "user" {
 
 ## Parameters
 
+- `username` (string)
+
+  Username is the user login name.
+
 - `uid` (string)
 
   UID is the user ID.
 
+- `groupname` (string)
+
+  Groupname is the primary group for user and must already exist.
+Only one of GID or Groupname may be indicated.
+
 - `gid` (string)
 
-  Gid is the primary group ID for user.
-
-- `username` (string)
-
-  Username is the user login name.
+  Gid is the primary group ID for user and must refer to an existing group.
+Only one of GID or Groupname may be indicated.
 
 - `name` (string)
 
@@ -48,5 +54,6 @@ name is appended to the home directory.
 - `state` (string)
 
   State is whether the user should be present.
+Options are present and absent; default is present.
 
 
