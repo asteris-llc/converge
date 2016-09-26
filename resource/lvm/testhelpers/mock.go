@@ -1,4 +1,4 @@
-package lowlevel_test
+package testhelpers
 
 import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
@@ -10,7 +10,7 @@ type MockExecutor struct {
 	mock.Mock
 }
 
-func makeLvmWithMockExec() (lowlevel.LVM, *MockExecutor) {
+func MakeLvmWithMockExec() (lowlevel.LVM, *MockExecutor) {
 	me := &MockExecutor{}
 	lvm := &lowlevel.RealLVM{Backend: me}
 	return lvm, me
