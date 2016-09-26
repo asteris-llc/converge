@@ -44,21 +44,28 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("all parameters", func(t *testing.T) {
-			p := group.Preparer{GID: &testGID, Name: "test", State: group.StateAbsent}
+			p := group.Preparer{GID: &testGID, Name: "test", NewName: "test2", State: group.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("no new_name parameter", func(t *testing.T) {
+			p := group.Preparer{GID: &testGID, Name: "test", State: group.StatePresent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no state parameter", func(t *testing.T) {
-			p := group.Preparer{GID: &testGID, Name: "test"}
+			p := group.Preparer{GID: &testGID, Name: "test", NewName: "test2"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no gid parameter", func(t *testing.T) {
-			p := group.Preparer{Name: "test"}
+			p := group.Preparer{Name: "test", NewName: "test2", State: group.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
