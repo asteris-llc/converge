@@ -1,6 +1,7 @@
-## 0.2.0 (September 26, 2016)
+# 0.2.0 (September 26, 2016)
 
-### Enhancements 
+### Enhancements
+
 - shell env and working dir support (#185)
 - Docker image resource (#188)
 - RPC support (#187)
@@ -15,7 +16,8 @@
 - Change Port to 4774 after IANA approval (#261)
 - Support for create/delete linux users (#259)
 
-### Bug Fixes 
+### Bug fixes
+
 - don't panic when result status is nil (#180)
 - Fix error handling when fail to print results during plan or apply (#183)
 - Order fixes (#254)
@@ -26,8 +28,9 @@
 - Use thread-safe field cache (#303)
 
 ### Documentation/Examples
+
 - Documentation Site (#192)
-- Docker Swarm mode (#267) 
+- Docker Swarm mode (#267)
 - ELK (Elasticsearch, Logstash, and Kibana) stack (#272)
-- Add CodeClimate Checks to build (#281) 
+- Add CodeClimate Checks to build (#281)
 - docs: add draft resource authors guide (#290)
