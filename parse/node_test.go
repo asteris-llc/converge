@@ -227,8 +227,8 @@ func TestNodeGetStrings(t *testing.T) {
 
 	node, err := fromString(`
 module x y {
-  fst = "fst"
-  snd = "snd"
+	fst = "fst"
+	snd = "snd"
 }
 `)
 	require.NoError(t, err)
@@ -238,4 +238,27 @@ module x y {
 
 	sort.Strings(vals)
 	assert.Equal(t, []string{"fst", "snd"}, vals)
+}
+
+// TestNodeGetStringsWithMap will test the special case of a node with a map to
+// ensure the keys are also considered valid strings
+func TestNodeGetStringsWithMap(t *testing.T) {
+	t.Parallel()
+	node, err := fromString(`
+module x y {
+	aMap {
+		"key" = "value"
+		nestedMap {
+			"nestedKey1" = "nestedValue1"
+		}
+	}
+}
+`)
+	require.NoError(t, err)
+
+	vals, err := node.GetStrings()
+	assert.NoError(t, err)
+
+	sort.Strings(vals)
+	assert.Equal(t, []string{"key", "nestedKey1", "nestedMap", "nestedValue1", "value"}, vals)
 }
