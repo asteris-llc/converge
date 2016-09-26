@@ -26,122 +26,124 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPreparerInterface tests that the Preparer interface is properly implemeted
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(user.Preparer))
 }
 
-func TestValidPreparer(t *testing.T) {
+// TestPrepare tests the valid and invalid cases of Prepare
+func TestPrepare(t *testing.T) {
 	t.Parallel()
 
 	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
-	_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
+	t.Run("valid", func(t *testing.T) {
+		t.Run("no uid", func(t *testing.T) {
+			p := user.Preparer{GID: "123", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-func TestInvalidPreparerNoUsername(t *testing.T) {
-	t.Parallel()
+			assert.NoError(t, err)
+		})
 
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", GID: "123", Name: "test", HomeDir: "tmp"}
-	_, err := p.Prepare(&fr)
+		t.Run("max allowable uid", func(t *testing.T) {
+			uid := strconv.Itoa(math.MaxUint32 - 1)
+			p := user.Preparer{UID: uid, Username: "test"}
+			_, err := p.Prepare(&fr)
 
-	assert.EqualError(t, err, fmt.Sprintf("user requires a \"username\" parameter"))
-}
+			assert.NoError(t, err)
+		})
 
-func TestValidPreparerNoUID(t *testing.T) {
-	t.Parallel()
+		t.Run("no group", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{GID: "123", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
-	_, err := p.Prepare(&fr)
+			assert.NoError(t, err)
+		})
 
-	assert.NoError(t, err)
-}
+		t.Run("with groupname", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", Username: "test", Groupname: currGroupName, Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-func TestValidPreparerMaxUID(t *testing.T) {
-	t.Parallel()
+			assert.NoError(t, err)
+		})
 
-	uid := strconv.Itoa(math.MaxUint32 - 1)
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: uid, Username: "test"}
-	_, err := p.Prepare(&fr)
+		t.Run("with gid", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", Username: "test", GID: currGid, Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
+			assert.NoError(t, err)
+		})
 
-func TestInvalidPreparerInvalidUID(t *testing.T) {
-	t.Parallel()
+		t.Run("max allowable gid", func(t *testing.T) {
+			gid := strconv.Itoa(math.MaxUint32 - 1)
+			p := user.Preparer{GID: gid, Username: "test"}
+			_, err := p.Prepare(&fr)
 
-	uid := strconv.Itoa(math.MaxUint32)
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: uid, Username: "test"}
-	_, err := p.Prepare(&fr)
+			assert.NoError(t, err)
+		})
 
-	assert.EqualError(t, err, fmt.Sprintf("user \"uid\" parameter out of range"))
-}
+		t.Run("no name parameter", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", GID: "123", Username: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-func TestValidPreparerNoGID(t *testing.T) {
-	t.Parallel()
+			assert.NoError(t, err)
+		})
 
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
-	_, err := p.Prepare(&fr)
+		t.Run("no home_dir parameter", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", State: string(user.StateAbsent)}
+			_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
+			assert.NoError(t, err)
+		})
 
-func TestValidPreparerMaxGID(t *testing.T) {
-	t.Parallel()
+		t.Run("no state parameter", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", HomeDir: "tmp"}
+			_, err := p.Prepare(&fr)
 
-	gid := strconv.Itoa(math.MaxUint32 - 1)
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{GID: gid, Username: "test"}
-	_, err := p.Prepare(&fr)
+			assert.NoError(t, err)
+		})
+	})
 
-	assert.NoError(t, err)
-}
+	t.Run("invalid", func(t *testing.T) {
+		t.Run("no username parameter", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", GID: "123", Name: "test", HomeDir: "tmp"}
+			_, err := p.Prepare(&fr)
 
-func TestInvalidPreparerInvalidGID(t *testing.T) {
-	t.Parallel()
+			assert.EqualError(t, err, fmt.Sprintf("user requires a \"username\" parameter"))
+		})
 
-	gid := strconv.Itoa(math.MaxUint32)
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{GID: gid, Username: "test"}
-	_, err := p.Prepare(&fr)
+		t.Run("uid out of range", func(t *testing.T) {
+			uid := strconv.Itoa(math.MaxUint32)
+			p := user.Preparer{UID: uid, Username: "test"}
+			_, err := p.Prepare(&fr)
 
-	assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))
-}
+			assert.EqualError(t, err, fmt.Sprintf("user \"uid\" parameter out of range"))
+		})
 
-func TestValidPreparerNoName(t *testing.T) {
-	t.Parallel()
+		t.Run("groupname and gid indicated", func(t *testing.T) {
+			t.Run("all parameters", func(t *testing.T) {
+				p := user.Preparer{UID: "1234", Groupname: "test", GID: "123", Username: "test", Name: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
+				_, err := p.Prepare(&fr)
 
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", GID: "123", Username: "test", HomeDir: "tmp", State: string(user.StateAbsent)}
-	_, err := p.Prepare(&fr)
+				assert.EqualError(t, err, fmt.Sprintf("user \"groupname\" and \"gid\" both indicated, choose one"))
+			})
+		})
 
-	assert.NoError(t, err)
-}
+		t.Run("gid out of range", func(t *testing.T) {
+			gid := strconv.Itoa(math.MaxUint32)
+			p := user.Preparer{GID: gid, Username: "test"}
+			_, err := p.Prepare(&fr)
 
-func TestValidPreparerNoHomeDir(t *testing.T) {
-	t.Parallel()
+			assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))
+		})
 
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", State: string(user.StateAbsent)}
-	_, err := p.Prepare(&fr)
+		t.Run("invalid state", func(t *testing.T) {
+			p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", HomeDir: "tmp", State: "test"}
+			_, err := p.Prepare(&fr)
 
-	assert.NoError(t, err)
-}
-
-func TestValidPreparerNoState(t *testing.T) {
-	t.Parallel()
-
-	fr := fakerenderer.FakeRenderer{}
-	p := user.Preparer{UID: "1234", GID: "123", Username: "test", Name: "test", HomeDir: "tmp"}
-	_, err := p.Prepare(&fr)
-
-	assert.NoError(t, err)
+			assert.EqualError(t, err, fmt.Sprintf("user \"state\" parameter invalid, use present or absent"))
+		})
+	})
 }

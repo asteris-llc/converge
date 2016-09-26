@@ -6,8 +6,77 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 21 Sep 2016 14:04:24 -0500</lastBuildDate>
+    <lastBuildDate>Mon, 26 Sep 2016 09:00:07 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>user.user</title>
+      <link>http://converge.aster.is/resources/user-user/</link>
+      <pubDate>Mon, 26 Sep 2016 09:00:07 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <description>
+
+&lt;p&gt;User renders user data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
+user.user &amp;quot;user&amp;quot; {
+  username = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username is the user login name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID is the user ID.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;groupname&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Groupname is the primary group for user and must already exist.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the primary group ID for user and must refer to an existing group.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the user description.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
+name is appended to the home directory.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the user should be present.
+Options are present and absent; default is present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>user.group</title>
@@ -310,66 +379,6 @@ task &amp;quot;render&amp;quot; {
 &lt;p&gt;Default is an optional field that provides a default value if none is
 provided to this parameter. If this field is not set, this param will be
 treated as required.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>user.user</title>
-      <link>http://converge.aster.is/resources/user-user/</link>
-      <pubDate>Fri, 16 Sep 2016 15:26:27 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/user-user/</guid>
-      <description>
-
-&lt;p&gt;User renders user data&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
-user.user &amp;quot;user&amp;quot; {
-  username = &amp;quot;test&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;UID is the user ID.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Gid is the primary group ID for user.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Username is the user login name.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Name is the user description.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
-name is appended to the home directory.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;State is whether the user should be present.&lt;/p&gt;
 </description>
     </item>
     
