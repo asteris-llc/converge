@@ -59,8 +59,16 @@ func (n *Node) Validate() error {
 			return fmt.Errorf("%s: missing source or name in module call", n.Pos())
 		}
 
+		if n.IsCase() {
+			return fmt.Errorf("%s: missing name or predicate in case", n.Pos())
+		}
+
 	default:
 		if n.IsModule() && len(n.Keys) == 3 {
+			break
+		}
+
+		if n.IsCase() && len(n.Keys) == 3 {
 			break
 		}
 
@@ -83,6 +91,11 @@ func (n *Node) Name() string {
 // IsModule tests whether this node is a module call
 func (n *Node) IsModule() bool {
 	return n.Kind() == "module"
+}
+
+// IsCase tests whether this node is a case statement
+func (n *Node) IsCase() bool {
+	return n.Kind() == "case"
 }
 
 // Source returns where a module call is to be loaded from
