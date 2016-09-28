@@ -81,7 +81,12 @@ func (s *Shell) StatusCode() resource.StatusLevel {
 	if s.Status == nil {
 		return resource.StatusFatal
 	}
-	return resource.StatusLevel(s.Status.ExitStatus)
+
+	if s.Status.ExitStatus == 0 {
+		return resource.StatusNoChange
+	}
+
+	return resource.StatusWillChange
 }
 
 // Messages returns a summary of the first execution of check and/or apply.

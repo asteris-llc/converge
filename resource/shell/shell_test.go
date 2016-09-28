@@ -142,11 +142,28 @@ func Test_StatusCode_WhenNoStatus_ReturnsFatal(t *testing.T) {
 // TestStatusCodeWhenMultipleStatusReturnsMostRecentStatus tests what happens
 // when there are multiple status returns
 func TestStatusCodeWhenMultipleStatusReturnsMostRecentStatus(t *testing.T) {
-	var expected resource.StatusLevel = 7
+	// first result returns 0 (StatusNoChange)
 	status := &shell.CommandResults{ExitStatus: 0}
-	status = status.Cons("", &shell.CommandResults{ExitStatus: uint32(expected)})
+	// second result returns 7 (StatusWillChange)
+	status = status.Cons("", &shell.CommandResults{ExitStatus: 7})
 	sh := &shell.Shell{Status: status}
-	assert.Equal(t, expected, sh.StatusCode())
+	assert.Equal(t, resource.StatusWillChange, sh.StatusCode())
+}
+
+// TestStatusCodeWhenExitStatusZero verifies that StatusCode returns
+// StatusNoChanges when a shell command has a zero exit code
+func TestStatusCodeWhenExitStatusZero(t *testing.T) {
+	status := &shell.CommandResults{ExitStatus: 0}
+	sh := &shell.Shell{Status: status}
+	assert.Equal(t, resource.StatusNoChange, sh.StatusCode())
+}
+
+// TestStatusCodeWhenExitStatusNonZero verifies that StatusCode returns
+// StatusWillChange when a shell command has a non-zero exit code
+func TestStatusCodeWhenExitStatusNonZero(t *testing.T) {
+	status := &shell.CommandResults{ExitStatus: 4}
+	sh := &shell.Shell{Status: status}
+	assert.Equal(t, resource.StatusWillChange, sh.StatusCode())
 }
 
 // Shell context
