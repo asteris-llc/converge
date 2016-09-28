@@ -8,6 +8,7 @@ module "docker.hcl" "docker" {
   params = {
     user-name = "{{param `user-name`}}"
   }
+
   depends = ["module.packages"]
 }
 
@@ -50,18 +51,14 @@ task "filebeat-enable" {
   depends = ["file.content.filebeat-yml"]
 }
 
-task.query "elasticsearch-wait" {
-  query = <<EOF
-MAX_SECONDS=60
-while /bin/true
-do
-    status=$(curl -s 'http://localhost:9200/_cluster/health' 2>/dev/null | jq -r .status)
-    if [ "$status" == "yellow" ] || [ "$status" == "green" ] ; then
-        exit 0
-    fi
-    [[ "$SECONDS" -ge "$MAX_SECONDS" ]] && exit 1
-done
+wait.query "elasticsearch-wait" {
+  check = <<EOF
+status=$(curl -s 'http://localhost:9200/_cluster/health' 2>/dev/null | jq -r .status)
+[[ "$status" == "yellow" ]] || [[ "$status" == "green" ]]
 EOF
+
+  interval  = "10s"
+  max_retry = 10
 
   depends = ["docker.container.elasticsearch-container"]
 }
@@ -69,7 +66,7 @@ EOF
 task "filebeat-elasticsearch-template" {
   check   = "[[  \"$(curl 'http://localhost:9200/_template/filebeat' 2>/dev/null)\" != \"{}\" ]] || exit 1"
   apply   = "curl -XPUT 'http://localhost:9200/_template/filebeat' -d@/etc/filebeat/filebeat.template.json 2>/dev/null"
-  depends = ["task.filebeat-enable", "docker.container.elasticsearch-container", "task.query.elasticsearch-wait"]
+  depends = ["task.filebeat-enable", "docker.container.elasticsearch-container", "wait.query.elasticsearch-wait"]
 }
 
 task "filebeat-start" {
@@ -80,7 +77,7 @@ task "filebeat-start" {
 
 file.directory "elasticsearch-data-directory" {
   destination = "{{param `elasticsearch-data-directory`}}"
-  create_all = true
+  create_all  = true
 }
 
 docker.image "elasticsearch-image" {
