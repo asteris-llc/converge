@@ -37,6 +37,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/shell"
 	_ "github.com/asteris-llc/converge/resource/shell/query"
 	_ "github.com/asteris-llc/converge/resource/user"
+	_ "github.com/asteris-llc/converge/resource/wait"
 )
 
 // SetResources loads the resources for each graph node
