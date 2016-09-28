@@ -15,14 +15,16 @@
 package meta
 
 import (
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 type Preparer struct {
 }
 
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-
+	return nil, errors.New("Not implemented yet")
 }
 
 func init() {

@@ -15,9 +15,9 @@
 package meta
 
 import (
-	"bytes"
+	"fmt"
 	"reflect"
-	"text/template"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 )
@@ -38,6 +38,8 @@ import (
 */
 
 type Meta struct {
+	resource.Status
+
 	Author       string `hcl:"author"`
 	Organization string `hcl:"organization"`
 	PgpKeyId     string `hcl:"pgp_key_id"`
