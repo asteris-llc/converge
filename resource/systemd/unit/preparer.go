@@ -64,7 +64,7 @@ type Preparer struct {
 	Timeout string `hcl:"timeout" doc_type:"duration string"`
 
 	// The location of the original unit file.
-	Destination string `hcl:destination"`
+	Destination string `hcl:"destination"`
 }
 
 //Prepare returns a new systemd.unit task

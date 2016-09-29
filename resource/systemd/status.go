@@ -16,6 +16,7 @@ package systemd
 
 import "github.com/asteris-llc/converge/resource"
 
+// AppendStatus combines two *resource.Status
 func AppendStatus(a, b *resource.Status) *resource.Status {
 	if a == nil && b == nil {
 		return nil

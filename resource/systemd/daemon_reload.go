@@ -1,9 +1,6 @@
 package systemd
 
-import (
-	"github.com/asteris-llc/converge/resource"
-	"github.com/coreos/go-systemd/dbus"
-)
+import "github.com/coreos/go-systemd/dbus"
 
 //CheckDaemonReload checks whether the systemd daemon needs to be reloaded.
 //it does not check if a unit is failed and needs to be reset though.
@@ -29,20 +26,3 @@ func ApplyDaemonReload() error {
 }
 
 const daemonWontReloadMsg = "daemon does not need to be reloaded"
-
-func GetDaemonReloadStatus(shouldReload bool) *resource.Status {
-	status := daemonWontReloadMsg
-	warningLevel := resource.StatusNoChange
-	if shouldReload {
-		status = "daemon will be reloaded"
-		warningLevel = resource.StatusWillChange
-	}
-	diffs := map[string]resource.Diff{
-		"daemon-reload": resource.TextDiff{Default: daemonWontReloadMsg, Values: [2]string{"daemon does not need to be reloaded", status}},
-	}
-	return &resource.Status{
-		Level:       warningLevel,
-		Differences: diffs,
-		Output:      []string{status},
-	}
-}

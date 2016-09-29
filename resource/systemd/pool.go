@@ -45,7 +45,7 @@ func init() {
 	connectionPool = make(chan *dbus.Conn, ConnectionPoolSize)
 }
 
-// Get a systemd.Conn. This wrapps the dbusConn. It is necessary to call `.Return`
+// GetDbusConnection gets a systemd.Conn. This wrapps the dbusConn. It is necessary to call `.Return`
 // when you are done with the connection.
 func GetDbusConnection() (*Conn, error) {
 	for {

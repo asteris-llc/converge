@@ -41,14 +41,14 @@ const (
 	LSError LoadState = "error"
 	// LSMasked says that the unit is masked
 	LSMasked LoadState = "masked"
-	// LSLoaded says that the unit is no longer found
+	// LSNotFound says that the unit is no longer found
 	// LSError will happen when the unit can't be loaded because the unit file
 	// is not found. This happens when the unit is already loaded, but the
 	// unit file is no longer found
 	LSNotFound LoadState = "not-found"
 )
 
-// PropActiveState creates a valid `*dbus.Property` with the given LoadState
+// PropLoadState creates a valid `*dbus.Property` with the given LoadState
 func PropLoadState(ls LoadState) *dbus.Property {
 	return &dbus.Property{
 		Name:  "LoadState",
@@ -69,7 +69,7 @@ func (states LoadStates) Contains(state LoadState) bool {
 // ActiveState reflects dbus values for a unit's "ActiveState" property
 type ActiveState string
 
-// ActiveState defines a slice of ActiveState
+// ActiveStates defines a slice of ActiveState
 type ActiveStates []ActiveState
 
 // This block defines string values for properties given by dbus
@@ -181,7 +181,7 @@ func (states UnitFileStates) Contains(s UnitFileState) bool {
 	return false
 }
 
-// Checks if the `UnitFileState` is one the user can make a unit take
+// IsValidUnitFileState checks if the `UnitFileState` is one the user can make a unit take
 func IsValidUnitFileState(ufs UnitFileState) bool {
 	return ValidUnitFileStates.Contains(ufs)
 }
