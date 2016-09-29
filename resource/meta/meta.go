@@ -22,56 +22,30 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-/*
-## List of metadata keys we support:
-
-- author
-- organization
-- pgp_key_id
-- org_url
-- version
-- vcs_url
-- license
-- vcs_commit
-- description
-- platforms
-*/
-
 type Meta struct {
 	resource.Status
 
-	Author       string
-	Organization string
-	PgpKeyId     string
-	OrgUrl       string
-	Version      string
-	VcsUrl       string
-	License      string
-	VcsCommit    string
-	Description  string
+	MetaMap map[string]string
+
 	//Platforms    []map[string]interface{}
 }
 
 func (m *Meta) Check(resource.Renderer) (resource.TaskStatus, error) {
 	m.Status = resource.Status{Output: []string{m.String()}}
 
-	return m, nil
+	return m.Status, nil
 }
 
 func (m *Meta) Apply() (resource.TaskStatus, error) {
-	return m, nil
+	return m.Status, nil
 }
 
 func (m *Meta) String() string {
 	// get the fields from the struct, then String them
-	metaValue := reflect.ValueOf(m).Elem()
 	stringSlice := []string{"meta:"}
 
-	for i := 0; i < metaValue.NumField(); i++ {
-		key := metaValue.Type().Field(i).Name
-		value := metaValue.Field(i)
-
-		stringSlice = append(stringSlice, fmt.Sprintf("%v:\t%v", key, value))
+	for field, value := range m.MetaMap {
+		stringSlice = append(stringSlice, fmt.Sprintf("%v:\t%v", field, value))
 
 	}
 	return strings.Join(stringSlice, "\n\t")

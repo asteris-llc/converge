@@ -39,17 +39,17 @@ type Preparer struct {
 
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	// get the fields from the struct, then String them
-	metaValue := reflect.ValueOf(m).Elem()
-	stringSlice := []string{"meta:"}
+	metaMap := make(map[string]string)
+	prepStruct := reflect.ValueOf(p).Elem()
 
-	for i := 0; i < metaValue.NumField(); i++ {
-		key := metaValue.Type().Field(i).Name
-		value := metaValue.Field(i)
+	for i := 0; i < prepStruct.NumField(); i++ {
+		key := prepStruct.Type().Field(i).Name
+		value := prepStruct.Field(i)
 
-		stringSlice = append(stringSlice, fmt.Sprintf("%v:\t%v", key, value))
+		metaMap[key] = value
 
 	}
-	return nil, errors.New("Not implemented yet")
+	return &Meta{MetaMap: metaMap}, nil
 }
 
 func init() {
