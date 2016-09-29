@@ -1,5 +1,5 @@
-hash: e78ce8449b12d65358c2b5a7fd3fa8475a777b29173f0185845cd983b4d0a2d8
-updated: 2016-09-13T11:27:40.835135-05:00
+hash: 4bd96d2f047b776c628ea28be12bd8b18cacdc58b43019d9ea58d9d066c7c602
+updated: 2016-09-29T10:28:04.778624198-05:00
 imports:
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
@@ -7,6 +7,10 @@ imports:
   - test_helpers
 - name: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/coreos/go-systemd
+  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  subpackages:
+  - dbus
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -44,6 +48,8 @@ imports:
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/fsouza/go-dockerclient
   version: 5ffc56c4f7ce8d150a5c770dd7166b86bfd486e5
+- name: github.com/godbus/dbus
+  version: 5f6efc7ef2759c81b7ba876593971bfce311eab3
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
