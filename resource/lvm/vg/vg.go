@@ -19,7 +19,7 @@ type ResourceVG struct {
 }
 
 func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
-	status := &resource.Status{Status: r.Name}
+	status := &resource.Status{}
 
 	pvs, err := r.lvm.QueryPhysicalVolumes()
 	if err != nil {
@@ -64,13 +64,12 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	if resource.AnyChanges(status.Differences) {
-		status.WillChange = true
-		status.WarningLevel = resource.StatusWillChange
+		status.Level = resource.StatusWillChange
 	}
 	return status, nil
 }
 
-func (r *ResourceVG) Apply(resource.Renderer) (status resource.TaskStatus, err error) {
+func (r *ResourceVG) Apply() (status resource.TaskStatus, err error) {
 	if r.Exists {
 		for _, d := range r.DevicesToAdd {
 			if err := r.lvm.ExtendVolumeGroup(r.Name, d); err != nil {
@@ -88,9 +87,7 @@ func (r *ResourceVG) Apply(resource.Renderer) (status resource.TaskStatus, err e
 		}
 	}
 
-	return &resource.Status{
-		Status: r.Name,
-	}, nil
+	return &resource.Status{}, nil
 }
 
 func (r *ResourceVG) Setup(lvm lowlevel.LVM, devs []string) {

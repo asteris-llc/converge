@@ -37,11 +37,10 @@ func TestCreateFilesystem(t *testing.T) {
 	status, err := r.Check(fr)
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assert.Equal(t, "/dev/mapper/vg0-data", status.Value())
 	// FIXME: proper diffs
 	//    comparsion.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
 
-	status, err = r.Apply(fr)
+	status, err = r.Apply()
 	assert.NoError(t, err)
 	me.AssertCalled(t, "Run", "mkfs", []string{"-t", "xfs", "/dev/mapper/vg0-data"})
 }
