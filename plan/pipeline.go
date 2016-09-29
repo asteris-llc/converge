@@ -107,10 +107,18 @@ func (g *pipelineGen) PlanNode(taski interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("unable to get renderer for %s", g.ID)
 	}
 	status, err := twrapper.Task.Check(renderer)
+
+	type settable interface {
+		SetError(error)
+	}
+	if inner, ok := status.(settable); ok && err != nil {
+		inner.SetError(err)
+	}
+
 	return &Result{
 		Status: status,
 		Task:   twrapper.Task,
-		Err:    err,
+		Err:    status.Error(),
 	}, nil
 }
 
