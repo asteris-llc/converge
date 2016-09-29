@@ -28,22 +28,6 @@ func TestPreparerInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(container.Preparer))
 }
 
-func TestPreparerNameIsRequired(t *testing.T) {
-	p := &container.Preparer{}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "name is required")
-	}
-}
-
-func TestPreparerImageIsRequired(t *testing.T) {
-	p := &container.Preparer{Name: "test"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "image is required")
-	}
-}
-
 func TestPreparerInvalidStatus(t *testing.T) {
 	p := &container.Preparer{Name: "test", Image: "nginx", Status: "exited"}
 	_, err := p.Prepare(fakerenderer.New())

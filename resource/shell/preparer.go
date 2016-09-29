@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/helpers/transform"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -77,59 +78,33 @@ type Preparer struct {
 
 // Prepare a new shell task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-
-	check, err := render.Render("check", p.Check)
-	if err != nil {
-		return nil, err
-	}
-
-	apply, err := render.Render("apply", p.Apply)
-	if err != nil {
-		return nil, err
-	}
-
-	interpreter, err := render.Render("interpreter", p.Interpreter)
-	if err != nil {
-		return nil, err
-	}
-
-	dir, err := render.Render("dir", p.Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	renderedEnv, err := render.RenderStringMapToStringSlice("env", p.Env, func(k, v string) string {
-		return fmt.Sprintf("%s=%s", k, v)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	timeout, err := render.Render("timeout", p.Timeout)
-	if err != nil {
-		return nil, err
-	}
+	env := transform.StringsMapToStringSlice(
+		p.Env,
+		func(k, v string) string {
+			return fmt.Sprintf("%s=%s", k, v)
+		},
+	)
 
 	generator := &CommandGenerator{
-		Interpreter: interpreter,
+		Interpreter: p.Interpreter,
 		Flags:       p.ExecFlags,
-		Dir:         dir,
-		Env:         renderedEnv,
+		Dir:         p.Dir,
+		Env:         env,
 	}
 
-	if duration, err := time.ParseDuration(timeout); err == nil {
+	if duration, err := time.ParseDuration(p.Timeout); err == nil {
 		generator.Timeout = &duration
 	}
 
 	shell := &Shell{
 		CmdGenerator: generator,
-		CheckStmt:    check,
-		ApplyStmt:    apply,
-		Dir:          dir,
-		Env:          renderedEnv,
+		CheckStmt:    p.Check,
+		ApplyStmt:    p.Apply,
+		Dir:          p.Dir,
+		Env:          env,
 	}
 
-	return shell, checkSyntax(interpreter, p.CheckFlags, check)
+	return shell, checkSyntax(p.Interpreter, p.CheckFlags, p.Check)
 }
 
 func checkSyntax(interpreter string, flags []string, script string) error {

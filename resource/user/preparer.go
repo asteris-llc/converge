@@ -17,7 +17,6 @@ package user
 import (
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -28,18 +27,18 @@ import (
 // User renders user data
 type Preparer struct {
 	// Username is the user login name.
-	Username string `hcl:"username"`
+	Username string `hcl:"username" required:"true"`
 
 	// UID is the user ID.
-	UID string `hcl:"uid"`
+	UID uint32 `hcl:"uid"`
 
-	// Groupname is the primary group for user and must already exist.
+	// GroupName is the primary group for user and must already exist.
 	// Only one of GID or Groupname may be indicated.
-	Groupname string `hcl:"groupname"`
+	GroupName string `hcl:"groupname" mutually_exclusive:"gid,groupname"`
 
 	// Gid is the primary group ID for user and must refer to an existing group.
 	// Only one of GID or Groupname may be indicated.
-	GID string `hcl:"gid"`
+	GID uint32 `hcl:"gid" mutually_exclusive:"gid,groupname"`
 
 	// Name is the user description.
 	Name string `hcl:"name"`
@@ -49,90 +48,33 @@ type Preparer struct {
 	HomeDir string `hcl:"home_dir"`
 
 	// State is whether the user should be present.
-	// Options are present and absent; default is present.
-	State string `hcl:"state"`
+	State State `hcl:"state" valid_values:"present,absent"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	username, err := render.Render("username", p.Username)
-	if err != nil {
-		return nil, err
+	if p.UID == math.MaxUint32 {
+		// the maximum uid on linux is MaxUint32 - 1
+		return nil, fmt.Errorf("user \"uid\" parameter out of range")
 	}
-	if username == "" {
-		return nil, fmt.Errorf("user requires a \"username\" parameter")
+
+	if p.GID == math.MaxUint32 {
+		// the maximum gid on linux is MaxUint32 - 1
+		return nil, fmt.Errorf("user \"gid\" parameter out of range")
 	}
+
+	if p.State == "" {
+		p.State = StatePresent
+	}
+
 	usr := NewUser(new(System))
-	usr.Username = username
-
-	uid, err := render.Render("uid", p.UID)
-	if err != nil {
-		return nil, err
-	}
-	if uid != "" {
-		uidVal, err := strconv.ParseUint(uid, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		if uidVal == math.MaxUint32 {
-			// the maximum uid on linux is MaxUint32 - 1
-			return nil, fmt.Errorf("user \"uid\" parameter out of range")
-		}
-		usr.UID = uid
-	}
-
-	groupName, err := render.Render("groupname", p.Groupname)
-	if err != nil {
-		return nil, err
-	}
-	gid, err := render.Render("gid", p.GID)
-	if err != nil {
-		return nil, err
-	}
-	if groupName != "" && gid != "" {
-		return nil, fmt.Errorf("user \"groupname\" and \"gid\" both indicated, choose one")
-	}
-	if groupName != "" {
-		usr.GroupName = groupName
-	} else if gid != "" {
-		gidVal, err := strconv.ParseUint(gid, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		if gidVal == math.MaxUint32 {
-			// the maximum gid on linux is MaxUint32 - 1
-			return nil, fmt.Errorf("user \"gid\" parameter out of range")
-		}
-		usr.GID = gid
-	}
-
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-	if name != "" {
-		usr.Name = name
-	}
-
-	homeDir, err := render.Render("home_dir", p.HomeDir)
-	if err != nil {
-		return nil, err
-	}
-	if homeDir != "" {
-		usr.HomeDir = homeDir
-	}
-
-	sstate, err := render.Render("state", p.State)
-	state := State(sstate)
-	if err != nil {
-		return nil, err
-	}
-	if state == "" {
-		state = StatePresent
-	} else if state != StatePresent && state != StateAbsent {
-		return nil, fmt.Errorf("user \"state\" parameter invalid, use present or absent")
-	}
-	usr.State = state
+	usr.Username = p.Username
+	usr.UID = fmt.Sprintf("%v", p.UID)
+	usr.GroupName = p.GroupName
+	usr.GID = fmt.Sprintf("%v", p.GID)
+	usr.Name = p.Name
+	usr.HomeDir = p.HomeDir
+	usr.State = p.State
 
 	return usr, nil
 }

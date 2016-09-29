@@ -33,7 +33,16 @@ func TestRenderSingleNode(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root/file.content.x", &content.Preparer{Destination: "{{1}}", Content: "{{2}}"})
+	g.Add(
+		"root/file.content.x",
+		resource.NewPreparerWithSource(
+			new(content.Preparer),
+			map[string]interface{}{
+				"destination": "{{1}}",
+				"content":     "{{2}}",
+			},
+		),
+	)
 
 	rendered, err := render.Render(context.Background(), g, render.Values{})
 	assert.NoError(t, err)
@@ -55,8 +64,22 @@ func TestRenderParam(t *testing.T) {
 
 	g := graph.New()
 	g.Add("root", nil)
-	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
-	g.Add("root/param.destination", &param.Preparer{Default: "1"})
+
+	g.Add(
+		"root/file.content.x",
+		resource.NewPreparerWithSource(
+			new(content.Preparer),
+			map[string]interface{}{"destination": "{{param `destination`}}"},
+		),
+	)
+
+	g.Add(
+		"root/param.destination",
+		resource.NewPreparerWithSource(
+			new(param.Preparer),
+			map[string]interface{}{"default": "1"},
+		),
+	)
 
 	g.ConnectParent("root", "root/file.content.x")
 	g.ConnectParent("root", "root/param.destination")
@@ -81,8 +104,20 @@ func TestRenderValues(t *testing.T) {
 
 	g := graph.New()
 	g.Add("root", nil)
-	g.Add("root/file.content.x", &content.Preparer{Destination: "{{param `destination`}}"})
-	g.Add("root/param.destination", &param.Preparer{Default: "1"})
+	g.Add(
+		"root/file.content.x",
+		resource.NewPreparerWithSource(
+			new(content.Preparer),
+			map[string]interface{}{"destination": "{{param `destination`}}"},
+		),
+	)
+	g.Add(
+		"root/param.destination",
+		resource.NewPreparerWithSource(
+			new(param.Preparer),
+			map[string]interface{}{"default": "1"},
+		),
+	)
 
 	g.ConnectParent("root", "root/file.content.x")
 	g.ConnectParent("root", "root/param.destination")

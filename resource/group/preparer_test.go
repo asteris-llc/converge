@@ -17,7 +17,6 @@ package group_test
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -41,16 +40,14 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("all parameters", func(t *testing.T) {
-			// fr := fakerenderer.FakeRenderer{}
-			p := group.Preparer{GID: "123", Name: "test", State: string(group.StateAbsent)}
+			p := group.Preparer{GID: 123, Name: "test", State: group.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no state parameter", func(t *testing.T) {
-			// fr := fakerenderer.FakeRenderer{}
-			p := group.Preparer{GID: "123", Name: "test"}
+			p := group.Preparer{GID: 123, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
@@ -64,8 +61,7 @@ func TestPrepare(t *testing.T) {
 		})
 
 		t.Run("max allowable gid", func(t *testing.T) {
-			gid := strconv.Itoa(math.MaxUint32 - 1)
-			p := group.Preparer{GID: gid, Name: "test"}
+			p := group.Preparer{GID: math.MaxUint32 - 1, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
@@ -73,26 +69,11 @@ func TestPrepare(t *testing.T) {
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		t.Run("no name parameter", func(t *testing.T) {
-			p := group.Preparer{GID: "123"}
-			_, err := p.Prepare(&fr)
-
-			assert.EqualError(t, err, fmt.Sprintf("group requires a \"name\" parameter"))
-		})
-
 		t.Run("gid out of range", func(t *testing.T) {
-			gid := strconv.Itoa(math.MaxUint32)
-			p := group.Preparer{GID: gid, Name: "test"}
+			p := group.Preparer{GID: math.MaxUint32, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("group \"gid\" parameter out of range"))
-		})
-
-		t.Run("invalid state", func(t *testing.T) {
-			p := group.Preparer{GID: "123", Name: "test", State: "test"}
-			_, err := p.Prepare(&fr)
-
-			assert.EqualError(t, err, fmt.Sprintf("group \"state\" parameter invalid, use present or absent"))
 		})
 	})
 }
