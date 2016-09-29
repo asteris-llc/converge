@@ -12,25 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package wait
+package port
 
 import (
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/shell"
+	"github.com/pkg/errors"
 )
 
 const (
 	defaultInterval = 5 * time.Second
 	defaultTimeout  = 10 * time.Second
 	defaultRetries  = 5
+	defaultHost     = "localhost"
 )
 
-// Wait waits for a shell task to return 0 or reaches max failure threshold
-type Wait struct {
-	*shell.Shell
+// Port represents a port check
+type Port struct {
+	*resource.Status
+	Host        string
+	Port        int
 	GracePeriod time.Duration
 	Interval    time.Duration
 	MaxRetry    int
@@ -38,63 +42,79 @@ type Wait struct {
 	Duration    time.Duration
 }
 
+// Check if the port is open
+func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
+	p.Status = resource.NewStatus()
+
+	alive, err := p.checkConnection()
+	if err != nil {
+		p.Status.RaiseLevel(resource.StatusFatal)
+		return p, errors.Wrapf(err, "failed to check connection")
+	}
+
+	if !alive {
+		p.RaiseLevel(resource.StatusWillChange)
+	}
+
+	return p, nil
+}
+
 // Apply retries the check until it passes or returns max failure threshold
-func (w *Wait) Apply() (resource.TaskStatus, error) {
+func (p *Port) Apply() (resource.TaskStatus, error) {
+	p.Status = resource.NewStatus()
 	startTime := time.Now()
 
-	retries := w.MaxRetry
+	retries := p.MaxRetry
 	if retries <= 0 {
 		retries = defaultRetries
 	}
 
-	interval := w.Interval
+	interval := p.Interval
 	if interval <= 0 {
 		interval = defaultInterval
 	}
 
-	after := w.GracePeriod
+	after := p.GracePeriod
 waitLoop:
 	for {
 		select {
 		case <-time.After(after):
-			w.RetryCount++
+			p.RetryCount++
 			after = interval
-			results, err := w.CmdGenerator.Run(w.CheckStmt)
+
+			alive, err := p.checkConnection()
 			if err != nil {
-				return w, err
+				return p, err
 			}
 
-			w.Status = w.Status.Cons(fmt.Sprintf("check %d", w.RetryCount), results)
-			w.CheckStatus = results
-
-			if results.ExitStatus == 0 {
+			if alive {
 				break waitLoop
 			}
 
-			if w.RetryCount >= retries {
+			if p.RetryCount >= retries {
 				break waitLoop
 			}
 		}
 	}
 
-	w.Duration = time.Since(startTime)
-	return w, nil
+	p.Duration = time.Since(startTime)
+	return p, nil
 }
 
-// Messages returns a summary of the attempts
-func (w *Wait) Messages() []string {
-	var messages []string
-	passed := w.StatusCode() == resource.StatusNoChange
-
-	if passed {
-		messages = append(messages, fmt.Sprintf("Passed after %d retries (%v)", w.RetryCount, w.Duration))
-	} else {
-		messages = append(messages, fmt.Sprintf("Failed after %d retries (%v)", w.RetryCount, w.Duration))
-		last := w.Status.Last()
-		if last != nil {
-			messages = append(messages, fmt.Sprintf("Last attempt: %s", last.Summarize()))
-		}
+func (p *Port) checkConnection() (connected bool, err error) {
+	if p.Host == "" {
+		p.Host = defaultHost
 	}
 
-	return messages
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", p.Host, p.Port))
+	if err != nil {
+		if _, ok := err.(*net.OpError); ok {
+			return false, nil
+		}
+		return false, errors.Wrapf(err, "dial failed")
+	}
+
+	defer conn.Close()
+
+	return true, nil
 }

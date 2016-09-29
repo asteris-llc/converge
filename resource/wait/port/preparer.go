@@ -12,46 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package wait
+package port
 
 import (
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/shell"
 )
 
 // Preparer handles wait.query tasks
 type Preparer struct {
-	// the shell interpreter that will be used for your scripts. `/bin/sh` is
-	// used by default.
-	Interpreter string `hcl:"interpreter"`
+	// a host name or ip address. A TCP connection will be attempted at this host
+	// and the specified Port.
+	Host string `hcl:"host"`
 
-	// the script to run to check if a resource is ready. exit with exit code 0 if
-	// the resource is healthy, and 1 (or above) otherwise.
-	Check string `hcl:"check"`
-
-	// flags to pass to the `interpreter` binary to check validity. For
-	// `/bin/sh` this is `-n`.
-	CheckFlags []string `hcl:"check_flags"`
-
-	// flags to pass to the interpreter at execution time.
-	ExecFlags []string `hcl:"exec_flags"`
-
-	// the amount of time the command will wait before halting forcefully. The
-	// format is Go's duraction string. A duration string is a possibly signed
-	// sequence of decimal numbers, each with optional fraction and a unit
-	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-	// "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout string `hcl:"timeout" doc_type:"duration string"`
-
-	// the working directory this command should be run in.
-	Dir string `hcl:"dir"`
-
-	// any environment variables that should be passed to the command.
-	Env map[string]string `hcl:"env"`
+	// the TCP port to attempt to connect to.
+	Port interface{} `hcl:"port"`
 
 	// the amount of time to wait in between checks. The format is Go's duraction
 	// string. A duration string is a possibly signed sequence of decimal numbers,
@@ -70,56 +48,51 @@ type Preparer struct {
 	MaxRetry interface{} `hcl:"max_retry"`
 }
 
-// Prepare creates a new wait type
+// Prepare creates a new wait.port type
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	shPrep := &shell.Preparer{
-		Interpreter: p.Interpreter,
-		Check:       p.Check,
-		CheckFlags:  p.CheckFlags,
-		ExecFlags:   p.ExecFlags,
-		Timeout:     p.Timeout,
-		Dir:         p.Dir,
-		Env:         p.Env,
-	}
-
-	task, err := shPrep.Prepare(render)
-
+	host, err := render.Render("host", p.Host)
 	if err != nil {
-		return &Wait{}, err
+		return nil, err
 	}
 
-	shell, ok := task.(*shell.Shell)
-	if !ok {
-		return &Wait{}, fmt.Errorf("expected *shell.Shell but got %T", task)
+	var (
+		portNum int
+		ok      bool
+	)
+	if portNum, ok = p.Port.(int); !ok {
+		return nil, errors.New("invalid port or no port specified")
 	}
 
-	wait := &Wait{Shell: shell}
+	port := &Port{
+		Host: host,
+		Port: portNum,
+	}
 
 	interval, err := render.Render("interval", p.Interval)
 	if err != nil {
-		return wait, err
+		return port, err
 	}
 
 	if intervalDuration, perr := time.ParseDuration(interval); perr == nil {
-		wait.Interval = intervalDuration
+		port.Interval = intervalDuration
 	}
 
 	gracePeriod, err := render.Render("grace_period", p.GracePeriod)
 	if err != nil {
-		return wait, err
+		return port, err
 	}
 
 	if gracePeriodDuration, perr := time.ParseDuration(gracePeriod); perr == nil {
-		wait.GracePeriod = gracePeriodDuration
+		port.GracePeriod = gracePeriodDuration
 	}
 
 	if maxRetry, ok := p.MaxRetry.(int); ok {
-		wait.MaxRetry = maxRetry
+		port.MaxRetry = maxRetry
 	}
 
-	return wait, nil
+	return port, nil
 }
 
 func init() {
-	registry.Register("wait.query", (*Preparer)(nil), (*Wait)(nil))
+	registry.Register("wait.port", (*Preparer)(nil), (*Port)(nil))
 }
