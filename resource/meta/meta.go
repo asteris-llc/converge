@@ -40,16 +40,16 @@ import (
 type Meta struct {
 	resource.Status
 
-	Author       string `hcl:"author"`
-	Organization string `hcl:"organization"`
-	PgpKeyId     string `hcl:"pgp_key_id"`
-	OrgUrl       string `hcl:"org_url"`
-	Version      string `hcl:"version"`
-	VcsUrl       string `hcl:"vcs_url"`
-	License      string `hcl:"license"`
-	VcsCommit    string `hcl:"vcs_commit"`
-	Description  string `hcl:"description"`
-	//Platforms    []map[string]interface{} `hcl:"platforms"`
+	Author       string
+	Organization string
+	PgpKeyId     string
+	OrgUrl       string
+	Version      string
+	VcsUrl       string
+	License      string
+	VcsCommit    string
+	Description  string
+	//Platforms    []map[string]interface{}
 }
 
 func (m *Meta) Check(resource.Renderer) (resource.TaskStatus, error) {

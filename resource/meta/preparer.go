@@ -15,15 +15,40 @@
 package meta
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
 
 type Preparer struct {
+	Author       string `hcl:"author"`
+	Organization string `hcl:"organization"`
+	PgpKeyId     string `hcl:"pgp_key_id"`
+	OrgUrl       string `hcl:"org_url"`
+	Version      string `hcl:"version"`
+	VcsUrl       string `hcl:"vcs_url"`
+	License      string `hcl:"license"`
+	VcsCommit    string `hcl:"vcs_commit"`
+	Description  string `hcl:"description"`
+	//Platforms    []map[string]interface{} `hcl:"platforms"`
 }
 
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	// get the fields from the struct, then String them
+	metaValue := reflect.ValueOf(m).Elem()
+	stringSlice := []string{"meta:"}
+
+	for i := 0; i < metaValue.NumField(); i++ {
+		key := metaValue.Type().Field(i).Name
+		value := metaValue.Field(i)
+
+		stringSlice = append(stringSlice, fmt.Sprintf("%v:\t%v", key, value))
+
+	}
 	return nil, errors.New("Not implemented yet")
 }
 
