@@ -40,3 +40,7 @@ func (me *MockExecutor) WriteFile(fn string, content []byte, perm os.FileMode) e
 	c := me.Called(fn, content, perm)
 	return c.Error(0)
 }
+
+func (me *MockExecutor) MkdirAll(path string, perm os.FileMode) error {
+    return me.Called(path, perm).Error(0)
+}
