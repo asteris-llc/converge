@@ -16,7 +16,7 @@ engines:
       MD024:
         enabled: false 
   
-shellcheck:
+  shellcheck:
     enabled: true
 
   fixme:
