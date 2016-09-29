@@ -67,6 +67,7 @@ type Preparer struct {
 	Destination string `hcl:destination"`
 }
 
+//Prepare returns a new systemd.unit task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	name, err := render.Render("name", p.Name)
 	if err != nil {
@@ -112,12 +113,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		StartMode:     systemd.StartMode(sm),
 		Timeout:       t,
 	}
-	return unit, Validate(unit)
+	return unit, validate(unit)
 }
 
 var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSMasked, systemd.UFSMaskedRuntime, systemd.UFSDisabled}
 
-func Validate(t *Unit) error {
+func validate(t *Unit) error {
 	if t.Name == "" {
 		return fmt.Errorf("task requires a %q parameter", "name")
 	}

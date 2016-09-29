@@ -23,12 +23,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//TestPreparerInterface ensures that the preparer implements the resource
+//interface
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(unit.Preparer))
 }
 
+//TestValidPreparer ensures that validation workes
 func TestVaildPreparer(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}

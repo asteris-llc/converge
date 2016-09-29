@@ -31,12 +31,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestTaskInterface test  that unit taks implements Task
 func TestTaskInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Task)(nil), new(unit.Unit))
 }
 
+// TestInactiveToActiveUnit test  if unit can activate a unit
 func TestInactiveToActiveUnit(t *testing.T) {
 	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
@@ -57,6 +59,7 @@ func TestInactiveToActiveUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// TestDisabledtoEnabledUnit test  if unit can enable a unit
 func TestDisabledtoEnabledUnit(t *testing.T) {
 	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
@@ -80,6 +83,7 @@ func TestDisabledtoEnabledUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// TestDisabledtoEnabledRuntimeUnit test  if unit can make a unitfile enabled at runtime
 func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
@@ -103,6 +107,7 @@ func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// TestEnabledToDisabledUnit test if unit can disable a unit
 func TestEnabledToDisabledUnit(t *testing.T) {
 	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
@@ -126,6 +131,7 @@ func TestEnabledToDisabledUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// TestStaticToDisabledUnit tests if unit can disable a static unit
 func TestStaticToDisabledUnit(t *testing.T) {
 	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
@@ -149,6 +155,7 @@ func TestStaticToDisabledUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// TestLinkedUnit test if unit can link a unit file
 func TestLinkedUnit(t *testing.T) {
 	fr := fakerenderer.FakeRenderer{}
 	if !IsRoot() || !HasSystemd() {
@@ -178,6 +185,7 @@ func TestLinkedUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+// HelloUnit is a simple service file that is not static
 const HelloUnit = `
 [Unit]
 Description=Foo hello world
@@ -188,6 +196,7 @@ ExecStart=/bin/bash -c "while true; do /bin/echo HELLO WORLD; sleep 5; done;"
 WantedBy=multi-user.target
 `
 
+// HelloUnitStatic is a simple service file that is  static
 const HelloUnitStatic = `
 [Unit]
 Description=Foo hello world
@@ -195,11 +204,13 @@ Description=Foo hello world
 ExecStart=/bin/bash -c "while true; do /bin/echo HELLO WORLD; sleep 5; done;"
 `
 
+// TmpService is the information for a temporary service file
 type TmpService struct {
 	Path string
 	Name string
 }
 
+// Remove removes this service file from the system entirely
 func (t *TmpService) Remove() {
 	base := filepath.Base(t.Path)
 
@@ -222,6 +233,8 @@ func (t *TmpService) Remove() {
 
 var count uint32
 
+// NewTmpService creates a service file on the system either in
+// "/tmp", "/etc/systemd/system", or "/run/systemd/system".
 func NewTmpService(prefix string, static bool) (svc *TmpService, err error) {
 	atomic.AddUint32(&count, 1)
 	name := fmt.Sprintf("foo%d.service", count)
@@ -243,11 +256,13 @@ func NewTmpService(prefix string, static bool) (svc *TmpService, err error) {
 	return &TmpService{Path: path, Name: name}, systemd.ApplyDaemonReload()
 }
 
+// IsRoot checks if the current user is Root
 func IsRoot() bool {
 	currentUser, _ := user.Current()
 	return currentUser.Uid == "0"
 }
 
+// HasSystemd checks if dbus is available
 func HasSystemd() bool {
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {

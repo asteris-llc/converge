@@ -27,7 +27,7 @@ import (
 )
 
 // Unit represents a systemd units
-// TODO Enable Parallelization of this Unit
+// NOTE: This unit does not parallelize with itself
 type Unit struct {
 	Name          string
 	Active        bool
@@ -88,7 +88,6 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 		// Unit doesn't exist should be linked
 		if err.Error() == loadError {
 			if shouldBeLinked {
-				fmt.Println("Here--------------\n\n")
 				// Check if file to be linked exist on disk
 				_, statErr := os.Stat(t.Name)
 				if statErr != nil {
@@ -157,10 +156,9 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	return t.TaskStatus, err
 }
 
-/* Apply sets the properties
-1. Apply active state
-2. Apply UFS
-*/
+// Apply sets the properties
+// Apply active state
+// Apply UFS
 func (t *Unit) Apply() (resource.TaskStatus, error) {
 	/*////////////////////////////////////////////////////
 	First thing to do is to check if the Name given is outside

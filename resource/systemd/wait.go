@@ -23,8 +23,11 @@ import (
 	"github.com/coreos/go-systemd/dbus"
 )
 
+// DefaultTimeout checks how long systemd operations should run before
+// throwing a timeout error. Default = 5s.
 const DefaultTimeout = time.Second * 5
 
+// WaitToLoad pauses execution of this thread until a configuration file is loaded
 func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	// first check if there was an error loading configuration
 	loadStatus, err := CheckProperty(conn, unit, "LoadState", []*dbus.Property{
@@ -61,6 +64,8 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	return nil
 }
 
+// WaitForLoadedState waits until configuration file is loaded. unlike `WaitToLoad`,
+// does not check if configuration is already loaded
 func WaitForLoadedState(ctx context.Context, conn *dbus.Conn, unit string) error {
 	err := conn.Subscribe()
 	if err != nil {

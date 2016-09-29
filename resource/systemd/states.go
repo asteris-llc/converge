@@ -28,16 +28,27 @@ func propDependency(name string, units []string) *dbus.Property {
 	}
 }
 
+// LoadState reflects dbus values for a unit's "LoadState" property
 type LoadState string
+
+// LoadStates defines a slice of LoadState
 type LoadStates []LoadState
 
 const (
-	LSLoaded   LoadState = "loaded"
-	LSError    LoadState = "error"
-	LSMasked   LoadState = "masked"
+	// LSLoaded says that the unit is loaded
+	LSLoaded LoadState = "loaded"
+	// LSError says that an error occured when loading
+	LSError LoadState = "error"
+	// LSMasked says that the unit is masked
+	LSMasked LoadState = "masked"
+	// LSLoaded says that the unit is no longer found
+	// LSError will happen when the unit can't be loaded because the unit file
+	// is not found. This happens when the unit is already loaded, but the
+	// unit file is no longer found
 	LSNotFound LoadState = "not-found"
 )
 
+// PropActiveState creates a valid `*dbus.Property` with the given LoadState
 func PropLoadState(ls LoadState) *dbus.Property {
 	return &dbus.Property{
 		Name:  "LoadState",
@@ -45,6 +56,7 @@ func PropLoadState(ls LoadState) *dbus.Property {
 	}
 }
 
+// Contains checks if a slice of LoadState has a specific LoadState
 func (states LoadStates) Contains(state LoadState) bool {
 	for _, s := range states {
 		if s == state {
@@ -54,9 +66,13 @@ func (states LoadStates) Contains(state LoadState) bool {
 	return false
 }
 
+// ActiveState reflects dbus values for a unit's "ActiveState" property
 type ActiveState string
+
+// ActiveState defines a slice of ActiveState
 type ActiveStates []ActiveState
 
+// This block defines string values for properties given by dbus
 const (
 	ASActive       ActiveState = "active"
 	ASReloading    ActiveState = "reloading"
@@ -66,6 +82,7 @@ const (
 	ASDeactivating ActiveState = "deactivating"
 )
 
+// Equal checks if two ActiveStates are equal. It automatically strips quotes.
 func (state ActiveState) Equal(other ActiveState) bool {
 	if state == other {
 		return true
@@ -75,6 +92,7 @@ func (state ActiveState) Equal(other ActiveState) bool {
 	return stateStr == otherStr
 }
 
+// Contains checks if in a list of ActiveState one state is the given
 func (states ActiveStates) Contains(state ActiveState) bool {
 	for _, s := range states {
 		if s == state {
@@ -84,6 +102,7 @@ func (states ActiveStates) Contains(state ActiveState) bool {
 	return false
 }
 
+// PropActiveState creates a valid `*dbus.Property` with the given ActiveState
 func PropActiveState(as ActiveState) *dbus.Property {
 	return &dbus.Property{
 		Name:  "ActiveState",
@@ -91,9 +110,13 @@ func PropActiveState(as ActiveState) *dbus.Property {
 	}
 }
 
+// UnitFileState reflects the dbus property "UnitFileState" for a unit
 type UnitFileState string
+
+// UnitFileStates defines a slice of UnitFileState
 type UnitFileStates []UnitFileState
 
+// This block defines the possible values of the property "UnitFileState"
 const (
 	UFSEnabled        UnitFileState = "enabled"
 	UFSEnabledRuntime UnitFileState = "enabled-runtime"
@@ -107,6 +130,7 @@ const (
 	UFSBad            UnitFileState = "bad"
 )
 
+// PropUnitFileState creatues a valid `*dbus.Property` with the given UnitFileState
 func PropUnitFileState(ufs UnitFileState) *dbus.Property {
 	return &dbus.Property{
 		Name:  "UnitFileState",
@@ -114,6 +138,7 @@ func PropUnitFileState(ufs UnitFileState) *dbus.Property {
 	}
 }
 
+// Equal checks if two `UnitFileState`s are equal. Trims quotes.
 func (state UnitFileState) Equal(other UnitFileState) bool {
 	if state == other {
 		return true
@@ -123,12 +148,12 @@ func (state UnitFileState) Equal(other UnitFileState) bool {
 	return stateStr == otherStr
 }
 
-// Determines whether unit should be enabled
+// IsEnabled Determines whether unit should be enabled
 func (state UnitFileState) IsEnabled() bool {
 	return state.Equal(UFSEnabled) || state.Equal(UFSEnabledRuntime)
 }
 
-// Determines whether service should be linked to usual locations
+// IsLinked Determines whether service should be linked to usual locations
 func (state UnitFileState) IsLinked() bool {
 	return state.Equal(UFSLinked) || state.Equal(UFSLinkedRuntime)
 }
@@ -138,16 +163,17 @@ func (state UnitFileState) IsRuntimeState() bool {
 	return state.Equal(UFSEnabledRuntime) || state.Equal(UFSLinkedRuntime) || state.Equal(UFSMaskedRuntime)
 }
 
-// IsMaskedState
+// IsMaskedState Determines if a static unit is masked
 func (state UnitFileState) IsMaskedState() bool {
 	return state.Equal(UFSMasked) || state.Equal(UFSMaskedRuntime)
 }
 
+// ValidUnitFileStates are states that a user can make a unit take
 var ValidUnitFileStates = UnitFileStates{UFSEnabled, UFSEnabledRuntime, UFSLinked, UFSLinkedRuntime, UFSMasked, UFSMaskedRuntime, UFSStatic, UFSDisabled, UFSInvalid}
-var ValidUnitFileStatesWithoutInvalid = ValidUnitFileStates[:len(ValidUnitFileStates)-1]
 
+// Contains checks if in a list of `UnitFileState`s one state is the given
 func (states UnitFileStates) Contains(s UnitFileState) bool {
-	for i, _ := range states {
+	for i := range states {
 		if s == states[i] {
 			return true
 		}
@@ -155,13 +181,18 @@ func (states UnitFileStates) Contains(s UnitFileState) bool {
 	return false
 }
 
+// Checks if the `UnitFileState` is one the user can make a unit take
 func IsValidUnitFileState(ufs UnitFileState) bool {
 	return ValidUnitFileStates.Contains(ufs)
 }
 
+// StartMode reflects valid parameters to the `StartUnit` function
 type StartMode string
+
+// StartModes defines a slice of `StartMode`
 type StartModes []StartMode
 
+// This block defines valid paramaters to the `StartUnit` function
 const (
 	SMReplace            StartMode = "replace"
 	SMFail               StartMode = "fail"
@@ -170,8 +201,9 @@ const (
 	SMIgnoreRequirements StartMode = "ignore-requirements"
 )
 
+// Contains checks if the given `StartMode` is in a list of `StartModes`
 func (states StartModes) Contains(s StartMode) bool {
-	for i, _ := range states {
+	for i := range states {
 		if s == states[i] {
 			return true
 		}
@@ -179,8 +211,10 @@ func (states StartModes) Contains(s StartMode) bool {
 	return false
 }
 
+// ValidStartModes is a list of valid paramaters to the `StartUnit` function
 var ValidStartModes = StartModes{SMReplace, SMFail, SMIsolate, SMIgnoreDependencies, SMIgnoreRequirements}
 
+// IsValidStartMode checks if a given StartMode is valid
 func IsValidStartMode(sm StartMode) bool {
 	return ValidStartModes.Contains(sm)
 }
