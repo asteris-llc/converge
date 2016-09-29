@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/coreos/go-systemd/dbus"
+	"github.com/hashicorp/go-multierror"
 )
 
 // Unit represents a systemd units
@@ -64,7 +65,7 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 	}
 	defer conn.Return()
 	dbusConn := conn.Connection
@@ -95,7 +96,7 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 						Level:  resource.StatusFatal,
 						Output: []string{statErr.Error()},
 					}
-					return t.TaskStatus, statErr
+					return t, statErr
 				}
 				statusMsg := fmt.Sprintf("unit %q does not exist, will be linked", unitName)
 				diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
@@ -105,7 +106,7 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 					Differences: map[string]resource.Diff{unitName: diff},
 					Output:      []string{statusMsg},
 				}
-				return t.TaskStatus, nil
+				return t, nil
 			} else if t.UnitFileState.Equal(systemd.UFSDisabled) {
 				// Consider it the same as it being disabled.
 				statusMsg := fmt.Sprintf("unit %q does not exist, considered disabled", unitName)
@@ -113,14 +114,14 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 					Level:  resource.StatusWontChange,
 					Output: []string{statusMsg},
 				}
-				return t.TaskStatus, nil
+				return t, nil
 			}
 		}
 		t.TaskStatus = &resource.Status{
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 
 	}
 
@@ -151,9 +152,15 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	ufsStatus, ufsErr := systemd.CheckProperty(dbusConn, unitName, "UnitFileState", validUnitFileStates)
 	ufsStatus = systemd.AppendStatus(ufsStatus, asStatus)
 
-	err = systemd.MultiErrorAppend(asErr, ufsErr)
+	if ufsErr != nil {
+		if asErr != nil {
+			err = multierror.Append(asErr, asErr)
+		}
+		err = ufsErr
+	}
+
 	t.TaskStatus = ufsStatus
-	return t.TaskStatus, err
+	return t, err
 }
 
 // Apply sets the properties
@@ -179,7 +186,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 	}
 	defer conn.Return()
 	dbusConn := conn.Connection
@@ -207,7 +214,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 						Level:  resource.StatusFatal,
 						Output: []string{err.Error()},
 					}
-					return t.TaskStatus, err
+					return t, err
 				}
 				// Link the Unit
 				changes, e := dbusConn.LinkUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
@@ -216,7 +223,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 						Level:  resource.StatusFatal,
 						Output: []string{err.Error()},
 					}
-					return t.TaskStatus, err
+					return t, err
 				}
 				startStatus, e := t.startOrStop(dbusConn)
 				if e != nil {
@@ -233,14 +240,14 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 						fmt.Sprintf("file %q has been linkded to %q", changes[0].Filename, changes[0].Destination),
 					},
 				}
-				return t.TaskStatus, nil
+				return t, nil
 			}
 		}
 		t.TaskStatus = &resource.Status{
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 	}
 
 	// Start the unit
@@ -256,7 +263,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 	}
 	state := systemd.UnitFileState(prop.Value.String())
 
@@ -271,7 +278,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 			Level:  resource.StatusNoChange,
 			Output: []string{statusMsg},
 		}
-		return t.TaskStatus, nil
+		return t, nil
 	}
 
 	switch t.UnitFileState {
@@ -288,7 +295,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				Level:  resource.StatusWontChange,
 				Output: []string{statusMsg},
 			}
-			return t.TaskStatus, nil
+			return t, nil
 		}
 		// check if unit is in a state that cannot be enabled
 		if state.IsLinked() || state.Equal(systemd.UFSInvalid) || state.Equal(systemd.UFSBad) {
@@ -299,7 +306,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					statusMsg.Error(),
 				},
 			}
-			return t.TaskStatus, statusMsg
+			return t, statusMsg
 		}
 		// At this point state must be disabled, static, or masked
 		if state.Equal(systemd.UFSStatic) { // If static do nothing
@@ -310,7 +317,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					statusMsg,
 				},
 			}
-			return t.TaskStatus, err
+			return t, err
 		}
 		if state.IsMaskedState() { // If masked unmask
 			changes, err := dbusConn.UnmaskUnitFiles([]string{unitName}, state.IsRuntimeState())
@@ -319,7 +326,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					Level:  resource.StatusFatal,
 					Output: []string{err.Error()},
 				}
-				return t.TaskStatus, err
+				return t, err
 			}
 			statusMsg := fmt.Sprintf("unit %q is unmasked", unitName)
 			t.TaskStatus = &resource.Status{
@@ -329,7 +336,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
 				},
 			}
-			return t.TaskStatus, nil
+			return t, nil
 		}
 		// if hasEnaablementInfo is false then the unit will become static
 		hasEnaablementInfo, changes, err := dbusConn.EnableUnitFiles([]string{unitName}, t.UnitFileState.IsRuntimeState(), true)
@@ -338,7 +345,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				Level:  resource.StatusFatal,
 				Output: []string{err.Error()},
 			}
-			return t.TaskStatus, err
+			return t, err
 		}
 		ufs := t.UnitFileState
 		if hasEnaablementInfo {
@@ -352,7 +359,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
 			},
 		}
-		return t.TaskStatus, nil
+		return t, nil
 
 	/*///////////////////////////////////
 	*Disabling
@@ -364,7 +371,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				Level:  resource.StatusNoChange,
 				Output: []string{statusMsg},
 			}
-			return t.TaskStatus, nil
+			return t, nil
 		}
 		if state.Equal(systemd.UFSStatic) {
 			changes, err := dbusConn.MaskUnitFiles([]string{unitName}, false, true)
@@ -373,7 +380,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					Level:  resource.StatusFatal,
 					Output: []string{err.Error()},
 				}
-				return t.TaskStatus, err
+				return t, err
 			}
 			statusMsg := fmt.Sprintf("unit %q is maksed", unitName)
 			t.TaskStatus = &resource.Status{
@@ -383,7 +390,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					fmt.Sprintf("symlink for %q was %q. link between %q and %q", unitName, changes[0].Type, changes[0].Filename, changes[0].Destination),
 				},
 			}
-			return t.TaskStatus, err
+			return t, err
 		}
 
 		_, err := dbusConn.DisableUnitFiles([]string{unitName}, state.IsRuntimeState())
@@ -392,7 +399,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				Level:  resource.StatusFatal,
 				Output: []string{err.Error()},
 			}
-			return t.TaskStatus, err
+			return t, err
 		}
 		statusMsg := fmt.Sprintf("unit %q has been disabled", unitName)
 		t.TaskStatus = &resource.Status{
@@ -401,7 +408,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 				statusMsg,
 			},
 		}
-		return t.TaskStatus, nil
+		return t, nil
 	/*///////////////////////////////////
 	*Linking
 	 */ ///////////////////////////////////
@@ -416,7 +423,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					Level:  resource.StatusFatal,
 					Output: []string{err.Error()},
 				}
-				return t.TaskStatus, err
+				return t, err
 			}
 
 			changes, e := dbusConn.LinkUnitFiles([]string{t.Name}, t.UnitFileState.IsRuntimeState(), true)
@@ -425,7 +432,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					Level:  resource.StatusFatal,
 					Output: []string{e.Error()},
 				}
-				return t.TaskStatus, e
+				return t, e
 			}
 			statusMsg := fmt.Sprintf("unit %q has been linked", unitName)
 			diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
@@ -438,7 +445,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					fmt.Sprintf("file %q has been linkded to %q", changes[0].Filename, changes[0].Destination),
 				},
 			}
-			return t.TaskStatus, nil
+			return t, nil
 		}
 
 	}
@@ -448,7 +455,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 		Level:  resource.StatusFatal,
 		Output: []string{statusMsg.Error()},
 	}
-	return t.TaskStatus, statusMsg
+	return t, statusMsg
 }
 
 func (t *Unit) startOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
@@ -466,7 +473,7 @@ func (t *Unit) startOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
 			Level:  resource.StatusFatal,
 			Output: []string{err.Error()},
 		}
-		return t.TaskStatus, err
+		return t, err
 	}
 	<-job
 	activeMsg := "inactive"
@@ -478,5 +485,5 @@ func (t *Unit) startOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
 		Level:  resource.StatusNoChange,
 		Output: []string{statusMsg},
 	}
-	return t.TaskStatus, nil
+	return t, nil
 }

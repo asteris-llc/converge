@@ -45,7 +45,7 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 		return fmt.Errorf("%s: %q", loadError.Name, loadError.Value.String())
 	}
 
-	//Check if unit is activating
+	// Check if unit is activating
 	status, err := CheckProperty(conn, unit, "ActiveState", []*dbus.Property{
 		PropActiveState(ASReloading),
 		PropActiveState(ASActivating),
@@ -54,7 +54,7 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	if err != nil {
 		return err
 	}
-	//If loading wait until it becomes stable
+	// If loading wait until it becomes stable
 	if status.Level == resource.StatusNoChange {
 		err := WaitForLoadedState(ctx, conn, unit)
 		if err != nil {

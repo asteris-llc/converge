@@ -38,11 +38,20 @@ type Preparer struct {
 	It currently knows the following states: `enabled`, `enabled-runtime`, `linked`,
 	`linked-runtime`, `masked`, `masked-runtime`, `static`, `bad`, `disabled`, `invalid`.
 
-	Of these states only  `enabled`, `enabled-runtime`, `linked`,
-	`linked-runtime`, `masked`, `masked-runtime`, `static`, `disabled`, and
-	`invalid` are permitted in the preparer
+	Of these states only `enabled`, `enabled-runtime`, `linked`,
+	`linked-runtime`, `masked`, `masked-runtime`, `static`, and `disabled`
+	are permitted in the preparer. If you would like your unit to be
+	run at runtime, put the unit file in the /run/systemd/system folder, and
+	only use states with the `-runtime` suffix. Once a unit has
+	a runtime state, converge cannot change it to be used through /etc/. Static
+	units, units that have no `[Install]` section, should be disabled with `masked` or
+	`masked-runtime`. Converge will not throw a warning if you want your unit to be
+	`enabled`, when it is infact `static`, and technically cannot be `enabled`,
+	since the unit will be "enabled" either way.
+	Likewise it will not throw a warning if you want your unit disabled, but it is
+	actually masked.
 
-	See https://godoc.org/github.com/coreos/go-systemd/dbus for more info
+	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
 	UnitFileState string `hcl:"state"`
 
@@ -51,7 +60,7 @@ type Preparer struct {
 	Takes the unit to activate, plus a mode string. The mode needs to be one of
 	replace, fail, isolate, ignore-dependencies, ignore-requirements.
 
-	See https://godoc.org/github.com/coreos/go-systemd/dbus for more info
+	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
 	StartMode string `hcl:"mode"`
 
@@ -113,23 +122,19 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		StartMode:     systemd.StartMode(sm),
 		Timeout:       t,
 	}
-	return unit, validate(unit)
+	if unit.Name == "" {
+		return unit, fmt.Errorf("task requires a %q parameter", "name")
+	}
+	if !systemd.IsValidUnitFileState(unit.UnitFileState) {
+		return unit, fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
+	}
+	if !systemd.IsValidStartMode(unit.StartMode) {
+		return unit, fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, unit.StartMode)
+	}
+	return unit, nil
 }
 
 var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSMasked, systemd.UFSMaskedRuntime, systemd.UFSDisabled}
-
-func validate(t *Unit) error {
-	if t.Name == "" {
-		return fmt.Errorf("task requires a %q parameter", "name")
-	}
-	if !systemd.IsValidUnitFileState(t.UnitFileState) {
-		return fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
-	}
-	if !systemd.IsValidStartMode(t.StartMode) {
-		return fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, t.StartMode)
-	}
-	return nil
-}
 
 func init() {
 	registry.Register("systemd.unit", (*Preparer)(nil), (*Unit)(nil))
