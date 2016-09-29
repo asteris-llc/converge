@@ -14,6 +14,35 @@ param "user-name" {
   default = "vagrant"
 }
 
+file.content "overlay-module" {
+  destination = "/etc/modules-load.d/overlay.conf"
+
+  content = <<EOF
+overlay
+EOF
+}
+
+task "load-overlay-module" {
+  check   = "lsmod | grep overlay"
+  apply   = "modprobe overlay"
+  depends = ["file.content.overlay-module"]
+}
+
+file.directory "service-directory" {
+  destination = "/etc/systemd/system/docker.service.d"
+  create_all  = true
+}
+
+file.content "docker-storage-driver" {
+  destination  = "/etc/systemd/system/docker.service.d/overlay.conf"
+  content = <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd --storage-driver=overlay
+EOF
+  depends = ["file.directory.service-directory"]
+}
+
 file.content "docker-repo" {
   destination = "/etc/yum.repos.d/docker.repo"
 
@@ -41,12 +70,12 @@ task "docker-user-group" {
 
 task "docker-enable" {
   check   = "systemctl is-enabled {{param `docker-service`}}"
-  apply   = "systemctl enable {{param `docker-service`}}"
+  apply   = "systemctl daemon-reload; systemctl enable {{param `docker-service`}}"
   depends = ["task.docker-user-group"]
 }
 
 task "docker-start" {
   check   = "systemctl is-active {{param `docker-service`}}"
-  apply   = "systemctl start {{param `docker-service`}}"
+  apply   = "systemctl daemon-reload; systemctl start {{param `docker-service`}}"
   depends = ["task.docker-enable"]
 }
