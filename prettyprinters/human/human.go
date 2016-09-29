@@ -139,7 +139,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), err
 	}
 
-	tabWriter := tabwriter.NewWriter(&out, 4, 4, 4, ' ', tabwriter.Debug)
+	tabWriter := tabwriter.NewWriter(&out, 1, 1, 1, ' ', 0)
 	_, err = tabWriter.Write(intermediate.Bytes())
 
 	return &out, err
@@ -173,7 +173,8 @@ func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
 	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		return fmt.Sprintf("%q\t=>\t%q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
+		sprintf := []string{"%q\t", "\x1b[1m", "=>", "\x1b[22m", "\t%q"}
+		return fmt.Sprintf(strings.Join(sprintf, ""), strings.TrimSpace(before), strings.TrimSpace(after)), nil
 	}
 
 	tmpl, err := p.template(`before:
