@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/asteris-llc/converge/graph"
 )
@@ -30,7 +31,29 @@ var ErrUnresolvable = errors.New("field is unresolvable")
 
 // fieldMapCache caches the results of field map generation to avoid
 // recalculating it during execution.
-var fieldMapCache = make(map[reflect.Type]map[string]string)
+type lockedFieldMapCache struct {
+	innerLock *sync.RWMutex
+	vals      map[reflect.Type]map[string]string
+}
+
+var fieldMapCache = makeCache()
+
+func makeCache() *lockedFieldMapCache {
+	return &lockedFieldMapCache{innerLock: new(sync.RWMutex), vals: make(map[reflect.Type]map[string]string)}
+}
+
+func (f *lockedFieldMapCache) Get(t reflect.Type) (map[string]string, bool) {
+	f.innerLock.Lock()
+	defer f.innerLock.Unlock()
+	val, ok := f.vals[t]
+	return val, ok
+}
+
+func (f *lockedFieldMapCache) Put(t reflect.Type, m map[string]string) {
+	f.innerLock.Lock()
+	defer f.innerLock.Unlock()
+	f.vals[t] = m
+}
 
 // Preprocessor is a template preprocessor
 type Preprocessor struct {
@@ -262,6 +285,7 @@ func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
 // a struct.
 func fieldMap(val interface{}) (map[string]string, error) {
 	fieldMap := make(map[string]string)
+	conflictMap := make(map[string]struct{})
 	var t reflect.Type
 	switch typed := val.(type) {
 	case reflect.Type:
@@ -277,32 +301,40 @@ func fieldMap(val interface{}) (map[string]string, error) {
 	if t.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("cannot access fields of non-struct type %T", val)
 	}
-	return addFieldsToMap(fieldMap, t)
+	return addFieldsToMap(fieldMap, conflictMap, t)
 }
 
-func addFieldsToMap(m map[string]string, t reflect.Type) (map[string]string, error) {
-	if cached, ok := fieldMapCache[t]; ok {
+func addFieldsToMap(m map[string]string, conflicts map[string]struct{}, t reflect.Type) (map[string]string, error) {
+	if cached, ok := fieldMapCache.Get(t); ok {
 		return cached, nil
 	}
-
 	for idx := 0; idx < t.NumField(); idx++ {
 		field := t.Field(idx)
 		if field.Anonymous {
+			lower := strings.ToLower(field.Name)
+			if _, ok := m[lower]; !ok {
+				m[lower] = field.Name
+			}
 			var err error
-			if m, err = addFieldsToMap(m, interfaceToConcreteType(field.Type)); err != nil {
-				return nil, err
+			anonType := interfaceToConcreteType(field.Type)
+			if anonType.Kind() == reflect.Struct {
+				if m, err = addFieldsToMap(m, conflicts, anonType); err != nil {
+					return nil, err
+				}
 			}
 			continue
 		}
-
 		name := field.Name
 		lower := strings.ToLower(name)
 		if _, ok := m[lower]; ok {
-			return nil, fmt.Errorf("multiple potential matches for %s", name)
+			conflicts[lower] = struct{}{}
+		} else {
+			if _, ok := conflicts[lower]; !ok {
+				m[lower] = name
+			}
 		}
-		m[lower] = name
 	}
-	fieldMapCache[t] = m
+	fieldMapCache.Put(t, m)
 	return m, nil
 }
 

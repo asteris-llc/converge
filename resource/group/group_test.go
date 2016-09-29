@@ -47,8 +47,8 @@ var (
 const (
 	// Valid GID range varies based on system
 	// At a minimum, 0-32676 is valid
-	GID_MIN = 0
-	GID_MAX = math.MaxInt16
+	minGID = 0
+	maxGID = math.MaxInt16
 )
 
 func init() {
@@ -73,400 +73,568 @@ func init() {
 	fakeName = strings.Join(tempName[0:], "")
 }
 
+// TestGroupInterface tests that the Group interface is properly implemented
 func TestGroupInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Task)(nil), new(group.Group))
 }
 
-func TestCheckFoundGidFoundNameStatePresent(t *testing.T) {
+// TestCheck tests all possible cases Check handles
+func TestCheck(t *testing.T) {
 	t.Parallel()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = currGid
-	g.Name = currName
-	g.State = group.StatePresent
-	status, err := g.Check(fakerenderer.New())
+	t.Run("state=present", func(t *testing.T) {
+		g := group.NewGroup(new(group.System))
+		g.State = group.StatePresent
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
+		t.Run("gid not provided", func(t *testing.T) {
+			t.Run("no add-group already exists", func(t *testing.T) {
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("add group", func(t *testing.T) {
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+					assert.Equal(t, "group does not exist", status.Messages()[0])
+					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
+					assert.Equal(t, fmt.Sprintf("group %s", g.Name), status.Diffs()["group"].Current())
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+		})
+
+		t.Run("gid provided", func(t *testing.T) {
+			t.Run("add group with gid", func(t *testing.T) {
+				g.GID = fakeGid
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+					assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
+					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
+					assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no add-group gid already exists", func(t *testing.T) {
+				g.GID = currGid
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group gid %s already exists", g.GID), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no add-group name already exists", func(t *testing.T) {
+				g.GID = fakeGid
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no add-group name and gid belong to different groups", func(t *testing.T) {
+				gid, err := setGid()
+				if err != nil {
+					panic(err)
+				}
+				g.GID = gid
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no add-group with gid already exists", func(t *testing.T) {
+				g := group.NewGroup(new(group.System))
+				g.GID = currGid
+				g.Name = currName
+				g.State = group.StatePresent
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s with gid %s already exists", g.Name, g.GID), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+		})
+	})
+
+	t.Run("state=absent", func(t *testing.T) {
+		g := group.NewGroup(new(group.System))
+		g.State = group.StateAbsent
+
+		t.Run("gid not provided", func(t *testing.T) {
+			t.Run("no delete-group does not exist", func(t *testing.T) {
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("delete group", func(t *testing.T) {
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s", g.Name), status.Diffs()["group"].Original())
+					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Current())
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+		})
+
+		t.Run("gid provided", func(t *testing.T) {
+			t.Run("no delete-group name and gid do not exist", func(t *testing.T) {
+				g.GID = fakeGid
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+					assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no delete-group name does not exist", func(t *testing.T) {
+				g.GID = currGid
+				g.Name = fakeName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no delete-group gid does not exist", func(t *testing.T) {
+				g.GID = fakeGid
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group gid %s does not exist", g.GID), status.Messages()[0])
+					assert.False(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("no delete-group name and gid belong to different groups", func(t *testing.T) {
+				gid, err := setGid()
+				if err != nil {
+					panic(err)
+				}
+				g.GID = gid
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+
+			t.Run("delete group with gid", func(t *testing.T) {
+				g.GID = currGid
+				g.Name = currName
+				status, err := g.Check(fakerenderer.New())
+
+				if runtime.GOOS == "linux" {
+					assert.NoError(t, err)
+					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Original())
+					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Current())
+					assert.True(t, status.HasChanges())
+				} else {
+					assert.EqualError(t, err, "group: not supported on this system")
+				}
+			})
+		})
+	})
+
+	t.Run("state unknown", func(t *testing.T) {
+		g := group.NewGroup(new(group.System))
+		g.GID = fakeGid
+		g.Name = fakeName
+		g.State = "test"
+		_, err := g.Check(fakerenderer.New())
+
+		if runtime.GOOS == "linux" {
+			assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
+		} else {
+			assert.EqualError(t, err, "group: not supported on this system")
+		}
+	})
 }
 
-func TestCheckFoundGidFoundNameStateAbsent(t *testing.T) {
+// TestApply tests all possible cases Apply handles
+func TestApply(t *testing.T) {
 	t.Parallel()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = currGid
-	g.Name = currName
-	g.State = group.StateAbsent
-	status, err := g.Check(fakerenderer.New())
+	t.Run("state=present", func(t *testing.T) {
+		t.Run("gid not provided", func(t *testing.T) {
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Original())
-		assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Current())
-		assert.True(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+			t.Run("add group", func(t *testing.T) {
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.State = group.StatePresent
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				g.Name = grp.Name
 
-func TestCheckFoundGidNotNameStatePresent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
+				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
+				m.On("AddGroup", g.Name, g.GID).Return(nil)
+				status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = currGid
-	g.Name = fakeName
-	g.State = group.StatePresent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+				assert.NoError(t, err)
+				assert.Equal(t, fmt.Sprintf("added group %s", g.Name), status.Messages()[0])
+			})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group gid %s already exists", g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+			t.Run("no add-error adding group", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.Name = grp.Name
+				g.State = group.StatePresent
 
-func TestCheckFoundGidNotNameStateAbsent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
+				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
+				m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
+				status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = currGid
-	g.Name = fakeName
-	g.State = group.StateAbsent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, fmt.Sprintf("error adding group %s", g.Name), status.Messages()[0])
+			})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+			t.Run("no add-will not attempt add", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.Name = grp.Name
+				g.State = group.StatePresent
 
-func TestCheckFoundNameNotGidStatePresent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("LookupGroupID", g.GID).Return(grp, nil)
+				m.On("AddGroup", g.Name, g.GID).Return(nil)
+				status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = fakeGid
-	g.Name = currName
-	g.State = group.StatePresent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s", g.Name))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			})
+		})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+		t.Run("gid provided", func(t *testing.T) {
+			t.Run("add group with gid", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp.Gid
+				g.Name = grp.Name
+				g.State = group.StatePresent
 
-func TestCheckFoundNameNotGidStateAbsent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
+				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
+				m.On("AddGroup", g.Name, g.GID).Return(nil)
+				status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = fakeGid
-	g.Name = currName
-	g.State = group.StateAbsent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+				assert.NoError(t, err)
+				assert.Equal(t, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+			})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group gid %s does not exist", g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+			t.Run("no add-error adding group", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp.Gid
+				g.Name = grp.Name
+				g.State = group.StatePresent
 
-func TestCheckNameAndGidMismatchStatePresent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
+				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
+				m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
+				status, err := g.Apply()
 
-	gid, err := setGid()
-	if err != nil {
-		panic(err)
-	}
-	g := group.NewGroup(new(group.System))
-	g.GID = gid
-	g.Name = currName
-	g.State = group.StatePresent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, fmt.Sprintf("error adding group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+			})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+			t.Run("no add-will not attempt add", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp.Gid
+				g.Name = grp.Name
+				g.State = group.StatePresent
 
-func TestCheckNameAndGidMismatchStateAbsent(t *testing.T) {
-	t.Parallel()
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("LookupGroupID", g.GID).Return(grp, nil)
+				m.On("AddGroup", g.Name, g.GID).Return(nil)
+				status, err := g.Apply()
 
-	gid, err := setGid()
-	if err != nil {
-		panic(err)
-	}
-	g := group.NewGroup(new(group.System))
-	g.GID = gid
-	g.Name = currName
-	g.State = group.StateAbsent
-	status, err := g.Check(fakerenderer.New())
+				m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s with gid %s", g.Name, g.GID))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			})
+		})
+	})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusFatal, status.StatusCode())
-		assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+	t.Run("state=absent", func(t *testing.T) {
+		t.Run("delete group", func(t *testing.T) {
+			grp := &user.Group{
+				Name: fakeName,
+				Gid:  fakeGid,
+			}
+			m := &MockSystem{}
+			g := group.NewGroup(m)
+			g.Name = grp.Name
+			g.State = group.StateAbsent
 
-func TestCheckNameAndGidNotFoundStatePresent(t *testing.T) {
-	t.Parallel()
+			m.On("LookupGroup", g.Name).Return(grp, nil)
+			m.On("LookupGroupID", g.GID).Return(grp, nil)
+			m.On("DelGroup", g.Name).Return(nil)
+			status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = fakeGid
-	g.Name = fakeName
-	g.State = group.StatePresent
-	status, err := g.Check(fakerenderer.New())
+			m.AssertCalled(t, "DelGroup", g.Name)
+			assert.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("deleted group %s", g.Name), status.Messages()[0])
+		})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-		assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
-		assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
-		assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
-		assert.True(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+		t.Run("no delete-error deleting group", func(t *testing.T) {
+			grp := &user.Group{
+				Name: fakeName,
+				Gid:  fakeGid,
+			}
+			m := &MockSystem{}
+			g := group.NewGroup(m)
+			g.Name = grp.Name
+			g.State = group.StateAbsent
 
-func TestCheckNameAndGidNotFoundStateAbsent(t *testing.T) {
-	t.Parallel()
+			m.On("LookupGroup", g.Name).Return(grp, nil)
+			m.On("LookupGroupID", g.GID).Return(grp, nil)
+			m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
+			status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = fakeGid
-	g.Name = fakeName
-	g.State = group.StateAbsent
-	status, err := g.Check(fakerenderer.New())
+			m.AssertCalled(t, "DelGroup", g.Name)
+			assert.EqualError(t, err, fmt.Sprintf(""))
+			assert.Equal(t, resource.StatusFatal, status.StatusCode())
+			assert.Equal(t, fmt.Sprintf("error deleting group %s", g.Name), status.Messages()[0])
+		})
 
-	if runtime.GOOS == "linux" {
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-		assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
-		assert.False(t, status.HasChanges())
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
+		t.Run("no delete-will not attempt delete", func(t *testing.T) {
+			grp := &user.Group{
+				Name: fakeName,
+				Gid:  fakeGid,
+			}
+			m := &MockSystem{}
+			g := group.NewGroup(m)
+			g.Name = grp.Name
+			g.State = group.StateAbsent
 
-func TestCheckStateUnknown(t *testing.T) {
-	t.Parallel()
+			m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
+			m.On("LookupGroupID", g.GID).Return(grp, nil)
+			m.On("DelGroup", g.Name).Return(nil)
+			status, err := g.Apply()
 
-	g := group.NewGroup(new(group.System))
-	g.GID = fakeGid
-	g.Name = fakeName
-	g.State = "test"
-	_, err := g.Check(fakerenderer.New())
+			m.AssertNotCalled(t, "DelGroup", g.Name)
+			assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s", g.Name))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+		})
 
-	if runtime.GOOS == "linux" {
+		t.Run("gid provided", func(t *testing.T) {
+			t.Run("delete group with gid", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp.Gid
+				g.Name = grp.Name
+				g.State = group.StateAbsent
+
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("LookupGroupID", g.GID).Return(grp, nil)
+				m.On("DelGroup", g.Name).Return(nil)
+				status, err := g.Apply()
+
+				m.AssertCalled(t, "DelGroup", g.Name)
+				assert.NoError(t, err)
+				assert.Equal(t, fmt.Sprintf("deleted group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+			})
+
+			t.Run("no delete-error deleting group", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp.Gid
+				g.Name = grp.Name
+				g.State = group.StateAbsent
+
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("LookupGroupID", g.GID).Return(grp, nil)
+				m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
+				status, err := g.Apply()
+
+				m.AssertCalled(t, "DelGroup", g.Name)
+				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, fmt.Sprintf("error deleting group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+			})
+
+			t.Run("no delete-will not attempt delete", func(t *testing.T) {
+				grp1 := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				grp2 := &user.Group{
+					Name: currName,
+					Gid:  currGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.GID = grp2.Gid
+				g.Name = grp1.Name
+				g.State = group.StateAbsent
+
+				m.On("LookupGroup", g.Name).Return(grp1, nil)
+				m.On("LookupGroupID", g.GID).Return(grp2, nil)
+				m.On("DelGroup", g.Name).Return(nil)
+				status, err := g.Apply()
+
+				m.AssertNotCalled(t, "DelGroup", g.Name)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s with gid %s", g.Name, g.GID))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			})
+		})
+	})
+
+	t.Run("state unknown", func(t *testing.T) {
+		m := &MockSystem{}
+		g := group.NewGroup(m)
+		grp := &user.Group{
+			Name: fakeName,
+			Gid:  fakeGid,
+		}
+		g.GID = grp.Gid
+		g.Name = grp.Name
+		g.State = "test"
+
+		m.On("LookupGroup", g.Name).Return(grp, nil)
+		m.On("LookupGroupID", g.GID).Return(grp, nil)
+		m.On("AddGroup", g.Name, g.GID)
+		m.On("DelGroup", g.Name)
+		_, err := g.Apply()
+
+		m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
+		m.AssertNotCalled(t, "DelGroup", g.Name)
 		assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
-	} else {
-		assert.EqualError(t, err, "group: not supported on this system")
-	}
-}
-
-func TestApplyAddGroup(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = group.StatePresent
-
-	m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-	m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-	m.On("AddGroup", g.Name, g.GID).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID), status.Messages()[0])
-}
-
-func TestApplyDeleteGroup(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = group.StateAbsent
-
-	m.On("LookupGroup", g.Name).Return(grp, nil)
-	m.On("LookupGroupID", g.GID).Return(grp, nil)
-	m.On("DelGroup", g.Name).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertCalled(t, "DelGroup", g.Name)
-	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("deleted group %s with gid %s", g.Name, g.GID), status.Messages()[0])
-}
-
-func TestApplyAddGroupErrorAdding(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = group.StatePresent
-
-	m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-	m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-	m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-	assert.EqualError(t, err, fmt.Sprintf(""))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("error adding group %s with gid %s", g.Name, g.GID), status.Messages()[0])
-}
-
-func TestApplyAddGroupNotAdded(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = group.StatePresent
-
-	m.On("LookupGroup", g.Name).Return(grp, nil)
-	m.On("LookupGroupID", g.GID).Return(grp, nil)
-	m.On("AddGroup", g.Name, g.GID).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
-	assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s with gid %s", g.Name, g.GID))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-}
-
-func TestApplyDeleteGroupErrorDeleting(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = group.StateAbsent
-
-	m.On("LookupGroup", g.Name).Return(grp, nil)
-	m.On("LookupGroupID", g.GID).Return(grp, nil)
-	m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertCalled(t, "DelGroup", g.Name)
-	assert.EqualError(t, err, fmt.Sprintf(""))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("error deleting group %s with gid %s", g.Name, g.GID), status.Messages()[0])
-}
-
-func TestApplyDeleteGroupNotDeleted(t *testing.T) {
-	t.Parallel()
-
-	grp1 := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	grp2 := &user.Group{
-		Name: currName,
-		Gid:  currGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp2.Gid
-	g.Name = grp1.Name
-	g.State = group.StateAbsent
-
-	m.On("LookupGroup", g.Name).Return(grp1, nil)
-	m.On("LookupGroupID", g.GID).Return(grp2, nil)
-	m.On("DelGroup", g.Name).Return(nil)
-	status, err := g.Apply(fakerenderer.New())
-
-	m.AssertNotCalled(t, "DelGroup", g.Name)
-	assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s with gid %s", g.Name, g.GID))
-	assert.Equal(t, resource.StatusFatal, status.StatusCode())
-}
-
-func TestApplyStateUnknown(t *testing.T) {
-	t.Parallel()
-
-	grp := &user.Group{
-		Name: fakeName,
-		Gid:  fakeGid,
-	}
-	m := &MockSystem{}
-	g := group.NewGroup(m)
-	g.GID = grp.Gid
-	g.Name = grp.Name
-	g.State = "test"
-
-	m.On("LookupGroup", g.Name).Return(grp, nil)
-	m.On("LookupGroupID", g.GID).Return(grp, nil)
-	m.On("AddGroup", g.Name, g.GID)
-	m.On("DelGroup", g.Name)
-	_, err := g.Apply(fakerenderer.New())
-
-	m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
-	m.AssertNotCalled(t, "DelGroup", g.Name)
-	assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
+	})
 }
 
 // setGid is used for TestCheckNameAndGidMismatch. We need a gid that exists,
 // but is not a match for the current user group name (currName).
 func setGid() (string, error) {
-	for i := 0; i <= GID_MAX; i++ {
+	for i := 0; i <= maxGID; i++ {
 		gid := strconv.Itoa(i)
 		group, err := user.LookupGroupId(gid)
 		if err == nil && group.Name != currName {
@@ -478,7 +646,7 @@ func setGid() (string, error) {
 
 // setFakeGid is used to set a gid that does not exist.
 func setFakeGid() (string, error) {
-	for i := GID_MIN; i <= GID_MAX; i++ {
+	for i := minGID; i <= maxGID; i++ {
 		gid := strconv.Itoa(i)
 		_, err := user.LookupGroupId(gid)
 		if err != nil {
@@ -488,25 +656,30 @@ func setFakeGid() (string, error) {
 	return "", fmt.Errorf("setFakeGid: could not set gid")
 }
 
+// MockSystem for Group
 type MockSystem struct {
 	mock.Mock
 }
 
+// AddGroup for MockSystem
 func (m *MockSystem) AddGroup(name, gid string) error {
 	args := m.Called(name, gid)
 	return args.Error(0)
 }
 
+// DelGroup for MockSystem
 func (m *MockSystem) DelGroup(name string) error {
 	args := m.Called(name)
 	return args.Error(0)
 }
 
+// LookupGroup for MockSystem
 func (m *MockSystem) LookupGroup(name string) (*user.Group, error) {
 	args := m.Called(name)
 	return args.Get(0).(*user.Group), args.Error(1)
 }
 
+// LookupGroupID for MockSystem
 func (m *MockSystem) LookupGroupID(gid string) (*user.Group, error) {
 	args := m.Called(gid)
 	return args.Get(0).(*user.Group), args.Error(1)

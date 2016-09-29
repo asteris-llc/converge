@@ -22,23 +22,25 @@ import (
 	"os/user"
 )
 
-var linuxOpts = map[string]string{
-	"uid":       "-u",
-	"gid":       "-g",
-	"comment":   "-c",
-	"directory": "-d",
-}
-
 // System implements SystemUtils
 type System struct{}
 
 // AddUser adds a user
-func (s *System) AddUser(userName string, options map[string]string) error {
+func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	args := []string{userName}
-	for k, v := range options {
-		args = append(args, linuxOpts[k])
-		args = append(args, v)
+	if options.UID != "" {
+		args = append(args, "-u", options.UID)
 	}
+	if options.Group != "" {
+		args = append(args, "-g", options.Group)
+	}
+	if options.Comment != "" {
+		args = append(args, "-c", options.Comment)
+	}
+	if options.Directory != "" {
+		args = append(args, "-d", options.Directory)
+	}
+
 	cmd := exec.Command("useradd", args...)
 	err := cmd.Run()
 	if err != nil {
@@ -67,6 +69,12 @@ func (s *System) Lookup(userName string) (*user.User, error) {
 // If the user cannot be found an error is returned
 func (s *System) LookupID(userID string) (*user.User, error) {
 	return user.LookupId(userID)
+}
+
+// LookupGroup looks up a group by name
+// If the group cannot be found an error is returned
+func (s *System) LookupGroup(groupName string) (*user.Group, error) {
+	return user.LookupGroup(groupName)
 }
 
 // LookupGroupID looks up a group by gid

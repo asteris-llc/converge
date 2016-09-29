@@ -23,6 +23,8 @@ import (
 
 // Mode monitors the mode of a file
 type Mode struct {
+	resource.Status
+
 	Destination string
 	Mode        os.FileMode
 }
@@ -35,11 +37,9 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 		diffs[t.Destination] = &FileModeDiff{Expected: t.Mode}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
 		return &resource.Status{
-			Status:       status,
-			WarningLevel: resource.StatusFatal,
-			WillChange:   false,
-			Differences:  diffs,
-			Output:       []string{status},
+			Level:       resource.StatusFatal,
+			Differences: diffs,
+			Output:      []string{status},
 		}, nil
 	} else if err != nil {
 		return nil, err
@@ -52,29 +52,30 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if modeDiff.Changes() {
 		warningLevel = resource.StatusWillChange
 	}
-	return &resource.Status{
-		Status:       status,
-		WarningLevel: warningLevel,
-		WillChange:   modeDiff.Changes(),
-		Differences:  diffs,
+
+	t.Status = resource.Status{
+		Level:       warningLevel,
+		Differences: diffs,
 		Output: []string{
 			fmt.Sprintf("%q exist", t.Destination),
 			status,
 		},
-	}, nil
+	}
+	return t, nil
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply(r resource.Renderer) (resource.TaskStatus, error) {
+func (t *Mode) Apply() (resource.TaskStatus, error) {
 	err := os.Chmod(t.Destination, t.Mode.Perm())
-	if err == nil {
-		return t.Check(r)
+
+	if err != nil {
+		return &resource.Status{
+			Level:  resource.StatusFatal,
+			Output: []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
+		}, err
 	}
-	return &resource.Status{
-		WarningLevel: resource.StatusFatal,
-		Status:       fmt.Sprintf("%s", err),
-		Output:       []string{fmt.Sprintf("failed to set mode on %s: %s", t.Destination, err)},
-	}, err
+
+	return t, nil
 }
 
 // Validate Mode

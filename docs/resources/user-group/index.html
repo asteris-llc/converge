@@ -271,6 +271,19 @@
 
 
         
+        
+        
+
+
+
+<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+
+
+
+        
     </ul>
     
 </li>
@@ -504,9 +517,7 @@
 
 <pre><code class="language-hcl"># create a group, only works on linux
 user.group &quot;group&quot; {
-  gid   = &quot;123&quot;
-  name  = &quot;test&quot;
-  state = &quot;present&quot;
+  name = &quot;test&quot;
 }
 
 </code></pre>
@@ -529,7 +540,8 @@ user.group &quot;group&quot; {
 <li><code>state</code> (string)</li>
 </ul>
 
-<p>State is whether the group should be present.</p>
+<p>State is whether the group should be present.
+Options are present and absent; default is present.</p>
 
 
 			<aside class="copyright" role="note">
@@ -548,18 +560,34 @@ user.group &quot;group&quot; {
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
+      <a href="http://converge.aster.is/resources/user-user/" title="user.user">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              user.user
+            </div>
+          </div>
+        </div>
+      </a>
+  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/user-user/" title="user.user">
+      <a href="http://converge.aster.is/resource-authors-guide/" title="Resource Authors Guide">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              user.user
+              Resource Authors Guide
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

@@ -47,7 +47,6 @@ func TestContainerCheckContainerNotFound(t *testing.T) {
 	status, err := container.Check(fakerenderer.New())
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	assert.Equal(t, name, status.Value())
 	assertDiff(t, status.Diffs(), "name", "<container-missing>", name)
 }
 
@@ -139,7 +138,7 @@ func TestContainerCheckStatusNoChange(t *testing.T) {
 		},
 	}
 
-	container := &container.Container{Force: true, Name: "nginx", Status: "created"}
+	container := &container.Container{Force: true, Name: "nginx", CStatus: "created"}
 	container.SetClient(c)
 
 	status, err := container.Check(fakerenderer.New())
@@ -638,7 +637,7 @@ func TestContainerApply(t *testing.T) {
 	container := &container.Container{Force: true, Name: "nginx", Image: "nginx:latest"}
 	container.SetClient(c)
 
-	_, err := container.Apply(fakerenderer.New())
+	_, err := container.Apply()
 	assert.NoError(t, err)
 }
 

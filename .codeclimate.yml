@@ -1,0 +1,36 @@
+---
+engines:
+  gofmt:
+    enabled: true
+
+  golint:
+    enabled: true
+
+  govet:
+    enabled: true
+
+  markdownlint:
+    enabled: true
+    checks:
+    #duplicate headers are used in CHANGELOG
+      MD024:
+        enabled: false 
+  
+  shellcheck:
+    enabled: true
+
+  fixme:
+    enabled: true
+
+ratings:
+  paths:
+    - "**.go"
+    - "**.md"
+    - "**.sh"
+
+exclude_paths:
+  - vendor/
+
+  # generated files
+  - rpc/pb/root.pb.go
+  - rpc/pb/root.pb.gw.go

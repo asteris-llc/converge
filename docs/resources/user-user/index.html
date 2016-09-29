@@ -271,6 +271,19 @@
 
 
         
+        
+        
+
+
+
+<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+
+
+
+        
     </ul>
     
 </li>
@@ -512,22 +525,30 @@ user.user &quot;user&quot; {
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><code>username</code> (string)</li>
+</ul>
+
+<p>Username is the user login name.</p>
+
+<ul>
 <li><code>uid</code> (string)</li>
 </ul>
 
 <p>UID is the user ID.</p>
 
 <ul>
+<li><code>groupname</code> (string)</li>
+</ul>
+
+<p>Groupname is the primary group for user and must already exist.
+Only one of GID or Groupname may be indicated.</p>
+
+<ul>
 <li><code>gid</code> (string)</li>
 </ul>
 
-<p>Gid is the primary group ID for user.</p>
-
-<ul>
-<li><code>username</code> (string)</li>
-</ul>
-
-<p>Username is the user login name.</p>
+<p>Gid is the primary group ID for user and must refer to an existing group.
+Only one of GID or Groupname may be indicated.</p>
 
 <ul>
 <li><code>name</code> (string)</li>
@@ -546,7 +567,8 @@ name is appended to the home directory.</p>
 <li><code>state</code> (string)</li>
 </ul>
 
-<p>State is whether the user should be present.</p>
+<p>State is whether the user should be present.
+Options are present and absent; default is present.</p>
 
 
 			<aside class="copyright" role="note">
@@ -565,34 +587,18 @@ name is appended to the home directory.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/resources/user-group/" title="user.group">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              user.group
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/resources/file-directory/" title="file.directory">
+      <a href="http://converge.aster.is/resources/user-group/" title="user.group">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              file.directory
+              user.group
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

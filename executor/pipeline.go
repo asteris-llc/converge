@@ -14,63 +14,44 @@
 
 package executor
 
-import (
-	"fmt"
-
-	"github.com/asteris-llc/converge/executor/either"
-	"github.com/asteris-llc/converge/executor/list"
-	"github.com/asteris-llc/converge/executor/monad"
-)
+// PipelineFunc represents a pipelined function that uses multi-return instead
+// of either.
+type PipelineFunc func(interface{}) (interface{}, error)
 
 // Pipeline is a type alias for a lazy list of pipeline functions
 type Pipeline struct {
-	CallStack list.List
+	CallStack []PipelineFunc
 }
 
 // NewPipeline creats a new Pipeline with an empty call stack
 func NewPipeline() Pipeline {
-	return Pipeline{CallStack: list.Mzero()}
+	return Pipeline{[]PipelineFunc{}}
 }
 
-// AndThen pushes a function onto the pipeline call stack
-func (p Pipeline) AndThen(f func(interface{}) monad.Monad) Pipeline {
-	p.CallStack = list.Append(f, p.CallStack)
-	return p
-}
-
-// LogAndThen pushes a function onto the pipeline call stack
-func (p Pipeline) LogAndThen(f func(interface{}) monad.Monad, log func(interface{})) Pipeline {
-	logged := func(i interface{}) monad.Monad {
-		log(i)
-		return f(i)
-	}
-	p.CallStack = list.Append(logged, p.CallStack)
+// AndThen is a utility function that converts a PipelineFunc into a
+// MonadicPipelineFunc before adding it to the execution list as part of the
+// refactor to remove Either from pipeline processing.
+func (p Pipeline) AndThen(f PipelineFunc) Pipeline {
+	p.CallStack = append(p.CallStack, f)
 	return p
 }
 
 // Connect adds a pipeline to the end of the current pipeline.
 // E.g. {a,b,c}.Connect({d,e,f}) = {a,b,c,d,e.f}
 func (p Pipeline) Connect(end Pipeline) Pipeline {
-	p.CallStack = list.Concat(p.CallStack, end.CallStack)
+	p.CallStack = append(p.CallStack, end.CallStack...)
 	return p
 }
 
 // Exec executes the pipeline
-func (p Pipeline) Exec(zeroValue interface{}) either.EitherM {
-	foldFunc := func(carry, elem interface{}) interface{} {
-		f, ok := elem.(func(interface{}) monad.Monad)
-		if !ok {
-			return either.LeftM(badTypeError("func(interface{}) monad.Monad", elem))
+func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
+	var err error
+	var val = zeroValue
+	for _, f := range p.CallStack {
+		val, err = f(val)
+		if err != nil {
+			return nil, err
 		}
-		e, ok := carry.(either.EitherM)
-		if !ok {
-			return either.LeftM(badTypeError("EitherM", carry))
-		}
-		return e.AndThen(f)
 	}
-	return list.Foldl(foldFunc, zeroValue, p.CallStack).(either.EitherM)
-}
-
-func badTypeError(expected string, actual interface{}) error {
-	return fmt.Errorf("expected type `%s' but actual value is of type %T", expected, actual)
+	return val, nil
 }

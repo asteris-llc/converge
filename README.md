@@ -1,8 +1,18 @@
 # Converge
 
-Converge is a configuration management tool.
+Converge is a configuration management tool that makes it easy to manage servers,
+laptops and other devices.
+
+Key features:
+
+- Easy to install and run. A single binary and configuration file is all you need.
+- A powerful graph engine that automatically generates dependencies and
+runs tasks in parallel.
+- API-first communication using [grpc](http://grpc.io).
+- Module verification: only run trusted modules.
 
 [![Slack Status](http://converge-slack.aster.is/badge.svg)](http://converge-slack.aster.is)
+[![Code Climate](https://codeclimate.com/github/asteris-llc/converge/badges/gpa.svg)](https://codeclimate.com/github/asteris-llc/converge)
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
@@ -53,8 +63,8 @@ file.content "render" {
 }
 ```
 
-Invoke this with `converge apply --local samples/fileContent.hcl` to install
-Traefik from yum on your system. You can also `converge plan --local
+Invoke this with `converge apply --local samples/fileContent.hcl` to place
+a test file on your system. You can also `converge plan --local
 samples/fileContent.hcl` to see what changes will be made before you apply them.
 
 ## Development

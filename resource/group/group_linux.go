@@ -27,7 +27,11 @@ type System struct{}
 
 // AddGroup adds a group
 func (s *System) AddGroup(groupName, groupID string) error {
-	cmd := exec.Command("groupadd", groupName, "-g", groupID)
+	args := []string{groupName}
+	if groupID != "" {
+		args = append(args, "-g", groupID)
+	}
+	cmd := exec.Command("groupadd", args...)
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("groupadd: %s", err)

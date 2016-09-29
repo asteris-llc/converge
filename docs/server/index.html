@@ -274,6 +274,19 @@
 
 
         
+        
+        
+
+
+
+<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+
+
+
+        
     </ul>
     
 </li>
@@ -508,6 +521,33 @@
 network</li>
 </ul>
 
+<h2 id="basic-usage">Basic Usage</h2>
+
+<p>To run converge in server mode with easy configuration, you just need
+the binary installed on your device, and a token to use for authenticating over
+RPC. In this example, we&rsquo;ll use the <code>uuid</code> utility to generate this token.</p>
+
+<pre><code class="language-shell">TOKEN=`uuid`
+converge server --rpc-token $TOKEN
+</code></pre>
+
+<p>This will spin up a gRPC server on port 4774, with <code>$token</code> set as the RPC
+token. You should see messages streaming from the server.</p>
+
+<p>If you run the server command without <code>--rpc-token</code>, then the output will
+include the generated token. While this token is valid during the whole
+session, a new one is generated each time you start a new session. If you want
+to use the same token across sessions, you will need to pass it in.</p>
+
+<p>The next step is to run the converge binary in client mode. This can be on
+the same machine, or a different machine in your network. This example assumes
+that you have a HCL file called <code>your.hcl</code> that you wish to configure the
+server or device with.</p>
+
+<pre><code class="language-shell">TOKEN=&quot;the pasted contents of that token from earlier&quot;
+converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
+</code></pre>
+
 <h2 id="https">HTTPS</h2>
 
 <p>You can run the server over HTTPS. If you don&rsquo;t have your own certificates, you
@@ -580,7 +620,7 @@ argument (or set <code>CONVERGE_LOCAL=1</code>.) This will:</p>
 <li>Shut down the RPC server</li>
 </ol>
 
-<p>During this process, a port (<code>localhost:26930</code>) will be opened and RPC will be
+<p>During this process, a port (<code>localhost:47740</code>) will be opened and RPC will be
 running on it. This interface will be protected with an randomly-generated
 token, unless you specify <code>--no-token</code></p>
 
@@ -592,6 +632,11 @@ instructions to whoever can reach that port. You can make this process <em>more<
 secure by specifying <code>--cert-file</code>, <code>--key-file</code>, and optionally <code>--ca-file</code> to
 connect over HTTPS.</p>
 </div>
+
+<h2 id="address">Address</h2>
+
+<p>Converge has been assigned
+<a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774">port 4774 by the Internet Assigned Numbers Authority</a>.</p>
 
 
 			<aside class="copyright" role="note">

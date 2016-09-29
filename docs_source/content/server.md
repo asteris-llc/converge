@@ -16,6 +16,35 @@ Converge comes with a server that can:
 - serve the Converge binary itself, for bootstrapping new systems inside your
   network
 
+## Basic Usage
+
+To run converge in server mode with easy configuration, you just need
+the binary installed on your device, and a token to use for authenticating over
+RPC. In this example, we'll use the `uuid` utility to generate this token.
+
+```shell
+TOKEN=`uuid`
+converge server --rpc-token $TOKEN
+```
+
+This will spin up a gRPC server on port 4774, with `$token` set as the RPC
+token. You should see messages streaming from the server.
+
+If you run the server command without `--rpc-token`, then the output will
+include the generated token. While this token is valid during the whole
+session, a new one is generated each time you start a new session. If you want
+to use the same token across sessions, you will need to pass it in.
+
+The next step is to run the converge binary in client mode. This can be on
+the same machine, or a different machine in your network. This example assumes
+that you have a HCL file called `your.hcl` that you wish to configure the
+server or device with.
+
+```shell
+TOKEN="the pasted contents of that token from earlier"
+converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
+```
+
 ## HTTPS
 
 You can run the server over HTTPS. If you don't have your own certificates, you
@@ -89,7 +118,7 @@ argument (or set `CONVERGE_LOCAL=1`.) This will:
 2. Perform the requested action against the RPC server
 3. Shut down the RPC server
 
-During this process, a port (`localhost:26930`) will be opened and RPC will be
+During this process, a port (`localhost:47740`) will be opened and RPC will be
 running on it. This interface will be protected with an randomly-generated
 token, unless you specify `--no-token`
 
@@ -100,3 +129,8 @@ instructions to whoever can reach that port. You can make this process *more*
 secure by specifying `--cert-file`, `--key-file`, and optionally `--ca-file` to
 connect over HTTPS.
 {{< /warning >}}
+
+## Address
+
+Converge has been assigned
+[port 4774 by the Internet Assigned Numbers Authority](http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774).

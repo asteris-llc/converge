@@ -14,24 +14,32 @@
 
 package param
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"fmt"
+
+	"github.com/asteris-llc/converge/resource"
+)
 
 // Param controls parameter flow inside execution
 type Param struct {
-	Value string
+	resource.Status
+
+	Val interface{}
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
 func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{Status: p.String()}, nil
+	p.Status = resource.Status{Output: []string{p.String()}}
+
+	return p, nil
 }
 
 // Apply doesn't do anything since params are final values
-func (p *Param) Apply(r resource.Renderer) (resource.TaskStatus, error) {
-	return p.Check(r)
+func (p *Param) Apply() (resource.TaskStatus, error) {
+	return p, nil
 }
 
-// String is the final value of thie Param
+// String is the final value of this Param
 func (p *Param) String() string {
-	return p.Value
+	return fmt.Sprintf("%v", p.Val)
 }
