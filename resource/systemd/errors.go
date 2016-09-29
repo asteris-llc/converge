@@ -20,6 +20,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+// MultiErrorAppend appends errors together into one skipping nil errors.
+// If all errors passed in are nil then it also returns nil
 func MultiErrorAppend(errs ...error) error {
 	//Filter out all the nil errors
 	nonNilErrs := make([]error, 0, len(errs))
@@ -33,7 +35,7 @@ func MultiErrorAppend(errs ...error) error {
 	} else if len(nonNilErrs) == 1 {
 		return nonNilErrs[0]
 	} else {
-		e := multierror.Append(errs[0], errs[1:]...)
+		e := multierror.Append(nonNilErrs[0], nonNilErrs[1:]...)
 		e.ErrorFormat = multiErrorPrinter
 		return e
 	}

@@ -25,26 +25,24 @@ import (
 
 // Preparer for Systemd Unit
 type Preparer struct {
-	// The name of this unit as in "foo.service"
+	// The name of this unit as in `foo.service`
+	// (either just file names or full absolute paths if the unit files are
+	// residing outside the usual unit search paths
 	Name string `hcl:"name"`
 
-	// Active determines whether this unit should be active or inactive
+	// Active determines whether this unit should be in an active or inactive state
 	Active string `hcl:"active"`
 
-	/* State is the UnitFileState of the unit.
-	UnitFileState encodes the install state of the unit file of FragmentPath.
-	It currently knows the following states: enabled, enabled-runtime, linked,
-	linked-runtime, masked, masked-runtime, static, disabled, invalid. enabled
-	indicates that a unit file is permanently enabled. enable-runtime indicates
-	the unit file is only temporarily enabled, and will no longer be enabled
-	after a reboot (that means, it is enabled via /run symlinks, rather than /etc).
-	linked indicates that a unit is linked into /etc permanently, linked indicates
-	that a unit is linked into /run temporarily (until the next reboot). masked
-	indicates that the unit file is masked permanently, masked-runtime indicates
-	that it is only temporarily masked in /run, until the next reboot.
-	static indicates that the unit is statically enabled, i.e. always enabled and
-	doesn't need to be enabled explicitly. invalid indicates that it could not
-	be determined whether the unit file is enabled.
+	/* state is the `UnitFileState` of the unit.
+	`UnitFileState` encodes the install state of the unit file of FragmentPath.
+	It currently knows the following states: `enabled`, `enabled-runtime`, `linked`,
+	`linked-runtime`, `masked`, `masked-runtime`, `static`, `bad`, `disabled`, `invalid`.
+
+	Of these states only  `enabled`, `enabled-runtime`, `linked`,
+	`linked-runtime`, `masked`, `masked-runtime`, `static`, `disabled`, and
+	`invalid` are permitted in the preparer
+
+	See https://godoc.org/github.com/coreos/go-systemd/dbus for more info
 	*/
 	UnitFileState string `hcl:"state"`
 
@@ -52,15 +50,8 @@ type Preparer struct {
 	StartUnit() enqeues a start job, and possibly depending jobs.
 	Takes the unit to activate, plus a mode string. The mode needs to be one of
 	replace, fail, isolate, ignore-dependencies, ignore-requirements.
-	If "replace" the call will start the unit and its dependencies,
-	possibly replacing already queued jobs that conflict with this. If "fail" the
-	call will start the unit and its dependencies, but will fail if this would
-	change an already queued job. If "isolate" the call will start the unit in
-	question and terminate all units that aren't dependencies of it. If
-	"ignore-dependencies" it will start a unit but ignore all its dependencies.
-	If "ignore-requirements" it will start a unit but only ignore the requirement
-	dependencies. It is not recommended to make use of the latter two options.
-	Returns the newly created job object.
+
+	See https://godoc.org/github.com/coreos/go-systemd/dbus for more info
 	*/
 	StartMode string `hcl:"mode"`
 
@@ -72,7 +63,7 @@ type Preparer struct {
 	// "us" (or "µs"), "ms", "s", "m", "h".
 	Timeout string `hcl:"timeout" doc_type:"duration string"`
 
-	// The location of the original uit file.
+	// The location of the original unit file.
 	Destination string `hcl:destination"`
 }
 
@@ -121,7 +112,22 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		StartMode:     systemd.StartMode(sm),
 		Timeout:       t,
 	}
-	return unit, unit.Validate()
+	return unit, Validate(unit)
+}
+
+var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSMasked, systemd.UFSMaskedRuntime, systemd.UFSDisabled}
+
+func Validate(t *Unit) error {
+	if t.Name == "" {
+		return fmt.Errorf("task requires a %q parameter", "name")
+	}
+	if !systemd.IsValidUnitFileState(t.UnitFileState) {
+		return fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
+	}
+	if !systemd.IsValidStartMode(t.StartMode) {
+		return fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, t.StartMode)
+	}
+	return nil
 }
 
 func init() {

@@ -66,13 +66,13 @@ const (
 	ASDeactivating ActiveState = "deactivating"
 )
 
-func (state ActiveState) Equal(state2 ActiveState) bool {
-	if state == state2 {
+func (state ActiveState) Equal(other ActiveState) bool {
+	if state == other {
 		return true
 	}
-	state = ActiveState(strings.Replace(string(state), "\"", "", -1))
-	state2 = ActiveState(strings.Replace(string(state2), "\"", "", -1))
-	return state == state2
+	stateStr := strings.Trim(string(state), "\"")
+	otherStr := strings.Trim(string(other), "\"")
+	return stateStr == otherStr
 }
 
 func (states ActiveStates) Contains(state ActiveState) bool {
@@ -114,13 +114,13 @@ func PropUnitFileState(ufs UnitFileState) *dbus.Property {
 	}
 }
 
-func (state UnitFileState) Equal(state2 UnitFileState) bool {
-	if state == state2 {
+func (state UnitFileState) Equal(other UnitFileState) bool {
+	if state == other {
 		return true
 	}
-	state = UnitFileState(strings.Replace(string(state), "\"", "", -1))
-	state2 = UnitFileState(strings.Replace(string(state2), "\"", "", -1))
-	return state == state2
+	stateStr := strings.Trim(string(state), "\"")
+	otherStr := strings.Trim(string(other), "\"")
+	return stateStr == otherStr
 }
 
 // Determines whether unit should be enabled

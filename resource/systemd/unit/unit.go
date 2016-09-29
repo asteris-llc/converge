@@ -29,55 +29,16 @@ import (
 // Unit represents a systemd units
 // TODO Enable Parallelization of this Unit
 type Unit struct {
-	// The name of this unit as in "foo.service"
-	Name string // (either just file names or full absolute paths if the unit files are residing outside the usual unit search paths
-
-	// Active determines whether this unit should be active or inactive
-	Active bool
-
-	/*
-		UnitFileState encodes the install state of the unit file of FragmentPath.
-		It currently knows the following states: enabled, enabled-runtime, linked,
-		linked-runtime, masked, masked-runtime, static, disabled, invalid. enabled
-		indicates that a unit file is permanently enabled. enable-runtime indicates
-		the unit file is only temporarily enabled, and will no longer be enabled
-		after a reboot (that means, it is enabled via /run symlinks, rather than /etc).
-		linked indicates that a unit is linked into /etc permanently, linked indicates
-		that a unit is linked into /run temporarily (until the next reboot). masked
-		indicates that the unit file is masked permanently, masked-runtime indicates
-		that it is only temporarily masked in /run, until the next reboot.
-		static indicates that the unit is statically enabled, i.e. always enabled and
-		doesn't need to be enabled explicitly. invalid indicates that it could not
-		be determined whether the unit file is enabled.
-	*/
+	Name          string
+	Active        bool
 	UnitFileState systemd.UnitFileState
-
-	/* Mode for the call to StartUnit()
-	StartUnit() enqeues a start job, and possibly depending jobs.
-	Takes the unit to activate, plus a mode string. The mode needs to be one of
-	replace, fail, isolate, ignore-dependencies, ignore-requirements.
-	If "replace" the call will start the unit and its dependencies,
-	possibly replacing already queued jobs that conflict with this. If "fail" the
-	call will start the unit and its dependencies, but will fail if this would
-	change an already queued job. If "isolate" the call will start the unit in
-	question and terminate all units that aren't dependencies of it. If
-	"ignore-dependencies" it will start a unit but ignore all its dependencies.
-	If "ignore-requirements" it will start a unit but only ignore the requirement
-	dependencies. It is not recommended to make use of the latter two options.
-	Returns the newly created job object.
-	*/
-	StartMode systemd.StartMode // how to start the unit
-
-	// the amount of time the command will wait for configuration to load
-	// before halting forcefully. The
-	// format is Go's duraction string. A duration string is a possibly signed
-	// sequence of decimal numbers, each with optional fraction and a unit
-	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-	// "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout time.Duration // how long to wait for the load state to resolve
+	StartMode     systemd.StartMode
+	Timeout       time.Duration
 
 	resource.TaskStatus
 }
+
+var loadError = `LoadError: "[\"org.freedesktop.DBus.Error.FileNotFound\", \"No such file or directory\"]"`
 
 // Check if all the properties for the unit are correct
 // 1. Checks if the unit is currently loading, if so waits Default 5 seconds
@@ -85,12 +46,11 @@ type Unit struct {
 // 3. Check if the unit is in the unit file state
 func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	systemd.ApplyDaemonReload()
-	/*////////////////////////////////////////////////////
-	First thing to do is to check if the Name given is outside
+	/*First thing to do is to check if the Name given is outside
 	the normal search path of systemd. If so it should be linked
-	*/ ////////////////////////////////////////////////////
+	*/
 	dir, unitName := filepath.Split(t.Name)
-	var shouldBeLinked = false
+	shouldBeLinked := false
 	if dir != "" && t.UnitFileState.IsLinked() {
 		// The fullpath to a unit was given. Assume that this isn't in the
 		// normal search paths
@@ -126,16 +86,17 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 
 	if err != nil {
 		// Unit doesn't exist should be linked
-		if err.Error() == "LoadError: \"[\\\"org.freedesktop.DBus.Error.FileNotFound\\\", \\\"No such file or directory\\\"]\"" {
+		if err.Error() == loadError {
 			if shouldBeLinked {
+				fmt.Println("Here--------------\n\n")
 				// Check if file to be linked exist on disk
 				_, statErr := os.Stat(t.Name)
 				if statErr != nil {
 					t.TaskStatus = &resource.Status{
 						Level:  resource.StatusFatal,
-						Output: []string{err.Error()},
+						Output: []string{statErr.Error()},
 					}
-					return t.TaskStatus, err
+					return t.TaskStatus, statErr
 				}
 				statusMsg := fmt.Sprintf("unit %q does not exist, will be linked", unitName)
 				diffMsg := fmt.Sprintf("unit %q does not exist", unitName)
@@ -143,7 +104,7 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 				t.TaskStatus = &resource.Status{
 					Level:       resource.StatusWillChange,
 					Differences: map[string]resource.Diff{unitName: diff},
-					Output:      []string{statusMsg, err.Error()},
+					Output:      []string{statusMsg},
 				}
 				return t.TaskStatus, nil
 			} else if t.UnitFileState.Equal(systemd.UFSDisabled) {
@@ -239,7 +200,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 	err = systemd.WaitToLoad(ctx, dbusConn, unitName)
 	if err != nil {
 		// Unit doesn't exist should be linked
-		if err.Error() == "LoadError: \"[\\\"org.freedesktop.DBus.Error.FileNotFound\\\", \\\"No such file or directory\\\"]\"" {
+		if err.Error() == loadError {
 			if shouldBeLinked {
 				// Check if file to be linked exist on disk
 				_, statErr := os.Stat(t.Name)
@@ -259,7 +220,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 					}
 					return t.TaskStatus, err
 				}
-				startStatus, e := t.StartOrStop(dbusConn)
+				startStatus, e := t.startOrStop(dbusConn)
 				if e != nil {
 					return startStatus, e
 				}
@@ -285,7 +246,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 	}
 
 	// Start the unit
-	startStatus, err := t.StartOrStop(dbusConn)
+	startStatus, err := t.startOrStop(dbusConn)
 	systemd.ApplyDaemonReload()
 	if err != nil {
 		return startStatus, err
@@ -492,7 +453,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 	return t.TaskStatus, statusMsg
 }
 
-func (t *Unit) StartOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
+func (t *Unit) startOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
 	var err error
 	_, unitName := filepath.Split(t.Name)
 	// Apply the activeState
@@ -520,19 +481,4 @@ func (t *Unit) StartOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
 		Output: []string{statusMsg},
 	}
 	return t.TaskStatus, nil
-}
-
-var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSDisabled}
-
-func (t *Unit) Validate() error {
-	if t.Name == "" {
-		return fmt.Errorf("task requires a %q parameter", "name")
-	}
-	if !systemd.IsValidUnitFileState(t.UnitFileState) {
-		return fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
-	}
-	if !systemd.IsValidStartMode(t.StartMode) {
-		return fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, t.StartMode)
-	}
-	return nil
 }

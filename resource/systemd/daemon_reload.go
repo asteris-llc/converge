@@ -5,6 +5,9 @@ import (
 	"github.com/coreos/go-systemd/dbus"
 )
 
+//CheckDaemonReload checks whether the systemd daemon needs to be reloaded.
+//it does not check if a unit is failed and needs to be reset though.
+//NOTE : should I implement checkResetFailed?
 func CheckDaemonReload(conn *dbus.Conn, unit string) (bool, error) {
 	prop, err := conn.GetUnitProperty(unit, "NeedDaemonReload")
 	if err != nil {
@@ -14,6 +17,8 @@ func CheckDaemonReload(conn *dbus.Conn, unit string) (bool, error) {
 	return shouldReload && ok, nil
 }
 
+//ApplyDaemonReload reloads the daemon
+//NOTE : should I implement applyResetFailed?
 func ApplyDaemonReload() error {
 	conn, err := GetDbusConnection()
 	if err != nil {
@@ -23,17 +28,17 @@ func ApplyDaemonReload() error {
 	return err
 }
 
-const daemon_wont_reload_msg = "daemon does not need to be reloaded"
+const daemonWontReloadMsg = "daemon does not need to be reloaded"
 
 func GetDaemonReloadStatus(shouldReload bool) *resource.Status {
-	status := daemon_wont_reload_msg
+	status := daemonWontReloadMsg
 	warningLevel := resource.StatusNoChange
 	if shouldReload {
 		status = "daemon will be reloaded"
 		warningLevel = resource.StatusWillChange
 	}
 	diffs := map[string]resource.Diff{
-		"daemon-reload": resource.TextDiff{Default: daemon_wont_reload_msg, Values: [2]string{daemon_wont_reload_msg, status}},
+		"daemon-reload": resource.TextDiff{Default: daemonWontReloadMsg, Values: [2]string{"daemon does not need to be reloaded", status}},
 	}
 	return &resource.Status{
 		Level:       warningLevel,

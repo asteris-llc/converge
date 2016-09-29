@@ -26,7 +26,7 @@ import (
 const DefaultTimeout = time.Second * 5
 
 func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
-	// first checck if there was an error loading ocnfiguration
+	// first check if there was an error loading configuration
 	loadStatus, err := CheckProperty(conn, unit, "LoadState", []*dbus.Property{
 		PropLoadState(LSError),
 		PropLoadState(LSNotFound),

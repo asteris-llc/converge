@@ -19,6 +19,7 @@ import (
 	"github.com/coreos/go-systemd/dbus"
 )
 
+// CheckUnitIsActive determines if the unit property "ActiveState" is active
 func CheckUnitIsActive(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	validActiveStates := []*dbus.Property{
 		PropActiveState(ASActive),
@@ -26,6 +27,7 @@ func CheckUnitIsActive(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	return CheckProperty(conn, unit, "ActiveState", validActiveStates)
 }
 
+// CheckUnitIsInactive determines if the unit property "ActiveState" is inacive
 func CheckUnitIsInactive(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	validInactiveStates := []*dbus.Property{
 		PropActiveState(ASInactive),
@@ -33,16 +35,19 @@ func CheckUnitIsInactive(conn *dbus.Conn, unit string) (*resource.Status, error)
 	return CheckProperty(conn, unit, "ActiveState", validInactiveStates)
 }
 
+// CheckUnitHasEnabledUFS determines if the unit property "UnitFileState" is inacive,
+//linked, or static
 func CheckUnitHasEnabledUFS(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	validRuntimeStates := []*dbus.Property{
 		PropUnitFileState(UFSEnabled),
 		PropUnitFileState(UFSLinked),
-		PropUnitFileState(UFSMasked),
 		PropUnitFileState(UFSStatic),
 	}
 	return CheckProperty(conn, unit, "UnitFileState", validRuntimeStates)
 }
 
+//CheckUnitHasEnabledUFSRuntimes determines if the unit property "UnitFileState"
+// is enabled-runtime, linked-runtime, or masked-runtime.
 func CheckUnitHasEnabledUFSRuntimes(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	validRuntimeStates := []*dbus.Property{
 		PropUnitFileState(UFSEnabledRuntime),
@@ -52,6 +57,7 @@ func CheckUnitHasEnabledUFSRuntimes(conn *dbus.Conn, unit string) (*resource.Sta
 	return CheckProperty(conn, unit, "UnitFileState", validRuntimeStates)
 }
 
+//CheckUnitIsDisabled determines if the unit property "UnitfileState" is disabled
 func CheckUnitIsDisabled(conn *dbus.Conn, unit string) (*resource.Status, error) {
 	validRuntimeStates := []*dbus.Property{
 		PropUnitFileState(UFSDisabled),
