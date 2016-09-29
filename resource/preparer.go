@@ -176,13 +176,29 @@ func (p *Preparer) validateMutuallyExclusive(field reflect.StructField) error {
 	if mutuallyexclusives, ok := field.Tag.Lookup("mutually_exclusive"); ok {
 		name := p.getFieldName(field)
 
-		for _, mutuallyexclusive := range strings.Split(mutuallyexclusives, ",") {
+		exclusives := strings.Split(mutuallyexclusives, ",")
+		for _, mutuallyexclusive := range exclusives {
 			if mutuallyexclusive == name {
 				continue
 			}
 
 			if _, ok := p.Source[mutuallyexclusive]; ok {
-				return fmt.Errorf("%q and %q cannot both be set", name, mutuallyexclusive)
+				err := "only one of "
+				if len(exclusives) == 2 {
+					err += `"` + exclusives[0] + `" or "` + exclusives[1] + `"`
+				} else {
+					for i, exclusive := range exclusives {
+						err += `"` + exclusive + `"`
+						if i+1 != len(exclusives) {
+							err += ", "
+						}
+						if i+1 == len(exclusives)-1 {
+							err += "or "
+						}
+					}
+				}
+				err += " can be set"
+				return errors.New(err)
 			}
 		}
 	}
