@@ -21,20 +21,27 @@ import "fmt"
 type StatusLevel uint32
 
 const (
-	// StatusNoChange means no changes are necessary
+	// StatusNoChange means no changes are necessary. This status signals that
+	// execution of dependent resources can continue.
 	StatusNoChange StatusLevel = iota
 
-	// StatusWontChange indicates an acceptable delta that wont be corrected
+	// StatusWontChange indicates an acceptable delta that wont be corrected.
+	// This status signals that execution of dependent resources can continue.
 	StatusWontChange
 
-	// StatusWillChange indicates an unacceptable delta that will be corrected
+	// StatusWillChange indicates an unacceptable delta that will be corrected.
+	// This status signals that execution of dependent resources can continue.
 	StatusWillChange
 
-	// StatusCantChange indicates an unacceptable delta that can't be corrected
+	// StatusCantChange indicates an unacceptable delta that can't be corrected.
+	// This is just like StatusFatal except the user will see that the resource
+	// needs to change, but can't because of the condition specified in your
+	// messaging. This status halts execution of dependent resources.
 	StatusCantChange
 
 	// StatusFatal indicates an error. This is just like StatusCantChange except
-	// it does not imply that there are changes to be made.
+	// it does not imply that there are changes to be made. This status halts
+	// execution of dependent resources.
 	StatusFatal
 )
 
