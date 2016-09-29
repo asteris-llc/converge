@@ -1,77 +1,71 @@
-hash: a66a96dd7da26bb8fb8b32579b335ee882add511ce29d662bcb838282f92b5d7
-updated: 2016-09-12T14:09:43.60494359-05:00
+hash: e78ce8449b12d65358c2b5a7fd3fa8475a777b29173f0185845cd983b4d0a2d8
+updated: 2016-09-13T11:27:40.835135-05:00
 imports:
 - name: github.com/braintree/manners
-  version: ""
+  version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
   - test_helpers
 - name: github.com/BurntSushi/toml
-  version: ""
-- name: github.com/coreos/go-systemd
-  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
-  subpackages:
-  - dbus
+  version: f0aeabca5a127c4078abb8c8d64298b147264b55
 - name: github.com/davecgh/go-spew
-  version: ""
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
-- name: github.com/deckarep/golang-set
-  version: ""
 - name: github.com/dgrijalva/jwt-go
-  version: ""
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+- name: github.com/deckarep/golang-set
+  version: 52ba7f28f319e9d560acbf47c7fcf9b9ee7aa7d3
 - name: github.com/docker/docker
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: d55b3ff568f998fc3f471c1f25110da43f59bbc4
   subpackages:
   - opts
   - pkg/archive
   - pkg/fileutils
   - pkg/homedir
-  - pkg/stdcopy
   - pkg/idtools
   - pkg/ioutils
+  - pkg/longpath
   - pkg/pools
   - pkg/promise
+  - pkg/stdcopy
   - pkg/system
-  - pkg/longpath
 - name: github.com/docker/engine-api
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: 8d8fffdf863b12d03c76abf6ca1377e6f8f4e549
   subpackages:
-  - types/swarm
   - types/filters
   - types/mount
+  - types/swarm
   - types/versions
 - name: github.com/docker/go-units
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: eb879ae3e2b84e2a142af415b679ddeda47ec71c
 - name: github.com/fgrid/uuid
-  version: ""
+  version: 6f72a2d331c927473b9b19f590d43ccb5018c844
 - name: github.com/fsnotify/fsnotify
-  version: ""
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/fsouza/go-dockerclient
-  version: 35b3940066086b191104701a4df1378be540b2a4
-- name: github.com/godbus/dbus
-  version: 5f6efc7ef2759c81b7ba876593971bfce311eab3
+  version: 5ffc56c4f7ce8d150a5c770dd7166b86bfd486e5
 - name: github.com/golang/protobuf
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
-  - ptypes/empty
-  - proto
   - jsonpb
+  - proto
   - protoc-gen-go/descriptor
+  - ptypes/empty
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: ""
+  version: a8f25bd1ab549f8b87afd48aa9181221e9d439bb
   subpackages:
-  - third_party/googleapis/google/api
   - runtime
-  - utilities
   - runtime/internal
+  - third_party/googleapis/google/api
+  - utilities
 - name: github.com/hashicorp/errwrap
-  version: ""
+  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
 - name: github.com/hashicorp/go-cleanhttp
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/go-multierror
-  version: ""
+  version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - name: github.com/hashicorp/hcl
-  version: ""
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -83,88 +77,88 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/hashicorp/logutils
-  version: ""
+  version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: ""
+  version: dce175459a9b0bc1f42b1b0f919aae294a73a138
   subpackages:
   - dag
-  - vendor/github.com/hashicorp/go-multierror
   - vendor/github.com/hashicorp/errwrap
+  - vendor/github.com/hashicorp/go-multierror
 - name: github.com/inconshreveable/mousetrap
-  version: ""
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/kardianos/osext
-  version: ""
+  version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
 - name: github.com/magiconair/properties
-  version: ""
+  version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mattn/go-isatty
-  version: ""
+  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
 - name: github.com/mitchellh/hashstructure
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
-  version: ""
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/opencontainers/runc
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: 9b53b362e2036d3d4c41bca62edf0482b80665a6
   subpackages:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/pkg/errors
-  version: ""
+  version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
 - name: github.com/pmezard/go-difflib
-  version: ""
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: ""
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/spf13/cast
-  version: ""
+  version: 27b586b42e29bec072fe7379259cc719e1289da6
 - name: github.com/spf13/cobra
-  version: ""
+  version: f368244301305f414206f889b1735a54cfc8bde8
 - name: github.com/spf13/jwalterweatherman
-  version: ""
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: ""
+  version: cb88ea77998c3f024757528e3305022ab50b43be
 - name: github.com/spf13/viper
-  version: ""
+  version: d8a428b8a30606e1d0b355d91edf282609ade1a6
 - name: github.com/streamrail/concurrent-map
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
-  version: 35b3940066086b191104701a4df1378be540b2a4
+  version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 - name: github.com/stretchr/testify
-  version: ""
+  version: c5d7a69bf8a2c9c374798160849c071093e41dd1
   subpackages:
   - assert
+  - mock
   - require
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
-  - mock
 - name: golang.org/x/crypto
   version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
   subpackages:
   - openpgp
 - name: golang.org/x/net
-  version: ""
+  version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
   - context
-  - http2
-  - trace
   - context/ctxhttp
+  - http2
   - http2/hpack
   - internal/timeseries
+  - trace
 - name: golang.org/x/sys
-  version: ""
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
   - unix
 - name: google.golang.org/grpc
-  version: ""
+  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
   subpackages:
-  - grpclog
-  - metadata
-  - credentials
   - codes
+  - credentials
+  - grpclog
   - internal
+  - metadata
   - naming
-  - transport
   - peer
+  - transport
 - name: gopkg.in/yaml.v2
-  version: ""
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
 testImports: []
