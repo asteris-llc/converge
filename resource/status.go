@@ -92,6 +92,7 @@ type TaskStatus interface {
 	StatusCode() StatusLevel
 	Messages() []string
 	HasChanges() bool
+	Error() error
 }
 
 // Status is the default TaskStatus implementation
