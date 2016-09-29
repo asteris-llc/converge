@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -68,5 +69,31 @@ func TestHasChanges(t *testing.T) {
 				assert.Equal(t, row.willChange, status.HasChanges())
 			},
 		)
+	}
+}
+
+// TestSetError makes sure that the level and error fields are set in all cases.
+func TestSetError(t *testing.T) {
+	t.Parallel()
+
+	// test the translation of error levels
+	fromTo := [][2]resource.StatusLevel{
+		{resource.StatusNoChange, resource.StatusFatal},
+		{resource.StatusWontChange, resource.StatusFatal},
+		{resource.StatusWillChange, resource.StatusCantChange},
+		{resource.StatusCantChange, resource.StatusCantChange},
+		{resource.StatusFatal, resource.StatusFatal},
+	}
+	for _, pair := range fromTo {
+		testErr := errors.New("test")
+
+		t.Run(pair[0].String(), func(t *testing.T) {
+			status := resource.NewStatus()
+			status.Level = pair[0]
+			status.SetError(testErr)
+
+			assert.Equal(t, pair[1], status.Level, "%s != %s", pair[1], status.Level)
+			assert.Equal(t, testErr, status.Error())
+		})
 	}
 }
