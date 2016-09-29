@@ -97,3 +97,37 @@ func TestSetError(t *testing.T) {
 		})
 	}
 }
+
+// TestStatusError makes sure we always return a good error, even if error is
+// not set.
+func TestStatusError(t *testing.T) {
+	t.Parallel()
+
+	// when error is set, just return it
+	t.Run("with error", func(t *testing.T) {
+		err := errors.New("test")
+		status := resource.NewStatus()
+		status.SetError(err)
+
+		assert.Equal(t, err, status.Error())
+	})
+
+	// otherwise, we'll have to return some generic stuff
+	messages := []struct {
+		level resource.StatusLevel
+		err   error
+	}{
+		{resource.StatusNoChange, nil},
+		{resource.StatusWontChange, nil},
+		{resource.StatusWillChange, nil},
+		{resource.StatusCantChange, resource.ErrStatusCantChange},
+		{resource.StatusFatal, resource.ErrStatusFatal},
+	}
+	for _, msg := range messages {
+		t.Run(msg.level.String(), func(t *testing.T) {
+			status := resource.NewStatus()
+			status.Level = msg.level
+			assert.Equal(t, msg.err, status.Error())
+		})
+	}
+}

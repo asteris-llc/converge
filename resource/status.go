@@ -14,7 +14,10 @@
 
 package resource
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // StatusLevel will be used as a level in Status. It indicates if a resource
 // needs to be changed, as well as fatal conditions.
@@ -43,6 +46,17 @@ const (
 	// it does not imply that there are changes to be made. This status halts
 	// execution of dependent resources.
 	StatusFatal
+)
+
+// error messages
+var (
+	// ErrStatusCantChange is returned when an error is not set but the level is
+	// StatusCantChange
+	ErrStatusCantChange = errors.New("resource cannot change because of an error")
+
+	// ErrStatusFatal is returned when an error is not set but the level is
+	// StatusFatal
+	ErrStatusFatal = errors.New("resource encountered an error")
 )
 
 func (l StatusLevel) String() string {
@@ -124,7 +138,20 @@ func (t *Status) SetError(err error) {
 	t.error = err
 }
 
+// Error returns an error, if set. If the level is StatusCantChange or
+// StatusFatal and an error is not set, Error will generate an appropriate
+// error message.
 func (t *Status) Error() error {
+	if t.error == nil {
+		switch t.Level {
+		case StatusCantChange:
+			return ErrStatusCantChange
+
+		case StatusFatal:
+			return ErrStatusFatal
+		}
+	}
+
 	return t.error
 }
 
