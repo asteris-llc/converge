@@ -96,6 +96,7 @@ type Status struct {
 	// the Status* contsts above.)
 	Level StatusLevel
 
+	error       error
 	failingDeps []badDep
 }
 
@@ -104,6 +105,27 @@ func NewStatus() *Status {
 	return &Status{
 		Differences: map[string]Diff{},
 	}
+}
+
+// SetError sets an error on a status
+func (t *Status) SetError(err error) {
+	if t == nil {
+		*t = *NewStatus()
+	}
+
+	switch t.Level {
+	case StatusWillChange, StatusCantChange:
+		t.Level = StatusCantChange
+
+	default:
+		t.Level = StatusFatal
+	}
+
+	t.error = err
+}
+
+func (t *Status) Error() error {
+	return t.error
 }
 
 // Diffs returns the internal differences
