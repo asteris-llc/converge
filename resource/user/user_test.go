@@ -37,7 +37,7 @@ var (
 	currUID       string
 	currGroup     *os.Group
 	currGroupName string
-	currGid       string
+	currGID       string
 	userErr       error
 	groupErr      error
 	tempUsername  []string
@@ -77,8 +77,8 @@ func init() {
 	currUsername = currUser.Username
 	currUID = currUser.Uid
 
-	currGid = currUser.Gid
-	currGroup, groupErr = os.LookupGroupId(currGid)
+	currGID = currUser.Gid
+	currGroup, groupErr = os.LookupGroupId(currGID)
 	if groupErr != nil {
 		panic(groupErr)
 	}
@@ -195,7 +195,7 @@ func TestCheck(t *testing.T) {
 
 				t.Run("add user with group gid", func(t *testing.T) {
 					u.Username = fakeUsername
-					u.GID = currGid
+					u.GID = currGID
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {

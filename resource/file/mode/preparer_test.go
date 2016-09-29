@@ -33,23 +33,15 @@ func TestPreparerInterface(t *testing.T) {
 func TestVaildPreparer(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
-	prep := mode.Preparer{Destination: "path/to/file", Mode: "0777"}
+	prep := mode.Preparer{Destination: "path/to/file", Mode: 777}
 	_, err := prep.Prepare(&fr)
 	assert.NoError(t, err)
-}
-
-func TestInVaildPreparer(t *testing.T) {
-	t.Parallel()
-	fr := fakerenderer.FakeRenderer{}
-	prep := mode.Preparer{Destination: "path/to/file", Mode: "aaa"}
-	_, err := prep.Prepare(&fr)
-	assert.EqualError(t, err, "\"aaa\" is not a valid file mode: strconv.ParseUint: parsing \"aaa\": invalid syntax")
 }
 
 func TestInVaildPreparerNoDestination(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
-	prep := mode.Preparer{Mode: "0777"}
+	prep := mode.Preparer{Mode: 777}
 	_, err := prep.Prepare(&fr)
 	assert.EqualError(t, err, fmt.Sprintf("task requires a \"destination\" parameter"))
 }
