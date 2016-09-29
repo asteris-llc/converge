@@ -6,7 +6,7 @@ TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vend
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
 BENCH = .
-INTEGRATION_CMD = ./converge apply --local -p rpc-token=$(shell uuid) -p converge-bin-dir=build/$(NAME)_$(VERSION)_linux_amd64
+INTEGRATION_CMD = ./converge apply --local -p "converge-bin-dir=build/$(NAME)_$(VERSION)_linux_amd64"
 
 converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
 	go build -ldflags="-s -w" .
@@ -134,7 +134,7 @@ integration: xcompile
 	@echo
 	@echo === quick integration test ===
 	$(INTEGRATION_CMD) quick-integration.hcl
-	@ if [ $$CVG_FULL_INTEGRATION -eq 1 ];\
+	@ if [ -n "$$CVG_FULL_INTEGRATION" ];\
 		then echo "=== full integration test ==="; $(INTEGRATION_CMD) full-integration.sh;\
 		else echo "=== Skipping full test ===";\
 		fi
