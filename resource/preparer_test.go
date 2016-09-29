@@ -242,7 +242,7 @@ func TestPreparerPrepare(t *testing.T) {
 			}
 
 			_, err := prep.Prepare(fakerenderer.New())
-			assert.EqualError(t, err, `"a" and "b" cannot both be set`)
+			assert.EqualError(t, err, `only one of "a" or "b" can be set`)
 		})
 	})
 }
