@@ -49,11 +49,11 @@ func TestInactiveToActiveUnit(t *testing.T) {
 	defer svc.Remove()
 
 	foo := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
-	foo.Apply(&fr)
+	foo.Apply()
 	status, err := foo.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 
@@ -69,14 +69,14 @@ func TestDisabledtoEnabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply(&fr)
+	_, err = disabled.Apply()
 	assert.NoError(t, err)
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
-	enabled.Apply(&fr)
+	enabled.Apply()
 	status, err := enabled.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 
@@ -92,14 +92,14 @@ func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 	defer svc.Remove()
 
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply(&fr)
+	_, err = disabled.Apply()
 	assert.NoError(t, err)
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: systemd.UFSEnabledRuntime, StartMode: "replace"}
-	enabled.Apply(&fr)
+	enabled.Apply()
 	status, err := enabled.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled-runtime\", expected one of [\"enabled-runtime, static\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled-runtime\", expected one of [\"enabled-runtime, static\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 
@@ -115,14 +115,14 @@ func TestEnabledToDisabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
-	enabled.Apply(&fr)
+	enabled.Apply()
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply(&fr)
+	_, err = disabled.Apply()
 	assert.NoError(t, err)
 	status, err := disabled.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"disabled\", expected one of [\"disabled, bad\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"disabled\", expected one of [\"disabled, bad\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 
@@ -138,14 +138,14 @@ func TestStaticToDisabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	static := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "static", StartMode: "replace"}
-	static.Apply(&fr)
+	static.Apply()
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply(&fr)
+	_, err = disabled.Apply()
 	assert.NoError(t, err)
 	status, err := disabled.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"bad\", expected one of [\"disabled, bad\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"bad\", expected one of [\"disabled, bad\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 
@@ -159,22 +159,22 @@ func TestLinkedUnit(t *testing.T) {
 	defer svc.Remove()
 
 	linked := unit.Unit{Name: svc.Path, Active: true, UnitFileState: systemd.UFSLinked, StartMode: "replace"}
-	_, err = linked.Apply(&fr)
+	_, err = linked.Apply()
 	assert.NoError(t, err)
 	status, err := linked.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"linked\", expected one of [\"linked\"]", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("property \"UnitFileState\" of unit %q is \"linked\", expected one of [\"linked\"]", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 
 	// Testing disabling
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply(&fr)
+	_, err = disabled.Apply()
 	assert.NoError(t, err)
 	status, err = disabled.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusWontChange, status.StatusCode())
-	assert.Equal(t, fmt.Sprintf("unit %q does not exist, considered disabled", svc.Name), status.Value())
+	assert.Equal(t, fmt.Sprintf("unit %q does not exist, considered disabled", svc.Name), status.Messages()[0])
 	assert.False(t, status.HasChanges())
 }
 

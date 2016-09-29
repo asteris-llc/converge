@@ -34,15 +34,9 @@ func AppendStatus(a, b *resource.Status) *resource.Status {
 		}
 	}
 	a.Output = append(a.Output, b.Output...)
-	if b.WarningLevel > a.WarningLevel {
-		a.WarningLevel = b.WarningLevel
-		a.Status = b.Status
+	if b.Level > a.Level {
+		a.Level = b.Level
 	}
-	if b.WillChange && !a.WillChange {
-		a.WillChange = b.WillChange
-		a.Status = b.Status
-	}
-	a.FailingDeps = append(a.FailingDeps, b.FailingDeps...)
 
 	return a
 }

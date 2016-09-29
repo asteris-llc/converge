@@ -36,11 +36,9 @@ func CheckProperty(conn *dbus.Conn, unit string, propertyName string, wants []*d
 	}
 	statusMsg := fmt.Sprintf("property %q of unit %q is %q, expected one of [%q]", propertyName, unit, prop.Value.Value(), possibilities)
 	return &resource.Status{
-		Status:       statusMsg,
-		WarningLevel: warningLevel,
-		WillChange:   !found,
-		Differences:  diffs,
-		Output:       []string{statusMsg},
+		Level:       warningLevel,
+		Differences: diffs,
+		Output:      []string{statusMsg},
 	}, nil
 }
 

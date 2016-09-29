@@ -34,7 +34,7 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 	if err != nil {
 		return err
 	}
-	if loadStatus.WarningLevel == resource.StatusNoChange {
+	if loadStatus.Level == resource.StatusNoChange {
 		loadError, err := conn.GetUnitProperty(unit, "LoadError")
 		if err != nil {
 			return fmt.Errorf("configuration failed to load")
@@ -52,7 +52,7 @@ func WaitToLoad(ctx context.Context, conn *dbus.Conn, unit string) error {
 		return err
 	}
 	//If loading wait until it becomes stable
-	if status.WarningLevel == resource.StatusNoChange {
+	if status.Level == resource.StatusNoChange {
 		err := WaitForLoadedState(ctx, conn, unit)
 		if err != nil {
 			return err

@@ -36,10 +36,8 @@ func GetDaemonReloadStatus(shouldReload bool) *resource.Status {
 		"daemon-reload": resource.TextDiff{Default: daemon_wont_reload_msg, Values: [2]string{daemon_wont_reload_msg, status}},
 	}
 	return &resource.Status{
-		Status:       status,
-		WarningLevel: warningLevel,
-		WillChange:   shouldReload,
-		Differences:  diffs,
-		Output:       []string{status},
+		Level:       warningLevel,
+		Differences: diffs,
+		Output:      []string{status},
 	}
 }
