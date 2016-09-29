@@ -19,6 +19,7 @@ import (
 	"net"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
 )
@@ -109,18 +110,21 @@ waitLoop:
 }
 
 func (p *Port) checkConnection() (connected bool, err error) {
+	logger := log.WithField("module", "wait.port")
+
 	if p.Host == "" {
 		p.Host = defaultHost
 	}
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", p.Host, p.Port))
+	addr := fmt.Sprintf("%s:%d", p.Host, p.Port)
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		if _, ok := err.(*net.OpError); ok {
+		if opErr, ok := err.(*net.OpError); ok {
+			logger.WithError(opErr).WithField("addr", addr).Info("connection failed")
 			return false, nil
 		}
 		return false, errors.Wrapf(err, "dial failed")
 	}
-
 	defer conn.Close()
 
 	return true, nil
