@@ -139,7 +139,11 @@ func (s *Shell) HealthCheck() (*resource.HealthStatus, error) {
 
 // Error is required for TaskStatus
 func (s *Shell) Error() error {
-	return s.HealthStatus.Error()
+	if s.HealthStatus != nil {
+		return s.HealthStatus.Error()
+	}
+
+	return nil
 }
 
 func (s *Shell) updateHealthStatus() error {
