@@ -73,4 +73,5 @@ harder to review. Pretty please?
 Participation in the development process of Converge is subject to
 the [code of conduct](CODE_OF_CONDUCT.md). Please familiarise yourself with that
 document. If nothing else, it will let you know what to do if something goes
-terribly wrong.
+terribly wrong. But aside from that, the code has positive standards of how
+community members should behave in their interactions with others.
