@@ -19,29 +19,24 @@ type ResourceLV struct {
 }
 
 func (r *ResourceLV) Check(resource.Renderer) (status resource.TaskStatus, err error) {
-	if _, ok := r.lvs[r.name]; !ok {
-		r.needCreate = true
-	} else {
-		r.needCreate = false
-	}
+	_, ok := r.lvs[r.name]
+	r.needCreate = !ok
 
-	ts := &resource.Status{
-		Status:     r.name,
-		WillChange: r.needCreate,
+	ts := &resource.Status{}
+
+	if r.needCreate {
+		ts.Level = resource.StatusWillChange
 	}
 	return ts, nil
 }
 
-func (r *ResourceLV) Apply(resource.Renderer) (status resource.TaskStatus, err error) {
+func (r *ResourceLV) Apply() (status resource.TaskStatus, err error) {
 	if r.needCreate {
 		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size, r.sizeOption, r.sizeUnit); err != nil {
 			return nil, err
 		}
 	}
-	ts := &resource.Status{
-		Status:     r.name,
-		WillChange: r.needCreate,
-	}
+	ts := &resource.Status{}
 	return ts, nil
 }
 

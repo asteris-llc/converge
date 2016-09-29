@@ -43,7 +43,7 @@ WantedBy=local-fs.target {{.WantedBy}}
 RequiredBy={{.RequiredBy}}`
 
 func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
-	status := &resource.Status{Status: r.mount.What}
+	status := &resource.Status{}
 
 	if fs, err := r.lvm.Blkid(r.mount.What); err != nil {
 		return nil, err
@@ -75,14 +75,13 @@ func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
 	}
 	if resource.AnyChanges(status.Differences) {
-		status.WillChange = true
-		status.WarningLevel = resource.StatusWillChange
+		status.Level = resource.StatusWillChange
 	}
 
 	return status, nil
 }
 
-func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
+func (r *ResourceFS) Apply() (resource.TaskStatus, error) {
 	if r.needMkfs {
 		if err := r.lvm.Mkfs(r.mount.What, r.mount.Type); err != nil {
 			return nil, err
@@ -102,9 +101,7 @@ func (r *ResourceFS) Apply(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 
-	return &resource.Status{
-		Status: r.mount.What,
-	}, nil
+	return &resource.Status{}, nil
 }
 
 func (r *ResourceFS) Setup(lvm lowlevel.LVM, m *Mount) error {
