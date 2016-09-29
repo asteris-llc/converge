@@ -75,20 +75,27 @@ func (p *Port) Apply() (resource.TaskStatus, error) {
 	}
 
 	after := p.GracePeriod
+	alive := false
 waitLoop:
 	for {
 		select {
 		case <-time.After(after):
+			if alive {
+				break waitLoop
+			}
+
 			p.RetryCount++
 			after = interval
 
-			alive, err := p.checkConnection()
+			var err error
+			alive, err = p.checkConnection()
 			if err != nil {
 				return p, err
 			}
 
 			if alive {
-				break waitLoop
+				after = p.GracePeriod
+				continue
 			}
 
 			if p.RetryCount >= retries {
