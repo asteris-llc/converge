@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestRetryUntilSetsDuration tests that RetryUntil sets the RetryCount
+// TestRetryUntilSetsRetryCount tests that RetryUntil sets the RetryCount
 func TestRetryUntilSetsRetryCount(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
