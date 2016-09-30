@@ -102,6 +102,23 @@ func TestNodeCase(t *testing.T) {
 	})
 }
 
+// TestNodeDefault tests various scenarios where the node is a default statement
+func TestNodeDefault(t *testing.T) {
+	t.Run("when no name or predicate", func(t *testing.T) {
+		node, err := fromString(`default {}`)
+		assert.NoError(t, err)
+		assert.Equal(t, "default", node.Kind())
+	})
+
+	t.Run("when no name or predicate", func(t *testing.T) {
+		validateTable(t, `default x {}`, "1:1: too many keys")
+	})
+
+	t.Run("when too many keys", func(t *testing.T) {
+		validateTable(t, `default x y z {}`, "1:1: too many keys")
+	})
+}
+
 func TestNodeKind(t *testing.T) {
 	t.Parallel()
 

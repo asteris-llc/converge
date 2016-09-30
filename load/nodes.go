@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/render/preprocessor/control"
 	"github.com/pkg/errors"
 )
 
@@ -89,6 +90,13 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 		}
 
 		for _, resource := range resources {
+			if control.IsSwitchNode(resource) {
+				out, err = expandSwitchMacro(content, current, resource, out)
+				if err != nil {
+					return out, errors.Wrap(err, "unable to load resource")
+				}
+				continue
+			}
 			newID := graph.ID(current.Parent, resource.String())
 			out.Add(node.New(newID, resource))
 			out.ConnectParent(current.Parent, newID)
@@ -105,6 +113,40 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 			}
 		}
 	}
-
 	return out, out.Validate()
+}
+
+func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Graph) (*graph.Graph, error) {
+	if !control.IsSwitchNode(n) {
+		return g, nil
+	}
+	switchObj, err := control.NewSwitch(n, data)
+	if err != nil {
+		return g, err
+	}
+	switchNode, err := switchObj.GenerateNode()
+	if err != nil {
+		return g, err
+	}
+	switchID := graph.ID(current.Parent, switchNode.String())
+	g.Add(switchID, switchNode)
+	g.ConnectParent(current.Parent, switchID)
+	for _, branch := range switchObj.Branches {
+		branchNode, err := branch.GenerateNode()
+		if err != nil {
+			return g, err
+		}
+
+		branchID := graph.ID(switchID, branchNode.String())
+		g.Add(branchID, branchNode)
+		g.ConnectParent(switchID, branchID)
+
+		for _, innerNode := range branch.InnerNodes {
+			innerID := graph.ID(current.Parent, innerNode.String())
+			g.Add(innerID, innerNode)
+			g.ConnectParent(current.Parent, innerID)
+			g.Connect(branchID, innerID)
+		}
+	}
+	return g, nil
 }

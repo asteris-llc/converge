@@ -5,25 +5,16 @@ import (
 	"reflect"
 )
 
-// TypeError represents a type error implementation of the error interface
-type TypeError struct {
-	expected string
-	actual   reflect.Type
-}
-
 // NewTypeError returns a new TypeError with the appropriate expected and actual
 // types.
-func NewTypeError(expected string, actual interface{}) *TypeError {
-	return &TypeError{
-		expected: expected,
-		actual:   reflect.TypeOf(actual),
-	}
+func NewTypeError(expected string, actual interface{}) error {
+	return fmt.Errorf(
+		"type error: expected %s but got %s",
+		expected, reflect.TypeOf(actual).String(),
+	)
 }
 
-// Error implements the error interface
-func (t *TypeError) Error() string {
-	return fmt.Sprintf(
-		"type error: expected %s but got %s",
-		t.expected, t.actual.String(),
-	)
+// BadPredicate returns a new error for an invalid predicate
+func BadPredicate(p string) error {
+	return fmt.Errorf("invalid predicate: %q", p)
 }

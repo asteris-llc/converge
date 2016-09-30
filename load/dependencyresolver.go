@@ -134,7 +134,7 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 	for _, call := range calls {
 		vertex, _, found := preprocessor.VertexSplitTraverse(g, call, id, preprocessor.TraverseUntilModule)
 		if !found {
-			return []string{}, fmt.Errorf("unresolvable call to %s", call)
+			return []string{}, fmt.Errorf("dependency generator: unresolvable call to %s", call)
 		}
 
 		vertex, pfxError := stringIntersection(vertex, call)
