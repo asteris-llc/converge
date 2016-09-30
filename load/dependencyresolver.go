@@ -132,8 +132,7 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 		tmpl.Execute(ioutil.Discard, &struct{}{})
 	}
 	for _, call := range calls {
-		fqgn := graph.SiblingID(id, call)
-		vertex, _, found := preprocessor.VertexSplit(g, fqgn)
+		vertex, _, found := preprocessor.VertexSplitTraverse(g, call, id, preprocessor.TraverseUntilModule)
 		if !found {
 			return []string{}, fmt.Errorf("unresolvable call to %s", call)
 		}
@@ -147,6 +146,23 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 			out = append(out, vertex)
 		}
 	}
+	/*
+		for _, call := range calls {
+			fqgn := graph.SiblingID(id, call)
+			vertex, _, found := preprocessor.VertexSplit(g, fqgn)
+			if !found {
+				return []string{}, fmt.Errorf("unresolvable call to %s", call)
+			}
+
+			vertex, pfxError := stringIntersection(vertex, call)
+			if pfxError != nil {
+				return out, pfxError
+			}
+			if _, ok := nodeRefs[vertex]; !ok {
+				nodeRefs[vertex] = struct{}{}
+				out = append(out, vertex)
+			}
+		}*/
 	return out, err
 }
 

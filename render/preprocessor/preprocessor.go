@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/resource/module"
 )
 
 // ErrUnresolvable indicates that a field exists but is unresolvable due to nil
@@ -141,6 +142,49 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 		return prefix, "", true
 	}
 	return prefix, s[len(prefix)+1:], true
+}
+
+// VertexSplitTraverse will act like vertex split, looking for a prefix matching
+// the current set of graph nodes, however unlike `VertexSplit`, if a node is
+// not found at the current level it will look at the parent level to the
+// provided starting node, unless stop(parent) returns true.
+func VertexSplitTraverse(
+	g *graph.Graph,
+	toFind string,
+	startingNode string,
+	stop func(*graph.Graph, string) bool,
+) (string, string, bool) {
+	fqgn := graph.SiblingID(startingNode, toFind)
+	vertex, middle, found := VertexSplit(g, fqgn)
+	if found {
+		return vertex, middle, found
+	}
+	parentID := graph.ParentID(startingNode)
+	if stop(g, parentID) {
+		fmt.Println("stoping vertex split traversal on: ", startingNode)
+		return "", toFind, false
+	}
+	return VertexSplitTraverse(g, toFind, parentID, stop)
+}
+
+// TraverseUntilModule is a function intended to be used with
+// VertexSplitTraverse and will cause vertex splitting to propogate upwards
+// until it encounters a module
+func TraverseUntilModule(g *graph.Graph, id string) bool {
+	if id == "root" {
+		return true
+	}
+	elem := g.Get(id)
+	if elem == nil {
+		return true
+	}
+	if _, ok := elem.(*module.Module); ok {
+		return true
+	}
+	if _, ok := elem.(*module.Preparer); ok {
+		return true
+	}
+	return false
 }
 
 // HasField returns true if the provided struct has the defined field
