@@ -17,7 +17,6 @@ package user_test
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -38,67 +37,84 @@ func TestPrepare(t *testing.T) {
 	t.Parallel()
 
 	fr := fakerenderer.FakeRenderer{}
+	var invalidID = uint32(math.MaxUint32)
+	var maxID = uint32(math.MaxUint32 - 1)
+	var minID uint32
+	var testID uint32 = 123
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("no uid", func(t *testing.T) {
-			p := user.Preparer{GID: 123, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			p := user.Preparer{GID: &testID, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("min allowable uid", func(t *testing.T) {
+			p := user.Preparer{UID: &minID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("max allowable uid", func(t *testing.T) {
-			p := user.Preparer{UID: math.MaxUint32 - 1, Username: "test"}
+			p := user.Preparer{UID: &maxID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no group", func(t *testing.T) {
-			p := user.Preparer{UID: 1234, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			p := user.Preparer{UID: &testID, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("with groupname", func(t *testing.T) {
-			p := user.Preparer{UID: 1234, Username: "test", GroupName: currGroupName, Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			p := user.Preparer{UID: &testID, Username: "test", GroupName: currGroupName, Name: "test", HomeDir: "tmp", State: user.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("with gid", func(t *testing.T) {
-			gid, _ := strconv.ParseUint(currGID, 10, 32)
-			p := user.Preparer{UID: 1234, Username: "test", GID: uint32(gid), Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			p := user.Preparer{UID: &testID, Username: "test", GID: &testID, Name: "test", HomeDir: "tmp", State: user.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("min allowable gid", func(t *testing.T) {
+			p := user.Preparer{GID: &minID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("max allowable gid", func(t *testing.T) {
-			p := user.Preparer{GID: math.MaxUint32 - 1, Username: "test"}
+			p := user.Preparer{GID: &maxID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no name parameter", func(t *testing.T) {
-			p := user.Preparer{UID: 1234, GID: 123, Username: "test", HomeDir: "tmp", State: user.StateAbsent}
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", HomeDir: "tmp", State: user.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no home_dir parameter", func(t *testing.T) {
-			p := user.Preparer{UID: 1234, GID: 123, Username: "test", Name: "test", State: user.StateAbsent}
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", Name: "test", State: user.StateAbsent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no state parameter", func(t *testing.T) {
-			p := user.Preparer{UID: 1234, GID: 123, Username: "test", Name: "test", HomeDir: "tmp"}
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", Name: "test", HomeDir: "tmp"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
@@ -107,14 +123,14 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("invalid", func(t *testing.T) {
 		t.Run("uid out of range", func(t *testing.T) {
-			p := user.Preparer{UID: math.MaxUint32, Username: "test"}
+			p := user.Preparer{UID: &invalidID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"uid\" parameter out of range"))
 		})
 
 		t.Run("gid out of range", func(t *testing.T) {
-			p := user.Preparer{GID: math.MaxUint32, Username: "test"}
+			p := user.Preparer{GID: &invalidID, Username: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))

@@ -36,11 +36,13 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if os.IsNotExist(err) {
 		diffs[t.Destination] = &FileModeDiff{Expected: t.Mode}
 		status := fmt.Sprintf("%q does not exist", t.Destination)
-		return &resource.Status{
+		stat := &resource.Status{
 			Level:       resource.StatusFatal,
 			Differences: diffs,
 			Output:      []string{status},
-		}, nil
+		}
+		stat.SetError(fmt.Errorf("cannot set mode for file that does not exist"))
+		return stat, nil
 	} else if err != nil {
 		return nil, err
 	}
@@ -57,7 +59,7 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 		Level:       warningLevel,
 		Differences: diffs,
 		Output: []string{
-			fmt.Sprintf("%q exist", t.Destination),
+			fmt.Sprintf("%q exists", t.Destination),
 			status,
 		},
 	}

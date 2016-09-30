@@ -15,7 +15,6 @@
 package mode
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -29,21 +28,17 @@ type Preparer struct {
 	// Destination specifies which file will be modified by this resource. The
 	// file must exist on the system (for example, having been created with
 	// `file.content`.)
-	Destination string `hcl:"destination"`
+	Destination string `hcl:"destination" required:"true"`
 
 	// Mode is the mode of the file, specified in octal.
-	Mode uint32 `hcl:"mode" base:"8"`
+	Mode *uint32 `hcl:"mode" base:"8" required:"true"`
 }
 
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	if p.Mode == 0 {
-		return nil, fmt.Errorf("task requires a \"mode\" parameter")
-	}
-
 	modeTask := &Mode{
 		Destination: p.Destination,
-		Mode:        os.FileMode(p.Mode),
+		Mode:        os.FileMode(*p.Mode),
 	}
 	return modeTask, modeTask.Validate()
 }

@@ -27,12 +27,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestTemplateInterface tests whether file mode is properly implemented
 func TestTemplateInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Task)(nil), new(mode.Mode))
 }
 
+// TestCheck tests Check() for file mode
 func TestCheck(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "mode_test")
 	assert.NoError(t, os.Chmod(tmpfile.Name(), 0600))
@@ -47,6 +49,7 @@ func TestCheck(t *testing.T) {
 	assert.True(t, status.HasChanges())
 }
 
+// TestApply tests Apply() for file mode
 func TestApply(t *testing.T) {
 
 	tmpfile, err := ioutil.TempFile("", "mode_test")

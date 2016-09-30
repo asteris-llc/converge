@@ -30,7 +30,7 @@ type Preparer struct {
 	Username string `hcl:"username" required:"true"`
 
 	// UID is the user ID.
-	UID uint32 `hcl:"uid"`
+	UID *uint32 `hcl:"uid"`
 
 	// GroupName is the primary group for user and must already exist.
 	// Only one of GID or Groupname may be indicated.
@@ -38,7 +38,7 @@ type Preparer struct {
 
 	// Gid is the primary group ID for user and must refer to an existing group.
 	// Only one of GID or Groupname may be indicated.
-	GID uint32 `hcl:"gid" mutually_exclusive:"gid,groupname"`
+	GID *uint32 `hcl:"gid" mutually_exclusive:"gid,groupname"`
 
 	// Name is the user description.
 	Name string `hcl:"name"`
@@ -53,12 +53,12 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	if p.UID == math.MaxUint32 {
+	if p.UID != nil && *p.UID == math.MaxUint32 {
 		// the maximum uid on linux is MaxUint32 - 1
 		return nil, fmt.Errorf("user \"uid\" parameter out of range")
 	}
 
-	if p.GID == math.MaxUint32 {
+	if p.GID != nil && *p.GID == math.MaxUint32 {
 		// the maximum gid on linux is MaxUint32 - 1
 		return nil, fmt.Errorf("user \"gid\" parameter out of range")
 	}
@@ -69,12 +69,18 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	usr := NewUser(new(System))
 	usr.Username = p.Username
-	usr.UID = fmt.Sprintf("%v", p.UID)
 	usr.GroupName = p.GroupName
-	usr.GID = fmt.Sprintf("%v", p.GID)
 	usr.Name = p.Name
 	usr.HomeDir = p.HomeDir
 	usr.State = p.State
+
+	if p.UID != nil {
+		usr.UID = fmt.Sprintf("%v", *p.UID)
+	}
+
+	if p.GID != nil {
+		usr.GID = fmt.Sprintf("%v", *p.GID)
+	}
 
 	return usr, nil
 }
