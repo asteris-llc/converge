@@ -100,11 +100,25 @@ func (m *LoadRequest) String() string            { return proto.CompactTextStrin
 func (*LoadRequest) ProtoMessage()               {}
 func (*LoadRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *LoadRequest) GetLocation() string {
+	if m != nil {
+		return m.Location
+	}
+	return ""
+}
+
 func (m *LoadRequest) GetParameters() map[string]string {
 	if m != nil {
 		return m.Parameters
 	}
 	return nil
+}
+
+func (m *LoadRequest) GetVerify() bool {
+	if m != nil {
+		return m.Verify
+	}
+	return false
 }
 
 type ContentResponse struct {
@@ -115,6 +129,13 @@ func (m *ContentResponse) Reset()                    { *m = ContentResponse{} }
 func (m *ContentResponse) String() string            { return proto.CompactTextString(m) }
 func (*ContentResponse) ProtoMessage()               {}
 func (*ContentResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *ContentResponse) GetContent() string {
+	if m != nil {
+		return m.Content
+	}
+	return ""
+}
 
 type StatusResponse struct {
 	// TODO: preserve for compat but will stop working in 0.4.0. This has moved to
@@ -130,6 +151,27 @@ func (m *StatusResponse) Reset()                    { *m = StatusResponse{} }
 func (m *StatusResponse) String() string            { return proto.CompactTextString(m) }
 func (*StatusResponse) ProtoMessage()               {}
 func (*StatusResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *StatusResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *StatusResponse) GetStage() StatusResponse_Stage {
+	if m != nil {
+		return m.Stage
+	}
+	return StatusResponse_UNSPECIFIED_STAGE
+}
+
+func (m *StatusResponse) GetRun() StatusResponse_Run {
+	if m != nil {
+		return m.Run
+	}
+	return StatusResponse_UNSPECIFIED_RUN
+}
 
 func (m *StatusResponse) GetDetails() *StatusResponse_Details {
 	if m != nil {
@@ -159,11 +201,32 @@ func (m *StatusResponse_Details) String() string            { return proto.Compa
 func (*StatusResponse_Details) ProtoMessage()               {}
 func (*StatusResponse_Details) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2, 0} }
 
+func (m *StatusResponse_Details) GetMessages() []string {
+	if m != nil {
+		return m.Messages
+	}
+	return nil
+}
+
 func (m *StatusResponse_Details) GetChanges() map[string]*DiffResponse {
 	if m != nil {
 		return m.Changes
 	}
 	return nil
+}
+
+func (m *StatusResponse_Details) GetHasChanges() bool {
+	if m != nil {
+		return m.HasChanges
+	}
+	return false
+}
+
+func (m *StatusResponse_Details) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
 }
 
 type StatusResponse_Meta struct {
@@ -175,6 +238,13 @@ func (m *StatusResponse_Meta) String() string            { return proto.CompactT
 func (*StatusResponse_Meta) ProtoMessage()               {}
 func (*StatusResponse_Meta) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2, 1} }
 
+func (m *StatusResponse_Meta) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 type DiffResponse struct {
 	Original string `protobuf:"bytes,1,opt,name=original" json:"original,omitempty"`
 	Current  string `protobuf:"bytes,2,opt,name=current" json:"current,omitempty"`
@@ -185,6 +255,27 @@ func (m *DiffResponse) Reset()                    { *m = DiffResponse{} }
 func (m *DiffResponse) String() string            { return proto.CompactTextString(m) }
 func (*DiffResponse) ProtoMessage()               {}
 func (*DiffResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *DiffResponse) GetOriginal() string {
+	if m != nil {
+		return m.Original
+	}
+	return ""
+}
+
+func (m *DiffResponse) GetCurrent() string {
+	if m != nil {
+		return m.Current
+	}
+	return ""
+}
+
+func (m *DiffResponse) GetChanges() bool {
+	if m != nil {
+		return m.Changes
+	}
+	return false
+}
 
 type GraphComponent struct {
 	// Types that are valid to be assigned to Component:
@@ -321,6 +412,27 @@ func (m *GraphComponent_Vertex) String() string            { return proto.Compac
 func (*GraphComponent_Vertex) ProtoMessage()               {}
 func (*GraphComponent_Vertex) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 0} }
 
+func (m *GraphComponent_Vertex) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *GraphComponent_Vertex) GetKind() string {
+	if m != nil {
+		return m.Kind
+	}
+	return ""
+}
+
+func (m *GraphComponent_Vertex) GetDetails() []byte {
+	if m != nil {
+		return m.Details
+	}
+	return nil
+}
+
 type GraphComponent_Edge struct {
 	Source     string   `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
 	Dest       string   `protobuf:"bytes,2,opt,name=dest" json:"dest,omitempty"`
@@ -331,6 +443,27 @@ func (m *GraphComponent_Edge) Reset()                    { *m = GraphComponent_E
 func (m *GraphComponent_Edge) String() string            { return proto.CompactTextString(m) }
 func (*GraphComponent_Edge) ProtoMessage()               {}
 func (*GraphComponent_Edge) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 1} }
+
+func (m *GraphComponent_Edge) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *GraphComponent_Edge) GetDest() string {
+	if m != nil {
+		return m.Dest
+	}
+	return ""
+}
+
+func (m *GraphComponent_Edge) GetAttributes() []string {
+	if m != nil {
+		return m.Attributes
+	}
+	return nil
+}
 
 func init() {
 	proto.RegisterType((*LoadRequest)(nil), "pb.LoadRequest")
@@ -352,7 +485,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Executor service
 
@@ -568,7 +701,7 @@ var _Executor_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: fileDescriptor0,
+	Metadata: "root.proto",
 }
 
 // Client API for ResourceHost service
@@ -669,7 +802,7 @@ var _ResourceHost_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "root.proto",
 }
 
 // Client API for Grapher service
@@ -760,7 +893,7 @@ var _Grapher_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: fileDescriptor0,
+	Metadata: "root.proto",
 }
 
 // Client API for Info service

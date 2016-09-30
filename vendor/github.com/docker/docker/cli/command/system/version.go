@@ -1,6 +1,7 @@
 package system
 
 import (
+	"fmt"
 	"runtime"
 	"time"
 
@@ -24,7 +25,7 @@ var versionTemplate = `Client:
 
 Server:
  Version:      {{.Server.Version}}
- API version:  {{.Server.APIVersion}}
+ API version:  {{.Server.APIVersion}} (minimum version {{.Server.MinAPIVersion}})
  Go version:   {{.Server.GoVersion}}
  Git commit:   {{.Server.GitCommit}}
  Built:        {{.Server.BuildTime}}
@@ -69,10 +70,15 @@ func runVersion(dockerCli *command.DockerCli, opts *versionOptions) error {
 			Status: "Template parsing error: " + err.Error()}
 	}
 
+	APIVersion := dockerCli.Client().ClientVersion()
+	if defaultAPIVersion := dockerCli.DefaultVersion(); APIVersion != defaultAPIVersion {
+		APIVersion = fmt.Sprintf("%s (downgraded from %s)", APIVersion, defaultAPIVersion)
+	}
+
 	vd := types.VersionResponse{
 		Client: &types.Version{
 			Version:    dockerversion.Version,
-			APIVersion: dockerCli.Client().ClientVersion(),
+			APIVersion: APIVersion,
 			GoVersion:  runtime.Version(),
 			GitCommit:  dockerversion.GitCommit,
 			BuildTime:  dockerversion.BuildTime,

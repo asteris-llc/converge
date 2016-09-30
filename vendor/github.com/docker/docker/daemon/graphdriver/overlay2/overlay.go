@@ -11,17 +11,21 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
 
 	"github.com/docker/docker/daemon/graphdriver"
+	"github.com/docker/docker/daemon/graphdriver/overlayutils"
 	"github.com/docker/docker/daemon/graphdriver/quota"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/directory"
+	"github.com/docker/docker/pkg/fsutils"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/docker/pkg/parsers"
@@ -44,7 +48,7 @@ var (
 
 // Each container/image has at least a "diff" directory and "link" file.
 // If there is also a "lower" file when there are diff layers
-// below  as well as "merged" and "work" directories. The "diff" directory
+// below as well as "merged" and "work" directories. The "diff" directory
 // has the upper layer of the overlay and is used to capture any
 // changes to the layer. The "lower" file contains all the lower layer
 // mounts separated by ":" and ordered from uppermost to lowermost
@@ -86,17 +90,22 @@ type overlayOptions struct {
 
 // Driver contains information about the home directory and the list of active mounts that are created using this driver.
 type Driver struct {
-	home     string
-	uidMaps  []idtools.IDMap
-	gidMaps  []idtools.IDMap
-	ctr      *graphdriver.RefCounter
-	quotaCtl *quota.Control
-	options  overlayOptions
+	home          string
+	uidMaps       []idtools.IDMap
+	gidMaps       []idtools.IDMap
+	ctr           *graphdriver.RefCounter
+	quotaCtl      *quota.Control
+	options       overlayOptions
+	naiveDiff     graphdriver.DiffDriver
+	supportsDType bool
 }
 
 var (
 	backingFs             = "<unknown>"
 	projectQuotaSupported = false
+
+	useNaiveDiffLock sync.Once
+	useNaiveDiffOnly bool
 )
 
 func init() {
@@ -125,7 +134,7 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 		if !opts.overrideKernelCheck {
 			return nil, graphdriver.ErrNotSupported
 		}
-		logrus.Warnf("Using pre-4.0.0 kernel for overlay2, mount failures may require kernel update")
+		logrus.Warn("Using pre-4.0.0 kernel for overlay2, mount failures may require kernel update")
 	}
 
 	fsMagic, err := graphdriver.GetFSMagic(home)
@@ -156,12 +165,24 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 		return nil, err
 	}
 
-	d := &Driver{
-		home:    home,
-		uidMaps: uidMaps,
-		gidMaps: gidMaps,
-		ctr:     graphdriver.NewRefCounter(graphdriver.NewFsChecker(graphdriver.FsMagicOverlay)),
+	supportsDType, err := fsutils.SupportsDType(home)
+	if err != nil {
+		return nil, err
 	}
+	if !supportsDType {
+		// not a fatal error until v1.16 (#27443)
+		logrus.Warn(overlayutils.ErrDTypeNotSupported("overlay2", backingFs))
+	}
+
+	d := &Driver{
+		home:          home,
+		uidMaps:       uidMaps,
+		gidMaps:       gidMaps,
+		ctr:           graphdriver.NewRefCounter(graphdriver.NewFsChecker(graphdriver.FsMagicOverlay)),
+		supportsDType: supportsDType,
+	}
+
+	d.naiveDiff = graphdriver.NewNaiveDiffDriver(d, uidMaps, gidMaps)
 
 	if backingFs == "xfs" {
 		// Try to enable project quota support over xfs.
@@ -218,6 +239,16 @@ func supportsOverlay() error {
 	return graphdriver.ErrNotSupported
 }
 
+func useNaiveDiff(home string) bool {
+	useNaiveDiffLock.Do(func() {
+		if err := hasOpaqueCopyUpBug(home); err != nil {
+			logrus.Warnf("Not using native diff for overlay2: %v", err)
+			useNaiveDiffOnly = true
+		}
+	})
+	return useNaiveDiffOnly
+}
+
 func (d *Driver) String() string {
 	return driverName
 }
@@ -227,6 +258,8 @@ func (d *Driver) String() string {
 func (d *Driver) Status() [][2]string {
 	return [][2]string{
 		{"Backing Filesystem", backingFs},
+		{"Supports d_type", strconv.FormatBool(d.supportsDType)},
+		{"Native Overlay Diff", strconv.FormatBool(!useNaiveDiff(d.home))},
 	}
 }
 
@@ -264,15 +297,15 @@ func (d *Driver) Cleanup() error {
 
 // CreateReadWrite creates a layer that is writable for use as a container
 // file system.
-func (d *Driver) CreateReadWrite(id, parent, mountLabel string, storageOpt map[string]string) error {
-	return d.Create(id, parent, mountLabel, storageOpt)
+func (d *Driver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
+	return d.Create(id, parent, opts)
 }
 
 // Create is used to create the upper, lower, and merge directories required for overlay fs for a given id.
 // The parent filesystem is used to configure these directories for the overlay.
-func (d *Driver) Create(id, parent, mountLabel string, storageOpt map[string]string) (retErr error) {
+func (d *Driver) Create(id, parent string, opts *graphdriver.CreateOpts) (retErr error) {
 
-	if len(storageOpt) != 0 && !projectQuotaSupported {
+	if opts != nil && len(opts.StorageOpt) != 0 && !projectQuotaSupported {
 		return fmt.Errorf("--storage-opt is supported only for overlay over xfs with 'pquota' mount option")
 	}
 
@@ -296,9 +329,9 @@ func (d *Driver) Create(id, parent, mountLabel string, storageOpt map[string]str
 		}
 	}()
 
-	if len(storageOpt) > 0 {
+	if opts != nil && len(opts.StorageOpt) > 0 {
 		driver := &Driver{}
-		if err := d.parseStorageOpt(storageOpt, driver); err != nil {
+		if err := d.parseStorageOpt(opts.StorageOpt, driver); err != nil {
 			return err
 		}
 
@@ -408,7 +441,7 @@ func (d *Driver) getLowerDirs(id string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			lowersArray = append(lowersArray, path.Clean(path.Join(d.home, "link", lp)))
+			lowersArray = append(lowersArray, path.Clean(path.Join(d.home, linkDir, lp)))
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err
@@ -525,7 +558,7 @@ func (d *Driver) Put(id string) error {
 		return nil
 	}
 	if err := syscall.Unmount(mountpoint, 0); err != nil {
-		logrus.Debugf("Failed to unmount %s overlay: %v", id, err)
+		logrus.Debugf("Failed to unmount %s overlay: %s - %v", id, mountpoint, err)
 	}
 	return nil
 }
@@ -536,8 +569,33 @@ func (d *Driver) Exists(id string) bool {
 	return err == nil
 }
 
+// isParent returns if the passed in parent is the direct parent of the passed in layer
+func (d *Driver) isParent(id, parent string) bool {
+	lowers, err := d.getLowerDirs(id)
+	if err != nil {
+		return false
+	}
+	if parent == "" && len(lowers) > 0 {
+		return false
+	}
+
+	parentDir := d.dir(parent)
+	var ld string
+	if len(lowers) > 0 {
+		ld = filepath.Dir(lowers[0])
+	}
+	if ld == "" && parent == "" {
+		return true
+	}
+	return ld == parentDir
+}
+
 // ApplyDiff applies the new layer into a root
 func (d *Driver) ApplyDiff(id string, parent string, diff io.Reader) (size int64, err error) {
+	if !d.isParent(id, parent) {
+		return d.naiveDiff.ApplyDiff(id, parent, diff)
+	}
+
 	applyDir := d.getDiffPath(id)
 
 	logrus.Debugf("Applying tar in %s", applyDir)
@@ -550,7 +608,7 @@ func (d *Driver) ApplyDiff(id string, parent string, diff io.Reader) (size int64
 		return 0, err
 	}
 
-	return d.DiffSize(id, parent)
+	return directory.Size(applyDir)
 }
 
 func (d *Driver) getDiffPath(id string) string {
@@ -563,12 +621,19 @@ func (d *Driver) getDiffPath(id string) string {
 // and its parent and returns the size in bytes of the changes
 // relative to its base filesystem directory.
 func (d *Driver) DiffSize(id, parent string) (size int64, err error) {
+	if useNaiveDiff(d.home) || !d.isParent(id, parent) {
+		return d.naiveDiff.DiffSize(id, parent)
+	}
 	return directory.Size(d.getDiffPath(id))
 }
 
 // Diff produces an archive of the changes between the specified
 // layer and its parent layer which may be "".
 func (d *Driver) Diff(id, parent string) (io.ReadCloser, error) {
+	if useNaiveDiff(d.home) || !d.isParent(id, parent) {
+		return d.naiveDiff.Diff(id, parent)
+	}
+
 	diffPath := d.getDiffPath(id)
 	logrus.Debugf("Tar with options on %s", diffPath)
 	return archive.TarWithOptions(diffPath, &archive.TarOptions{
@@ -582,6 +647,9 @@ func (d *Driver) Diff(id, parent string) (io.ReadCloser, error) {
 // Changes produces a list of changes between the specified layer
 // and its parent layer. If parent is "", then all changes will be ADD changes.
 func (d *Driver) Changes(id, parent string) ([]archive.Change, error) {
+	if useNaiveDiff(d.home) || !d.isParent(id, parent) {
+		return d.naiveDiff.Changes(id, parent)
+	}
 	// Overlay doesn't have snapshots, so we need to get changes from all parent
 	// layers.
 	diffPath := d.getDiffPath(id)

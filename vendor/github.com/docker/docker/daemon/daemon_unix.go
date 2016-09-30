@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
@@ -39,7 +40,6 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/label"
 	rsystem "github.com/opencontainers/runc/libcontainer/system"
-	"github.com/opencontainers/runc/libcontainer/user"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
@@ -110,6 +110,14 @@ func getCPUResources(config containertypes.Resources) *specs.CPU {
 		cpu.Mems = &cpuset
 	}
 
+	if config.NanoCPUs > 0 {
+		// https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt
+		period := uint64(100 * time.Millisecond / time.Microsecond)
+		quota := uint64(config.NanoCPUs) * period / 1e9
+		cpu.Period = &period
+		cpu.Quota = &quota
+	}
+
 	if config.CPUPeriod != 0 {
 		period := uint64(config.CPUPeriod)
 		cpu.Period = &period
@@ -160,29 +168,30 @@ func parseSecurityOpt(container *container.Container, config *containertypes.Hos
 	for _, opt := range config.SecurityOpt {
 		if opt == "no-new-privileges" {
 			container.NoNewPrivileges = true
-		} else {
-			var con []string
-			if strings.Contains(opt, "=") {
-				con = strings.SplitN(opt, "=", 2)
-			} else if strings.Contains(opt, ":") {
-				con = strings.SplitN(opt, ":", 2)
-				logrus.Warn("Security options with `:` as a separator are deprecated and will be completely unsupported in 1.13, use `=` instead.")
-			}
+			continue
+		}
 
-			if len(con) != 2 {
-				return fmt.Errorf("Invalid --security-opt 1: %q", opt)
-			}
+		var con []string
+		if strings.Contains(opt, "=") {
+			con = strings.SplitN(opt, "=", 2)
+		} else if strings.Contains(opt, ":") {
+			con = strings.SplitN(opt, ":", 2)
+			logrus.Warn("Security options with `:` as a separator are deprecated and will be completely unsupported in 1.14, use `=` instead.")
+		}
 
-			switch con[0] {
-			case "label":
-				labelOpts = append(labelOpts, con[1])
-			case "apparmor":
-				container.AppArmorProfile = con[1]
-			case "seccomp":
-				container.SeccompProfile = con[1]
-			default:
-				return fmt.Errorf("Invalid --security-opt 2: %q", opt)
-			}
+		if len(con) != 2 {
+			return fmt.Errorf("invalid --security-opt 1: %q", opt)
+		}
+
+		switch con[0] {
+		case "label":
+			labelOpts = append(labelOpts, con[1])
+		case "apparmor":
+			container.AppArmorProfile = con[1]
+		case "seccomp":
+			container.SeccompProfile = con[1]
+		default:
+			return fmt.Errorf("invalid --security-opt 2: %q", opt)
 		}
 	}
 
@@ -248,12 +257,11 @@ func (daemon *Daemon) adaptContainerSettings(hostConfig *containertypes.HostConf
 		hostConfig.ShmSize = container.DefaultSHMSize
 	}
 	var err error
-	if hostConfig.SecurityOpt == nil {
-		hostConfig.SecurityOpt, err = daemon.generateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode, hostConfig.Privileged)
-		if err != nil {
-			return err
-		}
+	opts, err := daemon.generateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode, hostConfig.Privileged)
+	if err != nil {
+		return err
 	}
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, opts...)
 	if hostConfig.MemorySwappiness == nil {
 		defaultSwappiness := int64(-1)
 		hostConfig.MemorySwappiness = &defaultSwappiness
@@ -341,6 +349,26 @@ func verifyContainerResources(resources *containertypes.Resources, sysInfo *sysi
 	}
 
 	// cpu subsystem checks and adjustments
+	if resources.NanoCPUs > 0 && resources.CPUPeriod > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Period cannot both be set")
+	}
+	if resources.NanoCPUs > 0 && resources.CPUQuota > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Quota cannot both be set")
+	}
+	if resources.NanoCPUs > 0 && (!sysInfo.CPUCfsPeriod || !sysInfo.CPUCfsQuota) {
+		return warnings, fmt.Errorf("NanoCPUs can not be set, as your kernel does not support CPU cfs period/quota or the cgroup is not mounted")
+	}
+	// The highest precision we could get on Linux is 0.001, by setting
+	//   cpu.cfs_period_us=1000ms
+	//   cpu.cfs_quota=1ms
+	// See the following link for details:
+	// https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt
+	// Here we don't set the lower limit and it is up to the underlying platform (e.g., Linux) to return an error.
+	// The error message is 0.01 so that this is consistent with Windows
+	if resources.NanoCPUs < 0 || resources.NanoCPUs > int64(sysinfo.NumCPU())*1e9 {
+		return warnings, fmt.Errorf("Range of CPUs is from 0.01 to %d.00, as there are only %d CPUs available", sysinfo.NumCPU(), sysinfo.NumCPU())
+	}
+
 	if resources.CPUShares > 0 && !sysInfo.CPUShares {
 		warnings = append(warnings, "Your kernel does not support CPU shares or the cgroup is not mounted. Shares discarded.")
 		logrus.Warn("Your kernel does not support CPU shares or the cgroup is not mounted. Shares discarded.")
@@ -636,7 +664,7 @@ func (daemon *Daemon) initNetworkController(config *Config, activeSandboxes map[
 	}
 
 	if len(activeSandboxes) > 0 {
-		logrus.Infof("There are old running containers, the network config will not take affect")
+		logrus.Info("There are old running containers, the network config will not take affect")
 		return controller, nil
 	}
 
@@ -912,7 +940,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 	if uid, err := strconv.ParseInt(idparts[0], 10, 32); err == nil {
 		// must be a uid; take it as valid
 		userID = int(uid)
-		luser, err := user.LookupUid(userID)
+		luser, err := idtools.LookupUID(userID)
 		if err != nil {
 			return "", "", fmt.Errorf("Uid %d has no entry in /etc/passwd: %v", userID, err)
 		}
@@ -920,7 +948,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if len(idparts) == 1 {
 			// if the uid was numeric and no gid was specified, take the uid as the gid
 			groupID = userID
-			lgrp, err := user.LookupGid(groupID)
+			lgrp, err := idtools.LookupGID(groupID)
 			if err != nil {
 				return "", "", fmt.Errorf("Gid %d has no entry in /etc/group: %v", groupID, err)
 			}
@@ -933,7 +961,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if lookupName == defaultIDSpecifier {
 			lookupName = defaultRemappedID
 		}
-		luser, err := user.LookupUser(lookupName)
+		luser, err := idtools.LookupUser(lookupName)
 		if err != nil && idparts[0] != defaultIDSpecifier {
 			// error if the name requested isn't the special "dockremap" ID
 			return "", "", fmt.Errorf("Error during uid lookup for %q: %v", lookupName, err)
@@ -950,7 +978,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		username = luser.Name
 		if len(idparts) == 1 {
 			// we only have a string username, and no group specified; look up gid from username as group
-			group, err := user.LookupGroup(lookupName)
+			group, err := idtools.LookupGroup(lookupName)
 			if err != nil {
 				return "", "", fmt.Errorf("Error during gid lookup for %q: %v", lookupName, err)
 			}
@@ -965,14 +993,14 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if gid, err := strconv.ParseInt(idparts[1], 10, 32); err == nil {
 			// must be a gid, take it as valid
 			groupID = int(gid)
-			lgrp, err := user.LookupGid(groupID)
+			lgrp, err := idtools.LookupGID(groupID)
 			if err != nil {
 				return "", "", fmt.Errorf("Gid %d has no entry in /etc/passwd: %v", groupID, err)
 			}
 			groupname = lgrp.Name
 		} else {
 			// not a number; attempt a lookup
-			if _, err := user.LookupGroup(idparts[1]); err != nil {
+			if _, err := idtools.LookupGroup(idparts[1]); err != nil {
 				return "", "", fmt.Errorf("Error during groupname lookup for %q: %v", idparts[1], err)
 			}
 			groupname = idparts[1]
@@ -1241,6 +1269,17 @@ func (daemon *Daemon) initCgroupsPath(path string) error {
 			return err
 		}
 	}
+	return nil
+}
 
+func (daemon *Daemon) setupSeccompProfile() error {
+	if daemon.configStore.SeccompProfile != "" {
+		daemon.seccompProfilePath = daemon.configStore.SeccompProfile
+		b, err := ioutil.ReadFile(daemon.configStore.SeccompProfile)
+		if err != nil {
+			return fmt.Errorf("opening seccomp profile (%s) failed: %v", daemon.configStore.SeccompProfile, err)
+		}
+		daemon.seccompProfile = b
+	}
 	return nil
 }

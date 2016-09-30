@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/httputils"
 	icmd "github.com/docker/docker/pkg/integration/cmd"
@@ -302,6 +303,40 @@ func getAllNetworks() ([]types.NetworkResource, error) {
 	return networks, nil
 }
 
+func deleteAllPlugins() error {
+	plugins, err := getAllPlugins()
+	if err != nil {
+		return err
+	}
+	var errors []string
+	for _, p := range plugins {
+		status, b, err := sockRequest("DELETE", "/plugins/"+p.Name+":"+p.Tag+"?force=1", nil)
+		if err != nil {
+			errors = append(errors, err.Error())
+			continue
+		}
+		if status != http.StatusNoContent {
+			errors = append(errors, fmt.Sprintf("error deleting plugin %s: %s", p.Name, string(b)))
+		}
+	}
+	if len(errors) > 0 {
+		return fmt.Errorf(strings.Join(errors, "\n"))
+	}
+	return nil
+}
+
+func getAllPlugins() (types.PluginsListResponse, error) {
+	var plugins types.PluginsListResponse
+	_, b, err := sockRequest("GET", "/plugins", nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(b, &plugins); err != nil {
+		return nil, err
+	}
+	return plugins, nil
+}
+
 func deleteAllVolumes() error {
 	volumes, err := getAllVolumes()
 	if err != nil {
@@ -325,7 +360,7 @@ func deleteAllVolumes() error {
 }
 
 func getAllVolumes() ([]*types.Volume, error) {
-	var volumes types.VolumesListResponse
+	var volumes volumetypes.VolumesListOKBody
 	_, b, err := sockRequest("GET", "/volumes", nil)
 	if err != nil {
 		return nil, err
@@ -1364,6 +1399,11 @@ func waitForContainer(contID string, args ...string) error {
 		return result.Error
 	}
 	return waitRun(contID)
+}
+
+// waitRestart will wait for the specified container to restart once
+func waitRestart(contID string, duration time.Duration) error {
+	return waitInspect(contID, "{{.RestartCount}}", "1", duration)
 }
 
 // waitRun will wait for the specified container to be running, maximum 5 seconds.

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"net"
+	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -59,14 +60,14 @@ type ContainerExecInspect struct {
 
 // ContainerListOptions holds parameters to list containers with.
 type ContainerListOptions struct {
-	Quiet  bool
-	Size   bool
-	All    bool
-	Latest bool
-	Since  string
-	Before string
-	Limit  int
-	Filter filters.Args
+	Quiet   bool
+	Size    bool
+	All     bool
+	Latest  bool
+	Since   string
+	Before  string
+	Limit   int
+	Filters filters.Args
 }
 
 // ContainerLogsOptions holds parameters to filter logs with.
@@ -201,9 +202,8 @@ type ImageImportOptions struct {
 
 // ImageListOptions holds parameters to filter the list of images with.
 type ImageListOptions struct {
-	MatchName string
-	All       bool
-	Filters   filters.Args
+	All     bool
+	Filters filters.Args
 }
 
 // ImageLoadResponse returns information to the client about a load process.
@@ -267,7 +267,7 @@ func (v VersionResponse) ServerOK() bool {
 
 // NodeListOptions holds parameters to list nodes with.
 type NodeListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // NodeRemoveOptions holds parameters to remove nodes with.
@@ -285,10 +285,12 @@ type ServiceCreateOptions struct {
 }
 
 // ServiceCreateResponse contains the information returned to a client
-// on the  creation of a new service.
+// on the creation of a new service.
 type ServiceCreateResponse struct {
 	// ID is the ID of the created service.
 	ID string
+	// Warnings is a set of non-fatal warning messages to pass on to the user.
+	Warnings []string `json:",omitempty"`
 }
 
 // Values for RegistryAuthFrom in ServiceUpdateOptions
@@ -317,17 +319,22 @@ type ServiceUpdateOptions struct {
 
 // ServiceListOptions holds parameters to list  services with.
 type ServiceListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // TaskListOptions holds parameters to list  tasks with.
 type TaskListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // PluginRemoveOptions holds parameters to remove plugins.
 type PluginRemoveOptions struct {
 	Force bool
+}
+
+// PluginEnableOptions holds parameters to enable plugins.
+type PluginEnableOptions struct {
+	Timeout int
 }
 
 // PluginInstallOptions holds parameters to install a plugin.
@@ -337,4 +344,26 @@ type PluginInstallOptions struct {
 	RegistryAuth          string // RegistryAuth is the base64 encoded credentials for the registry
 	PrivilegeFunc         RequestPrivilegeFunc
 	AcceptPermissionsFunc func(PluginPrivileges) (bool, error)
+	Args                  []string
+}
+
+// SecretRequestOption is a type for requesting secrets
+type SecretRequestOption struct {
+	Source string
+	Target string
+	UID    string
+	GID    string
+	Mode   os.FileMode
+}
+
+// SwarmUnlockKeyResponse contains the response for Engine API:
+// GET /swarm/unlockkey
+type SwarmUnlockKeyResponse struct {
+	// UnlockKey is the unlock key in ASCII-armored format.
+	UnlockKey string
+}
+
+// PluginCreateOptions hold all options to plugin create.
+type PluginCreateOptions struct {
+	RepoName string
 }

@@ -189,9 +189,6 @@ func (ld *v2LayerDescriptor) Download(ctx context.Context, progressOutput progre
 	layerDownload, err := ld.open(ctx)
 	if err != nil {
 		logrus.Errorf("Error initiating layer download: %v", err)
-		if err == distribution.ErrBlobUnknown {
-			return nil, 0, xfer.DoNotRetry{Err: err}
-		}
 		return nil, 0, retryOnError(err)
 	}
 
@@ -338,9 +335,6 @@ func (p *v2Puller) pullV2Tag(ctx context.Context, ref reference.Named) (tagUpdat
 		tagOrDigest string // Used for logging/progress only
 	)
 	if tagged, isTagged := ref.(reference.NamedTagged); isTagged {
-		// NOTE: not using TagService.Get, since it uses HEAD requests
-		// against the manifests endpoint, which are not supported by
-		// all registry versions.
 		manifest, err = manSvc.Get(ctx, "", distribution.WithTag(tagged.Tag()))
 		if err != nil {
 			return false, allowV1Fallback(err)
@@ -361,7 +355,8 @@ func (p *v2Puller) pullV2Tag(ctx context.Context, ref reference.Named) (tagUpdat
 	}
 
 	if m, ok := manifest.(*schema2.DeserializedManifest); ok {
-		if m.Manifest.Config.MediaType == schema2.MediaTypePluginConfig {
+		if m.Manifest.Config.MediaType == schema2.MediaTypePluginConfig ||
+			m.Manifest.Config.MediaType == "application/vnd.docker.plugin.image.v0+json" { //TODO: remove this v0 before 1.13 GA
 			return false, errMediaTypePlugin
 		}
 	}
@@ -673,7 +668,7 @@ func (p *v2Puller) pullManifestList(ctx context.Context, ref reference.Named, mf
 		return "", "", err
 	}
 
-	manifestRef, err := reference.WithDigest(ref, manifestDigest)
+	manifestRef, err := reference.WithDigest(reference.TrimNamed(ref), manifestDigest)
 	if err != nil {
 		return "", "", err
 	}

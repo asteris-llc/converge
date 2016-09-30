@@ -59,12 +59,13 @@ func NewExecCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.StringVarP(&opts.user, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
 	flags.BoolVarP(&opts.privileged, "privileged", "", false, "Give extended privileges to the command")
 	flags.VarP(opts.env, "env", "e", "Set environment variables")
+	flags.SetAnnotation("env", "version", []string{"1.25"})
 
 	return cmd
 }
 
 func runExec(dockerCli *command.DockerCli, opts *execOptions, container string, execCmd []string) error {
-	execConfig, err := parseExec(opts, container, execCmd)
+	execConfig, err := parseExec(opts, execCmd)
 	// just in case the ParseExec does not exit
 	if container == "" || err != nil {
 		return cli.StatusError{StatusCode: 1}
@@ -169,7 +170,7 @@ func getExecExitCode(ctx context.Context, client apiclient.ContainerAPIClient, e
 	resp, err := client.ContainerExecInspect(ctx, execID)
 	if err != nil {
 		// If we can't connect, then the daemon probably died.
-		if err != apiclient.ErrConnectionFailed {
+		if !apiclient.IsErrConnectionFailed(err) {
 			return false, -1, err
 		}
 		return false, -1, nil
@@ -180,14 +181,13 @@ func getExecExitCode(ctx context.Context, client apiclient.ContainerAPIClient, e
 
 // parseExec parses the specified args for the specified command and generates
 // an ExecConfig from it.
-func parseExec(opts *execOptions, container string, execCmd []string) (*types.ExecConfig, error) {
+func parseExec(opts *execOptions, execCmd []string) (*types.ExecConfig, error) {
 	execConfig := &types.ExecConfig{
 		User:       opts.user,
 		Privileged: opts.privileged,
 		Tty:        opts.tty,
 		Cmd:        execCmd,
 		Detach:     opts.detach,
-		// container is not used here
 	}
 
 	// If -d is not set, attach to everything by default

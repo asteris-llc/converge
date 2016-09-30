@@ -32,6 +32,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/docker/volume"
 	_ "github.com/asteris-llc/converge/resource/file/content"
 	_ "github.com/asteris-llc/converge/resource/file/directory"
+	_ "github.com/asteris-llc/converge/resource/file/fetch"
 	_ "github.com/asteris-llc/converge/resource/file/mode"
 	_ "github.com/asteris-llc/converge/resource/group"
 	_ "github.com/asteris-llc/converge/resource/lvm/fs"

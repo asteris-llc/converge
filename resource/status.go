@@ -221,6 +221,10 @@ func (t *Status) Messages() []string {
 
 // HasChanges returns the WillChange value
 func (t *Status) HasChanges() bool {
+	if t.Level == StatusFatal {
+		return false
+	}
+
 	if t.Level == StatusWillChange || t.Level == StatusCantChange || t.Level == StatusMayChange {
 		return true
 	}

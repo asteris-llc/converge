@@ -234,7 +234,9 @@ func (s *saveSession) saveImage(id image.ID) (map[layer.DiffID]distribution.Desc
 	var layers []string
 	var foreignSrcs map[layer.DiffID]distribution.Descriptor
 	for i := range img.RootFS.DiffIDs {
-		v1Img := image.V1Image{}
+		v1Img := image.V1Image{
+			Created: img.Created,
+		}
 		if i == len(img.RootFS.DiffIDs)-1 {
 			v1Img = img.V1Image
 		}
@@ -315,8 +317,10 @@ func (s *saveSession) saveLayer(id layer.ChainID, legacyImg image.V1Image, creat
 		}
 		os.Symlink(relPath, layerPath)
 	} else {
-
-		tarFile, err := os.Create(layerPath)
+		// Use system.CreateSequential rather than os.Create. This ensures sequential
+		// file access on Windows to avoid eating into MM standby list.
+		// On Linux, this equates to a regular os.Create.
+		tarFile, err := system.CreateSequential(layerPath)
 		if err != nil {
 			return distribution.Descriptor{}, err
 		}

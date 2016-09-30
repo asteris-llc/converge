@@ -14,6 +14,7 @@ import (
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/pkg/sysinfo"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -110,6 +111,18 @@ func (clnt *client) Create(containerID string, checkpoint string, checkpointDir 
 
 	if spec.Windows.Resources != nil {
 		if spec.Windows.Resources.CPU != nil {
+			if spec.Windows.Resources.CPU.Count != nil {
+				// This check is being done here rather than in adaptContainerSettings
+				// because we don't want to update the HostConfig in case this container
+				// is moved to a host with more CPUs than this one.
+				cpuCount := *spec.Windows.Resources.CPU.Count
+				hostCPUCount := uint64(sysinfo.NumCPU())
+				if cpuCount > hostCPUCount {
+					logrus.Warnf("Changing requested CPUCount of %d to current number of processors, %d", cpuCount, hostCPUCount)
+					cpuCount = hostCPUCount
+				}
+				configuration.ProcessorCount = uint32(cpuCount)
+			}
 			if spec.Windows.Resources.CPU.Shares != nil {
 				configuration.ProcessorWeight = uint64(*spec.Windows.Resources.CPU.Shares)
 			}
@@ -298,6 +311,7 @@ func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendly
 	// Configure the environment for the process
 	createProcessParms.Environment = setupEnvironmentVariables(procToAdd.Env)
 	createProcessParms.CommandLine = strings.Join(procToAdd.Args, " ")
+	createProcessParms.User = procToAdd.User.Username
 
 	logrus.Debugf("libcontainerd: commandLine: %s", createProcessParms.CommandLine)
 
@@ -610,4 +624,8 @@ func (clnt *client) DeleteCheckpoint(containerID string, checkpointID string, ch
 
 func (clnt *client) ListCheckpoints(containerID string, checkpointDir string) (*Checkpoints, error) {
 	return nil, errors.New("Windows: Containers do not support checkpoints")
+}
+
+func (clnt *client) GetServerVersion(ctx context.Context) (*ServerVersion, error) {
+	return &ServerVersion{}, nil
 }
