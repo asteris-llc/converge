@@ -14,30 +14,45 @@ type ResourceLV struct {
 	sizeOption string
 	sizeUnit   string
 	lvm        lowlevel.LVM
-	lvs        map[string]*lowlevel.LogicalVolume
 	needCreate bool
 }
 
-func (r *ResourceLV) Check(resource.Renderer) (status resource.TaskStatus, err error) {
-	_, ok := r.lvs[r.name]
+func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
+	status := &resource.Status{}
+	ok, err := r.checkVG()
+	if err != nil {
+		return nil, err
+	}
+
+	lvs, err := r.lvm.QueryLogicalVolumes(r.group)
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok = lvs[r.name]
 	r.needCreate = !ok
 
-	ts := &resource.Status{}
-
 	if r.needCreate {
-		ts.Level = resource.StatusWillChange
+		status.Level = resource.StatusWillChange
 	}
-	return ts, nil
+	return status, nil
 }
 
-func (r *ResourceLV) Apply() (status resource.TaskStatus, err error) {
+func (r *ResourceLV) Apply() (resource.TaskStatus, error) {
+	status := &resource.Status{}
+	if ok, err := r.checkVG(); err != nil {
+		return nil, err
+	} else {
+		if !ok {
+			return nil, fmt.Errorf("Group %s not exists", r.group)
+		}
+	}
 	if r.needCreate {
 		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size, r.sizeOption, r.sizeUnit); err != nil {
 			return nil, err
 		}
 	}
-	ts := &resource.Status{}
-	return ts, nil
+	return status, nil
 }
 
 func (r *ResourceLV) Setup(lvm lowlevel.LVM, group string, name string, sizeToParse string) error {
@@ -46,13 +61,17 @@ func (r *ResourceLV) Setup(lvm lowlevel.LVM, group string, name string, sizeToPa
 	r.lvm = lvm
 
 	var err error
-	r.lvs, err = r.lvm.QueryLogicalVolumes(r.group)
-	if err != nil {
-		return err
-	}
-
 	r.size, r.sizeOption, r.sizeUnit, err = lowlevel.ParseSize(sizeToParse)
 	return err
+}
+
+func (r *ResourceLV) checkVG() (bool, error) {
+	vgs, err := r.lvm.QueryVolumeGroups()
+	if err != nil {
+		return false, err
+	}
+	_, ok := vgs[r.group]
+	return ok, nil
 }
 
 func (r *ResourceLV) devicePath() string {
