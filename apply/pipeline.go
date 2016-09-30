@@ -117,16 +117,22 @@ func (g *pipelineGen) applyNode(val interface{}) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("apply expected a resultWrappert but got %T", val)
 	}
-	applyStatus, err := twrapper.Plan.Task.Apply()
-	if err != nil {
-		err = fmt.Errorf("error applying %s: %s", g.ID, err)
+
+	status, err := twrapper.Plan.Task.Apply()
+
+	type settable interface {
+		SetError(error)
 	}
+	if inner, ok := status.(settable); ok && err != nil {
+		inner.SetError(err)
+	}
+
 	return &Result{
 		Ran:    true,
-		Status: applyStatus,
+		Status: status,
 		Task:   twrapper.Plan.Task,
 		Plan:   twrapper.Plan,
-		Err:    err,
+		Err:    status.Error(),
 	}, nil
 }
 

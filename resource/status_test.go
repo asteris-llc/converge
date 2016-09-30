@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -68,5 +69,65 @@ func TestHasChanges(t *testing.T) {
 				assert.Equal(t, row.willChange, status.HasChanges())
 			},
 		)
+	}
+}
+
+// TestSetError makes sure that the level and error fields are set in all cases.
+func TestSetError(t *testing.T) {
+	t.Parallel()
+
+	// test the translation of error levels
+	fromTo := [][2]resource.StatusLevel{
+		{resource.StatusNoChange, resource.StatusFatal},
+		{resource.StatusWontChange, resource.StatusFatal},
+		{resource.StatusWillChange, resource.StatusCantChange},
+		{resource.StatusCantChange, resource.StatusCantChange},
+		{resource.StatusFatal, resource.StatusFatal},
+	}
+	for _, pair := range fromTo {
+		testErr := errors.New("test")
+
+		t.Run(pair[0].String(), func(t *testing.T) {
+			status := resource.NewStatus()
+			status.Level = pair[0]
+			status.SetError(testErr)
+
+			assert.Equal(t, pair[1], status.Level, "%s != %s", pair[1], status.Level)
+			assert.Equal(t, testErr, status.Error())
+		})
+	}
+}
+
+// TestStatusError makes sure we always return a good error, even if error is
+// not set.
+func TestStatusError(t *testing.T) {
+	t.Parallel()
+
+	// when error is set, just return it
+	t.Run("with error", func(t *testing.T) {
+		err := errors.New("test")
+		status := resource.NewStatus()
+		status.SetError(err)
+
+		assert.Equal(t, err, status.Error())
+	})
+
+	// otherwise, we'll have to return some generic stuff
+	messages := []struct {
+		level resource.StatusLevel
+		err   error
+	}{
+		{resource.StatusNoChange, nil},
+		{resource.StatusWontChange, nil},
+		{resource.StatusWillChange, nil},
+		{resource.StatusCantChange, resource.ErrStatusCantChange},
+		{resource.StatusFatal, resource.ErrStatusFatal},
+	}
+	for _, msg := range messages {
+		t.Run(msg.level.String(), func(t *testing.T) {
+			status := resource.NewStatus()
+			status.Level = msg.level
+			assert.Equal(t, msg.err, status.Error())
+		})
 	}
 }
