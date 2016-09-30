@@ -199,6 +199,6 @@ func RememberCalls(list *[]string, nameIndex int) interface{} {
 // the keyword is unimplemented.
 func Unimplemented(name string) interface{} {
 	return func(params ...string) (string, error) {
-		return "", fmt.Errorf("%s is unimplimented in the current template language", name)
+		return "", fmt.Errorf("%s is unimplemented in the current template language", name)
 	}
 }
