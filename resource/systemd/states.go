@@ -15,8 +15,6 @@
 package systemd
 
 import (
-	"strings"
-
 	"github.com/coreos/go-systemd/dbus"
 	godbus "github.com/godbus/dbus"
 )
@@ -30,6 +28,11 @@ func propDependency(name string, units []string) *dbus.Property {
 
 // LoadState reflects dbus values for a unit's "LoadState" property
 type LoadState string
+
+// Equal checks if two `LoadState`s are equal. Trims quotes.
+func (state LoadState) Equal(other LoadState) bool {
+	return state == other
+}
 
 // LoadStates defines a slice of LoadState
 type LoadStates []LoadState
@@ -84,18 +87,13 @@ const (
 
 // Equal checks if two ActiveStates are equal. It automatically strips quotes.
 func (state ActiveState) Equal(other ActiveState) bool {
-	if state == other {
-		return true
-	}
-	stateStr := strings.Trim(string(state), "\"")
-	otherStr := strings.Trim(string(other), "\"")
-	return stateStr == otherStr
+	return state == other
 }
 
 // Contains checks if in a list of ActiveState one state is the given
 func (states ActiveStates) Contains(state ActiveState) bool {
 	for _, s := range states {
-		if s == state {
+		if s.Equal(state) {
 			return true
 		}
 	}
@@ -140,12 +138,7 @@ func PropUnitFileState(ufs UnitFileState) *dbus.Property {
 
 // Equal checks if two `UnitFileState`s are equal. Trims quotes.
 func (state UnitFileState) Equal(other UnitFileState) bool {
-	if state == other {
-		return true
-	}
-	stateStr := strings.Trim(string(state), "\"")
-	otherStr := strings.Trim(string(other), "\"")
-	return stateStr == otherStr
+	return state == other
 }
 
 // IsEnabled Determines whether unit should be enabled
@@ -174,7 +167,7 @@ var ValidUnitFileStates = UnitFileStates{UFSEnabled, UFSEnabledRuntime, UFSLinke
 // Contains checks if in a list of `UnitFileState`s one state is the given
 func (states UnitFileStates) Contains(s UnitFileState) bool {
 	for i := range states {
-		if s == states[i] {
+		if s.Equal(states[i]) {
 			return true
 		}
 	}
@@ -188,6 +181,11 @@ func IsValidUnitFileState(ufs UnitFileState) bool {
 
 // StartMode reflects valid parameters to the `StartUnit` function
 type StartMode string
+
+// Equal checks if two `StartMode`s are equal. Trims quotes.
+func (state StartMode) Equal(other StartMode) bool {
+	return state == other
+}
 
 // StartModes defines a slice of `StartMode`
 type StartModes []StartMode
@@ -204,7 +202,7 @@ const (
 // Contains checks if the given `StartMode` is in a list of `StartModes`
 func (states StartModes) Contains(s StartMode) bool {
 	for i := range states {
-		if s == states[i] {
+		if s.Equal(states[i]) {
 			return true
 		}
 	}

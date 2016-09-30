@@ -265,7 +265,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 		}
 		return t, err
 	}
-	state := systemd.UnitFileState(prop.Value.String())
+	state := systemd.UnitFileState(prop.Value.Value().(string))
 
 	//////////////////////////
 	// Apply the UnitFileState
