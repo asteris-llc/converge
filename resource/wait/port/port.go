@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
 )
 
@@ -34,13 +35,9 @@ const (
 // Port represents a port check
 type Port struct {
 	*resource.Status
-	Host        string
-	Port        int
-	GracePeriod time.Duration
-	Interval    time.Duration
-	MaxRetry    int
-	RetryCount  int
-	Duration    time.Duration
+	*wait.Retrier
+	Host string
+	Port int
 }
 
 // Check if the port is open
@@ -63,49 +60,12 @@ func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 // Apply retries the check until it passes or returns max failure threshold
 func (p *Port) Apply() (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
-	startTime := time.Now()
 
-	retries := p.MaxRetry
-	if retries <= 0 {
-		retries = defaultRetries
+	_, err := p.RetryUntil(p.checkConnection)
+	if err != nil {
+		return p, errors.Wrapf(err, "failed to check connection")
 	}
 
-	interval := p.Interval
-	if interval <= 0 {
-		interval = defaultInterval
-	}
-
-	after := p.GracePeriod
-	alive := false
-waitLoop:
-	for {
-		select {
-		case <-time.After(after):
-			if alive {
-				break waitLoop
-			}
-
-			p.RetryCount++
-			after = interval
-
-			var err error
-			alive, err = p.checkConnection()
-			if err != nil {
-				return p, err
-			}
-
-			if alive {
-				after = p.GracePeriod
-				continue
-			}
-
-			if p.RetryCount >= retries {
-				break waitLoop
-			}
-		}
-	}
-
-	p.Duration = time.Since(startTime)
 	return p, nil
 }
 

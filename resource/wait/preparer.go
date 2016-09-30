@@ -93,7 +93,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return &Wait{}, fmt.Errorf("expected *shell.Shell but got %T", task)
 	}
 
-	wait := &Wait{Shell: shell}
+	wait := &Wait{Shell: shell, Retrier: &Retrier{}}
 
 	interval, err := render.Render("interval", p.Interval)
 	if err != nil {

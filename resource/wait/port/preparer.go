@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/wait"
 )
 
 // Preparer handles wait.query tasks
@@ -64,8 +65,9 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	port := &Port{
-		Host: host,
-		Port: portNum,
+		Host:    host,
+		Port:    portNum,
+		Retrier: &wait.Retrier{},
 	}
 
 	interval, err := render.Render("interval", p.Interval)
