@@ -183,6 +183,15 @@ func TestPreparerPrepare(t *testing.T) {
 		})
 	}
 
+	// pointers
+	t.Run("pointers", func(t *testing.T) {
+		val := "test"
+		target := newWithField(t, "pointer", val)
+		if assert.NotNil(t, target.Pointer) {
+			assert.Equal(t, *target.Pointer, val)
+		}
+	})
+
 	// we do some very basic validations, let's test those too
 	t.Run("valid_values", func(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
@@ -284,6 +293,9 @@ type testPreparerTarget struct {
 
 	// aliasing
 	Alias testAlias `hcl:"alias"`
+
+	// pointers
+	Pointer *string `hcl:"pointer"`
 }
 
 func (tpt *testPreparerTarget) Prepare(resource.Renderer) (resource.Task, error)     { return tpt, nil }
