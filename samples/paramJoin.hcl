@@ -1,3 +1,5 @@
+# an example of joining a list with newlines
+
 param "items" {
   default = [1, 2, 3]
 }

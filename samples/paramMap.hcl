@@ -1,3 +1,5 @@
+# ranging a map
+
 param "items" {
   default = {
     a = 1
