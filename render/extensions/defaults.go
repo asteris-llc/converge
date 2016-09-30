@@ -15,6 +15,7 @@
 package extensions
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 )
@@ -44,4 +45,14 @@ func DefaultSplit(sep, str string) []string {
 // works in a reasonable manner when dealing with piped output.
 func DefaultJoin(sep string, str []string) string {
 	return strings.Join(str, sep)
+}
+
+// DefaultJsonify just marshals a value to string
+func DefaultJsonify(val interface{}) (string, error) {
+	out, err := json.Marshal(val)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out), nil
 }

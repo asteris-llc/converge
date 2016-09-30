@@ -32,6 +32,7 @@ var keywords = map[string]struct{}{
 	"platform": {},
 	"split":    {},
 	"join":     {},
+	"jsonify":  {},
 	"lookup":   {},
 
 	// parameters

@@ -75,3 +75,5 @@ resource to the named parameter.
 
 - **join** joins a list of strings (second argument) using another string (first
   argument)
+
+- **jsonify** returns the value as a JSON string
