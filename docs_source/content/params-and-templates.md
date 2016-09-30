@@ -70,8 +70,14 @@ resource to the named parameter.
 
 ### Utility
 
+{{< note title="Backwards arguments?" >}}
+Some of the utility functions (like `split` and `join`) seem to have their
+arguments backwards. This is to allow you to pipe values to them. For example,
+joining a list on strings is `{{paramList "x" | join "\n"}}`
+{{< /note >}}
+
 - **split** splits a string (second argument) at the instances of another string
-  (first argument)
+  (first argument).
 
 - **join** joins a list of strings (second argument) using another string (first
   argument)
