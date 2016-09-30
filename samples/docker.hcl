@@ -11,9 +11,9 @@ param "container" {
 }
 
 docker.image "nginx" {
-  name    = "{{param `image`}}"
-  tag     = "{{param `image-tag`}}"
-  timeout = "60s"
+  name               = "{{param `image`}}"
+  tag                = "{{param `image-tag`}}"
+  inactivity_timeout = "60s"
 }
 
 docker.container "nginx" {
