@@ -108,6 +108,9 @@ func (p *Preparer) validateExtra(typ reflect.Type) error {
 		fieldNames[p.getFieldName(typ.Field(i))] = struct{}{}
 	}
 
+	// add special fields
+	fieldNames["depends"] = struct{}{}
+
 	var err error
 	for key := range p.Source {
 		if _, ok := fieldNames[key]; ok {
@@ -129,7 +132,7 @@ func (p *Preparer) validateExtra(typ reflect.Type) error {
 
 		err = multierror.Append(
 			err,
-			fmt.Errorf("I don't a field named %q.%s", key, msg),
+			fmt.Errorf("I don't have a field named %q.%s", key, msg),
 		)
 	}
 
