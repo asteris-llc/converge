@@ -23,7 +23,7 @@ const (
 )
 
 // Retrier can be included in resources to provide retry capabilities
-type Retrier struct { // TODO: rename?
+type Retrier struct {
 	GracePeriod time.Duration
 	Interval    time.Duration
 	MaxRetry    int
