@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/arbovm/levenshtein"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -62,6 +64,10 @@ func (p *Preparer) Prepare(r Renderer) (Task, error) {
 		return nil, errors.New("Preparer can only wrap structs")
 	}
 
+	if err := p.validateExtra(typ); err != nil {
+		return nil, err
+	}
+
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		if field.Anonymous {
@@ -90,6 +96,44 @@ func (p *Preparer) Prepare(r Renderer) (Task, error) {
 	}
 
 	return resource.Prepare(r)
+}
+
+func (p *Preparer) validateExtra(typ reflect.Type) error {
+	if typ.Kind() != reflect.Struct {
+		return errors.New("can't validate extra on a non-struct type")
+	}
+
+	fieldNames := map[string]struct{}{}
+	for i := 0; i < typ.NumField(); i++ {
+		fieldNames[p.getFieldName(typ.Field(i))] = struct{}{}
+	}
+
+	var err error
+	for key := range p.Source {
+		if _, ok := fieldNames[key]; ok {
+			continue
+		}
+
+		// check for spelling errors. Deploy the Levenshtein distance algorithm!
+		var candidates []string
+		for candidate := range fieldNames {
+			if levenshtein.Distance(key, candidate) <= 5 {
+				candidates = append(candidates, candidate)
+			}
+		}
+
+		var msg string
+		if len(candidates) > 0 {
+			msg = " Maybe you meant: " + strings.Join(candidates, ", ")
+		}
+
+		err = multierror.Append(
+			err,
+			fmt.Errorf("I don't a field named %q.%s", key, msg),
+		)
+	}
+
+	return err
 }
 
 // getValueForField retrieves and converts the value for a given field
