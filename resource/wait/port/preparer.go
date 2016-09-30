@@ -15,7 +15,6 @@
 package port
 
 import (
-	"errors"
 	"time"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -30,7 +29,7 @@ type Preparer struct {
 	Host string `hcl:"host"`
 
 	// the TCP port to attempt to connect to.
-	Port interface{} `hcl:"port"`
+	Port int `hcl:"port" required:"true"`
 
 	// the amount of time to wait in between checks. The format is Go's duraction
 	// string. A duration string is a possibly signed sequence of decimal numbers,
@@ -46,7 +45,7 @@ type Preparer struct {
 	GracePeriod string `hcl:"grace_period" doc_type:"duration string"`
 
 	// the maximum number of attempts before the wait fails.
-	MaxRetry interface{} `hcl:"max_retry"`
+	MaxRetry int `hcl:"max_retry"`
 }
 
 // Prepare creates a new wait.port type
@@ -56,40 +55,20 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	var (
-		portNum int
-		ok      bool
-	)
-	if portNum, ok = p.Port.(int); !ok {
-		return nil, errors.New("invalid port or no port specified")
-	}
-
 	port := &Port{
-		Host:    host,
-		Port:    portNum,
-		Retrier: &wait.Retrier{},
+		Host: host,
+		Port: p.Port,
+		Retrier: &wait.Retrier{
+			MaxRetry: p.MaxRetry,
+		},
 	}
 
-	interval, err := render.Render("interval", p.Interval)
-	if err != nil {
-		return port, err
-	}
-
-	if intervalDuration, perr := time.ParseDuration(interval); perr == nil {
+	if intervalDuration, perr := time.ParseDuration(p.Interval); perr == nil {
 		port.Interval = intervalDuration
 	}
 
-	gracePeriod, err := render.Render("grace_period", p.GracePeriod)
-	if err != nil {
-		return port, err
-	}
-
-	if gracePeriodDuration, perr := time.ParseDuration(gracePeriod); perr == nil {
+	if gracePeriodDuration, perr := time.ParseDuration(p.GracePeriod); perr == nil {
 		port.GracePeriod = gracePeriodDuration
-	}
-
-	if maxRetry, ok := p.MaxRetry.(int); ok {
-		port.MaxRetry = maxRetry
 	}
 
 	return port, nil

@@ -31,7 +31,7 @@ type Preparer struct {
 
 	// the script to run to check if a resource is ready. exit with exit code 0 if
 	// the resource is healthy, and 1 (or above) otherwise.
-	Check string `hcl:"check"`
+	Check string `hcl:"check" required:"true"`
 
 	// flags to pass to the `interpreter` binary to check validity. For
 	// `/bin/sh` this is `-n`.
@@ -67,7 +67,7 @@ type Preparer struct {
 	GracePeriod string `hcl:"grace_period" doc_type:"duration string"`
 
 	// the maximum number of attempts before the wait fails.
-	MaxRetry interface{} `hcl:"max_retry"`
+	MaxRetry int `hcl:"max_retry"`
 }
 
 // Prepare creates a new wait type
@@ -93,28 +93,19 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return &Wait{}, fmt.Errorf("expected *shell.Shell but got %T", task)
 	}
 
-	wait := &Wait{Shell: shell, Retrier: &Retrier{}}
-
-	interval, err := render.Render("interval", p.Interval)
-	if err != nil {
-		return wait, err
+	wait := &Wait{
+		Shell: shell,
+		Retrier: &Retrier{
+			MaxRetry: p.MaxRetry,
+		},
 	}
 
-	if intervalDuration, perr := time.ParseDuration(interval); perr == nil {
+	if intervalDuration, perr := time.ParseDuration(p.Interval); perr == nil {
 		wait.Interval = intervalDuration
 	}
 
-	gracePeriod, err := render.Render("grace_period", p.GracePeriod)
-	if err != nil {
-		return wait, err
-	}
-
-	if gracePeriodDuration, perr := time.ParseDuration(gracePeriod); perr == nil {
+	if gracePeriodDuration, perr := time.ParseDuration(p.GracePeriod); perr == nil {
 		wait.GracePeriod = gracePeriodDuration
-	}
-
-	if maxRetry, ok := p.MaxRetry.(int); ok {
-		wait.MaxRetry = maxRetry
 	}
 
 	return wait, nil
