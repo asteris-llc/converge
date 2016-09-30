@@ -39,6 +39,7 @@ var languageKeywords = map[string]struct{}{
 	"join":      {},
 	RefFuncName: {},
 	"platform":  {},
+	"jsonify":   {},
 
 	// functions for working with parameters
 	"param":     {},
@@ -96,6 +97,7 @@ func DefaultLanguage() *LanguageExtension {
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
 	language.On("join", DefaultJoin)
+	language.On("jsonify", DefaultJsonify)
 	language.On("platform", platform.DefaultPlatform)
 	language.On(RefFuncName, Unimplemented(RefFuncName))
 
