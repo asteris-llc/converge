@@ -98,6 +98,7 @@ func getParams(node *parse.Node) (out []string, err error) {
 	language := extensions.MinimalLanguage()
 	language.On("param", extensions.RememberCalls(&out, ""))
 	language.On("paramList", extensions.RememberCalls(&out, []interface{}(nil)))
+	language.On("paramMap", extensions.RememberCalls(&out, map[string]interface{}(nil)))
 
 	for _, s := range nodeStrings {
 		useless := stub{}
