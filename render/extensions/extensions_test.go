@@ -30,9 +30,12 @@ import (
 var keywords = map[string]struct{}{
 	"env":      {},
 	"platform": {},
-	"param":    {},
 	"split":    {},
 	"lookup":   {},
+
+	// parameters
+	"param":     {},
+	"paramList": {},
 }
 
 var contextualFunctions = map[string]string{
@@ -74,7 +77,7 @@ func Test_Validate_ReturnsEmptySlicesWhenValidDSL(t *testing.T) {
 }
 
 func Test_Validate_ReturnsSlicesOfMissingWhenMissingL(t *testing.T) {
-	expected := []string{"env", "param", "split", "lookup", "platform"}
+	expected := []string{"env", "param", "paramList", "split", "lookup", "platform"}
 	l := extensions.EmptyLanguage()
 	missing, _, ok := l.Validate()
 	assert.False(t, ok)
