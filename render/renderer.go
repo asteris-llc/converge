@@ -18,11 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/param"
 )
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
@@ -54,7 +56,10 @@ func (r *Renderer) Value() (value string, present bool) {
 // Render a string with text/template
 func (r *Renderer) Render(name, src string) (string, error) {
 	r.resolverErr = false
+
 	r.Language = r.Language.On("param", r.param)
+	r.Language = r.Language.On("paramList", r.paramList)
+
 	r.Language = r.Language.On(extensions.RefFuncName, r.lookup)
 	out, err := r.Language.Render(r.DotValue, name, src)
 	if err != nil {
@@ -79,6 +84,38 @@ func (r *Renderer) param(name string) (string, error) {
 	}
 
 	return fmt.Sprintf("%+v", val), nil
+}
+
+func (r *Renderer) paramList(name string) ([]string, error) {
+	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+	var out []string
+
+	if task == nil || !ok {
+		return out, errors.New("param not found")
+	}
+
+	if _, ok := task.(*PrepareThunk); ok {
+		r.resolverErr = true
+		return out, ErrUnresolvable{}
+	}
+
+	// so it's a param. Grab that value!
+	param, ok := task.(*param.Param)
+	if !ok {
+		return out, fmt.Errorf("task is not a param, but a %T", task)
+	}
+
+	vals := reflect.ValueOf(param.Val)
+	if vals.Kind() != reflect.Slice {
+		return out, fmt.Errorf("param is not a list, it is a %s (%s)", vals.Kind(), vals)
+	}
+
+	for i := 0; i < vals.Len(); i++ {
+		val := vals.Index(i)
+		out = append(out, fmt.Sprintf("%v", val.Interface()))
+	}
+
+	return out, nil
 }
 
 func (r *Renderer) lookup(name string) (string, error) {
