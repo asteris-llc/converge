@@ -37,7 +37,7 @@ rules are:
   will result in an error. Resources also can specify a base for conversion. For
   example, [file.mode]({{< ref "resources/file.mode.md" >}})) takes an octal
   (base-8) integral value.
-  
+
 - **list** items will be interpreted using the semantics above
 
 - **map** keys and values will both be interpreted using the semantics above
@@ -48,23 +48,27 @@ Converge provides the following template functions for your use:
 
 ### Params
 
-- **param** refers to a parameter as a single stringified value. Use of this
-  function will create an edge in the graph pointing from your resource to the
-  named parameter.
-  
+Use of any of these functions will create edges in the graph pointing from your
+resource to the named parameter.
+
+- **param** refers to a parameter as a single stringified value.
+
 - **paramList** refers to a parameter as a list of values. Use this in
   combination with `range` to loop over values, as in `samples/paramList.hcl` in
-  the Converge source. Use of this function will create an edge in the graph
-  pointing from your resource to the named parameter.
+  the Converge source.
+
+- **paramMap** refers to a parameter as a map of values. Use this in combination
+  with `range` to loop over values, as in `samples/paramMap.hcl` in the Converge
+  source.
 
 ### Platform
-  
+
 - **platform** TODO
-  
+
 - **env** retrieves an item (named by the first argument) from an environment
   variable
 
 ### Utility
-  
+
 - **split** splits a string (second argument) at the instances of another string
   (first argument)

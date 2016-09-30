@@ -42,6 +42,7 @@ var languageKeywords = map[string]struct{}{
 	// functions for working with parameters
 	"param":     {},
 	"paramList": {},
+	"paramMap":  {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -81,6 +82,7 @@ func MinimalLanguage() *LanguageExtension {
 	// params
 	language.On("param", newStub(""))
 	language.On("paramList", newStub([]interface{}{}))
+	language.On("paramMap", newStub(map[string]interface{}{}))
 	return language
 }
 
@@ -97,7 +99,8 @@ func DefaultLanguage() *LanguageExtension {
 
 	// params
 	language.On("param", Unimplemented("param"))
-	language.On("paramList", Unimplemented("param"))
+	language.On("paramList", Unimplemented("paramList"))
+	language.On("paramMap", Unimplemented("paramMap"))
 	language.Validate()
 	return language
 }

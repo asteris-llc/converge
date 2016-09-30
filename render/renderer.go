@@ -59,6 +59,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 
 	r.Language = r.Language.On("param", r.param)
 	r.Language = r.Language.On("paramList", r.paramList)
+	r.Language = r.Language.On("paramMap", r.paramMap)
 
 	r.Language = r.Language.On(extensions.RefFuncName, r.lookup)
 	out, err := r.Language.Render(r.DotValue, name, src)
@@ -72,50 +73,74 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
-
-	if val == nil || !ok {
-		return "", errors.New("param not found")
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return "", err
 	}
 
-	if _, ok := val.(*PrepareThunk); ok {
-		r.resolverErr = true
-		return "", ErrUnresolvable{}
-	}
-
-	return fmt.Sprintf("%+v", val), nil
+	return fmt.Sprintf("%v", raw), nil
 }
 
 func (r *Renderer) paramList(name string) ([]string, error) {
-	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
-	var out []string
-
-	if task == nil || !ok {
-		return out, errors.New("param not found")
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return nil, err
 	}
 
-	if _, ok := task.(*PrepareThunk); ok {
-		r.resolverErr = true
-		return out, ErrUnresolvable{}
-	}
-
-	// so it's a param. Grab that value!
-	param, ok := task.(*param.Param)
-	if !ok {
-		return out, fmt.Errorf("task is not a param, but a %T", task)
-	}
-
-	vals := reflect.ValueOf(param.Val)
+	vals := reflect.ValueOf(raw)
 	if vals.Kind() != reflect.Slice {
-		return out, fmt.Errorf("param is not a list, it is a %s (%s)", vals.Kind(), vals)
+		return nil, fmt.Errorf("param is not a list, it is a %s (%s)", vals.Kind(), vals)
 	}
 
+	var out []string
 	for i := 0; i < vals.Len(); i++ {
 		val := vals.Index(i)
 		out = append(out, fmt.Sprintf("%v", val.Interface()))
 	}
 
 	return out, nil
+}
+
+func (r *Renderer) paramMap(name string) (map[string]interface{}, error) {
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return nil, err
+	}
+
+	vals := reflect.ValueOf(raw)
+	if vals.Kind() != reflect.Map {
+		return nil, fmt.Errorf("param is not a map, it is a %s (%s)", vals.Kind(), vals)
+	}
+
+	out := map[string]interface{}{}
+	for _, key := range vals.MapKeys() {
+		k := fmt.Sprintf("%v", key)
+
+		out[k] = vals.MapIndex(key).Interface()
+	}
+
+	return out, nil
+}
+
+func (r *Renderer) paramRawValue(name string) (interface{}, error) {
+	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+
+	if task == nil || !ok {
+		return "", errors.New("param not found")
+	}
+
+	if _, ok := task.(*PrepareThunk); ok {
+		r.resolverErr = true
+		return "", ErrUnresolvable{}
+	}
+
+	// grab the value
+	param, ok := task.(*param.Param)
+	if !ok {
+		return nil, fmt.Errorf("task it not a param, but a %T", task)
+	}
+
+	return param.Val, nil
 }
 
 func (r *Renderer) lookup(name string) (string, error) {
