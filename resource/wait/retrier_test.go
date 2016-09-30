@@ -23,6 +23,7 @@ import (
 )
 
 func TestRetryUntilSetsRetryCount(t *testing.T) {
+	t.Parallel()
 	r := &wait.Retrier{
 		Interval: 100 * time.Millisecond,
 		MaxRetry: 3,
@@ -32,6 +33,7 @@ func TestRetryUntilSetsRetryCount(t *testing.T) {
 }
 
 func TestRetryUntilSetsDuration(t *testing.T) {
+	t.Parallel()
 	r := &wait.Retrier{
 		Interval: 100 * time.Millisecond,
 		MaxRetry: 3,
@@ -41,6 +43,7 @@ func TestRetryUntilSetsDuration(t *testing.T) {
 }
 
 func TestRetryUntilFailure(t *testing.T) {
+	t.Parallel()
 	r := &wait.Retrier{
 		Interval: 100 * time.Millisecond,
 		MaxRetry: 3,
@@ -51,6 +54,7 @@ func TestRetryUntilFailure(t *testing.T) {
 }
 
 func TestRetryUntilSuccess(t *testing.T) {
+	t.Parallel()
 	r := &wait.Retrier{
 		Interval: 100 * time.Millisecond,
 		MaxRetry: 3,
@@ -61,6 +65,7 @@ func TestRetryUntilSuccess(t *testing.T) {
 }
 
 func TestRetryBreaksOnSuccess(t *testing.T) {
+	t.Parallel()
 	r := &wait.Retrier{
 		Interval: 100 * time.Millisecond,
 		MaxRetry: 3,

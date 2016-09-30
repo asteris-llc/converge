@@ -46,7 +46,6 @@ func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	alive, err := p.checkConnection()
 	if err != nil {
-		p.Status.RaiseLevel(resource.StatusFatal)
 		return p, errors.Wrapf(err, "failed to check connection")
 	}
 
@@ -80,7 +79,7 @@ func (p *Port) checkConnection() (connected bool, err error) {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		if opErr, ok := err.(*net.OpError); ok {
-			logger.WithError(opErr).WithField("addr", addr).Info("connection failed")
+			logger.WithError(opErr).WithField("addr", addr).Debug("connection failed")
 			return false, nil
 		}
 		return false, errors.Wrapf(err, "dial failed")
