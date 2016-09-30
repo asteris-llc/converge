@@ -65,6 +65,25 @@ func WillChange() *FakeTask {
 	}
 }
 
+// NilTask always return (nil, error) tuple on Check/Apply calls
+type NilTask struct {
+}
+
+// Check always raise error
+func (*NilTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+	return nil, errors.New("check error")
+}
+
+// Apply always raise error
+func (*NilTask) Apply() (resource.TaskStatus, error) {
+	return nil, errors.New("apply error")
+}
+
+// NilAndError return a FakeTask that will simulate `return nil, err` case
+func NilAndError() resource.Task {
+	return &NilTask{}
+}
+
 // FakeSwapper is a task that tracks its state so that it can change between
 // calls to Apply
 type FakeSwapper struct {
