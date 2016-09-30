@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestRetryUntilSetsDuration tests that RetryUntil sets the RetryCount
 func TestRetryUntilSetsRetryCount(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
@@ -32,6 +33,7 @@ func TestRetryUntilSetsRetryCount(t *testing.T) {
 	assert.Equal(t, 3, r.RetryCount)
 }
 
+// TestRetryUntilSetsDuration tests that RetryUntil sets the Duration
 func TestRetryUntilSetsDuration(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
@@ -42,6 +44,8 @@ func TestRetryUntilSetsDuration(t *testing.T) {
 	assert.True(t, r.Duration >= 0)
 }
 
+// TestRetryUntilFailure tests that RetryUntil returns correctly on a failed
+// check
 func TestRetryUntilFailure(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
@@ -53,6 +57,8 @@ func TestRetryUntilFailure(t *testing.T) {
 	assert.False(t, b)
 }
 
+// TestRetryUntilSuccess tests that RetryUntil returns correctly on a succesful
+// check
 func TestRetryUntilSuccess(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
@@ -64,6 +70,8 @@ func TestRetryUntilSuccess(t *testing.T) {
 	assert.True(t, b)
 }
 
+// TestRetryBreaksOnSuccess tests that the Retrier will break out of the loop on
+// a successful check
 func TestRetryBreaksOnSuccess(t *testing.T) {
 	t.Parallel()
 	r := &wait.Retrier{
