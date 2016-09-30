@@ -485,7 +485,12 @@ func (p *Preparer) convertInterface(typ reflect.Type, r Renderer, name string, v
 		return reflect.Zero(typ), nil
 	}
 
-	return p.convertValue(reflect.TypeOf(val), r, name, val, base)
+	raw, err := p.convertValue(reflect.TypeOf(val), r, name, val, base)
+	if err != nil {
+		return raw, err
+	}
+
+	return p.maybeUnwrapMap(raw), nil
 }
 
 // convertMap properly converts and renders both keys and values
@@ -494,13 +499,7 @@ func (p *Preparer) convertMap(typ reflect.Type, r Renderer, name string, val int
 		return reflect.Zero(typ), nil
 	}
 
-	values := reflect.ValueOf(val)
-
-	// HCL does this annoying thing where it deserializes into lists by default.
-	// So our val might be a list with one map at index 0. Hooray!
-	if values.Kind() == reflect.Slice && values.Len() == 1 {
-		values = values.Index(0)
-	}
+	values := p.maybeUnwrapMap(reflect.ValueOf(val))
 
 	if values.Kind() != reflect.Map {
 		return reflect.Zero(typ), fmt.Errorf("expected map for %q, got %T", name, val)
@@ -536,6 +535,17 @@ func (p *Preparer) convertMap(typ reflect.Type, r Renderer, name string, val int
 	}
 
 	return acc, nil
+}
+
+func (p *Preparer) maybeUnwrapMap(val reflect.Value) reflect.Value {
+	typ := val.Type()
+	// HCL does this annoying thing where it deserializes into lists by default.
+	// So our val might be a list with one map at index 0. Hooray!
+	if typ.Kind() == reflect.Slice && val.Len() == 1 && typ.Elem().Kind() == reflect.Map {
+		val = val.Index(0)
+	}
+
+	return val
 }
 
 // convertSlice properly converts and renders all elements in a slice.
