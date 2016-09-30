@@ -4,6 +4,7 @@ docker.volume,../resource/docker/volume/preparer.go,../samples/dockerVolume.hcl,
 docker.network,../resource/docker/network/preparer.go,../samples/dockerNetwork.hcl,Preparer,../resource/docker/network/network.go,Network
 file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Preparer,../resource/file/content/content.go,Content
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer,../resource/file/directory/directory.go,Directory
+file.fetch,../resource/file/fetch/preparer.go,../samples/fileFetch.hcl,Preparer,../resource/file/fetch/fetch.go,Fetch
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer,../resource/file/mode/mode.go,Mode
 filesystem,../resource/lvm/fs/preparer.go,../samples/lvm.hcl,Preparer,"",""
 lvm.volumegroup,../resource/lvm/vg/preparer.go,../samples/lvm.hcl,Preparer,"",""

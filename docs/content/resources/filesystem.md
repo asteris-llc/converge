@@ -1,7 +1,7 @@
 ---
 title: "filesystem"
 slug: "filesystem"
-date: "2016-12-15T15:18:19-06:00"
+date: "2016-12-16T11:20:34-06:00"
 menu:
   main:
     parent: resources
