@@ -110,6 +110,42 @@ To get values other than strings (bools, ints, et cetera), you just need to
 specify them. Converge will render the values and parse them from strings, if
 necessary.
 
+### Zero Values
+
+Sometimes you need to disambiguate between a zero value the user provided and
+one that Go did. In this case, use a pointer to that type. For example, your
+preparer may look like this:
+
+```go
+type Preparer struct {
+    Field int `hcl:"field"`
+}
+```
+
+But in this case, the value of `Field` would be zero in each of the two calls
+below!
+
+```hcl
+mymodule "test" {
+    field = 0
+}
+
+mymodule "test" {
+    # field is unspecified!
+}
+```
+
+If you need to tell which case happened, use a pointer. In other words, your
+preparer will now look like this:
+
+```go
+type Preparer struct {
+    Field *int `hcl:"field"`
+}
+```
+
+If the user provides a zero, the value will be `*0`. Otherwise, it wil be `nil`.
+
 ### Struct Tags
 
 Other than `hcl` (which is used to specify the field name you'll accept) the
