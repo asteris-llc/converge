@@ -16,68 +16,34 @@ package wait
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
-)
-
-const (
-	defaultInterval = 5 * time.Second
-	defaultTimeout  = 10 * time.Second
-	defaultRetries  = 5
+	"github.com/pkg/errors"
 )
 
 // Wait waits for a shell task to return 0 or reaches max failure threshold
 type Wait struct {
 	*shell.Shell
-	GracePeriod time.Duration
-	Interval    time.Duration
-	MaxRetry    int
-	RetryCount  int
-	Duration    time.Duration
+	*Retrier
 }
 
 // Apply retries the check until it passes or returns max failure threshold
 func (w *Wait) Apply() (resource.TaskStatus, error) {
-	startTime := time.Now()
-
-	retries := w.MaxRetry
-	if retries <= 0 {
-		retries = defaultRetries
-	}
-
-	interval := w.Interval
-	if interval <= 0 {
-		interval = defaultInterval
-	}
-
-	after := w.GracePeriod
-waitLoop:
-	for {
-		select {
-		case <-time.After(after):
-			w.RetryCount++
-			after = interval
-			results, err := w.CmdGenerator.Run(w.CheckStmt)
-			if err != nil {
-				return w, err
-			}
-
-			w.Status = w.Status.Cons(fmt.Sprintf("check %d", w.RetryCount), results)
-			w.CheckStatus = results
-
-			if results.ExitStatus == 0 {
-				break waitLoop
-			}
-
-			if w.RetryCount >= retries {
-				break waitLoop
-			}
+	_, err := w.RetryUntil(func() (bool, error) {
+		results, err := w.CmdGenerator.Run(w.CheckStmt)
+		if err != nil {
+			return false, err
 		}
-	}
 
-	w.Duration = time.Since(startTime)
+		w.Status = w.Status.Cons(fmt.Sprintf("check %d", w.RetryCount), results)
+		w.CheckStatus = results
+		return results.ExitStatus == 0, nil
+	})
+
+	if err != nil {
+		return w, errors.Wrapf(err, "failed to run check: %s", w.CheckStmt)
+	}
 	return w, nil
 }
 
