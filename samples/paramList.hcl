@@ -4,8 +4,9 @@ param "items" {
 
 file.content "enumerated" {
   destination = "enumerated.txt"
+
   content = <<EOF
-{{range paramList `items` -}}
+{{- range paramList `items` -}}
 {{.}}
 {{end -}}
 EOF
