@@ -250,6 +250,9 @@ func (p *Preparer) convertValue(typ reflect.Type, r Renderer, name string, val i
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
 		out, err = p.convertNumber(typ, r, name, val, base)
 
+	case reflect.Ptr:
+		out, err = p.convertPointer(typ, r, name, val, base)
+
 	default:
 		logrus.WithFields(logrus.Fields{
 			"field": name,
@@ -516,4 +519,17 @@ func (p *Preparer) convertSlice(typ reflect.Type, r Renderer, name string, val i
 	}
 
 	return acc, nil
+}
+
+// convertPointer wraps whatever value we have in a pointer
+func (p *Preparer) convertPointer(typ reflect.Type, r Renderer, name string, val interface{}, base int) (reflect.Value, error) {
+	inner, err := p.convertValue(typ.Elem(), r, name, val, base)
+	if err != nil {
+		return inner, err
+	}
+
+	out := reflect.New(typ.Elem())
+	out.Elem().Set(inner)
+
+	return out, nil
 }
