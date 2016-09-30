@@ -72,3 +72,6 @@ resource to the named parameter.
 
 - **split** splits a string (second argument) at the instances of another string
   (first argument)
+
+- **join** joins a list of strings (second argument) using another string (first
+  argument)

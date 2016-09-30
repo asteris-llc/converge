@@ -38,3 +38,10 @@ func DefaultEnv(env string) string {
 func DefaultSplit(sep, str string) []string {
 	return strings.Split(str, sep)
 }
+
+// DefaultJoin provides a default implementation for the join function in text
+// templates. It operates by simply reversing the arguments to split so that it
+// works in a reasonable manner when dealing with piped output.
+func DefaultJoin(sep string, str []string) string {
+	return strings.Join(str, sep)
+}

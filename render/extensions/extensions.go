@@ -36,6 +36,7 @@ const RefFuncName string = "lookup"
 var languageKeywords = map[string]struct{}{
 	"env":       {},
 	"split":     {},
+	"join":      {},
 	RefFuncName: {},
 	"platform":  {},
 
@@ -94,6 +95,7 @@ func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
+	language.On("join", DefaultJoin)
 	language.On("platform", platform.DefaultPlatform)
 	language.On(RefFuncName, Unimplemented(RefFuncName))
 
