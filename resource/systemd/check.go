@@ -35,6 +35,14 @@ func CheckUnitIsInactive(conn *dbus.Conn, unit string) (*resource.Status, error)
 	return CheckProperty(conn, unit, "ActiveState", validInactiveStates)
 }
 
+// CheckUnitIsFailed determines if the unit property "ActiveState" is inacive
+func CheckUnitIsFailed(conn *dbus.Conn, unit string) (*resource.Status, error) {
+	validInactiveStates := []*dbus.Property{
+		PropActiveState(ASFailed),
+	}
+	return CheckProperty(conn, unit, "ActiveState", validInactiveStates)
+}
+
 // CheckUnitHasEnabledUFS determines if the unit property "UnitFileState" is inacive,
 //linked, or static
 func CheckUnitHasEnabledUFS(conn *dbus.Conn, unit string) (*resource.Status, error) {

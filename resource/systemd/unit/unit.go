@@ -461,6 +461,28 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 func (t *Unit) startOrStop(dbusConn *dbus.Conn) (resource.TaskStatus, error) {
 	var err error
 	_, unitName := filepath.Split(t.Name)
+
+	// First check if the unit is failed so that we can call reset-failed
+	// Get the current UnitFileState
+	shouldReset, err := systemd.CheckResetFailed(unitName)
+	if err != nil {
+		t.TaskStatus = &resource.Status{
+			Level:  resource.StatusFatal,
+			Output: []string{err.Error()},
+		}
+		return t, err
+	}
+	if shouldReset {
+		err = systemd.ApplyResetFailed(unitName)
+		if err != nil {
+			t.TaskStatus = &resource.Status{
+				Level:  resource.StatusFatal,
+				Output: []string{err.Error()},
+			}
+			return t, err
+		}
+	}
+
 	// Apply the activeState
 	job := make(chan string)
 	if t.Active {
