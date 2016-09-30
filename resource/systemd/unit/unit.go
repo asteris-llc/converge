@@ -167,10 +167,8 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 // Apply active state
 // Apply UFS
 func (t *Unit) Apply() (resource.TaskStatus, error) {
-	/*////////////////////////////////////////////////////
-	First thing to do is to check if the Name given is outside
-	the normal search path of systemd. If so it should be linked
-	*/ ////////////////////////////////////////////////////
+	//First thing to do is to check if the Name given is outside
+	//the normal search path of systemd. If so it should be linked
 	dir, unitName := filepath.Split(t.Name)
 	var shouldBeLinked = false
 	if dir != "" && t.UnitFileState.IsLinked() {
@@ -267,9 +265,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 	}
 	state := systemd.UnitFileState(prop.Value.Value().(string))
 
-	//////////////////////////
 	// Apply the UnitFileState
-	//////////////////////////
 
 	// First thing first, if the state you want is the state you have, quit.
 	if t.UnitFileState.Equal(state) {
@@ -282,9 +278,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 	}
 
 	switch t.UnitFileState {
-	/*///////////////////////////////////
-	*ENABLING
-	 */ ///////////////////////////////////
+	//ENABLING
 	case systemd.UFSEnabled:
 		fallthrough
 	case systemd.UFSEnabledRuntime:
@@ -361,9 +355,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 		}
 		return t, nil
 
-	/*///////////////////////////////////
-	*Disabling
-	 */ ///////////////////////////////////
+	//Disabling
 	case systemd.UFSDisabled:
 		if state.IsMaskedState() {
 			statusMsg := fmt.Sprintf("unit %q is maked", unitName)
@@ -409,9 +401,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 			},
 		}
 		return t, nil
-	/*///////////////////////////////////
-	*Linking
-	 */ ///////////////////////////////////
+	//Linking
 	case systemd.UFSLinked:
 		fallthrough
 	case systemd.UFSLinkedRuntime:
