@@ -43,6 +43,8 @@ func NewNode(item *ast.ObjectItem) *Node {
 
 // Validate this node
 func (n *Node) Validate() error {
+	// TODO: Refactor validation code to switch on key type then do validation
+	// instead of the other way around now that we have so many exceptions.
 	if n == nil {
 		return errors.New("node is empty, check for bad input")
 	}
@@ -52,11 +54,18 @@ func (n *Node) Validate() error {
 		return fmt.Errorf("%s: no keys", n.Pos())
 
 	case 1:
+		if n.IsDefault() {
+			break
+		}
 		return fmt.Errorf("%s: missing name", n.Pos())
 
 	case 2:
 		if n.IsModule() {
 			return fmt.Errorf("%s: missing source or name in module call", n.Pos())
+		}
+
+		if n.IsDefault() {
+			return fmt.Errorf("%s: too many keys", n.Pos())
 		}
 
 		if n.IsCase() {
@@ -96,6 +105,11 @@ func (n *Node) IsModule() bool {
 // IsCase tests whether this node is a case statement
 func (n *Node) IsCase() bool {
 	return n.Kind() == "case"
+}
+
+// IsDefault tests whether this node is a default case statement
+func (n *Node) IsDefault() bool {
+	return n.Kind() == "default"
 }
 
 // Source returns where a module call is to be loaded from

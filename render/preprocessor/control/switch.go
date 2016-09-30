@@ -1,9 +1,10 @@
 package control
 
 import (
-	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/hashicorp/hcl/hcl/ast"
 
@@ -16,19 +17,6 @@ var keywords = map[string]string{
 	"switch":  "switch",
 	"case":    "case",
 	"default": "default",
-}
-
-// Preprocessor defines the general preprocessor for hcl control structures
-type Preprocessor struct {
-	Data []byte
-}
-
-// Case represents a case structure from a switch element
-type Case struct {
-	Name      string
-	Predicate string
-	InnerNode *parse.Node
-	OuterNode *parse.Node
 }
 
 // Switch represents a switch element
@@ -47,7 +35,7 @@ func IsSwitchNode(n *parse.Node) bool {
 }
 
 // NewSwitch constructs a *Switch from a switch node
-func (p *Preprocessor) NewSwitch(n *parse.Node) (*Switch, error) {
+func NewSwitch(n *parse.Node, data []byte) (*Switch, error) {
 	if n.Kind() != keywords["switch"] {
 		return nil, fmt.Errorf("expected switch node but got %s", n.Kind())
 	}
@@ -55,8 +43,7 @@ func (p *Preprocessor) NewSwitch(n *parse.Node) (*Switch, error) {
 		Name: n.Name(),
 		Node: n,
 	}
-
-	branches, err := p.Cases(s)
+	branches, err := Cases(s, data)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +51,31 @@ func (p *Preprocessor) NewSwitch(n *parse.Node) (*Switch, error) {
 	return s, nil
 }
 
+// GenerateNode generates a parse.Node for the macro-expanded placeholder from
+// the switch statement
+func (s *Switch) GenerateNode() (*parse.Node, error) {
+	var quotedBranches []string
+	for _, branch := range s.Branches {
+		quotedBranches = append(quotedBranches, fmt.Sprintf("%q", branch.Name))
+	}
+	switchHCL := fmt.Sprintf(
+		"macro.switch %q {\n\tbranches = [ %s ]\n",
+		s.Name,
+		strings.Join(quotedBranches, ","),
+	)
+	switchHCL = fmt.Sprintf("%s}", switchHCL)
+	nodes, err := parse.Parse([]byte(switchHCL))
+	if err != nil {
+		return nil, err
+	}
+	if len(nodes) != 1 {
+		return nil, errors.New("expanded macro did not parse to a single node")
+	}
+	return nodes[0], nil
+}
+
 // Cases returns a slice of cases
-func (p *Preprocessor) Cases(s *Switch) ([]*Case, error) {
+func Cases(s *Switch, data []byte) ([]*Case, error) {
 	var cases []*Case
 	asObjType, ok := s.Node.Val.(*ast.ObjectType)
 	if !ok {
@@ -76,7 +86,7 @@ func (p *Preprocessor) Cases(s *Switch) ([]*Case, error) {
 		if itemErr := caseNode.Validate(); itemErr != nil {
 			return nil, itemErr
 		}
-		newCase, err := p.ParseCase(caseNode)
+		newCase, err := ParseSwitchConditional(caseNode, data)
 		if err != nil {
 			return nil, err
 		}
@@ -85,33 +95,30 @@ func (p *Preprocessor) Cases(s *Switch) ([]*Case, error) {
 	return cases, nil
 }
 
-// ParseCase generates a case statement from an ast node at the switch statement
-// level.  The node should be an *ast.ObjectItem whose Val is an *ast.ObjectType
-func (p *Preprocessor) ParseCase(n *parse.Node) (*Case, error) {
-	if n.Kind() != keywords["case"] {
-		return nil, fmt.Errorf("expected `case` but got %s", n.Kind())
+// ParseSwitchConditional generates a case statement from an ast node at the
+// switch statement level.  The node should be an *ast.ObjectItem whose Val is
+// an *ast.ObjectType
+func ParseSwitchConditional(n *parse.Node, data []byte) (*Case, error) {
+	if n.Kind() == keywords["case"] {
+		return ParseCase(n, data)
 	}
-	c := &Case{
-		Name:      n.Name(),
-		Predicate: strings.TrimSpace(n.Keys[1].Token.Value().(string)),
-		OuterNode: n,
+	if n.Kind() == keywords["default"] {
+		return parseDefault(n, data)
 	}
-
-	return c, nil
+	return nil, fmt.Errorf("expected `case` but got %s", n.Kind())
 }
 
 // InnerText returns the text inside of a *parse.Node whose ObjectItem has a
 // value of type *ast.ObjectType.
-func (p *Preprocessor) InnerText(n *parse.Node) ([]byte, error) {
+func InnerText(n *parse.Node, data []byte) ([]byte, error) {
 	asObjType, ok := n.Val.(*ast.ObjectType)
 	if !ok {
 		return nil, NewTypeError("*ast.ObjectType", n.Val)
 	}
-
 	start := asObjType.Lbrace.Offset + 1
 	end := asObjType.Rbrace.Offset - 1
-	if end > len(p.Data) {
+	if end > len(data) {
 		return nil, errors.New("index out-of-bounds error")
 	}
-	return p.Data[start:end], nil
+	return data[start:end], nil
 }

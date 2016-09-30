@@ -38,5 +38,7 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 		return nil, errors.Wrap(err, "could not resolve resources")
 	}
 
-	return resourced, nil
+	predicated, err := ResolveConditionals(ctx, resourced)
+
+	return predicated, nil
 }

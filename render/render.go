@@ -76,7 +76,7 @@ func (p pipelineGen) maybeTransformRoot(idi interface{}) (interface{}, error) {
 	if res, ok := idi.(resource.Resource); ok {
 		return res, nil
 	}
-	return nil, typeError("resource.Renderer", idi)
+	return nil, typeError("resource.Resource", idi)
 }
 
 // Run prepare on the node and return the resource.Resource to be wrapped
