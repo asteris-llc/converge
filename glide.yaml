@@ -101,3 +101,4 @@ import:
 - package: golang.org/x/crypto
   subpackages:
   - openpgp
+- package: github.com/arbovm/levenshtein
