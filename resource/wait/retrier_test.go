@@ -18,68 +18,106 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// TestRetryUntilSetsRetryCount tests that RetryUntil sets the RetryCount
-func TestRetryUntilSetsRetryCount(t *testing.T) {
+// TestRetryUntil tests the behavior of the RetryUntil function
+func TestRetryUntil(t *testing.T) {
 	t.Parallel()
-	r := &wait.Retrier{
-		Interval: 100 * time.Millisecond,
-		MaxRetry: 3,
-	}
-	r.RetryUntil(func() (bool, error) { return false, nil })
-	assert.Equal(t, 3, r.RetryCount)
+	defer logging.HideLogs(t)()
+
+	t.Run("sets retry count", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		r.RetryUntil(func() (bool, error) { return false, nil })
+		assert.Equal(t, 3, r.RetryCount)
+	})
+
+	t.Run("sets duration", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		r.RetryUntil(func() (bool, error) { return false, nil })
+		assert.True(t, r.Duration >= 0)
+	})
+
+	t.Run("retry task failure", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		b, err := r.RetryUntil(func() (bool, error) { return false, nil })
+		require.NoError(t, err)
+		assert.False(t, b)
+	})
+
+	t.Run("retry task success", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		b, err := r.RetryUntil(func() (bool, error) { return true, nil })
+		require.NoError(t, err)
+		assert.True(t, b)
+	})
+
+	t.Run("break on success", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		b, err := r.RetryUntil(func() (bool, error) { return (r.RetryCount == 2), nil })
+		require.NoError(t, err)
+		assert.True(t, b)
+		assert.Equal(t, 2, r.RetryCount)
+	})
 }
 
-// TestRetryUntilSetsDuration tests that RetryUntil sets the Duration
-func TestRetryUntilSetsDuration(t *testing.T) {
+// TestPrepareRetrier tests the generation of a Retrier from preparer values
+func TestPrepareRetrier(t *testing.T) {
 	t.Parallel()
-	r := &wait.Retrier{
-		Interval: 100 * time.Millisecond,
-		MaxRetry: 3,
-	}
-	r.RetryUntil(func() (bool, error) { return false, nil })
-	assert.True(t, r.Duration >= 0)
-}
 
-// TestRetryUntilFailure tests that RetryUntil returns correctly on a failed
-// check
-func TestRetryUntilFailure(t *testing.T) {
-	t.Parallel()
-	r := &wait.Retrier{
-		Interval: 100 * time.Millisecond,
-		MaxRetry: 3,
-	}
-	b, err := r.RetryUntil(func() (bool, error) { return false, nil })
-	assert.NoError(t, err)
-	assert.False(t, b)
-}
+	t.Run("sets max retries", func(t *testing.T) {
+		r := wait.PrepareRetrier("3s", "5s", 10)
+		assert.Equal(t, 10, r.MaxRetry)
+	})
 
-// TestRetryUntilSuccess tests that RetryUntil returns correctly on a succesful
-// check
-func TestRetryUntilSuccess(t *testing.T) {
-	t.Parallel()
-	r := &wait.Retrier{
-		Interval: 100 * time.Millisecond,
-		MaxRetry: 3,
-	}
-	b, err := r.RetryUntil(func() (bool, error) { return true, nil })
-	assert.NoError(t, err)
-	assert.True(t, b)
-}
+	t.Run("default max retries", func(t *testing.T) {
+		r := wait.PrepareRetrier("3s", "5s", 0)
+		assert.Equal(t, wait.DefaultRetries, r.MaxRetry)
+	})
 
-// TestRetryBreaksOnSuccess tests that the Retrier will break out of the loop on
-// a successful check
-func TestRetryBreaksOnSuccess(t *testing.T) {
-	t.Parallel()
-	r := &wait.Retrier{
-		Interval: 100 * time.Millisecond,
-		MaxRetry: 3,
-	}
-	b, err := r.RetryUntil(func() (bool, error) { return (r.RetryCount == 2), nil })
-	assert.NoError(t, err)
-	assert.True(t, b)
-	assert.Equal(t, 2, r.RetryCount)
+	t.Run("sets interval", func(t *testing.T) {
+		r := wait.PrepareRetrier("3s", "", 1)
+		assert.Equal(t, 3*time.Second, r.Interval)
+	})
+
+	t.Run("default interval", func(t *testing.T) {
+		defer logging.HideLogs(t)()
+		tests := []string{"", "0s", "0", "unparseable"}
+		for _, test := range tests {
+			r := wait.PrepareRetrier(test, "5s", 1)
+			assert.Equal(t, wait.DefaultInterval, r.Interval)
+		}
+	})
+
+	t.Run("sets grace period", func(t *testing.T) {
+		r := wait.PrepareRetrier("", "2s", 1)
+		assert.Equal(t, 2*time.Second, r.GracePeriod)
+	})
+
+	t.Run("default grace period", func(t *testing.T) {
+		defer logging.HideLogs(t)()
+		tests := []string{"", "0s", "0", "unparseable"}
+		for _, test := range tests {
+			r := wait.PrepareRetrier("5s", test, 1)
+			assert.Equal(t, wait.DefaultGracePeriod, r.GracePeriod)
+		}
+	})
 }

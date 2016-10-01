@@ -17,19 +17,11 @@ package port
 import (
 	"fmt"
 	"net"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
-)
-
-const (
-	defaultInterval = 5 * time.Second
-	defaultTimeout  = 10 * time.Second
-	defaultRetries  = 5
-	defaultHost     = "localhost"
 )
 
 // Port represents a port check
@@ -70,10 +62,6 @@ func (p *Port) Apply() (resource.TaskStatus, error) {
 
 func (p *Port) checkConnection() (connected bool, err error) {
 	logger := log.WithField("module", "wait.port")
-
-	if p.Host == "" {
-		p.Host = defaultHost
-	}
 
 	addr := fmt.Sprintf("%s:%d", p.Host, p.Port)
 	conn, err := net.Dial("tcp", addr)

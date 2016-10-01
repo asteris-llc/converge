@@ -15,8 +15,8 @@
 package wait
 
 import (
+	"errors"
 	"fmt"
-	"time"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -59,11 +59,11 @@ type Preparer struct {
 	// "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	Interval string `hcl:"interval" doc_type:"duration string"`
 
-	// the amount of time to wait before running the first check. The format is
-	// Go's duraction string. A duration string is a possibly signed sequence of
-	// decimal numbers, each with optional fraction and a unit suffix, such as
-	// "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"),
-	// "ms", "s", "m", "h".
+	// the amount of time to wait before running the first check and after a
+	// successful check. The format is Go's duraction string. A duration string is
+	// a possibly signed sequence of decimal numbers, each with optional fraction
+	// and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units
+	// are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	GracePeriod string `hcl:"grace_period" doc_type:"duration string"`
 
 	// the maximum number of attempts before the wait fails.
@@ -72,6 +72,10 @@ type Preparer struct {
 
 // Prepare creates a new wait type
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	if p.Check == "" {
+		return nil, errors.New("Check is required and cannot be empty")
+	}
+
 	shPrep := &shell.Preparer{
 		Interpreter: p.Interpreter,
 		Check:       p.Check,
@@ -94,18 +98,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	wait := &Wait{
-		Shell: shell,
-		Retrier: &Retrier{
-			MaxRetry: p.MaxRetry,
-		},
-	}
-
-	if intervalDuration, perr := time.ParseDuration(p.Interval); perr == nil {
-		wait.Interval = intervalDuration
-	}
-
-	if gracePeriodDuration, perr := time.ParseDuration(p.GracePeriod); perr == nil {
-		wait.GracePeriod = gracePeriodDuration
+		Shell:   shell,
+		Retrier: PrepareRetrier(p.Interval, p.GracePeriod, p.MaxRetry),
 	}
 
 	return wait, nil
