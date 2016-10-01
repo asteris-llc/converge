@@ -15,7 +15,7 @@
 package port
 
 import (
-	"time"
+	"errors"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -50,27 +50,14 @@ type Preparer struct {
 
 // Prepare creates a new wait.port type
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	host, err := render.Render("host", p.Host)
-	if err != nil {
-		return nil, err
+	if p.Port <= 0 {
+		return nil, errors.New("port is required and must be greater than zero")
 	}
-
 	port := &Port{
-		Host: host,
-		Port: p.Port,
-		Retrier: &wait.Retrier{
-			MaxRetry: p.MaxRetry,
-		},
+		Host:    p.Host,
+		Port:    p.Port,
+		Retrier: wait.PrepareRetrier(p.Interval, p.GracePeriod, p.MaxRetry),
 	}
-
-	if intervalDuration, perr := time.ParseDuration(p.Interval); perr == nil {
-		port.Interval = intervalDuration
-	}
-
-	if gracePeriodDuration, perr := time.ParseDuration(p.GracePeriod); perr == nil {
-		port.GracePeriod = gracePeriodDuration
-	}
-
 	return port, nil
 }
 

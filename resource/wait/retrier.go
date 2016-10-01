@@ -14,12 +14,22 @@
 
 package wait
 
-import "time"
+import (
+	"time"
+
+	log "github.com/Sirupsen/logrus"
+)
 
 const (
-	defaultInterval = 5 * time.Second
-	defaultTimeout  = 10 * time.Second
-	defaultRetries  = 5
+	// DefaultInterval is the default amount of time to wait in between checks
+	DefaultInterval = 5 * time.Second
+
+	// DefaultGracePeriod is the amount of time to wait before running the first
+	// check and after a successful check
+	DefaultGracePeriod = time.Duration(0)
+
+	// DefaultRetries is the default number of times to retry before failing
+	DefaultRetries = 5
 )
 
 // Retrier can be included in resources to provide retry capabilities
@@ -37,17 +47,6 @@ type RetryFunc func() (bool, error)
 // RetryUntil implements a retry loop
 func (r *Retrier) RetryUntil(retryFunc RetryFunc) (bool, error) {
 	startTime := time.Now()
-
-	retries := r.MaxRetry
-	if retries <= 0 {
-		retries = defaultRetries
-	}
-
-	interval := r.Interval
-	if interval <= 0 {
-		interval = defaultInterval
-	}
-
 	after := r.GracePeriod
 	ok := false
 waitLoop:
@@ -59,7 +58,7 @@ waitLoop:
 			}
 
 			r.RetryCount++
-			after = interval
+			after = r.Interval
 
 			var err error
 			ok, err = retryFunc()
@@ -72,7 +71,7 @@ waitLoop:
 				continue
 			}
 
-			if r.RetryCount >= retries {
+			if r.RetryCount >= r.MaxRetry {
 				break waitLoop
 			}
 		}
@@ -80,4 +79,33 @@ waitLoop:
 
 	r.Duration = time.Since(startTime)
 	return ok, nil
+}
+
+// PrepareRetrier generates a Retrier from preparer input
+func PrepareRetrier(interval, gracePeriod string, maxRetry int) *Retrier {
+	if maxRetry <= 0 {
+		maxRetry = DefaultRetries
+	}
+	return &Retrier{
+		MaxRetry:    maxRetry,
+		GracePeriod: parseDuration(gracePeriod, "grace_period", DefaultGracePeriod),
+		Interval:    parseDuration(interval, "interval", DefaultInterval),
+	}
+}
+
+func parseDuration(durstr, field string, defdur time.Duration) time.Duration {
+	if durstr != "" {
+		if dur, err := time.ParseDuration(durstr); err == nil {
+			if dur != time.Duration(0) {
+				return dur
+			}
+		} else {
+			log.WithFields(log.Fields{
+				"module": "preparer",
+				"field":  field,
+				"value":  durstr,
+			}).Warn("could not parse as a duration.")
+		}
+	}
+	return defdur
 }
