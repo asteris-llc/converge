@@ -109,6 +109,7 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 				return res.Prepare(dynamicRenderer)
 			}), nil
 		}
+		fmt.Printf("%s got a non-unresolvable error: %s\n", p.ID, errors.Cause(err))
 		return nil, err
 	}
 	return prepared, nil

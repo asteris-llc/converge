@@ -161,9 +161,9 @@ func VertexSplitTraverse(
 	}
 	parentID := graph.ParentID(startingNode)
 	if stop(g, parentID) {
-		fmt.Println("stoping vertex split traversal on: ", startingNode)
 		return "", toFind, false
 	}
+
 	return VertexSplitTraverse(g, toFind, parentID, stop)
 }
 

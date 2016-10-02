@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
@@ -61,8 +62,32 @@ func (r *Renderer) Render(name, src string) (string, error) {
 	return out.String(), err
 }
 
+func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
+	if node == "root" || node == "" {
+		return "", false
+	}
+	siblingID := graph.SiblingID(id, node)
+	val := g.Get(siblingID)
+	if val == nil {
+		return getNearestAncestor(g, graph.ParentID(id), node)
+	}
+	fmt.Printf("renderer: getNearestAncestor: value type: %T\n", val)
+	if elem, ok := val.(*parse.Node); ok {
+		if elem.Kind() == "module" {
+			return "", false
+		}
+	}
+	return siblingID, true
+}
+
 func (r *Renderer) param(name string) (string, error) {
-	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+	fmt.Println("looking up param: ", name)
+	// val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+	ancestor, found := getNearestAncestor(r.Graph(), r.ID, "param."+name)
+	if !found {
+		return "", errors.New("param not found")
+	}
+	val, ok := resource.ResolveTask(r.Graph().Get(ancestor))
 
 	if val == nil || !ok {
 		return "", errors.New("param not found")

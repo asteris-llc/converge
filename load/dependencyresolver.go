@@ -62,14 +62,35 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			if err != nil {
 				return err
 			}
-
 			for _, dep := range deps {
-
-				out.Connect(id, graph.SiblingID(id, dep))
+				target, ok := getNearestAncestor(g, id, dep)
+				if !ok {
+					return fmt.Errorf("no valid vertex to connect to for at %s", dep)
+				}
+				out.Connect(id, target)
 			}
 		}
 		return nil
 	})
+}
+
+func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
+	if node == "root" || node == "" {
+		return "", false
+	}
+	siblingID := graph.SiblingID(id, node)
+	val := g.Get(siblingID)
+	if val == nil {
+		return getNearestAncestor(g, graph.ParentID(id), node)
+	}
+	elem, ok := val.(*parse.Node)
+	if !ok {
+		return "", false
+	}
+	if elem.Kind() == "module" {
+		return "", false
+	}
+	return siblingID, true
 }
 
 func getDepends(node *parse.Node) ([]string, error) {
@@ -133,7 +154,6 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 		if !found {
 			return []string{}, fmt.Errorf("dependency generator: unresolvable call to %s", call)
 		}
-
 		vertex, pfxError := stringIntersection(vertex, call)
 		if pfxError != nil {
 			return out, pfxError
@@ -143,23 +163,6 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 			out = append(out, vertex)
 		}
 	}
-	/*
-		for _, call := range calls {
-			fqgn := graph.SiblingID(id, call)
-			vertex, _, found := preprocessor.VertexSplit(g, fqgn)
-			if !found {
-				return []string{}, fmt.Errorf("unresolvable call to %s", call)
-			}
-
-			vertex, pfxError := stringIntersection(vertex, call)
-			if pfxError != nil {
-				return out, pfxError
-			}
-			if _, ok := nodeRefs[vertex]; !ok {
-				nodeRefs[vertex] = struct{}{}
-				out = append(out, vertex)
-			}
-		}*/
 	return out, err
 }
 
