@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
@@ -72,6 +73,24 @@ func (r *Renderer) Render(name, src string) (string, error) {
 	return out.String(), err
 }
 
+func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
+	if node == "root" || node == "" {
+		return "", false
+	}
+	siblingID := graph.SiblingID(id, node)
+	val := g.Get(siblingID)
+	if val == nil {
+		return getNearestAncestor(g, graph.ParentID(id), node)
+	}
+	fmt.Printf("renderer: getNearestAncestor: value type: %T\n", val)
+	if elem, ok := val.(*parse.Node); ok {
+		if elem.Kind() == "module" {
+			return "", false
+		}
+	}
+	return siblingID, true
+}
+
 func (r *Renderer) param(name string) (string, error) {
 	raw, err := r.paramRawValue(name)
 	if err != nil {
@@ -97,7 +116,6 @@ func (r *Renderer) paramList(name string) ([]string, error) {
 		val := vals.Index(i)
 		out = append(out, fmt.Sprintf("%v", val.Interface()))
 	}
-
 	return out, nil
 }
 
@@ -123,10 +141,12 @@ func (r *Renderer) paramMap(name string) (map[string]interface{}, error) {
 }
 
 func (r *Renderer) paramRawValue(name string) (interface{}, error) {
-	sibling, ok := r.Graph().Get(graph.SiblingID(r.ID, "param."+name))
-	if !ok {
+
+	ancestor, found := getNearestAncestor(r.Graph(), r.ID, "param."+name)
+	if !found {
 		return "", errors.New("param not found")
 	}
+	task, ok := resource.ResolveTask(r.Graph().Get(ancestor))
 
 	task, ok := resource.ResolveTask(sibling.Value())
 	if task == nil || !ok {
