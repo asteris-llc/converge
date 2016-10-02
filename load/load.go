@@ -27,18 +27,14 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "loading failed")
 	}
-
 	resolved, err := ResolveDependencies(ctx, base)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve dependencies")
 	}
-
 	resourced, err := SetResources(ctx, resolved)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve resources")
 	}
-
 	predicated, err := ResolveConditionals(ctx, resourced)
-
 	return predicated, nil
 }

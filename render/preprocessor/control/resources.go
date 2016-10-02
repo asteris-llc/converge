@@ -1,14 +1,19 @@
 package control
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/asteris-llc/converge/load/registry"
+	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 // SwitchPreparer represents a switch resourc; the task it generates simply
 // wraps the values and will not do anything during check or apply.
 type SwitchPreparer struct {
-	Branches []map[string]string `hcl:"branches"`
+	Branches []string `hcl:"branches"`
 	Cases    []*CasePreparer
 }
 
@@ -16,7 +21,7 @@ type SwitchPreparer struct {
 // perform any operations and exists to provide structure to conditional
 // evaluation in the graph and holds predicate state information.
 type SwitchTask struct {
-	Branches map[string]string
+	Branches []string
 }
 
 type CasePreparer struct {
@@ -31,13 +36,7 @@ type CaseTask struct {
 
 // Prepare does stuff
 func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
-	out := make(map[string]string)
-	for _, m := range s.Branches {
-		for k, v := range m {
-			out[k] = v
-		}
-	}
-	task := &SwitchTask{Branches: out}
+	task := &SwitchTask{Branches: s.Branches}
 	for _, caseObj := range s.Cases {
 		if caseObj != nil {
 			caseObj.Parent = task
@@ -70,11 +69,58 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 // ShouldEvaluate returns true if the case has a valid parent and it is the
 // selected branch for that parent
 func (c *CasePreparer) ShouldEvaluate() bool {
+	fmt.Println("case preparer calling ShouldEvaluate")
 	if c.Parent == nil {
 		return false
 	}
-	val, ok := c.Parent.Branches[c.Name]
-	return ok && val == "true"
+	for _, br := range c.Parent.Branches {
+		if c.Name == br {
+			t, _ := c.IsTrue()
+			return t
+		}
+	}
+	return false
+}
+
+// IsTrue returns true if the template precicate evaluates to "true", or "t",
+// false if it returns "false", or "f", or if the pointer is nil, and returns
+// false with an error otherwise.
+func (c *CasePreparer) IsTrue() (bool, error) {
+	if c == nil {
+		return false, nil
+	}
+	return EvaluatePredicate(c.Predicate)
+}
+
+// EvaluatePredicate looks at a templated string and returns true if template
+// execution results in the string "true" or t", and false if the string is
+// "false" or "f".  In any other case an error is returned.
+func EvaluatePredicate(predicate string) (bool, error) {
+	lang := extensions.DefaultLanguage()
+	if predicate == "" {
+		return false, BadPredicate(predicate)
+	}
+	template := "{{ " + predicate + " }}"
+	fmt.Println("case.IsTrue: checking:")
+	fmt.Println("\t", template)
+	result, err := lang.Render(
+		struct{}{},
+		"predicate evaluation",
+		template,
+	)
+	if err != nil {
+		return false, errors.Wrap(err, "case evaluation failed")
+	}
+
+	truthiness := strings.TrimSpace(strings.ToLower(result.String()))
+
+	switch truthiness {
+	case "true", "t":
+		return true, nil
+	case "false", "f":
+		return false, nil
+	}
+	return false, fmt.Errorf("%s: not a valid truth value; should be one of [f false t true]", truthiness)
 }
 
 // Check does stuff
@@ -105,6 +151,7 @@ type ConditionalPreparer struct {
 // otherwise.  The nop task will embed the original task so fields will still be
 // resolvable.
 func (c *ConditionalTask) GetTask() (resource.Task, bool) {
+	fmt.Println("checking conditional task to see if it should run...")
 	if c.ShouldEvaluate() {
 		return c.Task, true
 	}
@@ -113,6 +160,7 @@ func (c *ConditionalTask) GetTask() (resource.Task, bool) {
 
 // Apply will conditionally apply a task
 func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
+	fmt.Println("checking conditional task to see if it should run...")
 	if c.ShouldEvaluate() {
 		return c.Task.Apply()
 	}
@@ -121,6 +169,7 @@ func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
 
 // Check will conditionally check a task
 func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error) {
+	fmt.Println("checking conditional task to see if it should run...")
 	if c.ShouldEvaluate() {
 		return c.Task.Check(r)
 	}

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/pkg/errors"
 )
 
@@ -70,27 +69,4 @@ func parseDefault(n *parse.Node, data []byte) (*Case, error) {
 		Predicate:  "true",
 		InnerNodes: parsed,
 	}, nil
-}
-
-// IsTrue returns true if the predicate is true
-func (c *Case) IsTrue() (bool, error) {
-	lang := extensions.DefaultLanguage()
-	if c.Predicate == "" {
-		return false, BadPredicate(c.Predicate)
-	}
-	result, err := lang.Render(
-		struct{}{},
-		"case."+c.Name,
-		"{{ "+c.Predicate+" }}",
-	)
-	if err != nil {
-		return false, errors.Wrap(err, "case evaluation failed")
-	}
-	switch strings.TrimSpace(strings.ToLower(result.String())) {
-	case "true":
-		return true, nil
-	case "false":
-		return false, nil
-	}
-	return true, nil
 }
