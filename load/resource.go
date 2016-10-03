@@ -34,6 +34,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/group"
 	_ "github.com/asteris-llc/converge/resource/module"
 	_ "github.com/asteris-llc/converge/resource/param"
+	_ "github.com/asteris-llc/converge/resource/rpm"
 	_ "github.com/asteris-llc/converge/resource/shell"
 	_ "github.com/asteris-llc/converge/resource/shell/query"
 	_ "github.com/asteris-llc/converge/resource/user"
