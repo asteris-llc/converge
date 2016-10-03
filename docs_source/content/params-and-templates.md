@@ -63,7 +63,9 @@ resource to the named parameter.
 
 ### Platform
 
-- **platform** TODO
+- **platform** retrieves read-only attributes from the system. For example,
+  `platform.OS` will return with the value of `linux` for Linux distributions or
+  `darwin` for macOS.
 
 - **env** retrieves an item (named by the first argument) from an environment
   variable
