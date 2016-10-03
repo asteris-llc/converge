@@ -1,9 +1,9 @@
 variable "name" {
-  default = "docker-swarm"
+  default = "swarm"
 }
 
 variable "region" {
-  default = "us-east-1"
+  default = "us-west-1"
 }
 
 variable "public_key_path" {
@@ -31,16 +31,20 @@ variable "ssh_user_name" {
   default = "centos"
 }
 
-variable "vpc_cidr_block" {
-  default = "10.0.0.0/16"
-}
-
 variable "bucket-prefix" {
-  default = "asteris-llc"
+  default = "converge"
 }
 
 variable "worker-count" {
   default = 2
+}
+
+variable "vpc_cidr_block" {
+  default = "10.0.0.0/16"
+}
+
+variable "swarm-manager-ip" {
+  default = "10.0.1.10"
 }
 
 provider "aws" {
@@ -79,7 +83,7 @@ resource "aws_route" "internet_access" {
 
 resource "aws_subnet" "default" {
   vpc_id                  = "${aws_vpc.default.id}"
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "${var.vpc_cidr_block}"
   map_public_ip_on_launch = true
   tags {
     Name = "${var.name}"
@@ -120,7 +124,6 @@ resource "aws_key_pair" "auth" {
   key_name   = "${var.name}"
   public_key = "${file(var.public_key_path)}"
 }
-
 
 resource "aws_iam_role" "node-role" {
   name = "${var.name}-node-role"
@@ -177,6 +180,7 @@ resource "aws_instance" "manager" {
   subnet_id = "${aws_subnet.default.id}"
   key_name = "${aws_key_pair.auth.id}"
   iam_instance_profile = "${aws_iam_instance_profile.node-profile.name}"
+  private_ip = "${var.swarm-manager-ip}"
   tags {
     Name = "${var.name}"
     Role = "manager"
@@ -198,7 +202,7 @@ resource "aws_instance" "manager" {
   provisioner "converge" {
     params = {
       user-name = "${var.ssh_user_name}"
-      swarm-manager-ip = "${aws_instance.manager.private_ip}"
+      swarm-manager-ip = "${var.swarm-manager-ip}"
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
     hcl = [
@@ -211,6 +215,7 @@ resource "aws_instance" "manager" {
 }
 
 resource "aws_instance" "worker" {
+  depends_on = ["aws_s3_bucket.token"]
   count = "${var.worker-count}"
   ami = "${lookup(var.amis, var.region)}"
   instance_type = "m3.medium"
@@ -238,34 +243,12 @@ resource "aws_instance" "worker" {
 
   provisioner "converge" {
     params = {
-      user-name = "${var.ssh_user_name}",
-    }
-    hcl = [
-      "converge/main.hcl"
-    ]
-    download_binary = true
-    prevent_sudo = false
-  }
-}
-
-resource "null_resource" "worker-join" {
-  count = "${var.worker-count}"
-  depends_on = ["aws_instance.manager"]
-  triggers {
-    workers = "${join(",", aws_instance.worker.*.id)}"
-  }
-
-  connection {
-    user = "${var.ssh_user_name}"
-    host = "${element(aws_instance.worker.*.public_ip, count.index)}"
-  }
-
-  provisioner "converge" {
-    params = {
-      swarm-manager-ip = "${aws_instance.manager.private_ip}"
+      user-name = "${var.ssh_user_name}"
+      swarm-manager-ip = "${var.swarm-manager-ip}"
       swarm-token-bucket = "${var.bucket-prefix}-${var.name}"
     }
     hcl = [
+      "converge/main.hcl",
       "converge/worker.hcl"
     ]
     download_binary = true
