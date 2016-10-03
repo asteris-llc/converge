@@ -54,8 +54,10 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 			}
 		}
 		if !found {
-			r.DevicesToRemove = append(r.DevicesToRemove, d)
-			status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.Name), "<removed>", "")
+			if pv, ok := pvs[d]; ok && pv.Group == r.Name {
+				r.DevicesToRemove = append(r.DevicesToRemove, d)
+				status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.Name), "<removed>", "")
+			}
 		}
 	}
 
