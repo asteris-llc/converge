@@ -7,7 +7,6 @@ menu:
     parent: content
 ---
 
-
 Platform retrieves read-only system information from the underlying host. Returns
 an empty string if the value is not set.
 
