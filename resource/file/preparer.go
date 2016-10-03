@@ -32,12 +32,11 @@ type Preparer struct {
 	Destination string `hcl:"destination"`
 
 	// State sets whether the resource exists
-	// vaild states are [  "present", "absent" ]
-	State string `hcl:"state"`
+	State string `hcl:"state" valid_values:"present,absent"`
 
 	// Type sets the type of the resource
 	// valid types are [ "file", "directory", "hardlink", "symlink"]
-	Type string `hcl:"type"`
+	Type string `hcl:"type" valid_values:"file,directory,hardlink,symlink"`
 
 	// Target is the target file for a symbolic or hard link
 	// destination -> target
@@ -46,10 +45,10 @@ type Preparer struct {
 	// Force Change the resource. For example, if the target is a file and
 	// state is set to directory, the file will be removed
 	// Force on a symlink will remove the previous symlink
-	Force string `hcl:"force" doc_type:"bool"`
+	Force bool `hcl:"force" doc_type:"bool"`
 
 	// Mode is the mode of the file, specified in octal (like 0755).
-	Mode string `hcl:"mode" doc_type:"octal string"`
+	Mode *uint32 `hcl:"mode" base:"8" doc_type:"uint32"`
 
 	// User is the user name of the file owner
 	User string `hcl:"user"`
@@ -64,71 +63,16 @@ type Preparer struct {
 // Prepare a file resource
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
-	// render Destination
-	Destination, err := render.Render("destination", p.Destination)
-	if err != nil {
-		return nil, err
-	}
-
-	State, err := render.Render("state", p.State)
-	if err != nil {
-		return nil, err
-	}
-
-	Type, err := render.Render("type", p.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	Target, err := render.Render("target", p.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	Force, err := render.RenderBool("target", p.Force)
-	if err != nil {
-		return nil, err
-	}
-
-	// render Mode
-	Mode, err := render.Render("mode", p.Mode)
-	if err != nil {
-		return nil, err
-	}
-
-	fileMode, err := UnixMode(Mode)
-	if err != nil {
-		return nil, err
-	}
-
-	UserName, err := render.Render("user", p.User)
-	if err != nil {
-		return nil, err
-	}
-
-	GroupName, err := render.Render("group", p.Group)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := render.Render("content", p.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	Content := []byte(c)
-
 	fileTask := &File{
-		Destination: Destination,
-		State:       State,
-		Type:        Type,
-		Target:      Target,
-		Force:       Force,
-		Mode:        Mode,
-		FileMode:    fileMode,
-		UserInfo:    &user.User{Username: UserName},
-		GroupInfo:   &user.Group{Name: GroupName},
-		Content:     Content,
+		Destination: p.Destination,
+		Mode:        p.Mode,
+		State:       p.State,
+		Type:        p.Type,
+		Target:      p.Target,
+		Force:       p.Force,
+		UserInfo:    &user.User{Username: p.User},
+		GroupInfo:   &user.Group{Name: p.Group},
+		Content:     []byte(p.Content),
 	}
 
 	return fileTask, fileTask.Validate()

@@ -15,6 +15,7 @@
 package file_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -30,113 +31,104 @@ func TestPreparerInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(content.Preparer))
 }
 
-func TestPreparerDestinationIsRequired(t *testing.T) {
-	p := &file.Preparer{}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "file requires a destination parameter")
-	}
-}
+func TestPrepare(t *testing.T) {
+	t.Parallel()
+	t.Run("validConfig1", func(t *testing.T) {
+		perms := new(uint32)
+		*perms = uint32(0755)
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Mode:        perms,
+			Type:        "file",
+			Force:       true,
+			User:        "root",
+			Group:       "wheel",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		if !assert.Nil(t, err) {
+			assert.EqualError(t, err, "correct configuration should pass")
+		}
+	})
 
-func TestPreparerInvalidState(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", State: "foo"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "state should be one of present, absent, got \"foo\"")
-	}
-}
+	t.Run("validConfig2", func(t *testing.T) {
+		perms := new(uint32)
+		*perms = 4700
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Mode:        perms,
+			Type:        "directory",
+			Force:       false,
+			User:        "root",
+			Group:       "wheel",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		if !assert.Nil(t, err) {
+			assert.EqualError(t, err, "correct configuration should pass")
+		}
+	})
 
-func TestPreparerInvalidType(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Type: "bar"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "type should be one of directory, file, hardlink, symlink, got \"bar\"")
-	}
-}
+	t.Run("badConfigNoDestination", func(t *testing.T) {
+		perms := new(uint32)
+		*perms = 4700
+		p := &file.Preparer{
+			Mode:  perms,
+			Type:  "directory",
+			Force: false,
+			User:  "root",
+			Group: "wheel",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.Error(t, err, "file requires a destination parameter")
+	})
 
-func TestTargetNotDefinedForSymlink(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Type: "symlink"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "must define a target if you are using a \"symlink\"")
-	}
-}
+	t.Run("badConfigType", func(t *testing.T) {
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Type:        "badType",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.NotNil(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("type should be one of directory, file, hardlink, symlink, got %q", p.Type))
+	})
 
-func TestTargetDefinedForSymlink(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Type: "symlink", Target: "/get/converge"}
-	_, err := p.Prepare(fakerenderer.New())
-	if !assert.Nil(t, err) {
-		assert.EqualError(t, err, "target + symlink should pass")
-	}
-}
+	t.Run("badConfigState", func(t *testing.T) {
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			State:       "badState",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.NotNil(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("state should be one of present, absent, got %q", p.State))
+	})
 
-func TestTargetNotDefinedForHardlink(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Type: "hardlink"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "must define a target if you are using a \"hardlink\"")
-	}
-}
+	t.Run("badConfigSymlink", func(t *testing.T) {
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Type:        "symlink",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.NotNil(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("must define a target if you are using a %q", p.Type))
+	})
 
-func TestTargetDefinedForHardLink(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Type: "hardlink", Target: "/get/converge"}
-	_, err := p.Prepare(fakerenderer.New())
-	if !assert.Nil(t, err) {
-		assert.EqualError(t, err, "target + hardlink should pass")
-	}
-}
+	t.Run("badConfigHardlink", func(t *testing.T) {
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Type:        "hardlink",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.NotNil(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("must define a target if you are using a %q", p.Type))
+	})
 
-func TestBadPermissions1(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Mode: "999"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "\"999\" is not a valid file mode")
-	}
-}
+	t.Run("badConfigTargetNolink", func(t *testing.T) {
+		p := &file.Preparer{
+			Destination: "/aster/is",
+			Target:      "/converge",
+		}
+		_, err := p.Prepare(fakerenderer.New())
+		assert.NotNil(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("cannot define target on a type of \"file\": target: %q", p.Target))
+	})
 
-//text permissions not supported yet
-func TestBadPermissions2(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Mode: "rwxrwxrwx"}
-	_, err := p.Prepare(fakerenderer.New())
-	if assert.Error(t, err) {
-		assert.EqualError(t, err, "\"rwxrwxrwx\" is not a valid file mode")
-	}
-}
-
-func TestValidPermissions(t *testing.T) {
-	p := &file.Preparer{Destination: "/aster/is", Mode: "0755"}
-	_, err := p.Prepare(fakerenderer.New())
-	if !assert.Nil(t, err) {
-		assert.EqualError(t, err, "correct permissions of 0755 should pass")
-	}
-}
-
-func TestValidConfig1(t *testing.T) {
-	p := &file.Preparer{
-		Destination: "/aster/is",
-		Mode:        "0755",
-		Type:        "file",
-		Force:       "true",
-		User:        "root",
-		Group:       "wheel",
-	}
-	_, err := p.Prepare(fakerenderer.New())
-	if !assert.Nil(t, err) {
-		assert.EqualError(t, err, "correct configuration should pass")
-	}
-}
-
-func TestValidConfig2(t *testing.T) {
-	p := &file.Preparer{
-		Destination: "/aster/is",
-		Mode:        "4700",
-		Type:        "directory",
-		Force:       "false",
-		User:        "root",
-		Group:       "wheel",
-	}
-	_, err := p.Prepare(fakerenderer.New())
-	if !assert.Nil(t, err) {
-		assert.EqualError(t, err, "correct configuration should pass")
-	}
 }
