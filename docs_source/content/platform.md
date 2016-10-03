@@ -1,5 +1,5 @@
 ---
-title: "platform"
+title: "Platform Detection"
 slug: "platform"
 date: "2016-10-03"
 menu:
