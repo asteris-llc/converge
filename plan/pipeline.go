@@ -108,6 +108,11 @@ func (g *pipelineGen) PlanNode(taski interface{}) (interface{}, error) {
 	}
 	status, err := twrapper.Task.Check(renderer)
 
+	// create empty Status structure, if it not created in .Check()
+	if status == nil {
+		status = &resource.Status{}
+	}
+
 	type settable interface {
 		SetError(error)
 	}
