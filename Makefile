@@ -135,7 +135,7 @@ integration: xcompile
 	@echo === quick integration test ===
 	$(INTEGRATION_CMD) quick-integration.hcl
 	@ if [ -n "$$CVG_FULL_INTEGRATION" ];\
-		then echo "=== full integration test ==="; $(INTEGRATION_CMD) full-integration.sh;\
+		then echo "=== full integration test ==="; ./full-integration.sh;\
 		else echo "=== Skipping full test ===";\
 		fi
 
