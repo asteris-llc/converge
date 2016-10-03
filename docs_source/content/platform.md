@@ -40,7 +40,7 @@ file.content "platformData" {
 
   Value of the [LSB](https://www.freedesktop.org/software/systemd/man/os-release.html) `ID` in `/etc/os-release`.
 
-  Examples: "alpine", "centos", "coreos", "debian", "nixos", "ubuntu".
+  Examples: `alpine`, `centos`, `coreos`, `debian`, `nixos`, `ubuntu`.
 
 - `LinuxLSBLike` (list of strings)
 
