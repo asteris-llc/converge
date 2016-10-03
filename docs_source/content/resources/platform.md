@@ -31,7 +31,7 @@ file.content "platformData" {
   Examples: `Centos` distributions return `{"rhel", "fedora"}`.
   `Ubuntu` distributions have this value set to `{"debian"}`.
 
-- `NAME` (string)
+- `Name` (string)
   Value of LSB `NAME` in `/etc/os-release` for Linux, [`/usr/bin/sw_vers`](https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/sw_vers.1.html) `ProductName` on macOS.
   Operating System Name. Examples: `CoreOS`, `Debian`, `Mac OS X`, `NixOS`, `Ubuntu`
 
