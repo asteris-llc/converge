@@ -1,4 +1,5 @@
 param "swarm-manager-ip" {}
+
 param "swarm-token-bucket" {}
 
 task "swarm-init" {
@@ -7,7 +8,7 @@ task "swarm-init" {
 }
 
 task "swarm-persist-worker-token" {
-  check = "aws s3 ls s3://{{param `swarm-token-bucket`}}/worker"
-  apply = "docker swarm join-token worker -q | aws s3 cp - s3://{{param `swarm-token-bucket`}}/worker"
+  check   = "aws s3 ls s3://{{param `swarm-token-bucket`}}/worker"
+  apply   = "docker swarm join-token worker -q | aws s3 cp - s3://{{param `swarm-token-bucket`}}/worker"
   depends = ["task.swarm-init"]
 }

@@ -10,7 +10,7 @@ task "pip-install" {
 }
 
 task "awscli-install" {
-  check = "which aws"
-  apply = "pip install awscli"
+  check   = "which aws"
+  apply   = "pip install awscli"
   depends = ["task.pip-install"]
 }
