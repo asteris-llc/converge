@@ -4,7 +4,7 @@ slug: "platform"
 date: "2016-10-03"
 menu:
   main:
-    parent: content
+    parent: converge
 ---
 
 Platform retrieves read-only system information from the underlying host. Returns
