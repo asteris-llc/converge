@@ -1,6 +1,6 @@
 
-Platform retrienves read-only system information from the underlying host. If
-the value is not set, returns an empty string.
+Platform retrieves read-only system information from the underlying host. Returns
+an empty string if the value is not set.
 
 ## Example
 
