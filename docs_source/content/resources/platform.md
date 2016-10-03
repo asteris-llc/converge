@@ -1,3 +1,12 @@
+---
+title: "platform"
+slug: "platform"
+date: "2016-10-03"
+menu:
+  main:
+    parent: content
+---
+
 
 Platform retrieves read-only system information from the underlying host. Returns
 an empty string if the value is not set.
