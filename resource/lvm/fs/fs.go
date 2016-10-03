@@ -6,6 +6,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"os"
 	"strings"
 	"text/template"
 )
@@ -45,7 +46,7 @@ RequiredBy={{.RequiredBy}}`
 func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
-	if fs, err := r.lvm.Blkid(r.mount.What); err != nil {
+	if fs, err := r.checkBlkid(r.mount.What); err != nil {
 		return nil, err
 	} else {
 		if fs == r.mount.Type {
@@ -102,6 +103,14 @@ func (r *ResourceFS) Apply() (resource.TaskStatus, error) {
 	}
 
 	return &resource.Status{}, nil
+}
+
+// FIXME: ugly kludge
+func (r *ResourceFS) checkBlkid(name string) (string, error) {
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		return "", nil
+	}
+	return r.lvm.Blkid(name)
 }
 
 func (r *ResourceFS) Setup(lvm lowlevel.LVM, m *Mount) error {
