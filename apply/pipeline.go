@@ -15,7 +15,6 @@
 package apply
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor"
@@ -23,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 )
 
 type pipelineGen struct {
@@ -162,7 +162,11 @@ func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) (interface{}, erro
 	}
 	result.PostCheck = planned.Status
 	if planned.HasChanges() {
-		result.Err = fmt.Errorf("%s still has changes after apply", g.ID)
+		if result.Err != nil {
+			result.Err = errors.Wrap(result.Err, fmt.Sprintf("%s still has changes after apply", g.ID))
+		} else {
+			result.Err = fmt.Errorf("%s still has changes after apply", g.ID)
+		}
 	}
 	return result, nil
 }
