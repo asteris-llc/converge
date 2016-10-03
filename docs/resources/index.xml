@@ -191,7 +191,7 @@ failure.)&lt;/p&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;the amount of time the command will wait before halting forcefully. The
-format is Go&amp;rsquo;s duraction string. A duration string is a possibly signed
+format is Go&amp;rsquo;s duration string. A duration string is a possibly signed
 sequence of decimal numbers, each with optional fraction and a unit
 suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;,
 &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
