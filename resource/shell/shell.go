@@ -137,6 +137,15 @@ func (s *Shell) HealthCheck() (*resource.HealthStatus, error) {
 	return s.HealthStatus, err
 }
 
+// Error is required for TaskStatus
+func (s *Shell) Error() error {
+	if s.HealthStatus != nil {
+		return s.HealthStatus.Error()
+	}
+
+	return nil
+}
+
 func (s *Shell) updateHealthStatus() error {
 	if s.Status == nil {
 		fmt.Println("[INFO] health status requested with no plan, running check")

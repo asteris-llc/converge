@@ -14,28 +14,49 @@
 
 package resource
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // StatusLevel will be used as a level in Status. It indicates if a resource
 // needs to be changed, as well as fatal conditions.
 type StatusLevel uint32
 
 const (
-	// StatusNoChange means no changes are necessary
+	// StatusNoChange means no changes are necessary. This status signals that
+	// execution of dependent resources can continue.
 	StatusNoChange StatusLevel = iota
 
-	// StatusWontChange indicates an acceptable delta that wont be corrected
+	// StatusWontChange indicates an acceptable delta that wont be corrected.
+	// This status signals that execution of dependent resources can continue.
 	StatusWontChange
 
-	// StatusWillChange indicates an unacceptable delta that will be corrected
+	// StatusWillChange indicates an unacceptable delta that will be corrected.
+	// This status signals that execution of dependent resources can continue.
 	StatusWillChange
 
-	// StatusCantChange indicates an unacceptable delta that can't be corrected
+	// StatusCantChange indicates an unacceptable delta that can't be corrected.
+	// This is just like StatusFatal except the user will see that the resource
+	// needs to change, but can't because of the condition specified in your
+	// messaging. This status halts execution of dependent resources.
 	StatusCantChange
 
 	// StatusFatal indicates an error. This is just like StatusCantChange except
-	// it does not imply that there are changes to be made.
+	// it does not imply that there are changes to be made. This status halts
+	// execution of dependent resources.
 	StatusFatal
+)
+
+// error messages
+var (
+	// ErrStatusCantChange is returned when an error is not set but the level is
+	// StatusCantChange
+	ErrStatusCantChange = errors.New("resource cannot change because of an error")
+
+	// ErrStatusFatal is returned when an error is not set but the level is
+	// StatusFatal
+	ErrStatusFatal = errors.New("resource encountered an error")
 )
 
 func (l StatusLevel) String() string {
@@ -71,6 +92,7 @@ type TaskStatus interface {
 	StatusCode() StatusLevel
 	Messages() []string
 	HasChanges() bool
+	Error() error
 }
 
 // Status is the default TaskStatus implementation
@@ -89,6 +111,7 @@ type Status struct {
 	// the Status* contsts above.)
 	Level StatusLevel
 
+	error       error
 	failingDeps []badDep
 }
 
@@ -97,6 +120,40 @@ func NewStatus() *Status {
 	return &Status{
 		Differences: map[string]Diff{},
 	}
+}
+
+// SetError sets an error on a status
+func (t *Status) SetError(err error) {
+	if t == nil {
+		*t = *NewStatus()
+	}
+
+	switch t.Level {
+	case StatusWillChange, StatusCantChange:
+		t.Level = StatusCantChange
+
+	default:
+		t.Level = StatusFatal
+	}
+
+	t.error = err
+}
+
+// Error returns an error, if set. If the level is StatusCantChange or
+// StatusFatal and an error is not set, Error will generate an appropriate
+// error message.
+func (t *Status) Error() error {
+	if t.error == nil {
+		switch t.Level {
+		case StatusCantChange:
+			return ErrStatusCantChange
+
+		case StatusFatal:
+			return ErrStatusFatal
+		}
+	}
+
+	return t.error
 }
 
 // Diffs returns the internal differences

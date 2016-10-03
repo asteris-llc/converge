@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-09-08T23:26:25-07:00"
+date: "2016-09-27T18:19:08-05:00"
 menu:
   main:
     parent: resources
@@ -46,3 +46,6 @@ file.content "hostname data" {
 
 
 - `env` (map of string to string)
+
+
+

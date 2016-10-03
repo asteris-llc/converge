@@ -17,11 +17,9 @@ package mode
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 )
 
 // Preparer for file Mode
@@ -34,31 +32,19 @@ type Preparer struct {
 	Destination string `hcl:"destination"`
 
 	// Mode is the mode of the file, specified in octal.
-	Mode string `hcl:"mode" doc_type:"octal string"`
+	Mode uint32 `hcl:"mode" base:"8"`
 }
 
 // Prepare this resource for use
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	// render Destination
-	Destination, err := render.Render("destination", p.Destination)
-	if err != nil {
-		return nil, err
-	}
-	// render Mode
-	sMode, err := render.Render("mode", p.Mode)
-	if err != nil {
-		return nil, err
-	}
-	if sMode == "" {
+	if p.Mode == 0 {
 		return nil, fmt.Errorf("task requires a \"mode\" parameter")
 	}
-	iMode, err := strconv.ParseUint(sMode, 8, 32)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("%q is not a valid file mode", sMode))
-	}
-	mode := os.FileMode(iMode)
 
-	modeTask := &Mode{Destination: Destination, Mode: mode}
+	modeTask := &Mode{
+		Destination: p.Destination,
+		Mode:        os.FileMode(p.Mode),
+	}
 	return modeTask, modeTask.Validate()
 }
 

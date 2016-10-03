@@ -43,16 +43,6 @@ type Preparer struct {
 
 // Prepare a new docker image
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	tag, err := render.Render("tag", p.Tag)
-	if err != nil {
-		return nil, err
-	}
-
 	timeout, err := render.Render("inactivity_timeout", p.InactivityTimeout)
 	if err != nil {
 		return nil, err
@@ -72,8 +62,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	image := &Image{
-		Name: name,
-		Tag:  tag,
+		Name: p.Name,
+		Tag:  p.Tag,
 	}
 	image.SetClient(dockerClient)
 	return image, nil
