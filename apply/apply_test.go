@@ -105,6 +105,21 @@ func TestApplyStillChange(t *testing.T) {
 	}
 }
 
+// TestApplyNilError test for panics in apply/pipeline.go
+func TestApplyNilError(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	g := graph.New()
+	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.NilAndError()})
+
+	require.NoError(t, g.Validate())
+
+	// Apply should return an error and not panic
+	out, err := apply.Apply(context.Background(), g)
+	assert.Error(t, err)
+	assert.NotNil(t, out)
+}
+
 func getResult(t *testing.T, src *graph.Graph, key string) *apply.Result {
 	val := src.Get(key)
 	result, ok := val.(*apply.Result)
