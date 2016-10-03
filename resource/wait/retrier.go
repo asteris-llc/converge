@@ -49,6 +49,7 @@ func (r *Retrier) RetryUntil(retryFunc RetryFunc) (bool, error) {
 	startTime := time.Now()
 	after := r.GracePeriod
 	ok := false
+	var err error
 waitLoop:
 	for {
 		select {
@@ -60,11 +61,7 @@ waitLoop:
 			r.RetryCount++
 			after = r.Interval
 
-			var err error
 			ok, err = retryFunc()
-			if err != nil {
-				return false, err
-			}
 
 			if ok {
 				after = r.GracePeriod
@@ -78,7 +75,7 @@ waitLoop:
 	}
 
 	r.Duration = time.Since(startTime)
-	return ok, nil
+	return ok, err
 }
 
 // PrepareRetrier generates a Retrier from preparer input

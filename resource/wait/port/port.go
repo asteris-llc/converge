@@ -21,7 +21,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/wait"
-	"github.com/pkg/errors"
 )
 
 // Port represents a port check
@@ -30,19 +29,24 @@ type Port struct {
 	*wait.Retrier
 	Host string
 	Port int
+	ConnectionCheck
 }
 
 // Check if the port is open
 func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 
-	alive, err := p.checkConnection()
-	if err != nil {
-		return p, errors.Wrapf(err, "failed to check connection")
-	}
-
-	if !alive {
+	err := p.CheckConnection()
+	if err == nil {
+		if p.RetryCount > 0 {
+			p.Status.AddMessage(fmt.Sprintf("Passed after %d retries (%v)", p.RetryCount, p.Duration))
+		}
+	} else {
 		p.RaiseLevel(resource.StatusWillChange)
+		p.Status.AddMessage(fmt.Sprintf("Failed to connect to %s:%d: %s", p.Host, p.Port, err.Error()))
+		if p.RetryCount > 0 { // only add retry messages after an apply attempt
+			p.Status.AddMessage(fmt.Sprintf("Failed after %d retries (%v)", p.RetryCount, p.Duration))
+		}
 	}
 
 	return p, nil
@@ -52,27 +56,41 @@ func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 func (p *Port) Apply() (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 
-	_, err := p.RetryUntil(p.checkConnection)
-	if err != nil {
-		return p, errors.Wrapf(err, "failed to check connection")
-	}
+	_, err := p.RetryUntil(func() (bool, error) {
+		checkErr := p.CheckConnection()
+		return checkErr == nil, checkErr
+	})
 
-	return p, nil
+	return p, err
 }
 
-func (p *Port) checkConnection() (connected bool, err error) {
+// CheckConnection attempts to see if a tcp port is open
+func (p *Port) CheckConnection() error {
+	if p.ConnectionCheck == nil {
+		p.ConnectionCheck = &TCPConnectionCheck{}
+	}
+	return p.ConnectionCheck.CheckConnection(p.Host, p.Port)
+}
+
+// ConnectionCheck represents a connection checker
+type ConnectionCheck interface {
+	CheckConnection(host string, port int) error
+}
+
+// TCPConnectionCheck impelements a ConnectionCheck over TCP
+type TCPConnectionCheck struct{}
+
+// CheckConnection attempts to see if a tcp port is open
+func (t *TCPConnectionCheck) CheckConnection(host string, port int) error {
 	logger := log.WithField("module", "wait.port")
 
-	addr := fmt.Sprintf("%s:%d", p.Host, p.Port)
+	addr := fmt.Sprintf("%s:%d", host, port)
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		if opErr, ok := err.(*net.OpError); ok {
-			logger.WithError(opErr).WithField("addr", addr).Debug("connection failed")
-			return false, nil
-		}
-		return false, errors.Wrapf(err, "dial failed")
+		logger.WithError(err).WithField("addr", addr).Debug("connection failed")
+		return err
 	}
 	defer conn.Close()
 
-	return true, nil
+	return nil
 }
