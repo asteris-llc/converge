@@ -24,16 +24,21 @@ func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 		return nil, err
 	}
 
-	lvs, err := r.lvm.QueryLogicalVolumes(r.group)
-	if err != nil {
-		return nil, err
-	}
+	if ok {
+		lvs, err := r.lvm.QueryLogicalVolumes(r.group)
+		if err != nil {
+			return nil, err
+		}
 
-	_, ok = lvs[r.name]
-	r.needCreate = !ok
+		_, ok = lvs[r.name]
+		r.needCreate = !ok
+	} else {
+		status.AddDifference(fmt.Sprintf("group: %s", r.group), "<not exists>", "created", "")
+	}
 
 	if r.needCreate {
 		status.Level = resource.StatusWillChange
+		status.AddDifference(fmt.Sprintf("volume: %s", r.name), "<not exists>", "created", "")
 	}
 	return status, nil
 }
