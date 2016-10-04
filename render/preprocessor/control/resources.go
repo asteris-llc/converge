@@ -91,6 +91,7 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 // ShouldEvaluate returns true if the case has a valid parent and it is the
 // selected branch for that parent
 func (c *CasePreparer) ShouldEvaluate() bool {
+	fmt.Println("calling ShouldEvaluate...")
 	if c.parent == nil {
 		return false
 	}
@@ -117,6 +118,7 @@ func (c *CasePreparer) IsTrue() (bool, error) {
 // execution results in the string "true" or t", and false if the string is
 // "false" or "f".  In any other case an error is returned.
 func EvaluatePredicate(predicate string) (bool, error) {
+	fmt.Println("calling evaluate predicate with: ", predicate)
 	lang := extensions.DefaultLanguage()
 	if predicate == "" {
 		return false, BadPredicate(predicate)
