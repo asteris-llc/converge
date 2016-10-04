@@ -138,6 +138,47 @@ func TestDescendents(t *testing.T) {
 	assert.Equal(t, []string{"one/two"}, g.Descendents("one"))
 }
 
+// TestChildren tests to ensure the correct behavior when getting children
+func TestChildren(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	g := graph.New()
+	g.Add("root", nil)
+	g.Add("child1", nil)
+	g.Add("child2", nil)
+
+	g.Add("child1.1", nil)
+	g.Add("child1.2", nil)
+	g.Add("child1.3", nil)
+
+	g.Add("child.1.1.1", nil)
+
+	g.Add("child2.1", nil)
+	g.Add("child2.2", nil)
+	g.Add("child2.3", nil)
+
+	g.ConnectParent("root", "child1")
+	g.ConnectParent("root", "child2")
+
+	g.ConnectParent("child1", "child1.1")
+	g.ConnectParent("child1", "child1.2")
+	g.ConnectParent("child1", "child1.3")
+
+	g.ConnectParent("child2", "child2.1")
+	g.ConnectParent("child2", "child2.2")
+	g.ConnectParent("child2", "child2.3")
+
+	g.ConnectParent("child1.1", "child.1.1.1")
+
+	g.Connect("child1", "child2.1")
+	g.Connect("child1", "child2.2")
+	g.Connect("child1", "child2.3")
+
+	children := g.Children("child1")
+
+	assert.Equal(t, []string{"child1.1", "child1.2", "child1.3"}, children)
+}
+
 func TestWalkOrder(t *testing.T) {
 	// the walk order should start with leaves and head towards the root
 	defer logging.HideLogs(t)()

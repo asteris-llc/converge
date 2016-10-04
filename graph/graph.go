@@ -112,6 +112,19 @@ func (g *Graph) ConnectParent(from, to string) {
 	g.inner.Connect(NewParentEdge(from, to))
 }
 
+// Children returns a list of ids whose parent id is set to the specified node
+func (g *Graph) Children(id string) (out []string) {
+	downEdges := g.DownEdges(id)
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+	for _, edge := range downEdges {
+		if _, ok := edge.(*ParentEdge); ok {
+			out = append(out, edge.Target().(string))
+		}
+	}
+	return
+}
+
 // Connect two vertices together by ID
 func (g *Graph) Connect(from, to string) {
 	g.innerLock.Lock()
