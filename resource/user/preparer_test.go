@@ -119,6 +119,13 @@ func TestPrepare(t *testing.T) {
 
 			assert.NoError(t, err)
 		})
+
+		t.Run("home_dir and move_dir parameters", func(t *testing.T) {
+			p := user.Preparer{Username: "test", MoveDir: true, HomeDir: "tmp"}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
 	})
 
 	t.Run("invalid", func(t *testing.T) {
@@ -134,6 +141,13 @@ func TestPrepare(t *testing.T) {
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))
+		})
+
+		t.Run("no home_dir with move_dir", func(t *testing.T) {
+			p := user.Preparer{Username: "test", MoveDir: true}
+			_, err := p.Prepare(&fr)
+
+			assert.EqualError(t, err, fmt.Sprintf("user \"home_dir\" parameter required with \"move_dir\" parameter"))
 		})
 	})
 }

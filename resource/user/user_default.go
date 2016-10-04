@@ -33,6 +33,11 @@ func (s *System) DelUser(userName string) error {
 	return ErrUnsupported
 }
 
+// ModUser implementation for systems which are not supported
+func (s *System) ModUser(userName string, options *ModUserOptions) error {
+	return ErrUnsupported
+}
+
 // Lookup implementation for systems which are not supported
 func (s *System) Lookup(userName string) (*user.User, error) {
 	return nil, ErrUnsupported
