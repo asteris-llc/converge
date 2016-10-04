@@ -60,9 +60,7 @@ type Container struct {
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
-	if c.Status == nil {
-		c.Status = resource.NewStatus()
-	}
+	c.Status = resource.NewStatus()
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
 		c.Status.Level = resource.StatusFatal
@@ -87,9 +85,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() (resource.TaskStatus, error) {
-	if c.Status == nil {
-		c.Status = resource.NewStatus()
-	}
+	c.Status = resource.NewStatus()
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
