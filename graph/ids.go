@@ -44,6 +44,9 @@ func IsNibling(fst, snd string) bool {
 	if snd == "." {
 		return false
 	}
+	if fst == ParentID(snd) {
+		return false
+	}
 	if AreSiblingIDs(fst, snd) {
 		return true
 	}

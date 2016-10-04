@@ -65,6 +65,12 @@ func TestIsNibling(t *testing.T) {
 	t.Run("is nibling child of nibling", func(t *testing.T) {
 		assert.True(t, graph.IsNibling("a/b", "a/c/d/e"))
 	})
+	t.Run("child", func(t *testing.T) {
+		assert.False(t, graph.IsNibling("a/b", "a/b/c"))
+	})
+	t.Run("grandchild", func(t *testing.T) {
+		assert.False(t, graph.IsNibling("a/b", "a/b/c/d"))
+	})
 	t.Run("unrelated", func(t *testing.T) {
 		assert.False(t, graph.IsNibling("a/b", "x/c"))
 	})

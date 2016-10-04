@@ -27,11 +27,12 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "loading failed")
 	}
-	predicated, err := ResolveConditionals(ctx, base)
+
+	resolved, err := ResolveDependencies(ctx, base)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not preprocess macros")
 	}
-	resolved, err := ResolveDependencies(ctx, predicated)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve dependencies")
 	}
@@ -39,5 +40,6 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve resources")
 	}
-	return resourced, nil
+	predicated, err := ResolveConditionals(ctx, resourced)
+	return predicated, nil
 }
