@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/resource/module"
 )
 
@@ -148,23 +149,32 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 // the current set of graph nodes, however unlike `VertexSplit`, if a node is
 // not found at the current level it will look at the parent level to the
 // provided starting node, unless stop(parent) returns true.
-func VertexSplitTraverse(
-	g *graph.Graph,
-	toFind string,
-	startingNode string,
-	stop func(*graph.Graph, string) bool,
-) (string, string, bool) {
+func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, stop func(*graph.Graph, string) bool, history map[string]struct{}) (string, string, bool) {
+	history[startingNode] = struct{}{}
+
+	for _, child := range g.Children(startingNode) {
+		if _, ok := history[child]; ok {
+			continue
+		}
+		if stop(g, child) {
+			continue
+		}
+		vertex, middle, found := VertexSplitTraverse(g, toFind, child, stop, history)
+		if found {
+			return vertex, middle, found
+		}
+	}
+	if stop(g, startingNode) {
+		return "", toFind, false
+	}
+
 	fqgn := graph.SiblingID(startingNode, toFind)
 	vertex, middle, found := VertexSplit(g, fqgn)
 	if found {
 		return vertex, middle, found
 	}
 	parentID := graph.ParentID(startingNode)
-	if stop(g, parentID) {
-		return "", toFind, false
-	}
-
-	return VertexSplitTraverse(g, toFind, parentID, stop)
+	return VertexSplitTraverse(g, toFind, parentID, stop, history)
 }
 
 // TraverseUntilModule is a function intended to be used with
@@ -183,6 +193,9 @@ func TraverseUntilModule(g *graph.Graph, id string) bool {
 	}
 	if _, ok := elem.(*module.Preparer); ok {
 		return true
+	}
+	if node, ok := elem.(*parse.Node); ok {
+		return node.Kind() == "module"
 	}
 	return false
 }

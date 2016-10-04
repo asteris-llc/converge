@@ -209,6 +209,7 @@ func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error
 
 // Prepare returns a conditional task after preparing the underlying resource
 func (c *ConditionalPreparer) Prepare(r resource.Renderer) (resource.Task, error) {
+	fmt.Println("calling conditional preparerer...")
 	if c == nil {
 		return &ConditionalTask{}, errors.New("cannot create a conditional task from a nil preparer")
 	}

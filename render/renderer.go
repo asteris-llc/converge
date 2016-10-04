@@ -80,15 +80,14 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	// val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
 	ancestor, found := getNearestAncestor(r.Graph(), r.ID, "param."+name)
 	if !found {
-		return "", errors.New("param not found")
+		return "", errors.New("param not found (no such ancestor)")
 	}
 	val, ok := resource.ResolveTask(r.Graph().Get(ancestor))
 
 	if val == nil || !ok {
-		return "", errors.New("param not found")
+		return "", errors.New("param not found (value is nil)")
 	}
 
 	if _, ok := val.(*PrepareThunk); ok {
@@ -102,10 +101,8 @@ func (r *Renderer) param(name string) (string, error) {
 func (r *Renderer) lookup(name string) (string, error) {
 	g := r.Graph()
 	// fully-qualified graph name
-
 	fqgn := graph.SiblingID(r.ID, name)
-	vertexName, terms, found := preprocessor.VertexSplit(g, fqgn)
-
+	vertexName, terms, found := preprocessor.VertexSplitTraverse(g, name, r.ID, preprocessor.TraverseUntilModule, make(map[string]struct{}))
 	if !found {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
