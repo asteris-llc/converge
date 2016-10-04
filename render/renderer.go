@@ -41,6 +41,11 @@ type Renderer struct {
 	Language        *extensions.LanguageExtension
 }
 
+// GetID returns the ID of this renderer
+func (r *Renderer) GetID() string {
+	return r.ID
+}
+
 // Value of this renderer
 func (r *Renderer) Value() (value string, present bool) {
 	return r.DotValue, r.DotValuePresent
