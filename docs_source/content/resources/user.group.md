@@ -1,7 +1,7 @@
 ---
 title: "user.group"
 slug: "user-group"
-date: "2016-09-28T10:46:11-05:00"
+date: "2016-10-04T13:01:50-05:00"
 menu:
   main:
     parent: resources
@@ -24,7 +24,7 @@ user.group "group" {
 
 ## Parameters
 
-- `gid` (uint32)
+- `gid` (optional uint32)
 
   Gid is the group gid.
 
@@ -32,7 +32,12 @@ user.group "group" {
 
   Name is the group name.
 
-- `state` (string)
+- `new_name` (string)
+
+  NewName is used when modifying a group.
+The group Name will be changed to NewName.
+
+- `state` (State)
 
 
   Valid values: `present` and `absent`

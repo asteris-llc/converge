@@ -1,7 +1,7 @@
 ---
 title: "param"
 slug: "param"
-date: "2016-09-27T18:19:08-05:00"
+date: "2016-10-04T13:01:49-05:00"
 menu:
   main:
     parent: resources
