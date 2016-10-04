@@ -34,6 +34,7 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 // WithNotify is plan, but with a notification feature
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
+	fmt.Println("calling plan.WithNotify...")
 	var hasErrors error
 
 	renderingPlant, err := render.NewFactory(ctx, in)
