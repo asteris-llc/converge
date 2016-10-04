@@ -115,7 +115,7 @@ func TestDrawNodeNoChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{},
-		"root:\n        Messages:\n        Has Changes: no\n        Changes: No changes\n\n",
+		"root:\n Messages:\n Has Changes: no\n Changes: No changes\n\n",
 	)
 }
 
@@ -179,7 +179,7 @@ func TestDrawNodeChanges(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"a": "b"},
-		"root:\n        Messages:\n        Has Changes: yes\n        Changes:\n                a:       \"\" => \"b\"\n\n",
+		"root:\n Messages:\n Has Changes: yes\n Changes:\n  a: \"\" \x1b[1m=>\x1b[22m \"b\"\n\n",
 	)
 }
 
@@ -197,7 +197,7 @@ func TestDrawNodeError(t *testing.T) {
 	testDrawNodes(
 		t,
 		Printable{"error": "x"},
-		"root:\n        Error: x\n        Messages:\n        Has Changes: yes\n        Changes:\n                error:   \"\" => \"x\"\n\n",
+		"root:\n Error: x\n Messages:\n Has Changes: yes\n Changes:\n  error: \"\" \x1b[1m=>\x1b[22m \"x\"\n\n",
 	)
 }
 
