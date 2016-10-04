@@ -71,7 +71,6 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 	if val == nil {
 		return getNearestAncestor(g, graph.ParentID(id), node)
 	}
-	fmt.Printf("renderer: getNearestAncestor: value type: %T\n", val)
 	if elem, ok := val.(*parse.Node); ok {
 		if elem.Kind() == "module" {
 			return "", false
@@ -81,7 +80,6 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	fmt.Println("looking up param: ", name)
 	// val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
 	ancestor, found := getNearestAncestor(r.Graph(), r.ID, "param."+name)
 	if !found {
