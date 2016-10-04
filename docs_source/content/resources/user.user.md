@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-09-28T10:46:11-05:00"
+date: "2016-10-04T13:01:50-05:00"
 menu:
   main:
     parent: resources
@@ -28,7 +28,7 @@ user.user "user" {
 
   Username is the user login name.
 
-- `uid` (uint32)
+- `uid` (optional uint32)
 
   UID is the user ID.
 
@@ -40,7 +40,7 @@ user.user "user" {
   GroupName is the primary group for user and must already exist.
 Only one of GID or Groupname may be indicated.
 
-- `gid` (uint32)
+- `gid` (optional uint32)
 
 
   Only one of `gid` or `groupname` may be set.
@@ -57,7 +57,7 @@ Only one of GID or Groupname may be indicated.
   HomeDir is the user's login directory. By default,  the login
 name is appended to the home directory.
 
-- `state` (string)
+- `state` (State)
 
 
   Valid values: `present` and `absent`

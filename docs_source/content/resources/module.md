@@ -1,7 +1,7 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-09-08T23:18:03-07:00"
+date: "2016-10-04T13:01:49-05:00"
 menu:
   main:
     parent: resources
