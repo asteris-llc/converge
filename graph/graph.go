@@ -491,7 +491,13 @@ func rootDepthWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 				todo = append(todo, id)
 				skip = true
 			} else if _, ok := done[edge.Target().(string)]; IsNibling(id, edge.Target().(string)) && !ok {
-				deferred[edge.Target().(string)] = append(deferred[edge.Target().(string)], id)
+				targetS := edge.Target().(string)
+				spliced := []string{}
+				for t := targetS; t != ParentID(id) && t != "root"; t = ParentID(t) {
+					spliced = append([]string{t}, spliced...)
+				}
+				todo = append(todo, spliced...)
+				todo = append(todo, id)
 				skip = true
 			}
 		}

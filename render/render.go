@@ -38,7 +38,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		return nil, err
 	}
 
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
+	return g.RootDepthTransform(ctx, func(id string, out *graph.Graph) error {
 		pipeline := Pipeline(out, id, renderingPlant, top)
 		value, err := pipeline.Exec(out.Get(id))
 		if err != nil {
