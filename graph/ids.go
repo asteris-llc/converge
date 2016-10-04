@@ -39,6 +39,17 @@ func AreSiblingIDs(a, b string) bool {
 	return ParentID(a) == ParentID(b)
 }
 
+// IsNibling checks to see if second is the child of a sibling of the first.
+func IsNibling(fst, snd string) bool {
+	if snd == "." {
+		return false
+	}
+	if AreSiblingIDs(fst, snd) {
+		return true
+	}
+	return IsNibling(fst, ParentID(snd))
+}
+
 // BaseID is the end of the ID, so "just" the original part
 func BaseID(id string) string {
 	return path.Base(id)

@@ -51,6 +51,32 @@ func TestAreSiblingIDsNot(t *testing.T) {
 	assert.False(t, graph.AreSiblingIDs("a/b", "x/y"))
 }
 
+// TestIsNibling tests various scenarios where we want to know if a node is a
+// nibling of the source node.
+func TestIsNibling(t *testing.T) {
+	t.Parallel()
+
+	t.Run("are siblings", func(t *testing.T) {
+		assert.True(t, graph.IsNibling("a/b", "a/c"))
+	})
+	t.Run("is direct nibling", func(t *testing.T) {
+		assert.True(t, graph.IsNibling("a/b", "a/c/d"))
+	})
+	t.Run("is nibling child of nibling", func(t *testing.T) {
+		assert.True(t, graph.IsNibling("a/b", "a/c/d/e"))
+	})
+	t.Run("unrelated", func(t *testing.T) {
+		assert.False(t, graph.IsNibling("a/b", "x/c"))
+	})
+	t.Run("cousins", func(t *testing.T) {
+		assert.False(t, graph.IsNibling("a/b/c", "a/x"))
+	})
+	t.Run("parent", func(t *testing.T) {
+		assert.False(t, graph.IsNibling("a/b/c", "a/b"))
+	})
+
+}
+
 func TestBaseID(t *testing.T) {
 	t.Parallel()
 
