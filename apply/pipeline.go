@@ -120,6 +120,10 @@ func (g *pipelineGen) applyNode(val interface{}) (interface{}, error) {
 
 	status, err := twrapper.Plan.Task.Apply()
 
+	if status == nil {
+		status = &resource.Status{}
+	}
+
 	type settable interface {
 		SetError(error)
 	}
