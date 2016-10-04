@@ -3,7 +3,6 @@ package load
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
@@ -32,15 +31,7 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			switchNode.AppendCase(caseNode)
 			for _, targetID := range g.Children(caseID) {
 				targetPreparer := g.Get(targetID).(*resource.Preparer)
-				conditionalTarget, ok := targetPreparer.Destination.(resource.Resource)
-				if !ok {
-					logger.Infof(
-						"unexpected type for node at %s: %T",
-						targetID,
-						g.Get(targetID),
-					)
-				}
-				fmt.Println("wrapping ", targetID, " in a conditional preparer...")
+				conditionalTarget := targetPreparer
 				conditional := &control.ConditionalPreparer{
 					Name:     targetID,
 					Resource: conditionalTarget,
