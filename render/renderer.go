@@ -82,7 +82,6 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 	if val == nil {
 		return getNearestAncestor(g, graph.ParentID(id), node)
 	}
-	fmt.Printf("renderer: getNearestAncestor: value type: %T\n", val)
 	if elem, ok := val.(*parse.Node); ok {
 		if elem.Kind() == "module" {
 			return "", false

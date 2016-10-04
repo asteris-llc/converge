@@ -58,14 +58,9 @@ type CaseTask struct {
 
 // Prepare does stuff
 func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
-	fmt.Println("calling switch preparer...")
-	fmt.Println("branch count: ", len(s.Branches))
-	fmt.Println("branches: ", s.Branches)
 	task := &SwitchTask{Branches: s.Branches}
 	for _, caseObj := range s.cases {
-		fmt.Println("looking at case: ", caseObj)
 		if caseObj != nil {
-			fmt.Println("Setting swich case parent to self")
 			caseObj.SetParent(s)
 		}
 	}
@@ -96,20 +91,15 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 // ShouldEvaluate returns true if the case has a valid parent and it is the
 // selected branch for that parent
 func (c *CasePreparer) ShouldEvaluate() bool {
-	fmt.Println("\tcase preparer calling ShouldEvaluate")
 	if c.parent == nil {
-		fmt.Println("\tparent is nil, will not evaluate")
 		return false
 	}
 	for _, br := range c.parent.Branches {
 		if c.Name == br {
-			fmt.Println("\tfound a branch mach, calling IsTrue()...")
-			t, trueErr := c.IsTrue()
-			fmt.Println("\tisTrue returned: ", t, trueErr)
+			t, _ := c.IsTrue()
 			return t
 		}
 	}
-	fmt.Println("\tnot in parent branches, false")
 	return false
 }
 
@@ -117,12 +107,9 @@ func (c *CasePreparer) ShouldEvaluate() bool {
 // false if it returns "false", or "f", or if the pointer is nil, and returns
 // false with an error otherwise.
 func (c *CasePreparer) IsTrue() (bool, error) {
-	fmt.Println("\t\tcalling CasePreparer.IsTrue()...")
 	if c == nil {
-		fmt.Println("\t\tpreparer is nil, returning false")
 		return false, nil
 	}
-	fmt.Println("\t\tevaluating predicate...")
 	return EvaluatePredicate(c.Predicate)
 }
 
@@ -130,14 +117,11 @@ func (c *CasePreparer) IsTrue() (bool, error) {
 // execution results in the string "true" or t", and false if the string is
 // "false" or "f".  In any other case an error is returned.
 func EvaluatePredicate(predicate string) (bool, error) {
-	fmt.Println("evaluating predicate: ", predicate)
 	lang := extensions.DefaultLanguage()
 	if predicate == "" {
 		return false, BadPredicate(predicate)
 	}
 	template := "{{ " + predicate + " }}"
-	fmt.Println("case.IsTrue: checking:")
-	fmt.Println("\t", template)
 	result, err := lang.Render(
 		struct{}{},
 		"predicate evaluation",
@@ -198,7 +182,6 @@ func (c *ConditionalPreparer) SetExecutionController(ctrl EvaluationController) 
 // otherwise.  The nop task will embed the original task so fields will still be
 // resolvable.
 func (c *ConditionalTask) GetTask() (resource.Task, bool) {
-	fmt.Println("checking conditional task to see if it should run...")
 	if c.controller.ShouldEvaluate() {
 		return c.Task, true
 	}
@@ -207,7 +190,6 @@ func (c *ConditionalTask) GetTask() (resource.Task, bool) {
 
 // Apply will conditionally apply a task
 func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
-	fmt.Println("checking conditional task to see if it should run...")
 	if c.controller.ShouldEvaluate() {
 		return c.Task.Apply()
 	}
@@ -216,27 +198,20 @@ func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
 
 // Check will conditionally check a task
 func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error) {
-	fmt.Println("checking conditional task to see if it should run...")
 	if c == nil {
-		fmt.Println("conditional task is nil!")
 		return &resource.Status{}, errors.New("conditional task is nil")
 	}
-	fmt.Println("ConditionalCheck: calling ShouldEvaluate() on ", c.Name)
 	if c.controller.ShouldEvaluate() {
-		fmt.Println("ShouldEvaluate() returned true, calling c.Task.Check()")
 		return c.Task.Check(r)
 	}
-	fmt.Println("conditional check returned false, returning empty status")
 	return &resource.Status{}, nil
 }
 
 // Prepare returns a conditional task after preparing the underlying resource
 func (c *ConditionalPreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 	if c == nil {
-		fmt.Println("trying to prepare a non-existant conditional preparerer!")
 		return &ConditionalTask{}, errors.New("cannot create a conditional task from a nil preparer")
 	}
-	fmt.Println("conditional preparer is not nil: ", c)
 	prepared, err := c.Resource.Prepare(r)
 	if err != nil {
 		return nil, err
