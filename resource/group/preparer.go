@@ -37,6 +37,7 @@ type Preparer struct {
 	NewName string `hcl:"new_name"`
 
 	// State is whether the group should be present.
+	// The default value is present.
 	State State `hcl:"state" valid_values:"present,absent"`
 }
 

@@ -59,6 +59,36 @@ func (s *System) DelUser(userName string) error {
 	return nil
 }
 
+// ModUser modifies a user
+func (s *System) ModUser(userName string, options *ModUserOptions) error {
+	args := []string{userName}
+	if options.Username != "" {
+		args = append(args, "-l", options.Username)
+	}
+	if options.UID != "" {
+		args = append(args, "-u", options.UID)
+	}
+	if options.Group != "" {
+		args = append(args, "-g", options.Group)
+	}
+	if options.Comment != "" {
+		args = append(args, "-c", options.Comment)
+	}
+	if options.Directory != "" {
+		args = append(args, "-d", options.Directory)
+		if options.MoveDir {
+			args = append(args, "-m")
+		}
+	}
+
+	cmd := exec.Command("usermod", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("usermod: %s", err)
+	}
+	return nil
+}
+
 // Lookup looks up a user by name
 // If the user cannot be found an error is returned
 func (s *System) Lookup(userName string) (*user.User, error) {
