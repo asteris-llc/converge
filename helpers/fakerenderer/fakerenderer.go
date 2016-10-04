@@ -16,8 +16,14 @@ package fakerenderer
 
 // FakeRenderer is a pass-through renderer for testing resources
 type FakeRenderer struct {
+	ID           string
 	DotValue     string
 	ValuePresent bool
+}
+
+// GetID returns the ID of this renderer
+func (fr *FakeRenderer) GetID() string {
+	return fr.ID
 }
 
 // Value returns a blank string
@@ -40,6 +46,14 @@ func NewWithValue(val string) *FakeRenderer {
 	fr := New()
 	fr.DotValue = val
 	fr.ValuePresent = true
+
+	return fr
+}
+
+// NewWithID gets a FakeRenderer with the specified ID
+func NewWithID(id string) *FakeRenderer {
+	fr := New()
+	fr.ID = id
 
 	return fr
 }

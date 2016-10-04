@@ -35,6 +35,7 @@ type Resource interface {
 
 // Renderer is passed to resources
 type Renderer interface {
+	GetID() string
 	Value() (value string, present bool)
 	Render(name, content string) (string, error)
 }
