@@ -1,4 +1,4 @@
-rpm.package "python" {
-   name = "python"
-   state = "absent"
+rpm.package "mc" {
+   name = "mc"
+   state = "installed"
 }
