@@ -3,6 +3,7 @@ package load
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
@@ -14,46 +15,72 @@ import (
 // in a conditional resource.  For cases it will look at the parent switch and
 func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveConditionals")
-	logger.Debug("resolving conditional macros")
+	logger.Info("resolving conditional macros")
 	return g.Transform(ctx, func(id string, out *graph.Graph) error {
-		switchNode, ok := g.Get(id).(*control.SwitchPreparer)
+		switchNode, ok := getSwitchNode(id, g)
 		if !ok {
 			return nil
 		}
-		for _, edge := range g.DownEdges(id) {
-			caseID, ok := edge.Target().(string)
-			if !ok {
-				logger.Error("graph node was not a string as expected")
-				return errors.New("invalid node")
+		for _, caseID := range g.Children(id) {
+			caseNode, ok := getCaseNode(caseID, g)
+			if caseNode == nil {
+				return errors.New("got a nil caseNode for " + id)
 			}
-			caseNode, ok := g.Get(caseID).(*control.CasePreparer)
 			if !ok {
 				continue
 			}
-			switchNode.Cases = append(switchNode.Cases, caseNode)
-			for _, caseEdge := range g.DownEdges(edge.Target().(string)) {
-				targetID, ok := caseEdge.Target().(string)
-				if !ok {
-					logger.Error("graph node was not a string as expected")
-					return errors.New("invalid node")
-				}
-				conditionalTarget, ok := g.Get(targetID).(resource.Resource)
+			switchNode.AppendCase(caseNode)
+			for _, targetID := range g.Children(caseID) {
+				targetPreparer := g.Get(targetID).(*resource.Preparer)
+				conditionalTarget, ok := targetPreparer.Destination.(resource.Resource)
 				if !ok {
 					logger.Infof(
 						"unexpected type for node at %s: %T",
-						caseEdge.Target().(string),
-						g.Get(caseEdge.Target().(string)),
+						targetID,
+						g.Get(targetID),
 					)
 				}
+				fmt.Println("wrapping ", targetID, " in a conditional preparer...")
 				conditional := &control.ConditionalPreparer{
+					Name:     targetID,
 					Resource: conditionalTarget,
-					ShouldEvaluate: func() bool {
-						return caseNode.ShouldEvaluate()
-					},
 				}
+				conditional.SetExecutionController(caseNode)
 				out.Add(targetID, conditional)
 			}
 		}
 		return nil
 	})
+}
+
+func getSwitchNode(id string, g *graph.Graph) (*control.SwitchPreparer, bool) {
+	elem := g.Get(id)
+	if elem == nil {
+		return nil, false
+	}
+	if asSwitch, ok := elem.(*control.SwitchPreparer); ok {
+		return asSwitch, true
+	}
+	if asPreparer, ok := elem.(*resource.Preparer); ok {
+		if asSwitch, ok := asPreparer.Destination.(*control.SwitchPreparer); ok {
+			return asSwitch, true
+		}
+	}
+	return nil, false
+}
+
+func getCaseNode(id string, g *graph.Graph) (*control.CasePreparer, bool) {
+	elem := g.Get(id)
+	if elem == nil {
+		return nil, false
+	}
+	if asCase, ok := elem.(*control.CasePreparer); ok {
+		return asCase, true
+	}
+	if asPreparer, ok := elem.(*resource.Preparer); ok {
+		if asCase, ok := asPreparer.Destination.(*control.CasePreparer); ok {
+			return asCase, true
+		}
+	}
+	return nil, false
 }

@@ -14,7 +14,19 @@ import (
 // wraps the values and will not do anything during check or apply.
 type SwitchPreparer struct {
 	Branches []string `hcl:"branches"`
-	Cases    []*CasePreparer
+	cases    []*CasePreparer
+}
+
+func (s *SwitchPreparer) Cases() []*CasePreparer {
+	return s.cases
+}
+
+func (s *SwitchPreparer) SetCases(cases []*CasePreparer) {
+	s.cases = cases
+}
+
+func (s *SwitchPreparer) AppendCase(c *CasePreparer) {
+	s.cases = append(s.cases, c)
 }
 
 // SwitchTask represents a resource.Task for a switch node.  It does not
@@ -27,7 +39,17 @@ type SwitchTask struct {
 type CasePreparer struct {
 	Predicate string `hcl:"predicate"`
 	Name      string `hcl:"name"`
-	Parent    *SwitchTask
+	parent    *SwitchPreparer
+}
+
+// SetParent set's the parent of a case statement
+func (c *CasePreparer) SetParent(s *SwitchPreparer) {
+	c.parent = s
+}
+
+// GetParent gets the parent of a case
+func (c *CasePreparer) GetParent() *SwitchPreparer {
+	return c.parent
 }
 
 type CaseTask struct {
@@ -36,10 +58,15 @@ type CaseTask struct {
 
 // Prepare does stuff
 func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
+	fmt.Println("calling switch preparer...")
+	fmt.Println("branch count: ", len(s.Branches))
+	fmt.Println("branches: ", s.Branches)
 	task := &SwitchTask{Branches: s.Branches}
-	for _, caseObj := range s.Cases {
+	for _, caseObj := range s.cases {
+		fmt.Println("looking at case: ", caseObj)
 		if caseObj != nil {
-			caseObj.Parent = task
+			fmt.Println("Setting swich case parent to self")
+			caseObj.SetParent(s)
 		}
 	}
 	return task, nil
@@ -69,16 +96,20 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 // ShouldEvaluate returns true if the case has a valid parent and it is the
 // selected branch for that parent
 func (c *CasePreparer) ShouldEvaluate() bool {
-	fmt.Println("case preparer calling ShouldEvaluate")
-	if c.Parent == nil {
+	fmt.Println("\tcase preparer calling ShouldEvaluate")
+	if c.parent == nil {
+		fmt.Println("\tparent is nil, will not evaluate")
 		return false
 	}
-	for _, br := range c.Parent.Branches {
+	for _, br := range c.parent.Branches {
 		if c.Name == br {
-			t, _ := c.IsTrue()
+			fmt.Println("\tfound a branch mach, calling IsTrue()...")
+			t, trueErr := c.IsTrue()
+			fmt.Println("\tisTrue returned: ", t, trueErr)
 			return t
 		}
 	}
+	fmt.Println("\tnot in parent branches, false")
 	return false
 }
 
@@ -86,9 +117,12 @@ func (c *CasePreparer) ShouldEvaluate() bool {
 // false if it returns "false", or "f", or if the pointer is nil, and returns
 // false with an error otherwise.
 func (c *CasePreparer) IsTrue() (bool, error) {
+	fmt.Println("\t\tcalling CasePreparer.IsTrue()...")
 	if c == nil {
+		fmt.Println("\t\tpreparer is nil, returning false")
 		return false, nil
 	}
+	fmt.Println("\t\tevaluating predicate...")
 	return EvaluatePredicate(c.Predicate)
 }
 
@@ -96,6 +130,7 @@ func (c *CasePreparer) IsTrue() (bool, error) {
 // execution results in the string "true" or t", and false if the string is
 // "false" or "f".  In any other case an error is returned.
 func EvaluatePredicate(predicate string) (bool, error) {
+	fmt.Println("evaluating predicate: ", predicate)
 	lang := extensions.DefaultLanguage()
 	if predicate == "" {
 		return false, BadPredicate(predicate)
@@ -137,14 +172,26 @@ func (c *CaseTask) Apply() (resource.TaskStatus, error) {
 // evaluation is determined by it's parent control-structure predicate.
 type ConditionalTask struct {
 	resource.Task
-	ShouldEvaluate func() bool `hash:"ignore"`
+	*ConditionalPreparer
+}
+
+// EvaluationController represents an interface for a thing that can control
+// conditional execution (e.g. a CasePreparer or CaseTask)
+type EvaluationController interface {
+	ShouldEvaluate() bool
 }
 
 // ConditionalPreparer wraps a preparer resource so thta a conditional task can
 // be generated.
 type ConditionalPreparer struct {
 	resource.Resource
-	ShouldEvaluate func() bool `hash:"ignore"`
+	controller EvaluationController
+	Name       string
+}
+
+// SetExecutionController sets the private execution controller
+func (c *ConditionalPreparer) SetExecutionController(ctrl EvaluationController) {
+	c.controller = ctrl
 }
 
 // GetTask will return the task if it should be evaluated, and a nop-task
@@ -152,7 +199,7 @@ type ConditionalPreparer struct {
 // resolvable.
 func (c *ConditionalTask) GetTask() (resource.Task, bool) {
 	fmt.Println("checking conditional task to see if it should run...")
-	if c.ShouldEvaluate() {
+	if c.controller.ShouldEvaluate() {
 		return c.Task, true
 	}
 	return &NopTask{c.Task}, true
@@ -161,7 +208,7 @@ func (c *ConditionalTask) GetTask() (resource.Task, bool) {
 // Apply will conditionally apply a task
 func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
 	fmt.Println("checking conditional task to see if it should run...")
-	if c.ShouldEvaluate() {
+	if c.controller.ShouldEvaluate() {
 		return c.Task.Apply()
 	}
 	return &resource.Status{}, nil
@@ -170,21 +217,33 @@ func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
 // Check will conditionally check a task
 func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	fmt.Println("checking conditional task to see if it should run...")
-	if c.ShouldEvaluate() {
+	if c == nil {
+		fmt.Println("conditional task is nil!")
+		return &resource.Status{}, errors.New("conditional task is nil")
+	}
+	fmt.Println("ConditionalCheck: calling ShouldEvaluate() on ", c.Name)
+	if c.controller.ShouldEvaluate() {
+		fmt.Println("ShouldEvaluate() returned true, calling c.Task.Check()")
 		return c.Task.Check(r)
 	}
+	fmt.Println("conditional check returned false, returning empty status")
 	return &resource.Status{}, nil
 }
 
 // Prepare returns a conditional task after preparing the underlying resource
 func (c *ConditionalPreparer) Prepare(r resource.Renderer) (resource.Task, error) {
+	if c == nil {
+		fmt.Println("trying to prepare a non-existant conditional preparerer!")
+		return &ConditionalTask{}, errors.New("cannot create a conditional task from a nil preparer")
+	}
+	fmt.Println("conditional preparer is not nil: ", c)
 	prepared, err := c.Resource.Prepare(r)
 	if err != nil {
 		return nil, err
 	}
 	return &ConditionalTask{
-		Task:           prepared,
-		ShouldEvaluate: c.ShouldEvaluate,
+		Task:                prepared,
+		ConditionalPreparer: c,
 	}, nil
 }
 
