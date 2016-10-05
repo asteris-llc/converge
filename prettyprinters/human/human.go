@@ -52,6 +52,7 @@ func NewFiltered(f FilterFunc) *Printer {
 // InitColors initializes the colors used by the human printer
 func (p *Printer) InitColors() {
 	reset := "\x1b[0m"
+	p.funcsMapWrite("bold", p.styled(func(in string) string { return "\x1b[1m" + in + reset }))
 	p.funcsMapWrite("black", p.styled(func(in string) string { return "\x1b[30m" + in + reset }))
 	p.funcsMapWrite("red", p.styled(func(in string) string { return "\x1b[31m" + in + reset }))
 	p.funcsMapWrite("green", p.styled(func(in string) string { return "\x1b[32m" + in + reset }))
@@ -125,7 +126,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
-		{{cyan $key}}:	{{diff ($values.Original) ($values.Current)}}
+		{{cyan $key}}:	{{diff ($values.Original) ($values.Current) | bold}}
 		{{- else}} No changes {{- end}}
 
 `)
@@ -173,8 +174,7 @@ func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
 	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		sprintf := []string{"%q\t", "\x1b[1m", "=>", "\x1b[22m", "\t%q"}
-		return fmt.Sprintf(strings.Join(sprintf, ""), strings.TrimSpace(before), strings.TrimSpace(after)), nil
+		return fmt.Sprintf("%q\t=>\t%q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
 	}
 
 	tmpl, err := p.template(`before:
