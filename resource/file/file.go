@@ -21,8 +21,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
@@ -30,334 +30,252 @@ import (
 
 const defaultPermissions = os.FileMode(0750)
 
-const defaultState = "present"
+// Action is the calculated action
+type Action uint8
 
-var validStates = []string{"present", "absent"}
+const (
+	// ActionNone indicates no action is required
+	ActionNone Action = iota
 
-const defaultType = "file"
+	// ActionCreate creates a File resource
+	ActionCreate
 
-var validFileTypes = []string{"directory", "file"}
-var validLinkTypes = []string{"hardlink", "symlink"}
+	// ActionModify deletes a File resource
+	ActionModify
+
+	// ActionDelete deletes a File resource
+	ActionDelete
+)
+
+func (a Action) String() string {
+	return string(a)
+}
+
+// State is the desired state of the file
+type State string
+
+const (
+	// StateAbsent indicates the file should be absent
+	StateAbsent State = "absent"
+
+	// StateUndefined indicates an undefined state
+	StateUndefined State = ""
+
+	// StatePresent indicates the file should be present
+	StatePresent State = "present"
+
+	// DefaultState is the default state
+	DefaultState State = StatePresent
+)
+
+// ValidStates indicates supported states that can be defined
+var ValidStates = []State{StateAbsent, StatePresent}
+
+func (s State) String() string {
+	return string(s)
+}
+
+// Type is the type of file
+type Type string
+
+const (
+	// TypeDirectory is a directory
+	TypeDirectory Type = "directory"
+
+	// TypeFile is a regular file
+	TypeFile Type = "file"
+
+	// TypeLink is a hardlink
+	TypeLink Type = "hardlink"
+
+	// TypeNone is an undefined type
+	TypeNone Type = ""
+
+	// TypeSymlink is a symlink
+	TypeSymlink Type = "symlink"
+
+	// DefaultType is the default type
+	DefaultType Type = TypeFile
+)
+
+// ValidFileTypes are valid file types
+var ValidFileTypes = []Type{TypeDirectory, TypeFile}
+
+// ValidLinkTypes are valid link types
+var ValidLinkTypes = []Type{TypeLink, TypeSymlink}
+
+// AllTypes are the current FileTypes that are supported
+var AllTypes = append(ValidFileTypes, ValidLinkTypes...)
+
+func (t Type) String() string {
+	return string(t)
+}
 
 // File contains information for managing files
 type File struct {
 	Destination string
-	State       string
-	Type        string
+	State       State
+	Type        Type
 	Target      string
-	Force       bool        //force replacement of symlinks, etc
-	Mode        string      //requested permissions from Prepare
-	FileMode    os.FileMode //calculated permissions
+	Force       bool    //force replacement of file
+	Mode        *uint32 //requested permissions from Prepare
 	UserInfo    *user.User
 	GroupInfo   *user.Group
 	Content     []byte
 
-	action        string //create, delete, modify
-	modifyContent bool   // does content need to be changed
+	action Action //create, delete, modify
 
 	renderer resource.Renderer
 }
 
-// Apply  changes to file resources
-func (f *File) Apply() (resource.TaskStatus, error) {
-	var err error
+// New returns a File with UserInfo and GroupInfo fields allocated
+func New() *File {
+	return &File{
+		UserInfo:  &user.User{},
+		GroupInfo: &user.Group{},
+	}
+}
 
-	status := &resource.Status{}
+// Apply changes to file resources
+func (f *File) Apply() (resource.TaskStatus, error) {
+
+	actual := New()
+
+	status, err := f.diff(actual)
+	if err != nil || status.Level == resource.StatusFatal {
+		return status, errors.Wrap(err, "apply")
+	}
 
 	switch f.action {
-	case "delete":
+	case ActionDelete:
 		err = f.Delete()
-	case "create":
-		err = f.Create()
-	case "modify":
-		err = f.Modify()
+	case ActionCreate, ActionModify:
+		err = f.Modify(status)
 	}
 	if err != nil {
-		return status, errors.Wrapf(err, "%s on %s failed: %s", f.action, f.Destination)
+		status.Level = resource.StatusFatal
+		status.AddMessage(err.Error())
 	}
 	return status, err
 }
 
 // Check File settings
 func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
-	var err error
+
+	f.renderer = r
+
+	actual := New()
+
+	status, err := f.diff(actual)
+	status.AddMessage(fmt.Sprintf("%s (%s)", f.Destination, f.Type))
+	if err != nil || status.Level == resource.StatusFatal {
+		return status, errors.Wrap(err, "check")
+	}
+
+	return status, err
+}
+
+// Compare desired state with an actual file (if present)
+func (f *File) diff(actual *File) (*resource.Status, error) {
 
 	status := &resource.Status{}
-	f.renderer = r
-	var actual *File
+	var stat os.FileInfo
+	err := f.Validate()
 
-	status.Output = append(status.Output, fmt.Sprintf("%s (%s)", f.Destination, f.Type))
+	if err != nil {
+		return status, err
+	}
 
-	// Get information about the current file
-	stat, err := os.Lstat(f.Destination) //link aware
-	if os.IsNotExist(err) {              //file not found
+	stat, err = os.Lstat(f.Destination)
+
+	if os.IsNotExist(err) { // file not found
 		switch f.State {
-		case "absent": // if "absent" is set and the file doesn't exist, return with no changes
+		case StateAbsent: // if "absent" is set and the file doesn't exist, return with no changes
 			return status, nil
-		case "present": //file doesn't exist, we need to create it
-			actual = &File{Destination: "<file does not exist>",
-				State:     "absent",
-				UserInfo:  &user.User{},
-				GroupInfo: &user.Group{}}
-			err = f.diffFile(actual)
+
+		case StatePresent: // file doesn't exist, we need to create it
+			f.action = ActionCreate
+			actual := &File{
+				Destination: "<file does not exist>",
+				State:       "absent",
+				Type:        f.Type,
+				UserInfo:    &user.User{},
+				GroupInfo:   &user.Group{},
+			}
+			err = f.diffFile(actual, status)
 			if err != nil {
 				status.Level = resource.StatusFatal
 				return status, errors.Wrapf(err, "check")
 			}
-			f.action = "create"
 			return status, nil
 		default:
-			return status, errors.Errorf("unknown state %s", f.State)
+			return status, fmt.Errorf("unknown state %s", f.State)
 		}
-	} else { //file exists
-		actual = &File{
-			Destination: f.Destination,
-			State:       "present"}
-		err = GetFileInfo(actual, stat)
-		if err != nil {
-			status.Level = resource.StatusFatal
-			return status, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
-		}
-		actual.Content, err = Content(actual.Destination)
-		if err != nil {
-			return status, errors.Wrap(err, "unable to get content")
-		}
-
-		err = f.diffFile(actual)
-		if err != nil {
-			return status, errors.Wrap(err, "check")
-		}
+	} else {
+		actual.Destination = f.Destination
+		actual.State = StatePresent
 		switch f.State {
-		case "absent": //file exists -> absent
+		case StateAbsent: //file exists -> absent
 			status.Level = resource.StatusWillChange
-			f.action = "delete"
-		case "present": //file exists -> modified file
-			if status.Level == resource.StatusWillChange {
-				f.action = "modify"
-			}
-		}
-	}
-
-	if status.Level == resource.StatusFatal {
-		return status, errors.New("failure during check")
-	}
-	return status, nil
-
-}
-
-// Validate runs checks against a File resource
-func (f *File) Validate() error {
-	var err error
-	if f.Destination == "" {
-		return errors.New("file requires a destination parameter")
-	}
-
-	err = f.validateState()
-	if err != nil {
-		return err
-	}
-
-	err = f.validateType()
-	if err != nil {
-		return err
-	}
-
-	// links should have a target
-	err = f.validateTarget()
-	if err != nil {
-		return err
-	}
-
-	err = f.validateUser()
-	if err != nil {
-		return err
-	}
-
-	err = f.validateGroup()
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-// Validate the state or set default value
-func (f *File) validateState() error {
-
-	switch f.State {
-	case "": //nothing set, use default
-		f.State = defaultState
-		return nil
-	default:
-		for _, s := range validStates {
-			if f.State == s {
-				return nil
-			}
-		}
-		return errors.Errorf("state should be one of %s, got %q", strings.Join(validStates, ", "), f.State)
-	}
-}
-
-// Validate the type or set default value
-func (f *File) validateType() error {
-	var allTypes []string
-	allTypes = append(allTypes, validFileTypes...)
-	allTypes = append(allTypes, validLinkTypes...)
-	switch f.Type {
-	case "": //use default if not set
-		f.Type = defaultType
-		return nil
-	default:
-		for _, t := range allTypes {
-			if f.Type == t {
-				return nil
-			}
-		}
-		return fmt.Errorf("type should be one of %s, got %q", strings.Join(allTypes, ", "), f.Type)
-	}
-}
-
-// A target needs to be set if you are creating a link
-func (f *File) validateTarget() error {
-
-	switch f.Target {
-	case "":
-		if f.Type == "symlink" || f.Type == "hardlink" {
-			return fmt.Errorf("must define a target if you are using a %q", f.Type)
-		}
-		return nil
-	default:
-		// is target set for a file or directory type?
-		if f.Type == "symlink" || f.Type == "hardlink" {
-			return nil
-		}
-		return errors.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
-	}
-}
-
-func (f *File) validateUser() error {
-	if f.UserInfo.Username != "" {
-		u, err := user.Lookup(f.UserInfo.Username)
-		if err != nil {
-			return errors.Wrapf(err, "unable to get user information for username %s: %s", f.UserInfo.Username, err)
-		}
-		f.UserInfo.Username = u.Username
-	}
-	return nil
-}
-
-//if a group is provided, make sure it exists on the system
-func (f *File) validateGroup() error {
-	if f.GroupInfo.Name != "" {
-		g, err := user.LookupGroup(f.GroupInfo.Name)
-		if err != nil {
-			return errors.Wrapf(err, "unable to get user information for username %s: %s", f.GroupInfo.Name)
-		}
-		f.GroupInfo = g
-	}
-	return nil
-}
-
-// GetFileInfo populates a File struct with data from a file on the system
-func GetFileInfo(f *File, stat os.FileInfo) error {
-	var err error
-
-	if f.Destination == "" {
-		f.Destination = stat.Name()
-	}
-
-	if f.State == "" {
-		f.State = "present"
-	}
-
-	f.Type, err = Type(stat)
-	if err != nil {
-		return errors.Wrapf(err, "error determining type of %s : %s", f.Destination)
-	}
-
-	// follow symlinks
-	if f.Type == "symlink" {
-		f.Target, err = os.Readlink(f.Destination)
-		if err != nil {
-			return errors.Wrapf(err, "error determining target of symlink %s : %s", f.Destination)
-		}
-	}
-
-	f.FileMode = stat.Mode() & os.ModePerm //strip out higher order bits from perms
-
-	f.UserInfo, err = UserInfo(stat)
-	if err != nil {
-		return errors.Wrapf(err, "error determining owner of %s : %s", f.Destination)
-	}
-
-	f.GroupInfo, err = GroupInfo(stat)
-	if err != nil {
-		return errors.Wrapf(err, "error determining group of %s : %s", f.Destination)
-	}
-	return err
-}
-
-// Compute the difference between desired and actual state
-func (f *File) diffFile(actual *File) error {
-	status := &resource.Status{}
-
-	if f.State != actual.State {
-		status.AddDifference("state", actual.State, f.State, "")
-	}
-
-	if f.Type != actual.Type && f.Type != "hardlink" {
-		status.AddDifference("type", actual.Type, f.Type, "")
-	}
-
-	switch f.Type {
-	case "symlink":
-		if f.Target != actual.Target {
-			status.AddDifference("target", actual.Target, f.Target, "")
-			return nil
-		}
-
-	case "hardlink":
-		//check to see if target exists
-		_, err := os.Stat(f.Target)
-		if os.IsNotExist(err) {
-			status.Level = resource.StatusFatal
-			return errors.Wrap(err, "hardlink target does not exist")
-		}
-		if err != nil {
-			status.Level = resource.StatusFatal
-			return errors.Wrap(err, "error looking up link target")
-		}
-
-		switch f.action {
-		case "modify":
-			same, err := SameFile(f.Destination, f.Target)
-
+			f.action = ActionDelete
+			return status, nil
+		case StatePresent: //file exists -> modified file
+			err = GetFileInfo(actual, stat)
 			if err != nil {
 				status.Level = resource.StatusFatal
-				return errors.Wrapf(err, "failed to check link status of %s -> %s", f.Destination, f.Target)
+				return status, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
+			}
+			if actual.Type == TypeFile {
+				actual.Content, err = Content(actual.Destination)
+				if err != nil {
+					return status, errors.Wrap(err, "unable to get content")
+				}
+			}
+			err = f.diffFile(actual, status)
+			if err != nil {
+				return status, errors.Wrap(err, "check")
 			}
 
-			if !same {
-				actual.Type = "hardlink"
-				status.AddDifference("hardlink", f.Destination, f.Target, "")
-				return err
+			if status.Level == resource.StatusWillChange {
+				f.action = ActionModify
 			}
-		case "create":
-			status.AddDifference("hardlink", f.Destination, f.Target, "")
+		}
+	}
+	return status, err
+}
+
+// diffFile computes the difference between desired and actual state
+func (f *File) diffFile(actual *File, status *resource.Status) error {
+	if f.Destination != actual.Destination {
+		status.AddDifference("destination", actual.Destination, f.Destination, "")
+	}
+
+	if f.State != actual.State {
+		status.AddDifference("state", actual.State.String(), f.State.String(), "")
+	}
+
+	if f.Type != actual.Type && f.Type != TypeLink {
+		status.AddDifference("type", actual.Type.String(), f.Type.String(), "")
+	}
+
+	if f.Type == TypeLink || f.Type == TypeSymlink {
+		err := f.diffLink(actual, status)
+		if err != nil {
+			status.Level = resource.StatusFatal
 			return err
 		}
 	}
 
-	mode := desiredMode(f, actual)
-	if mode != actual.FileMode {
-		status.AddDifference("permissions", actual.FileMode.String(), mode.String(), "")
-	}
+	f.diffMode(actual, status)
+
 	// determine if the file owner needs to be changed
 	user, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
 	if err != nil {
 		status.Level = resource.StatusFatal
 		return err
 	}
+
+	f.UserInfo = user
 
 	if userChanges {
 		if user.Username != actual.UserInfo.Username {
@@ -374,38 +292,139 @@ func (f *File) diffFile(actual *File) error {
 	if err != nil {
 		status.Level = resource.StatusFatal
 	}
+	f.GroupInfo = group
 
 	if groupChanges == true {
-		if group.Name != actual.GroupInfo.Name {
-			status.AddDifference("group", actual.GroupInfo.Name, group.Name, "")
+		if f.GroupInfo.Name != actual.GroupInfo.Name {
+			status.AddDifference("group", actual.GroupInfo.Name, f.GroupInfo.Name, "")
 		}
 
-		if group.Gid != actual.GroupInfo.Gid {
-			status.AddDifference("gid", actual.GroupInfo.Gid, group.Gid, "")
+		if f.GroupInfo.Gid != actual.GroupInfo.Gid {
+			status.AddDifference("gid", actual.GroupInfo.Gid, f.GroupInfo.Gid, "")
 		}
 	}
 
 	// only check content on file types
-	if f.Type == "file" {
+	if f.Type == TypeFile {
 		fHash := hash(f.Content)
 		actualHash := hash(actual.Content)
 
 		if fHash != actualHash {
 			status.AddDifference("content", string(actual.Content), string(f.Content), "")
-			f.modifyContent = true
 		}
 	}
 
-	if len(status.Differences) > 0 {
-		switch status.Level {
-		case resource.StatusFatal:
-		default:
-			status.Level = resource.StatusWillChange
+	if resource.AnyChanges(status.Differences) {
+		status.Level = resource.StatusWillChange
+	}
+
+	return nil
+}
+
+// generates diffs for had and symlinks
+func (f *File) diffLink(actual *File, status *resource.Status) error {
+	var err error
+	switch f.Type {
+	case TypeSymlink:
+		if f.Target != actual.Target {
+			status.AddDifference("target", actual.Target, f.Target, "")
+			return err
 		}
 
+	case TypeLink:
+		tgt, err := os.Stat(f.Target)
+		if os.IsNotExist(err) || err != nil {
+			status.Level = resource.StatusFatal
+			return errors.Wrap(err, "hardlink target lookup")
+		}
+
+		fi, err := os.Stat(f.Destination)
+
+		if os.IsNotExist(err) { // create link
+			status.AddDifference("hardlink", f.Destination, f.Target, "")
+			return nil
+		}
+		if err == nil {
+			same := os.SameFile(tgt, fi)
+			if !same {
+				actual.Type = TypeLink
+				status.AddDifference("hardlink", f.Destination, f.Target, "")
+				return nil
+			}
+		}
+	}
+	return err
+}
+
+// keep existing permissions if new ones are not requested
+func (f *File) diffMode(actual *File, status *resource.Status) {
+
+	if f.Type == TypeSymlink {
+		return
+	}
+
+	switch f.Mode {
+	case nil:
+		switch actual.Mode {
+		case nil: // use default perms if nothing is set
+			m := ModeType(uint32(defaultPermissions), f.Type)
+			f.Mode = &m
+			status.AddDifference("permissions", os.FileMode(0).String(), os.FileMode(*f.Mode).String(), "")
+		default:
+			f.Mode = actual.Mode
+		}
+	default: // compare to file permissions
+		switch actual.Mode {
+		case nil:
+			status.AddDifference("permissions", os.FileMode(0).String(), os.FileMode(*f.Mode).String(), "")
+		default:
+			if *actual.Mode != *f.Mode {
+				status.AddDifference("permissions", os.FileMode(*actual.Mode).String(), os.FileMode(*f.Mode).String(), "")
+			}
+		}
+	}
+}
+
+// GetFileInfo populates a File struct with data from a file on the system
+func GetFileInfo(f *File, fi os.FileInfo) error {
+	var err error
+
+	if f.State == StateUndefined {
+		f.State = StatePresent
+	}
+
+	f.Type, err = FileType(fi)
+	if err != nil {
+		return errors.Wrapf(err, "error determining type of %s : %s", f.Destination)
+	}
+
+	// set perms & higher bits for file type
+	// in POSIX permissions are not set for symlinks
+	if f.Type != TypeSymlink {
+		f.Mode = new(uint32)
+		*f.Mode = ModeType(uint32(fi.Mode()), f.Type)
+	}
+
+	// follow symlinks
+	if f.Type == TypeSymlink {
+		f.Target, err = os.Readlink(f.Destination)
+		if err != nil {
+			return errors.Wrapf(err, "error determining target of symlink %s : %s", f.Destination)
+		}
+	}
+
+	f.UserInfo, err = UserInfo(fi)
+	if err != nil {
+		return errors.Wrapf(err, "error determining owner of %s : %s", f.Destination)
+	}
+
+	f.GroupInfo, err = GroupInfo(fi)
+	if err != nil {
+		return errors.Wrapf(err, "error determining group of %s : %s", f.Destination)
 	}
 
 	return err
+
 }
 
 // hash is used to compare file content
@@ -414,56 +433,17 @@ func hash(b []byte) string {
 	return hex.EncodeToString(sha[:])
 }
 
-// Create a file from File information
-func (f *File) Create() error {
-	var err error
-	switch f.Type {
-	case "file":
-		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
-		if err != nil {
-			return errors.Wrapf(err, "unable to write file %s", f.Destination)
-		}
-
-	case "directory":
-		err = os.MkdirAll(f.Destination, f.FileMode)
-		if err != nil {
-			return errors.Wrapf(err, "unable to create directory %s", f.Destination)
-		}
-	case "symlink":
-		err := os.Symlink(f.Target, f.Destination)
-		if err != nil {
-			return errors.Wrapf(err, "unable to create symlink %s", f.Destination)
-		}
-	case "hardlink":
-		err := os.Link(f.Target, f.Destination)
-		if err != nil {
-			return errors.Wrapf(err, "unable to create hardlink %s", f.Destination)
-		}
-	}
-
-	tgtUser, _, err := desiredUser(f.UserInfo, &user.User{})
-	if err != nil {
-		return errors.Wrapf(err, "unable to get file owner information %s", f.Destination)
-	}
-	tgtGroup, _, err := desiredGroup(f.GroupInfo, &user.Group{})
-	if err != nil {
-		return errors.Wrapf(err, "unable to get file group information %s", f.Destination)
-	}
-	uid, _ := strconv.Atoi(tgtUser.Uid)
-	gid, _ := strconv.Atoi(tgtGroup.Gid)
-	err = os.Chown(f.Destination, uid, gid)
-	if err != nil {
-		return errors.Wrapf(err, "unable to change permissions on file %s: %s", f.Destination)
-	}
-
-	return err
-}
-
 // Delete a file Listed by the File Resource
 func (f *File) Delete() error {
 	var err error
+	_, err = os.Lstat(f.Destination)
+
+	if os.IsNotExist(err) {
+		return nil
+	}
+
 	switch f.Type {
-	case "directory":
+	case TypeDirectory:
 		err = os.RemoveAll(f.Destination)
 	default:
 		err = os.Remove(f.Destination)
@@ -472,89 +452,107 @@ func (f *File) Delete() error {
 }
 
 // Modify a file based on a file resource
-func (f *File) Modify() error {
+func (f *File) Modify(status *resource.Status) error {
 	var err error
 
-	actual := &File{Destination: f.Destination}
-	stat, err := os.Lstat(f.Destination)
-	if err != nil {
-		return errors.Wrapf(err, "apply: unable to get information about %s: %s", f.Destination)
-	}
-	err = GetFileInfo(actual, stat)
-	if err != nil {
-		return errors.Wrapf(err, "apply: unable to get information about %s: %s", f.Destination)
-	}
-
-	// if the file type changes, delete and recreate
-	if f.Type != actual.Type {
-		err := f.Delete()
-		if err != nil {
-			return errors.Wrapf(err, "apply: unable to recreate %s: %s", f.Destination)
-		}
-		err = f.Create()
-		if err != nil {
-			return errors.Wrapf(err, "apply: unable to recreate %s: %s", f.Destination)
-		}
-		return nil
-
-		if f.Target != actual.Target {
-
+	if status.HasDifference("type") || status.HasDifference("hardlink") && f.action == ActionModify {
+		switch f.Force {
+		case true:
+			// if the file type changes, delete and recreate
+			err = f.Delete()
+			if err != nil {
+				return errors.Wrapf(err, "apply: unable to recreate")
+			}
+			f.action = ActionCreate
+		default:
+			return errors.New("apply: please set force=true to change file")
 		}
 	}
 
-	if f.modifyContent && f.Type == "file" {
-		err = ioutil.WriteFile(f.Destination, f.Content, f.FileMode)
-		if err != nil {
-			return errors.Wrapf(err, "unable to write file %s: %s", f.Destination)
-		}
-	}
-
-	//only modify gid/uid of a file if it has been requested
-	tgtUser, userChanges, err := desiredUser(f.UserInfo, actual.UserInfo)
-	if err != nil {
-		return errors.Wrapf(err, "unable to get file owner information %s: %s", f.Destination)
-	}
-	tgtGroup, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
-	if err != nil {
-		return errors.Wrapf(err, "unable to get file group information %s: %s", f.Destination)
-	}
-
-	if userChanges || groupChanges {
-		uid, _ := strconv.Atoi(tgtUser.Uid)
-		gid, _ := strconv.Atoi(tgtGroup.Gid)
-		err = os.Chown(f.Destination, uid, gid)
-		if err != nil {
-			return errors.Wrapf(err, "unable to change ownership on %s", f.Destination)
-		}
-	}
-
-	mode := desiredMode(f, actual)
-	if mode != actual.FileMode {
-		err = os.Chmod(f.Destination, mode.Perm())
-		if err != nil {
-			return errors.Wrapf(err, "unable to change permissions on %s", f.Destination)
-		}
-	}
-
-	// handle links
 	switch f.Type {
-	case "symlink":
-		err := os.Symlink(f.Target, f.Destination)
+	case TypeDirectory:
+		err = os.MkdirAll(f.Destination, os.FileMode(*f.Mode))
 		if err != nil {
-			return errors.Wrapf(err, "unable to create symlink %s -> %s", f.Destination, f.Target)
+			return errors.Wrap(err, "unable to create directory")
 		}
-	case "hardlink":
-		same, err := SameFile(f.Destination, f.Target)
-		if err != nil {
-			return errors.Wrapf(err, "unable to check hardlink status %s -> %s", f.Destination, f.Target)
+
+	case TypeFile:
+		if _, ok := status.Difference("content"); ok || f.action == ActionCreate {
+
+			// parent directory check
+			d := filepath.Dir(f.Destination)
+			_, err := os.Stat(d)
+
+			if os.IsNotExist(err) {
+				switch f.Force {
+				case true:
+					err = os.MkdirAll(d, os.FileMode(*f.Mode))
+					if err != nil {
+						return errors.Wrap(err, "unable to create directory")
+					}
+				default:
+					return errors.Wrapf(err, "parent directory is missing (set force = \"true\" to create it)")
+				}
+			}
+
+			err = ioutil.WriteFile(f.Destination, f.Content, os.FileMode(*f.Mode))
+			if err != nil {
+				return errors.Wrapf(err, "unable to write file %s", f.Destination)
+			}
 		}
-		if !same {
-			err := os.Link(actual.Target, f.Destination)
+
+	case TypeLink:
+		if _, ok := status.Difference(TypeLink.String()); ok {
+			err := os.Link(f.Target, f.Destination)
 			if err != nil {
 				return errors.Wrapf(err, "unable to create hardlink %s -> %s", f.Destination, f.Target)
 			}
 		}
+
+	case TypeSymlink:
+		if _, ok := status.Difference("target"); ok {
+			_, err := os.Stat(f.Destination)
+			if err == nil { //symlink already exists
+				switch f.Force {
+				case true:
+					err := f.Delete()
+					if err != nil {
+						return errors.Wrapf(err, "unable to delete existing symlink")
+					}
+				default:
+					return errors.Wrap(err, "symlink already exists, set force=true to replace")
+				}
+			}
+			err = os.Symlink(f.Target, f.Destination)
+			if err != nil {
+				return errors.Wrapf(err, "unable to create")
+			}
+		}
 	}
 
-	return err
+	_, changeUser := status.Difference("uid")
+	_, changeGroup := status.Difference("gid")
+
+	if changeUser || changeGroup {
+		uid, err := strconv.Atoi(f.UserInfo.Uid)
+		if err != nil {
+			return errors.Wrapf(err, "modify: uid")
+		}
+		gid, err := strconv.Atoi(f.GroupInfo.Gid)
+		if err != nil {
+			return errors.Wrapf(err, "modify: gid")
+		}
+		err = os.Lchown(f.Destination, uid, gid)
+		if err != nil {
+			return errors.Wrapf(err, "apply: modify owner/group")
+		}
+	}
+
+	if _, ok := status.Difference("permissions"); ok {
+		err = os.Chmod(f.Destination, os.FileMode(*f.Mode).Perm())
+		if err != nil {
+			return errors.Wrapf(err, "apply: modify permissions")
+		}
+	}
+	return nil
 }

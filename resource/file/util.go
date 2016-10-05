@@ -26,33 +26,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Type determines the file type and returns a string {directory, file, symlink..}
-func Type(fi os.FileInfo) (string, error) {
-
-	switch mode := fi.Mode(); {
-	case mode.IsRegular():
-		return "file", nil
-	case mode.IsDir():
-		return "directory", nil
-	case mode&os.ModeSymlink == os.ModeSymlink:
-		return "symlink", nil
-	default:
-		return "", fmt.Errorf("unsupported filetype for %s", fi.Name())
+// ModeType sets the higher-order bits of an os.FileMode based on the file type
+func ModeType(mode uint32, filetype Type) uint32 {
+	m := os.FileMode(mode)
+	switch filetype {
+	case TypeFile:
+		m &^= os.ModeType //clear bits if they are set
+	case TypeDirectory:
+		m |= os.ModeDir
+	case TypeSymlink:
+		m |= os.ModeSymlink
 	}
+	return uint32(m)
 }
 
-// UnixMode takes a string and converts it to a FileMode. If string is not set,
-// return -1
-func UnixMode(permissions string) (os.FileMode, error) {
-	if permissions == "" {
-		return os.FileMode(defaultPermissions), nil
+// FileType determines the file type and returns a Type
+func FileType(fi os.FileInfo) (Type, error) {
+	switch mode := fi.Mode(); {
+	case mode.IsRegular():
+		return TypeFile, nil
+	case mode.IsDir():
+		return TypeDirectory, nil
+	case mode&os.ModeSymlink == os.ModeSymlink:
+		return TypeSymlink, nil
+	default:
+		return TypeNone, fmt.Errorf("unsupported filetype for %s", fi.Name())
 	}
-
-	mode, err := strconv.ParseUint(permissions, 8, 32)
-	if err != nil {
-		return os.FileMode(defaultPermissions), fmt.Errorf("%q is not a valid file mode", permissions)
-	}
-	return os.FileMode(mode), err
 }
 
 // UID returns the Unix Uid of a File
@@ -91,24 +90,11 @@ func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 
 }
 
-// given two File structs, decide which permsissions to use
-// since go sets default values to 0, we use the Mode field to
-// determine if a Mode was configured by the user
-func desiredMode(f, actual *File) os.FileMode {
-	switch f.Mode {
-	case "": //user did not request permissions
-		return actual.FileMode
-	default:
-		return f.FileMode
-	}
-}
-
 //given two users, decide which one to use
 //returns true if a change is required
 func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err error) {
-	switch f.Username {
-	case "":
-		if actual.Username == "" { // if neither is set, use the effective uid of the process
+	if f == nil || f.Username == "" {
+		if actual == nil || actual.Username == "" { // if neither is set, use the effective uid of the process
 			userInfo, err = user.LookupId(strconv.Itoa(os.Geteuid()))
 			if err != nil {
 				return &user.User{}, true, errors.Wrapf(err, "unable to set default username %s", f.Name)
@@ -118,39 +104,43 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 		if actual.Username != "" {
 			return &user.User{Username: actual.Username, Uid: actual.Uid}, true, err
 		}
-	default:
-		userInfo, err = user.Lookup(f.Username)
-		if err != nil {
-			return userInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
-		}
+	}
+
+	userInfo, err = user.Lookup(f.Username)
+	if err != nil {
+		return userInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
+	}
+	if f.Username != actual.Username {
 		changed = true
 	}
 	return userInfo, changed, err
 }
 
-//given two users, decide which one to use
+//given two groups, decide which one to use
 //returns true if a change is required
 func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, err error) {
-	switch f.Name {
-	case "":
-		if actual.Name == "" { // if neither is set, use the effective uid of the process
+	if f == nil || f.Name == "" {
+		if actual == nil || actual.Name == "" { // if neither is set, use the effective gid of the process
 			groupInfo, err = user.LookupGroupId(strconv.Itoa(os.Getegid()))
 			if err != nil {
 				return &user.Group{}, true, errors.Wrapf(err, "unable to set default group")
 			}
-			changed = true
+			return groupInfo, true, nil
 		}
 		if actual.Name != "" { //if we didn't request a group, use the file's information
 			return &user.Group{Name: actual.Name, Gid: actual.Gid}, false, nil
 		}
-	default: //we asked to set a group on the file
-		groupInfo, err = user.LookupGroup(f.Name)
-		if err != nil {
-			return groupInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Name)
-		}
-		changed = true
-
 	}
+
+	groupInfo, err = user.LookupGroup(f.Name)
+	if err != nil {
+		return groupInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Name)
+	}
+
+	if f.Name != actual.Name {
+		changed = true
+	}
+
 	return groupInfo, changed, err
 }
 
@@ -158,7 +148,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 func Content(filename string) ([]byte, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Errorf("unable to open %s: %s", filename, err)
+		return nil, errors.Wrapf(err, "content")
 	}
 	return b, err
 }
