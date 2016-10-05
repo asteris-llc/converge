@@ -133,18 +133,20 @@ docs: docs_source/**/*
 integration: xcompile
 	@echo
 	@echo === quick integration test ===
-	$(INTEGRATION_CMD) quick-integration.hcl
+	$(INTEGRATION_CMD) testing/quick-integration.hcl
 	@ if [ -n "$$CVG_FULL_INTEGRATION" ];\
-		then echo "=== full integration test ==="; ./full-integration.sh;\
+		then echo "=== full integration test ==="; ./testing/full-integration.sh;\
 		else echo "=== Skipping full test ===";\
 		fi
 
 vagrant: Vagrantfile
 	@echo
 	@echo === vagrant test ===
+	cd testing
 	vagrant up --provision
 
 vagrant-clean:
+	cd testing
 	vagrant destroy --force
 
 .PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check docker docker-clean vagrant vagrant-clean integration integration-clean
