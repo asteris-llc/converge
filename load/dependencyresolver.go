@@ -46,7 +46,9 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 		}
 
 		depGenerators := []dependencyGenerator{
-			getDepends,
+			func(node *parse.Node) ([]string, error) {
+				return getDepends(g, id, node)
+			},
 			func(node *parse.Node) ([]string, error) {
 				return getParams(g, id, node)
 			},
@@ -70,16 +72,16 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 }
 
-func getDepends(node *parse.Node) ([]string, error) {
+func getDepends(g *graph.Graph, id string, node *parse.Node) ([]string, error) {
 	deps, err := node.GetStringSlice("depends")
-
 	switch err {
 	case parse.ErrNotFound:
 		return []string{}, nil
-
 	case nil:
+		for idx := range deps {
+			deps[idx] = graph.SiblingID(id, deps[idx])
+		}
 		return deps, nil
-
 	default:
 		return nil, err
 	}
@@ -157,10 +159,12 @@ func getPeerVertex(src, dst string) (string, bool) {
 }
 
 func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
-	if node == "root" || node == "" {
+	if id == "root" || id == "" || id == "." {
 		return "", false
 	}
+
 	siblingID := graph.SiblingID(id, node)
+
 	val := g.Get(siblingID)
 	if val == nil {
 		return getNearestAncestor(g, graph.ParentID(id), node)

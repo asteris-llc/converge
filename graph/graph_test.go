@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"sort"
 
 	"strconv"
 	"sync"
@@ -186,7 +187,10 @@ func TestChildren(t *testing.T) {
 
 	children := g.Children("child1")
 
-	assert.Equal(t, []string{"child1.1", "child1.2", "child1.3"}, children)
+	expected := []string{"child1.1", "child1.2", "child1.3"}
+	sort.Strings(expected)
+	sort.Strings(children)
+	assert.Equal(t, expected, children)
 }
 
 func TestWalkOrder(t *testing.T) {
