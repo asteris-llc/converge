@@ -57,7 +57,7 @@ can be done separately to see what needs to be changed before execution.`,
 			clog.WithError(err).Fatal("could not get SSL config")
 		}
 
-		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+		if err = maybeStartSelfHostedRPC(ctx, ssl); err != nil {
 			clog.WithError(err).Fatal("could not start RPC")
 		}
 
@@ -136,7 +136,7 @@ can be done separately to see what needs to be changed before execution.`,
 			}
 
 			// validate resulting graph
-			if err := g.Validate(); err != nil {
+			if err = g.Validate(); err != nil {
 				flog.WithError(err).Warning("graph is not valid")
 			}
 
