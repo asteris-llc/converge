@@ -58,7 +58,7 @@ not display healthy checks.`,
 			clog.WithError(err).Fatal("could not get SSL config")
 		}
 
-		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+		if err = maybeStartSelfHostedRPC(ctx, ssl); err != nil {
 			clog.WithError(err).Fatal("could not start RPC")
 		}
 

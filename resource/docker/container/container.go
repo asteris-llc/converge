@@ -383,9 +383,7 @@ func (c *Container) compareVolumes(container *dc.Container, image *dc.Image) (ac
 func (c *Container) compareBinds(container *dc.Container) (actual, expected string) {
 	toList := func(binds []string) []string {
 		list := make([]string, len(binds))
-		for i, bind := range binds {
-			list[i] = bind
-		}
+		copy(list, binds)
 		sort.Strings(list)
 		return list
 	}
