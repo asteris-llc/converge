@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package apt
+package rpm
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -34,20 +35,20 @@ type Package struct {
 func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
-	currentPkgStatusRaw, err := exec.Command("sh", "-c", "apt-cache policy "+p.Name+" | grep Installed | awk '{print $2}'").Output()
+	currentPkgStatusRaw, err := exec.Command("sh", "-c", fmt.Sprintf("yum info %q | grep Repo | awk '{print $3}'", p.Name)).Output()
 	if err != nil {
 		return status, errors.Wrapf(err, "checking package %s", p.Name)
 	}
 	currentPkgStatus := strings.TrimSpace(string(currentPkgStatusRaw))
 
 	if p.State == "installed" {
-		if string(currentPkgStatus) == "(none)" {
+		if string(currentPkgStatus) != "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "installed", "")
 		} else {
 			status.AddMessage("Package is installed")
 		}
 	} else if p.State == "absent" {
-		if string(currentPkgStatus) != "(none)" {
+		if string(currentPkgStatus) == "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "uninstalled", "")
 		} else {
 			status.AddMessage("Package is absent")
@@ -63,19 +64,21 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
 	if p.State == "installed" {
-		aptStatus, err := exec.Command("sh", "-c", "apt-get install -y "+p.Name).Output()
-		if err != nil {
-			return status, errors.Wrapf(err, "installing package %s, what happened: %s", p.Name, aptStatus)
-		}
+		currentPkgStatus, err := exec.Command("sh", "-c", "yum install -y "+p.Name).Output()
 
+		if err != nil {
+			return status, errors.Wrapf(err, "installing package %s, what happened: %s", p.Name, currentPkgStatus)
+		}
+		status.AddMessage(fmt.Sprintf("Package %q installed", p.Name))
 		status.AddDifference(p.Name, "absent", "installed", "")
 
 	} else if p.State == "absent" {
-		aptStatus, err := exec.Command("sh", "-c", "apt-get remove -y "+p.Name).Output()
-		if err != nil {
-			return status, errors.Wrapf(err, "removing package %s, what happened: %s", p.Name, aptStatus)
-		}
+		currentPkgStatus, err := exec.Command("sh", "-c", "yum remove -y "+p.Name).Output()
 
+		if err != nil {
+			return status, errors.Wrapf(err, "installing package %s, what happened: %s", p.Name, currentPkgStatus)
+		}
+		status.AddMessage(fmt.Sprintf("Package %q removed", p.Name))
 		status.AddDifference(p.Name, "installed", "absent", "")
 	}
 
