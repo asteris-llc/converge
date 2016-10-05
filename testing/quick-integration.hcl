@@ -5,11 +5,12 @@ param "image-name" {
 }
 
 param "image-tag" {
-  default = "latest"
+  default = "xenial"
 }
 
-docker.image "converge" {
-
+docker.image "base-os" {
+  name = "{{param `image-name`}}"
+  tag = "{{param `image-tag`}}"
 }
 
 docker.container "converge" {
@@ -27,6 +28,8 @@ docker.container "converge" {
   ]
 
   command = ["/converge/bin/converge", "server", "--no-token"]
+
+  depends = ["docker.image.base-os"]
 }
 
 task.query "wait" {
