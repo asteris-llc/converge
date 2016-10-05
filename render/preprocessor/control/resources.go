@@ -55,6 +55,13 @@ func (s *SwitchTask) AppendCase(c *CaseTask) {
 	}
 }
 
+func (s *SwitchTask) Cases() []*CaseTask {
+	if s == nil {
+		return []*CaseTask{}
+	}
+	return s.cases
+}
+
 // Check does stuff
 func (s *SwitchTask) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
@@ -90,6 +97,7 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 type CaseTask struct {
 	Predicate string
 	Name      string
+	Status    *bool
 	parent    *SwitchTask
 }
 
@@ -125,7 +133,26 @@ func (c *CaseTask) IsTrue() (bool, error) {
 	if c == nil {
 		return false, nil
 	}
-	return EvaluatePredicate(c.Predicate)
+	if c.parent == nil {
+		fmt.Println(c.Name, ": parent is nil")
+	}
+	for _, otherCase := range c.parent.Cases() {
+		if otherCase == c {
+			break
+		}
+		if isTrue, _ := otherCase.IsTrue(); isTrue {
+			return false, nil
+		}
+	}
+	if c.Status == nil {
+		status, err := EvaluatePredicate(c.Predicate)
+		if err != nil {
+			return false, err
+		}
+		c.Status = new(bool)
+		*c.Status = status
+	}
+	return *c.Status, nil
 }
 
 // EvaluatePredicate looks at a templated string and returns true if template
