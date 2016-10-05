@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestValidateHelpers tests File validation routines
 func TestValidateHelpers(t *testing.T) {
 	t.Parallel()
 

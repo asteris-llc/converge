@@ -16,6 +16,9 @@ package file_test
 
 import (
 	"fmt"
+	"os"
+	"os/user"
+	"strconv"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -23,15 +26,23 @@ import (
 	"github.com/asteris-llc/converge/resource/file"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+// TestPreparerInterface checks our implementation
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
 	assert.Implements(t, (*resource.Resource)(nil), new(content.Preparer))
 }
 
+// TestPrepare checks configuration options
 func TestPrepare(t *testing.T) {
+	userInfo, err := user.LookupId(strconv.Itoa(os.Geteuid()))
+	require.NoError(t, err)
+
+	groupInfo, err := user.LookupGroupId(strconv.Itoa(os.Getegid()))
+	require.NoError(t, err)
 	t.Parallel()
 	t.Run("validConfig1", func(t *testing.T) {
 		perms := new(uint32)
@@ -41,8 +52,8 @@ func TestPrepare(t *testing.T) {
 			Mode:        perms,
 			Type:        "file",
 			Force:       true,
-			User:        "root",
-			Group:       "wheel",
+			User:        userInfo.Username,
+			Group:       groupInfo.Name,
 		}
 		_, err := p.Prepare(fakerenderer.New())
 		if !assert.Nil(t, err) {
@@ -52,14 +63,14 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("validConfig2", func(t *testing.T) {
 		perms := new(uint32)
-		*perms = 4700
+		*perms = uint32(0700)
 		p := &file.Preparer{
 			Destination: "/aster/is",
 			Mode:        perms,
 			Type:        "directory",
 			Force:       false,
-			User:        "root",
-			Group:       "wheel",
+			User:        userInfo.Username,
+			Group:       groupInfo.Name,
 		}
 		_, err := p.Prepare(fakerenderer.New())
 		if !assert.Nil(t, err) {
@@ -74,8 +85,8 @@ func TestPrepare(t *testing.T) {
 			Mode:  perms,
 			Type:  "directory",
 			Force: false,
-			User:  "root",
-			Group: "wheel",
+			User:  userInfo.Username,
+			Group: groupInfo.Name,
 		}
 		_, err := p.Prepare(fakerenderer.New())
 		assert.Error(t, err, "file requires a destination parameter")

@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestModeType checks to see if type bits are set correctly
 func TestModeType(t *testing.T) {
 	t.Run("modeType", func(t *testing.T) {
 		var tests = []struct {
