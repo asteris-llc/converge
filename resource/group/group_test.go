@@ -73,7 +73,7 @@ func init() {
 	fakeName = strings.Join(tempName[0:], "")
 }
 
-// TestGroupInterface tests that the Group interface is properly implemented
+// TestGroupInterface tests that Group is properly implemented
 func TestGroupInterface(t *testing.T) {
 	t.Parallel()
 
@@ -87,121 +87,233 @@ func TestCheck(t *testing.T) {
 	t.Run("state=present", func(t *testing.T) {
 		g := group.NewGroup(new(group.System))
 		g.State = group.StatePresent
+		gid, err := setGid()
+		if err != nil {
+			panic(err)
+		}
+		tempGroup, err := user.LookupGroupId(gid)
+		if err != nil {
+			panic(err)
+		}
 
 		t.Run("gid not provided", func(t *testing.T) {
-			t.Run("no add-group already exists", func(t *testing.T) {
-				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+			t.Run("NewName not provided", func(t *testing.T) {
+				t.Run("no add-group already exists", func(t *testing.T) {
+					g.Name = currName
+					status, err := g.Check(fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group add: group %s already exists", g.Name), status.Messages()[0])
+						assert.False(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("add group", func(t *testing.T) {
+					g.Name = fakeName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+						assert.Equal(t, "add group", status.Messages()[0])
+						assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
+						assert.Equal(t, fmt.Sprintf("group %s", g.Name), status.Diffs()["group"].Current())
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 			})
 
-			t.Run("add group", func(t *testing.T) {
-				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+			t.Run("NewName provided", func(t *testing.T) {
+				t.Run("no modify-group does not exist", func(t *testing.T) {
+					g.Name = fakeName
+					g.NewName = fakeName
+					status, err := g.Check(fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-					assert.Equal(t, "group does not exist", status.Messages()[0])
-					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
-					assert.Equal(t, fmt.Sprintf("group %s", g.Name), status.Diffs()["group"].Current())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group modify: group %s does not exist", g.Name), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("no modify-new group already exists", func(t *testing.T) {
+					g.Name = currName
+					g.NewName = tempGroup.Name
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group modify: group %s already exists", g.NewName), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("modify group", func(t *testing.T) {
+					g.Name = currName
+					g.NewName = fakeName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+						assert.Equal(t, "modify group name", status.Messages()[0])
+						assert.Equal(t, fmt.Sprintf("group %s", g.Name), status.Diffs()["group"].Original())
+						assert.Equal(t, fmt.Sprintf("group %s", g.NewName), status.Diffs()["group"].Current())
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 			})
 		})
 
 		t.Run("gid provided", func(t *testing.T) {
-			t.Run("add group with gid", func(t *testing.T) {
-				g.GID = fakeGid
-				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+			t.Run("NewName not provided", func(t *testing.T) {
+				g.NewName = ""
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-					assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
-					assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
-					assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
+				t.Run("add group with gid", func(t *testing.T) {
+					g.GID = fakeGid
+					g.Name = fakeName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+						assert.Equal(t, "add group with gid", status.Messages()[0])
+						assert.Equal(t, string(group.StateAbsent), status.Diffs()["group"].Original())
+						assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("no add-group gid already exists", func(t *testing.T) {
+					g.GID = currGid
+					g.Name = fakeName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot add group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group add: gid %s already exists", g.GID), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("modify group gid", func(t *testing.T) {
+					g.GID = fakeGid
+					g.Name = currName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+						assert.Equal(t, "modify group gid", status.Messages()[0])
+						assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, currGid), status.Diffs()["group"].Original())
+						assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, g.GID), status.Diffs()["group"].Current())
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("no add or modify-group name and gid belong to different groups", func(t *testing.T) {
+					g.GID = gid
+					g.Name = currName
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot add or modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group add/modify: group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
+
+				t.Run("no add or modify-group with gid already exists", func(t *testing.T) {
+					g.GID = currGid
+					g.Name = currName
+					g.State = group.StatePresent
+					status, err := g.Check(fakerenderer.New())
+
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot add or modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group add/modify: group %s with gid %s already exists", g.Name, g.GID), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 			})
 
-			t.Run("no add-group gid already exists", func(t *testing.T) {
-				g.GID = currGid
-				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+			t.Run("NewName provided", func(t *testing.T) {
+				t.Run("modify group name and gid", func(t *testing.T) {
+					g.GID = fakeGid
+					g.Name = currName
+					g.NewName = fakeName
+					status, err := g.Check(fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group gid %s already exists", g.GID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
-			})
+					if runtime.GOOS == "linux" {
+						assert.NoError(t, err)
+						assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+						assert.Equal(t, "modify group name and gid", status.Messages()[0])
+						assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.Name, currGid), status.Diffs()["group"].Original())
+						assert.Equal(t, fmt.Sprintf("group %s with gid %s", g.NewName, g.GID), status.Diffs()["group"].Current())
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 
-			t.Run("no add-group name already exists", func(t *testing.T) {
-				g.GID = fakeGid
-				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				t.Run("no modify-group already exists", func(t *testing.T) {
+					g.GID = fakeGid
+					g.Name = currName
+					g.NewName = tempGroup.Name
+					status, err := g.Check(fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s already exists", g.Name), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
-			})
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group modify: group %s already exists", g.NewName), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 
-			t.Run("no add-group name and gid belong to different groups", func(t *testing.T) {
-				gid, err := setGid()
-				if err != nil {
-					panic(err)
-				}
-				g.GID = gid
-				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				t.Run("no modify-gid already exists", func(t *testing.T) {
+					g.GID = gid
+					g.Name = currName
+					g.NewName = fakeName
+					status, err := g.Check(fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
-			})
-
-			t.Run("no add-group with gid already exists", func(t *testing.T) {
-				g := group.NewGroup(new(group.System))
-				g.GID = currGid
-				g.Name = currName
-				g.State = group.StatePresent
-				status, err := g.Check(fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s with gid %s already exists", g.Name, g.GID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "group: not supported on this system")
-				}
+					if runtime.GOOS == "linux" {
+						assert.EqualError(t, err, "cannot modify group")
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+						assert.Equal(t, fmt.Sprintf("group modify: gid %s already exists", g.GID), status.Messages()[0])
+						assert.True(t, status.HasChanges())
+					} else {
+						assert.EqualError(t, err, "group: not supported on this system")
+					}
+				})
 			})
 		})
 	})
@@ -218,7 +330,7 @@ func TestCheck(t *testing.T) {
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
 					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("group delete: group %s does not exist", g.Name), status.Messages()[0])
 					assert.False(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "group: not supported on this system")
@@ -250,7 +362,7 @@ func TestCheck(t *testing.T) {
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
 					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, "group name and gid do not exist", status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("group delete: group %s and gid %s do not exist", g.Name, g.GID), status.Messages()[0])
 					assert.False(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "group: not supported on this system")
@@ -263,10 +375,10 @@ func TestCheck(t *testing.T) {
 				status, err := g.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s does not exist", g.Name), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.EqualError(t, err, "cannot delete group")
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group delete: group %s does not exist", g.Name), status.Messages()[0])
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "group: not supported on this system")
 				}
@@ -278,10 +390,10 @@ func TestCheck(t *testing.T) {
 				status, err := g.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group gid %s does not exist", g.GID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.EqualError(t, err, "cannot delete group")
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("group delete: gid %s does not exist", g.GID), status.Messages()[0])
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "group: not supported on this system")
 				}
@@ -297,9 +409,9 @@ func TestCheck(t *testing.T) {
 				status, err := g.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
+					assert.EqualError(t, err, "cannot delete group")
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("group delete: group %s and gid %s belong to different groups", g.Name, g.GID), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "group: not supported on this system")
@@ -345,196 +457,405 @@ func TestApply(t *testing.T) {
 
 	t.Run("state=present", func(t *testing.T) {
 		t.Run("gid not provided", func(t *testing.T) {
+			t.Run("NewName not provided", func(t *testing.T) {
+				t.Run("add group", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.State = group.StatePresent
 
-			t.Run("add group", func(t *testing.T) {
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.State = group.StatePresent
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				g.Name = grp.Name
+					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("AddGroup", g.Name, g.GID).Return(nil)
+					status, err := g.Apply()
 
-				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-				m.On("AddGroup", g.Name, g.GID).Return(nil)
-				status, err := g.Apply()
+					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("added group %s", g.Name), status.Messages()[0])
+				})
 
-				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-				assert.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("added group %s", g.Name), status.Messages()[0])
+				t.Run("no add-error adding group", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.State = group.StatePresent
+
+					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
+					status, err := g.Apply()
+
+					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+					assert.EqualError(t, err, "group add: ")
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("error adding group %s", g.Name), status.Messages()[0])
+				})
+
+				t.Run("no add-will not attempt add", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.State = group.StatePresent
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("AddGroup", g.Name, g.GID).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
+					assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s", g.Name))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				})
 			})
 
-			t.Run("no add-error adding group", func(t *testing.T) {
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.Name = grp.Name
-				g.State = group.StatePresent
+			t.Run("NewName provided", func(t *testing.T) {
+				t.Run("modify group name", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName}
 
-				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-				m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-				status, err := g.Apply()
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("ModGroup", g.Name, &options).Return(nil)
+					status, err := g.Apply()
 
-				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-				assert.EqualError(t, err, fmt.Sprintf(""))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
-				assert.Equal(t, fmt.Sprintf("error adding group %s", g.Name), status.Messages()[0])
-			})
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("modified group %s with new name %s", g.Name, g.NewName), status.Messages()[0])
+				})
 
-			t.Run("no add-will not attempt add", func(t *testing.T) {
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.Name = grp.Name
-				g.State = group.StatePresent
+				t.Run("no modify-error modifying group", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName}
 
-				m.On("LookupGroup", g.Name).Return(grp, nil)
-				m.On("LookupGroupID", g.GID).Return(grp, nil)
-				m.On("AddGroup", g.Name, g.GID).Return(nil)
-				status, err := g.Apply()
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
+					status, err := g.Apply()
 
-				m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s", g.Name))
-				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.EqualError(t, err, "group modify: ")
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("error modifying group %s", g.Name), status.Messages()[0])
+				})
+
+				t.Run("no modify-will not attempt modify", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName}
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(grp, nil)
+					m.On("ModGroup", g.Name, &options).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertNotCalled(t, "ModGroup", g.Name, &options)
+					assert.EqualError(t, err, fmt.Sprintf("will not attempt modify: group %s", g.Name))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				})
 			})
 		})
 
 		t.Run("gid provided", func(t *testing.T) {
-			t.Run("add group with gid", func(t *testing.T) {
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.GID = grp.Gid
-				g.Name = grp.Name
-				g.State = group.StatePresent
+			t.Run("NewName not provided", func(t *testing.T) {
+				t.Run("add group with gid", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
 
-				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-				m.On("AddGroup", g.Name, g.GID).Return(nil)
-				status, err := g.Apply()
+					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("AddGroup", g.Name, g.GID).Return(nil)
+					status, err := g.Apply()
 
-				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-				assert.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("added group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+				})
+
+				t.Run("no add-error adding group", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
+
+					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
+					status, err := g.Apply()
+
+					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
+					assert.EqualError(t, err, "group add: ")
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("error adding group %s with gid %s", g.Name, g.GID), status.Messages()[0])
+				})
+
+				t.Run("no add-will not attempt add/modify", func(t *testing.T) {
+					grp := &user.Group{
+						Name: fakeName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroupID", g.GID).Return(grp, nil)
+					m.On("AddGroup", g.Name, g.GID).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
+					assert.EqualError(t, err, fmt.Sprintf("will not attempt add/modify: group %s with gid %s", g.Name, g.GID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				})
+
+				t.Run("modify group gid", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{GID: g.GID}
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("ModGroup", g.Name, &options).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("modified group %s with new gid %s", g.Name, g.GID), status.Messages()[0])
+				})
+
+				t.Run("no modify-error modifying group gid", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{GID: g.GID}
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
+					status, err := g.Apply()
+
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.EqualError(t, err, "group modify: ")
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("error modifying group %s with new gid %s", g.Name, g.GID), status.Messages()[0])
+				})
+
+				t.Run("no modify-will not attempt add/modify", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  fakeGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.GID = grp.Gid
+					g.Name = grp.Name
+					g.State = group.StatePresent
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroupID", g.GID).Return(grp, nil)
+					m.On("ModGroup", g.Name, g.GID).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertNotCalled(t, "ModGroup", g.Name, g.GID)
+					assert.EqualError(t, err, fmt.Sprintf("will not attempt add/modify: group %s with gid %s", g.Name, g.GID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				})
 			})
 
-			t.Run("no add-error adding group", func(t *testing.T) {
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.GID = grp.Gid
-				g.Name = grp.Name
-				g.State = group.StatePresent
+			t.Run("NewName provided", func(t *testing.T) {
+				t.Run("modify group name and gid", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.GID = fakeGid
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName, GID: g.GID}
 
-				m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-				m.On("LookupGroupID", g.GID).Return(grp, user.UnknownGroupIdError(""))
-				m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-				status, err := g.Apply()
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("ModGroup", g.Name, &options).Return(nil)
+					status, err := g.Apply()
 
-				m.AssertCalled(t, "AddGroup", g.Name, g.GID)
-				assert.EqualError(t, err, fmt.Sprintf(""))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
-				assert.Equal(t, fmt.Sprintf("error adding group %s with gid %s", g.Name, g.GID), status.Messages()[0])
-			})
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("modified group %s with new name %s and new gid %s", g.Name, g.NewName, g.GID), status.Messages()[0])
+				})
 
-			t.Run("no add-will not attempt add", func(t *testing.T) {
-				grp := &user.Group{
-					Name: fakeName,
-					Gid:  fakeGid,
-				}
-				m := &MockSystem{}
-				g := group.NewGroup(m)
-				g.GID = grp.Gid
-				g.Name = grp.Name
-				g.State = group.StatePresent
+				t.Run("no modify-error modifying group", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.GID = fakeGid
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName, GID: g.GID}
 
-				m.On("LookupGroup", g.Name).Return(grp, nil)
-				m.On("LookupGroupID", g.GID).Return(grp, nil)
-				m.On("AddGroup", g.Name, g.GID).Return(nil)
-				status, err := g.Apply()
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
+					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
+					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
+					status, err := g.Apply()
 
-				m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s with gid %s", g.Name, g.GID))
-				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+					m.AssertCalled(t, "ModGroup", g.Name, &options)
+					assert.EqualError(t, err, "group modify: ")
+					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.Equal(t, fmt.Sprintf("error modifying group %s with new name %s and new gid %s", g.Name, g.NewName, g.GID), status.Messages()[0])
+				})
+
+				t.Run("no modify-will not attempt modify", func(t *testing.T) {
+					grp := &user.Group{
+						Name: currName,
+						Gid:  currGid,
+					}
+					m := &MockSystem{}
+					g := group.NewGroup(m)
+					g.Name = grp.Name
+					g.NewName = fakeName
+					g.GID = fakeGid
+					g.State = group.StatePresent
+					options := group.ModGroupOptions{NewName: g.NewName, GID: g.GID}
+
+					m.On("LookupGroup", g.Name).Return(grp, nil)
+					m.On("LookupGroup", g.NewName).Return(grp, nil)
+					m.On("LookupGroupID", g.GID).Return(grp, nil)
+					m.On("ModGroup", g.Name, &options).Return(nil)
+					status, err := g.Apply()
+
+					m.AssertNotCalled(t, "ModGroup", g.Name, &options)
+					assert.EqualError(t, err, fmt.Sprintf("will not attempt modify: group %s with new name %s and new gid %s", g.Name, g.NewName, g.GID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				})
 			})
 		})
 	})
 
 	t.Run("state=absent", func(t *testing.T) {
-		t.Run("delete group", func(t *testing.T) {
-			grp := &user.Group{
-				Name: fakeName,
-				Gid:  fakeGid,
-			}
-			m := &MockSystem{}
-			g := group.NewGroup(m)
-			g.Name = grp.Name
-			g.State = group.StateAbsent
+		t.Run("gid not provided", func(t *testing.T) {
+			t.Run("delete group", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.Name = grp.Name
+				g.State = group.StateAbsent
 
-			m.On("LookupGroup", g.Name).Return(grp, nil)
-			m.On("LookupGroupID", g.GID).Return(grp, nil)
-			m.On("DelGroup", g.Name).Return(nil)
-			status, err := g.Apply()
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("DelGroup", g.Name).Return(nil)
+				status, err := g.Apply()
 
-			m.AssertCalled(t, "DelGroup", g.Name)
-			assert.NoError(t, err)
-			assert.Equal(t, fmt.Sprintf("deleted group %s", g.Name), status.Messages()[0])
-		})
+				m.AssertCalled(t, "DelGroup", g.Name)
+				assert.NoError(t, err)
+				assert.Equal(t, fmt.Sprintf("deleted group %s", g.Name), status.Messages()[0])
+			})
 
-		t.Run("no delete-error deleting group", func(t *testing.T) {
-			grp := &user.Group{
-				Name: fakeName,
-				Gid:  fakeGid,
-			}
-			m := &MockSystem{}
-			g := group.NewGroup(m)
-			g.Name = grp.Name
-			g.State = group.StateAbsent
+			t.Run("no delete-error deleting group", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.Name = grp.Name
+				g.State = group.StateAbsent
 
-			m.On("LookupGroup", g.Name).Return(grp, nil)
-			m.On("LookupGroupID", g.GID).Return(grp, nil)
-			m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
-			status, err := g.Apply()
+				m.On("LookupGroup", g.Name).Return(grp, nil)
+				m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
+				status, err := g.Apply()
 
-			m.AssertCalled(t, "DelGroup", g.Name)
-			assert.EqualError(t, err, fmt.Sprintf(""))
-			assert.Equal(t, resource.StatusFatal, status.StatusCode())
-			assert.Equal(t, fmt.Sprintf("error deleting group %s", g.Name), status.Messages()[0])
-		})
+				m.AssertCalled(t, "DelGroup", g.Name)
+				assert.EqualError(t, err, "group delete: ")
+				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, fmt.Sprintf("error deleting group %s", g.Name), status.Messages()[0])
+			})
 
-		t.Run("no delete-will not attempt delete", func(t *testing.T) {
-			grp := &user.Group{
-				Name: fakeName,
-				Gid:  fakeGid,
-			}
-			m := &MockSystem{}
-			g := group.NewGroup(m)
-			g.Name = grp.Name
-			g.State = group.StateAbsent
+			t.Run("no delete-will not attempt delete", func(t *testing.T) {
+				grp := &user.Group{
+					Name: fakeName,
+					Gid:  fakeGid,
+				}
+				m := &MockSystem{}
+				g := group.NewGroup(m)
+				g.Name = grp.Name
+				g.State = group.StateAbsent
 
-			m.On("LookupGroup", g.Name).Return(grp, user.UnknownGroupError(""))
-			m.On("LookupGroupID", g.GID).Return(grp, nil)
-			m.On("DelGroup", g.Name).Return(nil)
-			status, err := g.Apply()
+				m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
+				m.On("DelGroup", g.Name).Return(nil)
+				status, err := g.Apply()
 
-			m.AssertNotCalled(t, "DelGroup", g.Name)
-			assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s", g.Name))
-			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+				m.AssertNotCalled(t, "DelGroup", g.Name)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s", g.Name))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			})
 		})
 
 		t.Run("gid provided", func(t *testing.T) {
@@ -576,7 +897,7 @@ func TestApply(t *testing.T) {
 				status, err := g.Apply()
 
 				m.AssertCalled(t, "DelGroup", g.Name)
-				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.EqualError(t, err, "group delete: ")
 				assert.Equal(t, resource.StatusFatal, status.StatusCode())
 				assert.Equal(t, fmt.Sprintf("error deleting group %s with gid %s", g.Name, g.GID), status.Messages()[0])
 			})
@@ -631,8 +952,36 @@ func TestApply(t *testing.T) {
 	})
 }
 
-// setGid is used for TestCheckNameAndGidMismatch. We need a gid that exists,
-// but is not a match for the current user group name (currName).
+// TestSetModGroupOptions tests options provided for modifying a group
+// are properly set
+func TestSetModGroupOptions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("all options", func(t *testing.T) {
+		g := group.NewGroup(new(group.System))
+		g.Name = currName
+		g.NewName = fakeName
+		g.GID = fakeGid
+
+		options := group.SetModGroupOptions(g)
+
+		assert.Equal(t, g.NewName, options.NewName)
+		assert.Equal(t, g.GID, options.GID)
+	})
+
+	t.Run("no options", func(t *testing.T) {
+		g := group.NewGroup(new(group.System))
+		g.Name = currName
+
+		options := group.SetModGroupOptions(g)
+
+		assert.Equal(t, "", options.NewName)
+		assert.Equal(t, "", options.GID)
+	})
+}
+
+// setGid is used to set a gid that exists but is not a match for
+// the current user group name (currName).
 func setGid() (string, error) {
 	for i := 0; i <= maxGID; i++ {
 		gid := strconv.Itoa(i)
@@ -670,6 +1019,12 @@ func (m *MockSystem) AddGroup(name, gid string) error {
 // DelGroup for MockSystem
 func (m *MockSystem) DelGroup(name string) error {
 	args := m.Called(name)
+	return args.Error(0)
+}
+
+// ModGroup for MockSystem
+func (m *MockSystem) ModGroup(name string, options *group.ModGroupOptions) error {
+	args := m.Called(name, options)
 	return args.Error(0)
 }
 

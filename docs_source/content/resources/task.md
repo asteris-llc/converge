@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-09-20T14:45:56-05:00"
+date: "2016-10-04T13:01:49-05:00"
 menu:
   main:
     parent: resources
