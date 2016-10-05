@@ -10,7 +10,7 @@ wait.port "swarm-manager-port" {
   grace_period = "2s"
 }
 
-wait.query "wait-for-swarm-worker-token" {
+wait.query "swarm-worker-token" {
   check        = "aws s3 ls s3://{{param `swarm-token-bucket`}}/worker"
   interval     = "10s"
   max_retry    = 30
@@ -20,7 +20,7 @@ wait.query "wait-for-swarm-worker-token" {
 
 task.query "swarm-worker-token" {
   query   = "aws s3 cp s3://{{param `swarm-token-bucket`}}/worker - | tr -d '\n'"
-  depends = ["wait.query.wait-for-swarm-worker-token"]
+  depends = ["wait.query.swarm-worker-token"]
 }
 
 task "swarm-join" {
