@@ -85,6 +85,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply() (resource.TaskStatus, error) {
+	c.Status = resource.NewStatus()
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
@@ -113,13 +114,13 @@ func (c *Container) Apply() (resource.TaskStatus, error) {
 
 	container, err := c.client.CreateContainer(opts)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to run container %s", c.Name)
+		return c, err
 	}
 
 	if c.CStatus == "" || c.CStatus == containerStatusRunning {
 		err = c.client.StartContainer(c.Name, container.ID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to start container %s", c.Name)
+			return c, err
 		}
 	}
 
