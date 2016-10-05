@@ -140,10 +140,26 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 		g.Add(branchID, branchNode)
 		g.ConnectParent(switchID, branchID)
 		for _, innerNode := range branch.InnerNodes {
+			if err := validateInnerNode(innerNode); err != nil {
+				return g, err
+			}
 			innerID := graph.ID(branchID, innerNode.String())
 			g.Add(innerID, innerNode)
 			g.ConnectParent(branchID, innerID)
 		}
 	}
 	return g, nil
+}
+
+func validateInnerNode(node *parse.Node) error {
+	switch node.Kind() {
+	case "module":
+		return errors.New("modules not supported in conditionals")
+	case "switch":
+		return errors.New("nested conditionals are not supported")
+	case "case":
+		return errors.New("nested branches are not supported")
+	}
+	fmt.Println("inner node: kind = ", node.Kind())
+	return nil
 }
