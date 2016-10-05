@@ -14,19 +14,13 @@ import (
 // wraps the values and will not do anything during check or apply.
 type SwitchPreparer struct {
 	Branches []string `hcl:"branches"`
-	cases    []*CasePreparer
 }
 
-func (s *SwitchPreparer) Cases() []*CasePreparer {
-	return s.cases
-}
+// Prepare does stuff
+func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
+	task := &SwitchTask{Branches: s.Branches}
 
-func (s *SwitchPreparer) SetCases(cases []*CasePreparer) {
-	s.cases = cases
-}
-
-func (s *SwitchPreparer) AppendCase(c *CasePreparer) {
-	s.cases = append(s.cases, c)
+	return task, nil
 }
 
 // SwitchTask represents a resource.Task for a switch node.  It does not
@@ -34,37 +28,17 @@ func (s *SwitchPreparer) AppendCase(c *CasePreparer) {
 // evaluation in the graph and holds predicate state information.
 type SwitchTask struct {
 	Branches []string
+	cases    []*CaseTask
 }
 
-type CasePreparer struct {
-	Predicate string `hcl:"predicate"`
-	Name      string `hcl:"name"`
-	parent    *SwitchPreparer
-}
-
-// SetParent set's the parent of a case statement
-func (c *CasePreparer) SetParent(s *SwitchPreparer) {
-	c.parent = s
-}
-
-// GetParent gets the parent of a case
-func (c *CasePreparer) GetParent() *SwitchPreparer {
-	return c.parent
-}
-
-type CaseTask struct {
-	*CasePreparer
-}
-
-// Prepare does stuff
-func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
-	task := &SwitchTask{Branches: s.Branches}
+// AppendCase adds a case statement to the list of cases
+func (s *SwitchTask) AppendCase(c *CaseTask) {
+	s.cases = append(s.cases, c)
 	for _, caseObj := range s.cases {
 		if caseObj != nil {
 			caseObj.SetParent(s)
 		}
 	}
-	return task, nil
 }
 
 // Check does stuff
@@ -77,6 +51,11 @@ func (s *SwitchTask) Apply() (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 
+type CasePreparer struct {
+	Predicate string `hcl:"predicate"`
+	Name      string `hcl:"name"`
+}
+
 // Prepare does stuff
 func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 	predicate, err := r.Render("predicate", c.Predicate)
@@ -85,13 +64,31 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 	}
 
 	c.Predicate = predicate
-	return &CaseTask{c}, nil
+	return &CaseTask{
+		Predicate: c.Predicate,
+		Name:      c.Name,
+	}, nil
+}
+
+type CaseTask struct {
+	Predicate string
+	Name      string
+	parent    *SwitchTask
+}
+
+// SetParent set's the parent of a case statement
+func (c *CaseTask) SetParent(s *SwitchTask) {
+	c.parent = s
+}
+
+// GetParent gets the parent of a case
+func (c *CaseTask) GetParent() *SwitchTask {
+	return c.parent
 }
 
 // ShouldEvaluate returns true if the case has a valid parent and it is the
 // selected branch for that parent
-func (c *CasePreparer) ShouldEvaluate() bool {
-	fmt.Println("calling ShouldEvaluate...")
+func (c *CaseTask) ShouldEvaluate() bool {
 	if c.parent == nil {
 		return false
 	}
@@ -107,7 +104,7 @@ func (c *CasePreparer) ShouldEvaluate() bool {
 // IsTrue returns true if the template precicate evaluates to "true", or "t",
 // false if it returns "false", or "f", or if the pointer is nil, and returns
 // false with an error otherwise.
-func (c *CasePreparer) IsTrue() (bool, error) {
+func (c *CaseTask) IsTrue() (bool, error) {
 	if c == nil {
 		return false, nil
 	}
@@ -118,7 +115,6 @@ func (c *CasePreparer) IsTrue() (bool, error) {
 // execution results in the string "true" or t", and false if the string is
 // "false" or "f".  In any other case an error is returned.
 func EvaluatePredicate(predicate string) (bool, error) {
-	fmt.Println("calling evaluate predicate with: ", predicate)
 	lang := extensions.DefaultLanguage()
 	if predicate == "" {
 		return false, BadPredicate(predicate)
@@ -158,7 +154,8 @@ func (c *CaseTask) Apply() (resource.TaskStatus, error) {
 // evaluation is determined by it's parent control-structure predicate.
 type ConditionalTask struct {
 	resource.Task
-	*ConditionalPreparer
+	Name       string
+	controller EvaluationController
 }
 
 // EvaluationController represents an interface for a thing that can control
@@ -167,16 +164,8 @@ type EvaluationController interface {
 	ShouldEvaluate() bool
 }
 
-// ConditionalPreparer wraps a preparer resource so thta a conditional task can
-// be generated.
-type ConditionalPreparer struct {
-	resource.Resource
-	controller EvaluationController
-	Name       string
-}
-
 // SetExecutionController sets the private execution controller
-func (c *ConditionalPreparer) SetExecutionController(ctrl EvaluationController) {
+func (c *ConditionalTask) SetExecutionController(ctrl EvaluationController) {
 	c.controller = ctrl
 }
 
@@ -207,22 +196,6 @@ func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error
 		return c.Task.Check(r)
 	}
 	return &resource.Status{}, nil
-}
-
-// Prepare returns a conditional task after preparing the underlying resource
-func (c *ConditionalPreparer) Prepare(r resource.Renderer) (resource.Task, error) {
-	fmt.Println("calling conditional preparerer...")
-	if c == nil {
-		return &ConditionalTask{}, errors.New("cannot create a conditional task from a nil preparer")
-	}
-	prepared, err := c.Resource.Prepare(r)
-	if err != nil {
-		return nil, err
-	}
-	return &ConditionalTask{
-		Task:                prepared,
-		ConditionalPreparer: c,
-	}, nil
 }
 
 // NopTask is a task with accessible fields that will never execute

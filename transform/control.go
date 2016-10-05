@@ -30,11 +30,11 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			}
 			switchNode.AppendCase(caseNode)
 			for _, targetID := range g.Children(caseID) {
-				targetPreparer := g.Get(targetID).(*resource.Preparer)
+				targetPreparer := g.Get(targetID).(resource.Task)
 				conditionalTarget := targetPreparer
-				conditional := &control.ConditionalPreparer{
-					Name:     targetID,
-					Resource: conditionalTarget,
+				conditional := &control.ConditionalTask{
+					Name: targetID,
+					Task: conditionalTarget,
 				}
 				conditional.SetExecutionController(caseNode)
 				out.Add(targetID, conditional)
@@ -44,34 +44,32 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 }
 
-func getSwitchNode(id string, g *graph.Graph) (*control.SwitchPreparer, bool) {
+func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
 	elem := g.Get(id)
 	if elem == nil {
 		return nil, false
 	}
-	if asSwitch, ok := elem.(*control.SwitchPreparer); ok {
-		return asSwitch, true
+	elem, canResolve := resource.ResolveTask(elem)
+	if !canResolve {
+		return nil, false
 	}
-	if asPreparer, ok := elem.(*resource.Preparer); ok {
-		if asSwitch, ok := asPreparer.Destination.(*control.SwitchPreparer); ok {
-			return asSwitch, true
-		}
+	if asSwitch, ok := elem.(*control.SwitchTask); ok {
+		return asSwitch, true
 	}
 	return nil, false
 }
 
-func getCaseNode(id string, g *graph.Graph) (*control.CasePreparer, bool) {
+func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
 	elem := g.Get(id)
 	if elem == nil {
 		return nil, false
 	}
-	if asCase, ok := elem.(*control.CasePreparer); ok {
-		return asCase, true
+	elem, canResolve := resource.ResolveTask(elem)
+	if !canResolve {
+		return nil, false
 	}
-	if asPreparer, ok := elem.(*resource.Preparer); ok {
-		if asCase, ok := asPreparer.Destination.(*control.CasePreparer); ok {
-			return asCase, true
-		}
+	if asCase, ok := elem.(*control.CaseTask); ok {
+		return asCase, true
 	}
 	return nil, false
 }
