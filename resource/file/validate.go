@@ -17,7 +17,6 @@ package file
 import (
 	"fmt"
 	"os/user"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -29,6 +28,10 @@ func (f *File) Validate() error {
 		return errors.New("file requires a destination parameter")
 	}
 
+	if f.Type == TypeSymlink && f.Mode != nil {
+		return fmt.Errorf("permissions on symlinks not supported")
+	}
+
 	err = f.validateState()
 	if err != nil {
 		return err
@@ -38,6 +41,8 @@ func (f *File) Validate() error {
 	if err != nil {
 		return err
 	}
+
+	f.validateMode()
 
 	// links should have a target
 	err = f.validateTarget()
@@ -61,16 +66,16 @@ func (f *File) Validate() error {
 // Validate the state or set default value
 func (f *File) validateState() error {
 	switch f.State {
-	case "": //nothing set, use default
-		f.State = defaultState
+	case StateUndefined:
+		f.State = DefaultState
 		return nil
 	default:
-		for _, s := range validStates {
+		for _, s := range ValidStates {
 			if f.State == s {
 				return nil
 			}
 		}
-		return fmt.Errorf("state should be one of %s, got %q", strings.Join(validStates, ", "), f.State)
+		return fmt.Errorf("state should be one of %v, got %q", ValidStates, f.State)
 	}
 }
 
@@ -78,29 +83,39 @@ func (f *File) validateState() error {
 func (f *File) validateType() error {
 	switch f.Type {
 	case "": //use default if not set
-		f.Type = defaultType
+		f.Type = DefaultType
 		return nil
 	default:
-		for _, t := range allTypes {
+		for _, t := range AllTypes {
 			if f.Type == t {
 				return nil
 			}
 		}
-		return fmt.Errorf("type should be one of %s, got %q", strings.Join(allTypes, ", "), f.Type)
+		return fmt.Errorf("type should be one of %v, got %q", AllTypes, f.Type)
 	}
+}
+
+// Validate the mode of the file
+func (f *File) validateMode() {
+	if f.Mode == nil {
+		return
+	}
+	m := new(uint32)
+	*m = ModeType(*f.Mode, f.Type)
+	f.Mode = m
 }
 
 // A target needs to be set if you are creating a link
 func (f *File) validateTarget() error {
 	switch f.Target {
 	case "":
-		if f.Type == "symlink" || f.Type == "hardlink" {
+		if f.Type == TypeSymlink || f.Type == TypeLink {
 			return fmt.Errorf("must define a target if you are using a %q", f.Type)
 		}
 		return nil
 	default:
 		// is target set for a file or directory type?
-		if f.Type == "symlink" || f.Type == "hardlink" {
+		if f.Type == TypeSymlink || f.Type == TypeLink {
 			return nil
 		}
 		return fmt.Errorf("cannot define target on a type of %q: target: %q", f.Type, f.Target)
