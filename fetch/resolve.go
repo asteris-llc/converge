@@ -23,7 +23,7 @@ import (
 
 // ResolveInContext resolves a path relative to another
 func ResolveInContext(loc, ctx string) (string, error) {
-	log.WithField("target", loc).WithField("context", ctx).Debug("resolving target in contextj")
+	log.WithField("target", loc).WithField("context", ctx).Debug("resolving target in context")
 
 	var (
 		locScheme, locPath = parse(loc)
