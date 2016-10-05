@@ -75,7 +75,7 @@ resource to the named parameter.
 {{< note title="Backwards arguments?" >}}
 Some of the utility functions (like `split` and `join`) seem to have their
 arguments backwards. This is to allow you to pipe values to them. For example,
-joining a list on strings is `{{paramList "x" | join "\n"}}`
+joining a list of strings is `{{paramList "x" | join "\n"}}`
 {{< /note >}}
 
 - **split** splits a string (second argument) at the instances of another string
