@@ -8,6 +8,10 @@ param "image-tag" {
   default = "latest"
 }
 
+docker.image "converge" {
+
+}
+
 docker.container "converge" {
   name  = "converge-test"
   image = "{{param `image-name`}}:{{param `image-tag`}}"
@@ -38,7 +42,7 @@ EOF
 }
 
 task "tests" {
-  check = "exit $(docker exec {{lookup `docker.container.converge.name`}} test -f /converge/samples/test.txt)"
+  check = "docker exec {{lookup `docker.container.converge.name`}} test -f /converge/samples/test.txt"
   apply = "./converge apply /converge/samples/basic.hcl --log-level WARN --rpc-addr :{{lookup `task.query.rpc-port.status.stdout`}}"
   depends = ["task.query.rpc-port"]
 }
