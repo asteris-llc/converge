@@ -16,6 +16,7 @@ package load_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -33,6 +34,8 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 
 	resolved, err := load.ResolveDependencies(context.Background(), nodes)
 	assert.NoError(t, err)
+	fmt.Println("resolved: ")
+	fmt.Println(resolved)
 	assert.Contains(
 		t,
 		graph.Targets(resolved.DownEdges("root/task.render")),
