@@ -102,7 +102,13 @@ func (r *Renderer) lookup(name string) (string, error) {
 	g := r.Graph()
 	// fully-qualified graph name
 	fqgn := graph.SiblingID(r.ID, name)
+
 	vertexName, terms, found := preprocessor.VertexSplitTraverse(g, name, r.ID, preprocessor.TraverseUntilModule, make(map[string]struct{}))
+
+	if !validateLookup(r.ID, vertexName) {
+		return "", fmt.Errorf("%s cannot resolve inner-branch node at %s", r.ID, vertexName)
+	}
+
 	if !found {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
@@ -131,4 +137,18 @@ func (r *Renderer) lookup(name string) (string, error) {
 	}
 
 	return fmt.Sprintf("%v", result), nil
+}
+
+// validateLookup ensures that the lookup is valid and resolvable over cases of
+// nesting and conditional evaluation.  It restricts lookups such that a nested
+// value may depend on an outer value, but an outer value may not depend on a
+// nested value.
+func validateLookup(src, dst string) bool {
+	if graph.AreSiblingIDs(src, dst) {
+		return true
+	}
+	if graph.IsNibling(src, dst) {
+		return false
+	}
+	return true
 }
