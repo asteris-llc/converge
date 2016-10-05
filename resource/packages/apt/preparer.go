@@ -19,32 +19,22 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Preparer for Content
+// Preparer for APT Package
 //
-// Content renders content to disk
+// APT Package manages system packages
 type Preparer struct {
-	// Content is the file content. This will be rendered as a template.
-	Name string `hcl:"name"`
+	// Name of the system package to be managed.
+	Name string `hcl:"name" required:"true" `
 
-	// Destination is the location on disk where the content will be rendered.
-	State string `hcl:"state"`
+	// State defines desired system package state.
+	State string `hcl:"state" valid_values:"installed,absent" default:"installed"`
 }
 
-// Prepare a new task
+// Prepare a new package
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	state, err := render.Render("state", p.State)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Package{
-		Name:  name,
-		State: state,
+		Name:  p.Name,
+		State: p.State,
 	}, nil
 }
 
