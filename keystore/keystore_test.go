@@ -36,10 +36,10 @@ func TestStoreTrustedKey(t *testing.T) {
 	if filepath.Base(output) != fingerprint {
 		t.Errorf("expected finger print %s, got %v", fingerprint, filepath.Base(output))
 	}
-	if err := ks.DeleteTrustedKey(fingerprint); err != nil {
+	if err = ks.DeleteTrustedKey(fingerprint); err != nil {
 		t.Errorf("unexpected error %v", err)
 	}
-	if _, err := os.Lstat(output); !os.IsNotExist(err) {
+	if _, err = os.Lstat(output); !os.IsNotExist(err) {
 		t.Errorf("unexpected error %v", err)
 	}
 
