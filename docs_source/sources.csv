@@ -9,3 +9,5 @@ task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer
 task.query,../resource/shell/query/preparer.go,../samples/query.hcl,Preparer
 user.group,../resource/group/preparer.go,../samples/group.hcl,Preparer
 user.user,../resource/user/preparer.go,../samples/user.hcl,Preparer
+wait.query,../resource/wait/preparer.go,../samples/wait.hcl,Preparer
+wait.port,../resource/wait/port/preparer.go,../samples/waitPort.hcl,Preparer

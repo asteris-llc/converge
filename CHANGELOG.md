@@ -4,6 +4,8 @@
 
 ### Enhancements
 
+- Ability to wait for a condition (#238)
+
 ### Bug fixes
 
 - Fix #225 pipeline function refactor (#307)
