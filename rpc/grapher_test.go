@@ -37,7 +37,7 @@ func TestGrapherGraph(t *testing.T) {
 	ctx := logging.WithLogger(context.Background(), logrus.WithField("testing", true))
 
 	t.Run("good request", func(t *testing.T) {
-		stream := new(mocks.Grapher_GraphServer)
+		stream := new(mocks.GrapherGraphServer)
 		stream.On("Context").Return(ctx)
 		stream.On("Send", mock.Anything).Return(nil)
 
@@ -48,7 +48,7 @@ func TestGrapherGraph(t *testing.T) {
 	})
 
 	t.Run("bad file", func(t *testing.T) {
-		stream := new(mocks.Grapher_GraphServer)
+		stream := new(mocks.GrapherGraphServer)
 		stream.On("Context").Return(ctx)
 		stream.On("Send", mock.Anything).Return(nil)
 
@@ -67,7 +67,7 @@ func TestGrapherGraph(t *testing.T) {
 	})
 
 	t.Run("stream error", func(t *testing.T) {
-		stream := new(mocks.Grapher_GraphServer)
+		stream := new(mocks.GrapherGraphServer)
 		stream.On("Context").Return(ctx)
 		stream.On("Send", mock.Anything).Return(errors.New("fake error"))
 
