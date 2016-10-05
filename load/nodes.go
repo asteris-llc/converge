@@ -160,6 +160,5 @@ func validateInnerNode(node *parse.Node) error {
 	case "case":
 		return errors.New("nested branches are not supported")
 	}
-	fmt.Println("inner node: kind = ", node.Kind())
 	return nil
 }
