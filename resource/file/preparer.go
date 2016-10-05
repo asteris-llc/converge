@@ -66,8 +66,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	fileTask := &File{
 		Destination: p.Destination,
 		Mode:        p.Mode,
-		State:       p.State,
-		Type:        p.Type,
+		State:       State(p.State),
+		Type:        Type(p.Type),
 		Target:      p.Target,
 		Force:       p.Force,
 		UserInfo:    &user.User{Username: p.User},

@@ -88,7 +88,7 @@ func TestPrepare(t *testing.T) {
 		}
 		_, err := p.Prepare(fakerenderer.New())
 		assert.NotNil(t, err)
-		assert.EqualError(t, err, fmt.Sprintf("type should be one of directory, file, hardlink, symlink, got %q", p.Type))
+		assert.EqualError(t, err, fmt.Sprintf("type should be one of %v, got %q", file.AllTypes, p.Type))
 	})
 
 	t.Run("badConfigState", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestPrepare(t *testing.T) {
 		}
 		_, err := p.Prepare(fakerenderer.New())
 		assert.NotNil(t, err)
-		assert.EqualError(t, err, fmt.Sprintf("state should be one of present, absent, got %q", p.State))
+		assert.EqualError(t, err, fmt.Sprintf("state should be one of %v, got %q", file.ValidStates, p.State))
 	})
 
 	t.Run("badConfigSymlink", func(t *testing.T) {
