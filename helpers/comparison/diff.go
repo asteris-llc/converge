@@ -15,11 +15,13 @@
 package comparsion
 
 import (
+	"testing"
+
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
+// AssertDiff makes sure that the relevant fields are set
 func AssertDiff(t *testing.T, diffs map[string]resource.Diff, name, original, current string) bool {
 	var ok bool
 
