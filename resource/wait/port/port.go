@@ -42,6 +42,9 @@ func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 			p.Status.AddMessage(fmt.Sprintf("Passed after %d retries (%v)", p.RetryCount, p.Duration))
 		}
 	} else {
+		// The desired state is that the port will be available after the apply. We
+		// also want to indicate that the port is not available in the plan output.
+		// Therefore, we set the status to StatusWillChange.
 		p.RaiseLevel(resource.StatusWillChange)
 		p.Status.AddMessage(fmt.Sprintf("Failed to connect to %s:%d: %s", p.Host, p.Port, err.Error()))
 		if p.RetryCount > 0 { // only add retry messages after an apply attempt
