@@ -26,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
+	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
 )
 
@@ -38,18 +39,20 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	if err != nil {
 		return nil, err
 	}
-	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+	rendered, err := g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
 		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
 		value, err := pipeline.Exec(meta.Value())
-
 		if err != nil {
 			return err
 		}
-
 		out.Add(meta.WithValue(value))
 		renderingPlant.Graph = out
 		return nil
 	})
+	if err != nil {
+		return rendered, err
+	}
+	return transform.ResolveConditionals(ctx, rendered)
 }
 
 type pipelineGen struct {
