@@ -32,22 +32,18 @@ docker.container "converge" {
   depends = ["docker.image.base-os"]
 }
 
-task.query "wait" {
-  query = "sleep 1"
-  depends = ["docker.container.converge"]
-}
-
-task.query "rpc-port" {
-  query = <<EOF
+wait.query "rpc-port" {
+  check = <<EOF
 docker inspect {{lookup `docker.container.converge.name`}} | jq '.[0].NetworkSettings.Ports["4774/tcp"][0].HostPort'
 EOF
-  depends = ["task.query.wait"]
+  interval = "1s"
+  max_retry = 10
+  grace_period = "1s"
 }
 
 task "tests" {
   check = "docker exec {{lookup `docker.container.converge.name`}} test -f /converge/samples/test.txt"
-  apply = "./converge apply /converge/samples/basic.hcl --log-level WARN --rpc-addr :{{lookup `task.query.rpc-port.status.stdout`}}"
-  depends = ["task.query.rpc-port"]
+  apply = "./converge apply /converge/samples/basic.hcl --log-level WARN --rpc-addr :{{lookup `wait.query.rpc-port.status.stdout`}}"
 }
 
 task "destroy-container" {
