@@ -1,7 +1,7 @@
 ---
 title: "file.mode"
 slug: "file-mode"
-date: "2016-09-27T18:19:08-05:00"
+date: "2016-10-04T13:01:49-05:00"
 menu:
   main:
     parent: resources
@@ -28,13 +28,13 @@ file.mode "render" {
 
 ## Parameters
 
-- `destination` (string)
+- `destination` (required string)
 
   Destination specifies which file will be modified by this resource. The
 file must exist on the system (for example, having been created with
 `file.content`.)
 
-- `mode` (base 8 uint32)
+- `mode` (required base 8 optional uint32)
 
   Mode is the mode of the file, specified in octal.
 
