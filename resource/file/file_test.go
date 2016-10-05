@@ -108,6 +108,7 @@ func TestCheckApply(t *testing.T) {
 
 }
 
+// TestDiffMode tests the permission diff engine
 func TestDiffMode(t *testing.T) {
 	dirMode := ModeType(0750, "directory")
 	symlinkMode := ModeType(0750, "symlink")
@@ -145,6 +146,7 @@ func TestDiffMode(t *testing.T) {
 	}
 }
 
+// TestDiffLink tesks the link diff engine
 func TestDiffLink(t *testing.T) {
 
 	tmpDir, err := ioutil.TempDir("", "converge-difflink")
@@ -187,7 +189,7 @@ func TestDiffLink(t *testing.T) {
 	}
 }
 
-// Ensure that GetFileInfo is poulating File structs with the correct information
+// TestFileInfo ensures that GetFileInfo is poulating File structs with the correct information
 func TestFileInfo(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "converge-file-info")
 	require.NoError(t, err)
