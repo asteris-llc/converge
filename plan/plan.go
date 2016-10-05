@@ -34,7 +34,6 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 
 // WithNotify is plan, but with a notification feature
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
-	fmt.Println("calling plan.WithNotify...")
 	var hasErrors error
 
 	renderingPlant, err := render.NewFactory(ctx, in)
@@ -50,13 +49,11 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 
 			val, pipelineErr := pipeline.Exec(meta.Value())
 			if pipelineErr != nil {
-				fmt.Printf("pipeline returned Right %v\n", val)
 				return pipelineErr
 			}
 
 			asResult, ok := val.(*Result)
 			if !ok {
-				fmt.Printf("expected *Result but got %T\n", val)
 				return fmt.Errorf("expected asResult but got %T", val)
 			}
 
