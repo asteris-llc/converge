@@ -178,7 +178,7 @@ func ComparePlatform(t *testing.T, expected Platform, platform Platform) {
 		t.Errorf("ParseLSBContent Build: wanted %q, got %q\n", expected.Build, platform.Build)
 	}
 
-	if reflect.DeepEqual(expected.LinuxLSBLike, platform.LinuxLSBLike) == false {
+	if !reflect.DeepEqual(expected.LinuxLSBLike, platform.LinuxLSBLike) {
 		t.Errorf("ParseLSBContent LinuxLSBLike wanted %q got %q\n", expected.LinuxLSBLike, platform.LinuxLSBLike)
 	}
 
