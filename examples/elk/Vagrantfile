@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-converge_version = "0.2.0"
+converge_version = "0.3.0"
 release_url = "https://github.com/asteris-llc/converge/releases/download/#{converge_version}/converge_#{converge_version}_linux_amd64.tar.gz"
 
 converge_script = <<SCRIPT
