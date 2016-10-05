@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
 )
 
@@ -40,6 +41,6 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve resources")
 	}
-	predicated, err := ResolveConditionals(ctx, resourced)
+	predicated, err := transform.ResolveConditionals(ctx, resourced)
 	return predicated, nil
 }
