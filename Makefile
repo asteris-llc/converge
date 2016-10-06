@@ -6,6 +6,7 @@ TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vend
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
 BENCH = .
+INTEGRATION_CMD = ./converge apply --local -p "converge-bin-dir=build/$(NAME)_$(VERSION)_linux_amd64"
 
 converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
 	go build -ldflags="-s -w" .
@@ -129,4 +130,23 @@ docs: docs_source/**/*
 	$(MAKE) -C docs_source
 	mv docs_source/public docs
 
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+integration: xcompile
+	@echo
+	@echo === quick integration test ===
+	$(INTEGRATION_CMD) testing/quick-integration.hcl
+	@ if [ -n "$$CVG_FULL_INTEGRATION" ];\
+		then echo "=== full integration test ==="; ./testing/full-integration.sh;\
+		else echo "=== Skipping full test ===";\
+		fi
+
+vagrant: Vagrantfile
+	@echo
+	@echo === vagrant test ===
+	cd testing
+	vagrant up --provision
+
+vagrant-clean:
+	cd testing
+	vagrant destroy --force
+
+.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check docker docker-clean vagrant vagrant-clean integration integration-clean
