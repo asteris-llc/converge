@@ -395,7 +395,7 @@ func GetFileInfo(f *File, fi os.FileInfo) error {
 
 	f.Type, err = FileType(fi)
 	if err != nil {
-		return errors.Wrapf(err, "error determining type of %s : %s", f.Destination)
+		return errors.Wrapf(err, "error determining type")
 	}
 
 	// set perms & higher bits for file type
@@ -409,18 +409,18 @@ func GetFileInfo(f *File, fi os.FileInfo) error {
 	if f.Type == TypeSymlink {
 		f.Target, err = os.Readlink(f.Destination)
 		if err != nil {
-			return errors.Wrapf(err, "error determining target of symlink %s : %s", f.Destination)
+			return errors.Wrapf(err, "error determining target of symlink")
 		}
 	}
 
 	f.UserInfo, err = UserInfo(fi)
 	if err != nil {
-		return errors.Wrapf(err, "error determining owner of %s : %s", f.Destination)
+		return errors.Wrapf(err, "error determining owner")
 	}
 
 	f.GroupInfo, err = GroupInfo(fi)
 	if err != nil {
-		return errors.Wrapf(err, "error determining group of %s : %s", f.Destination)
+		return errors.Wrapf(err, "error determining group")
 	}
 
 	return err
