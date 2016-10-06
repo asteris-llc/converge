@@ -61,7 +61,7 @@ func (p *Port) Apply() (resource.TaskStatus, error) {
 
 	_, err := p.RetryUntil(func() (bool, error) {
 		checkErr := p.CheckConnection()
-		return checkErr == nil, checkErr
+		return checkErr == nil, nil
 	})
 
 	return p, err

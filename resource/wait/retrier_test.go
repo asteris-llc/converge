@@ -15,6 +15,7 @@
 package wait_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -77,10 +78,27 @@ func TestRetryUntil(t *testing.T) {
 		assert.True(t, b)
 		assert.Equal(t, 2, r.RetryCount)
 	})
+
+	t.Run("break on error", func(t *testing.T) {
+		r := &wait.Retrier{
+			Interval: 100 * time.Millisecond,
+			MaxRetry: 3,
+		}
+		b, err := r.RetryUntil(func() (bool, error) {
+			if r.RetryCount == 2 {
+				return false, errors.New("error")
+			}
+			return false, nil
+		})
+		require.Error(t, err)
+		assert.False(t, b)
+		assert.Equal(t, 2, r.RetryCount)
+	})
 }
 
 // TestPrepareRetrier tests the generation of a Retrier from preparer values
 func TestPrepareRetrier(t *testing.T) {
+	defer logging.HideLogs(t)()
 	t.Parallel()
 
 	t.Run("sets max retries", func(t *testing.T) {
@@ -99,7 +117,6 @@ func TestPrepareRetrier(t *testing.T) {
 	})
 
 	t.Run("default interval", func(t *testing.T) {
-		defer logging.HideLogs(t)()
 		tests := []string{"", "0s", "0", "unparseable"}
 		for _, test := range tests {
 			r := wait.PrepareRetrier(test, "5s", 1)
@@ -113,7 +130,6 @@ func TestPrepareRetrier(t *testing.T) {
 	})
 
 	t.Run("default grace period", func(t *testing.T) {
-		defer logging.HideLogs(t)()
 		tests := []string{"", "0s", "0", "unparseable"}
 		for _, test := range tests {
 			r := wait.PrepareRetrier("5s", test, 1)

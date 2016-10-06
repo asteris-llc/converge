@@ -123,16 +123,11 @@ func TestPortApply(t *testing.T) {
 
 	t.Run("retried", func(t *testing.T) {
 		port, err := runApply(errFakeConnectionFailure)
-		assert.Error(t, err)
+		require.NoError(t, err)
 
 		t.Run("retry count", func(t *testing.T) {
 			assert.Equal(t, 3, port.RetryCount)
 		})
-	})
-
-	t.Run("error", func(t *testing.T) {
-		_, err := runApply(errFakeConnectionFailure)
-		assert.Error(t, err)
 	})
 }
 
