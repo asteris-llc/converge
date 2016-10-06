@@ -18,11 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/param"
 )
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
@@ -54,7 +56,11 @@ func (r *Renderer) Value() (value string, present bool) {
 // Render a string with text/template
 func (r *Renderer) Render(name, src string) (string, error) {
 	r.resolverErr = false
+
 	r.Language = r.Language.On("param", r.param)
+	r.Language = r.Language.On("paramList", r.paramList)
+	r.Language = r.Language.On("paramMap", r.paramMap)
+
 	r.Language = r.Language.On(extensions.RefFuncName, r.lookup)
 	out, err := r.Language.Render(r.DotValue, name, src)
 	if err != nil {
@@ -67,18 +73,74 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func (r *Renderer) param(name string) (string, error) {
-	val, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return "", err
+	}
 
-	if val == nil || !ok {
+	return fmt.Sprintf("%v", raw), nil
+}
+
+func (r *Renderer) paramList(name string) ([]string, error) {
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return nil, err
+	}
+
+	vals := reflect.ValueOf(raw)
+	if vals.Kind() != reflect.Slice {
+		return nil, fmt.Errorf("param is not a list, it is a %s (%s)", vals.Kind(), vals)
+	}
+
+	var out []string
+	for i := 0; i < vals.Len(); i++ {
+		val := vals.Index(i)
+		out = append(out, fmt.Sprintf("%v", val.Interface()))
+	}
+
+	return out, nil
+}
+
+func (r *Renderer) paramMap(name string) (map[string]interface{}, error) {
+	raw, err := r.paramRawValue(name)
+	if err != nil {
+		return nil, err
+	}
+
+	vals := reflect.ValueOf(raw)
+	if vals.Kind() != reflect.Map {
+		return nil, fmt.Errorf("param is not a map, it is a %s (%s)", vals.Kind(), vals)
+	}
+
+	out := map[string]interface{}{}
+	for _, key := range vals.MapKeys() {
+		k := fmt.Sprintf("%v", key)
+
+		out[k] = vals.MapIndex(key).Interface()
+	}
+
+	return out, nil
+}
+
+func (r *Renderer) paramRawValue(name string) (interface{}, error) {
+	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+
+	if task == nil || !ok {
 		return "", errors.New("param not found")
 	}
 
-	if _, ok := val.(*PrepareThunk); ok {
+	if _, ok := task.(*PrepareThunk); ok {
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
-	return fmt.Sprintf("%+v", val), nil
+	// grab the value
+	param, ok := task.(*param.Param)
+	if !ok {
+		return nil, fmt.Errorf("task it not a param, but a %T", task)
+	}
+
+	return param.Val, nil
 }
 
 func (r *Renderer) lookup(name string) (string, error) {

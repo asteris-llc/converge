@@ -1,6 +1,8 @@
-hash: e78ce8449b12d65358c2b5a7fd3fa8475a777b29173f0185845cd983b4d0a2d8
-updated: 2016-09-13T11:27:40.835135-05:00
+hash: 85723d1b10ceb062f2de3695ef836c8b99abb1954667482dd385075814a4bf11
+updated: 2016-09-30T08:17:44.603702069-05:00
 imports:
+- name: github.com/arbovm/levenshtein
+  version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
