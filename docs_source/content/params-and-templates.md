@@ -81,7 +81,7 @@ joining a list of strings is `{{paramList "x" | join "\n"}}`
 - **split** splits a string (second argument) at the instances of another string
   (first argument).
 
-- **join** joins a list of strings (second argument) using another string (first
+- **join** joins a list of anything (second argument) using a string (first
   argument)
 
 - **jsonify** returns the value as a JSON string
