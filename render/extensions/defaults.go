@@ -48,6 +48,7 @@ func DefaultSplit(sep, str string) []string {
 func DefaultJoin(sep string, src interface{}) (string, error) {
 	values := reflect.ValueOf(src)
 
+	// {{"some string" | join " "}}
 	if values.Kind() != reflect.Slice {
 		container := reflect.MakeSlice(reflect.SliceOf(values.Type()), 1, 1)
 		container.Index(0).Set(values)
