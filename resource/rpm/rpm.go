@@ -31,6 +31,17 @@ type Package struct {
 	State string
 }
 
+// State type for Package
+type State string
+
+const (
+	// StatePresent indicates the package should be present
+	StatePresent State = "present"
+
+	// StateAbsent indicates the package should be absent
+	StateAbsent State = "absent"
+)
+
 // Check if the package has to be 'installed', or 'absent'
 func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
@@ -41,19 +52,19 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 	currentPkgStatus := strings.TrimSpace(string(currentPkgStatusRaw))
 
-	if p.State == "installed" {
+	switch p.State {
+	case StatePresent:
 		if string(currentPkgStatus) != "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "installed", "")
 		} else {
 			status.AddMessage("Package is installed")
 		}
-	} else if p.State == "absent" {
+	case StateAbsent:
 		if string(currentPkgStatus) == "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "uninstalled", "")
 		} else {
 			status.AddMessage("Package is absent")
 		}
-	}
 
 	p.TaskStatus = status
 	return p, nil
@@ -63,7 +74,8 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 func (p *Package) Apply() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
-	if p.State == "installed" {
+	switch p.State {
+	case StatePresent:
 		currentPkgStatus, err := exec.Command("sh", "-c", "yum install -y "+p.Name).Output()
 
 		if err != nil {
@@ -72,7 +84,7 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 		status.AddMessage(fmt.Sprintf("Package %q installed", p.Name))
 		status.AddDifference(p.Name, "absent", "installed", "")
 
-	} else if p.State == "absent" {
+	case StateAbsent:
 		currentPkgStatus, err := exec.Command("sh", "-c", "yum remove -y "+p.Name).Output()
 
 		if err != nil {
@@ -80,8 +92,7 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 		}
 		status.AddMessage(fmt.Sprintf("Package %q removed", p.Name))
 		status.AddDifference(p.Name, "installed", "absent", "")
-	}
-
+		
 	p.TaskStatus = status
 
 	return p, nil

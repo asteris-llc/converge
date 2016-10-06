@@ -27,8 +27,19 @@ type Package struct {
 	resource.TaskStatus
 
 	Name  string
-	State string
+	State State
 }
+
+// State type for Package
+type State string
+
+const (
+	// StatePresent indicates the package should be present
+	StatePresent State = "present"
+
+	// StateAbsent indicates the package should be absent
+	StateAbsent State = "absent"
+)
 
 // Check if the package has to be 'installed', or 'absent'
 func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
@@ -40,13 +51,15 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 	currentPkgStatus := strings.TrimSpace(string(currentPkgStatusRaw))
 
-	if p.State == "installed" {
+	switch p.State {
+	case StatePresent:
 		if string(currentPkgStatus) == "(none)" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "installed", "")
 		} else {
 			status.AddMessage("Package is installed")
 		}
-	} else if p.State == "absent" {
+
+	case StateAbsent:
 		if string(currentPkgStatus) != "(none)" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "uninstalled", "")
 		} else {
@@ -62,20 +75,18 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 func (p *Package) Apply() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
-	if p.State == "installed" {
+	switch p.State {
+	case StatePresent:
 		aptStatus, err := exec.Command("sh", "-c", "apt-get install -y "+p.Name).Output()
 		if err != nil {
 			return status, errors.Wrapf(err, "installing package %s, what happened: %s", p.Name, aptStatus)
 		}
-
 		status.AddDifference(p.Name, "absent", "installed", "")
-
-	} else if p.State == "absent" {
+	case StateAbsent:
 		aptStatus, err := exec.Command("sh", "-c", "apt-get remove -y "+p.Name).Output()
 		if err != nil {
 			return status, errors.Wrapf(err, "removing package %s, what happened: %s", p.Name, aptStatus)
 		}
-
 		status.AddDifference(p.Name, "installed", "absent", "")
 	}
 
