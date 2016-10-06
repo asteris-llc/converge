@@ -1,7 +1,7 @@
 package vg_test
 
 import (
-	"github.com/asteris-llc/converge/helpers/comparsion"
+	"github.com/asteris-llc/converge/helpers/comparison"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource/lvm/testdata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
@@ -25,7 +25,7 @@ func TestCreateVolumeFromSingleDevice(t *testing.T) {
 	status, err := r.Check(fr)
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	comparsion.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
+	comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
 
 	status, err = r.Apply()
 	assert.NoError(t, err)
