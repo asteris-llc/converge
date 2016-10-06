@@ -63,3 +63,19 @@ func TestNodesSourceFile(t *testing.T) {
 		basicDeps,
 	)
 }
+
+func TestNodeWithConditionals(t *testing.T) {
+	defer logging.HideLogs(t)()
+	g, err := load.Nodes(context.Background(), "../samples/conditionalLanguages.hcl", false)
+	require.NoError(t, err)
+	assert.NotNil(t, g.Get("root/param.lang"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.spanish"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.french"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.japanese"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.default"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.spanish/file.content.foo-file"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.french/file.content.foo-file"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.japanese/file.content.foo-file"))
+	assert.NotNil(t, g.Get("root/macro.switch.test-switch/macro.case.default/file.content.foo-file"))
+}

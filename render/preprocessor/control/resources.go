@@ -55,11 +55,28 @@ func (s *SwitchTask) AppendCase(c *CaseTask) {
 	}
 }
 
+// Cases returns the embedded cases
 func (s *SwitchTask) Cases() []*CaseTask {
 	if s == nil {
 		return []*CaseTask{}
 	}
 	return s.cases
+}
+
+// SortCases ensures that the ordering of the cases slice mirrors the ordering
+// of the Branches slice.  Because branches is the canonical order of evaluation
+// based on the HCL file and cases may be appended to the list in an unknown
+// order due to non-deterministic map evaluation we need to re-sort the list.
+func (s *SwitchTask) SortCases() {
+	workingMap := map[string]*CaseTask{}
+	sorted := []*CaseTask{}
+	for _, c := range s.cases {
+		workingMap[c.Name] = c
+	}
+	for _, br := range s.Branches {
+		sorted = append(sorted, workingMap[br])
+	}
+	s.cases = sorted
 }
 
 // Check does stuff
@@ -70,6 +87,23 @@ func (s *SwitchTask) Check(resource.Renderer) (resource.TaskStatus, error) {
 // Apply does stuff
 func (s *SwitchTask) Apply() (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
+}
+
+func (s *SwitchTask) String() string {
+	var out string
+	if s == nil {
+		return "<nil>"
+	}
+	out += fmt.Sprintf("Switch: \n")
+	out += fmt.Sprintf("\tBranches: \n")
+	for _, br := range s.Branches {
+		out += fmt.Sprintf("\t\t%s\n", br)
+	}
+	out += fmt.Sprintf("\tCases: \n")
+	for _, c := range s.Cases() {
+		out += fmt.Sprintf("\t\t%s\n", helperIndent(c.String(), 1))
+	}
+	return out
 }
 
 // CasePreparer contains generated case macro information
@@ -99,6 +133,14 @@ type CaseTask struct {
 	Name      string
 	Status    *bool
 	parent    *SwitchTask
+}
+
+// IsDefault returns true if the case is a default statement
+func (c *CaseTask) IsDefault() bool {
+	if c == nil {
+		return false
+	}
+	return c.Name == keywords["default"]
 }
 
 // SetParent set's the parent of a case statement
@@ -170,6 +212,7 @@ func EvaluatePredicate(predicate string) (bool, error) {
 		template,
 	)
 	if err != nil {
+		fmt.Println("\treturned an error: ", err)
 		return false, errors.Wrap(err, "case evaluation failed")
 	}
 
@@ -192,6 +235,23 @@ func (c *CaseTask) Check(resource.Renderer) (resource.TaskStatus, error) {
 // Apply does stuff
 func (c *CaseTask) Apply() (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
+}
+
+func (c *CaseTask) String() string {
+	var out string
+	if nil == c {
+		return "<nil>"
+	}
+	out += fmt.Sprintf("Case: \n")
+	out += fmt.Sprintf("\tName: %s\n", c.Name)
+	out += fmt.Sprintf("\tPredicate: %s\n", c.Predicate)
+	if c.Status == nil {
+		out += fmt.Sprintf("\tStatus: unevaluated\n")
+	} else {
+		out += fmt.Sprintf("\tStatus: %v\n", *(c.Status))
+	}
+	out += fmt.Sprintf("\tParent: %p\n", c.GetParent())
+	return out
 }
 
 // ConditionalTask represents a task that may or may not be executed. It's
@@ -262,4 +322,12 @@ func (n *NopTask) Apply() (resource.TaskStatus, error) {
 func init() {
 	registry.Register("macro.switch", (*SwitchPreparer)(nil), (*SwitchTask)(nil))
 	registry.Register("macro.case", (*CasePreparer)(nil), (*CaseTask)(nil))
+}
+
+func helperIndent(s string, count int) string {
+	var tabs string
+	for idx := 0; idx < count; idx++ {
+		tabs += "\t"
+	}
+	return strings.NewReplacer("\n", "\n"+tabs).Replace(s)
 }

@@ -54,6 +54,7 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				out.Add(targetID, conditional)
 			}
 		}
+		switchNode.SortCases()
 		return nil
 	})
 }
