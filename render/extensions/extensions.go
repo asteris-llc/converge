@@ -200,9 +200,9 @@ func newStub(returnVal interface{}) func(...string) (interface{}, error) {
 }
 
 // RememberCalls is a utility function to instert calls into a list.
-// RememberCalls takes a pointer to a list of strings, and an argument
-// index.  It returns a variadic function that when called from gotemplate will
-// take the indexed argument and append it to the provided list.
+// RememberCalls takes a pointer to a list of strings, and a default. It returns
+// a variadic function that when called from gotemplate will take the indexed
+// argument and append it to the provided list.
 func RememberCalls(list *[]string, returnvalue interface{}) interface{} {
 	return func(params ...string) (interface{}, error) {
 		name := params[0]
