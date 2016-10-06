@@ -41,7 +41,7 @@ file "deepdir" {
   state       = "present"
 }
 
-# create parent dir using force 
+# create parent dir using force
 file "deepfile" {
   destination = "{{param `dir`}}/a/b/c/d/e/f/g/deep.txt"
   type        = "file"
