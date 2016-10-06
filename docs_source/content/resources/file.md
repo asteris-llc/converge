@@ -12,30 +12,43 @@ Manages files, file content, directories, hard and soft links.
 ## Example
 
 ```hcl
-param "filename" {
-  default = "test.txt"
+param "dir" {
+  default = "/tmp/converge"
 }
 
-file "content" {
-  destination = "{{param `filename`}}"
-  mode        = 0777
+file "dir" {
+  destination = "{{param `dir`}}"
+  type        = "directory"
   state       = "present"
-  content     = "managed by converge"
+}
+
+file "hello" {
+  destination = "{{param `dir`}}/hello.txt"
+  mode        = "0750"
+  depends     = ["file.dir"]
 }
 
 file "symlink" {
-  destination = "symlink"
-  target      = "{{param `filename`}}"
+  destination = "{{param `dir`}}/symlink"
+  target      = "{{lookup `file.hello.Destination`}}"
+  state       = "present"
+  type        = "symlink"
+}
+
+file "deepdir" {
+  destination = "{{param `dir`}}/a/b/c/d/e"
+  type        = "directory"
   state       = "present"
 }
 
-file "directory" {
-  type        = directory
-  destination = "dir"
-  mode        = 07555
+# create parent dir using force 
+file "deepfile" {
+  destination = "{{param `dir`}}/a/b/c/d/e/f/g/deep.txt"
+  type        = "file"
+  state       = "present"
+  content     = "converge test"
+  force       = "true"
 }
-
-
 ```
 
 ## Parameters
