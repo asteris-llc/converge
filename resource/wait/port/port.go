@@ -61,6 +61,9 @@ func (p *Port) Apply() (resource.TaskStatus, error) {
 
 	_, err := p.RetryUntil(func() (bool, error) {
 		checkErr := p.CheckConnection()
+		// CheckConnection returns an err if the connection fails but RetryUntil
+		// breaks on errors. So if we get an error, we just return false and
+		// otherwise ignore the error
 		return checkErr == nil, nil
 	})
 
