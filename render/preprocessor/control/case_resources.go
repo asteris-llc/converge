@@ -36,9 +36,8 @@ func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	c.Predicate = predicate
 	return &CaseTask{
-		Predicate: c.Predicate,
+		Predicate: predicate,
 		Name:      c.Name,
 	}, nil
 }
@@ -90,10 +89,10 @@ func (c *CaseTask) ShouldEvaluate() bool {
 // false with an error otherwise.
 func (c *CaseTask) IsTrue() (bool, error) {
 	if c == nil {
-		return false, nil
+		return false, errors.New("case is nil")
 	}
 	if c.parent == nil {
-		fmt.Println(c.Name, ": parent is nil")
+		return false, errors.New("parent is nil")
 	}
 	for _, otherCase := range c.parent.Cases() {
 		if otherCase == c {
@@ -129,7 +128,6 @@ func EvaluatePredicate(predicate string) (bool, error) {
 		template,
 	)
 	if err != nil {
-		fmt.Println("\treturned an error: ", err)
 		return false, errors.Wrap(err, "case evaluation failed")
 	}
 
