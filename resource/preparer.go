@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/arbovm/levenshtein"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -62,6 +64,10 @@ func (p *Preparer) Prepare(r Renderer) (Task, error) {
 		return nil, errors.New("Preparer can only wrap structs")
 	}
 
+	if err := p.validateExtra(typ); err != nil {
+		return nil, err
+	}
+
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		if field.Anonymous {
@@ -90,6 +96,47 @@ func (p *Preparer) Prepare(r Renderer) (Task, error) {
 	}
 
 	return resource.Prepare(r)
+}
+
+func (p *Preparer) validateExtra(typ reflect.Type) error {
+	if typ.Kind() != reflect.Struct {
+		return errors.New("can't validate extra on a non-struct type")
+	}
+
+	fieldNames := map[string]struct{}{}
+	for i := 0; i < typ.NumField(); i++ {
+		fieldNames[p.getFieldName(typ.Field(i))] = struct{}{}
+	}
+
+	// add special fields
+	fieldNames["depends"] = struct{}{}
+
+	var err error
+	for key := range p.Source {
+		if _, ok := fieldNames[key]; ok {
+			continue
+		}
+
+		// check for spelling errors. Deploy the Levenshtein distance algorithm!
+		var candidates []string
+		for candidate := range fieldNames {
+			if levenshtein.Distance(key, candidate) <= 5 {
+				candidates = append(candidates, candidate)
+			}
+		}
+
+		var msg string
+		if len(candidates) > 0 {
+			msg = " Maybe you meant: " + strings.Join(candidates, ", ")
+		}
+
+		err = multierror.Append(
+			err,
+			fmt.Errorf("I don't have a field named %q.%s", key, msg),
+		)
+	}
+
+	return err
 }
 
 // getValueForField retrieves and converts the value for a given field
@@ -438,7 +485,12 @@ func (p *Preparer) convertInterface(typ reflect.Type, r Renderer, name string, v
 		return reflect.Zero(typ), nil
 	}
 
-	return p.convertValue(reflect.TypeOf(val), r, name, val, base)
+	raw, err := p.convertValue(reflect.TypeOf(val), r, name, val, base)
+	if err != nil {
+		return raw, err
+	}
+
+	return p.maybeUnwrapMap(raw), nil
 }
 
 // convertMap properly converts and renders both keys and values
@@ -447,13 +499,7 @@ func (p *Preparer) convertMap(typ reflect.Type, r Renderer, name string, val int
 		return reflect.Zero(typ), nil
 	}
 
-	values := reflect.ValueOf(val)
-
-	// HCL does this annoying thing where it deserializes into lists by default.
-	// So our val might be a list with one map at index 0. Hooray!
-	if values.Kind() == reflect.Slice && values.Len() == 1 {
-		values = values.Index(0)
-	}
+	values := p.maybeUnwrapMap(reflect.ValueOf(val))
 
 	if values.Kind() != reflect.Map {
 		return reflect.Zero(typ), fmt.Errorf("expected map for %q, got %T", name, val)
@@ -489,6 +535,17 @@ func (p *Preparer) convertMap(typ reflect.Type, r Renderer, name string, val int
 	}
 
 	return acc, nil
+}
+
+func (p *Preparer) maybeUnwrapMap(val reflect.Value) reflect.Value {
+	typ := val.Type()
+	// HCL does this annoying thing where it deserializes into lists by default.
+	// So our val might be a list with one map at index 0. Hooray!
+	if typ.Kind() == reflect.Slice && val.Len() == 1 && typ.Elem().Kind() == reflect.Map {
+		val = val.Index(0)
+	}
+
+	return val
 }
 
 // convertSlice properly converts and renders all elements in a slice.

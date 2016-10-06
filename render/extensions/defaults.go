@@ -15,7 +15,10 @@
 package extensions
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -37,4 +40,44 @@ func DefaultEnv(env string) string {
 // works in a reasonable manner when dealing with piped input.
 func DefaultSplit(sep, str string) []string {
 	return strings.Split(str, sep)
+}
+
+// DefaultJoin provides a default implementation for the join function in text
+// templates. It operates by simply reversing the arguments to split so that it
+// works in a reasonable manner when dealing with piped output.
+func DefaultJoin(sep string, src interface{}) (string, error) {
+	values := reflect.ValueOf(src)
+
+	// {{"some string" | join " "}}
+	if values.Kind() != reflect.Slice {
+		container := reflect.MakeSlice(reflect.SliceOf(values.Type()), 1, 1)
+		container.Index(0).Set(values)
+		values = container
+	}
+
+	dest := make([]string, values.Len(), values.Cap())
+	for i := 0; i < values.Len(); i++ {
+		switch val := values.Index(i).Interface().(type) {
+		case string:
+			dest[i] = val
+
+		case fmt.Stringer:
+			dest[i] = val.String()
+
+		default:
+			dest[i] = fmt.Sprintf("%v", val)
+		}
+	}
+
+	return strings.Join(dest, sep), nil
+}
+
+// DefaultJsonify just marshals a value to string
+func DefaultJsonify(val interface{}) (string, error) {
+	out, err := json.Marshal(val)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out), nil
 }
