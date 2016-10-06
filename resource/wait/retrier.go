@@ -62,6 +62,9 @@ waitLoop:
 			after = r.Interval
 
 			ok, err = retryFunc()
+			if err != nil {
+				break waitLoop
+			}
 
 			if ok {
 				after = r.GracePeriod
