@@ -32,19 +32,9 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	state, err := render.Render("state", p.State)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Package{
-		Name:  name,
-		State: state,
+		Name:  p.Name,
+		State: p.State,
 	}, nil
 }
 
