@@ -19,18 +19,18 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// Preparer for Content
+// Preparer for RPM Package
 //
-// Content renders content to disk
+// RPM Package manages system packages
 type Preparer struct {
-	// Content is the file content. This will be rendered as a template.
-	Name string `hcl:"name"`
+	// Name of the system package to be managed.
+	Name string `hcl:"name" required:"true" `
 
-	// Destination is the location on disk where the content will be rendered.
-	State string `hcl:"state"`
+	// State defines desired system package state.
+	State State `hcl:"state" valid_values:"installed,absent" default:"installed"`
 }
 
-// Prepare a new task
+// Prepare a new packge
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	return &Package{
 		Name:  p.Name,
