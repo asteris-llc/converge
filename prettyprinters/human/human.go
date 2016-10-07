@@ -174,7 +174,7 @@ func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
 	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		return fmt.Sprintf("%q\t=>\t%q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
+		return fmt.Sprintf("%q\t%s\t%q", strings.TrimSpace(before), funcs["bold"].(func(string) string)("=>"), strings.TrimSpace(after)), nil
 	}
 
 	tmpl, err := p.template(`before:
