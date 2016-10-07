@@ -35,10 +35,16 @@ const RefFuncName string = "lookup"
 // for DSL validation.
 var languageKeywords = map[string]struct{}{
 	"env":       {},
-	"param":     {},
 	"split":     {},
+	"join":      {},
 	RefFuncName: {},
 	"platform":  {},
+	"jsonify":   {},
+
+	// functions for working with parameters
+	"param":     {},
+	"paramList": {},
+	"paramMap":  {},
 }
 
 // LanguageExtension is a type wrapper around a template.FuncMap to allow us to
@@ -73,8 +79,12 @@ func MakeLanguage() *LanguageExtension {
 func MinimalLanguage() *LanguageExtension {
 	language := MakeLanguage()
 	language.On("platform", newStub(&platform.Platform{}))
-	language.On("param", newStub(""))
 	language.On(RefFuncName, newStub(""))
+
+	// params
+	language.On("param", newStub(""))
+	language.On("paramList", newStub([]interface{}{}))
+	language.On("paramMap", newStub(map[string]interface{}{}))
 	return language
 }
 
@@ -86,9 +96,15 @@ func DefaultLanguage() *LanguageExtension {
 	language := MakeLanguage()
 	language.On("env", DefaultEnv)
 	language.On("split", DefaultSplit)
-	language.On("param", Unimplemented("param"))
+	language.On("join", DefaultJoin)
+	language.On("jsonify", DefaultJsonify)
 	language.On("platform", platform.DefaultPlatform)
 	language.On(RefFuncName, Unimplemented(RefFuncName))
+
+	// params
+	language.On("param", Unimplemented("param"))
+	language.On("paramList", Unimplemented("paramList"))
+	language.On("paramMap", Unimplemented("paramMap"))
 	language.Validate()
 	return language
 }
@@ -184,14 +200,14 @@ func newStub(returnVal interface{}) func(...string) (interface{}, error) {
 }
 
 // RememberCalls is a utility function to instert calls into a list.
-// RememberCalls takes a pointer to a list of strings, and an argument
-// index.  It returns a variadic function that when called from gotemplate will
-// take the indexed argument and append it to the provided list.
-func RememberCalls(list *[]string, nameIndex int) interface{} {
-	return func(params ...string) (string, error) {
+// RememberCalls takes a pointer to a list of strings, and a default. It returns
+// a variadic function that when called from gotemplate will take the indexed
+// argument and append it to the provided list.
+func RememberCalls(list *[]string, returnvalue interface{}) interface{} {
+	return func(params ...string) (interface{}, error) {
 		name := params[0]
 		*list = append(*list, name)
-		return name, nil
+		return returnvalue, nil
 	}
 }
 
@@ -199,6 +215,6 @@ func RememberCalls(list *[]string, nameIndex int) interface{} {
 // the keyword is unimplemented.
 func Unimplemented(name string) interface{} {
 	return func(params ...string) (string, error) {
-		return "", fmt.Errorf("%s is unimplimented in the current template language", name)
+		return "", fmt.Errorf("%s is unimplemented in the current template language", name)
 	}
 }

@@ -45,6 +45,22 @@ func TestPlanNoOp(t *testing.T) {
 	assert.Equal(t, task, result.Task)
 }
 
+// TestPlanNilAndError test for panics in plan/pipeline.go
+func TestPlanNilAndError(t *testing.T) {
+	g := graph.New()
+	task := faketask.NilAndError()
+	g.Add("root", task)
+
+	// test that running this results in an appropriate result
+	planned, err := plan.Plan(context.Background(), g)
+	assert.Error(t, err)
+
+	result := getResult(t, planned, "root")
+
+	assert.False(t, result.Status.HasChanges())
+	assert.Equal(t, task, result.Task)
+}
+
 func TestPlanErrorsBelow(t *testing.T) {
 	defer logging.HideLogs(t)()
 

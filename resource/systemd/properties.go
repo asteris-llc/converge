@@ -13,6 +13,16 @@ func CheckProperty(conn *dbus.Conn, unit string, propertyName string, wants []*d
 	if err != nil {
 		return nil, err
 	}
+
+	if len(wants) == 0 {
+		errMsg := fmt.Errorf("property %q of unit %q has no expected states", propertyName, unit)
+		return &resource.Status{
+			Level: resource.StatusFatal,
+			Output: []string{
+				errMsg.Error(),
+			},
+		}, errMsg
+	}
 	possibilities, rest := wants[0].Value.Value(), wants[1:]
 	found := prop.Value.Value() == possibilities
 	for i := range rest {

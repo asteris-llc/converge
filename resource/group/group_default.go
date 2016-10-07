@@ -23,26 +23,27 @@ import (
 // System implements SystemUtils
 type System struct{}
 
-// AddGroup
-// Implementation for systems which are not supported
+// AddGroup implementation for systems which are not supported
 func (s *System) AddGroup(groupName, groupID string) error {
 	return ErrUnsupported
 }
 
-// DelGroup
-// Implementation for systems which are not supported
+// DelGroup implementation for systems which are not supported
 func (s *System) DelGroup(groupName string) error {
 	return ErrUnsupported
 }
 
-// LookupGroup
-// Implementation for systems which are not supported
+// ModGroup implementation for systems which are not supported
+func (s *System) ModGroup(groupName string, options *ModGroupOptions) error {
+	return ErrUnsupported
+}
+
+// LookupGroup implementation for systems which are not supported
 func (s *System) LookupGroup(groupName string) (*user.Group, error) {
 	return nil, ErrUnsupported
 }
 
-// LookupGroupID
-// Implementation for systems which are not supported
+// LookupGroupID implementation for systems which are not supported
 func (s *System) LookupGroupID(groupID string) (*user.Group, error) {
 	return nil, ErrUnsupported
 }

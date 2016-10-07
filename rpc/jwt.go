@@ -116,6 +116,7 @@ func (j *JWTAuth) Verify(material string) error {
 	return nil
 }
 
+// Protect checks requests for a valid token
 func (j *JWTAuth) Protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var token string

@@ -35,7 +35,7 @@ func TestPreparerInterface(t *testing.T) {
 func TestVaildPreparer(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
-	prep := &unit.Preparer{Name: "systemd-journald.service", Active: "true", UnitFileState: "enabled"}
+	prep := &unit.Preparer{Name: "systemd-journald.service", Active: true, UnitFileState: "enabled"}
 	_, err := prep.Prepare(&fr)
 	assert.NoError(t, err)
 }

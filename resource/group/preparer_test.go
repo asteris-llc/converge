@@ -37,31 +37,49 @@ func TestPrepare(t *testing.T) {
 	t.Parallel()
 
 	fr := fakerenderer.FakeRenderer{}
+	var invalidGID = uint32(math.MaxUint32)
+	var maxGID = uint32(math.MaxUint32 - 1)
+	var minGID uint32
+	var testGID uint32 = 123
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("all parameters", func(t *testing.T) {
-			p := group.Preparer{GID: 123, Name: "test", State: group.StateAbsent}
+			p := group.Preparer{GID: &testGID, Name: "test", NewName: "test2", State: group.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("no new_name parameter", func(t *testing.T) {
+			p := group.Preparer{GID: &testGID, Name: "test", State: group.StatePresent}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no state parameter", func(t *testing.T) {
-			p := group.Preparer{GID: 123, Name: "test"}
+			p := group.Preparer{GID: &testGID, Name: "test", NewName: "test2"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no gid parameter", func(t *testing.T) {
-			p := group.Preparer{Name: "test"}
+			p := group.Preparer{Name: "test", NewName: "test2", State: group.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("min allowable gid", func(t *testing.T) {
+			p := group.Preparer{GID: &minGID, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("max allowable gid", func(t *testing.T) {
-			p := group.Preparer{GID: math.MaxUint32 - 1, Name: "test"}
+			p := group.Preparer{GID: &maxGID, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.NoError(t, err)
@@ -70,7 +88,7 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("invalid", func(t *testing.T) {
 		t.Run("gid out of range", func(t *testing.T) {
-			p := group.Preparer{GID: math.MaxUint32, Name: "test"}
+			p := group.Preparer{GID: &invalidGID, Name: "test"}
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("group \"gid\" parameter out of range"))

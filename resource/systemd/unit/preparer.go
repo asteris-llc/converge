@@ -28,10 +28,10 @@ type Preparer struct {
 	// The name of this unit as in `foo.service`
 	// (either just file names or full absolute paths if the unit files are
 	// residing outside the usual unit search paths
-	Name string `hcl:"name"`
+	Name string `hcl:"name" required:"true"`
 
 	// Active determines whether this unit should be in an active or inactive state
-	Active string `hcl:"active"`
+	Active bool `hcl:"active" required:"true"`
 
 	/* state is the `UnitFileState` of the unit.
 	`UnitFileState` encodes the install state of the unit file of FragmentPath.
@@ -53,7 +53,7 @@ type Preparer struct {
 
 	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
-	UnitFileState string `hcl:"state"`
+	UnitFileState string `hcl:"state" required="true" valid_values="enabled,enabled-runtime,linked,linked-runtime,masked,masked-runtime,disabled"`
 
 	/* Mode for the call to StartUnit()
 	StartUnit() enqeues a start job, and possibly depending jobs.
@@ -62,7 +62,7 @@ type Preparer struct {
 
 	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
-	StartMode string `hcl:"mode"`
+	StartMode string `hcl:"mode" required="false" valid_values="replace,fail,isolate,ignore-dependencies,ignore-requirements"`
 
 	// the amount of time the command will wait for configuration to load
 	// before halting forcefully. The
@@ -70,71 +70,38 @@ type Preparer struct {
 	// sequence of decimal numbers, each with optional fraction and a unit
 	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	// "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout string `hcl:"timeout" doc_type:"duration string"`
-
-	// The location of the original unit file.
-	Destination string `hcl:"destination"`
+	Timeout string `hcl:"timeout" doc_type:"duration string" required="false"`
 }
 
 //Prepare returns a new systemd.unit task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-	ufs, err := render.Render("state", p.UnitFileState)
-	if err != nil {
-		return nil, err
-	}
-	sm, err := render.Render("mode", p.StartMode)
-	if err != nil {
-		return nil, err
-	}
-	active, err := render.RenderBool("active", p.Active)
-	if err != nil {
-		active = true
-	}
-	timeout, err := render.Render("timeout", p.Timeout)
-	if err != nil {
-		return nil, err
-	}
 	var t time.Duration
-	if timeout == "" {
+	var err error
+	if p.Timeout == "" {
 		t = systemd.DefaultTimeout
 	} else {
-		t, err = time.ParseDuration(timeout)
+		t, err = time.ParseDuration(p.Timeout)
 		if err != nil {
 			return nil, err
 		}
 	}
 	// Handle Defaults
-	if ufs == "invalid" {
-		return nil, fmt.Errorf("task %q parameter cannot be %q", "UnitFileState", "invalid")
-	}
-	if sm == "" {
-		sm = string(systemd.SMReplace)
+	if p.StartMode == "" {
+		p.StartMode = string(systemd.SMReplace)
 	}
 
 	unit := &Unit{
-		Name:          name,
-		Active:        active,
-		UnitFileState: systemd.UnitFileState(ufs),
-		StartMode:     systemd.StartMode(sm),
+		Name:          p.Name,
+		Active:        p.Active,
+		UnitFileState: systemd.UnitFileState(p.UnitFileState),
+		StartMode:     systemd.StartMode(p.StartMode),
 		Timeout:       t,
 	}
 	if unit.Name == "" {
 		return unit, fmt.Errorf("task requires a %q parameter", "name")
 	}
-	if !systemd.IsValidUnitFileState(unit.UnitFileState) {
-		return unit, fmt.Errorf("invalid %q parameter. can be one of [%s]", "state", validUnitFileStates)
-	}
-	if !systemd.IsValidStartMode(unit.StartMode) {
-		return unit, fmt.Errorf("task's parameter %q is not one of %s, is %q", "mode", systemd.ValidStartModes, unit.StartMode)
-	}
 	return unit, nil
 }
-
-var validUnitFileStates = systemd.UnitFileStates{systemd.UFSEnabled, systemd.UFSEnabledRuntime, systemd.UFSLinked, systemd.UFSLinkedRuntime, systemd.UFSMasked, systemd.UFSMaskedRuntime, systemd.UFSDisabled}
 
 func init() {
 	registry.Register("systemd.unit", (*Preparer)(nil), (*Unit)(nil))

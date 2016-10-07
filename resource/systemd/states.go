@@ -162,7 +162,17 @@ func (state UnitFileState) IsMaskedState() bool {
 }
 
 // ValidUnitFileStates are states that a user can make a unit take
-var ValidUnitFileStates = UnitFileStates{UFSEnabled, UFSEnabledRuntime, UFSLinked, UFSLinkedRuntime, UFSMasked, UFSMaskedRuntime, UFSStatic, UFSDisabled, UFSInvalid}
+var ValidUnitFileStates = UnitFileStates{
+	UFSEnabled,
+	UFSEnabledRuntime,
+	UFSLinked,
+	UFSLinkedRuntime,
+	UFSMasked,
+	UFSMaskedRuntime,
+	UFSStatic,
+	UFSDisabled,
+	UFSInvalid,
+}
 
 // Contains checks if in a list of `UnitFileState`s one state is the given
 func (states UnitFileStates) Contains(s UnitFileState) bool {

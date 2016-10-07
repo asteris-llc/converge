@@ -67,10 +67,12 @@ func TestPreparerProvided(t *testing.T) {
 func TestPreparerRequired(t *testing.T) {
 	t.Parallel()
 
+	name := "required-param"
+	id := fmt.Sprintf("root/module.nested/param.%s", name)
 	prep := new(param.Preparer)
-	_, err := prep.Prepare(fakerenderer.New())
+	_, err := prep.Prepare(fakerenderer.NewWithID(id))
 
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "param is required")
+		assert.EqualError(t, err, fmt.Sprintf("%s param is required", name))
 	}
 }

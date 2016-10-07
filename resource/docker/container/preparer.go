@@ -120,6 +120,12 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func validateContainer(container *Container) error {
+	if container.Name == "" {
+		return errors.New("name must be provided")
+	}
+	if container.Image == "" {
+		return errors.New("image must be provided")
+	}
 	if container.CStatus != "" {
 		if !strings.EqualFold(container.CStatus, containerStatusRunning) &&
 			!strings.EqualFold(container.CStatus, containerStatusCreated) {

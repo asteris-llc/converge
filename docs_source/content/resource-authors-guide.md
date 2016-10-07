@@ -86,6 +86,20 @@ these rules:
 1. Otherwise, if there are any diffs which say that they contain a difference,
    the Status will always show as having changes.
 
+### Dealing with Errors
+
+The default `Status` implementation has a `SetError(error)` method. When called,
+it sets an appropriate error level and an internal error state that will be
+presented to the user. You can also use the common Go patterm of returning `nil,
+err` in your `Check` and `Apply` statements. Converge will call `SetError(err)`
+automatically in this case. This gives you two options:
+
+1. call `SetError` yourself.
+1. return an error, which will be handled for you.
+
+You shoud choose *one* of these options and do it consistently across as much of
+your code as possible.
+
 ## Preparer
 
 Before you can use your resource, it has to be deserialized from HCL. For this,

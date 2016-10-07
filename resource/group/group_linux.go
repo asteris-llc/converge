@@ -49,6 +49,23 @@ func (s *System) DelGroup(groupName string) error {
 	return nil
 }
 
+// ModGroup modifies a group
+func (s *System) ModGroup(groupName string, options *ModGroupOptions) error {
+	args := []string{groupName}
+	if options.GID != "" {
+		args = append(args, "-g", options.GID)
+	}
+	if options.NewName != "" {
+		args = append(args, "-n", options.NewName)
+	}
+	cmd := exec.Command("groupmod", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("groupmod: %s", err)
+	}
+	return nil
+}
+
 // LookupGroup looks up a group by name
 // If the group cannot be found an error is returned
 func (s *System) LookupGroup(groupName string) (*user.Group, error) {

@@ -35,6 +35,7 @@ func ApplyDaemonReload() error {
 	if err != nil {
 		return err
 	}
+	defer conn.Return()
 	err = conn.Connection.Reload()
 	return err
 }
@@ -46,6 +47,7 @@ func CheckResetFailed(unit string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer conn.Return()
 	prop, err := conn.Connection.GetUnitProperty(unit, "ActiveState")
 	if err != nil {
 		return false, err
@@ -60,6 +62,7 @@ func ApplyResetFailed(unit string) error {
 	if err != nil {
 		return err
 	}
+	defer conn.Return()
 	err = conn.Connection.ResetFailedUnit(unit)
 	return err
 }
