@@ -15,6 +15,7 @@
 package apt
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -55,6 +56,7 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	case StatePresent:
 		if string(currentPkgStatus) == "(none)" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "installed", "")
+			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("Package is installed")
 		}
@@ -62,6 +64,7 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	case StateAbsent:
 		if string(currentPkgStatus) != "(none)" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "uninstalled", "")
+			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("Package is absent")
 		}
@@ -81,16 +84,17 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 		if err != nil {
 			return status, errors.Wrapf(err, "installing package %s, what happened: %s", p.Name, aptStatus)
 		}
+		status.AddMessage(fmt.Sprintf("Package %q installed", p.Name))
 		status.AddDifference(p.Name, "absent", "installed", "")
 	case StateAbsent:
 		aptStatus, err := exec.Command("sh", "-c", "apt-get remove -y "+p.Name).Output()
 		if err != nil {
 			return status, errors.Wrapf(err, "removing package %s, what happened: %s", p.Name, aptStatus)
 		}
+		status.AddMessage(fmt.Sprintf("Package %q removed", p.Name))
 		status.AddDifference(p.Name, "installed", "absent", "")
 	}
 
 	p.TaskStatus = status
-
 	return p, nil
 }

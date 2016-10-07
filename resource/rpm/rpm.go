@@ -28,7 +28,7 @@ type Package struct {
 	resource.TaskStatus
 
 	Name  string
-	State string
+	State State
 }
 
 // State type for Package
@@ -56,15 +56,18 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	case StatePresent:
 		if string(currentPkgStatus) != "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "installed", "")
+			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("Package is installed")
 		}
 	case StateAbsent:
 		if string(currentPkgStatus) == "installed" {
 			status.AddDifference(p.Name, string(currentPkgStatus), "uninstalled", "")
+			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("Package is absent")
 		}
+	}
 
 	p.TaskStatus = status
 	return p, nil
@@ -92,8 +95,8 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 		}
 		status.AddMessage(fmt.Sprintf("Package %q removed", p.Name))
 		status.AddDifference(p.Name, "installed", "absent", "")
-		
-	p.TaskStatus = status
+	}
 
+	p.TaskStatus = status
 	return p, nil
 }
