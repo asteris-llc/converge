@@ -24,8 +24,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestPrepare tests that CasePreparer works as expected
 func TestPrepare(t *testing.T) {
-
 	t.Run("sets the predicate", func(t *testing.T) {
 		mockRenderer := &MockRenderer{}
 		mockRenderer.On("Render", any, any).Return("predicate1", nil)
@@ -49,6 +49,8 @@ func TestPrepare(t *testing.T) {
 	})
 }
 
+// TestIsDefault ensures that we correctly understand when we are the default
+// case.
 func TestIsDefault(t *testing.T) {
 	c := &control.CaseTask{}
 	t.Run("when nil", func(t *testing.T) {
@@ -65,6 +67,8 @@ func TestIsDefault(t *testing.T) {
 	})
 }
 
+// TestSetGetParent ensures that setting and getting the parent switch task
+// works as expected.
 func TestSetGetParent(t *testing.T) {
 	parent := &control.SwitchTask{}
 	c := &control.CaseTask{}
@@ -72,6 +76,8 @@ func TestSetGetParent(t *testing.T) {
 	assert.Equal(t, parent, c.GetParent())
 }
 
+// TestShouldEvaluate ensures that we correctly understand when to evaluate and
+// when to avoid evaluation.
 func TestShouldEvaluate(t *testing.T) {
 	trueCase := &control.CaseTask{Name: "trueCase", Predicate: "true"}
 	falseCase := &control.CaseTask{Name: "false", Predicate: "false"}
@@ -100,6 +106,7 @@ func TestShouldEvaluate(t *testing.T) {
 	})
 }
 
+// TestIsTrue ensures that truth is correctly reported for predicates
 func TestIsTrue(t *testing.T) {
 	t.Run("when case is nil", func(t *testing.T) {
 		var c *control.CaseTask
@@ -169,6 +176,7 @@ func TestIsTrue(t *testing.T) {
 	})
 }
 
+// TestEvaluatePredicate tests predicate evaluation
 func TestEvaluatePredicate(t *testing.T) {
 	t.Run("returns an error when invalid predicate", func(t *testing.T) {
 		truth, err := control.EvaluatePredicate("foo | bar")
@@ -197,6 +205,7 @@ func TestEvaluatePredicate(t *testing.T) {
 	})
 }
 
+// TestCheck provides basic assurances about the operation of check
 func TestCheck(t *testing.T) {
 	c := &control.CaseTask{}
 	stat, err := c.Check(fakerenderer.New())
@@ -204,6 +213,7 @@ func TestCheck(t *testing.T) {
 	assert.Equal(t, &resource.Status{}, stat)
 }
 
+// TestApply provides basic assurances about the operation of apply
 func TestApply(t *testing.T) {
 	c := &control.CaseTask{}
 	stat, err := c.Apply()

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestExecutionController ensures that execution controllers are respected
 func TestExecutionController(t *testing.T) {
 	mockTask := newMockTask(&resource.Status{}, errors.New("error1"))
 	c := &control.ConditionalTask{
