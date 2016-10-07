@@ -208,6 +208,113 @@ will walk over them as nodes.
 {{< figure src="/images/getting-started/hello-you.png"
            caption="Our graph, but with our original module as a dependent module." >}}
 
+## Conditional Evaluation
+
+Converge supports the ability to conditionally execute a set of actions
+depending on the value of expressions that are evaluated at runtime.  This
+allows you to create a single converge file that will operate differently
+depending on parameters passed to coverge at execution time, information present
+about the system during run time, or the status of other processes that have
+executed.  If you are already familiar with `switch` statements from other
+languages you may wish to skip ahead to the section on *Rules of Conditionals*
+
+To understand how this works, let's consider the following example:  You wish to
+create a file, `greeting.txt` that contains a greeting like `hello`, however you
+want to be aware of the users preferred language so you would like to ensure
+that the content of the greeting file is in an appropriate language.  Let's look
+at an example, `helloLanguages.hcl`:
+
+```hcl
+param "lang" {
+  default = ""
+}
+switch "test-switch" {
+  case "eq `spanish` `{{param `lang`}}`" "spanish" {
+    file.content "foo-file" {
+      destination = "greeting.txt"
+      content     = "hola\n"
+    }
+  }
+  case "eq `french` `{{param `lang`}}`" "french" {
+    file.content "foo-file" {
+      destination = "greeting.txt"
+      content     = "salut\n"
+    }
+  }
+  case "eq `japanese` `{{param `lang`}}`" "japanese" {
+    file.content "foo-file" {
+      destination = "greeting.txt"
+      content     = "もしもし\n"
+    }
+  }
+  default {
+    file.content "foo-file" {
+      destination = "greeting.txt"
+      content     = "hello\n"
+    }
+  }
+}
+```
+
+Here we define a *conditional* clause using the keyword `switch`, which contains
+several *branches*, defined with they keyword `case`.  Each *branch* contains
+one or more *child* resources that define what should happen when the *branch*
+is executed.
+
+Let's graph this file and get an idea of how it looks:
+
+`converge graph --local helloLanguages.hcl | dot -Tpng -o hello-languages.png`
+
+{{< figure src="/images/getting-started/hello-languages.png"
+           caption="A graph displaying many possible branches." >}}
+
+We can see that our `switch` and `case` statements are each transformed into
+*macro expressions* in the graph, denoted by their names.  Each of these nodes
+represent a potential runnable action on the system.  The determination of what,
+if any, of these actions will be run is dependent on the results of branch
+evaluation.
+
+*Branch evaluation* refers to the process of evaluating a *predicate* to
+determine whether a branch may be run, and if so looking at the other branches
+to determine whether the current branch has priority.  Branches are evaluated
+top-to-bottom and the first branch that is true will be the one that is
+executed.  The special branch `default` is one whose predicate will always
+evaluate to `true`.
+
+{{< note title="Fall-Through" >}}
+If you're familiar with `switch` statments in other languages you should keep in
+mind that converge branches do not support fall-through.  You do not need to
+specify `break` to end a `case` statement, and there is no supported way of
+evaluating multiple branches in a single `switch` statement. The first
+(top-to-bottom) `case` with a true `predicate` is the one that is evalauted.
+{{< /note >}}
+
+*predicate*s are evaluated like other templates in converge, and may reference
+`param`s, and perform `lookup`s on other values in the system.  A *predicate*
+may not reference any of it's *child* resourceses.  The value of the predicate
+is it's truth value:  The strings `t` and `true` (case insensitive) are `true`
+values and will cause the *branch* to be evaluated.  The strings `f` and `false`
+(case insensitive) will cause the *branch* to remain unevaluated.  Any other
+value is an error.
+
+### Rules of Conditionals
+
+  * `switch` statements must have a name
+  * `case` statements must have a name and a predicate
+  * `case` statements may not be named *case*, *switch*, or *default*
+  * `default` statements must not have a name or a predicate
+  * predicates must evaluate to one of: *t*, *true*, *f*, *false*
+  * branches may not contain `module` references
+  * predicates may reference `param`s and `lookup` resources outside of the
+    switch statement
+  * child nodes may refrence `param`s and `lookup` resources outside of the
+    switch statement or within the same branch
+  * no resource may reference anything that is part of a branch that it does not
+    belong to
+  * root and module level resources may not reference fields inside of a switch
+    statement
+  * only the first (top-to-bottom) true branch of a switch will be evaluated
+
 ## What's Next?
 
 A great next step is to try and make something simple with Converge! Try
