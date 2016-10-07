@@ -30,6 +30,11 @@ type MockRenderer struct {
 	mock.Mock
 }
 
+func (m *MockRenderer) GetID() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // Value is a mock value
 func (m *MockRenderer) Value() (string, bool) {
 	args := m.Called()
