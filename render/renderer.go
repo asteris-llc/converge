@@ -152,7 +152,7 @@ func (r *Renderer) paramRawValue(name string) (interface{}, error) {
 		return "", errors.New("param not found")
 	}
 
-	if _, ok := task.(*PrepareThunk); ok {
+	if _, ok = task.(*PrepareThunk); ok {
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}

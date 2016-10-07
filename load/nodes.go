@@ -73,9 +73,9 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 			signatureURL := url + ".asc"
 
 			logger.WithField("signatureUrl", signatureURL).Debug("fetching")
-			signature, err := fetch.Any(ctx, signatureURL)
-			if err != nil {
-				return nil, errors.Wrap(err, signatureURL)
+			signature, sigErr := fetch.Any(ctx, signatureURL)
+			if sigErr != nil {
+				return nil, errors.Wrap(sigErr, signatureURL)
 			}
 
 			err = keystore.Default().CheckSignature(bytes.NewBuffer(content), bytes.NewBuffer(signature))
