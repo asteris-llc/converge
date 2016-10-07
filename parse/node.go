@@ -43,8 +43,6 @@ func NewNode(item *ast.ObjectItem) *Node {
 
 // Validate this node
 func (n *Node) Validate() error {
-	// TODO: Refactor validation code to switch on key type then do validation
-	// instead of the other way around now that we have so many exceptions.
 	if n == nil {
 		return errors.New("node is empty, check for bad input")
 	}

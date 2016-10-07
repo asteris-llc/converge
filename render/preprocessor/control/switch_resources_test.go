@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestAppendCase ensures that cases are properly appended to switches
 func TestAppendCase(t *testing.T) {
 	s := &control.SwitchTask{}
 	assert.Equal(t, 0, len(s.Cases()))
@@ -28,6 +29,7 @@ func TestAppendCase(t *testing.T) {
 	assert.Equal(t, 1, len(s.Cases()))
 }
 
+// TestSortCases ensures that cases are sorted by Branch order
 func TestSortCases(t *testing.T) {
 	case1 := &control.CaseTask{Name: "a"}
 	case2 := &control.CaseTask{Name: "b"}

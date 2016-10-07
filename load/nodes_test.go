@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestNodesBasic tests loading basic.hcl
 func TestNodesBasic(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -33,6 +34,7 @@ func TestNodesBasic(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestNodesSourceFile tests loading from a source file
 func TestNodesSourceFile(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -64,6 +66,7 @@ func TestNodesSourceFile(t *testing.T) {
 	)
 }
 
+// TestNodeWithConditionals tests loading when switch statements are present
 func TestNodeWithConditionals(t *testing.T) {
 	defer logging.HideLogs(t)()
 	g, err := load.Nodes(context.Background(), "../samples/conditionalLanguages.hcl", false)
