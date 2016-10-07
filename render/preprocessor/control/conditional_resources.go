@@ -38,16 +38,6 @@ func (c *ConditionalTask) SetExecutionController(ctrl EvaluationController) {
 	c.controller = ctrl
 }
 
-// GetTask will return the task if it should be evaluated, and a nop-task
-// otherwise.  The nop task will embed the original task so fields will still be
-// resolvable.
-func (c *ConditionalTask) GetTask() (resource.Task, bool) {
-	if c.controller.ShouldEvaluate() {
-		return c.Task, true
-	}
-	return &NopTask{c.Task}, true
-}
-
 // Apply will conditionally apply a task
 func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
 	if c.controller.ShouldEvaluate() {
@@ -65,21 +55,4 @@ func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error
 		return c.Task.Check(r)
 	}
 	return &resource.Status{}, nil
-}
-
-// NopTask is a task with accessible fields that will never execute
-type NopTask struct {
-	resource.Task
-}
-
-// Check is a NOP
-func (n *NopTask) Check(resource.Renderer) (resource.TaskStatus, error) {
-	msg := "Check: pruned branch not executing task"
-	return &resource.Status{Output: []string{msg}}, nil
-}
-
-// Apply is a NOP
-func (n *NopTask) Apply() (resource.TaskStatus, error) {
-	msg := "Apply: pruned branch not executing task"
-	return &resource.Status{Output: []string{msg}}, nil
 }

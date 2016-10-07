@@ -21,11 +21,8 @@ import (
 	"github.com/asteris-llc/converge/render/preprocessor/control"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-var any = mock.Anything
 
 func TestPrepare(t *testing.T) {
 
