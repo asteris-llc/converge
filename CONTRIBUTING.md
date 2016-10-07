@@ -55,12 +55,29 @@ often much easier to reason about than describing a problem and solution.
 
 That said, we have a number of bars for any contribution to clear:
 
-- It must pass the entire test suite and linting (including gofmt)
+- Your source code must be gofmt'd
+- It must pass integration testing (see below)
 - If it introduces a new feature or changes an existing feature, that feature
   must be documented (how else will people find out about your awesome work?)
 - It can't change existing syntax except in extremely well-reasoned cases. If
   you're changing the syntax of existing features, definitely open an issue
   first so we can discuss.
+
+### Automated Testing
+
+We want to make sure that Converge is solid software, so to do that, we have
+various flavors of automated tests, and they are all encoded in our `Makefile`.
+Here are the ones that you should use when adding features:
+
+- `make test`: Unit tests. This includes `go test`, blackbox testing, and even
+   testing and formatting each converge file in `samples`
+- `make lint`: Lint and vet go code
+- `make bench`: Benchmark tests. Use this for analyzing performance
+- `make integration`: Integration tests. There are two varieties here:
+    - quick integration: This runs docker containers with the cross-compiled
+      ELF binary as Converge servers and sends commands via gRPC
+    - full integration: This activates only when you have
+      `CVG_FULL_INTEGRATION` set in your environment, but it's currently a NOP
 
 #### Documentation
 
