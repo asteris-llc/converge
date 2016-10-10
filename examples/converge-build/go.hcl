@@ -13,7 +13,7 @@ file.content "go-sha256" {
 }
 
 wait.query "curl-check" {
-  check        = "curl --version"
+  check        = "curl -s https://github.com 2>&1 > /dev/null"
   interval     = "2s"
   max_retry    = 60
   grace_period = "3s"
@@ -32,7 +32,7 @@ task "go-dl" {
   check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
   apply       = "curl -L -o /tmp/go{{param `go-version`}}.linux-amd64.tar.gz  https://storage.googleapis.com/golang/go{{param `go-version`}}.linux-amd64.tar.gz"
   dir         = "/tmp"
-  depends     = ["wait.query.curl-check","file.content.go-sha256"]
+  depends     = ["wait.query.curl-check", "file.content.go-sha256"]
   interpreter = "/bin/bash"
 }
 
