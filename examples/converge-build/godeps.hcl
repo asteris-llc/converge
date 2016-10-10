@@ -20,7 +20,7 @@ wait.query "go-installed" {
 
 wait.query "git-installed" {
   check        = "git version"
-  interval     = "2s"
+  interval     = "3s"
   max_retry    = 60
   grace_period = "3s"
   interpreter  = "/bin/bash"
