@@ -13,7 +13,15 @@ file.content "go-sha256" {
 }
 
 wait.query "curl-check" {
-  check        = "which curl"
+  check        = "curl --version"
+  interval     = "2s"
+  max_retry    = 60
+  grace_period = "3s"
+  interpreter  = "/bin/bash"
+}
+
+wait.query "tar-check" {
+  check        = "tar --version"
   interval     = "2s"
   max_retry    = 60
   grace_period = "3s"
@@ -32,13 +40,13 @@ task "go-checksum" {
   check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
   apply       = "echo checksum failed"
   dir         = "/tmp"
-  depends     = ["file.content.go-sha256", "task.go-dl"]
+  depends     = ["wait.query.tar-check", "file.content.go-sha256", "task.go-dl"]
   interpreter = "/bin/bash"
 }
 
 task "go-extract" {
   check       = "[[ -d /usr/local/go ]]"
-  apply       = "tar -xvzf /tmp/go{{param `go-version`}}.linux-amd64.tar.gz 2>&1 > /dev/null"
+  apply       = "tar -xvzf /tmp/go{{param `go-version`}}.linux-amd64.tar.gz 2>&1 >/dev/null"
   dir         = "/usr/local"
   depends     = ["task.go-checksum"]
   interpreter = "/bin/bash"

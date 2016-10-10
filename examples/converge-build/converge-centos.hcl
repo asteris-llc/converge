@@ -16,7 +16,7 @@ param "protoc-version" {
 
 module "centos/pkg.hcl" "deps" {
   params {
-    name = "gcc git which sudo unzip"
+    name = "gcc git which sudo tar unzip"
   }
 }
 
