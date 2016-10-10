@@ -3,8 +3,8 @@ param "protoc-version" {
 }
 
 wait.query "curl-check" {
-  check        = "curl --version"
-  interval     = "1s"
+  check        = "curl -s https://github.com 2>&1 > /dev/null"
+  interval     = "2s"
   max_retry    = 60
   grace_period = "3s"
   interpreter  = "/bin/bash"
