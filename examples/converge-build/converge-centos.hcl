@@ -11,44 +11,30 @@ param "go-sha256sum" {
 }
 
 param "protoc-version" {
-     default = "3.0.0"
+  default = "3.0.0"
 }
 
-
-module "centos/pkg.hcl" "git" {
-   params {
-      name = "git"
-   }
-}
-
-module "centos/pkg.hcl" "gcc" {
-   params {
-      name = "gcc"
-   }
-}
-
-module "centos/pkg.hcl" "unzip" {
-   params {
-      name = "unzip"
-   }
+module "centos/pkg.hcl" "deps" {
+  params {
+    name = "gcc git which sudo unzip"
+  }
 }
 
 module "go.hcl" "go" {
-   params {
-      go-version = "{{param `go-version`}}"
-      go-sha256sum = "{{param `go-sha256sum`}}"
-   }
+  params {
+    go-version   = "{{param `go-version`}}"
+    go-sha256sum = "{{param `go-sha256sum`}}"
+  }
 }
 
 module "godeps.hcl" "godeps" {
-   params {
-     gopath = "{{param `gopath`}}" 
-   } 
+  params {
+    gopath = "{{param `gopath`}}"
+  }
 }
 
 module "protoc.hcl" "protoc" {
-   params { 
-     protoc-version = "{{param `protoc-version`}}"
-   }
+  params {
+    protoc-version = "{{param `protoc-version`}}"
+  }
 }
-

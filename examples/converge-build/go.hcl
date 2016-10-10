@@ -12,25 +12,36 @@ file.content "go-sha256" {
   content     = "{{param `go-sha256sum`}} go{{param `go-version`}}-sha256sum.txt"
 }
 
+wait.query "curl-check" {
+  check        = "which curl"
+  interval     = "2s"
+  max_retry    = 60
+  grace_period = "3s"
+  interpreter  = "/bin/bash"
+}
+
 task "go-dl" {
-  check   = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
-  apply   = "curl -L -o /tmp/go{{param `go-version`}}.linux-amd64.tar.gz  https://storage.googleapis.com/golang/go{{param `go-version`}}.linux-amd64.tar.gz"
-  dir     = "/tmp"
-  depends = ["file.content.go-sha256"]
+  check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
+  apply       = "curl -L -o /tmp/go{{param `go-version`}}.linux-amd64.tar.gz  https://storage.googleapis.com/golang/go{{param `go-version`}}.linux-amd64.tar.gz"
+  dir         = "/tmp"
+  depends     = ["wait.query.curl-check","file.content.go-sha256"]
+  interpreter = "/bin/bash"
 }
 
 task "go-checksum" {
-  check   = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
-  apply   = "echo checksum failed"
-  dir     = "/tmp"
-  depends = ["file.content.go-sha256", "task.go-dl"]
+  check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
+  apply       = "echo checksum failed"
+  dir         = "/tmp"
+  depends     = ["file.content.go-sha256", "task.go-dl"]
+  interpreter = "/bin/bash"
 }
 
 task "go-extract" {
-  check   = "[[ -d /usr/local/go ]]"
-  apply   = "sudo tar -xvzf /tmp/go{{param `go-version`}}.linux-amd64.tar.gz"
-  dir     = "/usr/local"
-  depends = ["task.go-checksum"]
+  check       = "[[ -d /usr/local/go ]]"
+  apply       = "tar -xvzf /tmp/go{{param `go-version`}}.linux-amd64.tar.gz 2>&1 > /dev/null"
+  dir         = "/usr/local"
+  depends     = ["task.go-checksum"]
+  interpreter = "/bin/bash"
 }
 
 file "go-symlink" {
