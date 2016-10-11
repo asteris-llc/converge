@@ -15,6 +15,7 @@
 package file
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -106,6 +107,58 @@ func TestCheckApply(t *testing.T) {
 	runner(t, "modify", modify)
 	runner(t, "delete", delete)
 
+}
+
+// TestCheckErors looks for errors
+func TestCheckApplyErrors(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "converge-file-check-errors")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	var create = []struct {
+		f   File
+		err error
+	}{
+		{File{Destination: filepath.Join(tmpDir, "file-change-type-no-force"), Type: "file", State: "present"}, nil},
+		{File{Destination: filepath.Join(tmpDir, "/dir/file"), Type: "file", State: "present"}, errors.New("modify: parent directory is missing (set force = \"true\" to create it)")},
+	}
+
+	var modify = []struct {
+		f   File
+		err error
+	}{
+		{File{Destination: filepath.Join(tmpDir, "file-change-type-no-force"), State: "present", Type: "directory"}, errors.New("check: diff: please set force=true to change the type of file")},
+	}
+
+	t.Run("create", func(t *testing.T) {
+		for _, tt := range create {
+			name := filepath.Base(tt.f.Destination)
+			t.Run("check-"+name, func(t *testing.T) {
+				_, err := tt.f.Apply()
+				switch tt.err {
+				case nil:
+					assert.Equal(t, tt.err, err)
+				default:
+					assert.Equal(t, tt.err.Error()[:60], err.Error()[:60])
+				}
+			})
+		}
+	})
+
+	t.Run("modify", func(t *testing.T) {
+		for _, tt := range modify {
+			name := filepath.Base(tt.f.Destination)
+			t.Run("check-"+name, func(t *testing.T) {
+				_, err := tt.f.Check(fakerenderer.New())
+				switch tt.err {
+				case nil:
+					assert.Equal(t, tt.err, err)
+				default:
+					assert.EqualError(t, tt.err, err.Error())
+				}
+			})
+		}
+	})
 }
 
 // TestDiffMode tests the permission diff engine

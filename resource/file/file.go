@@ -98,14 +98,16 @@ const (
 	DefaultType Type = TypeFile
 )
 
-// ValidFileTypes are valid file types
-var ValidFileTypes = []Type{TypeDirectory, TypeFile}
+var (
+	// ValidFileTypes are valid file types
+	ValidFileTypes = []Type{TypeDirectory, TypeFile}
 
-// ValidLinkTypes are valid link types
-var ValidLinkTypes = []Type{TypeLink, TypeSymlink}
+	// ValidLinkTypes are valid link types
+	ValidLinkTypes = []Type{TypeLink, TypeSymlink}
 
-// AllTypes are the current FileTypes that are supported
-var AllTypes = append(ValidFileTypes, ValidLinkTypes...)
+	// AllTypes are the current FileTypes that are supported
+	AllTypes = append(ValidFileTypes, ValidLinkTypes...)
+)
 
 func (t Type) String() string {
 	return string(t)
@@ -139,9 +141,7 @@ func New() *File {
 // Apply changes to file resources
 func (f *File) Apply() (resource.TaskStatus, error) {
 
-	actual := New()
-
-	status, err := f.diff(actual)
+	status, err := f.diff(New())
 	if err != nil || status.Level == resource.StatusFatal {
 		return status, errors.Wrap(err, "apply")
 	}
@@ -205,7 +205,7 @@ func (f *File) diff(actual *File) (*resource.Status, error) {
 			err = f.diffFile(actual, status)
 			if err != nil {
 				status.Level = resource.StatusFatal
-				return status, errors.Wrapf(err, "check")
+				return status, errors.Wrapf(err, "diff")
 			}
 			return status, nil
 		default:
@@ -223,17 +223,17 @@ func (f *File) diff(actual *File) (*resource.Status, error) {
 			err = GetFileInfo(actual, stat)
 			if err != nil {
 				status.Level = resource.StatusFatal
-				return status, errors.Wrapf(err, "unable to get file info for %s", f.Destination)
+				return status, errors.Wrapf(err, "diff: unable to get file info for %s", f.Destination)
 			}
 			if actual.Type == TypeFile {
 				actual.Content, err = Content(actual.Destination)
 				if err != nil {
-					return status, errors.Wrap(err, "unable to get content")
+					return status, errors.Wrap(err, "diff: unable to get content")
 				}
 			}
 			err = f.diffFile(actual, status)
 			if err != nil {
-				return status, errors.Wrap(err, "check")
+				return status, errors.Wrap(err, "diff")
 			}
 
 			if status.Level == resource.StatusWillChange {
@@ -255,7 +255,14 @@ func (f *File) diffFile(actual *File, status *resource.Status) error {
 	}
 
 	if f.Type != actual.Type && f.Type != TypeLink {
-		status.AddDifference("type", actual.Type.String(), f.Type.String(), "")
+		switch f.Force {
+		case true:
+			status.AddDifference("type", actual.Type.String(), f.Type.String(), "")
+		default:
+			status.Level = resource.StatusCantChange
+			return fmt.Errorf("please set force=true to change the type of file")
+		}
+
 	}
 
 	if f.Type == TypeLink || f.Type == TypeSymlink {
@@ -291,6 +298,7 @@ func (f *File) diffFile(actual *File, status *resource.Status) error {
 	group, groupChanges, err := desiredGroup(f.GroupInfo, actual.GroupInfo)
 	if err != nil {
 		status.Level = resource.StatusFatal
+		return err
 	}
 	f.GroupInfo = group
 
@@ -321,7 +329,7 @@ func (f *File) diffFile(actual *File, status *resource.Status) error {
 	return nil
 }
 
-// generates diffs for had and symlinks
+// generates diffs for hard and symlinks
 func (f *File) diffLink(actual *File, status *resource.Status) error {
 	var err error
 	switch f.Type {
@@ -461,11 +469,11 @@ func (f *File) Modify(status *resource.Status) error {
 			// if the file type changes, delete and recreate
 			err = f.Delete()
 			if err != nil {
-				return errors.Wrapf(err, "apply: unable to recreate")
+				return errors.Wrapf(err, "modify: unable to recreate")
 			}
 			f.action = ActionCreate
 		default:
-			return errors.New("apply: please set force=true to change file")
+			return errors.New("modify: please set force=true to change file")
 		}
 	}
 
@@ -473,7 +481,7 @@ func (f *File) Modify(status *resource.Status) error {
 	case TypeDirectory:
 		err = os.MkdirAll(f.Destination, os.FileMode(*f.Mode))
 		if err != nil {
-			return errors.Wrap(err, "unable to create directory")
+			return errors.Wrap(err, "modify: unable to create directory")
 		}
 
 	case TypeFile:
@@ -488,16 +496,16 @@ func (f *File) Modify(status *resource.Status) error {
 				case true:
 					err = os.MkdirAll(d, os.FileMode(*f.Mode))
 					if err != nil {
-						return errors.Wrap(err, "unable to create directory")
+						return errors.Wrap(err, "modify: unable to create directory")
 					}
 				default:
-					return errors.Wrapf(err, "parent directory is missing (set force = \"true\" to create it)")
+					return errors.Wrapf(err, "modify: parent directory is missing (set force = \"true\" to create it)")
 				}
 			}
 
 			err = ioutil.WriteFile(f.Destination, f.Content, os.FileMode(*f.Mode))
 			if err != nil {
-				return errors.Wrapf(err, "unable to write file %s", f.Destination)
+				return errors.Wrapf(err, "modify")
 			}
 		}
 
@@ -505,7 +513,7 @@ func (f *File) Modify(status *resource.Status) error {
 		if _, ok := status.Difference(TypeLink.String()); ok {
 			err := os.Link(f.Target, f.Destination)
 			if err != nil {
-				return errors.Wrapf(err, "unable to create hardlink %s -> %s", f.Destination, f.Target)
+				return errors.Wrapf(err, "modify: unable to create hardlink %s -> %s", f.Destination, f.Target)
 			}
 		}
 
@@ -517,15 +525,15 @@ func (f *File) Modify(status *resource.Status) error {
 				case true:
 					err := f.Delete()
 					if err != nil {
-						return errors.Wrapf(err, "unable to delete existing symlink")
+						return errors.Wrapf(err, "modify: unable to delete existing symlink")
 					}
 				default:
-					return errors.Wrap(err, "symlink already exists, set force=true to replace")
+					return errors.Wrap(err, "modify: symlink already exists, set force=true to replace")
 				}
 			}
 			err = os.Symlink(f.Target, f.Destination)
 			if err != nil {
-				return errors.Wrapf(err, "unable to create")
+				return errors.Wrapf(err, "modify: unable to create")
 			}
 		}
 	}
@@ -544,14 +552,14 @@ func (f *File) Modify(status *resource.Status) error {
 		}
 		err = os.Lchown(f.Destination, uid, gid)
 		if err != nil {
-			return errors.Wrapf(err, "apply: modify owner/group")
+			return errors.Wrapf(err, "modify: owner/group")
 		}
 	}
 
 	if _, ok := status.Difference("permissions"); ok {
 		err = os.Chmod(f.Destination, os.FileMode(*f.Mode).Perm())
 		if err != nil {
-			return errors.Wrapf(err, "apply: modify permissions")
+			return errors.Wrapf(err, "modify: permissions")
 		}
 	}
 	return nil

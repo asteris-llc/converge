@@ -70,7 +70,7 @@ func GID(fi os.FileInfo) (int, error) {
 	return 0, fmt.Errorf("GID: stat.Sys failed")
 }
 
-// UserInfo Returns the Unix username of a File
+// UserInfo Returns the (unix user.User, error) of a file
 func UserInfo(fi os.FileInfo) (*user.User, error) {
 	uid, err := UID(fi)
 	if err != nil {
@@ -86,7 +86,7 @@ func UserInfo(fi os.FileInfo) (*user.User, error) {
 
 }
 
-// GroupInfo returns the Unix groupname of a File
+// GroupInfo returns the (Unix user.Group of a File, error)
 func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 	gid, err := GID(fi)
 	if err != nil {
