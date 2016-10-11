@@ -28,32 +28,32 @@ $ converge apply --local converge-deb-ubuntu.hcl
 
 [protoc.hcl](./protoc.hcl) installs Protocol Buffers.
 
-![prtoc graph](./graphs/protoc.png)
+![prtoc graph](./graphs/protoc.hcl.png)
 
 ### go.hcl
 
 [go.hcl](./go.hcl) downloads and installs the go compiler.
 
-![main graph](./graphs/go.png)
+![main graph](./graphs/go.hcl.png)
 
 ### godeps.hcl
 
 [godeps.hcl](./godeps.hcl) installs the go binaries to `$HOME/go`.
 
-![godeps graph](./graphs/godeps.png)
+![godeps graph](./graphs/godeps.hcl.png)
 
 ### Architecture
 The `converge-*` files install packages and import `go.hcl`,
-`godeps.hcl` and `protoc.hcl`. 
+`godeps.hcl` and `protoc.hcl`.
 
 #### Debian/Ubuntu
 
 [converge-deb-ubuntu.hcl](./converge-deb-ubuntu.hcl)
 
-![ubuntu/debian graph](./graphs/converge-deb-ubuntu.png)
+![ubuntu/debian graph](./graphs/converge-deb-ubuntu.hcl.png)
 
 #### CentOS/Redhat/Fedora
 
 [converge-centos.hcl](./converge-centos.hcl)
 
-![centos/redhat/fedora graph](./graphs/converge-centos.png)
+![centos/redhat/fedora graph](./graphs/converge-centos.hcl.png)
