@@ -1,4 +1,4 @@
 apt.package "mc" {
-   name = "mc"
-   state = "absent"
+  name  = "mc"
+  state = "absent"
 }
