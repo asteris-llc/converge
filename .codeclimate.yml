@@ -9,13 +9,6 @@ engines:
   govet:
     enabled: true
 
-  markdownlint:
-    enabled: true
-    checks:
-    #duplicate headers are used in CHANGELOG
-      MD024:
-        enabled: false 
-  
   shellcheck:
     enabled: true
 
@@ -25,7 +18,6 @@ engines:
 ratings:
   paths:
     - "**.go"
-    - "**.md"
     - "**.sh"
 
 exclude_paths:
