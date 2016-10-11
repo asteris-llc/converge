@@ -53,7 +53,7 @@ type Preparer struct {
 
 	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
-	UnitFileState string `hcl:"state" required="true" valid_values="enabled,enabled-runtime,linked,linked-runtime,masked,masked-runtime,disabled"`
+	UnitFileState string `hcl:"state" required:"true" valid_values:"enabled,enabled-runtime,linked,linked-runtime,masked,masked-runtime,disabled"`
 
 	/* Mode for the call to StartUnit()
 	StartUnit() enqeues a start job, and possibly depending jobs.
@@ -62,7 +62,7 @@ type Preparer struct {
 
 	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
-	StartMode string `hcl:"mode" required="false" valid_values="replace,fail,isolate,ignore-dependencies,ignore-requirements"`
+	StartMode string `hcl:"mode" required:"false" valid_values:"replace,fail,isolate,ignore-dependencies,ignore-requirements"`
 
 	// the amount of time the command will wait for configuration to load
 	// before halting forcefully. The
@@ -70,7 +70,7 @@ type Preparer struct {
 	// sequence of decimal numbers, each with optional fraction and a unit
 	// suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 	// "us" (or "µs"), "ms", "s", "m", "h".
-	Timeout string `hcl:"timeout" doc_type:"duration string" required="false"`
+	Timeout string `hcl:"timeout" doc_type:"duration string" required:"false"`
 }
 
 //Prepare returns a new systemd.unit task

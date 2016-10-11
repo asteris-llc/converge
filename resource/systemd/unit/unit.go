@@ -348,6 +348,8 @@ func (t *Unit) ApplyLinkage(err error, dbusConn *dbus.Conn) (*resource.Status, e
 
 }
 
+// ApplyEnabledState Attempts to enable the file. Cannot switch between an enabled
+// and an enabled-runtime state.
 func (t *Unit) ApplyEnabledState(currentState systemd.UnitFileState, dbusConn *dbus.Conn) (*resource.Status, error) {
 	_, unitName := filepath.Split(t.Name)
 
@@ -426,6 +428,7 @@ func (t *Unit) ApplyEnabledState(currentState systemd.UnitFileState, dbusConn *d
 
 }
 
+// ApplyDisabledState attempts to disable a unit file
 func (t *Unit) ApplyDisabledState(currentState systemd.UnitFileState, dbusConn *dbus.Conn) (*resource.Status, error) {
 	_, unitName := filepath.Split(t.Name)
 
@@ -504,13 +507,12 @@ func (t *Unit) resetFailed(dbusConn *dbus.Conn) (*resource.Status, error) {
 			Output: []string{fmt.Sprintf("unit %q was failed, reset", unitName)},
 		}
 		return t.Status, err
-	} else {
-		t.Status = &resource.Status{
-			Level:  resource.StatusNoChange,
-			Output: []string{fmt.Sprintf("unit %q is not failed, no need to reset", unitName)},
-		}
-		return t.Status, nil
 	}
+	t.Status = &resource.Status{
+		Level:  resource.StatusNoChange,
+		Output: []string{fmt.Sprintf("unit %q is not failed, no need to reset", unitName)},
+	}
+	return t.Status, nil
 
 }
 
@@ -583,7 +585,7 @@ func (t *Unit) stopUnit(dbusConn *dbus.Conn) (*resource.Status, error) {
 func (t *Unit) startOrStop(dbusConn *dbus.Conn) (*resource.Status, error) {
 	if t.Active {
 		return t.restartUnit(dbusConn)
-	} else {
-		return t.stopUnit(dbusConn)
 	}
+	return t.stopUnit(dbusConn)
+
 }

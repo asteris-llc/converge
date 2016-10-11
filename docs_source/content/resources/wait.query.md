@@ -7,10 +7,7 @@ menu:
     parent: resources
 ---
 
-
-
-
-## Example
+# Example
 
 ```hcl
 wait.query "service-health" {
@@ -21,7 +18,6 @@ wait.query "service-health" {
 }
 
 ```
-
 
 ## Parameters
 
@@ -81,5 +77,3 @@ specified, no grace period will be taken into account.
 
   the maximum number of attempts before the wait fails. If the maximum number
 of retries is not set, it will default to 5.
-
-

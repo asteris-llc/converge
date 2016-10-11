@@ -12,7 +12,7 @@ Almost every value in Converge can be templated. We saw the basic usage of
 params in the [using dependencies]({{< ref "dependencies.md" >}}) guide, but
 there's even more you can do.
 
-## Values
+# Values
 
 First, it's helpful to realize that you can put almost any value in a param. You
 can have any number, string, or boolean in a param, or a list or map of any
@@ -42,11 +42,11 @@ rules are:
 
 - **map** keys and values will both be interpreted using the semantics above
 
-## Templates
+# Templates
 
 Converge provides the following template functions for your use:
 
-### Params
+## Params
 
 Use of any of these functions will create edges in the graph pointing from your
 resource to the named parameter.
@@ -61,7 +61,7 @@ resource to the named parameter.
   with `range` to loop over values, as in `samples/paramMap.hcl` in the Converge
   source.
 
-### Platform
+## Platform
 
 - **platform** retrieves read-only attributes from the system. For example,
   `platform.OS` will return with the value of `linux` for Linux distributions or
@@ -70,7 +70,7 @@ resource to the named parameter.
 - **env** retrieves an item (named by the first argument) from an environment
   variable
 
-### Utility
+## Utility
 
 {{< note title="Backwards arguments?" >}}
 Some of the utility functions (like `split` and `join`) seem to have their
