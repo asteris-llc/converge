@@ -29,25 +29,30 @@ type Preparer struct {
 	// Destination specifies which file will be modified by this resource. The
 	// file must exist on the system (for example, having been created with
 	// `file.content`.)
-	Destination string `hcl:"destination"`
+	Destination string `hcl:"destination" required:"true"`
 
 	// State sets whether the resource exists
-	State string `hcl:"state" valid_values:"present,absent"`
+	// Default is "present"
+	State State `hcl:"state" valid_values:"present,absent"`
 
 	// Type sets the type of the resource
 	// valid types are [ "file", "directory", "hardlink", "symlink"]
-	Type string `hcl:"type" valid_values:"file,directory,hardlink,symlink"`
+	// Default is "file"
+	Type Type `hcl:"type" valid_values:"file,directory,hardlink,symlink"`
 
 	// Target is the target file for a symbolic or hard link
 	// destination -> target
 	Target string `hcl:"target"`
 
 	// Force Change the resource. For example, if the target is a file and
-	// state is set to directory, the file will be removed
+	// type is set to "directory", the file will be removed
 	// Force on a symlink will remove the previous symlink
+	// Default is false
 	Force bool `hcl:"force" doc_type:"bool"`
 
 	// Mode is the mode of the file, specified in octal (like 0755).
+	// If Mode is not set, the permissinos of the existing file are used.
+	// If the file does not exist, a default of 750 is used.
 	Mode *uint32 `hcl:"mode" base:"8" doc_type:"uint32"`
 
 	// User is the user name of the file owner
@@ -66,8 +71,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	fileTask := &File{
 		Destination: p.Destination,
 		Mode:        p.Mode,
-		State:       State(p.State),
-		Type:        Type(p.Type),
+		State:       p.State,
+		Type:        p.Type,
 		Target:      p.Target,
 		Force:       p.Force,
 		UserInfo:    &user.User{Username: p.User},
