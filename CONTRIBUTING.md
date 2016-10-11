@@ -2,7 +2,7 @@
 
 Hi! Thanks for being interested in contributing to Converge. We're really happy
 to have you (we have mini-parties in Slack whenever someone external opens a
-PR!).
+PR!)
 
 Here's a quick guide for how you should expect the contribution process to go.
 Above all, the core team and everyone involved with Converge is expected to
@@ -60,7 +60,7 @@ That said, we have a number of bars for any contribution to clear:
 
 - It must pass the entire test suite and linting (including gofmt).
 - If it introduces a new feature or changes an existing feature, that feature
-  must be documented (how else will people find out about your awesome work?).
+  must be documented (how else will people find out about your awesome work?)
 - It can't change existing syntax except in extremely well-reasoned cases. If
   you're changing the syntax of existing features, definitely open an issue
   first so we can discuss.
@@ -69,10 +69,10 @@ That said, we have a number of bars for any contribution to clear:
 
 ##### Our Testing Goals
 
-We want to be sure of a few things, and testing will help us accomplish this:
+We want to be sure of a few things, and testing will:
 
 - Help ensure a new feature or changes to an existing feature are properly
-implemented.
+  implemented.
 - Avoid introducing bugs.
 - Avoid regressions when a new feature is introduced.
 
@@ -84,7 +84,7 @@ addressed:
 
 - Include tests for the way your code interacts with the core engine.
 - Test functionality of the code you have introduced, say in a new module.
-- Mock interaction with the system.
+- Include tests that demonstrate a bug, and prove the bug has been fixed.
 
 #### Documentation
 
