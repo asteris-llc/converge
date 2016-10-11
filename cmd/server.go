@@ -16,15 +16,15 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"os"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/rpc"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -54,8 +54,7 @@ var serverCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		GracefulExit(cancel)
 
-		var running sync.WaitGroup
-		running.Add(2)
+		group, ctx := errgroup.WithContext(ctx)
 
 		setLocal(true) // so we generate a token
 
@@ -77,31 +76,26 @@ var serverCmd = &cobra.Command{
 		}
 
 		// start RPC server
-		go func() {
-			defer running.Done()
-
-			err := startRPC(
+		group.Go(func() (err error) {
+			if err = startRPC(
 				ctx,
 				getRPCAddr(),
 				sslConfig,
 				viper.GetString("root"),
 				viper.GetBool("self-serve"),
-			)
-			if err != nil {
-				log.WithError(err).Fatal("could not run RPC")
+			); err != nil {
+				return errors.Wrap(err, "could not run RPC")
 			}
-
 			<-ctx.Done()
-		}()
+			return
+		})
 
 		// sleep here to avoid a race condition. The REST gateway can't connect
 		// to the RPC server if the gateway starts first.
 		time.Sleep(100 * time.Millisecond)
 
 		// start HTTP server
-		go func() {
-			defer running.Done()
-
+		group.Go(func() (err error) {
 			httpLog := log.WithFields(log.Fields{
 				"addr":    viper.GetString("api-addr"),
 				"service": "API",
@@ -109,7 +103,7 @@ var serverCmd = &cobra.Command{
 
 			server, err := rpc.NewRESTGateway(ctx, getRPCAddr(), clientOpts)
 			if err != nil {
-				httpLog.WithError(err).Fatal("failed to create server")
+				return errors.Wrap(err, "failed to create server")
 			}
 
 			if viper.GetBool("https") {
@@ -127,13 +121,15 @@ var serverCmd = &cobra.Command{
 			}
 
 			if err != nil {
-				httpLog.WithError(err).Fatal("failed to serve")
+				return errors.Wrap(err, "failed to serve")
 			}
-
 			httpLog.Info("halted")
-		}()
+			return
+		})
 
-		running.Wait()
+		if err = group.Wait(); err != nil {
+			log.WithError(err).Fatal("serving failed")
+		}
 	},
 }
 
