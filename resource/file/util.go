@@ -55,18 +55,27 @@ func FileType(fi os.FileInfo) (Type, error) {
 }
 
 // UID returns the Unix Uid of a File
-func UID(fi os.FileInfo) int {
-	return int(fi.Sys().(*syscall.Stat_t).Uid)
+func UID(fi os.FileInfo) (int, error) {
+	if stat, ok := fi.Sys().(*syscall.Stat_t); ok && stat != nil {
+		return int(stat.Uid), nil
+	}
+	return 0, fmt.Errorf("UID: stat.Sys failed")
 }
 
 // GID returns the Unix Gid of a File
-func GID(fi os.FileInfo) int {
-	return int(fi.Sys().(*syscall.Stat_t).Gid)
+func GID(fi os.FileInfo) (int, error) {
+	if stat, ok := fi.Sys().(*syscall.Stat_t); ok && stat != nil {
+		return int(stat.Gid), nil
+	}
+	return 0, fmt.Errorf("GID: stat.Sys failed")
 }
 
 // UserInfo Returns the Unix username of a File
 func UserInfo(fi os.FileInfo) (*user.User, error) {
-	uid := UID(fi)
+	uid, err := UID(fi)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get uid for file")
+	}
 
 	user, err := user.LookupId(strconv.Itoa(uid))
 	if err != nil {
@@ -79,7 +88,10 @@ func UserInfo(fi os.FileInfo) (*user.User, error) {
 
 // GroupInfo returns the Unix groupname of a File
 func GroupInfo(fi os.FileInfo) (*user.Group, error) {
-	gid := GID(fi)
+	gid, err := GID(fi)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get uid for file")
+	}
 
 	group, err := user.LookupGroupId(strconv.Itoa(gid))
 	if err != nil {
@@ -97,7 +109,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 		if actual == nil || actual.Username == "" { // if neither is set, use the effective uid of the process
 			userInfo, err = user.LookupId(strconv.Itoa(os.Geteuid()))
 			if err != nil {
-				return &user.User{}, true, errors.Wrapf(err, "unable to set default username %s", f.Name)
+				return &user.User{}, false, errors.Wrapf(err, "unable to set default username %s", f.Name)
 			}
 			return userInfo, true, err
 		}
@@ -108,7 +120,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 
 	userInfo, err = user.Lookup(f.Username)
 	if err != nil {
-		return userInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
+		return userInfo, false, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
 	}
 	if f.Username != actual.Username {
 		changed = true
@@ -123,7 +135,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 		if actual == nil || actual.Name == "" { // if neither is set, use the effective gid of the process
 			groupInfo, err = user.LookupGroupId(strconv.Itoa(os.Getegid()))
 			if err != nil {
-				return &user.Group{}, true, errors.Wrapf(err, "unable to set default group")
+				return &user.Group{}, false, errors.Wrapf(err, "unable to set default group")
 			}
 			return groupInfo, true, nil
 		}
