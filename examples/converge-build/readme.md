@@ -5,7 +5,7 @@ to compile converge.
 
 ## Usage
 
-Download converge from the [releases](https://github.com/asteris-llc/converge/releases) page. And
+Download converge from the [releases](https://github.com/asteris-llc/converge/releases) page. Then
 run the following commands based on your platform:
 
 ### Running on CentOS/Redhat/Fedora
@@ -32,7 +32,7 @@ $ converge apply --local converge-deb-ubuntu.hcl
 
 ### go.hcl
 
-[go.hcl](./go.hcl) downloads and install the go compiler.
+[go.hcl](./go.hcl) downloads and installs the go compiler.
 
 ![main graph](./graphs/go.png)
 
@@ -42,7 +42,9 @@ $ converge apply --local converge-deb-ubuntu.hcl
 
 ![godeps graph](./graphs/godeps.png)
 
-### Overall
+### Architecture
+The `converge-*` files install packages and import `go.hcl`,
+`godeps.hcl` and `protoc.hcl`. 
 
 #### Debian/Ubuntu
 
