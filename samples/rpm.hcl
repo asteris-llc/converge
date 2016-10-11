@@ -1,4 +1,4 @@
 rpm.package "mc" {
-   name = "mc"
-   state = "installed"
+  name  = "mc"
+  state = "installed"
 }
