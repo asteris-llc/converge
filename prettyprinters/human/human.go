@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -51,6 +52,7 @@ func NewFiltered(f FilterFunc) *Printer {
 // InitColors initializes the colors used by the human printer
 func (p *Printer) InitColors() {
 	reset := "\x1b[0m"
+	p.funcsMapWrite("bold", p.styled(func(in string) string { return "\x1b[1m" + in + reset }))
 	p.funcsMapWrite("black", p.styled(func(in string) string { return "\x1b[30m" + in + reset }))
 	p.funcsMapWrite("red", p.styled(func(in string) string { return "\x1b[31m" + in + reset }))
 	p.funcsMapWrite("green", p.styled(func(in string) string { return "\x1b[32m" + in + reset }))
@@ -124,7 +126,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
-		{{cyan $key}}:{{diff ($values.Original) ($values.Current)}}
+		{{cyan $key}}:	{{diff ($values.Original) ($values.Current) | bold}}
 		{{- else}} No changes {{- end}}
 
 `)
@@ -132,8 +134,14 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), err
 	}
 
-	var out bytes.Buffer
-	err = tmpl.Execute(&out, &printerNode{ID: id, Printable: printable})
+	var intermediate, out bytes.Buffer
+	err = tmpl.Execute(&intermediate, &printerNode{ID: id, Printable: printable})
+	if err != nil {
+		return pp.HiddenString(), err
+	}
+
+	tabWriter := tabwriter.NewWriter(&out, 1, 1, 1, ' ', 0)
+	_, err = tabWriter.Write(intermediate.Bytes())
 
 	return &out, err
 }
@@ -166,7 +174,7 @@ func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
 	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		return fmt.Sprintf(" %q => %q", strings.TrimSpace(before), strings.TrimSpace(after)), nil
+		return fmt.Sprintf("%q\t%s\t%q", strings.TrimSpace(before), funcs["bold"].(func(string) string)("=>"), strings.TrimSpace(after)), nil
 	}
 
 	tmpl, err := p.template(`before:
