@@ -40,7 +40,13 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	}
 	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
 		pipeline := Pipeline(out, id, renderingPlant, top)
-		value, err := pipeline.Exec(out.Get(id))
+
+		var val interface{}
+		if meta, ok := out.Get(id); ok {
+			val = meta.Value()
+		}
+
+		value, err := pipeline.Exec(val)
 		if err != nil {
 			return err
 		}

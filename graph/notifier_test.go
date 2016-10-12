@@ -58,7 +58,7 @@ func TestNotifyTransform(t *testing.T) {
 		var ran bool
 
 		notifier := &graph.Notifier{
-			Post: func(string, interface{}) error {
+			Post: func(string, *node.Node) error {
 				ran = true
 				return nil
 			},

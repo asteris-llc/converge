@@ -42,9 +42,14 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return nil
 		}
 
-		node, ok := out.Get(id).(*parse.Node)
+		meta, ok := out.Get(id)
 		if !ok {
-			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
+			return nil // can't get dependencies from an empty node
+		}
+
+		node, ok := meta.Value().(*parse.Node)
+		if !ok {
+			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", meta.Value())
 		}
 
 		depGenerators := []dependencyGenerator{

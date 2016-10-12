@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
@@ -41,10 +42,12 @@ task x {
 	)
 	assert.NoError(t, err)
 
-	item := resourced.Get("root/task.x")
-	preparer, ok := item.(*resource.Preparer)
+	meta, ok := resourced.Get("root/task.x")
+	require.True(t, ok, `"root/task.x" was not present in the graph`)
 
-	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", item, preparer))
+	preparer, ok := meta.Value().(*resource.Preparer)
+	require.True(t, ok, fmt.Sprintf("preparer was %T, not %T", meta.Value(), preparer))
+
 	assert.Equal(t, "check", preparer.Source["check"])
 	assert.Equal(t, "apply", preparer.Source["apply"])
 }
@@ -63,10 +66,10 @@ func getResourcesGraph(t *testing.T, content []byte) (*graph.Graph, error) {
 	require.NoError(t, err)
 
 	g := graph.New()
-	g.Add("root", nil)
+	g.Add(node.New("root", nil))
 	for _, resource := range resources {
 		id := graph.ID("root", resource.String())
-		g.Add(id, resource)
+		g.Add(node.New(id, resource))
 		g.Connect("root", id)
 	}
 	require.NoError(t, g.Validate())

@@ -40,7 +40,13 @@ type Printer struct{}
 
 // DrawNode prints a node in JSONL format
 func (j *Printer) DrawNode(graph *graph.Graph, nodeID string) (pp.Renderable, error) {
-	out, err := json.Marshal(&Node{Kind: "node", ID: nodeID, Value: graph.Get(nodeID)})
+	meta, ok := graph.Get(nodeID)
+	if !ok {
+		return pp.HiddenString(), nil
+	}
+
+	// TODO: should this use meta instead of the value? Should we expose that?
+	out, err := json.Marshal(&Node{Kind: "node", ID: nodeID, Value: meta.Value()})
 	return pp.VisibleString(string(out) + "\n"), err
 }
 

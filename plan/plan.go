@@ -44,8 +44,15 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 	out, err := in.Transform(ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
 			renderingPlant.Graph = out
+
 			pipeline := Pipeline(out, id, renderingPlant)
-			val, pipelineErr := pipeline.Exec(out.Get(id))
+
+			var val interface{}
+			if meta, ok := out.Get(id); ok {
+				val = meta.Value()
+			}
+
+			val, pipelineErr := pipeline.Exec(val)
 			if pipelineErr != nil {
 				fmt.Printf("pipeline returned Right %v\n", val)
 				return pipelineErr

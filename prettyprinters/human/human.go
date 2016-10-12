@@ -81,7 +81,12 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 	}{}
 
 	for _, id := range g.Vertices() {
-		printable, ok := g.Get(id).(Printable)
+		meta, ok := g.Get(id)
+		if !ok {
+			continue
+		}
+
+		printable, ok := meta.Value().(Printable)
 		if !ok {
 			continue
 		}
@@ -106,7 +111,12 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 
 // DrawNode containing a result
 func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
-	printable, ok := g.Get(id).(Printable)
+	meta, ok := g.Get(id)
+	if !ok {
+		return pp.HiddenString(), nil
+	}
+
+	printable, ok := meta.Value().(Printable)
 	if !ok {
 		return pp.HiddenString(), errors.New("cannot print values that don't implement Printable")
 	}

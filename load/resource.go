@@ -52,24 +52,29 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			return nil
 		}
 
-		node, ok := out.Get(id).(*parse.Node)
+		meta, ok := out.Get(id)
 		if !ok {
-			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
+			return nil // can't set resources on an empty node
 		}
 
-		dest, ok := registry.NewByName(node.Kind())
+		raw, ok := meta.Value().(*parse.Node)
 		if !ok {
-			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
+			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", meta.Value())
+		}
+
+		dest, ok := registry.NewByName(raw.Kind())
+		if !ok {
+			return fmt.Errorf("%q is not a valid resource type in %q", raw.Kind(), raw)
 		}
 
 		res, ok := dest.(resource.Resource)
 		if !ok {
-			return fmt.Errorf("%q is not a valid resource, got %T", node.Kind(), dest)
+			return fmt.Errorf("%q is not a valid resource, got %T", raw.Kind(), dest)
 		}
 
 		preparer := resource.NewPreparer(res)
 
-		err := hcl.DecodeObject(&preparer.Source, node.ObjectItem.Val)
+		err := hcl.DecodeObject(&preparer.Source, raw.ObjectItem.Val)
 		if err != nil {
 			return err
 		}

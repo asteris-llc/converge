@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
@@ -81,10 +82,10 @@ func (e *executor) stageNotifier(stage pb.StatusResponse_Stage, stream statusRes
 				Run:   pb.StatusResponse_STARTED,
 			})
 		},
-		Post: func(id string, r interface{}) error {
+		Post: func(id string, meta *node.Node) error {
 			response := statusResponseFromPrintable(
 				id,
-				r.(human.Printable),
+				meta.Value().(human.Printable),
 				stage,
 				pb.StatusResponse_FINISHED,
 			)
