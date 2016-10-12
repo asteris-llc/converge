@@ -141,7 +141,7 @@ func New() *File {
 // Apply changes to file resources
 func (f *File) Apply() (resource.TaskStatus, error) {
 
-	status, err := f.diff(New())
+	status, err := f.diff()
 	if err != nil || status.Level == resource.StatusFatal {
 		return status, errors.Wrap(err, "apply")
 	}
@@ -164,9 +164,7 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 
 	f.renderer = r
 
-	actual := New()
-
-	status, err := f.diff(actual)
+	status, err := f.diff()
 	status.AddMessage(fmt.Sprintf("%s (%s)", f.Destination, f.Type))
 	if err != nil || status.Level == resource.StatusFatal {
 		return status, errors.Wrap(err, "check")
@@ -176,7 +174,7 @@ func (f *File) Check(r resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Compare desired state with an actual file (if present)
-func (f *File) diff(actual *File) (*resource.Status, error) {
+func (f *File) diff() (*resource.Status, error) {
 
 	status := &resource.Status{}
 	var stat os.FileInfo
@@ -197,7 +195,7 @@ func (f *File) diff(actual *File) (*resource.Status, error) {
 			f.action = ActionCreate
 			actual := &File{
 				Destination: "<file does not exist>",
-				State:       "absent",
+				State:       StateAbsent,
 				Type:        f.Type,
 				UserInfo:    &user.User{},
 				GroupInfo:   &user.Group{},
@@ -212,8 +210,10 @@ func (f *File) diff(actual *File) (*resource.Status, error) {
 			return status, fmt.Errorf("unknown state %s", f.State)
 		}
 	} else {
-		actual.Destination = f.Destination
-		actual.State = StatePresent
+		actual := &File{
+			Destination: f.Destination,
+			State:       StatePresent,
+		}
 		switch f.State {
 		case StateAbsent: //file exists -> absent
 			status.Level = resource.StatusWillChange
