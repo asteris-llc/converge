@@ -1,5 +1,5 @@
-hash: 85723d1b10ceb062f2de3695ef836c8b99abb1954667482dd385075814a4bf11
-updated: 2016-09-30T08:17:44.603702069-05:00
+hash: ffe6ed785ee901a1e1cd728972a234581a03b59513093e479659848367670c2a
+updated: 2016-10-12T16:25:46.641335191-05:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -146,6 +146,10 @@ imports:
   - http2/hpack
   - internal/timeseries
   - trace
+- name: golang.org/x/sync
+  version: 1ae7c7b29e06598039be46c5083819ba6fd7a97e
+  subpackages:
+  - errgroup
 - name: golang.org/x/sys
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
