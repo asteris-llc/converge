@@ -70,6 +70,14 @@ func TestDesiredGroup(t *testing.T) {
 			{&user.Group{}, &user.Group{}, effectiveGroup, true, nil},
 			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, true, errors.New("unable to get information: group: unknown group converge-bad-group")},
 		}
+	case "linux":
+		groups = []Case{
+			{&user.Group{Name: "root", Gid: "0"}, &user.Group{}, &user.Group{Name: "root", Gid: "0"}, true, nil},
+			{&user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, false, nil},
+			{&user.Group{}, &user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, false, nil},
+			{&user.Group{}, &user.Group{}, effectiveGroup, true, nil},
+			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, true, errors.New("unable to get information: group: unknown group converge-bad-group")},
+		}
 	default:
 		groups = []Case{}
 	}
@@ -106,7 +114,7 @@ func TestDesiredUser(t *testing.T) {
 
 	var users []Case
 	switch runtime.GOOS {
-	case "darwin":
+	case "darwin", "linux":
 		users = []Case{
 			{&user.User{Username: "root", Uid: "0"}, &user.User{}, &user.User{Username: "root", Uid: "0"}, true, nil},
 			{&user.User{Username: "root", Uid: "0"}, &user.User{Username: "root", Uid: "0"}, &user.User{Username: "root", Uid: "0"}, false, nil},
