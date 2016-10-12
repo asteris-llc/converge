@@ -119,8 +119,8 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 // expandSwitchMacro is responsible for adding the generated switch nodes into
 // the graph.  Nodes inside of the switch macro are added as children to the
 // case statements, who are parents of the outer switch statement.  Actual node
-// generation happens in parse/preprocessor/switch/ and we add the nodes into
-// the graph here.
+// generation happens in parse/preprocessor/switch and we add the nodes into the
+// graph here.
 func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Graph) (*graph.Graph, error) {
 	if !control.IsSwitchNode(n) {
 		return g, nil
