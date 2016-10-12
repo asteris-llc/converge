@@ -173,7 +173,7 @@ func (r *Renderer) lookup(name string) (string, error) {
 
 	vertexName, terms, found := preprocessor.VertexSplitTraverse(g, name, r.ID, preprocessor.TraverseUntilModule, make(map[string]struct{}))
 
-	if !validateLookup(r.ID, vertexName) {
+	if !validateLookup(g, r.ID, vertexName) {
 		return "", fmt.Errorf("%s cannot resolve inner-branch node at %s", r.ID, vertexName)
 	}
 
@@ -214,11 +214,11 @@ func (r *Renderer) lookup(name string) (string, error) {
 // nesting and conditional evaluation.  It restricts lookups such that a nested
 // value may depend on an outer value, but an outer value may not depend on a
 // nested value.
-func validateLookup(src, dst string) bool {
+func validateLookup(g *graph.Graph, src, dst string) bool {
 	if graph.AreSiblingIDs(src, dst) {
 		return true
 	}
-	if graph.IsNibling(src, dst) {
+	if g.IsNibling(src, dst) {
 		return false
 	}
 	return true
