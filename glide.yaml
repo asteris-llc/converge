@@ -102,3 +102,6 @@ import:
   subpackages:
   - openpgp
 - package: github.com/arbovm/levenshtein
+- package: golang.org/x/sync
+  subpackages:
+  - errgroup
