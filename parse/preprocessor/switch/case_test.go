@@ -19,7 +19,7 @@ import (
 
 	"github.com/asteris-llc/converge/parse"
 
-	"github.com/asteris-llc/converge/render/preprocessor/control"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
