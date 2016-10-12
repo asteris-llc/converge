@@ -7,6 +7,7 @@ menu:
     parent: resources
 ---
 
+
 Manages files, file content, directories, hard and soft links.
 
 ## Example
@@ -69,8 +70,8 @@ file "deepfile" {
 
 - `group` (string)
 
-  The group account that owns the file. This account must exist on the system or an
-  error will be raised.
+  The group account that owns the file. This account must exist on the
+  system or an error will be raised.
 
   Default is the effective Group ID of the converge process. If unset, group ownership
   of existing files will not be changed.

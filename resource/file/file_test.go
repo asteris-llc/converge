@@ -109,7 +109,7 @@ func TestCheckApply(t *testing.T) {
 
 }
 
-// TestCheckErors looks for errors
+// TestCheckApplyErrors looks for errors
 func TestCheckApplyErrors(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", "converge-file-check-errors")
 	require.NoError(t, err)
