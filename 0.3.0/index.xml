@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Converge</title>
-    <link>http://converge.aster.is/</link>
+    <link>http://converge.aster.is/0.3.0/</link>
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 04 Oct 2016 13:01:50 -0500</lastBuildDate>
-    <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://converge.aster.is/0.3.0/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>user.group</title>
-      <link>http://converge.aster.is/resources/user-group/</link>
+      <link>http://converge.aster.is/0.3.0/resources/user-group/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:50 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/user-group/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/user-group/</guid>
       <description>
 
 &lt;p&gt;Group renders group data&lt;/p&gt;
@@ -61,10 +61,10 @@ The group Name will be changed to NewName.&lt;/p&gt;
     
     <item>
       <title>user.user</title>
-      <link>http://converge.aster.is/resources/user-user/</link>
+      <link>http://converge.aster.is/0.3.0/resources/user-user/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:50 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/user-user/</guid>
       <description>
 
 &lt;p&gt;User renders user data&lt;/p&gt;
@@ -135,10 +135,10 @@ name is appended to the home directory.&lt;/p&gt;
     
     <item>
       <title>docker.container</title>
-      <link>http://converge.aster.is/resources/docker-container/</link>
+      <link>http://converge.aster.is/0.3.0/resources/docker-container/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/docker-container/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/docker-container/</guid>
       <description>
 
 &lt;p&gt;Container is responsible for creating docker containers. It assumes that
@@ -268,10 +268,10 @@ container exists. Specified as a boolean value&lt;/p&gt;
     
     <item>
       <title>docker.image</title>
-      <link>http://converge.aster.is/resources/docker-image/</link>
+      <link>http://converge.aster.is/0.3.0/resources/docker-image/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/docker-image/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/docker-image/</guid>
       <description>
 
 &lt;p&gt;Image is responsible for pulling Docker images. It assumes that there is
@@ -315,10 +315,10 @@ Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp
     
     <item>
       <title>file.content</title>
-      <link>http://converge.aster.is/resources/file-content/</link>
+      <link>http://converge.aster.is/0.3.0/resources/file-content/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-content/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/file-content/</guid>
       <description>
 
 &lt;p&gt;Content renders content to disk&lt;/p&gt;
@@ -358,10 +358,10 @@ file.content &amp;quot;render&amp;quot; {
     
     <item>
       <title>file.directory</title>
-      <link>http://converge.aster.is/resources/file-directory/</link>
+      <link>http://converge.aster.is/0.3.0/resources/file-directory/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-directory/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/file-directory/</guid>
       <description>
 
 &lt;p&gt;Directory makes sure a directory is present on disk&lt;/p&gt;
@@ -399,10 +399,10 @@ file.directory &amp;quot;deeper&amp;quot; {
     
     <item>
       <title>file.mode</title>
-      <link>http://converge.aster.is/resources/file-mode/</link>
+      <link>http://converge.aster.is/0.3.0/resources/file-mode/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-mode/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/file-mode/</guid>
       <description>
 
 &lt;p&gt;Mode monitors the mode of a file&lt;/p&gt;
@@ -440,10 +440,10 @@ file must exist on the system (for example, having been created with
     
     <item>
       <title>module</title>
-      <link>http://converge.aster.is/resources/module/</link>
+      <link>http://converge.aster.is/0.3.0/resources/module/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/module/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/module/</guid>
       <description>
 
 &lt;p&gt;Module remotely sources other modules and adds them to the tree&lt;/p&gt;
@@ -475,10 +475,10 @@ the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s 
     
     <item>
       <title>param</title>
-      <link>http://converge.aster.is/resources/param/</link>
+      <link>http://converge.aster.is/0.3.0/resources/param/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/param/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/param/</guid>
       <description>
 
 &lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
@@ -516,10 +516,10 @@ treated as required.&lt;/p&gt;
     
     <item>
       <title>task</title>
-      <link>http://converge.aster.is/resources/task/</link>
+      <link>http://converge.aster.is/0.3.0/resources/task/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/task/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/task/</guid>
       <description>
 
 &lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
@@ -606,10 +606,10 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
     
     <item>
       <title>task.query</title>
-      <link>http://converge.aster.is/resources/task-query/</link>
+      <link>http://converge.aster.is/0.3.0/resources/task-query/</link>
       <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/task-query/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/task-query/</guid>
       <description>
 
 &lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
@@ -647,10 +647,10 @@ file.content &amp;quot;hostname data&amp;quot; {
     
     <item>
       <title>wait.port</title>
-      <link>http://converge.aster.is/resources/wait-port/</link>
+      <link>http://converge.aster.is/0.3.0/resources/wait-port/</link>
       <pubDate>Mon, 03 Oct 2016 10:23:34 -0400</pubDate>
       
-      <guid>http://converge.aster.is/resources/wait-port/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/wait-port/</guid>
       <description>
 
 &lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
@@ -712,10 +712,10 @@ of retries is not set, it will default to 5.&lt;/p&gt;
     
     <item>
       <title>wait.query</title>
-      <link>http://converge.aster.is/resources/wait-query/</link>
+      <link>http://converge.aster.is/0.3.0/resources/wait-query/</link>
       <pubDate>Mon, 03 Oct 2016 10:23:34 -0400</pubDate>
       
-      <guid>http://converge.aster.is/resources/wait-query/</guid>
+      <guid>http://converge.aster.is/0.3.0/resources/wait-query/</guid>
       <description>
 
 &lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
@@ -812,10 +812,10 @@ of retries is not set, it will default to 5.&lt;/p&gt;
     
     <item>
       <title>Platform Detection</title>
-      <link>http://converge.aster.is/platform/</link>
+      <link>http://converge.aster.is/0.3.0/platform/</link>
       <pubDate>Mon, 03 Oct 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://converge.aster.is/platform/</guid>
+      <guid>http://converge.aster.is/0.3.0/platform/</guid>
       <description>
 
 &lt;p&gt;Platform retrieves read-only system information from the underlying host. Returns
@@ -896,14 +896,14 @@ an empty string if the value is not set.&lt;/p&gt;
     
     <item>
       <title>Params and Templates</title>
-      <link>http://converge.aster.is/params-and-templates/</link>
+      <link>http://converge.aster.is/0.3.0/params-and-templates/</link>
       <pubDate>Fri, 30 Sep 2016 10:34:07 -0500</pubDate>
       
-      <guid>http://converge.aster.is/params-and-templates/</guid>
+      <guid>http://converge.aster.is/0.3.0/params-and-templates/</guid>
       <description>
 
 &lt;p&gt;Almost every value in Converge can be templated. We saw the basic usage of
-params in the &lt;a href=&#34;http://converge.aster.is/dependencies/&#34;&gt;using dependencies&lt;/a&gt; guide, but
+params in the &lt;a href=&#34;http://converge.aster.is/0.3.0/dependencies/&#34;&gt;using dependencies&lt;/a&gt; guide, but
 there&amp;rsquo;s even more you can do.&lt;/p&gt;
 
 &lt;h2 id=&#34;values&#34;&gt;Values&lt;/h2&gt;
@@ -930,7 +930,7 @@ accepted as boolean values.&lt;/p&gt;&lt;/li&gt;
 specified in the resource. Let&amp;rsquo;s take &lt;code&gt;uint32&lt;/code&gt; as an example: providing a
 negative integer or one above the ceiling for 32-bit unsigned integral values
 will result in an error. Resources also can specify a base for conversion. For
-example, &lt;a href=&#34;http://converge.aster.is/resources/file-mode/&#34;&gt;file.mode&lt;/a&gt;) takes an octal
+example, &lt;a href=&#34;http://converge.aster.is/0.3.0/resources/file-mode/&#34;&gt;file.mode&lt;/a&gt;) takes an octal
 (base-8) integral value.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;&lt;strong&gt;list&lt;/strong&gt; items will be interpreted using the semantics above&lt;/p&gt;&lt;/li&gt;

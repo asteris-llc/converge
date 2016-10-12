@@ -15,42 +15,42 @@
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/resource-authors-guide/">
+    <link rel="canonical" href="http://converge.aster.is/0.3.0/resource-authors-guide/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/resource-authors-guide/">
+    <meta property="og:url" content="http://converge.aster.is/0.3.0/resource-authors-guide/">
     <meta property="og:title" content="Converge">
-    <meta property="og:image" content="http://converge.aster.is/images/logo.png">
+    <meta property="og:image" content="http://converge.aster.is/0.3.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
-    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.3.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.3.0/images/favicon.ico">
 
     <style>
       @font-face {
         font-family: 'Icon';
-        src: url('http://converge.aster.is/fonts/icon.eot?52m981');
-        src: url('http://converge.aster.is/fonts/icon.eot?#iefix52m981')
+        src: url('http://converge.aster.is/0.3.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.3.0/fonts/icon.eot?#iefix52m981')
                format('embedded-opentype'),
-             url('http://converge.aster.is/fonts/icon.woff?52m981')
+             url('http://converge.aster.is/0.3.0/fonts/icon.woff?52m981')
                format('woff'),
-             url('http://converge.aster.is/fonts/icon.ttf?52m981')
+             url('http://converge.aster.is/0.3.0/fonts/icon.ttf?52m981')
                format('truetype'),
-             url('http://converge.aster.is/fonts/icon.svg?52m981#icon')
+             url('http://converge.aster.is/0.3.0/fonts/icon.svg?52m981#icon')
                format('svg');
         font-weight: normal;
         font-style: normal;
       }
     </style>
 
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/application.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/temporary.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/palettes.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/highlight/highlight.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.3.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.3.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.3.0/stylesheets/palettes.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.3.0/stylesheets/highlight/highlight.css">
 
     
     
@@ -66,7 +66,7 @@
     </style>
 
     
-    <script src="http://converge.aster.is/javascripts/modernizr.js"></script>
+    <script src="http://converge.aster.is/0.3.0/javascripts/modernizr.js"></script>
 
     
 
@@ -138,7 +138,7 @@
     <div class="banner">
       
         <div class="logo">
-          <img src="http://converge.aster.is/images/logo.png">
+          <img src="http://converge.aster.is/0.3.0/images/logo.png">
         </div>
       
       <div class="name">
@@ -302,14 +302,11 @@
 
 
 
-<a class="current" title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
   
   Resource Authors Guide
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -723,11 +720,11 @@ following struct tags control the values you get:</p>
 <li><p><code>doc_type</code>: control the exact printed type in the documentation. Example:
 fields that accept
 a <a href="https://golang.org/pkg/time/#ParseDuration">duration string</a> (such
-as <a href="http://converge.aster.is/resources/task/">task.timeout</a>) are commonly strings
+as <a href="http://converge.aster.is/0.3.0/resources/task/">task.timeout</a>) are commonly strings
 with a <code>doc_type</code> of &ldquo;duration string&rdquo;</p></li>
 
 <li><p><code>base</code>: used with numeric types to indicate a base for parsing. Does not work
-with floats. Example: <a href="http://converge.aster.is/resources/file-mode/">file.mode</a>
+with floats. Example: <a href="http://converge.aster.is/0.3.0/resources/file-mode/">file.mode</a>
 needs an octal number, and specifies that in this tag.</p></li>
 </ul>
 
@@ -736,16 +733,16 @@ needs an octal number, and specifies that in this tag.</p></li>
 <ul>
 <li><p><code>required</code>: one valid value: <code>true</code>. If set, this field must be set in the
 HCL, but may still have a zero value (for example, <code>int</code> can still be <code>0</code>.)
-Example: [docker.container]http://converge.aster.is/resources/docker-container/ uses
+Example: [docker.container]http://converge.aster.is/0.3.0/resources/docker-container/ uses
 this to require an image for the container.</p></li>
 
 <li><p><code>mutually_exclusive</code>: a comma-separated list of fields that cannot be set
-together. Example: <a href="http://converge.aster.is/resources/user-user/">user</a> uses this
+together. Example: <a href="http://converge.aster.is/0.3.0/resources/user-user/">user</a> uses this
 to disallow setting both <code>groupname</code> and <code>gid</code>.</p></li>
 
 <li><p><code>valid_values</code>: a comma-separated list of values that will be accepted for
 this field.
-Example: <a href="http://converge.aster.is/resources/docker-container/">docker.container</a> uses
+Example: <a href="http://converge.aster.is/0.3.0/resources/docker-container/">docker.container</a> uses
 this to enforce status is only <code>running</code> or <code>created</code>.</p></li>
 </ul>
 
@@ -789,7 +786,7 @@ with both the preparer and task, then empty-import your new module in
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/params-and-templates/" title="Params and Templates">
+      <a href="http://converge.aster.is/0.3.0/params-and-templates/" title="Params and Templates">
         <span class="direction">
           Previous
         </span>
@@ -809,7 +806,7 @@ with both the preparer and task, then empty-import your new module in
 
   <div class="next">
   
-      <a href="http://converge.aster.is/module-verification/" title="Module Verification">
+      <a href="http://converge.aster.is/0.3.0/module-verification/" title="Module Verification">
         <span class="direction">
           Next
         </span>
@@ -848,12 +845,12 @@ with both the preparer and task, then empty-import your new module in
 
     <script>
     
-      var base_url = 'http:\/\/converge.aster.is\/';
+      var base_url = 'http:\/\/converge.aster.is\/0.3.0\/';
       var repo_id  = 'asteris-llc\/converge';
     
     </script>
 
-    <script src="http://converge.aster.is/javascripts/application.js"></script>
+    <script src="http://converge.aster.is/0.3.0/javascripts/application.js"></script>
     
 
     <script>
