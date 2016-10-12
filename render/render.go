@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
@@ -43,7 +44,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		if err != nil {
 			return err
 		}
-		out.Add(id, value)
+		out.Add(node.New(id, value))
 		renderingPlant.Graph = out
 		return nil
 	})

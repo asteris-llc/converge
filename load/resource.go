@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/parse"
@@ -73,7 +74,7 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			return err
 		}
 
-		out.Add(id, preparer)
+		out.Add(node.New(id, preparer))
 
 		return nil
 	})

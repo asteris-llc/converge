@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 )
 
 // Subgraph are treated as a semi-lattice with the root graph as the ⊥ (join)
@@ -91,7 +92,7 @@ func (p Printer) loadSubgraphs(ctx context.Context, g *graph.Graph, subgraphs Su
 		return
 	}
 
-	g.RootFirstWalk(ctx, func(id string, val interface{}) error {
+	g.RootFirstWalk(ctx, func(id string, _ *node.Node) error {
 		if sgMarker := printer.MarkNode(g, id); sgMarker != nil {
 			if sgMarker.Start {
 				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)

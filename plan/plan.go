@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/render"
 )
 
@@ -60,7 +61,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 				hasErrors = ErrTreeContainsErrors
 			}
 
-			out.Add(id, asResult)
+			out.Add(node.New(id, asResult))
 			return nil
 		}),
 	)

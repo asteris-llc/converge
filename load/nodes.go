@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
@@ -44,7 +45,7 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
-	out.Add("root", nil)
+	out.Add(node.New("root", nil))
 
 	for len(toLoad) > 0 {
 		select {
@@ -89,7 +90,7 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 
 		for _, resource := range resources {
 			newID := graph.ID(current.Parent, resource.String())
-			out.Add(newID, resource)
+			out.Add(node.New(newID, resource))
 			out.ConnectParent(current.Parent, newID)
 
 			if resource.IsModule() {

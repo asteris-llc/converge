@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
@@ -126,7 +127,7 @@ can be done separately to see what needs to be changed before execution.`,
 					if resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
 						if details != nil {
-							g.Add(resp.Id, details.ToPrintable())
+							g.Add(node.New(resp.Id, details.ToPrintable()))
 						}
 					}
 				},
