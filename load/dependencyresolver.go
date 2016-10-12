@@ -48,7 +48,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 
 		depGenerators := []dependencyGenerator{
 			func(node *parse.Node) ([]string, error) {
-				return getDepends(g, id, node)
+				return getDepends(id, node)
 			},
 			func(node *parse.Node) ([]string, error) {
 				return getParams(g, meta.ID, node)
@@ -77,7 +77,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 }
 
-func getDepends(g *graph.Graph, id string, node *parse.Node) ([]string, error) {
+func getDepends(id string, node *parse.Node) ([]string, error) {
 	deps, err := node.GetStringSlice("depends")
 	switch err {
 	case parse.ErrNotFound:
