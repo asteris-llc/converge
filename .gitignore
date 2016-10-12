@@ -35,9 +35,9 @@ samples/**/*.png
 build
 
 # docs
-docs_source/extract
-docs_source/resources.mk
-docs_source/public
+docs/extract
+docs/resources.mk
+docs/public
 
 # examples
 terraform.tfstate*
