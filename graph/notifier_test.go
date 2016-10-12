@@ -20,13 +20,14 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNotifyTransform(t *testing.T) {
 	g := graph.New()
-	g.Add("root", 1)
+	g.Add(node.New("root", 1))
 
 	doNothing := func(string, *graph.Graph) error { return nil }
 	returnError := func(string, *graph.Graph) error { return errors.New("error") }

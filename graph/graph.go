@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/dag"
@@ -28,7 +29,7 @@ import (
 )
 
 // WalkFunc is taken by the walking functions
-type WalkFunc func(string, interface{}) error
+type WalkFunc func(string, *node.Node) error
 
 // TransformFunc is taken by the transformation functions
 type TransformFunc func(string, *Graph) error
@@ -60,12 +61,12 @@ func New() *Graph {
 }
 
 // Add a new value by ID
-func (g *Graph) Add(id string, value interface{}) {
+func (g *Graph) Add(node *node.Node) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
-	g.inner.Add(id)
-	g.values.Set(id, value)
+	g.inner.Add(node.ID)
+	g.values.Set(node.ID, node)
 }
 
 // Remove an existing value by ID
@@ -78,13 +79,18 @@ func (g *Graph) Remove(id string) {
 }
 
 // Get a value by ID
-func (g *Graph) Get(id string) interface{} {
+func (g *Graph) Get(id string) *node.Node {
 	val, _ := g.values.Get(id)
-	return val
+
+	if val == nil {
+		return nil
+	}
+
+	return val.(*node.Node)
 }
 
 // GetParent returns the direct parent vertex of the current node.
-func (g *Graph) GetParent(id string) interface{} {
+func (g *Graph) GetParent(id string) *node.Node {
 	var parentID string
 	for _, edge := range g.UpEdges(id) {
 		switch edge.(type) {
@@ -449,7 +455,7 @@ func (g *Graph) Copy() *Graph {
 	out := New()
 
 	for _, v := range g.Vertices() {
-		out.Add(v, g.Get(v))
+		out.Add(g.Get(v))
 	}
 
 	for _, e := range g.inner.Edges() {
@@ -505,8 +511,13 @@ func (g *Graph) Vertices() []string {
 
 // MaybeGet returns the value of the element and a bool indicating if it was
 // found, if it was not found the value of the returned element is nil.
-func (g *Graph) MaybeGet(id string) (interface{}, bool) {
-	return g.values.Get(id)
+func (g *Graph) MaybeGet(id string) (*node.Node, bool) {
+	raw, ok := g.values.Get(id)
+	if !ok {
+		return nil, ok
+	}
+
+	return raw.(*node.Node), true
 }
 
 // Contains returns true if the id exists in the map
@@ -550,7 +561,7 @@ func (g *Graph) String() string {
 func transform(ctx context.Context, source *Graph, walker walkerFunc, cb TransformFunc) (*Graph, error) {
 	dest := source.Copy()
 
-	err := walker(ctx, dest, func(id string, _ interface{}) error {
+	err := walker(ctx, dest, func(id string, _ *node.Node) error {
 		return cb(id, dest)
 	})
 	if err != nil {

@@ -46,8 +46,11 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		lock.Lock()
 		defer lock.Unlock()
 
-		value := out.Get(id)
-		hash, err := hashstructure.Hash(value, nil)
+		value, ok := out.MaybeGet(id)
+		if !ok {
+			return nil // not much use hashing a nil value
+		}
+		hash, err := hashstructure.Hash(value.Value(), nil)
 		if err != nil {
 			return err
 		}
