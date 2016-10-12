@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/resource"
@@ -42,7 +43,7 @@ func TestSatisfiesInterface(t *testing.T) {
 
 func testFinishPP(t *testing.T, in Printable, out string) {
 	g := graph.New()
-	g.Add("root", in)
+	g.Add(node.New("root", in))
 
 	printer := human.New()
 	printer.InitColors()
@@ -86,7 +87,7 @@ func testDrawNodes(t *testing.T, in Printable, out string) {
 
 func testDrawNodesCustomPrinter(t *testing.T, h *human.Printer, id string, in Printable, out string) {
 	g := graph.New()
-	g.Add(id, in)
+	g.Add(node.New(id, in))
 
 	str, err := h.DrawNode(g, id)
 
@@ -104,7 +105,7 @@ func benchmarkDrawNodes(in Printable) {
 
 func benchmarkDrawNodesCustomPrinter(h *human.Printer, id string, in Printable) {
 	g := graph.New()
-	g.Add(id, in)
+	g.Add(node.New(id, in))
 
 	h.DrawNode(g, id)
 }

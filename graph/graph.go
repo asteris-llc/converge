@@ -78,19 +78,19 @@ func (g *Graph) Remove(id string) {
 	g.values.Remove(id)
 }
 
-// Get a value by ID
-func (g *Graph) Get(id string) *node.Node {
-	val, _ := g.values.Get(id)
-
-	if val == nil {
-		return nil
+// Get returns the value of the element and a bool indicating if it was
+// found. If it was not found the value of the returned element is nil.
+func (g *Graph) Get(id string) (*node.Node, bool) {
+	raw, ok := g.values.Get(id)
+	if !ok {
+		return nil, ok
 	}
 
-	return val.(*node.Node)
+	return raw.(*node.Node), true
 }
 
 // GetParent returns the direct parent vertex of the current node.
-func (g *Graph) GetParent(id string) *node.Node {
+func (g *Graph) GetParent(id string) *node.Node { // TODO: make this (*node.Node, bool)
 	var parentID string
 	for _, edge := range g.UpEdges(id) {
 		switch edge.(type) {
@@ -100,7 +100,8 @@ func (g *Graph) GetParent(id string) *node.Node {
 		}
 	}
 
-	return g.Get(parentID)
+	val, _ := g.Get(parentID)
+	return val
 }
 
 // ConnectParent connects a parent node to a child node
@@ -352,7 +353,8 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		}
 
 		logger.WithField("id", id).Debug("executing")
-		if err := cb(id, g.Get(id)); err != nil {
+		val, _ := g.Get(id)
+		if err := cb(id, val); err != nil {
 			setErr(id, err)
 		}
 	}
@@ -426,7 +428,8 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 
 		logger.WithField("id", id).Debug("walking")
 
-		if err := cb(id, g.Get(id)); err != nil {
+		raw, _ := g.Get(id) // we want to call with every value, including nil
+		if err := cb(id, raw); err != nil {
 			return err
 		}
 
@@ -455,7 +458,8 @@ func (g *Graph) Copy() *Graph {
 	out := New()
 
 	for _, v := range g.Vertices() {
-		out.Add(g.Get(v))
+		val, _ := g.Get(v) // we don't care if it's nil here, we're doing a direct copy
+		out.Add(val)
 	}
 
 	for _, e := range g.inner.Edges() {
@@ -509,20 +513,9 @@ func (g *Graph) Vertices() []string {
 	return vertices
 }
 
-// MaybeGet returns the value of the element and a bool indicating if it was
-// found, if it was not found the value of the returned element is nil.
-func (g *Graph) MaybeGet(id string) (*node.Node, bool) {
-	raw, ok := g.values.Get(id)
-	if !ok {
-		return nil, ok
-	}
-
-	return raw.(*node.Node), true
-}
-
 // Contains returns true if the id exists in the map
 func (g *Graph) Contains(id string) bool {
-	_, found := g.MaybeGet(id)
+	_, found := g.Get(id)
 	return found
 }
 

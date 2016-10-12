@@ -67,7 +67,13 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 		if vertex == root {
 			continue
 		}
-		status, ok := g.Get(vertex).(*resource.HealthStatus)
+
+		meta, ok := g.Get(vertex)
+		if !ok {
+			continue
+		}
+
+		status, ok := meta.Value().(*resource.HealthStatus)
 		if !ok {
 			continue
 		}
@@ -138,17 +144,21 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 		return pp.HiddenString(), err
 	}
 
-	node := g.Get(id)
-	healthStatus, ok := node.(*resource.HealthStatus)
+	meta, ok := g.Get(id)
 	if !ok {
-		fmt.Printf("%s is not a health node, deferring to the human printer\n", id)
+		// not a node, deferring to the human printer
+		return p.Printer.DrawNode(g, id)
+	}
+
+	healthStatus, ok := meta.Value().(*resource.HealthStatus)
+	if !ok {
+		// not a health node, deferring to the human printer
 		return p.Printer.DrawNode(g, id)
 	}
 
 	tmpl, err := p.getDrawTemplate(healthStatus)
 
 	if err != nil {
-		fmt.Println("template generation error")
 		return pp.HiddenString(), err
 	}
 

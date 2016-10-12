@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/jsonl"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestSatisfiesInterface(t *testing.T) {
 
 func TestDrawNode(t *testing.T) {
 	g := graph.New()
-	g.Add("x", 1)
+	g.Add(node.New("x", 1))
 
 	printer := new(jsonl.Printer)
 	out, err := printer.DrawNode(g, "x")

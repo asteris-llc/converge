@@ -30,25 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGet(t *testing.T) {
-	// Get should return the value put into the graph
-	t.Parallel()
-
-	g := graph.New()
-	g.Add(node.New("one", 1))
-
-	assert.Equal(t, 1, g.Get("one").Value().(int))
-}
-
-func TestGetNothing(t *testing.T) {
-	// Get should return nil for a nonexistent node
-	t.Parallel()
-
-	g := graph.New()
-
-	assert.Nil(t, g.Get("nothing"))
-}
-
 func TestMaybeGet(t *testing.T) {
 	t.Parallel()
 
@@ -56,13 +37,13 @@ func TestMaybeGet(t *testing.T) {
 	g.Add(node.New("one", 1))
 
 	t.Run("found", func(t *testing.T) {
-		val, found := g.MaybeGet("one")
+		val, found := g.Get("one")
 		assert.Equal(t, 1, val.Value())
 		assert.True(t, found)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		val, found := g.MaybeGet("two")
+		val, found := g.Get("two")
 		assert.Nil(t, val)
 		assert.False(t, found)
 	})
@@ -80,9 +61,9 @@ func BenchmarkAddThenGet(b *testing.B) {
 	g := graph.New()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			id := rand.Int()
-			g.Add(node.New(strconv.Itoa(id), id))
-			g.Get(strconv.Itoa(id))
+			id := strconv.Itoa(rand.Int())
+			g.Add(node.New(id, id))
+			g.Get(id)
 		}
 	})
 }
@@ -104,7 +85,8 @@ func TestRemove(t *testing.T) {
 	g.Add(node.New("one", 1))
 	g.Remove("one")
 
-	assert.Nil(t, g.Get("one"))
+	_, ok := g.Get("one")
+	assert.False(t, ok)
 }
 
 func TestDownEdges(t *testing.T) {
@@ -345,7 +327,9 @@ func TestTransform(t *testing.T) {
 	)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, transformed.Get("int").Value().(int))
+	meta, ok := transformed.Get("int")
+	require.True(t, ok, "node was not present in graph")
+	assert.Equal(t, 2, meta.Value().(int))
 }
 
 func TestParent(t *testing.T) {
@@ -360,8 +344,9 @@ func TestParent(t *testing.T) {
 
 	require.NoError(t, g.Validate())
 
-	parent := g.GetParent(graph.ID("root", "child"))
-	assert.Equal(t, g.Get(graph.ID("root")), parent)
+	actual := g.GetParent(graph.ID("root", "child"))
+	should, _ := g.Get(graph.ID("root"))
+	assert.Equal(t, should, actual)
 }
 
 func TestRootFirstWalk(t *testing.T) {
@@ -437,7 +422,9 @@ func TestRootFirstTransform(t *testing.T) {
 	)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, transformed.Get("int").Value().(int))
+	meta, ok := transformed.Get("int")
+	require.True(t, ok, "\"int\" was not present in graph")
+	assert.Equal(t, 2, meta.Value().(int))
 }
 
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {

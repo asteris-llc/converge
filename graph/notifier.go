@@ -14,11 +14,13 @@
 
 package graph
 
+import "github.com/asteris-llc/converge/graph/node"
+
 // PreNotifyFunc will be called before execution
 type PreNotifyFunc func(string) error
 
 // PostNotifyFunc will be called after planning
-type PostNotifyFunc func(string, interface{}) error
+type PostNotifyFunc func(string, *node.Node) error
 
 // NotifyPre will call a function before walking a node
 func NotifyPre(pre PreNotifyFunc, inner TransformFunc) TransformFunc {
@@ -38,7 +40,8 @@ func NotifyPost(post PostNotifyFunc, inner TransformFunc) TransformFunc {
 			return err
 		}
 
-		return post(id, g.Get(id))
+		meta, _ := g.Get(id)
+		return post(id, meta)
 	}
 }
 

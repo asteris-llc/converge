@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/stretchr/testify/assert"
 )
@@ -78,10 +79,10 @@ func TestVertexSplit(t *testing.T) {
 	t.Run("TestVertexSplitWhenMatchingSubstringReturnsPrefixAndRest", func(t *testing.T) {
 		s := "a.b.c.d.e"
 		g := graph.New()
-		g.Add("a", "a")
-		g.Add("a.b", "a.b.")
-		g.Add("a.c.d.", "a.c.d")
-		g.Add("a.b.c", "a.b.c")
+		g.Add(node.New("a", "a"))
+		g.Add(node.New("a.b", "a.b."))
+		g.Add(node.New("a.c.d.", "a.c.d"))
+		g.Add(node.New("a.b.c", "a.b.c"))
 		pfx, rest, found := preprocessor.VertexSplit(g, s)
 		assert.Equal(t, "a.b.c", pfx)
 		assert.Equal(t, "d.e", rest)
@@ -91,7 +92,7 @@ func TestVertexSplit(t *testing.T) {
 	t.Run("TestVertexSplitWhenExactMatchReturnsPrefix", func(t *testing.T) {
 		s := "a.b.c"
 		g := graph.New()
-		g.Add("a.b.c", "a.b.c")
+		g.Add(node.New("a.b.c", "a.b.c"))
 		pfx, rest, found := preprocessor.VertexSplit(g, s)
 		assert.Equal(t, "a.b.c", pfx)
 		assert.Equal(t, "", rest)
@@ -101,7 +102,7 @@ func TestVertexSplit(t *testing.T) {
 	t.Run("TestVertexSplitWhenNoMatchReturnsRest", func(t *testing.T) {
 		s := "x.y.z"
 		g := graph.New()
-		g.Add("a.b.c", "a.b.c")
+		g.Add(node.New("a.b.c", "a.b.c"))
 		pfx, rest, found := preprocessor.VertexSplit(g, s)
 		assert.Equal(t, "", pfx)
 		assert.Equal(t, "x.y.z", rest)

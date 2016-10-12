@@ -40,16 +40,28 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 	return in.Transform(
 		ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
-			task, err := unboxNode(out.Get(id))
+			var val interface{}
+			if meta, ok := out.Get(id); ok {
+				val = meta.Value()
+			}
+
+			task, err := unboxNode(val)
 			if err != nil {
 				return err
 			}
+
 			asCheck, ok := task.(Check)
 			if !ok {
 				return nil
 			}
+
 			for _, dep := range out.Dependencies(id) {
-				depStatus, ok := out.Get(dep).(resource.TaskStatus)
+				meta, ok := out.Get(dep)
+				if !ok {
+					continue
+				}
+
+				depStatus, ok := meta.Value().(resource.TaskStatus)
 				if !ok {
 					continue
 				}

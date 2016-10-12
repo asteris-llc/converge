@@ -35,10 +35,10 @@ func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {
 	require.NoError(t, err)
 
 	var nodesLeft int
-	if transformed.Get("root/first") != nil {
+	if _, ok := transformed.Get("root/first"); ok {
 		nodesLeft++
 	}
-	if transformed.Get("root/one") != nil {
+	if _, ok := transformed.Get("root/one"); ok {
 		nodesLeft++
 	}
 
@@ -58,7 +58,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 
 		// we need to get a result where root/first is removed so we can test
 		// dependency migration. So if root/first still exists, we need to skip
-		if transformed.Get("root/first") != nil {
+		if _, ok := transformed.Get("root/first"); ok {
 			t.Logf("retrying test after failing %d times", i)
 			continue
 		}
@@ -86,15 +86,16 @@ func TestMergeDuplicatesRemovesChildren(t *testing.T) {
 	require.NoError(t, err)
 
 	var removed string
-	if transformed.Get("root/one") == nil {
+	if _, ok := transformed.Get("root/one"); !ok {
 		removed = "root/one"
-	} else if transformed.Get("root/first") == nil {
+	} else if _, ok := transformed.Get("root/first"); !ok {
 		removed = "root/first"
 	} else {
 		assert.FailNow(t, `neither "root/one" nor "root/first" was removed`)
 	}
 
-	assert.Nil(t, transformed.Get(graph.ID(removed, "x")))
+	_, ok := transformed.Get(graph.ID(removed, "x"))
+	assert.False(t, ok, "%q was still present", graph.ID(removed, "x"))
 }
 
 func baseDupGraph() *graph.Graph {
