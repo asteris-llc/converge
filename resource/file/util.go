@@ -114,13 +114,13 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 			return userInfo, true, err
 		}
 		if actual.Username != "" {
-			return &user.User{Username: actual.Username, Uid: actual.Uid}, true, err
+			return &user.User{Username: actual.Username, Uid: actual.Uid}, false, err
 		}
 	}
 
 	userInfo, err = user.Lookup(f.Username)
 	if err != nil {
-		return userInfo, false, errors.Wrapf(err, "unable to get user information for username %s:", f.Username)
+		return userInfo, true, errors.Wrapf(err, "unable to get user information")
 	}
 	if f.Username != actual.Username {
 		changed = true
@@ -146,7 +146,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 
 	groupInfo, err = user.LookupGroup(f.Name)
 	if err != nil {
-		return groupInfo, true, errors.Wrapf(err, "unable to get user information for username %s:", f.Name)
+		return groupInfo, true, errors.Wrapf(err, "unable to get information")
 	}
 
 	if f.Name != actual.Name {
