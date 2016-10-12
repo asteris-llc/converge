@@ -7,7 +7,6 @@ menu:
     parent: resources
 ---
 
-
 Manages files, file content, directories, hard and soft links.
 
 ## Example
