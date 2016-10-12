@@ -154,7 +154,7 @@ func (c *CaseTask) Apply() (resource.TaskStatus, error) {
 
 func (c *CaseTask) String() string {
 	var out string
-	if nil == c {
+	if c == nil {
 		return "<nil>"
 	}
 	out += fmt.Sprintf("Case: \n")
