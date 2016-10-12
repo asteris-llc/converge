@@ -86,7 +86,6 @@ func (g *Graph) Get(id string) (*node.Node, bool) {
 	if !ok {
 		return nil, ok
 	}
-
 	return raw.(*node.Node), true
 }
 
@@ -111,11 +110,22 @@ func (g *Graph) GetParentID(id string) (string, bool) {
 		return "", false
 	}
 	return node.ID, true
+	return "", false
+}
+
+// AreSiblings returns true if both nodes share a parent edge, or both nodes are
+// at the root of the graph (and have no parent edge).  It returns false if both
+// IDs are the same.
+func (g *Graph) AreSiblings(fst, snd string) bool {
+	fstParent, fstFound := g.GetParentID(fst)
+	sndParent, sndFound := g.GetParentID(snd)
+	return (fstParent == sndParent) && (fstFound == sndFound) && (fst != snd)
 }
 
 // IsNibling checks to see if second is the child of a sibling of the first.
 func (g *Graph) IsNibling(fst, snd string) bool {
-	if snd == "." || snd == "" {
+	sndParent, sndHasParent := g.GetParentID(snd)
+	if !sndHasParent {
 		return false
 	}
 	sndID, sndHasParent := g.GetParentID(snd)
@@ -123,9 +133,10 @@ func (g *Graph) IsNibling(fst, snd string) bool {
 	if fst == sndID {
 		return false
 	}
-	if AreSiblingIDs(fst, snd) {
+	if g.AreSiblings(fst, snd) {
 		return true
 	}
+
 	if !sndHasParent {
 		return false
 	}
