@@ -473,6 +473,55 @@ func TestRootFirstTransform(t *testing.T) {
 	assert.Equal(t, 2, meta.Value().(int))
 }
 
+// TestIsNibling tests various scenarios where we want to know if a node is a
+// nibling of the source node.
+func TestIsNibling(t *testing.T) {
+	t.Parallel()
+
+	g := graph.New()
+	g.Add("a", struct{}{})
+	g.Add("a/b", struct{}{})
+	g.ConnectParent("a", "a/b")
+	g.Add("a/b/c", struct{}{})
+	g.ConnectParent("a/b", "a/b/c")
+	g.Add("a/b/c/d", struct{}{})
+	g.ConnectParent("a/b/c", "a/b/c/d")
+	g.Add("a/c", struct{}{})
+	g.ConnectParent("a", "a/c")
+	g.Add("a/c/d", struct{}{})
+	g.ConnectParent("a/c", "a/c/d")
+	g.Add("a/c/d/e", struct{}{})
+	g.ConnectParent("a/c/d", "a/c/d/e")
+	g.Add("x", struct{}{})
+	g.Add("x/c", struct{}{})
+	g.ConnectParent("x", "x/c")
+
+	t.Run("are siblings", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c"))
+	})
+	t.Run("is direct nibling", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c/d"))
+	})
+	t.Run("is nibling child of nibling", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c/d/e"))
+	})
+	t.Run("child", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "a/b/c"))
+	})
+	t.Run("grandchild", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "a/b/c/d"))
+	})
+	t.Run("unrelated", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "x/c"))
+	})
+	t.Run("cousins", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b/c", "a/x"))
+	})
+	t.Run("parent", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b/c", "a/b"))
+	})
+}
+
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 	lock := new(sync.Mutex)
 	out := []string{}

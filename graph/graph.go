@@ -104,6 +104,34 @@ func (g *Graph) GetParent(id string) (*node.Node, bool) {
 	return g.Get(parentID)
 }
 
+// GetParentID is a combination of getting the parent the getting the ID.
+func (g *Graph) GetParentID(id string) (string, bool) {
+	node, ok := GetParentID(id)
+	if !ok {
+		return "", false
+	}
+	return node.ID, true
+}
+
+// IsNibling checks to see if second is the child of a sibling of the first.
+func (g *Graph) IsNibling(fst, snd string) bool {
+	if snd == "." || snd == "" {
+		return false
+	}
+	sndID, sndHasParent := g.GetParentID(snd)
+
+	if fst == sndID {
+		return false
+	}
+	if AreSiblingIDs(fst, snd) {
+		return true
+	}
+	if !sndHasParent {
+		return false
+	}
+	return g.IsNibling(fst, sndID)
+}
+
 // ConnectParent connects a parent node to a child node
 func (g *Graph) ConnectParent(from, to string) {
 	g.innerLock.Lock()
