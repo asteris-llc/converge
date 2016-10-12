@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,7 +49,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := baseDupGraph()
-	g.Add("root/two", 2)
+	g.Add(node.New("root/two", 2))
 	g.Connect("root", "root/two")
 	g.Connect("root/two", "root/first")
 
@@ -76,9 +77,9 @@ func TestMergeDuplicatesRemovesChildren(t *testing.T) {
 
 	g := baseDupGraph()
 
-	for _, node := range []string{"root/one", "root/first"} {
-		g.Add(graph.ID(node, "x"), node)
-		g.Connect(node, graph.ID(node, "x"))
+	for _, id := range []string{"root/one", "root/first"} {
+		g.Add(node.New(graph.ID(id, "x"), id))
+		g.Connect(id, graph.ID(id, "x"))
 	}
 
 	transformed, err := graph.MergeDuplicates(context.Background(), g, neverSkip)
@@ -98,9 +99,9 @@ func TestMergeDuplicatesRemovesChildren(t *testing.T) {
 
 func baseDupGraph() *graph.Graph {
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("root/one", 1)
-	g.Add("root/first", 1)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("root/one", 1))
+	g.Add(node.New("root/first", 1))
 
 	g.Connect("root", "root/one")
 	g.Connect("root", "root/first")
