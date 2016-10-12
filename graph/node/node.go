@@ -14,12 +14,9 @@
 
 package node
 
-import "fmt"
-
 // Node tracks the metadata associated with a node in the graph
 type Node struct {
-	ID          string
-	Coordinates *Coordinates
+	ID string
 
 	value interface{}
 }
@@ -35,15 +32,4 @@ func New(id string, value interface{}) *Node {
 // Value gets the inner value of this node
 func (n *Node) Value() interface{} {
 	return n.value
-}
-
-// Coordinates tracks the source of the node in the graph
-type Coordinates struct {
-	File   string
-	Line   int // TODO: should this be nullable?
-	Column int // TODO: should this be nullable?
-}
-
-func (c *Coordinates) String() string {
-	return fmt.Sprintf("%s:%d:%d", c.File, c.Line, c.Column)
 }
