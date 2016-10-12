@@ -90,7 +90,7 @@ func UserInfo(fi os.FileInfo) (*user.User, error) {
 func GroupInfo(fi os.FileInfo) (*user.Group, error) {
 	gid, err := GID(fi)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get uid for file")
+		return nil, fmt.Errorf("unable to get gid for file")
 	}
 
 	group, err := user.LookupGroupId(strconv.Itoa(gid))
@@ -109,7 +109,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 		if actual == nil || actual.Username == "" { // if neither is set, use the effective uid of the process
 			userInfo, err = user.LookupId(strconv.Itoa(os.Geteuid()))
 			if err != nil {
-				return &user.User{}, false, errors.Wrapf(err, "unable to set default username %s", f.Name)
+				return nil, false, errors.Wrapf(err, "unable to set default username %s", f.Name)
 			}
 			return userInfo, true, err
 		}
@@ -120,7 +120,7 @@ func desiredUser(f, actual *user.User) (userInfo *user.User, changed bool, err e
 
 	userInfo, err = user.Lookup(f.Username)
 	if err != nil {
-		return userInfo, true, errors.Wrapf(err, "unable to get user information")
+		return userInfo, false, errors.Wrapf(err, "unable to get user information")
 	}
 	if f.Username != actual.Username {
 		changed = true
@@ -135,7 +135,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 		if actual == nil || actual.Name == "" { // if neither is set, use the effective gid of the process
 			groupInfo, err = user.LookupGroupId(strconv.Itoa(os.Getegid()))
 			if err != nil {
-				return &user.Group{}, false, errors.Wrapf(err, "unable to set default group")
+				return nil, false, errors.Wrapf(err, "unable to set default group")
 			}
 			return groupInfo, true, nil
 		}
@@ -146,7 +146,7 @@ func desiredGroup(f, actual *user.Group) (groupInfo *user.Group, changed bool, e
 
 	groupInfo, err = user.LookupGroup(f.Name)
 	if err != nil {
-		return groupInfo, true, errors.Wrapf(err, "unable to get information")
+		return groupInfo, false, errors.Wrapf(err, "unable to get information")
 	}
 
 	if f.Name != actual.Name {

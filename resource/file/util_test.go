@@ -68,7 +68,7 @@ func TestDesiredGroup(t *testing.T) {
 			{&user.Group{Name: "wheel", Gid: "0"}, &user.Group{Name: "wheel", Gid: "0"}, &user.Group{Name: "wheel", Gid: "0"}, false, nil},
 			{&user.Group{}, &user.Group{Name: "wheel", Gid: "0"}, &user.Group{Name: "wheel", Gid: "0"}, false, nil},
 			{&user.Group{}, &user.Group{}, effectiveGroup, true, nil},
-			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, true, errors.New("unable to get information: group: unknown group converge-bad-group")},
+			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, false, errors.New("unable to get information: group: unknown group converge-bad-group")},
 		}
 	case "linux":
 		groups = []Case{
@@ -76,7 +76,7 @@ func TestDesiredGroup(t *testing.T) {
 			{&user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, false, nil},
 			{&user.Group{}, &user.Group{Name: "root", Gid: "0"}, &user.Group{Name: "root", Gid: "0"}, false, nil},
 			{&user.Group{}, &user.Group{}, effectiveGroup, true, nil},
-			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, true, errors.New("unable to get information: group: unknown group converge-bad-group")},
+			{&user.Group{Name: "converge-bad-group"}, &user.Group{}, effectiveGroup, false, errors.New("unable to get information: group: unknown group converge-bad-group")},
 		}
 	default:
 		groups = []Case{}
@@ -120,7 +120,7 @@ func TestDesiredUser(t *testing.T) {
 			{&user.User{Username: "root", Uid: "0"}, &user.User{Username: "root", Uid: "0"}, &user.User{Username: "root", Uid: "0"}, false, nil},
 			{&user.User{}, &user.User{Username: "root", Uid: "0"}, &user.User{Username: "root", Uid: "0"}, false, nil},
 			{&user.User{}, &user.User{}, effectiveUser, true, nil},
-			{&user.User{Username: "converge-bad-user"}, &user.User{}, effectiveUser, true, errors.New("unable to get user information: user: unknown user converge-bad-user")},
+			{&user.User{Username: "converge-bad-user"}, &user.User{}, effectiveUser, false, errors.New("unable to get user information: user: unknown user converge-bad-user")},
 		}
 	default:
 		users = []Case{}
