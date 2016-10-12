@@ -71,7 +71,6 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 
 		err := hcl.DecodeObject(&preparer.Source, raw.ObjectItem.Val)
 		if err != nil {
-			fmt.Println("error decoding object")
 			return err
 		}
 
