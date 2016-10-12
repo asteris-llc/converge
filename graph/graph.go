@@ -456,80 +456,6 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 	return nil
 }
 
-// rootDepthWalk is separate for internal use in the transformations
-func rootDepthWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
-	root, err := g.inner.Root()
-	if err != nil {
-		return err
-	}
-
-	logger := logging.GetLogger(ctx).WithField("function", "rootFirstWalk")
-
-	var (
-		todo     = []string{root.(string)}
-		deferred = map[string][]string{}
-		done     = map[string]struct{}{}
-	)
-
-	for len(todo) > 0 {
-		id := todo[0]
-		todo = todo[1:]
-
-		if deferredHere, ok := deferred[id]; ok {
-			todo = append(todo, deferredHere...)
-			delete(deferred, id)
-		}
-
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("interrupted at %q", id)
-		default:
-		}
-
-		// first check if we've already done this ID. We check multiple times as a
-		// signal to re-check after finding a dependency needs waiting for.
-		if _, ok := done[id]; ok {
-			continue
-		}
-
-		// make sure all sibling dependencies are finished first
-		var skip bool
-		for _, edge := range g.DownEdges(id) {
-			if _, ok := done[edge.Target().(string)]; AreSiblingIDs(id, edge.Target().(string)) && !ok {
-				logger.WithField("id", id).WithField("target", edge).Debug("still waiting for sibling")
-				todo = append(todo, id)
-				skip = true
-			} else if _, ok := done[edge.Target().(string)]; IsNibling(id, edge.Target().(string)) && !ok {
-				targetS := edge.Target().(string)
-				spliced := []string{}
-				for t := targetS; t != ParentID(id) && t != "root"; t = ParentID(t) {
-					spliced = append([]string{t}, spliced...)
-				}
-				todo = append(todo, spliced...)
-				todo = append(todo, id)
-				skip = true
-			}
-		}
-		if skip {
-			continue
-		}
-
-		logger.WithField("id", id).Debug("walking")
-
-		if err := cb(id, g.Get(id)); err != nil {
-			return err
-		}
-
-		// mark this ID as done and do the children
-		done[id] = struct{}{}
-		for _, edge := range g.DownEdges(id) {
-			todo = append(todo, edge.Target().(string))
-		}
-	}
-
-	return nil
-}
-
 // Transform a graph of type A to a graph of type B. A and B can be the same.
 func (g *Graph) Transform(ctx context.Context, cb TransformFunc) (*Graph, error) {
 	return transform(ctx, g, dependencyWalk, cb)
@@ -538,12 +464,6 @@ func (g *Graph) Transform(ctx context.Context, cb TransformFunc) (*Graph, error)
 // RootFirstTransform does Transform, but starting at the root
 func (g *Graph) RootFirstTransform(ctx context.Context, cb TransformFunc) (*Graph, error) {
 	return transform(ctx, g, rootFirstWalk, cb)
-}
-
-// RootDepthTransform is similar to RootFirstTransform but will add non-sibling
-// dependencies if necessary.
-func (g *Graph) RootDepthTransform(ctx context.Context, cb TransformFunc) (*Graph, error) {
-	return transform(ctx, g, rootDepthWalk, cb)
 }
 
 // Copy the graph for further modification
