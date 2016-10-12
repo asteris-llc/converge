@@ -2,112 +2,112 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://converge.aster.is/</loc>
+    <loc>http://converge.aster.is/0.2.0/</loc>
     <lastmod>2016-09-26T09:00:07-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/user-user/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/user-user/</loc>
     <lastmod>2016-09-26T09:00:07-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/user-group/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/user-group/</loc>
     <lastmod>2016-09-21T14:04:24-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resource-authors-guide/</loc>
+    <loc>http://converge.aster.is/0.2.0/resource-authors-guide/</loc>
     <lastmod>2016-09-21T10:55:55-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/task/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/task/</loc>
     <lastmod>2016-09-20T14:45:56-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/docker-container/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/docker-container/</loc>
     <lastmod>2016-09-20T14:45:55-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/param/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/param/</loc>
     <lastmod>2016-09-20T14:45:55-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/file-directory/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/file-directory/</loc>
     <lastmod>2016-09-13T11:04:59-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/module-verification/</loc>
+    <loc>http://converge.aster.is/0.2.0/module-verification/</loc>
     <lastmod>2016-09-13T00:13:59-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/task-query/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/task-query/</loc>
     <lastmod>2016-09-08T23:26:25-07:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/docker-image/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/docker-image/</loc>
     <lastmod>2016-09-08T23:18:03-07:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/module/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/module/</loc>
     <lastmod>2016-09-08T23:18:03-07:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/file-content/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/file-content/</loc>
     <lastmod>2016-09-08T23:18:02-07:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/file-mode/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/file-mode/</loc>
     <lastmod>2016-09-08T23:18:02-07:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/dependencies/</loc>
+    <loc>http://converge.aster.is/0.2.0/dependencies/</loc>
     <lastmod>2016-09-09T00:13:59-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/configuration/</loc>
+    <loc>http://converge.aster.is/0.2.0/configuration/</loc>
     <lastmod>2016-08-29T16:51:52-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/server/</loc>
+    <loc>http://converge.aster.is/0.2.0/server/</loc>
     <lastmod>2016-08-29T16:49:53-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/getting-started/</loc>
+    <loc>http://converge.aster.is/0.2.0/getting-started/</loc>
     <lastmod>2016-08-24T23:49:44-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/install/</loc>
+    <loc>http://converge.aster.is/0.2.0/install/</loc>
     <lastmod>2016-08-24T23:49:44-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/license/</loc>
+    <loc>http://converge.aster.is/0.2.0/license/</loc>
     <lastmod>2016-08-24T16:29:08-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/</loc>
+    <loc>http://converge.aster.is/0.2.0/</loc>
     <lastmod>2016-08-24T15:47:16-05:00</lastmod>
   </url>
   
   <url>
-    <loc>http://converge.aster.is/resources/</loc>
+    <loc>http://converge.aster.is/0.2.0/resources/</loc>
     <lastmod>2016-08-24T15:33:42-05:00</lastmod>
   </url>
   

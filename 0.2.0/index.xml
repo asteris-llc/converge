@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Converge</title>
-    <link>http://converge.aster.is/</link>
+    <link>http://converge.aster.is/0.2.0/</link>
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 26 Sep 2016 09:00:07 -0500</lastBuildDate>
-    <atom:link href="http://converge.aster.is/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://converge.aster.is/0.2.0/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>user.user</title>
-      <link>http://converge.aster.is/resources/user-user/</link>
+      <link>http://converge.aster.is/0.2.0/resources/user-user/</link>
       <pubDate>Mon, 26 Sep 2016 09:00:07 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/user-user/</guid>
       <description>
 
 &lt;p&gt;User renders user data&lt;/p&gt;
@@ -80,10 +80,10 @@ Options are present and absent; default is present.&lt;/p&gt;
     
     <item>
       <title>user.group</title>
-      <link>http://converge.aster.is/resources/user-group/</link>
+      <link>http://converge.aster.is/0.2.0/resources/user-group/</link>
       <pubDate>Wed, 21 Sep 2016 14:04:24 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/user-group/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/user-group/</guid>
       <description>
 
 &lt;p&gt;Group renders group data&lt;/p&gt;
@@ -122,10 +122,10 @@ Options are present and absent; default is present.&lt;/p&gt;
     
     <item>
       <title>Resource Authors Guide</title>
-      <link>http://converge.aster.is/resource-authors-guide/</link>
+      <link>http://converge.aster.is/0.2.0/resource-authors-guide/</link>
       <pubDate>Wed, 21 Sep 2016 10:55:55 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resource-authors-guide/</guid>
+      <guid>http://converge.aster.is/0.2.0/resource-authors-guide/</guid>
       <description>
 
 &lt;div class=&#34;admonition warning&#34;&gt;
@@ -264,10 +264,10 @@ with both the preparer and task, then empty-import your new module in
     
     <item>
       <title>task</title>
-      <link>http://converge.aster.is/resources/task/</link>
+      <link>http://converge.aster.is/0.2.0/resources/task/</link>
       <pubDate>Tue, 20 Sep 2016 14:45:56 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/task/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/task/</guid>
       <description>
 
 &lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
@@ -354,10 +354,10 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
     
     <item>
       <title>docker.container</title>
-      <link>http://converge.aster.is/resources/docker-container/</link>
+      <link>http://converge.aster.is/0.2.0/resources/docker-container/</link>
       <pubDate>Tue, 20 Sep 2016 14:45:55 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/docker-container/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/docker-container/</guid>
       <description>
 
 &lt;p&gt;Container is responsible for creating docker containers. It assumes that
@@ -485,10 +485,10 @@ container exists. Specified as a boolean value&lt;/p&gt;
     
     <item>
       <title>param</title>
-      <link>http://converge.aster.is/resources/param/</link>
+      <link>http://converge.aster.is/0.2.0/resources/param/</link>
       <pubDate>Tue, 20 Sep 2016 14:45:55 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/param/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/param/</guid>
       <description>
 
 &lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
@@ -526,10 +526,10 @@ treated as required.&lt;/p&gt;
     
     <item>
       <title>file.directory</title>
-      <link>http://converge.aster.is/resources/file-directory/</link>
+      <link>http://converge.aster.is/0.2.0/resources/file-directory/</link>
       <pubDate>Tue, 13 Sep 2016 11:04:59 -0500</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-directory/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/file-directory/</guid>
       <description>
 
 &lt;p&gt;Directory makes sure a directory is present on disk&lt;/p&gt;
@@ -567,10 +567,10 @@ file.directory &amp;quot;deeper&amp;quot; {
     
     <item>
       <title>Module Verification</title>
-      <link>http://converge.aster.is/module-verification/</link>
+      <link>http://converge.aster.is/0.2.0/module-verification/</link>
       <pubDate>Tue, 13 Sep 2016 00:13:59 -0500</pubDate>
       
-      <guid>http://converge.aster.is/module-verification/</guid>
+      <guid>http://converge.aster.is/0.2.0/module-verification/</guid>
       <description>
 
 &lt;p&gt;In the future, converge will require modules to be signed using a gpg detached signature.
@@ -734,10 +734,10 @@ https://example.com/modules/basic.hcl.asc
     
     <item>
       <title>task.query</title>
-      <link>http://converge.aster.is/resources/task-query/</link>
+      <link>http://converge.aster.is/0.2.0/resources/task-query/</link>
       <pubDate>Thu, 08 Sep 2016 23:26:25 -0700</pubDate>
       
-      <guid>http://converge.aster.is/resources/task-query/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/task-query/</guid>
       <description>
 
 &lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
@@ -775,10 +775,10 @@ file.content &amp;quot;hostname data&amp;quot; {
     
     <item>
       <title>docker.image</title>
-      <link>http://converge.aster.is/resources/docker-image/</link>
+      <link>http://converge.aster.is/0.2.0/resources/docker-image/</link>
       <pubDate>Thu, 08 Sep 2016 23:18:03 -0700</pubDate>
       
-      <guid>http://converge.aster.is/resources/docker-image/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/docker-image/</guid>
       <description>
 
 &lt;p&gt;Image is responsible for pulling Docker images. It assumes that there is
@@ -822,10 +822,10 @@ Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp
     
     <item>
       <title>module</title>
-      <link>http://converge.aster.is/resources/module/</link>
+      <link>http://converge.aster.is/0.2.0/resources/module/</link>
       <pubDate>Thu, 08 Sep 2016 23:18:03 -0700</pubDate>
       
-      <guid>http://converge.aster.is/resources/module/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/module/</guid>
       <description>
 
 &lt;p&gt;Module remotely sources other modules and adds them to the tree&lt;/p&gt;
@@ -857,10 +857,10 @@ the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s 
     
     <item>
       <title>file.content</title>
-      <link>http://converge.aster.is/resources/file-content/</link>
+      <link>http://converge.aster.is/0.2.0/resources/file-content/</link>
       <pubDate>Thu, 08 Sep 2016 23:18:02 -0700</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-content/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/file-content/</guid>
       <description>
 
 &lt;p&gt;Content renders content to disk&lt;/p&gt;
@@ -900,10 +900,10 @@ file.content &amp;quot;render&amp;quot; {
     
     <item>
       <title>file.mode</title>
-      <link>http://converge.aster.is/resources/file-mode/</link>
+      <link>http://converge.aster.is/0.2.0/resources/file-mode/</link>
       <pubDate>Thu, 08 Sep 2016 23:18:02 -0700</pubDate>
       
-      <guid>http://converge.aster.is/resources/file-mode/</guid>
+      <guid>http://converge.aster.is/0.2.0/resources/file-mode/</guid>
       <description>
 
 &lt;p&gt;Mode monitors the mode of a file&lt;/p&gt;
@@ -941,13 +941,13 @@ file must exist on the system (for example, having been created with
     
     <item>
       <title>Using Dependencies</title>
-      <link>http://converge.aster.is/dependencies/</link>
+      <link>http://converge.aster.is/0.2.0/dependencies/</link>
       <pubDate>Fri, 09 Sep 2016 00:13:59 -0500</pubDate>
       
-      <guid>http://converge.aster.is/dependencies/</guid>
+      <guid>http://converge.aster.is/0.2.0/dependencies/</guid>
       <description>
 
-&lt;p&gt;In the &lt;a href=&#34;http://converge.aster.is/getting-started/&#34;&gt;getting started guide&lt;/a&gt; we talked about
+&lt;p&gt;In the &lt;a href=&#34;http://converge.aster.is/0.2.0/getting-started/&#34;&gt;getting started guide&lt;/a&gt; we talked about
 dependencies, and briefly mentioned that they&amp;rsquo;re &lt;em&gt;super important&lt;/em&gt; for Converge
 to work properly. But we didn&amp;rsquo;t really go into them there&amp;hellip; so here we
 are!&lt;/p&gt;
@@ -962,7 +962,7 @@ Let&amp;rsquo;s explore what that means with one of our graphs from before:&lt;/
 
 &lt;figure &gt;
     
-        &lt;img src=&#34;http://converge.aster.is/images/getting-started/hello-world-params.png&#34; alt=&#34;A graph with a parameter. The file hello.txt depends on the name parameter.&#34; /&gt;
+        &lt;img src=&#34;http://converge.aster.is/0.2.0/images/getting-started/hello-world-params.png&#34; alt=&#34;A graph with a parameter. The file hello.txt depends on the name parameter.&#34; /&gt;
     
     
     &lt;figcaption&gt;
@@ -1061,7 +1061,7 @@ how it looks:&lt;/p&gt;
 
 &lt;figure &gt;
     
-        &lt;img src=&#34;http://converge.aster.is/images/dependencies/without-depends.png&#34; alt=&#34;The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.&#34; /&gt;
+        &lt;img src=&#34;http://converge.aster.is/0.2.0/images/dependencies/without-depends.png&#34; alt=&#34;The graph output of the above module. Converge hasn&amp;#39;t connected the directory and file.&#34; /&gt;
     
     
     &lt;figcaption&gt;
@@ -1100,7 +1100,7 @@ file.content &amp;quot;hello&amp;quot; {
 
 &lt;figure &gt;
     
-        &lt;img src=&#34;http://converge.aster.is/images/dependencies/with-depends.png&#34; alt=&#34;The graph output of the above module. Converge now sees the dependency between the directory and the file.&#34; /&gt;
+        &lt;img src=&#34;http://converge.aster.is/0.2.0/images/dependencies/with-depends.png&#34; alt=&#34;The graph output of the above module. Converge now sees the dependency between the directory and the file.&#34; /&gt;
     
     
     &lt;figcaption&gt;
@@ -1119,7 +1119,7 @@ file.content &amp;quot;hello&amp;quot; {
 &lt;p class=&#34;admonition-title&#34;&gt;Future Improvements&lt;/p&gt;
 &lt;p&gt;We&amp;rsquo;re working hard on making Converge better at detecting situations like this
 automatically. Ideally, you wouldn&amp;rsquo;t have to specify dependencies at all, and it
-would all work like &lt;a href=&#34;http://converge.aster.is/getting-started/#params&#34;&gt;the param example in the getting started guide&lt;/a&gt;. We&amp;rsquo;re not quite there yet, but keep an eye
+would all work like &lt;a href=&#34;http://converge.aster.is/0.2.0/getting-started/#params&#34;&gt;the param example in the getting started guide&lt;/a&gt;. We&amp;rsquo;re not quite there yet, but keep an eye
 out!&lt;/p&gt;
 &lt;/div&gt;
 </description>
@@ -1127,10 +1127,10 @@ out!&lt;/p&gt;
     
     <item>
       <title>Configuration</title>
-      <link>http://converge.aster.is/configuration/</link>
+      <link>http://converge.aster.is/0.2.0/configuration/</link>
       <pubDate>Mon, 29 Aug 2016 16:51:52 -0500</pubDate>
       
-      <guid>http://converge.aster.is/configuration/</guid>
+      <guid>http://converge.aster.is/0.2.0/configuration/</guid>
       <description>
 
 &lt;p&gt;Converge sources configuration from a number of different places:&lt;/p&gt;

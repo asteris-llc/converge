@@ -15,42 +15,42 @@
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/getting-started/">
+    <link rel="canonical" href="http://converge.aster.is/0.2.0/getting-started/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/getting-started/">
+    <meta property="og:url" content="http://converge.aster.is/0.2.0/getting-started/">
     <meta property="og:title" content="Converge">
-    <meta property="og:image" content="http://converge.aster.is/images/logo.png">
+    <meta property="og:image" content="http://converge.aster.is/0.2.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
-    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.2.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.2.0/images/favicon.ico">
 
     <style>
       @font-face {
         font-family: 'Icon';
-        src: url('http://converge.aster.is/fonts/icon.eot?52m981');
-        src: url('http://converge.aster.is/fonts/icon.eot?#iefix52m981')
+        src: url('http://converge.aster.is/0.2.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.2.0/fonts/icon.eot?#iefix52m981')
                format('embedded-opentype'),
-             url('http://converge.aster.is/fonts/icon.woff?52m981')
+             url('http://converge.aster.is/0.2.0/fonts/icon.woff?52m981')
                format('woff'),
-             url('http://converge.aster.is/fonts/icon.ttf?52m981')
+             url('http://converge.aster.is/0.2.0/fonts/icon.ttf?52m981')
                format('truetype'),
-             url('http://converge.aster.is/fonts/icon.svg?52m981#icon')
+             url('http://converge.aster.is/0.2.0/fonts/icon.svg?52m981#icon')
                format('svg');
         font-weight: normal;
         font-style: normal;
       }
     </style>
 
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/application.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/temporary.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/palettes.css">
-    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/highlight/highlight.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.2.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.2.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.2.0/stylesheets/palettes.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.2.0/stylesheets/highlight/highlight.css">
 
     
     
@@ -66,7 +66,7 @@
     </style>
 
     
-    <script src="http://converge.aster.is/javascripts/modernizr.js"></script>
+    <script src="http://converge.aster.is/0.2.0/javascripts/modernizr.js"></script>
 
     
 
@@ -138,11 +138,11 @@
     <div class="banner">
       
         <div class="logo">
-          <img src="http://converge.aster.is/images/logo.png">
+          <img src="http://converge.aster.is/0.2.0/images/logo.png">
         </div>
       
       <div class="name">
-        <strong>Converge <span class="version">0.3.0</span></strong>
+        <strong>Converge <span class="version">0.2.0</span></strong>
         
           <br>
           asteris-llc/converge
@@ -211,14 +211,11 @@
 
 
 
-<a class="current" title="Getting Started" href="http://converge.aster.is/getting-started/">
+<a  title="Getting Started" href="http://converge.aster.is/getting-started/">
   
   Getting Started
 </a>
 
-
-<ul id="scrollspy">
-</ul>
 
 
         
@@ -513,12 +510,12 @@
 
 <p>In this tutorial we&rsquo;re going to step through basic Converge usage by creating a
 small &ldquo;hello world&rdquo; module. Before beginning, please make sure to
-<a href="http://converge.aster.is/install/">install Converge</a>. You can test your installation by
+<a href="http://converge.aster.is/0.2.0/install/">install Converge</a>. You can test your installation by
 issuing <code>converge version</code>.</p>
 
 <h2 id="hello-world">Hello World!</h2>
 
-<p>We&rsquo;ll begin by writing a small module using the <a href="http://converge.aster.is/resources/file-content/">file.content</a> resource. Put the following into
+<p>We&rsquo;ll begin by writing a small module using the <a href="http://converge.aster.is/0.2.0/resources/file-content/">file.content</a> resource. Put the following into
 <code>helloWorld.hcl</code>:</p>
 
 <pre><code class="language-hcl">file.content &quot;render&quot; {
@@ -586,7 +583,7 @@ Right now we only have one resource, so the graph is pretty simple:</p>
 
 <figure >
     
-        <img src="http://converge.aster.is/images/getting-started/hello-world.png" alt="The graph of our hello world module. Root (represented as /) depends on the file we defined." />
+        <img src="http://converge.aster.is/0.2.0/images/getting-started/hello-world.png" alt="The graph of our hello world module. Root (represented as /) depends on the file we defined." />
     
     
     <figcaption>
@@ -601,7 +598,7 @@ Right now we only have one resource, so the graph is pretty simple:</p>
 </figure>
 
 
-<p>(By the way, you can find more information about this in <a href="http://converge.aster.is/dependencies/">Dependencies</a>)</p>
+<p>(By the way, you can find more information about this in <a href="http://converge.aster.is/0.2.0/dependencies/">Dependencies</a>)</p>
 
 <h2 id="divergence">Divergence!</h2>
 
@@ -632,7 +629,7 @@ module. Handy! A quick <code>converge apply helloWorld.hcl</code> and we&rsquo;r
 <h2 id="params">Params</h2>
 
 <p>Now let&rsquo;s add the ability to greet someone in particular, instead of the whole
-world. We&rsquo;re going to use <a href="http://converge.aster.is/resources/param/">params</a> for this.
+world. We&rsquo;re going to use <a href="http://converge.aster.is/0.2.0/resources/param/">params</a> for this.
 Change your <code>helloWorld.hcl</code> to look like this:</p>
 
 <pre><code class="language-hcl">param &quot;name&quot; {
@@ -645,7 +642,7 @@ file.content &quot;render&quot; {
 }
 </code></pre>
 
-<p>This <a href="http://converge.aster.is/resources/param/">param</a> allows us to add a parameter to
+<p>This <a href="http://converge.aster.is/0.2.0/resources/param/">param</a> allows us to add a parameter to
 our module when we call it. (Notice that we&rsquo;re using the result of our parameter
 in a template block in the <code>content</code> stanza of <code>file.content.render</code>.)</p>
 
@@ -682,14 +679,14 @@ Summary: 0 errors, 1 changes
 default of &ldquo;World&rdquo;.</p>
 
 <p>By the way, how does this effect our graph? Well, we&rsquo;ve added a new resource.
-Normally, you&rsquo;d have to <a href="http://converge.aster.is/dependencies/">explicitly specify dependencies</a>, but Converge will look inside our template strings for
+Normally, you&rsquo;d have to <a href="http://converge.aster.is/0.2.0/dependencies/">explicitly specify dependencies</a>, but Converge will look inside our template strings for
 references to Params. That means our graph is all hooked up, and looks like
 this:</p>
 
 
 <figure >
     
-        <img src="http://converge.aster.is/images/getting-started/hello-world-params.png" alt="Our graph with parameter. The file now depends on the name parameter." />
+        <img src="http://converge.aster.is/0.2.0/images/getting-started/hello-world-params.png" alt="Our graph with parameter. The file now depends on the name parameter." />
     
     
     <figcaption>
@@ -732,7 +729,7 @@ will walk over them as nodes.</p>
 
 <figure >
     
-        <img src="http://converge.aster.is/images/getting-started/hello-you.png" alt="Our graph, but with our original module as a dependent module." />
+        <img src="http://converge.aster.is/0.2.0/images/getting-started/hello-you.png" alt="Our graph, but with our original module as a dependent module." />
     
     
     <figcaption>
@@ -754,7 +751,7 @@ installing something from Brew, if you&rsquo;re running on OSX, or symlinking a
 dotfile into place.</p>
 
 <p>If you&rsquo;re ready, you can
-<a href="http://converge.aster.is/dependencies/">read about how all those dependencies <em>actually work</em></a>!</p>
+<a href="http://converge.aster.is/0.2.0/dependencies/">read about how all those dependencies <em>actually work</em></a>!</p>
 
 
 			<aside class="copyright" role="note">
@@ -773,7 +770,7 @@ dotfile into place.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/server/" title="Server">
+      <a href="http://converge.aster.is/0.2.0/server/" title="Server">
         <span class="direction">
           Previous
         </span>
@@ -793,7 +790,7 @@ dotfile into place.</p>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/install/" title="Install">
+      <a href="http://converge.aster.is/0.2.0/install/" title="Install">
         <span class="direction">
           Next
         </span>
@@ -832,12 +829,12 @@ dotfile into place.</p>
 
     <script>
     
-      var base_url = 'http:\/\/converge.aster.is\/';
+      var base_url = 'http:\/\/converge.aster.is\/0.2.0\/';
       var repo_id  = 'asteris-llc\/converge';
     
     </script>
 
-    <script src="http://converge.aster.is/javascripts/application.js"></script>
+    <script src="http://converge.aster.is/0.2.0/javascripts/application.js"></script>
     
 
     <script>
