@@ -116,6 +116,11 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 	return out, out.Validate()
 }
 
+// expandSwitchMacro is responsible for adding the generated switch nodes into
+// the graph.  Nodes inside of the switch macro are added as children to the
+// case statements, who are parents of the outer switch statement.  Actual node
+// generation happens in parse/preprocessor/switch/ and we add the nodes into
+// the graph here.
 func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Graph) (*graph.Graph, error) {
 	if !control.IsSwitchNode(n) {
 		return g, nil
@@ -151,6 +156,8 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 	return g, nil
 }
 
+// validateInnerNode ensures that we do not nest control statements nor attempt
+// to add modules under a switch statement.
 func validateInnerNode(node *parse.Node) error {
 	switch node.Kind() {
 	case "module":
