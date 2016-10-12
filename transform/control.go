@@ -20,7 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/render/preprocessor/control"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/resource"
 )
 

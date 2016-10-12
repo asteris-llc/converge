@@ -25,7 +25,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
-	"github.com/asteris-llc/converge/render/preprocessor/control"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/pkg/errors"
 )
 

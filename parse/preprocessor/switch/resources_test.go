@@ -17,7 +17,7 @@ package control_test
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/render/preprocessor/control"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 )
