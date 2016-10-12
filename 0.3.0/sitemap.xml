@@ -3,72 +3,72 @@
   
   <url>
     <loc>http://converge.aster.is/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/docker-container/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/docker-image/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/file-content/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/file-directory/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/file-mode/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/module/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/param/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/task/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/resources/task-query/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
+    <lastmod>2016-10-04T13:01:50-05:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/resources/user-group/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
+    <lastmod>2016-10-04T13:01:50-05:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/resources/user-user/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
+    <lastmod>2016-10-04T13:01:50-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/docker-container/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/docker-image/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/file-content/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/file-directory/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/file-mode/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/module/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/param/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/task/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/resources/task-query/</loc>
+    <lastmod>2016-10-04T13:01:49-05:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/resources/wait-port/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
+    <lastmod>2016-10-03T10:23:34-04:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/resources/wait-query/</loc>
-    <lastmod>2016-10-12T11:29:52-05:00</lastmod>
+    <lastmod>2016-10-03T10:23:34-04:00</lastmod>
   </url>
   
   <url>

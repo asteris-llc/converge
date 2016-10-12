@@ -6,13 +6,137 @@
     <description>Recent content in Resources on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 12 Oct 2016 11:29:52 -0500</lastBuildDate>
+    <lastBuildDate>Tue, 04 Oct 2016 13:01:50 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>user.group</title>
+      <link>http://converge.aster.is/resources/user-group/</link>
+      <pubDate>Tue, 04 Oct 2016 13:01:50 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-group/</guid>
+      <description>
+
+&lt;p&gt;Group renders group data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a group, only works on linux
+user.group &amp;quot;group&amp;quot; {
+  name = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the group gid.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the group name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;new_name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;NewName is used when modifying a group.
+The group Name will be changed to NewName.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;State is whether the group should be present.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>user.user</title>
+      <link>http://converge.aster.is/resources/user-user/</link>
+      <pubDate>Tue, 04 Oct 2016 13:01:50 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/resources/user-user/</guid>
+      <description>
+
+&lt;p&gt;User renders user data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
+user.user &amp;quot;user&amp;quot; {
+  username = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username is the user login name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (optional uint32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID is the user ID.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;groupname&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;
+
+&lt;p&gt;GroupName is the primary group for user and must already exist.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;
+
+&lt;p&gt;Gid is the primary group ID for user and must refer to an existing group.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the user description.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
+name is appended to the home directory.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;State is whether the user should be present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>docker.container</title>
       <link>http://converge.aster.is/resources/docker-container/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/docker-container/</guid>
       <description>
@@ -145,7 +269,7 @@ container exists. Specified as a boolean value&lt;/p&gt;
     <item>
       <title>docker.image</title>
       <link>http://converge.aster.is/resources/docker-image/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/docker-image/</guid>
       <description>
@@ -192,7 +316,7 @@ Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp
     <item>
       <title>file.content</title>
       <link>http://converge.aster.is/resources/file-content/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/file-content/</guid>
       <description>
@@ -235,7 +359,7 @@ file.content &amp;quot;render&amp;quot; {
     <item>
       <title>file.directory</title>
       <link>http://converge.aster.is/resources/file-directory/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/file-directory/</guid>
       <description>
@@ -276,7 +400,7 @@ file.directory &amp;quot;deeper&amp;quot; {
     <item>
       <title>file.mode</title>
       <link>http://converge.aster.is/resources/file-mode/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/file-mode/</guid>
       <description>
@@ -317,7 +441,7 @@ file must exist on the system (for example, having been created with
     <item>
       <title>module</title>
       <link>http://converge.aster.is/resources/module/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/module/</guid>
       <description>
@@ -352,7 +476,7 @@ the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s 
     <item>
       <title>param</title>
       <link>http://converge.aster.is/resources/param/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/param/</guid>
       <description>
@@ -393,7 +517,7 @@ treated as required.&lt;/p&gt;
     <item>
       <title>task</title>
       <link>http://converge.aster.is/resources/task/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/task/</guid>
       <description>
@@ -483,7 +607,7 @@ suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or &amp
     <item>
       <title>task.query</title>
       <link>http://converge.aster.is/resources/task-query/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Tue, 04 Oct 2016 13:01:49 -0500</pubDate>
       
       <guid>http://converge.aster.is/resources/task-query/</guid>
       <description>
@@ -522,133 +646,9 @@ file.content &amp;quot;hostname data&amp;quot; {
     </item>
     
     <item>
-      <title>user.group</title>
-      <link>http://converge.aster.is/resources/user-group/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/user-group/</guid>
-      <description>
-
-&lt;p&gt;Group renders group data&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a group, only works on linux
-user.group &amp;quot;group&amp;quot; {
-  name = &amp;quot;test&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Gid is the group gid.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Name is the group name.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;new_name&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;NewName is used when modifying a group.
-The group Name will be changed to NewName.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;State is whether the group should be present.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>user.user</title>
-      <link>http://converge.aster.is/resources/user-user/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/resources/user-user/</guid>
-      <description>
-
-&lt;p&gt;User renders user data&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
-user.user &amp;quot;user&amp;quot; {
-  username = &amp;quot;test&amp;quot;
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (required string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Username is the user login name.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (optional uint32)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;UID is the user ID.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;groupname&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;
-
-&lt;p&gt;GroupName is the primary group for user and must already exist.
-Only one of GID or Groupname may be indicated.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;
-
-&lt;p&gt;Gid is the primary group ID for user and must refer to an existing group.
-Only one of GID or Groupname may be indicated.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Name is the user description.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;HomeDir is the user&amp;rsquo;s login directory. By default,  the login
-name is appended to the home directory.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;State is whether the user should be present.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>wait.port</title>
       <link>http://converge.aster.is/resources/wait-port/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Mon, 03 Oct 2016 10:23:34 -0400</pubDate>
       
       <guid>http://converge.aster.is/resources/wait-port/</guid>
       <description>
@@ -713,7 +713,7 @@ of retries is not set, it will default to 5.&lt;/p&gt;
     <item>
       <title>wait.query</title>
       <link>http://converge.aster.is/resources/wait-query/</link>
-      <pubDate>Wed, 12 Oct 2016 11:29:52 -0500</pubDate>
+      <pubDate>Mon, 03 Oct 2016 10:23:34 -0400</pubDate>
       
       <guid>http://converge.aster.is/resources/wait-query/</guid>
       <description>
