@@ -110,6 +110,7 @@ func (p *Preparer) validateExtra(typ reflect.Type) error {
 
 	// add special fields
 	fieldNames["depends"] = struct{}{}
+	fieldNames["lock"] = struct{}{}
 
 	var err error
 	for key := range p.Source {

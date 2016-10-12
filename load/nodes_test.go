@@ -92,3 +92,18 @@ func TestNodeWithConditionals(t *testing.T) {
 	_, found = g.Get("root/macro.switch.test-switch/macro.case.default/file.content.foo-file")
 	assert.True(t, found)
 }
+
+func TestNodesWithLocks(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	g, err := load.Nodes(context.Background(), "../samples/locks.hcl", false)
+	require.NoError(t, err)
+
+	node, ok := g.Get("root/lock.lock.mylock")
+	require.True(t, ok)
+	assert.NotNil(t, node)
+
+	node, ok = g.Get("root/lock.unlock.mylock")
+	require.True(t, ok)
+	assert.NotNil(t, node)
+}

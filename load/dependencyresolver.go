@@ -24,8 +24,10 @@ import (
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/parse/preprocessor/lock"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
+	"github.com/pkg/errors"
 )
 
 type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)
@@ -59,8 +61,99 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				out.Connect(meta.ID, dep)
 			}
 		}
+
+		// if the node has a named lock, connect it between the lock entry and exit
+		// nodes
+		lockName, err := getLockName(node)
+		if err != nil {
+			return err
+		}
+		if lockName != "" {
+			lockNodeID := graph.SiblingID(meta.ID, lock.NewLockID(lockName))
+			unlockNodeID := graph.SiblingID(meta.ID, lock.NewUnlockID(lockName))
+			out.Connect(meta.ID, lockNodeID)
+			out.Connect(unlockNodeID, meta.ID)
+		}
+
 		return nil
 	})
+}
+
+// ResolveDependenciesInLocks ensures that all nodes in a lock depend on each
+// other
+func ResolveDependenciesInLocks(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
+	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependenciesInLocks")
+	logger.Debug("resolving dependencies in locks")
+
+	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		if meta.ID == "root" { // skip root
+			return nil
+		}
+
+		node, ok := meta.Value().(*parse.Node)
+		if !ok {
+			return fmt.Errorf("ResolveDependenciesInLocks can only be used on Graphs of *parse.Node. I got %T", meta.Value())
+		}
+
+		if lock.IsUnlockNode(node) {
+			var lockDeps []string
+			// collect all of the dependencies with locks on them
+			for _, dep := range out.Dependencies(meta.ID) {
+				depnode, ok := out.Get(dep)
+				if !ok {
+					continue
+				}
+
+				parsedDepNode, ok := depnode.Value().(*parse.Node)
+				if !ok {
+					return fmt.Errorf("dependency node must be of type *parse.Node. I got %T", depnode.Value())
+				}
+
+				hasLock, err := lock.HasLock(parsedDepNode)
+				if err != nil {
+					return errors.Wrapf(err, "failed to check for lock on %s", dep)
+				}
+				if hasLock {
+					lockDeps = append(lockDeps, dep)
+				}
+			}
+
+			// ensure each dependency within the lock depends on another or on the lock
+			// entry/exit
+			if len(lockDeps) > 0 {
+				lockName := lock.GetLockName(graph.BaseID(meta.ID))
+				lockNodeID := graph.SiblingID(meta.ID, lock.NewLockID(lockName))
+
+				var lastDep string
+				lastDepIdx := len(lockDeps) - 1
+				for i, dep := range lockDeps {
+					if i > 0 {
+						out.Disconnect(meta.ID, dep)
+						out.Connect(lastDep, dep)
+					}
+					if i != lastDepIdx {
+						out.Disconnect(dep, lockNodeID)
+					}
+					lastDep = dep
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func getLockName(node *parse.Node) (string, error) {
+	lock, err := node.GetString("lock")
+	switch err {
+	case parse.ErrNotFound:
+		return "", nil
+
+	case nil:
+		return lock, nil
+
+	default:
+		return "", err
+	}
 }
 
 func getDepends(_ *graph.Graph, id string, node *parse.Node) ([]string, error) {
