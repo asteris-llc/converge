@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>Server - Converge</title>
+    <meta name="generator" content="Hugo 0.16" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/server/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/server/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/images/logo.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/palettes.css">
+    <link rel="stylesheet" href="http://converge.aster.is/stylesheets/highlight/highlight.css">
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body class="palette-primary-indigo palette-accent-teal">
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        Server
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc" title="@asteris-llc on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/images/logo.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.3.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    
+
+
+
+<a  title="Converge" href="http://converge.aster.is/">
+  
+  Converge
+</a>
+
+
+
+    
+    <ul>
+        
+        
+        
+
+
+
+<a  title="Install" href="http://converge.aster.is/install/">
+  
+  Install
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="Getting Started" href="http://converge.aster.is/getting-started/">
+  
+  Getting Started
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="Module Verification" href="http://converge.aster.is/module-verification/">
+  
+  Module Verification
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="Using Dependencies" href="http://converge.aster.is/dependencies/">
+  
+  Using Dependencies
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a class="current" title="Server" href="http://converge.aster.is/server/">
+  
+  Server
+</a>
+
+
+<ul id="scrollspy">
+</ul>
+
+
+        
+        
+        
+
+
+
+<a  title="Configuration" href="http://converge.aster.is/configuration/">
+  
+  Configuration
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="Resource Authors Guide" href="http://converge.aster.is/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+
+
+
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    
+
+
+
+<a  title="License" href="http://converge.aster.is/license/">
+  
+  License
+</a>
+
+
+
+    
+</li>
+
+
+
+<li>
+    
+
+
+
+<a  title="Resource Reference" href="http://converge.aster.is/resources/">
+  
+  Resource Reference
+</a>
+
+
+
+    
+    <ul>
+        
+        
+        
+
+
+
+<a  title="docker.container" href="http://converge.aster.is/resources/docker-container/">
+  
+  docker.container
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="docker.image" href="http://converge.aster.is/resources/docker-image/">
+  
+  docker.image
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="file.content" href="http://converge.aster.is/resources/file-content/">
+  
+  file.content
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="file.directory" href="http://converge.aster.is/resources/file-directory/">
+  
+  file.directory
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="file.mode" href="http://converge.aster.is/resources/file-mode/">
+  
+  file.mode
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="module" href="http://converge.aster.is/resources/module/">
+  
+  module
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="param" href="http://converge.aster.is/resources/param/">
+  
+  param
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="task" href="http://converge.aster.is/resources/task/">
+  
+  task
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="task.query" href="http://converge.aster.is/resources/task-query/">
+  
+  task.query
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="user.group" href="http://converge.aster.is/resources/user-group/">
+  
+  user.group
+</a>
+
+
+
+        
+        
+        
+
+
+
+<a  title="user.user" href="http://converge.aster.is/resources/user-user/">
+  
+  user.user
+</a>
+
+
+
+        
+    </ul>
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc" target="_blank" title="@asteris-llc on GitHub">
+              @asteris-llc on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>Server </h1>
+
+			
+
+<p>Converge comes with a server that can:</p>
+
+<ul>
+<li>run <code>plan</code> and <code>apply</code> and stream the results (using
+<a href="http://www.grpc.io/">gRPC</a>)</li>
+<li>serve modules from a given root</li>
+<li>serve the Converge binary itself, for bootstrapping new systems inside your
+network</li>
+</ul>
+
+<h2 id="basic-usage">Basic Usage</h2>
+
+<p>To run converge in server mode with easy configuration, you just need
+the binary installed on your device, and a token to use for authenticating over
+RPC. In this example, we&rsquo;ll use the <code>uuid</code> utility to generate this token.</p>
+
+<pre><code class="language-shell">TOKEN=`uuid`
+converge server --rpc-token $TOKEN
+</code></pre>
+
+<p>This will spin up a gRPC server on port 4774, with <code>$token</code> set as the RPC
+token. You should see messages streaming from the server.</p>
+
+<p>If you run the server command without <code>--rpc-token</code>, then the output will
+include the generated token. While this token is valid during the whole
+session, a new one is generated each time you start a new session. If you want
+to use the same token across sessions, you will need to pass it in.</p>
+
+<p>The next step is to run the converge binary in client mode. This can be on
+the same machine, or a different machine in your network. This example assumes
+that you have a HCL file called <code>your.hcl</code> that you wish to configure the
+server or device with.</p>
+
+<pre><code class="language-shell">TOKEN=&quot;the pasted contents of that token from earlier&quot;
+converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
+</code></pre>
+
+<h2 id="https">HTTPS</h2>
+
+<p>You can run the server over HTTPS. If you don&rsquo;t have your own certificates, you
+can use <a href="https://github.com/square/certstrap">certstrap</a> to get some with the
+following commands:</p>
+
+<pre><code class="language-shell">$ certstrap init --common-name your-company
+$ certstrap request-cert --ip 127.0.0.1
+$ certstrap sign 127.0.0.1 --CA your-company
+</code></pre>
+
+<p>Of course, replace <code>your-company</code> and <code>127.0.0.1</code> with your company&rsquo;s name and
+the your server&rsquo;s IP address, respectively (but those defaults will work fine
+for trying it out locally.) The certificates will be placed in <code>out</code> in the
+directory you run the command from.</p>
+
+<p>Afterwards, reference these files like so:</p>
+
+<pre><code class="language-shell">converge server --cert-file out/127.0.0.1.crt \
+                --key-file out/127.0.0.1.crt \
+                --ca-file out/your-company.crt \
+                --use-ssl \
+                --rpc-token your-token
+</code></pre>
+
+<p>You&rsquo;ll also need to pass the <code>--ca-file</code> flag to commands like <code>plan</code> and
+<code>apply</code>, in order to trust your new CA (or put it in the system roots.)</p>
+
+<h2 id="apis">APIs</h2>
+
+<p>Using the Converge command-line interface is good enough for most cases. If you
+want to integrate Converge into your system in novel ways, however, an API is
+available.</p>
+
+<h3 id="authentication">Authentication</h3>
+
+<p>Authentication happens with <a href="https://jwt.io/">JSON Web Tokens</a>. The only
+currently supported algorithm is HS512, and issued tokens must have a 30 second
+expiration. Tokens are set using the <code>--rpc-token</code> <a href="http://converge.aster.is/configuration/">configuration flag</a> to all subcommands that use the API.</p>
+
+<h3 id="http-2-0-and-grpc">HTTP/2.0 And gRPC</h3>
+
+<p>If you want to create your own client for Converge, you&rsquo;ll probably want to use
+gRPC. You can get instructions for your chosen langauge in
+<a href="http://www.grpc.io/docs/">the gRPC docs</a>, and the protobuf file is
+<code>rpc/pb/root.proto</code> in the Converge source. If you&rsquo;re using Go, the client
+implementations in <code>rpc/client.go</code> are your friends.</p>
+
+<p>When using the RPC interface, the JWT token should be sent in the request
+metadata&rsquo;s <code>authorization</code> field with the prefix <code>BEARER</code>.</p>
+
+<h3 id="http-1-1-and-json">HTTP/1.1 And JSON</h3>
+
+<p>A pseudo-RESTful interface is available to do the same things the gRPC interface
+can do. See the protobuf file for the most up-to-date endpoints and payload
+information.</p>
+
+<p>When using the HTTP/1.1 interface, the JWT token should be sent in the
+<code>Authorization</code> header with the prefix <code>BEARER</code>. You can also set the <code>jwt</code>
+querystring var, or send it in the <code>jwt</code> cookie.</p>
+
+<h2 id="standalone-server-for-the-command-line">Standalone Server For The Command-Line</h2>
+
+<p>The main Converge commands (like <code>plan</code> and <code>apply</code>) will take a <code>--local</code>
+argument (or set <code>CONVERGE_LOCAL=1</code>.) This will:</p>
+
+<ol>
+<li>Start a local RPC server</li>
+<li>Perform the requested action against the RPC server</li>
+<li>Shut down the RPC server</li>
+</ol>
+
+<p>During this process, a port (<code>localhost:47740</code>) will be opened and RPC will be
+running on it. This interface will be protected with an randomly-generated
+token, unless you specify <code>--no-token</code></p>
+
+<div class="admonition warning">
+<p class="admonition-title">Don&#39;t Disable Tokens</p>
+<p>Please don&rsquo;t disable token generation with <code>--no-token</code>. I know we just said you
+can, but don&rsquo;t do it. This will open up remote execution of arbitrary
+instructions to whoever can reach that port. You can make this process <em>more</em>
+secure by specifying <code>--cert-file</code>, <code>--key-file</code>, and optionally <code>--ca-file</code> to
+connect over HTTPS.</p>
+</div>
+
+<h2 id="address">Address</h2>
+
+<p>Converge has been assigned
+<a href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=4774">port 4774 by the Internet Assigned Numbers Authority</a>.</p>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2016 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/configuration/" title="Configuration">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Configuration
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/getting-started/" title="Getting Started">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              Getting Started
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+            
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+        
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="//gohugo.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
