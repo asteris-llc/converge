@@ -2,10 +2,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Converge</title>
-    <link>http://converge.aster.is/0.2.0/</link>
+    <link>http://converge.aster.is/0.2.0/index.xml</link>
     <description>Recent content on Converge</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
+    <copyright>Released under the Apache 2.0 license</copyright>
     <lastBuildDate>Mon, 26 Sep 2016 09:00:07 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/0.2.0/index.xml" rel="self" type="application/rss+xml" />
     
