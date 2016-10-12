@@ -90,7 +90,7 @@ func (g *Graph) Get(id string) (*node.Node, bool) {
 }
 
 // GetParent returns the direct parent vertex of the current node.
-func (g *Graph) GetParent(id string) *node.Node { // TODO: make this (*node.Node, bool)
+func (g *Graph) GetParent(id string) (*node.Node, bool) {
 	var parentID string
 	for _, edge := range g.UpEdges(id) {
 		switch edge.(type) {
@@ -100,8 +100,7 @@ func (g *Graph) GetParent(id string) *node.Node { // TODO: make this (*node.Node
 		}
 	}
 
-	val, _ := g.Get(parentID)
-	return val
+	return g.Get(parentID)
 }
 
 // ConnectParent connects a parent node to a child node

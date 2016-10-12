@@ -344,7 +344,8 @@ func TestParent(t *testing.T) {
 
 	require.NoError(t, g.Validate())
 
-	actual := g.GetParent(graph.ID("root", "child"))
+	actual, ok := g.GetParent(graph.ID("root", "child"))
+	require.True(t, ok)
 	should, _ := g.Get(graph.ID("root"))
 	assert.Equal(t, should, actual)
 }
