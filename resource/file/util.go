@@ -40,8 +40,8 @@ func ModeType(mode uint32, filetype Type) uint32 {
 	return uint32(m)
 }
 
-// FileType determines the file type and returns a Type
-func FileType(fi os.FileInfo) (Type, error) {
+// GetType determines the file type and returns a Type
+func GetType(fi os.FileInfo) (Type, error) {
 	switch mode := fi.Mode(); {
 	case mode.IsRegular():
 		return TypeFile, nil

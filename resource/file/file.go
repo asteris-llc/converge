@@ -401,7 +401,7 @@ func GetFileInfo(f *File, fi os.FileInfo) error {
 		f.State = StatePresent
 	}
 
-	f.Type, err = FileType(fi)
+	f.Type, err = GetType(fi)
 	if err != nil {
 		return errors.Wrapf(err, "error determining type")
 	}
