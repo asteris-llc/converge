@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -36,7 +37,8 @@ func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 // WithNotify is CheckGraph, but with notification features
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 
-	return in.Transform(ctx,
+	return in.Transform(
+		ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
 			task, err := unboxNode(out.Get(id))
 			if err != nil {
@@ -58,13 +60,17 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 					asCheck.FailingDep(dep, depStatus)
 				}
 			}
+
 			status, err := asCheck.HealthCheck()
 			if err != nil {
 				return err
 			}
-			out.Add(id, status)
+
+			out.Add(node.New(id, status))
+
 			return nil
-		}))
+		}),
+	)
 }
 
 // unboxNode will remove a resource.TaskStatus from a plan.Result or apply.Result

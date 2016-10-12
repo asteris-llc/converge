@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/pkg/errors"
@@ -82,7 +83,7 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 				hasErrors = ErrTreeContainsErrors
 			}
 
-			out.Add(id, asResult)
+			out.Add(node.New(id, asResult))
 			return nil
 		}),
 	)
