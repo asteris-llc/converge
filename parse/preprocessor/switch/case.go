@@ -33,10 +33,12 @@ type Case struct {
 // GenerateNode generates a parse.Node for the macro-expanded placeholde from
 // the case clause
 func (c *Case) GenerateNode() (*parse.Node, error) {
-	switchHCL := fmt.Sprintf("macro.case %q {\n", c.Name)
-	switchHCL = fmt.Sprintf("%s\tpredicate = %q\n", switchHCL, c.Predicate)
-	switchHCL = fmt.Sprintf("%s\tname = %q\n", switchHCL, c.Name)
-	switchHCL = fmt.Sprintf("%s}", switchHCL)
+	switchHCL := fmt.Sprintf(
+		"macro.case %q {predicate = %q, name = %q}",
+		c.Name,
+		c.Predicate,
+		c.Name,
+	)
 	nodes, err := parse.Parse([]byte(switchHCL))
 	if err != nil {
 		return nil, err

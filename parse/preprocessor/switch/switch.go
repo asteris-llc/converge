@@ -73,11 +73,10 @@ func (s *Switch) GenerateNode() (*parse.Node, error) {
 		quotedBranches = append(quotedBranches, fmt.Sprintf("%q", branch.Name))
 	}
 	switchHCL := fmt.Sprintf(
-		"macro.switch %q {\n\tbranches = [ %s ]\n",
+		"macro.switch %q {branches = [ %s ]}",
 		s.Name,
 		strings.Join(quotedBranches, ","),
 	)
-	switchHCL = fmt.Sprintf("%s}", switchHCL)
 	nodes, err := parse.Parse([]byte(switchHCL))
 	if err != nil {
 		return nil, err
