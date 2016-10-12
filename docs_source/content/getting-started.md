@@ -194,7 +194,7 @@ module "helloWorld.hcl" "hello" {
 }
 ```
 
-Now try running `converge plan helloYou.hcl`. The same thing happens as if you
+Now try running `converge plan --local helloYou.hcl`. The same thing happens as if you
 had called the module yourself!
 
 But once again, how does this effect our graph? You remember before that we had
