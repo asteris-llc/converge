@@ -34,10 +34,10 @@ type PackageManager interface {
 	InstalledVersion(string) (PackageVersion, bool)
 
 	// Installs a package, returning an error if something went wrong
-	InstallPackage(string) error
+	InstallPackage(string) (string, error)
 
 	// Removes a package, returning an error if something went wrong
-	RemovePackage(string) error
+	RemovePackage(string) (string, error)
 }
 
 // SysCaller allows us to mock exec.Command
@@ -71,18 +71,18 @@ func (y *YumManager) InstalledVersion(pkg string) (PackageVersion, bool) {
 }
 
 // InstallPackage installs a package, returning an error if something went wrong
-func (y *YumManager) InstallPackage(pkg string) error {
+func (y *YumManager) InstallPackage(pkg string) (string, error) {
 	if _, isInstalled := y.InstalledVersion(pkg); isInstalled {
-		return nil
+		return "already installed", nil
 	}
-	_, err := y.Sys.Run(fmt.Sprintf("yum install -y %s", pkg))
-	return err
+	res, err := y.Sys.Run(fmt.Sprintf("yum install -y %s", pkg))
+	return string(res), err
 }
 
 // RemovePackage removes a package, returning an error if something went wrong
-func (y *YumManager) RemovePackage(pkg string) error {
-	_, err := y.Sys.Run(fmt.Sprintf("yum remove -y %s", pkg))
-	return err
+func (y *YumManager) RemovePackage(pkg string) (string, error) {
+	res, err := y.Sys.Run(fmt.Sprintf("yum remove -y %s", pkg))
+	return string(res), err
 }
 
 func getExitCode(err error) (uint32, error) {

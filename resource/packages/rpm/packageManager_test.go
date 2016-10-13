@@ -52,7 +52,7 @@ func TestYumInstallPackage(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", nil)
 		y := &rpm.YumManager{Sys: runner}
-		err := y.InstallPackage(pkg)
+		_, err := y.InstallPackage(pkg)
 		assert.NoError(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 1)
 	})
@@ -69,7 +69,7 @@ func TestYumInstallPackage(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", makeExitError("", 1))
 		y := &rpm.YumManager{Sys: runner}
-		err := y.InstallPackage(pkg)
+		_, err := y.InstallPackage(pkg)
 		assert.Error(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 2)
 	})
