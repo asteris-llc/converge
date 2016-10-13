@@ -21,19 +21,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func BenchmarkSetValue(b *testing.B) {
+func BenchmarkWithValue(b *testing.B) {
 	source := node.New("test", 1)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		source.SetValue(i)
+		source.WithValue(i)
 	}
 }
 
-func TestSetValue(t *testing.T) {
+func TestWithValue(t *testing.T) {
 	t.Run("base", func(t *testing.T) {
 		fst := node.New("test", 1)
-		snd := fst.SetValue(2)
+		snd := fst.WithValue(2)
 
 		assert.Equal(t, snd.Value(), 2)
 	})
@@ -42,7 +42,7 @@ func TestSetValue(t *testing.T) {
 		// TODO: when this grows any pointers, they should be tested here too
 		t.Run("no b to a", func(t *testing.T) {
 			fst := node.New("test", 1)
-			snd := fst.SetValue(2)
+			snd := fst.WithValue(2)
 			snd.ID = "other"
 
 			assert.Equal(t, fst.ID, "test")
@@ -50,7 +50,7 @@ func TestSetValue(t *testing.T) {
 
 		t.Run("no b to a", func(t *testing.T) {
 			fst := node.New("test", 1)
-			snd := fst.SetValue(2)
+			snd := fst.WithValue(2)
 			fst.ID = "other"
 
 			assert.Equal(t, snd.ID, "test")
