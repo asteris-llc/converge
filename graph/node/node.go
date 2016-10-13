@@ -34,8 +34,8 @@ func (n *Node) Value() interface{} {
 	return n.value
 }
 
-// SetValue returns a copy of the node with the new value set
-func (n *Node) SetValue(value interface{}) *Node {
+// WithValue returns a copy of the node with the new value set
+func (n *Node) WithValue(value interface{}) *Node {
 	copied := new(Node)
 	*copied = *n
 	copied.value = value
