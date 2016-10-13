@@ -33,3 +33,12 @@ func New(id string, value interface{}) *Node {
 func (n *Node) Value() interface{} {
 	return n.value
 }
+
+// SetValue returns a copy of the node with the new value set
+func (n *Node) SetValue(value interface{}) *Node {
+	copied := new(Node)
+	*copied = *n
+	copied.value = value
+
+	return copied
+}
