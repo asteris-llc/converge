@@ -221,11 +221,35 @@ func (t *Status) AddMessage(message ...string) {
 	t.Output = append(t.Output, message...)
 }
 
+// Difference returns the Current value of a Difference by key
+func (t *Status) Difference(key string) (string, bool) {
+	diff, ok := t.Differences[key]
+	if !ok {
+		return "", ok
+	}
+	return diff.Current(), diff.Changes()
+}
+
+// HasDifference indicates whether a change is defined
+func (t *Status) HasDifference(key string) bool {
+	diff, ok := t.Differences[key]
+	if !ok {
+		return false
+	}
+	return diff.Changes()
+}
+
 // RaiseLevel raises the status level to the given level
 func (t *Status) RaiseLevel(level StatusLevel) {
 	if level > t.Level {
 		t.Level = level
 	}
+}
+
+// SetLevel sets the level and adds a message[s]
+func (t *Status) SetLevel(level StatusLevel, message ...string) {
+	t.Level = level
+	t.AddMessage(message...)
 }
 
 // Diff represents a difference
