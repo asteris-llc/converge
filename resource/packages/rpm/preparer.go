@@ -27,14 +27,15 @@ type Preparer struct {
 	Name string `hcl:"name" required:"true" `
 
 	// State defines desired system package state.
-	State State `hcl:"state" valid_values:"installed,absent" default:"installed"`
+	State State `hcl:"state" valid_values:"present,absent" default:"installed"`
 }
 
 // Prepare a new packge
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	return &Package{
-		Name:  p.Name,
-		State: p.State,
+		Name:   p.Name,
+		State:  p.State,
+		PkgMgr: &YumManager{Sys: ExecCaller{}},
 	}, nil
 }
 

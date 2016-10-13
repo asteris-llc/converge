@@ -54,14 +54,16 @@ func (p *Package) Apply() (resource.TaskStatus, error) {
 		return p, nil
 	}
 
+	var results string
 	if p.State == StatePresent {
-		err = p.PkgMgr.InstallPackage(p.Name)
+		results, err = p.PkgMgr.InstallPackage(p.Name)
 		p.Status.AddMessage("installed " + p.Name)
 	} else {
-		err = p.PkgMgr.RemovePackage(p.Name)
+		results, err = p.PkgMgr.RemovePackage(p.Name)
 		p.Status.AddMessage("removed  " + p.Name)
 	}
 
+	p.Status.AddMessage(results)
 	if err != nil {
 		return p, err
 	}
