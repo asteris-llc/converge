@@ -72,6 +72,9 @@ func (y *YumManager) InstalledVersion(pkg string) (PackageVersion, bool) {
 
 // InstallPackage installs a package, returning an error if something went wrong
 func (y *YumManager) InstallPackage(pkg string) error {
+	if _, isInstalled := y.InstalledVersion(pkg); isInstalled {
+		return nil
+	}
 	_, err := y.Sys.Run(fmt.Sprintf("yum install -y %s", pkg))
 	return err
 }
