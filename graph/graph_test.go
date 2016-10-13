@@ -217,11 +217,11 @@ func TestWalkOrderParentDependency(t *testing.T) {
 	require.NoError(t,
 		g.Walk(
 			context.Background(),
-			func(id string, _ *node.Node) error {
+			func(meta *node.Node) error {
 				exLock.Lock()
 				defer exLock.Unlock()
 
-				execution = append(execution, id)
+				execution = append(execution, meta.ID)
 
 				return nil
 			},
@@ -253,8 +253,8 @@ func TestWalkError(t *testing.T) {
 
 	err := g.Walk(
 		context.Background(),
-		func(id string, _ *node.Node) error {
-			if id == "c" {
+		func(meta *node.Node) error {
+			if meta.ID == "c" {
 				return errors.New("test")
 			}
 			return nil
@@ -367,8 +367,8 @@ func TestRootFirstWalk(t *testing.T) {
 		t,
 		g.RootFirstWalk(
 			context.Background(),
-			func(id string, _ *node.Node) error {
-				out = append(out, id)
+			func(meta *node.Node) error {
+				out = append(out, meta.ID)
 				return nil
 			},
 		),
@@ -395,8 +395,8 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 		t,
 		g.RootFirstWalk(
 			context.Background(),
-			func(id string, _ *node.Node) error {
-				out = append(out, id)
+			func(meta *node.Node) error {
+				out = append(out, meta.ID)
 				return nil
 			},
 		),
@@ -437,11 +437,11 @@ func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 
 	err := g.Walk(
 		context.Background(),
-		func(id string, _ *node.Node) error {
+		func(meta *node.Node) error {
 			lock.Lock()
 			defer lock.Unlock()
 
-			out = append(out, id)
+			out = append(out, meta.ID)
 
 			return nil
 		},

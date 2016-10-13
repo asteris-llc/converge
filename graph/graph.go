@@ -29,7 +29,7 @@ import (
 )
 
 // WalkFunc is taken by the walking functions
-type WalkFunc func(string, *node.Node) error
+type WalkFunc func(*node.Node) error
 
 // TransformFunc is taken by the transformation functions
 type TransformFunc func(string, *Graph) error
@@ -354,7 +354,7 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 
 		logger.WithField("id", id).Debug("executing")
 		val, _ := g.Get(id)
-		if err := cb(id, val); err != nil {
+		if err := cb(val); err != nil {
 			setErr(id, err)
 		}
 	}
@@ -429,7 +429,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		logger.WithField("id", id).Debug("walking")
 
 		raw, _ := g.Get(id) // we want to call with every value, including nil
-		if err := cb(id, raw); err != nil {
+		if err := cb(raw); err != nil {
 			return err
 		}
 
@@ -554,8 +554,8 @@ func (g *Graph) String() string {
 func transform(ctx context.Context, source *Graph, walker walkerFunc, cb TransformFunc) (*Graph, error) {
 	dest := source.Copy()
 
-	err := walker(ctx, dest, func(id string, _ *node.Node) error {
-		return cb(id, dest)
+	err := walker(ctx, dest, func(meta *node.Node) error {
+		return cb(meta.ID, dest)
 	})
 	if err != nil {
 		return dest, err
