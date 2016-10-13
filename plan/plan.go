@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/render"
 )
 
@@ -47,12 +46,9 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 
 			pipeline := Pipeline(out, id, renderingPlant)
 
-			var val interface{}
-			if meta, ok := out.Get(id); ok {
-				val = meta.Value()
-			}
+			meta, _ := out.Get(id)
 
-			val, pipelineErr := pipeline.Exec(val)
+			val, pipelineErr := pipeline.Exec(meta.Value())
 			if pipelineErr != nil {
 				fmt.Printf("pipeline returned Right %v\n", val)
 				return pipelineErr
@@ -68,7 +64,8 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 				hasErrors = ErrTreeContainsErrors
 			}
 
-			out.Add(node.New(id, asResult))
+			out.Add(meta.WithValue(asResult))
+
 			return nil
 		}),
 	)

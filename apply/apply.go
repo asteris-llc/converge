@@ -20,7 +20,6 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/pkg/errors"
@@ -70,12 +69,9 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 			renderingPlant.Graph = out
 			pipeline := pipelineF(out, id)
 
-			var val interface{}
-			if meta, ok := out.Get(id); ok {
-				val = meta.Value()
-			}
+			meta, _ := out.Get(id)
 
-			val, pipelineError := pipeline.Exec(val)
+			val, pipelineError := pipeline.Exec(meta.Value())
 
 			if pipelineError != nil {
 				hasErrors = ErrTreeContainsErrors
@@ -90,7 +86,7 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 				hasErrors = ErrTreeContainsErrors
 			}
 
-			out.Add(node.New(id, asResult))
+			out.Add(meta.WithValue(asResult))
 			return nil
 		}),
 	)
