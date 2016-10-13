@@ -23,6 +23,7 @@ runs tasks in parallel.
     - [Development](#development)
         - [Tools](#tools)
         - [RPC](#rpc)
+        - [Continuous Integration and Testing](#continuous-integration-and-testing)
     - [License](#license)
 
 <!-- markdown-toc end -->
@@ -92,6 +93,22 @@ You'll need:
   or above.
 - The go protoc plugin: `go get -a github.com/golang/protobuf/protoc-gen-go`
 - The grpc gateway plugin(s): `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
+
+### Continuous Integration and Testing
+
+We use Wercker for CI with a custom base image. The Dockerfile for that image
+can be found at `/ci/Dockerfile` in the root of the project, and is pushed as
+`asteris/converge-ci`. You can test Converge in the container with the
+following invocation:
+
+```sh
+docker run -i \
+           -t \
+           --rm \
+           --volume $(pwd):/go/src/github.com/asteris-llc/converge \
+           asteris/converge-ci \
+           /bin/bash -c 'cd /go/src/github.com/asteris-llc/converge; make test'
+```
 
 ## License
 
