@@ -15,6 +15,8 @@
 package rpm_test
 
 import (
+	"fmt"
+	"os/exec"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource/packages/rpm"
@@ -25,12 +27,51 @@ import (
 func TestYumInstalledVersion(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns the version when installed", func(t *testing.T) {
+	t.Run("when installed", func(t *testing.T) {
 		expected := "foo-0.1.2.3"
-		y := &rpm.YumManager{Sys: newRunner(expected, nil)}
+		runner := newRunner(expected, nil)
+		y := &rpm.YumManager{Sys: runner}
 		result, found := y.InstalledVersion("foo1")
 		assert.True(t, found)
 		assert.Equal(t, expected, string(result))
+	})
+
+	t.Run("when not installed", func(t *testing.T) {
+		expected := ""
+		y := &rpm.YumManager{Sys: newRunner("", makeExitError("", 1))}
+		result, found := y.InstalledVersion("foo1")
+		assert.False(t, found)
+		assert.Equal(t, expected, string(result))
+	})
+}
+
+func TestYumInstallPackage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when installed", func(t *testing.T) {
+		pkg := "foo1"
+		runner := newRunner("", nil)
+		y := &rpm.YumManager{Sys: runner}
+		err := y.InstallPackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 1)
+	})
+
+	t.Run("when not installed", func(t *testing.T) {
+		pkg := "foo1"
+		runner := newRunner("", makeExitError("", 1))
+		y := &rpm.YumManager{Sys: runner}
+		y.InstallPackage(pkg)
+		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when installation error", func(t *testing.T) {
+		pkg := "foo1"
+		runner := newRunner("", makeExitError("", 1))
+		y := &rpm.YumManager{Sys: runner}
+		err := y.InstallPackage(pkg)
+		assert.Error(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 2)
 	})
 }
 
@@ -38,7 +79,7 @@ type MockRunner struct {
 	mock.Mock
 }
 
-func (m *MockRunner) Run(string) ([]byte, error) {
+func (m *MockRunner) Run(cmd string) ([]byte, error) {
 	args := m.Called(1)
 	return args.Get(0).([]byte), args.Error(1)
 }
@@ -47,4 +88,22 @@ func newRunner(output string, err error) *MockRunner {
 	m := &MockRunner{}
 	m.On("Run", mock.Anything).Return([]byte(output), err)
 	return m
+}
+
+func makeExitError(stderr string, exitCode uint32) error {
+	cmd := fmt.Sprintf("echo %q 1>&2; exit %d", stderr, exitCode)
+	_, err := exec.Command("/bin/bash", "-c", cmd).Output()
+	return err
+}
+
+func queryString(pkg string) string {
+	return "rpm -q " + pkg
+}
+
+func installString(pkg string) string {
+	return "yum install -y " + pkg
+}
+
+func removeString(pkg string) string {
+	return "yum remove -y " + pkg
 }

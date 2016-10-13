@@ -17,12 +17,88 @@ package rpm_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/packages/rpm"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestInterfaces(t *testing.T) {
+func TestPackageInterfaces(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(rpm.Package))
+}
+
+func TestPackageState(t *testing.T) {
+	t.Parallel()
+	p := &rpm.Package{Name: "foo"}
+	t.Run("when installed", func(t *testing.T) {
+		p.PkgMgr = &rpm.YumManager{Sys: newRunner("", makeExitError("", 0))}
+		assert.Equal(t, rpm.StatePresent, p.PackageState())
+	})
+	t.Run("when not installed", func(t *testing.T) {
+		p.PkgMgr = &rpm.YumManager{Sys: newRunner("", makeExitError("", 1))}
+		assert.Equal(t, rpm.StateAbsent, p.PackageState())
+	})
+}
+
+func TestCheck(t *testing.T) {
+	t.Parallel()
+
+	// runner := newRunner("", makeExitError("", 0))
+	t.Run("when present/present", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StatePresent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
+		status, err := p.Check(fakerenderer.New())
+		require.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+	t.Run("when absent/absent", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StateAbsent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
+		status, err := p.Check(fakerenderer.New())
+		require.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+	t.Run("when should be removed", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StateAbsent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
+		status, err := p.Check(fakerenderer.New())
+		require.NoError(t, err)
+		assert.True(t, status.HasChanges())
+	})
+	t.Run("when should be installed", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StatePresent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
+		status, err := p.Check(fakerenderer.New())
+		require.NoError(t, err)
+		assert.True(t, status.HasChanges())
+	})
+}
+
+func TestApply(t *testing.T) {
+	t.Parallel()
+
+	// runner := newRunner("", makeExitError("", 0))
+	t.Run("when present/present", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StatePresent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
+		status, err := p.Apply()
+		require.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+	t.Run("when absent/absent", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StateAbsent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
+		status, err := p.Apply()
+		require.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+	t.Run("when should be removed", func(t *testing.T) {
+		p := &rpm.Package{State: rpm.StateAbsent}
+		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
+		status, err := p.Apply()
+		require.NoError(t, err)
+		assert.True(t, status.HasChanges())
+	})
 }
