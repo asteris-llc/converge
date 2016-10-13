@@ -92,17 +92,17 @@ func (p Printer) loadSubgraphs(ctx context.Context, g *graph.Graph, subgraphs Su
 		return
 	}
 
-	g.RootFirstWalk(ctx, func(id string, _ *node.Node) error {
-		if sgMarker := printer.MarkNode(g, id); sgMarker != nil {
+	g.RootFirstWalk(ctx, func(meta *node.Node) error {
+		if sgMarker := printer.MarkNode(g, meta.ID); sgMarker != nil {
 			if sgMarker.Start {
-				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, id)
+				addNodeToSubgraph(subgraphs, sgMarker.SubgraphID, meta.ID)
 			} else {
-				thisSubgraph := getSubgraphByID(subgraphs, graph.ParentID(id))
-				setSubgraphEndNode(subgraphs, thisSubgraph, id)
+				thisSubgraph := getSubgraphByID(subgraphs, graph.ParentID(meta.ID))
+				setSubgraphEndNode(subgraphs, thisSubgraph, meta.ID)
 			}
 		} else {
-			subgraphID := getSubgraphByID(subgraphs, graph.ParentID(id))
-			addNodeToSubgraph(subgraphs, subgraphID, id)
+			subgraphID := getSubgraphByID(subgraphs, graph.ParentID(meta.ID))
+			addNodeToSubgraph(subgraphs, subgraphID, meta.ID)
 		}
 		return nil
 	})
