@@ -19,7 +19,6 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -40,12 +39,9 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 	return in.Transform(
 		ctx,
 		notify.Transform(func(id string, out *graph.Graph) error {
-			var val interface{}
-			if meta, ok := out.Get(id); ok {
-				val = meta.Value()
-			}
+			meta, _ := out.Get(id)
 
-			task, err := unboxNode(val)
+			task, err := unboxNode(meta.Value())
 			if err != nil {
 				return err
 			}
@@ -56,12 +52,12 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 			}
 
 			for _, dep := range out.Dependencies(id) {
-				meta, ok := out.Get(dep)
+				depmeta, ok := out.Get(dep)
 				if !ok {
 					continue
 				}
 
-				depStatus, ok := meta.Value().(resource.TaskStatus)
+				depStatus, ok := depmeta.Value().(resource.TaskStatus)
 				if !ok {
 					continue
 				}
@@ -78,7 +74,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 				return err
 			}
 
-			out.Add(node.New(id, status))
+			out.Add(meta.WithValue(status))
 
 			return nil
 		}),
