@@ -79,11 +79,12 @@ func (g *Graph) Remove(id string) {
 }
 
 // Get returns the value of the element and a bool indicating if it was
-// found. If it was not found the value of the returned element is nil.
+// found. If it was not found the value of the returned element is nil, but a
+// valid node will be constructed.
 func (g *Graph) Get(id string) (*node.Node, bool) {
 	raw, ok := g.values.Get(id)
 	if !ok {
-		return nil, ok
+		return node.New(id, nil), ok
 	}
 
 	return raw.(*node.Node), true

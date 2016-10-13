@@ -44,8 +44,11 @@ func TestMaybeGet(t *testing.T) {
 
 	t.Run("not found", func(t *testing.T) {
 		val, found := g.Get("two")
-		assert.Nil(t, val)
 		assert.False(t, found)
+		if assert.NotNil(t, val) {
+			assert.Equal(t, "two", val.ID)
+			assert.Nil(t, val.Value())
+		}
 	})
 }
 
