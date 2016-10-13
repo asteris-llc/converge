@@ -98,7 +98,7 @@ You'll need:
 
 We use Wercker for CI with a custom base image. The Dockerfile for that image
 can be found at `/ci/Dockerfile` in the root of the project, and is pushed as
-`asteris/converge-ci`. You can do test Converge in the container with the
+`asteris/converge-ci`. You can test Converge in the container with the
 following invocation:
 
 ```sh
