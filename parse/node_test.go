@@ -87,6 +87,40 @@ func TestNodeValidateTooManyKeysModule(t *testing.T) {
 	validateTable(t, `module x y z {}`, "1:1: too many keys")
 }
 
+// TestNodeCase tests various scenarios where the node is a case statement
+func TestNodeCase(t *testing.T) {
+	t.Parallel()
+	t.Run("when no name or predicate", func(t *testing.T) {
+		validateTable(t, `case {}`, "1:1: missing name")
+	})
+
+	t.Run("when no name or predicate", func(t *testing.T) {
+		validateTable(t, `case x {}`, "1:1: missing name or predicate in case")
+	})
+
+	t.Run("when too many keys", func(t *testing.T) {
+		validateTable(t, `case x y z {}`, "1:1: too many keys")
+	})
+}
+
+// TestNodeDefault tests various scenarios where the node is a default statement
+func TestNodeDefault(t *testing.T) {
+	t.Parallel()
+	t.Run("when no name or predicate", func(t *testing.T) {
+		node, err := fromString(`default {}`)
+		assert.NoError(t, err)
+		assert.Equal(t, "default", node.Kind())
+	})
+
+	t.Run("when no name or predicate", func(t *testing.T) {
+		validateTable(t, `default x {}`, "1:1: too many keys")
+	})
+
+	t.Run("when too many keys", func(t *testing.T) {
+		validateTable(t, `default x y z {}`, "1:1: too many keys")
+	})
+}
+
 func TestNodeKind(t *testing.T) {
 	t.Parallel()
 

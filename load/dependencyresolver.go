@@ -16,10 +16,8 @@ package load
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -30,7 +28,7 @@ import (
 	"github.com/asteris-llc/converge/render/preprocessor"
 )
 
-type dependencyGenerator func(node *parse.Node) ([]string, error)
+type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
@@ -48,46 +46,39 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", meta.Value())
 		}
 
-		depGenerators := []dependencyGenerator{
-			getDepends,
-			getParams,
-			func(node *parse.Node) (out []string, err error) {
-				return getXrefs(g, meta.ID, node)
-			},
-		}
+		depGenerators := []dependencyGenerator{getDepends, getParams, getXrefs}
 
 		// we have dependencies from various sources, but they're always IDs, so we
 		// can connect them pretty easily
 		for _, source := range depGenerators {
-			deps, err := source(node)
+			deps, err := source(g, meta.ID, node)
 			if err != nil {
 				return err
 			}
-
 			for _, dep := range deps {
-				out.Connect(meta.ID, graph.SiblingID(meta.ID, dep))
+				out.Connect(meta.ID, dep)
 			}
 		}
 		return nil
 	})
 }
 
-func getDepends(node *parse.Node) ([]string, error) {
+func getDepends(_ *graph.Graph, id string, node *parse.Node) ([]string, error) {
 	deps, err := node.GetStringSlice("depends")
-
 	switch err {
 	case parse.ErrNotFound:
 		return []string{}, nil
-
 	case nil:
+		for idx := range deps {
+			deps[idx] = graph.SiblingID(id, deps[idx])
+		}
 		return deps, nil
-
 	default:
 		return nil, err
 	}
 }
 
-func getParams(node *parse.Node) (out []string, err error) {
+func getParams(g *graph.Graph, id string, node *parse.Node) (out []string, err error) {
 	var nodeStrings []string
 	nodeStrings, err = node.GetStrings()
 	if err != nil {
@@ -109,7 +100,11 @@ func getParams(node *parse.Node) (out []string, err error) {
 		tmpl.Execute(ioutil.Discard, &useless)
 	}
 	for idx, val := range out {
-		out[idx] = "param." + val
+		ancestor, found := getNearestAncestor(g, id, "param."+val)
+		if !found {
+			return out, fmt.Errorf("unknown parameter: param.%s", val)
+		}
+		out[idx] = ancestor
 	}
 	return out, err
 }
@@ -132,34 +127,48 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 		tmpl.Execute(ioutil.Discard, &struct{}{})
 	}
 	for _, call := range calls {
-		fqgn := graph.SiblingID(id, call)
-		vertex, _, found := preprocessor.VertexSplit(g, fqgn)
+		vertex, _, found := preprocessor.VertexSplitTraverse(g, call, id, preprocessor.TraverseUntilModule, make(map[string]struct{}))
 		if !found {
-			return []string{}, fmt.Errorf("unresolvable call to %s", call)
-		}
-
-		vertex, pfxError := stringIntersection(vertex, call)
-		if pfxError != nil {
-			return out, pfxError
+			return []string{}, fmt.Errorf("dependency generator: unresolvable call to %s", call)
 		}
 		if _, ok := nodeRefs[vertex]; !ok {
 			nodeRefs[vertex] = struct{}{}
 			out = append(out, vertex)
+			if peerVertex, ok := getPeerVertex(id, vertex); ok {
+				out = append(out, peerVertex)
+			}
 		}
 	}
 	return out, err
 }
 
-// stringIntersection will find the intersection of two strings that overlap in
-// the middle; we use this to remove the module portion of the node when we have
-// modules by first getting the fully qualified node name from the calling id
-// then finding the interesection with the lookup.
-func stringIntersection(front, back string) (string, error) {
-	for len(back) > 0 {
-		if strings.HasSuffix(front, back) {
-			return back, nil
-		}
-		back = back[0 : len(back)-1]
+func getPeerVertex(src, dst string) (string, bool) {
+	if dst == "." || dst == "root" {
+		return "", false
 	}
-	return "", errors.New("no string intersection found")
+	if graph.AreSiblingIDs(src, dst) {
+		return dst, true
+	}
+	return getPeerVertex(src, graph.ParentID(dst))
+}
+
+func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
+	if id == "root" || id == "" || id == "." {
+		return "", false
+	}
+
+	siblingID := graph.SiblingID(id, node)
+
+	valMeta, ok := g.Get(siblingID)
+	if !ok {
+		return getNearestAncestor(g, graph.ParentID(id), node)
+	}
+	elem, ok := valMeta.Value().(*parse.Node)
+	if !ok {
+		return "", false
+	}
+	if elem.Kind() == "module" {
+		return "", false
+	}
+	return siblingID, true
 }

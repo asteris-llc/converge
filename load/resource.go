@@ -75,7 +75,6 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 		}
 
 		out.Add(meta.WithValue(preparer))
-
 		return nil
 	})
 }

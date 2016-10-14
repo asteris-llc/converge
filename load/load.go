@@ -29,14 +29,15 @@ func Load(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	}
 
 	resolved, err := ResolveDependencies(ctx, base)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve dependencies")
 	}
 
 	resourced, err := SetResources(ctx, resolved)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve resources")
 	}
-
 	return resourced, nil
 }

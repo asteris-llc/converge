@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestNodesBasic tests loading basic.hcl
 func TestNodesBasic(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -33,6 +34,7 @@ func TestNodesBasic(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestNodesSourceFile tests loading from a source file
 func TestNodesSourceFile(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -62,4 +64,31 @@ func TestNodesSourceFile(t *testing.T) {
 		},
 		basicDeps,
 	)
+}
+
+// TestNodeWithConditionals tests loading when switch statements are present
+func TestNodeWithConditionals(t *testing.T) {
+	defer logging.HideLogs(t)()
+	g, err := load.Nodes(context.Background(), "../samples/conditionalLanguages.hcl", false)
+	require.NoError(t, err)
+	_, found := g.Get("root/param.lang")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.spanish")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.french")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.japanese")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.default")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.spanish/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.french/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.japanese/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.default/file.content.foo-file")
+	assert.True(t, found)
 }
