@@ -152,10 +152,10 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("will not add user %s", u.Username))
-						assert.Equal(t, resource.StatusFatal, status.StatusCode())
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s", u.Username))
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 						assert.Equal(t, fmt.Sprintf("group %s does not exist", u.GroupName), status.Messages()[0])
-						assert.False(t, status.HasChanges())
+						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
 					}
@@ -184,10 +184,10 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("will not add user %s", u.Username))
-						assert.Equal(t, resource.StatusFatal, status.StatusCode())
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s", u.Username))
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 						assert.Equal(t, fmt.Sprintf("group gid %s does not exist", u.GID), status.Messages()[0])
-						assert.False(t, status.HasChanges())
+						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
 					}
@@ -238,10 +238,10 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("will not add user %s with uid %s", u.Username, u.UID))
-						assert.Equal(t, resource.StatusFatal, status.StatusCode())
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 						assert.Equal(t, fmt.Sprintf("group %s does not exist", u.GroupName), status.Messages()[0])
-						assert.False(t, status.HasChanges())
+						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
 					}
@@ -272,10 +272,10 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("will not add user %s with uid %s", u.Username, u.UID))
-						assert.Equal(t, resource.StatusFatal, status.StatusCode())
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 						assert.Equal(t, fmt.Sprintf("group gid %s does not exist", u.GID), status.Messages()[0])
-						assert.False(t, status.HasChanges())
+						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
 					}
@@ -310,10 +310,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user uid %s already exists", u.UID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -325,10 +325,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user %s already exists", u.Username), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -344,10 +344,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -412,10 +412,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user %s does not exist", u.Username), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -427,10 +427,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user uid %s does not exist", u.UID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -446,10 +446,10 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusFatal, status.StatusCode())
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 					assert.Equal(t, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
+					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
 				}
@@ -501,12 +501,14 @@ func TestApply(t *testing.T) {
 					Username: fakeUsername,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.State = user.StatePresent
 				options := user.AddUserOptions{}
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply()
 
@@ -515,22 +517,78 @@ func TestApply(t *testing.T) {
 				assert.Equal(t, fmt.Sprintf("added user %s", u.Username), status.Messages()[0])
 			})
 
+			t.Run("no add-group name does not exist", func(t *testing.T) {
+				usr := &os.User{
+					Username: fakeUsername,
+				}
+				grp := &os.Group{
+					Name: fakeGroupName,
+				}
+				m := &MockSystem{}
+				o := &MockOptions{}
+				u := user.NewUser(m)
+				u.Username = usr.Username
+				u.GroupName = grp.Name
+				u.State = user.StatePresent
+				options := user.AddUserOptions{}
+				optErr := fmt.Sprintf("group %s does not exist", u.GroupName)
+
+				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
+				o.On("SetAddUserOptions", u).Return(nil, optErr)
+				m.On("AddUser", u.Username, &options).Return(nil)
+				status, err := u.Apply()
+
+				m.AssertNotCalled(t, "AddUser", u.Username, &options)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
+				assert.Equal(t, optErr, status.Messages()[0])
+			})
+
+			t.Run("no add-group gid does not exist", func(t *testing.T) {
+				usr := &os.User{
+					Username: fakeUsername,
+				}
+				grp := &os.Group{
+					Gid: fakeGID,
+				}
+				m := &MockSystem{}
+				o := &MockOptions{}
+				u := user.NewUser(m)
+				u.Username = usr.Username
+				u.GID = grp.Gid
+				u.State = user.StatePresent
+				options := user.AddUserOptions{}
+				optErr := fmt.Sprintf("group gid %s does not exist", u.GID)
+
+				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				m.On("LookupGroupID", u.GID).Return(grp, os.UnknownGroupError(""))
+				o.On("SetAddUserOptions", u).Return(nil, optErr)
+				m.On("AddUser", u.Username, &options).Return(nil)
+				status, err := u.Apply()
+
+				m.AssertNotCalled(t, "AddUser", u.Username, &options)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
+				assert.Equal(t, optErr, status.Messages()[0])
+			})
+
 			t.Run("no add-error adding user", func(t *testing.T) {
 				usr := &os.User{
 					Username: fakeUsername,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.State = user.StatePresent
 				options := user.AddUserOptions{}
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(fmt.Errorf(""))
 				status, err := u.Apply()
 
 				m.AssertCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.EqualError(t, err, fmt.Sprintf("user add: "))
 				assert.Equal(t, resource.StatusFatal, status.StatusCode())
 				assert.Equal(t, fmt.Sprintf("error adding user %s", u.Username), status.Messages()[0])
 			})
@@ -540,18 +598,20 @@ func TestApply(t *testing.T) {
 					Username: fakeUsername,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.State = user.StatePresent
 				options := user.AddUserOptions{}
 
 				m.On("Lookup", u.Username).Return(usr, nil)
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
 
@@ -562,6 +622,7 @@ func TestApply(t *testing.T) {
 					Uid:      fakeUID,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.UID = usr.Uid
@@ -570,6 +631,7 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply()
 
@@ -578,12 +640,71 @@ func TestApply(t *testing.T) {
 				assert.Equal(t, fmt.Sprintf("added user %s with uid %s", u.Username, u.UID), status.Messages()[0])
 			})
 
+			t.Run("no add-group name does not exist", func(t *testing.T) {
+				usr := &os.User{
+					Username: fakeUsername,
+					Uid:      fakeUID,
+				}
+				grp := &os.Group{
+					Name: fakeGroupName,
+				}
+				m := &MockSystem{}
+				o := &MockOptions{}
+				u := user.NewUser(m)
+				u.Username = usr.Username
+				u.GroupName = grp.Name
+				u.State = user.StatePresent
+				options := user.AddUserOptions{}
+				optErr := fmt.Sprintf("group %s does not exist", u.GroupName)
+
+				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
+				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
+				o.On("SetAddUserOptions", u).Return(nil, optErr)
+				m.On("AddUser", u.Username, &options).Return(nil)
+				status, err := u.Apply()
+
+				m.AssertNotCalled(t, "AddUser", u.Username, &options)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
+				assert.Equal(t, optErr, status.Messages()[0])
+			})
+
+			t.Run("no add-group gid does not exist", func(t *testing.T) {
+				usr := &os.User{
+					Username: fakeUsername,
+					Uid:      fakeUID,
+				}
+				grp := &os.Group{
+					Gid: fakeGID,
+				}
+				m := &MockSystem{}
+				o := &MockOptions{}
+				u := user.NewUser(m)
+				u.Username = usr.Username
+				u.GID = grp.Gid
+				u.State = user.StatePresent
+				options := user.AddUserOptions{}
+				optErr := fmt.Sprintf("group gid %s does not exist", u.GID)
+
+				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+				m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
+				m.On("LookupGroupID", u.GID).Return(grp, os.UnknownGroupError(""))
+				o.On("SetAddUserOptions", u).Return(nil, optErr)
+				m.On("AddUser", u.Username, &options).Return(nil)
+				status, err := u.Apply()
+
+				m.AssertNotCalled(t, "AddUser", u.Username, &options)
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
+				assert.Equal(t, optErr, status.Messages()[0])
+			})
+
 			t.Run("no add-error adding user", func(t *testing.T) {
 				usr := &os.User{
 					Username: fakeUsername,
 					Uid:      fakeUID,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.UID = usr.Uid
@@ -592,11 +713,12 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				m.On("LookupID", u.UID).Return(usr, os.UnknownUserIdError(1))
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(fmt.Errorf(""))
 				status, err := u.Apply()
 
 				m.AssertCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.EqualError(t, err, fmt.Sprintf("user add: "))
 				assert.Equal(t, resource.StatusFatal, status.StatusCode())
 				assert.Equal(t, fmt.Sprintf("error adding user %s with uid %s", u.Username, u.UID), status.Messages()[0])
 			})
@@ -607,6 +729,7 @@ func TestApply(t *testing.T) {
 					Uid:      fakeUID,
 				}
 				m := &MockSystem{}
+				o := &MockOptions{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.UID = usr.Uid
@@ -615,12 +738,13 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("LookupID", u.UID).Return(usr, nil)
+				o.On("SetAddUserOptions", u).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s with uid %s", u.Username, u.UID))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
 	})
@@ -659,7 +783,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.EqualError(t, err, fmt.Sprintf("user delete: "))
 				assert.Equal(t, resource.StatusFatal, status.StatusCode())
 				assert.Equal(t, fmt.Sprintf("error deleting user %s", u.Username), status.Messages()[0])
 			})
@@ -679,7 +803,7 @@ func TestApply(t *testing.T) {
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s", u.Username))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
 
@@ -722,7 +846,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf(""))
+				assert.EqualError(t, err, fmt.Sprintf("user delete: "))
 				assert.Equal(t, resource.StatusFatal, status.StatusCode())
 				assert.Equal(t, fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID), status.Messages()[0])
 			})
@@ -745,7 +869,7 @@ func TestApply(t *testing.T) {
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s with uid %s", u.Username, u.UID))
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
 	})
@@ -756,6 +880,7 @@ func TestApply(t *testing.T) {
 			Uid:      fakeUID,
 		}
 		m := &MockSystem{}
+		o := &MockOptions{}
 		u := user.NewUser(m)
 		u.Username = usr.Username
 		u.UID = usr.Uid
@@ -764,10 +889,12 @@ func TestApply(t *testing.T) {
 
 		m.On("Lookup", u.Username).Return(usr, nil)
 		m.On("LookupID", u.UID).Return(usr, nil)
+		o.On("SetAddUserOptions", u).Return(options, nil)
 		m.On("AddUser", u.Username, &options).Return(nil)
 		m.On("DelUser", u.Username).Return(nil)
 		status, err := u.Apply()
 
+		o.AssertNotCalled(t, "SetAddUserOptions", u)
 		m.AssertNotCalled(t, "AddUser", u.Username, &options)
 		m.AssertNotCalled(t, "DelUser", u.Username)
 		assert.EqualError(t, err, fmt.Sprintf("user: unrecognized state %s", u.State))
@@ -779,17 +906,26 @@ func TestApply(t *testing.T) {
 // are properly set
 func TestSetAddUserOptions(t *testing.T) {
 	t.Parallel()
+	gid, err := setGid()
+	if err != nil {
+		panic(err)
+	}
+	grp, err := os.LookupGroupId(gid)
+	if err != nil {
+		panic(err)
+	}
 
 	t.Run("all options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = fakeUsername
 		u.UID = fakeUID
-		u.GID = fakeGID
+		u.GID = gid
 		u.Name = "test"
 		u.HomeDir = "testDir"
 
-		options := user.SetAddUserOptions(u)
+		options, err := user.SetAddUserOptions(u)
 
+		assert.NoError(t, err)
 		assert.Equal(t, u.UID, options.UID)
 		assert.Equal(t, u.GID, options.Group)
 		assert.Equal(t, u.Name, options.Comment)
@@ -797,22 +933,70 @@ func TestSetAddUserOptions(t *testing.T) {
 	})
 
 	t.Run("group options", func(t *testing.T) {
-		u := user.NewUser(new(user.System))
-		u.Username = fakeUsername
-		u.GroupName = fakeGroupName
-		u.GID = fakeGID
+		t.Run("group name and gid", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.GroupName = grp.Name
+			u.GID = gid
 
-		options := user.SetAddUserOptions(u)
+			options, err := user.SetAddUserOptions(u)
 
-		assert.Equal(t, u.GroupName, options.Group)
+			assert.NoError(t, err)
+			assert.Equal(t, u.GroupName, options.Group)
+		})
+
+		t.Run("with group name", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.GroupName = grp.Name
+
+			options, err := user.SetAddUserOptions(u)
+
+			assert.NoError(t, err)
+			assert.Equal(t, u.GroupName, options.Group)
+		})
+
+		t.Run("group name not found", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.GroupName = fakeGroupName
+
+			options, err := user.SetAddUserOptions(u)
+
+			assert.EqualError(t, err, fmt.Sprintf("group %s does not exist", u.GroupName))
+			assert.Nil(t, options)
+		})
+
+		t.Run("with group gid", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.GID = gid
+
+			options, err := user.SetAddUserOptions(u)
+
+			assert.NoError(t, err)
+			assert.Equal(t, u.GID, options.Group)
+		})
+
+		t.Run("group gid not found", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.GID = fakeGID
+
+			options, err := user.SetAddUserOptions(u)
+
+			assert.EqualError(t, err, fmt.Sprintf("group gid %s does not exist", u.GID))
+			assert.Nil(t, options)
+		})
 	})
 
 	t.Run("no options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = fakeUsername
 
-		options := user.SetAddUserOptions(u)
+		options, err := user.SetAddUserOptions(u)
 
+		assert.NoError(t, err)
 		assert.Equal(t, "", options.UID)
 		assert.Equal(t, "", options.Group)
 		assert.Equal(t, "", options.Comment)
@@ -867,6 +1051,17 @@ func setFakeGid() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("setFakeGid: could not set gid")
+}
+
+// MockOptions is a mock implementation for setting user options
+type MockOptions struct {
+	mock.Mock
+}
+
+// SetAddUserOptions sets the options for adding a user
+func (m *MockOptions) SetAddUserOptions(u *user.User) (*user.AddUserOptions, error) {
+	args := m.Called(u)
+	return args.Get(0).(*user.AddUserOptions), args.Error(1)
 }
 
 // MockSystem is a mock implementation of user.System
