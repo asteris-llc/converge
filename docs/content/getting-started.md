@@ -213,15 +213,15 @@ will walk over them as nodes.
 Converge supports the ability to conditionally execute a set of actions
 depending on the value of expressions that are evaluated at runtime.  These
 `switch` expressions will allow you to write a single converge file that will
-execute differenting depending on information such as:
+execute differently depending on information such as:
 
 - `param`s passed in by the user
 - information gathered calls to `platform`
 - the status of another resource with `lookup`
 
 To understand how this works, let's consider the following example: You wish to
-create a file, `greeting.txt`. You want that file to contain a greeting like in
-the users preferred language.  Here we have an example of a converge script that
+create a file, `greeting.txt`. You want that file to contain a greeting in the
+users preferred language.  Here we have an example of a converge script that
 will allow the user to specify that they would prefer their greeting in spanish
 by passing in a param.
 
