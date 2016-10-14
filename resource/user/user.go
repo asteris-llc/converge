@@ -105,26 +105,15 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case userByName != nil:
-				status.Output = append(status.Output, fmt.Sprintf("user %s already exists", u.Username))
+				status.AddMessage(fmt.Sprintf("user %s already exists", u.Username))
 			case nameNotFound:
-				switch {
-				case u.GroupName != "":
-					_, err := u.system.LookupGroup(u.GroupName)
-					if err != nil {
-						status.RaiseLevel(resource.StatusCantChange)
-						status.Output = append(status.Output, fmt.Sprintf("group %s does not exist", u.GroupName))
-						return status, fmt.Errorf("cannot add user %s", u.Username)
-					}
-				case u.GID != "":
-					_, err := u.system.LookupGroupID(u.GID)
-					if err != nil {
-						status.RaiseLevel(resource.StatusCantChange)
-						status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", u.GID))
-						return status, fmt.Errorf("cannot add user %s", u.Username)
-					}
+				_, err := SetAddUserOptions(u)
+				if err != nil {
+					status.RaiseLevel(resource.StatusCantChange)
+					return status, errors.Wrapf(err, "cannot add user %s", u.Username)
 				}
 				status.RaiseLevel(resource.StatusWillChange)
-				status.Output = append(status.Output, "user does not exist")
+				status.AddMessage("user does not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s", u.Username), "")
 			}
 		case u.UID != "":
@@ -133,41 +122,25 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				switch {
-				case u.GroupName != "":
-					_, err := u.system.LookupGroup(u.GroupName)
-					if err != nil {
-						status.RaiseLevel(resource.StatusCantChange)
-						status.Output = append(status.Output, fmt.Sprintf("group %s does not exist", u.GroupName))
-						return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
-					}
-				case u.GID != "":
-					_, err := u.system.LookupGroupID(u.GID)
-					if err != nil {
-						status.RaiseLevel(resource.StatusCantChange)
-						status.Output = append(status.Output, fmt.Sprintf("group gid %s does not exist", u.GID))
-						return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
-					}
+				_, err := SetAddUserOptions(u)
+				if err != nil {
+					status.RaiseLevel(resource.StatusCantChange)
+					return status, errors.Wrapf(err, "cannot add user %s with uid %s", u.Username, u.UID)
 				}
 				status.RaiseLevel(resource.StatusWillChange)
-				status.Output = append(status.Output, "user name and uid do not exist")
+				status.AddMessage("user name and uid do not exist")
 				status.AddDifference("user", string(StateAbsent), fmt.Sprintf("user %s with uid %s", u.Username, u.UID), "")
 			case nameNotFound:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user uid %s already exists", u.UID))
-				return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot add user %s with uid %s: user uid already exists", u.Username, u.UID)
 			case uidNotFound:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user %s already exists", u.Username))
-				return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot add user %s with uid %s: user already exists", u.Username, u.UID)
 			case userByName != nil && userByID != nil && userByName.Name != userByID.Name || userByName.Uid != userByID.Uid:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
-				return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot add user %s with uid %s: user and uid belong to different users", u.Username, u.UID)
 			case userByName != nil && userByID != nil && *userByName == *userByID:
-				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user %s with uid %s already exists", u.Username, u.UID))
-				return status, fmt.Errorf("cannot add user %s with uid %s", u.Username, u.UID)
+				status.AddMessage("user %s with uid %s already exists", u.Username, u.UID)
 			}
 		}
 	case StateAbsent:
@@ -177,7 +150,7 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound:
-				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
+				status.AddMessage(fmt.Sprintf("user %s does not exist", u.Username))
 			case userByName != nil:
 				status.RaiseLevel(resource.StatusWillChange)
 				status.AddDifference("user", fmt.Sprintf("user %s", u.Username), string(StateAbsent), "")
@@ -188,19 +161,16 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 			switch {
 			case nameNotFound && uidNotFound:
-				status.Output = append(status.Output, "user name and uid do not exist")
+				status.AddMessage(fmt.Sprintf("user %s and uid %s do not exist", u.Username, u.UID))
 			case nameNotFound:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user %s does not exist", u.Username))
-				return status, fmt.Errorf("cannot delete user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot delete user %s with uid %s: user does not exist", u.Username, u.UID)
 			case uidNotFound:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user uid %s does not exist", u.UID))
-				return status, fmt.Errorf("cannot delete user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot delete user %s with uid %s: uid does not exist", u.Username, u.UID)
 			case userByName != nil && userByID != nil && userByName.Name != userByID.Name || userByName.Uid != userByID.Uid:
 				status.RaiseLevel(resource.StatusCantChange)
-				status.Output = append(status.Output, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID))
-				return status, fmt.Errorf("cannot delete user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("cannot delete user %s with uid %s: user and uid belong to different users", u.Username, u.UID)
 			case userByName != nil && userByID != nil && *userByName == *userByID:
 				status.RaiseLevel(resource.StatusWillChange)
 				status.AddDifference("user", fmt.Sprintf("user %s with uid %s", u.Username, u.UID), string(StateAbsent), "")
@@ -248,19 +218,18 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				options, err := SetAddUserOptions(u)
 				if err != nil {
 					status.RaiseLevel(resource.StatusCantChange)
-					status.Output = append(status.Output, err.Error())
-					return status, fmt.Errorf("will not attempt add: user %s", u.Username)
+					return status, errors.Wrapf(err, "will not attempt to add user %s", u.Username)
 				}
 				err = u.system.AddUser(u.Username, options)
 				if err != nil {
 					status.RaiseLevel(resource.StatusFatal)
-					status.Output = append(status.Output, fmt.Sprintf("error adding user %s", u.Username))
+					status.AddMessage(fmt.Sprintf("error adding user %s", u.Username))
 					return status, errors.Wrap(err, "user add")
 				}
-				status.Output = append(status.Output, fmt.Sprintf("added user %s", u.Username))
+				status.AddMessage(fmt.Sprintf("added user %s", u.Username))
 			default:
 				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt add: user %s", u.Username)
+				return status, fmt.Errorf("will not attempt to add user %s", u.Username)
 			}
 		case u.UID != "":
 			_, nameNotFound := nameErr.(user.UnknownUserError)
@@ -271,19 +240,18 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				options, err := SetAddUserOptions(u)
 				if err != nil {
 					status.RaiseLevel(resource.StatusCantChange)
-					status.Output = append(status.Output, err.Error())
-					return status, fmt.Errorf("will not attempt add: user %s with uid %s", u.Username, u.UID)
+					return status, errors.Wrapf(err, "will not attempt to add user %s with uid %s", u.Username, u.UID)
 				}
 				err = u.system.AddUser(u.Username, options)
 				if err != nil {
 					status.RaiseLevel(resource.StatusFatal)
-					status.Output = append(status.Output, fmt.Sprintf("error adding user %s with uid %s", u.Username, u.UID))
+					status.AddMessage(fmt.Sprintf("error adding user %s with uid %s", u.Username, u.UID))
 					return status, errors.Wrap(err, "user add")
 				}
-				status.Output = append(status.Output, fmt.Sprintf("added user %s with uid %s", u.Username, u.UID))
+				status.AddMessage(fmt.Sprintf("added user %s with uid %s", u.Username, u.UID))
 			default:
 				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt add: user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("will not attempt to add user %s with uid %s", u.Username, u.UID)
 			}
 		}
 	case StateAbsent:
@@ -296,13 +264,13 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				err := u.system.DelUser(u.Username)
 				if err != nil {
 					status.RaiseLevel(resource.StatusFatal)
-					status.Output = append(status.Output, fmt.Sprintf("error deleting user %s", u.Username))
+					status.AddMessage(fmt.Sprintf("error deleting user %s", u.Username))
 					return status, errors.Wrap(err, "user delete")
 				}
-				status.Output = append(status.Output, fmt.Sprintf("deleted user %s", u.Username))
+				status.AddMessage(fmt.Sprintf("deleted user %s", u.Username))
 			default:
 				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt delete: user %s", u.Username)
+				return status, fmt.Errorf("will not attempt to delete user %s", u.Username)
 			}
 		case u.UID != "":
 			_, nameNotFound := nameErr.(user.UnknownUserError)
@@ -313,13 +281,13 @@ func (u *User) Apply() (resource.TaskStatus, error) {
 				err := u.system.DelUser(u.Username)
 				if err != nil {
 					status.RaiseLevel(resource.StatusFatal)
-					status.Output = append(status.Output, fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID))
+					status.AddMessage(fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID))
 					return status, errors.Wrap(err, "user delete")
 				}
-				status.Output = append(status.Output, fmt.Sprintf("deleted user %s with uid %s", u.Username, u.UID))
+				status.AddMessage(fmt.Sprintf("deleted user %s with uid %s", u.Username, u.UID))
 			default:
 				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt delete: user %s with uid %s", u.Username, u.UID)
+				return status, fmt.Errorf("will not attempt to delete user %s with uid %s", u.Username, u.UID)
 			}
 		}
 	default:
