@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"sort"
 
 	"strconv"
 	"sync"
@@ -136,6 +137,51 @@ func TestDescendents(t *testing.T) {
 	g.Connect("one", "one/two")
 
 	assert.Equal(t, []string{"one/two"}, g.Descendents("one"))
+}
+
+// TestChildren tests to ensure the correct behavior when getting children
+func TestChildren(t *testing.T) {
+	t.Parallel()
+	defer logging.HideLogs(t)()
+
+	g := graph.New()
+	g.Add(node.New("root", nil))
+	g.Add(node.New("child1", nil))
+	g.Add(node.New("child2", nil))
+
+	g.Add(node.New("child1.1", nil))
+	g.Add(node.New("child1.2", nil))
+	g.Add(node.New("child1.3", nil))
+
+	g.Add(node.New("child.1.1.1", nil))
+
+	g.Add(node.New("child2.1", nil))
+	g.Add(node.New("child2.2", nil))
+	g.Add(node.New("child2.3", nil))
+
+	g.ConnectParent("root", "child1")
+	g.ConnectParent("root", "child2")
+
+	g.ConnectParent("child1", "child1.1")
+	g.ConnectParent("child1", "child1.2")
+	g.ConnectParent("child1", "child1.3")
+
+	g.ConnectParent("child2", "child2.1")
+	g.ConnectParent("child2", "child2.2")
+	g.ConnectParent("child2", "child2.3")
+
+	g.ConnectParent("child1.1", "child.1.1.1")
+
+	g.Connect("child1", "child2.1")
+	g.Connect("child1", "child2.2")
+	g.Connect("child1", "child2.3")
+
+	children := g.Children("child1")
+
+	expected := []string{"child1.1", "child1.2", "child1.3"}
+	sort.Strings(expected)
+	sort.Strings(children)
+	assert.Equal(t, expected, children)
 }
 
 func TestWalkOrder(t *testing.T) {
@@ -426,6 +472,55 @@ func TestRootFirstTransform(t *testing.T) {
 	meta, ok := transformed.Get("int")
 	require.True(t, ok, "\"int\" was not present in graph")
 	assert.Equal(t, 2, meta.Value().(int))
+}
+
+// TestIsNibling tests various scenarios where we want to know if a node is a
+// nibling of the source node.
+func TestIsNibling(t *testing.T) {
+	t.Parallel()
+
+	g := graph.New()
+	g.Add(node.New("a", struct{}{}))
+	g.Add(node.New("a/b", struct{}{}))
+	g.ConnectParent("a", "a/b")
+	g.Add(node.New("a/b/c", struct{}{}))
+	g.ConnectParent("a/b", "a/b/c")
+	g.Add(node.New("a/b/c/d", struct{}{}))
+	g.ConnectParent("a/b/c", "a/b/c/d")
+	g.Add(node.New("a/c", struct{}{}))
+	g.ConnectParent("a", "a/c")
+	g.Add(node.New("a/c/d", struct{}{}))
+	g.ConnectParent("a/c", "a/c/d")
+	g.Add(node.New("a/c/d/e", struct{}{}))
+	g.ConnectParent("a/c/d", "a/c/d/e")
+	g.Add(node.New("x", struct{}{}))
+	g.Add(node.New("x/c", struct{}{}))
+	g.ConnectParent("x", "x/c")
+
+	t.Run("are siblings", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c"))
+	})
+	t.Run("is direct nibling", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c/d"))
+	})
+	t.Run("is nibling child of nibling", func(t *testing.T) {
+		assert.True(t, g.IsNibling("a/b", "a/c/d/e"))
+	})
+	t.Run("child", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "a/b/c"))
+	})
+	t.Run("grandchild", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "a/b/c/d"))
+	})
+	t.Run("unrelated", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b", "x/c"))
+	})
+	t.Run("cousins", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b/c", "a/x"))
+	})
+	t.Run("parent", func(t *testing.T) {
+		assert.False(t, g.IsNibling("a/b/c", "a/b"))
+	})
 }
 
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {

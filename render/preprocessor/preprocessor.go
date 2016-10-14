@@ -23,6 +23,8 @@ import (
 	"sync"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/resource/module"
 )
 
 // ErrUnresolvable indicates that a field exists but is unresolvable due to nil
@@ -141,6 +143,62 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 		return prefix, "", true
 	}
 	return prefix, s[len(prefix)+1:], true
+}
+
+// VertexSplitTraverse will act like vertex split, looking for a prefix matching
+// the current set of graph nodes, however unlike `VertexSplit`, if a node is
+// not found at the current level it will look at the parent level to the
+// provided starting node, unless stop(parent) returns true.
+func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, stop func(*graph.Graph, string) bool, history map[string]struct{}) (string, string, bool) {
+	history[startingNode] = struct{}{}
+
+	for _, child := range g.Children(startingNode) {
+		if _, ok := history[child]; ok {
+			continue
+		}
+		if stop(g, child) {
+			continue
+		}
+		vertex, middle, found := VertexSplitTraverse(g, toFind, child, stop, history)
+		if found {
+			return vertex, middle, found
+		}
+	}
+	if stop(g, startingNode) {
+		return "", toFind, false
+	}
+
+	fqgn := graph.SiblingID(startingNode, toFind)
+	vertex, middle, found := VertexSplit(g, fqgn)
+	if found {
+		return vertex, middle, found
+	}
+	parentID := graph.ParentID(startingNode)
+	return VertexSplitTraverse(g, toFind, parentID, stop, history)
+}
+
+// TraverseUntilModule is a function intended to be used with
+// VertexSplitTraverse and will cause vertex splitting to propogate upwards
+// until it encounters a module
+func TraverseUntilModule(g *graph.Graph, id string) bool {
+	if id == "root" {
+		return true
+	}
+	elemMeta, ok := g.Get(id)
+	if !ok {
+		return true
+	}
+	elem := elemMeta.Value()
+	if _, ok := elem.(*module.Module); ok {
+		return true
+	}
+	if _, ok := elem.(*module.Preparer); ok {
+		return true
+	}
+	if node, ok := elem.(*parse.Node); ok {
+		return node.Kind() == "module"
+	}
+	return false
 }
 
 // HasField returns true if the provided struct has the defined field

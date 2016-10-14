@@ -86,7 +86,6 @@ func (g *Graph) Get(id string) (*node.Node, bool) {
 	if !ok {
 		return nil, ok
 	}
-
 	return raw.(*node.Node), true
 }
 
@@ -104,12 +103,62 @@ func (g *Graph) GetParent(id string) (*node.Node, bool) {
 	return g.Get(parentID)
 }
 
+// GetParentID is a combination of getting the parent the getting the ID.
+func (g *Graph) GetParentID(id string) (string, bool) {
+	node, ok := g.GetParent(id)
+	if !ok {
+		return "", false
+	}
+	return node.ID, true
+}
+
+// AreSiblings returns true if both nodes share a parent edge, or both nodes are
+// at the root of the graph (and have no parent edge).  It returns false if both
+// IDs are the same.
+func (g *Graph) AreSiblings(fst, snd string) bool {
+	fstParent, fstFound := g.GetParentID(fst)
+	sndParent, sndFound := g.GetParentID(snd)
+	return (fstParent == sndParent) && (fstFound == sndFound) && (fst != snd)
+}
+
+// IsNibling checks to see if second is the child of a sibling of the first.
+func (g *Graph) IsNibling(fst, snd string) bool {
+	sndID, sndHasParent := g.GetParentID(snd)
+	if !sndHasParent {
+		return false
+	}
+	if fst == sndID {
+		return false
+	}
+	if g.AreSiblings(fst, snd) {
+		return true
+	}
+
+	if !sndHasParent {
+		return false
+	}
+	return g.IsNibling(fst, sndID)
+}
+
 // ConnectParent connects a parent node to a child node
 func (g *Graph) ConnectParent(from, to string) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
 	g.inner.Connect(NewParentEdge(from, to))
+}
+
+// Children returns a list of ids whose parent id is set to the specified node
+func (g *Graph) Children(id string) (out []string) {
+	downEdges := g.DownEdges(id)
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+	for _, edge := range downEdges {
+		if _, ok := edge.(*ParentEdge); ok {
+			out = append(out, edge.Target().(string))
+		}
+	}
+	return
 }
 
 // Connect two vertices together by ID
