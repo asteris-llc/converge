@@ -152,9 +152,8 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s", u.Username))
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s: group %s does not exist", u.Username, u.GroupName))
 						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-						assert.Equal(t, fmt.Sprintf("group %s does not exist", u.GroupName), status.Messages()[0])
 						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
@@ -184,9 +183,8 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s", u.Username))
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s: group gid %s does not exist", u.Username, u.GID))
 						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-						assert.Equal(t, fmt.Sprintf("group gid %s does not exist", u.GID), status.Messages()[0])
 						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
@@ -238,9 +236,8 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s: group %s does not exist", u.Username, u.UID, u.GroupName))
 						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-						assert.Equal(t, fmt.Sprintf("group %s does not exist", u.GroupName), status.Messages()[0])
 						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
@@ -272,9 +269,8 @@ func TestCheck(t *testing.T) {
 					status, err := u.Check(fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
-						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+						assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s: group gid %s does not exist", u.Username, u.UID, u.GID))
 						assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-						assert.Equal(t, fmt.Sprintf("group gid %s does not exist", u.GID), status.Messages()[0])
 						assert.True(t, status.HasChanges())
 					} else {
 						assert.EqualError(t, err, "user: not supported on this system")
@@ -310,9 +306,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s: user uid already exists", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user uid %s already exists", u.UID), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -325,9 +320,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s: user already exists", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s already exists", u.Username), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -344,9 +338,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s with uid %s: user and uid belong to different users", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -399,7 +392,7 @@ func TestCheck(t *testing.T) {
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
 					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprint("user name and uid do not exist"), status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("user %s and uid %s do not exist", u.Username, u.UID), status.Messages()[0])
 					assert.False(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -412,9 +405,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user does not exist", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s does not exist", u.Username), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -427,9 +419,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: uid does not exist", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user uid %s does not exist", u.UID), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -446,9 +437,8 @@ func TestCheck(t *testing.T) {
 				status, err := u.Check(fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s", u.Username, u.UID))
+					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user and uid belong to different users", u.Username, u.UID))
 					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s and uid %s belong to different users", u.Username, u.UID), status.Messages()[0])
 					assert.True(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
@@ -540,8 +530,8 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
-				assert.Equal(t, optErr, status.Messages()[0])
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s: %s", u.Username, optErr))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 
 			t.Run("no add-group gid does not exist", func(t *testing.T) {
@@ -567,8 +557,8 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
-				assert.Equal(t, optErr, status.Messages()[0])
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s: %s", u.Username, optErr))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 
 			t.Run("no add-error adding user", func(t *testing.T) {
@@ -610,7 +600,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s", u.Username))
 				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
@@ -665,8 +655,8 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
-				assert.Equal(t, optErr, status.Messages()[0])
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s: %s", u.Username, optErr))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 
 			t.Run("no add-group gid does not exist", func(t *testing.T) {
@@ -694,8 +684,8 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s", u.Username))
-				assert.Equal(t, optErr, status.Messages()[0])
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s: %s", u.Username, optErr))
+				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 
 			t.Run("no add-error adding user", func(t *testing.T) {
@@ -743,7 +733,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt add: user %s with uid %s", u.Username, u.UID))
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s with uid %s", u.Username, u.UID))
 				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
@@ -802,7 +792,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s", u.Username))
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s", u.Username))
 				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
@@ -868,7 +858,7 @@ func TestApply(t *testing.T) {
 				status, err := u.Apply()
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: user %s with uid %s", u.Username, u.UID))
+				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s with uid %s", u.Username, u.UID))
 				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			})
 		})
