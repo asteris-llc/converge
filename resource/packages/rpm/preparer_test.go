@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPreparerInterfaces ensures that the correct interfaces are implemented by
+// the preparer
 func TestPreparerInterfaces(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(rpm.Preparer))

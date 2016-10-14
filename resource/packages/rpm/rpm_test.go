@@ -24,11 +24,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestPackageInterfaces ensures the correct interfaces are implemented
 func TestPackageInterfaces(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(rpm.Package))
 }
 
+// TestPackageState ensures that package state queries work correctly
 func TestPackageState(t *testing.T) {
 	t.Parallel()
 	p := &rpm.Package{Name: "foo"}
@@ -42,6 +44,7 @@ func TestPackageState(t *testing.T) {
 	})
 }
 
+// TestCheck ensures Check works correctly
 func TestCheck(t *testing.T) {
 	t.Parallel()
 
@@ -76,10 +79,10 @@ func TestCheck(t *testing.T) {
 	})
 }
 
+// TestApply ensures Apply works correctly
 func TestApply(t *testing.T) {
 	t.Parallel()
 
-	// runner := newRunner("", makeExitError("", 0))
 	t.Run("when present/present", func(t *testing.T) {
 		p := &rpm.Package{State: rpm.StatePresent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
