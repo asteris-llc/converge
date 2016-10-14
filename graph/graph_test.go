@@ -141,6 +141,7 @@ func TestDescendents(t *testing.T) {
 
 // TestChildren tests to ensure the correct behavior when getting children
 func TestChildren(t *testing.T) {
+	t.Parallel()
 	defer logging.HideLogs(t)()
 
 	g := graph.New()

@@ -89,6 +89,7 @@ func TestNodeValidateTooManyKeysModule(t *testing.T) {
 
 // TestNodeCase tests various scenarios where the node is a case statement
 func TestNodeCase(t *testing.T) {
+	t.Parallel()
 	t.Run("when no name or predicate", func(t *testing.T) {
 		validateTable(t, `case {}`, "1:1: missing name")
 	})
@@ -104,6 +105,7 @@ func TestNodeCase(t *testing.T) {
 
 // TestNodeDefault tests various scenarios where the node is a default statement
 func TestNodeDefault(t *testing.T) {
+	t.Parallel()
 	t.Run("when no name or predicate", func(t *testing.T) {
 		node, err := fromString(`default {}`)
 		assert.NoError(t, err)

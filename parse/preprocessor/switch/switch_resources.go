@@ -21,7 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 )
 
-// SwitchPreparer represents a switch resourc; the task it generates simply
+// SwitchPreparer represents a switch resource; the task it generates simply
 // wraps the values and will not do anything during check or apply.
 type SwitchPreparer struct {
 	Branches []string `hcl:"branches"`
@@ -86,6 +86,7 @@ func (s *SwitchTask) Apply() (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 
+// String displays a switch statement; useful for debugging and errors
 func (s *SwitchTask) String() string {
 	var out string
 	if s == nil {
