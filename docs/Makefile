@@ -4,6 +4,9 @@ TASKLOC=${TASKFILE}:\#$(shell grep -b 'type Task interface' ${TASKFILE} | cut -d
 public: content/*.md static/**/* content/resources content/license.md
 	hugo
 
+publish:
+	./publish.sh $$VERSION
+
 extract: extract.go
 	go build -o $@ extract.go
 
@@ -39,3 +42,5 @@ resources.mk: sources.csv resourceContent.mk.tmpl
         resourceContent.mk.tmpl >> $@; \
     echo >> $@; \
   done
+
+.PHONY=publish

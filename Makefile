@@ -1,7 +1,7 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
 VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
 RPCLINT=$(shell find ./rpc -type f \( -not -iname 'root.*.go' -iname '*.go' \) )
-TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs_source*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
+TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
@@ -123,10 +123,5 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 	 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 	 --swagger_out=logtostderr=true:rpc/pb \
 	 rpc/pb/root.proto
-
-docs: docs_source/**/*
-	rm -rf docs || true
-	$(MAKE) -C docs_source
-	mv docs_source/public docs
 
 .PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
