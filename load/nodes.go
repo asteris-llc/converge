@@ -134,7 +134,7 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 		return g, err
 	}
 	switchID := graph.ID(current.Parent, switchNode.String())
-	g.Add(switchID, switchNode)
+	g.Add(node.New(switchID, switchNode))
 	g.ConnectParent(current.Parent, switchID)
 	for _, branch := range switchObj.Branches {
 		branchNode, err := branch.GenerateNode()
@@ -142,14 +142,14 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 			return g, err
 		}
 		branchID := graph.ID(switchID, branchNode.String())
-		g.Add(branchID, branchNode)
+		g.Add(node.New(branchID, branchNode))
 		g.ConnectParent(switchID, branchID)
 		for _, innerNode := range branch.InnerNodes {
 			if err := validateInnerNode(innerNode); err != nil {
 				return g, err
 			}
 			innerID := graph.ID(branchID, innerNode.String())
-			g.Add(innerID, innerNode)
+			g.Add(node.New(innerID, innerNode))
 			g.ConnectParent(branchID, innerID)
 		}
 	}

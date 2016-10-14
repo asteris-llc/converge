@@ -48,7 +48,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 
 		depGenerators := []dependencyGenerator{
 			func(node *parse.Node) ([]string, error) {
-				return getDepends(id, node)
+				return getDepends(meta.ID, node)
 			},
 			func(node *parse.Node) ([]string, error) {
 				return getParams(g, meta.ID, node)
@@ -173,11 +173,11 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 
 	siblingID := graph.SiblingID(id, node)
 
-	val := g.Get(siblingID)
-	if val == nil {
+	valMeta, ok := g.Get(siblingID)
+	if !ok {
 		return getNearestAncestor(g, graph.ParentID(id), node)
 	}
-	elem, ok := val.(*parse.Node)
+	elem, ok := valMeta.Value().(*parse.Node)
 	if !ok {
 		return "", false
 	}
