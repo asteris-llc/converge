@@ -24,46 +24,35 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGet(t *testing.T) {
-	// Get should return the value put into the graph
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
+	g.Add(node.New("one", 1))
 
-	assert.Equal(t, 1, g.Get("one").(int))
-}
+	t.Run("found", func(t *testing.T) {
+		val, found := g.Get("one")
+		assert.Equal(t, 1, val.Value())
+		assert.True(t, found)
+	})
 
-func TestGetNothing(t *testing.T) {
-	// Get should return nil for a nonexistent node
-	t.Parallel()
-
-	g := graph.New()
-
-	assert.Nil(t, g.Get("nothing"))
-}
-
-func TestMaybeGet(t *testing.T) {
-	t.Parallel()
-	g := graph.New()
-	g.Add("one", 1)
-	val, found := g.MaybeGet("one")
-	assert.Equal(t, 1, val)
-	assert.True(t, found)
-	val, found = g.MaybeGet("two")
-	assert.Nil(t, val)
-	assert.False(t, found)
+	t.Run("not found", func(t *testing.T) {
+		val, found := g.Get("two")
+		assert.False(t, found)
+		assert.Nil(t, val)
+	})
 }
 
 func TestContains(t *testing.T) {
 	t.Parallel()
 	g := graph.New()
-	g.Add("one", 1)
+	g.Add(node.New("one", 1))
 	assert.True(t, g.Contains("one"))
 	assert.False(t, g.Contains("two"))
 }
@@ -72,9 +61,9 @@ func BenchmarkAddThenGet(b *testing.B) {
 	g := graph.New()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			id := rand.Int()
-			g.Add(strconv.Itoa(id), id)
-			g.Get(strconv.Itoa(id))
+			id := strconv.Itoa(rand.Int())
+			g.Add(node.New(id, id))
+			g.Get(id)
 		}
 	})
 }
@@ -93,10 +82,11 @@ func TestRemove(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
+	g.Add(node.New("one", 1))
 	g.Remove("one")
 
-	assert.Nil(t, g.Get("one"))
+	_, ok := g.Get("one")
+	assert.False(t, ok)
 }
 
 func TestDownEdges(t *testing.T) {
@@ -104,8 +94,8 @@ func TestDownEdges(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
-	g.Add("two", 2)
+	g.Add(node.New("one", 1))
+	g.Add(node.New("two", 2))
 	g.Connect("one", "two")
 
 	assert.Equal(t, []string{"two"}, graph.Targets(g.DownEdges("one")))
@@ -117,8 +107,8 @@ func TestUpEdges(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
-	g.Add("two", 2)
+	g.Add(node.New("one", 1))
+	g.Add(node.New("two", 2))
 	g.Connect("one", "two")
 
 	assert.Equal(t, []string{"one"}, graph.Sources(g.UpEdges("two")))
@@ -129,8 +119,8 @@ func TestDisconnect(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
-	g.Add("two", 2)
+	g.Add(node.New("one", 1))
+	g.Add(node.New("two", 2))
 	g.Connect("one", "two")
 	g.Disconnect("one", "two")
 
@@ -141,8 +131,8 @@ func TestDescendents(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("one", 1)
-	g.Add("one/two", 2)
+	g.Add(node.New("one", 1))
+	g.Add(node.New("one/two", 2))
 	g.Connect("one", "one/two")
 
 	assert.Equal(t, []string{"one/two"}, g.Descendents("one"))
@@ -153,9 +143,9 @@ func TestWalkOrder(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("child1", nil)
-	g.Add("child2", nil)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("child1", nil))
+	g.Add(node.New("child2", nil))
 
 	g.ConnectParent("root", "child1")
 	g.ConnectParent("root", "child2")
@@ -182,10 +172,10 @@ func TestWalkOrderDiamond(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("a", nil)
-	g.Add("b", nil)
-	g.Add("c", nil)
-	g.Add("d", nil)
+	g.Add(node.New("a", nil))
+	g.Add(node.New("b", nil))
+	g.Add(node.New("c", nil))
+	g.Add(node.New("d", nil))
 
 	g.ConnectParent("a", "b")
 	g.ConnectParent("a", "c")
@@ -205,11 +195,11 @@ func TestWalkOrderParentDependency(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", 1)
-	g.Add("dependent", 1)
-	g.Add("dependency", 1)
-	g.Add("dependent/child", 1)
-	g.Add("dependency/child", 1)
+	g.Add(node.New("root", 1))
+	g.Add(node.New("dependent", 1))
+	g.Add(node.New("dependency", 1))
+	g.Add(node.New("dependent/child", 1))
+	g.Add(node.New("dependency/child", 1))
 
 	g.ConnectParent("root", "dependent")
 	g.ConnectParent("root", "dependency")
@@ -224,11 +214,11 @@ func TestWalkOrderParentDependency(t *testing.T) {
 	require.NoError(t,
 		g.Walk(
 			context.Background(),
-			func(id string, _ interface{}) error {
+			func(meta *node.Node) error {
 				exLock.Lock()
 				defer exLock.Unlock()
 
-				execution = append(execution, id)
+				execution = append(execution, meta.ID)
 
 				return nil
 			},
@@ -251,17 +241,17 @@ func TestWalkOrderParentDependency(t *testing.T) {
 func TestWalkError(t *testing.T) {
 	g := graph.New()
 
-	g.Add("a", nil)
-	g.Add("b", nil)
-	g.Add("c", nil)
+	g.Add(node.New("a", nil))
+	g.Add(node.New("b", nil))
+	g.Add(node.New("c", nil))
 
 	g.ConnectParent("a", "b")
 	g.ConnectParent("b", "c")
 
 	err := g.Walk(
 		context.Background(),
-		func(id string, _ interface{}) error {
-			if id == "c" {
+		func(meta *node.Node) error {
+			if meta.ID == "c" {
 				return errors.New("test")
 			}
 			return nil
@@ -290,9 +280,9 @@ func TestValidateCycle(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("a", nil)
-	g.Add("b", nil)
-	g.Add("c", nil)
+	g.Add(node.New("a", nil))
+	g.Add(node.New("b", nil))
+	g.Add(node.New("c", nil))
 
 	// a is just a root
 	g.Connect("a", "b")
@@ -311,7 +301,7 @@ func TestValidateDanglingEdge(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add("a", nil)
+	g.Add(node.New("a", nil))
 	g.Connect("a", "nope")
 
 	err := g.Validate()
@@ -325,19 +315,21 @@ func TestTransform(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("int", 1)
+	g.Add(node.New("int", 1))
 
 	transformed, err := g.Transform(
 		context.Background(),
-		func(id string, dest *graph.Graph) error {
-			dest.Add(id, 2)
+		func(meta *node.Node, dest *graph.Graph) error {
+			dest.Add(node.New(meta.ID, 2))
 
 			return nil
 		},
 	)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, transformed.Get("int").(int))
+	meta, ok := transformed.Get("int")
+	require.True(t, ok, "node was not present in graph")
+	assert.Equal(t, 2, meta.Value().(int))
 }
 
 func TestParent(t *testing.T) {
@@ -345,15 +337,17 @@ func TestParent(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
-	g.Add(graph.ID("root"), 1)
-	g.Add(graph.ID("root", "child"), 2)
+	g.Add(node.New(graph.ID("root"), 1))
+	g.Add(node.New(graph.ID("root", "child"), 2))
 
 	g.ConnectParent(graph.ID("root"), graph.ID("root", "child"))
 
 	require.NoError(t, g.Validate())
 
-	parent := g.GetParent(graph.ID("root", "child"))
-	assert.Equal(t, g.Get(graph.ID("root")), parent)
+	actual, ok := g.GetParent(graph.ID("root", "child"))
+	require.True(t, ok)
+	should, _ := g.Get(graph.ID("root"))
+	assert.Equal(t, should, actual)
 }
 
 func TestRootFirstWalk(t *testing.T) {
@@ -361,8 +355,8 @@ func TestRootFirstWalk(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("root/child", nil)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("root/child", nil))
 	g.Connect("root", "root/child")
 
 	var out []string
@@ -370,8 +364,8 @@ func TestRootFirstWalk(t *testing.T) {
 		t,
 		g.RootFirstWalk(
 			context.Background(),
-			func(id string, _ interface{}) error {
-				out = append(out, id)
+			func(meta *node.Node) error {
+				out = append(out, meta.ID)
 				return nil
 			},
 		),
@@ -385,9 +379,9 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("root/child", nil)
-	g.Add("root/sibling", nil)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("root/child", nil))
+	g.Add(node.New("root/sibling", nil))
 
 	g.Connect("root", "root/child")
 	g.Connect("root", "root/sibling")
@@ -398,8 +392,8 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 		t,
 		g.RootFirstWalk(
 			context.Background(),
-			func(id string, _ interface{}) error {
-				out = append(out, id)
+			func(meta *node.Node) error {
+				out = append(out, meta.ID)
 				return nil
 			},
 		),
@@ -417,19 +411,21 @@ func TestRootFirstTransform(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("int", 1)
+	g.Add(node.New("int", 1))
 
 	transformed, err := g.RootFirstTransform(
 		context.Background(),
-		func(id string, dest *graph.Graph) error {
-			dest.Add(id, 2)
+		func(meta *node.Node, dest *graph.Graph) error {
+			dest.Add(meta.WithValue(2))
 
 			return nil
 		},
 	)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, transformed.Get("int").(int))
+	meta, ok := transformed.Get("int")
+	require.True(t, ok, "\"int\" was not present in graph")
+	assert.Equal(t, 2, meta.Value().(int))
 }
 
 func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
@@ -438,11 +434,11 @@ func idsInOrderOfExecution(g *graph.Graph) ([]string, error) {
 
 	err := g.Walk(
 		context.Background(),
-		func(id string, _ interface{}) error {
+		func(meta *node.Node) error {
 			lock.Lock()
 			defer lock.Unlock()
 
-			out = append(out, id)
+			out = append(out, meta.ID)
 
 			return nil
 		},

@@ -21,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
@@ -115,7 +116,7 @@ real happens.`,
 					slog := flog.WithFields(log.Fields{
 						"stage": resp.Stage,
 						"run":   resp.Run,
-						"id":    resp.Id,
+						"id":    resp.Meta.Id,
 					})
 					if resp.Run == pb.StatusResponse_STARTED {
 						slog.Info("got status")
@@ -126,7 +127,7 @@ real happens.`,
 					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
 						if details != nil {
-							g.Add(resp.Id, details.ToPrintable())
+							g.Add(node.New(resp.Id, details.ToPrintable()))
 						}
 					}
 				},

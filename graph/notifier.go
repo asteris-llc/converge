@@ -14,38 +14,39 @@
 
 package graph
 
-// PreNotifyFunc will be called before execution
-type PreNotifyFunc func(string) error
+import "github.com/asteris-llc/converge/graph/node"
 
-// PostNotifyFunc will be called after planning
-type PostNotifyFunc func(string, interface{}) error
+// NotifyFunc will be called before execution
+type NotifyFunc func(*node.Node) error
 
 // NotifyPre will call a function before walking a node
-func NotifyPre(pre PreNotifyFunc, inner TransformFunc) TransformFunc {
-	return func(id string, g *Graph) error {
-		if err := pre(id); err != nil {
+func NotifyPre(pre NotifyFunc, inner TransformFunc) TransformFunc {
+	return func(meta *node.Node, g *Graph) error {
+		if err := pre(meta); err != nil {
 			return err
 		}
 
-		return inner(id, g)
+		return inner(meta, g)
 	}
 }
 
 // NotifyPost will call a function after walking a node
-func NotifyPost(post PostNotifyFunc, inner TransformFunc) TransformFunc {
-	return func(id string, g *Graph) error {
-		if err := inner(id, g); err != nil {
+func NotifyPost(post NotifyFunc, inner TransformFunc) TransformFunc {
+	return func(meta *node.Node, g *Graph) error {
+		if err := inner(meta, g); err != nil {
 			return err
 		}
 
-		return post(id, g.Get(id))
+		meta, _ = g.Get(meta.ID)
+
+		return post(meta)
 	}
 }
 
 // Notifier can wrap a graph transform
 type Notifier struct {
-	Pre  PreNotifyFunc
-	Post PostNotifyFunc
+	Pre  NotifyFunc
+	Post NotifyFunc
 }
 
 // Transform wraps a TransformFunc with this notifier

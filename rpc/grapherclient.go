@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -62,7 +63,7 @@ func (gc *GrapherClient) Graph(ctx context.Context, loc *pb.LoadRequest, opts ..
 		}
 
 		if vertex := container.GetVertex(); vertex != nil {
-			g.Add(vertex.Id, vertex)
+			g.Add(node.New(vertex.Id, vertex))
 		} else if edge := container.GetEdge(); edge != nil {
 			var parent bool
 			for _, attr := range edge.Attributes {

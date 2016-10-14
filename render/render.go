@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
@@ -37,13 +38,15 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	if err != nil {
 		return nil, err
 	}
-	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
-		pipeline := Pipeline(out, id, renderingPlant, top)
-		value, err := pipeline.Exec(out.Get(id))
+	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
+
+		value, err := pipeline.Exec(meta.Value())
 		if err != nil {
 			return err
 		}
-		out.Add(id, value)
+
+		out.Add(meta.WithValue(value))
 		renderingPlant.Graph = out
 		return nil
 	})
