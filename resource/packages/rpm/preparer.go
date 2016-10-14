@@ -27,7 +27,7 @@ type Preparer struct {
 	Name string `hcl:"name" required:"true" `
 
 	// State defines desired system package state.
-	State State `hcl:"state" valid_values:"present,absent" default:"installed"`
+	State State `hcl:"state" valid_values:"present,absent" default:"present"`
 }
 
 // Prepare a new packge
