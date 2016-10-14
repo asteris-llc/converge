@@ -514,7 +514,7 @@ func (g *Graph) Vertices() []string {
 }
 
 // Contains returns true if the id exists in the map
-func (g *Graph) Contains(id string) bool { // TODO: remove
+func (g *Graph) Contains(id string) bool {
 	_, found := g.Get(id)
 	return found
 }
