@@ -110,6 +110,6 @@ func baseDupGraph() *graph.Graph {
 	return g
 }
 
-func neverSkip(string) bool {
+func neverSkip(*node.Node) bool {
 	return false
 }
