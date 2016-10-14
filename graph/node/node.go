@@ -16,7 +16,7 @@ package node
 
 // Node tracks the metadata associated with a node in the graph
 type Node struct {
-	ID string
+	ID string `json:"id"`
 
 	value interface{}
 }
