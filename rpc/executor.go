@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/healthcheck"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/prettyprinters/human"
@@ -74,17 +75,18 @@ func (e *executor) sendMeta(ctx context.Context, g *graph.Graph, stream statusRe
 
 func (e *executor) stageNotifier(stage pb.StatusResponse_Stage, stream statusResponseStream) *graph.Notifier {
 	return &graph.Notifier{
-		Pre: func(id string) error {
+		Pre: func(meta *node.Node) error {
 			return stream.Send(&pb.StatusResponse{
-				Id:    id,
+				Id:    meta.ID, // TODO: deprecated, remove in 0.4.0
 				Stage: stage,
 				Run:   pb.StatusResponse_STARTED,
+				Meta:  pb.MetaFromNode(meta),
 			})
 		},
-		Post: func(id string, r interface{}) error {
+		Post: func(meta *node.Node) error {
 			response := statusResponseFromPrintable(
-				id,
-				r.(human.Printable),
+				meta,
+				meta.Value().(human.Printable),
 				stage,
 				pb.StatusResponse_FINISHED,
 			)

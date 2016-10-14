@@ -39,11 +39,16 @@ func TestNodesSourceFile(t *testing.T) {
 	g, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl", false)
 	require.NoError(t, err)
 
-	assert.NotNil(t, g.Get("root/param.message"))
-	assert.NotNil(t, g.Get("root/module.basic"))
-	assert.NotNil(t, g.Get("root/module.basic/param.message"))
-	assert.NotNil(t, g.Get("root/module.basic/param.filename"))
-	assert.NotNil(t, g.Get("root/module.basic/task.render"))
+	assertPresent := func(id string) {
+		_, ok := g.Get(id)
+		assert.True(t, ok, "%q was missing from the graph", id)
+	}
+
+	assertPresent("root/param.message")
+	assertPresent("root/module.basic")
+	assertPresent("root/module.basic/param.message")
+	assertPresent("root/module.basic/param.filename")
+	assertPresent("root/module.basic/task.render")
 
 	basicDeps := graph.Targets(g.DownEdges("root/module.basic"))
 	sort.Strings(basicDeps)

@@ -17,9 +17,9 @@ package render
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
@@ -123,8 +123,12 @@ func (r *Renderer) paramMap(name string) (map[string]interface{}, error) {
 }
 
 func (r *Renderer) paramRawValue(name string) (interface{}, error) {
-	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+	sibling, ok := r.Graph().Get(graph.SiblingID(r.ID, "param."+name))
+	if !ok {
+		return "", errors.New("param not found")
+	}
 
+	task, ok := resource.ResolveTask(sibling.Value())
 	if task == nil || !ok {
 		return "", errors.New("param not found")
 	}
@@ -154,17 +158,20 @@ func (r *Renderer) lookup(name string) (string, error) {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
 
-	if _, isThunk := g.Get(vertexName).(*PrepareThunk); isThunk {
-		log.Println("[INFO] node is unresolvable by proxy-reference to ", vertexName)
+	meta, ok := g.Get(vertexName)
+	if !ok {
+		return "", fmt.Errorf("%s is empty", vertexName)
+	}
+
+	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
+		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
-	val, ok := resource.ResolveTask(g.Get(vertexName))
-
+	val, ok := resource.ResolveTask(meta.Value())
 	if !ok {
-		p := g.Get(vertexName)
-		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, p)
+		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, meta.Value())
 	}
 
 	result, err := preprocessor.EvalTerms(val, preprocessor.SplitTerms(terms)...)

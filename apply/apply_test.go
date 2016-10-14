@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/apply"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/faketask"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
@@ -33,7 +34,7 @@ func TestApplyNoOp(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.Swapper()
-	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: task})
+	g.Add(node.New("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: task}))
 
 	require.NoError(t, g.Validate())
 
@@ -51,7 +52,7 @@ func TestApplyNoRun(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.NoOp()
-	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWontChange}, Task: task})
+	g.Add(node.New("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWontChange}, Task: task}))
 
 	require.NoError(t, g.Validate())
 
@@ -67,8 +68,8 @@ func TestApplyErrorsBelow(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.NoOp()})
-	g.Add("root/err", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.Error()})
+	g.Add(node.New("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.NoOp()}))
+	g.Add(node.New("root/err", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.Error()}))
 
 	g.ConnectParent("root", "root/err")
 
@@ -80,11 +81,15 @@ func TestApplyErrorsBelow(t *testing.T) {
 	out, err := apply.Apply(context.Background(), g)
 	assert.Equal(t, apply.ErrTreeContainsErrors, err)
 
-	errNode, ok := out.Get("root/err").(*apply.Result)
+	errMeta, ok := out.Get("root/err")
+	require.True(t, ok, `"root/err" was not present in the graph`)
+	errNode, ok := errMeta.Value().(*apply.Result)
 	require.True(t, ok)
 	assert.EqualError(t, errNode.Error(), "error")
 
-	rootNode, ok := out.Get("root").(*apply.Result)
+	rootMeta, ok := out.Get("root")
+	require.True(t, ok, `"root" was not present in the graph`)
+	rootNode, ok := rootMeta.Value().(*apply.Result)
 	require.True(t, ok)
 	assert.EqualError(t, rootNode.Error(), `error in dependency "root/err"`)
 }
@@ -93,7 +98,7 @@ func TestApplyStillChange(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.WillChange()})
+	g.Add(node.New("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.WillChange()}))
 
 	require.NoError(t, g.Validate())
 
@@ -110,7 +115,7 @@ func TestApplyNilError(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.NilAndError()})
+	g.Add(node.New("root", &plan.Result{Status: &resource.Status{Level: resource.StatusWillChange}, Task: faketask.NilAndError()}))
 
 	require.NoError(t, g.Validate())
 
@@ -121,12 +126,11 @@ func TestApplyNilError(t *testing.T) {
 }
 
 func getResult(t *testing.T, src *graph.Graph, key string) *apply.Result {
-	val := src.Get(key)
-	result, ok := val.(*apply.Result)
-	if !ok {
-		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
-		t.FailNow()
-	}
+	meta, ok := src.Get(key)
+	require.True(t, ok, "%q was not present in the graph", key)
+
+	result, ok := meta.Value().(*apply.Result)
+	require.True(t, ok, "needed a %T for %q, got a %T", result, key, meta.Value())
 
 	return result
 }
