@@ -28,7 +28,7 @@ import (
 	"github.com/asteris-llc/converge/render/preprocessor"
 )
 
-type dependencyGenerator func(node *parse.Node) ([]string, error)
+type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)
 
 // ResolveDependencies examines the strings and depdendencies at each vertex of
 // the graph and creates edges to fit them
@@ -46,22 +46,12 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return fmt.Errorf("ResolveDependencies can only be used on Graphs of *parse.Node. I got %T", meta.Value())
 		}
 
-		depGenerators := []dependencyGenerator{
-			func(node *parse.Node) ([]string, error) {
-				return getDepends(meta.ID, node)
-			},
-			func(node *parse.Node) ([]string, error) {
-				return getParams(g, meta.ID, node)
-			},
-			func(node *parse.Node) ([]string, error) {
-				return getXrefs(g, meta.ID, node)
-			},
-		}
+		depGenerators := []dependencyGenerator{getDepends, getParams, getXrefs}
 
 		// we have dependencies from various sources, but they're always IDs, so we
 		// can connect them pretty easily
 		for _, source := range depGenerators {
-			deps, err := source(node)
+			deps, err := source(g, meta.ID, node)
 			if err != nil {
 				return err
 			}
@@ -73,7 +63,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 }
 
-func getDepends(id string, node *parse.Node) ([]string, error) {
+func getDepends(_ *graph.Graph, id string, node *parse.Node) ([]string, error) {
 	deps, err := node.GetStringSlice("depends")
 	switch err {
 	case parse.ErrNotFound:
