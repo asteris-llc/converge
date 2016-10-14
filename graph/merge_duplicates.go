@@ -25,7 +25,7 @@ import (
 )
 
 // SkipMergeFunc will be used to determine whether or not to merge a node
-type SkipMergeFunc func(string) bool // TODO: use node here too
+type SkipMergeFunc func(*node.Node) bool
 
 // MergeDuplicates removes duplicates in the graph
 func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph, error) {
@@ -39,7 +39,7 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 			return nil
 		}
 
-		if skip(meta.ID) {
+		if skip(meta) {
 			logger.WithField("id", meta.ID).Debug("skipping by request")
 			return nil
 		}
@@ -91,7 +91,7 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 // TODO: find a better home
 
 // SkipModuleAndParams skips trimming modules and params
-func SkipModuleAndParams(id string) bool {
-	base := BaseID(id)
+func SkipModuleAndParams(meta *node.Node) bool {
+	base := BaseID(meta.ID)
 	return strings.HasPrefix(base, "module") || strings.HasPrefix(base, "param")
 }
