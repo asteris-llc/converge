@@ -25,16 +25,19 @@ module "go.hcl" "go" {
     go-version   = "{{param `go-version`}}"
     go-sha256sum = "{{param `go-sha256sum`}}"
   }
+  depends = ["module.deps"]
 }
 
 module "godeps.hcl" "godeps" {
   params {
     gopath = "{{param `gopath`}}"
   }
+  depends = ["module.deps", "module.go"]
 }
 
 module "protoc.hcl" "protoc" {
   params {
     protoc-version = "{{param `protoc-version`}}"
   }
+  depends = ["module.deps"]
 }
