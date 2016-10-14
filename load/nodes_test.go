@@ -93,6 +93,7 @@ func TestNodeWithConditionals(t *testing.T) {
 	assert.True(t, found)
 }
 
+// TestNodesWithLocks tests that lock nodes are generated on load
 func TestNodesWithLocks(t *testing.T) {
 	defer logging.HideLogs(t)()
 
