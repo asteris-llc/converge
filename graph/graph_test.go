@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMaybeGet(t *testing.T) {
+func TestGet(t *testing.T) {
 	t.Parallel()
 
 	g := graph.New()
@@ -45,10 +45,7 @@ func TestMaybeGet(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		val, found := g.Get("two")
 		assert.False(t, found)
-		if assert.NotNil(t, val) {
-			assert.Equal(t, "two", val.ID)
-			assert.Nil(t, val.Value())
-		}
+		assert.Nil(t, val)
 	})
 }
 

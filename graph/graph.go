@@ -84,7 +84,7 @@ func (g *Graph) Remove(id string) {
 func (g *Graph) Get(id string) (*node.Node, bool) {
 	raw, ok := g.values.Get(id)
 	if !ok {
-		return node.New(id, nil), ok // TODO: see if I can remove this non-nil nil value
+		return nil, ok
 	}
 
 	return raw.(*node.Node), true
