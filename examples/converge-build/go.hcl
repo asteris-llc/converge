@@ -8,7 +8,6 @@ param "go-sha256sum" {
 
 file.content "go-sha256" {
   destination = "/tmp/go{{param `go-version`}}-sha256sum.txt"
-  type        = "file"
   content     = "{{param `go-sha256sum`}} go{{param `go-version`}}-sha256sum.txt"
 }
 
@@ -52,10 +51,9 @@ task "go-extract" {
   interpreter = "/bin/bash"
 }
 
-file "go-symlink" {
-  destination = "/usr/local/bin/go"
-  target      = "/usr/local/go/bin/go"
-  type        = "symlink"
-  state       = "present"
+task "go-symlink" {
+  check       = "[[ -L /usr/local/bin/go ]]"
+  apply       = "ln -s /usr/local/go/bin/go /usr/local/bin/go"
+  interpreter = "/bin/bash"
   depends     = ["task.go-extract"]
 }
