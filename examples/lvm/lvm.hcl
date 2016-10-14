@@ -13,6 +13,6 @@ lvm.lv "lv-test" {
 lvm.fs "mnt-me"  {
   device = "/dev/mapper/test-test"
   mount = "/mnt"
-  type = "xfs"
+  fstype = "xfs"
   depends = [ "lvm.lv.lv-test" ]
 }

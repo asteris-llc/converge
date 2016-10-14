@@ -7,7 +7,21 @@ import (
 )
 
 func (lvm *RealLVM) Blkid(dev string) (string, error) {
-	return lvm.Backend.Read("blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", dev})
+	blkid, rc, err := lvm.Backend.ReadWithExitCode("blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", dev})
+	if err != nil {
+		return "", err
+	}
+	// excerpt from `man blkid`:
+	// RETURN CODE
+	// If  the  specified  device  or  device addressed by specified token (option -t) was found and it's possible to gather any information about the device, an exit code 0 is returned.
+	// Note the option -s filters output tags, but it does not affect return code.
+	// If the specified token was not found, or no (specified) devices could be identified, an exit code of 2 is returned.
+	// For usage or other errors, an exit code of 4 is returned.
+	//  If an ambivalent low-level probing result was detected, an exit code of 8 is returned.
+	if rc != 2 && rc != 0 {
+		return blkid, fmt.Errorf("blkid terminated with rc == %d, and output `%s`", rc, blkid)
+	}
+	return blkid, nil
 }
 
 func (lvm *RealLVM) QueryDeviceMapperName(dmName string) (string, error) {

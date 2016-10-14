@@ -3,12 +3,14 @@ package fs
 import (
 	"bytes"
 	"fmt"
-	"github.com/asteris-llc/converge/load/registry"
-	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"os"
 	"strings"
 	"text/template"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/load/registry"
+	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
 type ResourceFS struct {
@@ -49,6 +51,7 @@ func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if fs, err := r.checkBlkid(r.mount.What); err != nil {
 		return nil, err
 	} else {
+		log.Debugf("blkid detect following fstype: %s, planned fstype: %s", fs, r.mount.Type)
 		if fs == r.mount.Type {
 			r.needMkfs = false
 		} else if fs == "" {

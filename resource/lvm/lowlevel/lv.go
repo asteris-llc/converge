@@ -1,7 +1,8 @@
 package lowlevel
 
 type LogicalVolume struct {
-	Name string `mapstructure:"LVM2_LV_NAME"`
+	Name       string `mapstructure:"LVM2_LV_NAME"`
+	DevicePath string `mapstructure:"LVM2_LV_DM_PATH"`
 }
 
 func (lvm *RealLVM) QueryLogicalVolumes(vg string) (map[string]*LogicalVolume, error) {
