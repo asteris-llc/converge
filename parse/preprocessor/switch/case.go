@@ -30,7 +30,7 @@ type Case struct {
 	InnerNodes []*parse.Node
 }
 
-// GenerateNode generates a parse.Node for the macro-expanded placeholde from
+// GenerateNode generates a parse.Node for the macro-expanded placeholder from
 // the case clause
 func (c *Case) GenerateNode() (*parse.Node, error) {
 	switchHCL := fmt.Sprintf(

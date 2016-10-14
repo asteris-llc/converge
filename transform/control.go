@@ -26,7 +26,7 @@ import (
 )
 
 // ResolveConditionals will walk the graph and wrap tasks whose parent is a case
-// in a conditional resource.  For cases it will look at the parent switch and
+// in a conditional resource.
 func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveConditionals")
 	logger.Info("resolving conditional macros")
