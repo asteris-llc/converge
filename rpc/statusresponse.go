@@ -15,15 +15,17 @@
 package rpc
 
 import (
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/rpc/pb"
 )
 
-func statusResponseFromPrintable(id string, p human.Printable, stage pb.StatusResponse_Stage, run pb.StatusResponse_Run) *pb.StatusResponse {
+func statusResponseFromPrintable(meta *node.Node, p human.Printable, stage pb.StatusResponse_Stage, run pb.StatusResponse_Run) *pb.StatusResponse {
 	resp := &pb.StatusResponse{
-		Id:    id,
+		Id:    meta.ID, // TODO: deprecated, remove in 0.4.0
 		Stage: stage,
 		Run:   run,
+		Meta:  pb.MetaFromNode(meta),
 
 		Details: &pb.StatusResponse_Details{
 			Messages:   p.Messages(),

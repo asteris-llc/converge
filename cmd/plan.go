@@ -116,7 +116,7 @@ can be done separately to see what needs to be changed before execution.`,
 					slog := flog.WithFields(log.Fields{
 						"stage": resp.Stage,
 						"run":   resp.Run,
-						"id":    resp.Id,
+						"id":    resp.Meta.Id,
 					})
 					if resp.Run == pb.StatusResponse_STARTED {
 						slog.Info("got status")

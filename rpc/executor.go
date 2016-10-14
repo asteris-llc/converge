@@ -77,14 +77,15 @@ func (e *executor) stageNotifier(stage pb.StatusResponse_Stage, stream statusRes
 	return &graph.Notifier{
 		Pre: func(meta *node.Node) error {
 			return stream.Send(&pb.StatusResponse{
-				Id:    meta.ID,
+				Id:    meta.ID, // TODO: deprecated, remove in 0.4.0
 				Stage: stage,
 				Run:   pb.StatusResponse_STARTED,
+				Meta:  pb.MetaFromNode(meta),
 			})
 		},
 		Post: func(meta *node.Node) error {
 			response := statusResponseFromPrintable(
-				meta.ID,
+				meta,
 				meta.Value().(human.Printable),
 				stage,
 				pb.StatusResponse_FINISHED,
