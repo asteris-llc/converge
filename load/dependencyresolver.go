@@ -66,11 +66,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				return err
 			}
 			for _, dep := range deps {
-				target, ok := getNearestAncestor(g, meta.ID, dep)
-				if !ok {
-					return fmt.Errorf("no valid vertex to connect to for at %s", dep)
-				}
-				out.Connect(meta.ID, target)
+				out.Connect(meta.ID, dep)
 			}
 		}
 		return nil
