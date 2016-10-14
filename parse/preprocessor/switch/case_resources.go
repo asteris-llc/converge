@@ -153,18 +153,18 @@ func (c *CaseTask) Apply() (resource.TaskStatus, error) {
 }
 
 func (c *CaseTask) String() string {
-	var out string
 	if c == nil {
 		return "<nil>"
 	}
-	out += fmt.Sprintf("Case: \n")
-	out += fmt.Sprintf("\tName: %s\n", c.Name)
-	out += fmt.Sprintf("\tPredicate: %s\n", c.Predicate)
-	if c.Status == nil {
-		out += fmt.Sprintf("\tStatus: unevaluated\n")
-	} else {
-		out += fmt.Sprintf("\tStatus: %v\n", *(c.Status))
+	statusStr := "unevaluated"
+	if c.Status != nil {
+		statusStr = "evaluated"
 	}
-	out += fmt.Sprintf("\tParent: %p\n", c.GetParent())
-	return out
+	fmtStr := `Case:
+	Name: %s
+	Predicate: %s
+	Status: %s
+	Parent: %p
+`
+	return fmt.Sprintf(fmtStr, c.Name, c.Predicate, statusStr, c.GetParent())
 }
