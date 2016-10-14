@@ -11,18 +11,26 @@ import (
 func TestBlkid(t *testing.T) {
 	lvm, e := testhelpers.MakeLvmWithMockExec()
 	expected := []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/sda1"}
-	e.On("Read", "blkid", expected).Return("xfs", nil)
+	e.On("ReadWithExitCode", "blkid", expected).Return("xfs", 0, nil)
 	fs, err := lvm.Blkid("/dev/sda1")
 	assert.Equal(t, "xfs", fs)
 	assert.NoError(t, err)
-	e.AssertCalled(t, "Read", "blkid", expected)
+	e.AssertCalled(t, "ReadWithExitCode", "blkid", expected)
 }
 
 func TestBlkidError(t *testing.T) {
 	lvm, e := testhelpers.MakeLvmWithMockExec()
-	e.On("Read", "blkid", mock.Anything).Return("", fmt.Errorf("failed"))
+	e.On("ReadWithExitCode", "blkid", mock.Anything).Return("", 0, fmt.Errorf("failed"))
 	_, err := lvm.Blkid("/dev/sda1")
 	assert.Error(t, err)
+}
+
+func TestBlkidNonzero(t *testing.T) {
+	lvm, e := testhelpers.MakeLvmWithMockExec()
+	e.On("ReadWithExitCode", "blkid", mock.Anything).Return("", 2, nil)
+	fs, err := lvm.Blkid("/dev/sda1")
+	assert.NoError(t, err)
+	assert.Equal(t, "", fs)
 }
 
 func TestQueryParseEmptyString(t *testing.T) {

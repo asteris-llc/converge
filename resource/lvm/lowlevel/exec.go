@@ -1,6 +1,7 @@
 package lowlevel
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -8,17 +9,20 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 type Exec interface {
 	Run(prog string, args []string) error
 	RunExitCode(prog string, args []string) (int, error) // for mountpoint querying
 	Read(prog string, args []string) (stdout string, err error)
+	ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) // for blkid querying
 
 	// unit read/write injection
 	ReadFile(fn string) ([]byte, error)
 	WriteFile(fn string, c []byte, p os.FileMode) error
 	MkdirAll(path string, perm os.FileMode) error
+	Exists(path string) (bool, error)
 }
 
 type OsExec struct {
@@ -40,14 +44,29 @@ func (e *OsExec) RunExitCode(prog string, args []string) (int, error) {
 	return exitStatus(err)
 }
 
-func (*OsExec) Read(prog string, args []string) (stdout string, err error) {
+func (*OsExec) ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) {
 	log.WithField("module", "lvm").Infof("Executing (read) %s: %v", prog, args)
 	out, err := exec.Command(prog, args...).Output()
 	if err != nil {
-		log.WithField("module", "lvm").Debugf("%s: terminated with %s", prog, err.Error())
+		if rc, err := exitStatus(err); err != nil {
+			log.WithField("module", "lvm").Debugf("%s: terminated with %s", prog, err.Error())
+			return "", 0, errors.Wrapf(err, "reading output of process %s: %s", prog, args)
+		} else {
+			return strings.Trim(string(out), "\n "), rc, nil
+		}
+	}
+	return strings.Trim(string(out), "\n "), 0, err
+}
+
+func (e *OsExec) Read(prog string, args []string) (stdout string, err error) {
+	out, rc, err := e.ReadWithExitCode(prog, args)
+	if err != nil {
 		return "", err
 	}
-	return strings.Trim(string(out), "\n "), err
+	if rc != 0 {
+		return "", fmt.Errorf("process %s: %s terminated with status code %d", prog, args, rc)
+	}
+	return out, nil
 }
 
 func exitStatus(err error) (int, error) {
@@ -77,4 +96,14 @@ func (*OsExec) WriteFile(fn string, content []byte, perm os.FileMode) error {
 func (*OsExec) MkdirAll(path string, perm os.FileMode) error {
 	log.WithField("module", "lvm").Debugf("Make path %s...", path)
 	return os.MkdirAll(path, perm)
+}
+
+func (*OsExec) Exists(path string) (bool, error) {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
