@@ -322,8 +322,8 @@ func TestTransform(t *testing.T) {
 
 	transformed, err := g.Transform(
 		context.Background(),
-		func(id string, dest *graph.Graph) error {
-			dest.Add(node.New(id, 2))
+		func(meta *node.Node, dest *graph.Graph) error {
+			dest.Add(node.New(meta.ID, 2))
 
 			return nil
 		},
@@ -418,8 +418,8 @@ func TestRootFirstTransform(t *testing.T) {
 
 	transformed, err := g.RootFirstTransform(
 		context.Background(),
-		func(id string, dest *graph.Graph) error {
-			dest.Add(node.New(id, 2))
+		func(meta *node.Node, dest *graph.Graph) error {
+			dest.Add(meta.WithValue(2))
 
 			return nil
 		},

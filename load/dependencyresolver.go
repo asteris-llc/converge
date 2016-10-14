@@ -23,6 +23,7 @@ import (
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
@@ -37,14 +38,9 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
 	logger.Debug("resolving dependencies")
 
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
-		if id == "root" { // skip root
+	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		if meta.ID == "root" { // skip root
 			return nil
-		}
-
-		meta, ok := out.Get(id)
-		if !ok {
-			return nil // can't get dependencies from an empty node
 		}
 
 		node, ok := meta.Value().(*parse.Node)
@@ -56,7 +52,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			getDepends,
 			getParams,
 			func(node *parse.Node) (out []string, err error) {
-				return getXrefs(g, id, node)
+				return getXrefs(g, meta.ID, node)
 			},
 		}
 
@@ -69,8 +65,7 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			}
 
 			for _, dep := range deps {
-
-				out.Connect(id, graph.SiblingID(id, dep))
+				out.Connect(meta.ID, graph.SiblingID(meta.ID, dep))
 			}
 		}
 		return nil
