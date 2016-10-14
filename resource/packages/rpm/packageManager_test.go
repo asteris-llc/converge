@@ -24,6 +24,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// TestYumInstalledVersion validates that installation status is successfully
+// validated
 func TestYumInstalledVersion(t *testing.T) {
 	t.Parallel()
 
@@ -45,6 +47,8 @@ func TestYumInstalledVersion(t *testing.T) {
 	})
 }
 
+// TestYumInstallPackage validates that we successfully ask yum to install a
+// package
 func TestYumInstallPackage(t *testing.T) {
 	t.Parallel()
 
@@ -75,35 +79,42 @@ func TestYumInstallPackage(t *testing.T) {
 	})
 }
 
+// MockRunner mocks out SysCaller
 type MockRunner struct {
 	mock.Mock
 }
 
+// Run mocks out Run
 func (m *MockRunner) Run(cmd string) ([]byte, error) {
 	args := m.Called(1)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
+// newRunner creates a new MockRunner that returns the output string and error
 func newRunner(output string, err error) *MockRunner {
 	m := &MockRunner{}
 	m.On("Run", mock.Anything).Return([]byte(output), err)
 	return m
 }
 
+// makeExitError generates a new ExitError
 func makeExitError(stderr string, exitCode uint32) error {
 	cmd := fmt.Sprintf("echo %q 1>&2; exit %d", stderr, exitCode)
 	_, err := exec.Command("/bin/bash", "-c", cmd).Output()
 	return err
 }
 
+// queryString generates an RPM query string
 func queryString(pkg string) string {
 	return "rpm -q " + pkg
 }
 
+// installString generates a yum install string
 func installString(pkg string) string {
 	return "yum install -y " + pkg
 }
 
+// removeString generates a yum remove string
 func removeString(pkg string) string {
 	return "yum remove -y " + pkg
 }
