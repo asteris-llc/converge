@@ -88,20 +88,24 @@ func (s *SwitchTask) Apply() (resource.TaskStatus, error) {
 
 // String displays a switch statement; useful for debugging and errors
 func (s *SwitchTask) String() string {
-	var out string
 	if s == nil {
 		return "<nil>"
 	}
-	out += fmt.Sprintf("Switch: \n")
-	out += fmt.Sprintf("\tBranches: \n")
+	fmtStr := `Switch:
+	Branches:
+		%s
+	Cases:
+		%s
+`
+	var branchStrs string
 	for _, br := range s.Branches {
-		out += fmt.Sprintf("\t\t%s\n", br)
+		branchStrs += fmt.Sprintf("\t\t%s\n", br)
 	}
-	out += fmt.Sprintf("\tCases: \n")
+	var caseStrs string
 	for _, c := range s.Cases() {
-		out += fmt.Sprintf("\t\t%s\n", helperIndent(c.String(), 1))
+		caseStrs += fmt.Sprintf("\t\t%s\n", helperIndent(c.String(), 1))
 	}
-	return out
+	return fmt.Sprintf(fmtStr, branchStrs, caseStrs)
 }
 
 func helperIndent(s string, count int) string {
