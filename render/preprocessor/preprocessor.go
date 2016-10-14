@@ -184,10 +184,11 @@ func TraverseUntilModule(g *graph.Graph, id string) bool {
 	if id == "root" {
 		return true
 	}
-	elem := g.Get(id)
-	if elem == nil {
+	elemMeta, ok := g.Get(id)
+	if !ok {
 		return true
 	}
+	elem := elemMeta.Value()
 	if _, ok := elem.(*module.Module); ok {
 		return true
 	}

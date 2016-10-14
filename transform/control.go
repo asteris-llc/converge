@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/resource"
@@ -29,7 +30,8 @@ import (
 func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveConditionals")
 	logger.Info("resolving conditional macros")
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
+	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		id := meta.ID
 		switchNode, ok := getSwitchNode(id, g)
 		if !ok {
 			return nil
@@ -44,14 +46,21 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			}
 			switchNode.AppendCase(caseNode)
 			for _, targetID := range g.Children(caseID) {
-				targetPreparer := g.Get(targetID).(resource.Task)
+				targetPreparerMeta, ok := g.Get(targetID)
+				if !ok {
+					continue
+				}
+				targetPreparer, ok := targetPreparerMeta.Value().(resource.Task)
+				if !ok {
+					continue
+				}
 				conditionalTarget := targetPreparer
 				conditional := &control.ConditionalTask{
 					Name: targetID,
 					Task: conditionalTarget,
 				}
 				conditional.SetExecutionController(caseNode)
-				out.Add(targetID, conditional)
+				out.Add(targetPreparerMeta.WithValue(conditional))
 			}
 		}
 		switchNode.SortCases()
@@ -60,10 +69,11 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 }
 
 func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
-	elem := g.Get(id)
-	if elem == nil {
+	elemMeta, ok := g.Get(id)
+	if !ok {
 		return nil, false
 	}
+	elem := elemMeta.Value()
 	elem, canResolve := resource.ResolveTask(elem)
 	if !canResolve {
 		return nil, false
@@ -75,10 +85,11 @@ func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
 }
 
 func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
-	elem := g.Get(id)
-	if elem == nil {
+	elemMeta, ok := g.Get(id)
+	if !ok {
 		return nil, false
 	}
+	elem := elemMeta.Value()
 	elem, canResolve := resource.ResolveTask(elem)
 	if !canResolve {
 		return nil, false

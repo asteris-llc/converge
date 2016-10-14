@@ -78,11 +78,11 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 		return "", false
 	}
 	siblingID := graph.SiblingID(id, node)
-	val := g.Get(siblingID)
-	if val == nil {
+	val, ok := g.Get(siblingID)
+	if !ok {
 		return getNearestAncestor(g, graph.ParentID(id), node)
 	}
-	if elem, ok := val.(*parse.Node); ok {
+	if elem, ok := val.Value().(*parse.Node); ok {
 		if elem.Kind() == "module" {
 			return "", false
 		}
@@ -145,9 +145,9 @@ func (r *Renderer) paramRawValue(name string) (interface{}, error) {
 	if !found {
 		return "", errors.New("param not found (no such ancestor)")
 	}
-	task, ok := resource.ResolveTask(r.Graph().Get(ancestor))
+	ancestorMeta, _ := r.Graph().Get(ancestor)
+	task, ok := resource.ResolveTask(ancestorMeta.Value())
 
-	task, ok := resource.ResolveTask(sibling.Value())
 	if task == nil || !ok {
 		return "", errors.New("param not found")
 	}
