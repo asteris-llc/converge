@@ -47,14 +47,9 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "SetResources")
 	logger.Debug("loading resources")
 
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
-		if id == "root" { // root
+	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		if meta.ID == "root" {
 			return nil
-		}
-
-		meta, ok := out.Get(id)
-		if !ok {
-			return nil // can't set resources on an empty node
 		}
 
 		raw, ok := meta.Value().(*parse.Node)
@@ -79,7 +74,7 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 			return err
 		}
 
-		out.Add(node.New(id, preparer))
+		out.Add(meta.WithValue(preparer))
 
 		return nil
 	})

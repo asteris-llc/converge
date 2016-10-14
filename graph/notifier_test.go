@@ -29,8 +29,8 @@ func TestNotifyTransform(t *testing.T) {
 	g := graph.New()
 	g.Add(node.New("root", 1))
 
-	doNothing := func(string, *graph.Graph) error { return nil }
-	returnError := func(string, *graph.Graph) error { return errors.New("error") }
+	doNothing := func(*node.Node, *graph.Graph) error { return nil }
+	returnError := func(*node.Node, *graph.Graph) error { return errors.New("error") }
 
 	t.Run("pre", func(t *testing.T) {
 		defer logging.HideLogs(t)()
@@ -38,7 +38,7 @@ func TestNotifyTransform(t *testing.T) {
 		var ran bool
 
 		notifier := &graph.Notifier{
-			Pre: func(string) error {
+			Pre: func(*node.Node) error {
 				ran = true
 				return nil
 			},
@@ -58,7 +58,7 @@ func TestNotifyTransform(t *testing.T) {
 		var ran bool
 
 		notifier := &graph.Notifier{
-			Post: func(string, *node.Node) error {
+			Post: func(*node.Node) error {
 				ran = true
 				return nil
 			},
@@ -90,5 +90,33 @@ func TestNotifyTransform(t *testing.T) {
 			assert.False(t, ran)
 		})
 
+	})
+
+	t.Run("post gets a fresh node", func(t *testing.T) {
+		defer logging.HideLogs(t)()
+
+		var finalValue int
+		notifier := &graph.Notifier{
+			Post: func(meta *node.Node) error {
+				finalValue = meta.Value().(int)
+				return nil
+			},
+		}
+
+		_, err := g.Transform(
+			context.Background(),
+			notifier.Transform(func(meta *node.Node, g *graph.Graph) error {
+				g.Add(meta.WithValue(2))
+				return nil
+			}),
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(
+			t,
+			2,
+			finalValue,
+			"notifier probably didn't get a fresh value after the transform finished",
+		)
 	})
 }

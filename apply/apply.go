@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/pkg/errors"
@@ -65,11 +66,9 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 	var hasErrors error
 
 	out, err := in.Transform(ctx,
-		notify.Transform(func(id string, out *graph.Graph) error {
+		notify.Transform(func(meta *node.Node, out *graph.Graph) error {
 			renderingPlant.Graph = out
-			pipeline := pipelineF(out, id)
-
-			meta, _ := out.Get(id)
+			pipeline := pipelineF(out, meta.ID)
 
 			val, pipelineError := pipeline.Exec(meta.Value())
 

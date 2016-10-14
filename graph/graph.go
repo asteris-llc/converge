@@ -32,7 +32,7 @@ import (
 type WalkFunc func(*node.Node) error
 
 // TransformFunc is taken by the transformation functions
-type TransformFunc func(string, *Graph) error
+type TransformFunc func(*node.Node, *Graph) error
 
 type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
@@ -84,7 +84,7 @@ func (g *Graph) Remove(id string) {
 func (g *Graph) Get(id string) (*node.Node, bool) {
 	raw, ok := g.values.Get(id)
 	if !ok {
-		return node.New(id, nil), ok
+		return node.New(id, nil), ok // TODO: see if I can remove this non-nil nil value
 	}
 
 	return raw.(*node.Node), true
@@ -514,7 +514,7 @@ func (g *Graph) Vertices() []string {
 }
 
 // Contains returns true if the id exists in the map
-func (g *Graph) Contains(id string) bool {
+func (g *Graph) Contains(id string) bool { // TODO: remove
 	_, found := g.Get(id)
 	return found
 }
@@ -555,7 +555,7 @@ func transform(ctx context.Context, source *Graph, walker walkerFunc, cb Transfo
 	dest := source.Copy()
 
 	err := walker(ctx, dest, func(meta *node.Node) error {
-		return cb(meta.ID, dest)
+		return cb(meta, dest)
 	})
 	if err != nil {
 		return dest, err

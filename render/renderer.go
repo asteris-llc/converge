@@ -158,24 +158,18 @@ func (r *Renderer) lookup(name string) (string, error) {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
 
-	var val interface{}
-	if meta, ok := g.Get(vertexName); ok {
-		val = meta.Value()
-	}
-
-	if _, isThunk := val.(*PrepareThunk); isThunk {
-		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
-		r.resolverErr = true
-		return "", ErrUnresolvable{}
-	}
-
 	meta, ok := g.Get(vertexName)
 	if !ok {
 		return "", fmt.Errorf("%s is empty", vertexName)
 	}
 
-	val, ok = resource.ResolveTask(meta.Value())
+	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
+		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
+		r.resolverErr = true
+		return "", ErrUnresolvable{}
+	}
 
+	val, ok := resource.ResolveTask(meta.Value())
 	if !ok {
 		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, meta.Value())
 	}
