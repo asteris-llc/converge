@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// BenchmarkWithValue is mostly for testing the amount of allocations performed
+// by node.WithValue
 func BenchmarkWithValue(b *testing.B) {
 	source := node.New("test", 1)
 
@@ -30,6 +32,7 @@ func BenchmarkWithValue(b *testing.B) {
 	}
 }
 
+// TestWithValue tests the functionality of node.WithValue
 func TestWithValue(t *testing.T) {
 	t.Run("base", func(t *testing.T) {
 		fst := node.New("test", 1)
