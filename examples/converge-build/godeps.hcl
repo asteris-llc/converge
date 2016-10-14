@@ -11,9 +11,9 @@ param "converge-path" {
 }
 
 wait.query "go-installed" {
-  check        = "[[ -f {{param `go`}} ]]"
+  check        = "[[ -L {{param `go`}} ]]"
   interval     = "2s"
-  max_retry    = 60
+  max_retry    = 80
   grace_period = "3s"
   interpreter  = "/bin/bash"
 }
@@ -26,17 +26,17 @@ wait.query "git-installed" {
   interpreter  = "/bin/bash"
 }
 
-file "gosrc" {
-  destination = "{{param `gopath`}}/src/github.com"
-  type        = "directory"
-  state       = "present"
+task "gosrc" {
+  check       = "[[ -d {{param `gopath`}}/src/github.com ]]"
+  apply       = "mkdir -p {{param `gopath`}}/src/github.com"
+  interpreter = "/bin/bash"
 }
 
-file "gobin" {
-  destination = "{{param `gopath`}}/bin"
-  type        = "directory"
-  state       = "present"
-  depends     = ["wait.query.git-installed", "wait.query.go-installed"]
+task "gobin" {
+  check       = "[[ -d {{param `gopath`}}/bin ]]"
+  apply       = "mkdir -p {{param `gopath`}}/bin"
+  interpreter = "/bin/bash"
+  depends     = ["wait.query.go-installed", "wait.query.git-installed"]
 }
 
 task "install panicparse" {
@@ -47,7 +47,7 @@ task "install panicparse" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/pp ]]"
   apply       = "{{param `go`}} get github.com/maruel/panicparse/cmd/pp"
-  depends     = ["file.gobin", "wait.query.git-installed", "wait.query.go-installed"]
+  depends     = ["task.gobin"]
 }
 
 task "install gotool" {
@@ -58,7 +58,7 @@ task "install gotool" {
   interpreter = "/bin/bash"
   check       = "[[ -d {{param `gopath`}}/src/github.com/kisielk/gotool ]]"
   apply       = "{{param `go` }} get -u github.com/kisielk/gotool"
-  depends     = ["file.gobin"]
+  depends     = ["task.gobin"]
 }
 
 task "install golint" {
@@ -69,7 +69,7 @@ task "install golint" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/golint ]]"
   apply       = "{{param `go`}} get -u github.com/golang/lint/golint"
-  depends     = ["file.gobin", "task.install go guru", "task.install gotool"]
+  depends     = ["task.gobin", "task.install go guru", "task.install gotool"]
 }
 
 task "install goconvey" {
@@ -80,7 +80,7 @@ task "install goconvey" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/goconvey ]]"
   apply       = "{{param `go`}} get github.com/smartystreets/goconvey"
-  depends     = ["file.gobin"]
+  depends     = ["task.gobin"]
 }
 
 task "install goimports" {
@@ -91,7 +91,7 @@ task "install goimports" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/goimports ]]"
   apply       = "{{param `go`}} get golang.org/x/tools/cmd/goimports"
-  depends     = ["file.gobin"]
+  depends     = ["task.gobin"]
 }
 
 task "install go guru" {
@@ -102,7 +102,7 @@ task "install go guru" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/guru ]]"
   apply       = "{{param `go`}} get golang.org/x/tools/cmd/guru"
-  depends     = ["file.gobin", "task.install goimports"]
+  depends     = ["task.gobin", "task.install goimports"]
 }
 
 task "install gosimple" {
@@ -113,7 +113,7 @@ task "install gosimple" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/gosimple ]]"
   apply       = "{{param `go`}} get honnef.co/go/simple/cmd/gosimple"
-  depends     = ["file.gobin", "task.install golint"]
+  depends     = ["task.gobin", "task.install golint"]
 }
 
 task "install uconvert" {
@@ -124,7 +124,7 @@ task "install uconvert" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/unconvert ]]"
   apply       = "{{param `go`}} get github.com/mdempsky/unconvert"
-  depends     = ["file.gobin", "task.install golint"]
+  depends     = ["task.gobin", "task.install golint"]
 }
 
 task "install structcheck" {
@@ -135,7 +135,7 @@ task "install structcheck" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/structcheck ]]"
   apply       = "{{param `go`}} get -u github.com/opennota/check/cmd/structcheck"
-  depends     = ["file.gobin", "task.install golint"]
+  depends     = ["task.gobin", "task.install golint"]
 }
 
 task "install varcheck" {
@@ -146,7 +146,7 @@ task "install varcheck" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/varcheck ]]"
   apply       = "{{param `go`}} get github.com/opennota/check/cmd/varcheck"
-  depends     = ["file.gobin", "task.install structcheck"]
+  depends     = ["task.gobin", "task.install structcheck"]
 }
 
 task "install aligncheck" {
@@ -157,7 +157,7 @@ task "install aligncheck" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/aligncheck ]]"
   apply       = "{{param `go`}} get github.com/opennota/check/cmd/aligncheck"
-  depends     = ["file.gobin", "task.install varcheck"]
+  depends     = ["task.gobin", "task.install varcheck"]
 }
 
 task "install gas" {
@@ -168,5 +168,5 @@ task "install gas" {
   interpreter = "/bin/bash"
   check       = "[[ -f {{param `gopath`}}/bin/gas ]]"
   apply       = "{{param `go`}} get github.com/HewlettPackard/gas"
-  depends     = ["file.gobin"]
+  depends     = ["task.gobin"]
 }
