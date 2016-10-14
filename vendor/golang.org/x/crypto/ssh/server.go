@@ -284,6 +284,7 @@ userAuthLoop:
 		switch userAuthReq.Method {
 		case "none":
 			if config.NoClientAuth {
+				s.user = ""
 				authErr = nil
 			}
 		case "password":
