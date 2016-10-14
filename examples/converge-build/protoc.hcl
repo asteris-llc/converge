@@ -34,10 +34,9 @@ task "protoc-extract" {
   depends     = ["wait.query.unzip-check", "task.protoc-dl"]
 }
 
-file "protoc-link" {
-  destination = "/usr/include/google"
-  target      = "/usr/local/include/google"
+task "protoc-link" {
+  check       = "[[ -L /usr/include/google ]]"
+  apply       = "ln -s /usr/local/include/google /usr/include/google"
   depends     = ["task.protoc-extract"]
-  type        = "symlink"
   interpreter = "/bin/bash"
 }
