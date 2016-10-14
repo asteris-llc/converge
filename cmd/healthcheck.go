@@ -117,7 +117,7 @@ not display healthy checks.`,
 					slog := flog.WithFields(log.Fields{
 						"stage": resp.Stage,
 						"run":   resp.Run,
-						"id":    resp.Id,
+						"id":    resp.Meta.Id,
 					})
 					if resp.Run == pb.StatusResponse_STARTED {
 						slog.Info("got status")
