@@ -4,6 +4,7 @@ file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Pre
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer
 module,../resource/module/preparer.go,../samples/sourceFile.hcl,Preparer
+package.rpm,../resource/package/rpm/preparer.go,../samples/rpm.hcl,Preparer
 param,../resource/param/preparer.go,../samples/basic.hcl,Preparer
 task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer
 task.query,../resource/shell/query/preparer.go,../samples/query.hcl,Preparer
