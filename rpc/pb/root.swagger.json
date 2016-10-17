@@ -68,6 +68,33 @@
         ]
       }
     },
+    "/api/v1/machine/healthcheck": {
+      "post": {
+        "summary": "Healthcheck a module given by the location",
+        "operationId": "HealthCheck",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/pbStatusResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbLoadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Executor"
+        ]
+      }
+    },
     "/api/v1/machine/plan": {
       "post": {
         "summary": "Plan out the execution of a module given by the location",
@@ -206,6 +233,15 @@
       },
       "title": "the informational message, if present"
     },
+    "StatusResponseMeta": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "StatusResponseRun": {
       "type": "string",
       "enum": [
@@ -276,6 +312,10 @@
             "type": "string",
             "format": "string"
           }
+        },
+        "verify": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -287,7 +327,11 @@
         },
         "id": {
           "type": "string",
-          "format": "string"
+          "format": "string",
+          "title": "TODO: preserve for compat but will stop working in 0.4.0. This has moved to\nmeta.id"
+        },
+        "meta": {
+          "$ref": "#/definitions/StatusResponseMeta"
         },
         "run": {
           "$ref": "#/definitions/StatusResponseRun"

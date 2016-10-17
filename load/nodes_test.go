@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestNodesBasic tests loading basic.hcl
 func TestNodesBasic(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -33,17 +34,23 @@ func TestNodesBasic(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestNodesSourceFile tests loading from a source file
 func TestNodesSourceFile(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g, err := load.Nodes(context.Background(), "../samples/sourceFile.hcl", false)
 	require.NoError(t, err)
 
-	assert.NotNil(t, g.Get("root/param.message"))
-	assert.NotNil(t, g.Get("root/module.basic"))
-	assert.NotNil(t, g.Get("root/module.basic/param.message"))
-	assert.NotNil(t, g.Get("root/module.basic/param.filename"))
-	assert.NotNil(t, g.Get("root/module.basic/task.render"))
+	assertPresent := func(id string) {
+		_, ok := g.Get(id)
+		assert.True(t, ok, "%q was missing from the graph", id)
+	}
+
+	assertPresent("root/param.message")
+	assertPresent("root/module.basic")
+	assertPresent("root/module.basic/param.message")
+	assertPresent("root/module.basic/param.filename")
+	assertPresent("root/module.basic/task.render")
 
 	basicDeps := graph.Targets(g.DownEdges("root/module.basic"))
 	sort.Strings(basicDeps)
@@ -57,4 +64,31 @@ func TestNodesSourceFile(t *testing.T) {
 		},
 		basicDeps,
 	)
+}
+
+// TestNodeWithConditionals tests loading when switch statements are present
+func TestNodeWithConditionals(t *testing.T) {
+	defer logging.HideLogs(t)()
+	g, err := load.Nodes(context.Background(), "../samples/conditionalLanguages.hcl", false)
+	require.NoError(t, err)
+	_, found := g.Get("root/param.lang")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.spanish")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.french")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.japanese")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.default")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.spanish/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.french/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.japanese/file.content.foo-file")
+	assert.True(t, found)
+	_, found = g.Get("root/macro.switch.test-switch/macro.case.default/file.content.foo-file")
+	assert.True(t, found)
 }

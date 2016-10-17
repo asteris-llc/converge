@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
@@ -33,7 +34,7 @@ func TestRenderSingleNode(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add(
+	g.Add(node.New(
 		"root/file.content.x",
 		resource.NewPreparerWithSource(
 			new(content.Preparer),
@@ -42,15 +43,16 @@ func TestRenderSingleNode(t *testing.T) {
 				"content":     "{{2}}",
 			},
 		),
-	)
+	))
 
 	rendered, err := render.Render(context.Background(), g, render.Values{})
 	assert.NoError(t, err)
 
-	node := rendered.Get("root/file.content.x")
+	meta, ok := rendered.Get("root/file.content.x")
+	assert.True(t, ok, `"root/file.content.x" was missing from the graph`)
 
-	wrapper, ok := node.(*resource.TaskWrapper)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, node))
+	wrapper, ok := meta.Value().(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, meta.Value()))
 
 	fileContent, ok := wrapper.Task.(*content.Content)
 	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, wrapper.Task))
@@ -63,23 +65,23 @@ func TestRenderParam(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", nil)
+	g.Add(node.New("root", nil))
 
-	g.Add(
+	g.Add(node.New(
 		"root/file.content.x",
 		resource.NewPreparerWithSource(
 			new(content.Preparer),
 			map[string]interface{}{"destination": "{{param `destination`}}"},
 		),
-	)
+	))
 
-	g.Add(
+	g.Add(node.New(
 		"root/param.destination",
 		resource.NewPreparerWithSource(
 			new(param.Preparer),
 			map[string]interface{}{"default": "1"},
 		),
-	)
+	))
 
 	g.ConnectParent("root", "root/file.content.x")
 	g.ConnectParent("root", "root/param.destination")
@@ -88,13 +90,14 @@ func TestRenderParam(t *testing.T) {
 	rendered, err := render.Render(context.Background(), g, render.Values{})
 	require.NoError(t, err)
 
-	node := rendered.Get("root/file.content.x")
+	meta, ok := rendered.Get("root/file.content.x")
+	assert.True(t, ok, `"root/file.content.x" was missing from the graph`)
 
-	wrapper, ok := node.(*resource.TaskWrapper)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, node))
+	wrapper, ok := meta.Value().(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", wrapper, meta.Value()))
 
 	fileContent, ok := wrapper.Task.(*content.Content)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, node))
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was %T", fileContent, wrapper.Task))
 
 	assert.Equal(t, "1", fileContent.Destination)
 }
@@ -103,21 +106,21 @@ func TestRenderValues(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add(
+	g.Add(node.New("root", nil))
+	g.Add(node.New(
 		"root/file.content.x",
 		resource.NewPreparerWithSource(
 			new(content.Preparer),
 			map[string]interface{}{"destination": "{{param `destination`}}"},
 		),
-	)
-	g.Add(
+	))
+	g.Add(node.New(
 		"root/param.destination",
 		resource.NewPreparerWithSource(
 			new(param.Preparer),
 			map[string]interface{}{"default": "1"},
 		),
-	)
+	))
 
 	g.ConnectParent("root", "root/file.content.x")
 	g.ConnectParent("root", "root/param.destination")
@@ -126,10 +129,11 @@ func TestRenderValues(t *testing.T) {
 	rendered, err := render.Render(context.Background(), g, render.Values{"destination": 2})
 	require.NoError(t, err)
 
-	node := rendered.Get("root/file.content.x")
+	meta, ok := rendered.Get("root/file.content.x")
+	assert.True(t, ok, `"root/file.content.x" was missing from the graph`)
 
-	wrapper, ok := node.(*resource.TaskWrapper)
-	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", wrapper, node))
+	wrapper, ok := meta.Value().(*resource.TaskWrapper)
+	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", wrapper, meta.Value()))
 
 	content, ok := wrapper.Task.(*content.Content)
 	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, wrapper.Task))

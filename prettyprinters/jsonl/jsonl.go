@@ -18,13 +18,15 @@ import (
 	"encoding/json"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 )
 
 // Node is the serializable type for graph nodes
 type Node struct {
 	Kind  string      `json:"kind"`
-	ID    string      `json:"id"`
+	ID    string      `json:"id"` // TODO: preserved for compat, remove in 0.4.0
+	Meta  *node.Node  `json:"meta"`
 	Value interface{} `json:"value"`
 }
 
@@ -40,7 +42,17 @@ type Printer struct{}
 
 // DrawNode prints a node in JSONL format
 func (j *Printer) DrawNode(graph *graph.Graph, nodeID string) (pp.Renderable, error) {
-	out, err := json.Marshal(&Node{Kind: "node", ID: nodeID, Value: graph.Get(nodeID)})
+	meta, ok := graph.Get(nodeID)
+	if !ok {
+		return pp.HiddenString(), nil
+	}
+
+	out, err := json.Marshal(&Node{
+		Kind:  "node",
+		ID:    meta.ID, // TODO: preserved for compat, remove in 0.4.0
+		Meta:  meta,
+		Value: meta.Value(),
+	})
 	return pp.VisibleString(string(out) + "\n"), err
 }
 
