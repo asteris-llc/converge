@@ -35,7 +35,7 @@ const (
 	StateAbsent State = "absent"
 )
 
-// Check if the package has to be 'installed', or 'absent'
+// Check if the package has to be 'present', or 'absent'
 func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 	if p.State == p.PackageState() {
