@@ -1,7 +1,7 @@
 TASKFILE=../resource/resource.go
 TASKLOC=${TASKFILE}:\#$(shell grep -b 'type Task interface' ${TASKFILE} | cut -d: -f1)
 
-public: content/*.md static/**/* content/resources content/license.md
+public: content/*.md static/**/* content/resources content/license.md static/images/**/*.png
 	hugo
 
 publish:
@@ -41,6 +41,26 @@ resources.mk: sources.csv resourceContent.mk.tmpl
         -e "s|@@TARGET|content/resources/$$(echo $$line | cut -d, -f1 | tr -d '\n').md|g" \
         resourceContent.mk.tmpl >> $@; \
     echo >> $@; \
-  done
+	done
+
+# Images
+
+converge:
+	go build ..
+
+static/images/dependencies/with-depends.png: static/images/dependencies/with-depends.hcl converge
+	./converge graph --local $< | dot -Tpng -o$@
+
+static/images/dependencies/without-depends.png: static/images/dependencies/without-depends.hcl converge
+	./converge graph --local $< | dot -Tpng -o$@
+
+static/images/getting-started/hello-world.png: static/images/getting-started/hello-world.hcl converge
+	./converge graph --local $< | dot -Tpng -o$@
+
+static/images/getting-started/hello-world-params.png: static/images/getting-started/hello-world-params.hcl converge
+	./converge graph --local $< | dot -Tpng -o$@
+
+static/images/getting-started/hello-you.png: static/images/getting-started/hello-you.hcl converge
+	./converge graph --local $< | dot -Tpng -o$@
 
 .PHONY=publish
