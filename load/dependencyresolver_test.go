@@ -40,6 +40,21 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	)
 }
 
+func TestDependencyResolverResolvesExplicitDepsInBranch(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	nodes, err := load.Nodes(context.Background(), "../samples/conditionalDeps.hcl", false)
+	require.NoError(t, err)
+
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
+	assert.NoError(t, err)
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/macro.switch.sample/macro.case.true/file.content.foo-output")),
+		"root/task.query.foo",
+	)
+}
+
 func TestDependencyResolverBadDependency(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -48,7 +63,7 @@ func TestDependencyResolverBadDependency(t *testing.T) {
 
 	_, err = load.ResolveDependencies(context.Background(), nodes)
 	if assert.Error(t, err) {
-		assert.EqualError(t, err, "nonexistent vertices in edges: root/task.nonexistent")
+		assert.EqualError(t, err, "1 error(s) occurred:\n\n* root/task.bad_requirement: nonexistent vertices in edges: task.nonexistent")
 	}
 }
 
