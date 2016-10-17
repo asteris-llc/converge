@@ -36,6 +36,7 @@ build
 
 # docs
 docs/extract
+docs/converge
 docs/resources.mk
 docs/public
 
