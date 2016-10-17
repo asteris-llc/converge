@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -37,7 +38,7 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			return nil
 		}
 		for _, caseID := range g.Children(id) {
-			caseNode, ok := getCaseNode(caseID, g)
+			caseNode, ok := getEvaluationController(caseID, g)
 			if caseNode == nil {
 				return errors.New("got a nil caseNode for " + id)
 			}
@@ -84,7 +85,7 @@ func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
 	return nil, false
 }
 
-func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
+func getEvaluationController(id string, g *graph.Graph) (control.EvaluationController, bool) {
 	elemMeta, ok := g.Get(id)
 	if !ok {
 		return nil, false
@@ -93,6 +94,9 @@ func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
 	elem, canResolve := resource.ResolveTask(elem)
 	if !canResolve {
 		return nil, false
+	}
+	if asPrepareThunk, ok := elem.(*render.PrepareThunk); ok {
+		return &control.ThunkedCaseTask{PrepareThunk: asPrepareThunk}, true
 	}
 	if asCase, ok := elem.(*control.CaseTask); ok {
 		return asCase, true

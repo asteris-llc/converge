@@ -26,7 +26,6 @@ import (
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
-	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
 )
 
@@ -39,7 +38,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	if err != nil {
 		return nil, err
 	}
-	rendered, err := g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
 		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
 		value, err := pipeline.Exec(meta.Value())
 		if err != nil {
@@ -49,10 +48,6 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		renderingPlant.Graph = out
 		return nil
 	})
-	if err != nil {
-		return rendered, err
-	}
-	return transform.ResolveConditionals(ctx, rendered)
 }
 
 type pipelineGen struct {
@@ -135,12 +130,25 @@ func typeError(expected string, actual interface{}) error {
 	return fmt.Errorf("type error: expected type %s but received type %T", expected, actual)
 }
 
+// DeferredTask represents a task that is wrapped in a thunk and can be evaled
+type DeferredTask interface {
+	ApplyThunk(*Factory) (resource.Task, error)
+}
+
 // PrepareThunk returns a possibly lazily evaluated preparer
 type PrepareThunk struct {
 	resource.Task
 	// prevent hashing thunks into a single value
 	Data  []byte
 	Thunk func(*Factory) (resource.Task, error) `hash:"ignore"`
+}
+
+// ApplyThunk returns the result of applying the thunk to a value
+func (p *PrepareThunk) ApplyThunk(f *Factory) (resource.Task, error) {
+	if p == nil {
+		return nil, errors.New("thunk is empty")
+	}
+	return p.Thunk(f)
 }
 
 func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *PrepareThunk {

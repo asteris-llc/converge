@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
@@ -111,6 +112,51 @@ func (c *CaseTask) IsTrue() (bool, error) {
 		*c.Status = status
 	}
 	return *c.Status, nil
+}
+
+// GetCase provides a default implementation of SwitchBranch
+func (c *CaseTask) GetCase() (*CaseTask, error) {
+	return c, nil
+}
+
+// ThunkedCaseTask provides a thunked wrapper around the case task, allowing
+// deferred execution case nodes to be included in switch statements and as
+// evaluation controllers.
+type ThunkedCaseTask struct {
+	*render.PrepareThunk
+	caseTask *CaseTask
+}
+
+// ShouldEvaluate provides an implementation of EvaluationController for a
+// thunked case task, it requires that the inner value has been thunked before
+// it can do anything.
+func (t *ThunkedCaseTask) ShouldEvaluate() bool {
+	if t == nil {
+		return false
+	}
+	if t.caseTask == nil {
+		return false
+	}
+	return t.caseTask.ShouldEvaluate()
+}
+
+// GetCase for a thunked task returns true if the thunk has been evaluated,
+// otherwise it returns false.
+func (t *ThunkedCaseTask) GetCase() (*CaseTask, error) {
+	if t.caseTask != nil {
+		return t.caseTask, nil
+	}
+
+	return nil, errors.New("unable to resolve thunked case")
+}
+
+// ApplyThunk applys the inner thunk then sets the inner caseTask value
+func (t *ThunkedCaseTask) ApplyThunk(f *render.Factory) (resource.Task, error) {
+	result, err := t.PrepareThunk.ApplyThunk(f)
+	if asCase, ok := result.(*CaseTask); ok {
+		t.caseTask = asCase
+	}
+	return result, err
 }
 
 // EvaluatePredicate looks at a templated string and returns true if template

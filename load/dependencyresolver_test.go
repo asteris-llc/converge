@@ -78,3 +78,30 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 		"root/param.message",
 	)
 }
+
+func TestDependencyResolverResolvesConditionalDependencies(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	nodes, err := load.Nodes(context.Background(), "../samples/basicDependencies.hcl", false)
+	require.NoError(t, err)
+
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
+	assert.NoError(t, err)
+
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.directory")),
+		"root/param.filename",
+	)
+
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.render")),
+		"root/param.filename",
+	)
+	assert.Contains(
+		t,
+		graph.Targets(resolved.DownEdges("root/task.render")),
+		"root/param.message",
+	)
+}
