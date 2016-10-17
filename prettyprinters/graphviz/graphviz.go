@@ -194,11 +194,18 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 // DrawEdge prints edge data in a fashion similar to DrawNode.  It will return a
 // visible Renderable IFF the source and destination vertices are visible.
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, error) {
-	src, _ := g.Get(id1)
-	dest, _ := g.Get(id2)
+	var srcVal, destVal interface{}
 
-	sourceEntity := GraphEntity{id1, src.Value()}
-	destEntity := GraphEntity{id2, dest.Value()}
+	if src, ok := g.Get(id1); ok {
+		srcVal = src.Value()
+	}
+
+	if dest, ok := g.Get(id2); ok {
+		destVal = dest.Value()
+	}
+
+	sourceEntity := GraphEntity{id1, srcVal}
+	destEntity := GraphEntity{id2, destVal}
 
 	sourceVertex, err := p.printProvider.VertexGetID(sourceEntity)
 	if err != nil {
@@ -215,8 +222,8 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	maybeSetProperty(attributes, "label", escapeNewline(label))
 
-	srcVert, sok := src.Value().(*pb.GraphComponent_Vertex)
-	destVert, dok := dest.Value().(*pb.GraphComponent_Vertex)
+	srcVert, sok := srcVal.(*pb.GraphComponent_Vertex)
+	destVert, dok := destVal.(*pb.GraphComponent_Vertex)
 	if sok && dok && srcVert.Kind == "module" && destVert.Kind != "module" {
 		return pp.HiddenString(), nil
 	}
