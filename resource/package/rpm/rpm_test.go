@@ -19,7 +19,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/packages/rpm"
+	"github.com/asteris-llc/converge/resource/package/rpm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
