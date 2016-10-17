@@ -115,6 +115,9 @@ func (p RPCProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.Proper
 
 	case "file.content":
 		properties["shape"] = "tab"
+
+	case "module":
+		properties["shape"] = "folder"
 	}
 
 	return properties
