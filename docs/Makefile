@@ -55,12 +55,12 @@ static/images/dependencies/without-depends.png: static/images/dependencies/witho
 	./converge graph --local $< | dot -Tpng -o$@
 
 static/images/getting-started/hello-world.png: static/images/getting-started/hello-world.hcl converge
-	./converge graph --local $< | dot -Tpng -o$@
+	./converge graph --local --show-params $< | dot -Tpng -o$@
 
 static/images/getting-started/hello-world-params.png: static/images/getting-started/hello-world-params.hcl converge
-	./converge graph --local $< | dot -Tpng -o$@
+	./converge graph --local --show-params $< | dot -Tpng -o$@
 
 static/images/getting-started/hello-you.png: static/images/getting-started/hello-you.hcl converge
-	./converge graph --local $< | dot -Tpng -o$@
+	./converge graph --local --show-params $< | dot -Tpng -o$@
 
 .PHONY=publish
