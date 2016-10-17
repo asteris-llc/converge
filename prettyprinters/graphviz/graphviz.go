@@ -222,8 +222,8 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 	}
 
 	edgeStr := fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
-		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
+		escapeNewline(sourceVertex),
 		buildAttributeString(attributes),
 	)
 	visible := sourceVertex.Visible() && destVertex.Visible()
