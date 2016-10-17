@@ -1,4 +1,4 @@
-rpm.package "mc" {
+package.rpm "mc" {
   name  = "mc"
   state = "present"
 }
