@@ -16,10 +16,10 @@ func TestCreateLogicalVolume(t *testing.T) {
 	volname := "data" // Match with existing name in TESTDATA_VGS, so fool engine to find proper paths, etc
 	// after creation
 	lvm, me := testhelpers.MakeLvmWithMockExec()
+	me.LvsFirstCall = true
 	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
 	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
-	me.On("Read", "lvs", mock.Anything).Return("", nil).Once()
-	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
+	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_LVS, nil)
 	me.On("Run", "lvcreate", []string{"-n", volname, "-L", "100G", "vg0"}).Return(nil)
 	me.On("Exists", "/dev/mapper/vg0-data").Return(true, nil)
 

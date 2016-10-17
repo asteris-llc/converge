@@ -41,6 +41,7 @@ func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 		r.needCreate = !ok
 	} else {
 		status.Output = append(status.Output, fmt.Sprintf("group %s not exist, assume that it will be created"))
+		r.needCreate = true
 	}
 
 	status.DevicePath = fmt.Sprintf("/dev/mapper/%s-%s", r.group, r.name)

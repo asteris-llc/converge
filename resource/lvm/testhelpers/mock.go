@@ -29,7 +29,7 @@ func (e *MockExecutor) RunExitCode(prog string, args []string) (int, error) {
 
 func (me *MockExecutor) Read(prog string, args []string) (string, error) {
 	if me.LvsFirstCall {
-		//        me.LvsFirstCall = false
+		me.LvsFirstCall = false
 		return "", nil
 	}
 	c := me.Called(prog, args)
@@ -57,5 +57,5 @@ func (me *MockExecutor) MkdirAll(path string, perm os.FileMode) error {
 
 func (me *MockExecutor) Exists(path string) (bool, error) {
 	c := me.Called(path)
-	return c.Bool(0), c.Error(0)
+	return c.Bool(0), c.Error(1)
 }
