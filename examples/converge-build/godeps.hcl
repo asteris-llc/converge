@@ -170,3 +170,14 @@ task "install gas" {
   apply       = "{{param `go`}} get github.com/HewlettPackard/gas"
   depends     = ["task.gobin"]
 }
+
+task "install gox" {
+  env {
+    "GOPATH" = "{{param `gopath`}}"
+  }
+
+  interpreter = "/bin/bash"
+  check       = "[[ -f {{param `gopath`}}/bin/gox ]]"
+  apply       = "{{param `go`}} get github.com/mitchellh/gox"
+  depends     = ["task.gobin"]
+}
