@@ -148,8 +148,8 @@ func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotSource, _ := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	sourceVertex, destVertex := parseDotEdge(dotSource)
-	assert.Equal(t, "A", sourceVertex)
-	assert.Equal(t, "B", destVertex)
+	assert.Equal(t, "B", sourceVertex)
+	assert.Equal(t, "A", destVertex)
 }
 
 func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
