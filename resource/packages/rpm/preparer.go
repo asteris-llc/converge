@@ -40,5 +40,5 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 }
 
 func init() {
-	registry.Register("rpm.package", (*Preparer)(nil), (*Package)(nil))
+	registry.Register("package.rpm", (*Preparer)(nil), (*Package)(nil))
 }
