@@ -5,11 +5,8 @@
 distro=$1
 
 case "$distro" in 
-"centos" | "fedora")
-    docker run --rm  -v $(pwd):/converge ${distro}:latest /converge/converge apply --local /converge/converge-centos.hcl
-    ;;
-"debian" | "ubuntu")
-    docker run --rm  -v $(pwd):/converge ${distro}:latest  /converge/converge apply --local /converge/converge-deb-ubuntu.hcl
+"centos" | "fedora"| "debian" | "ubuntu")
+    docker run --rm  -v $(pwd):/converge ${distro}:latest /converge/converge apply --local /converge/converge-linux.hcl
     ;;
 *)
     echo "unsupported distribution: ${distro}"
