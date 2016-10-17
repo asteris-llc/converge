@@ -46,10 +46,14 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 	}
 
 	for _, vertex := range loaded.Vertices() {
-		node, err := resolveVertex(vertex, loaded.Get(vertex))
+		var val interface{}
+		if meta, ok := loaded.Get(vertex); ok {
+			val = meta.Value()
+		}
 
+		node, err := resolveVertex(vertex, val)
 		if err != nil {
-			return errors.Wrapf(err, "%T is an unknown vertex type", loaded.Get(vertex))
+			return errors.Wrapf(err, "%T is an unknown vertex type", val)
 		}
 
 		kind, ok := registry.NameForType(node)

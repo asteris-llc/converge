@@ -16,7 +16,9 @@ message ContentResponse {
 }
 
 message StatusResponse {
-  string id = 1;
+  // TODO: preserve for compat but will stop working in 0.4.0. This has moved to
+  // meta.id
+  string id = 1 [deprecated=true];
 
   // the stage from which this status response is being sent
   enum Stage {
@@ -42,6 +44,11 @@ message StatusResponse {
     string error = 4;
   }
   Details details = 4;
+
+  message Meta {
+    string id = 1;
+  }
+  Meta meta = 5;
 }
 
 message DiffResponse {

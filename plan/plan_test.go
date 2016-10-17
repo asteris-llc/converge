@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/faketask"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/plan"
@@ -31,7 +32,7 @@ func TestPlanNoOp(t *testing.T) {
 
 	g := graph.New()
 	task := faketask.NoOp()
-	g.Add("root", task)
+	g.Add(node.New("root", task))
 
 	require.NoError(t, g.Validate())
 
@@ -49,7 +50,7 @@ func TestPlanNoOp(t *testing.T) {
 func TestPlanNilAndError(t *testing.T) {
 	g := graph.New()
 	task := faketask.NilAndError()
-	g.Add("root", task)
+	g.Add(node.New("root", task))
 
 	// test that running this results in an appropriate result
 	planned, err := plan.Plan(context.Background(), g)
@@ -65,8 +66,8 @@ func TestPlanErrorsBelow(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := graph.New()
-	g.Add("root", faketask.NoOp())
-	g.Add("root/err", faketask.Error())
+	g.Add(node.New("root", faketask.NoOp()))
+	g.Add(node.New("root/err", faketask.Error()))
 
 	g.Connect("root", "root/err")
 
@@ -78,22 +79,25 @@ func TestPlanErrorsBelow(t *testing.T) {
 	out, err := plan.Plan(context.Background(), g)
 	assert.Equal(t, plan.ErrTreeContainsErrors, err)
 
-	errNode, ok := out.Get("root/err").(*plan.Result)
+	errMeta, ok := out.Get("root/err")
+	require.True(t, ok)
+	errNode, ok := errMeta.Value().(*plan.Result)
 	require.True(t, ok)
 	assert.Error(t, errNode.Error())
 
-	rootNode, ok := out.Get("root").(*plan.Result)
+	rootMeta, ok := out.Get("root")
+	require.True(t, ok)
+	rootNode, ok := rootMeta.Value().(*plan.Result)
 	require.True(t, ok)
 	assert.EqualError(t, rootNode.Error(), `error in dependency "root/err"`)
 }
 
 func getResult(t *testing.T, src *graph.Graph, key string) *plan.Result {
-	val := src.Get(key)
-	result, ok := val.(*plan.Result)
-	if !ok {
-		t.Logf("needed a %T for %q, got a %T\n", result, key, val)
-		t.FailNow()
-	}
+	meta, ok := src.Get(key)
+	require.True(t, ok, "%q was not present in the graph", key)
+
+	result, ok := meta.Value().(*plan.Result)
+	require.True(t, ok, "needed a %T for %q, got a %T", result, key, meta.Value())
 
 	return result
 }

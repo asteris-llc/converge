@@ -66,7 +66,12 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
 		return nil, errors.New("input node is not a task wrapper")
 	}
 	for _, depID := range graph.Targets(g.Graph.DownEdges(g.ID)) {
-		elem := g.Graph.Get(depID)
+		meta, ok := g.Graph.Get(depID)
+		if !ok {
+			return nil, nil
+		}
+
+		elem := meta.Value()
 		dep, ok := elem.(executor.Status)
 		if !ok {
 			return nil, fmt.Errorf("apply.DependencyCheck: expected %s to have type executor.Status but got type %T", depID, elem)

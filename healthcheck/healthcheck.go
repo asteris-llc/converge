@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -36,18 +37,26 @@ func CheckGraph(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 // WithNotify is CheckGraph, but with notification features
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 
-	return in.Transform(ctx,
-		notify.Transform(func(id string, out *graph.Graph) error {
-			task, err := unboxNode(out.Get(id))
+	return in.Transform(
+		ctx,
+		notify.Transform(func(meta *node.Node, out *graph.Graph) error {
+			task, err := unboxNode(meta.Value())
 			if err != nil {
 				return err
 			}
+
 			asCheck, ok := task.(Check)
 			if !ok {
 				return nil
 			}
-			for _, dep := range out.Dependencies(id) {
-				depStatus, ok := out.Get(dep).(resource.TaskStatus)
+
+			for _, dep := range out.Dependencies(meta.ID) {
+				depmeta, ok := out.Get(dep)
+				if !ok {
+					continue
+				}
+
+				depStatus, ok := depmeta.Value().(resource.TaskStatus)
 				if !ok {
 					continue
 				}
@@ -58,13 +67,17 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 					asCheck.FailingDep(dep, depStatus)
 				}
 			}
+
 			status, err := asCheck.HealthCheck()
 			if err != nil {
 				return err
 			}
-			out.Add(id, status)
+
+			out.Add(meta.WithValue(status))
+
 			return nil
-		}))
+		}),
+	)
 }
 
 // unboxNode will remove a resource.TaskStatus from a plan.Result or apply.Result

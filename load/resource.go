@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/parse"
@@ -47,35 +48,34 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "SetResources")
 	logger.Debug("loading resources")
 
-	return g.Transform(ctx, func(id string, out *graph.Graph) error {
-		if id == "root" { // root
+	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		if meta.ID == "root" {
 			return nil
 		}
 
-		node, ok := out.Get(id).(*parse.Node)
+		raw, ok := meta.Value().(*parse.Node)
 		if !ok {
-			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", out.Get(id))
+			return fmt.Errorf("SetResources can only be used on Graphs of *parse.Node. I got %T", meta.Value())
 		}
 
-		dest, ok := registry.NewByName(node.Kind())
+		dest, ok := registry.NewByName(raw.Kind())
 		if !ok {
-			return fmt.Errorf("%q is not a valid resource type in %q", node.Kind(), node)
+			return fmt.Errorf("%q is not a valid resource type in %q", raw.Kind(), raw)
 		}
 
 		res, ok := dest.(resource.Resource)
 		if !ok {
-			return fmt.Errorf("%q is not a valid resource, got %T", node.Kind(), dest)
+			return fmt.Errorf("%q is not a valid resource, got %T", raw.Kind(), dest)
 		}
 
 		preparer := resource.NewPreparer(res)
 
-		err := hcl.DecodeObject(&preparer.Source, node.ObjectItem.Val)
+		err := hcl.DecodeObject(&preparer.Source, raw.ObjectItem.Val)
 		if err != nil {
 			return err
 		}
 
-		out.Add(id, preparer)
-
+		out.Add(meta.WithValue(preparer))
 		return nil
 	})
 }

@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
@@ -80,29 +81,29 @@ func Example_generateAGraphFromAFileOnDisk() {
 
 func Example_createACustomPrintProvider() {
 	g := graph.New()
-	g.Add(graph.ID("a"), 1)
-	g.Add(graph.ID("a", "b"), 2)
-	g.Add(graph.ID("a", "c"), 3)
-	g.Add(graph.ID("a", "c", "d"), 4)
-	g.Add(graph.ID("a", "c", "e"), 5)
-	g.Add(graph.ID("a", "b", "f"), 6)
-	g.Add(graph.ID("a", "b", "g"), 7)
+	g.Add(node.New(graph.ID("a"), 1))
+	g.Add(node.New(graph.ID("a", "b"), 2))
+	g.Add(node.New(graph.ID("a", "c"), 3))
+	g.Add(node.New(graph.ID("a", "c", "d"), 4))
+	g.Add(node.New(graph.ID("a", "c", "e"), 5))
+	g.Add(node.New(graph.ID("a", "b", "f"), 6))
+	g.Add(node.New(graph.ID("a", "b", "g"), 7))
 
-	g.Add(graph.ID("a", "c", "d", "h"), 8)
-	g.Add(graph.ID("a", "c", "d", "i"), 9)
-	g.Add(graph.ID("a", "c", "d", "j"), 10)
+	g.Add(node.New(graph.ID("a", "c", "d", "h"), 8))
+	g.Add(node.New(graph.ID("a", "c", "d", "i"), 9))
+	g.Add(node.New(graph.ID("a", "c", "d", "j"), 10))
 
-	g.Add(graph.ID("a", "c", "e", "k"), 11)
-	g.Add(graph.ID("a", "c", "e", "l"), 12)
-	g.Add(graph.ID("a", "c", "e", "m"), 13)
+	g.Add(node.New(graph.ID("a", "c", "e", "k"), 11))
+	g.Add(node.New(graph.ID("a", "c", "e", "l"), 12))
+	g.Add(node.New(graph.ID("a", "c", "e", "m"), 13))
 
-	g.Add(graph.ID("a", "b", "f", "n"), 14)
-	g.Add(graph.ID("a", "b", "f", "o"), 15)
-	g.Add(graph.ID("a", "b", "f", "p"), 16)
+	g.Add(node.New(graph.ID("a", "b", "f", "n"), 14))
+	g.Add(node.New(graph.ID("a", "b", "f", "o"), 15))
+	g.Add(node.New(graph.ID("a", "b", "f", "p"), 16))
 
-	g.Add(graph.ID("a", "b", "g", "q"), 17)
-	g.Add(graph.ID("a", "b", "g", "r"), 18)
-	g.Add(graph.ID("a", "b", "g", "s"), 19)
+	g.Add(node.New(graph.ID("a", "b", "g", "q"), 17))
+	g.Add(node.New(graph.ID("a", "b", "g", "r"), 18))
+	g.Add(node.New(graph.ID("a", "b", "g", "s"), 19))
 
 	g.Connect(graph.ID("a"), graph.ID("a", "b"))
 	g.Connect(graph.ID("a"), graph.ID("a", "c"))
@@ -200,9 +201,9 @@ func (p NumberProvider) SubgraphMarker(e graphviz.GraphEntity) graphviz.Subgraph
 
 func createTestGraph() *graph.Graph {
 	g := graph.New()
-	g.Add(graph.ID("a"), 1)
-	g.Add(graph.ID("a", "b"), 2)
-	g.Add(graph.ID("a", "c"), 3)
+	g.Add(node.New(graph.ID("a"), 1))
+	g.Add(node.New(graph.ID("a", "b"), 2))
+	g.Add(node.New(graph.ID("a", "c"), 3))
 	g.Connect(graph.ID("a"), graph.ID("a", "b"))
 	g.Connect(graph.ID("a"), graph.ID("a", "c"))
 	return g
