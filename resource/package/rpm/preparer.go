@@ -21,12 +21,15 @@ import (
 
 // Preparer for RPM Package
 //
-// RPM Package manages system packages
+// RPM Package manages system packages with `rpm` and `yum`. It assumes that
+// both `rpm` and `yum` are installed on the system, and that the user has
+// permissions to install, remove, and query packages.
 type Preparer struct {
-	// Name of the system package to be managed.
+	// Name of the package or package group.
 	Name string `hcl:"name" required:"true" `
 
-	// State defines desired system package state.
+	// State of the package. Present means the package will be installed if
+	// missing; Absent means the package will be uninstalled if present.
 	State State `hcl:"state" valid_values:"present,absent" default:"present"`
 }
 
