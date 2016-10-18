@@ -1,4 +1,4 @@
-# automatically generated Wed Oct 12 11:29:51 CDT 2016
+# automatically generated Mon Oct 17 11:33:29 CDT 2016
 include Makefile
 
 content/resources/docker.container.md: extract ../resource/docker/container/preparer.go ../samples/dockerContainer.hcl
@@ -72,6 +72,18 @@ content/resources/module.md: extract ../resource/module/preparer.go ../samples/s
 	echo '---' >> $@
 	echo >> $@
 	./extract --example ../samples/sourceFile.hcl --resource-name module --path ../resource/module/preparer.go --type Preparer --strip-doc-lines=2 >> $@
+
+content/resources/package.rpm.md: extract ../resource/package/rpm/preparer.go ../samples/rpm.hcl
+	echo '---' > $@
+	echo 'title: "package.rpm"' >> $@
+	echo 'slug: "package-rpm"' >> $@
+	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
+	echo "menu:" >> $@
+	echo "  main:" >> $@
+	echo "    parent: resources" >> $@
+	echo '---' >> $@
+	echo >> $@
+	./extract --example ../samples/rpm.hcl --resource-name package.rpm --path ../resource/package/rpm/preparer.go --type Preparer --strip-doc-lines=2 >> $@
 
 content/resources/param.md: extract ../resource/param/preparer.go ../samples/basic.hcl
 	echo '---' > $@
