@@ -59,18 +59,23 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				out.Connect(meta.ID, dep)
 			}
 		}
+
 		return nil
 	})
 }
 
-func getDepends(_ *graph.Graph, id string, node *parse.Node) ([]string, error) {
+func getDepends(g *graph.Graph, id string, node *parse.Node) ([]string, error) {
 	deps, err := node.GetStringSlice("depends")
 	switch err {
 	case parse.ErrNotFound:
 		return []string{}, nil
 	case nil:
-		for idx := range deps {
-			deps[idx] = graph.SiblingID(id, deps[idx])
+		for idx, dep := range deps {
+			if ancestor, ok := getNearestAncestor(g, id, dep); ok {
+				deps[idx] = ancestor
+			} else {
+				return nil, fmt.Errorf("nonexistent vertices in edges: %s", dep)
+			}
 		}
 		return deps, nil
 	default:
