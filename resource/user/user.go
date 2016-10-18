@@ -311,13 +311,13 @@ func SetAddUserOptions(u *User) (*AddUserOptions, error) {
 
 	switch {
 	case u.GroupName != "":
-		_, err := u.system.LookupGroup(u.GroupName)
+		_, err := user.LookupGroup(u.GroupName)
 		if err != nil {
 			return nil, fmt.Errorf("group %s does not exist", u.GroupName)
 		}
 		options.Group = u.GroupName
 	case u.GID != "":
-		_, err := u.system.LookupGroupID(u.GID)
+		_, err := user.LookupGroupId(u.GID)
 		if err != nil {
 			return nil, fmt.Errorf("group gid %s does not exist", u.GID)
 		}
