@@ -148,7 +148,7 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 }
 
 func getPeerVertex(src, dst string) (string, bool) {
-	if dst == "." || dst == "root" {
+	if dst == "." || graph.IsRoot(dst) {
 		return "", false
 	}
 	if graph.AreSiblingIDs(src, dst) {
@@ -158,7 +158,7 @@ func getPeerVertex(src, dst string) (string, bool) {
 }
 
 func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
-	if id == "root" || id == "" || id == "." {
+	if graph.IsRoot(id) || id == "" || id == "." {
 		return "", false
 	}
 
