@@ -142,3 +142,82 @@ would all work like [the param example in the getting started guide]({{< ref
 "getting-started.md" >}}#params). We're not quite there yet, but keep an eye
 out!
 {{< /note >}}
+
+## Locking
+
+There can be some scenarios where a group of tasks are not explicitly dependent
+on each other but also cannot be run in parallel. A good example of this is
+package management tools like
+[apk](http://wiki.alpinelinux.org/wiki/Alpine_Linux_package_management) or
+[apt](https://wiki.debian.org/Apt). As an example, let's look at this file which
+installs three packages:
+
+```hcl
+task "install-tree" {
+  check = "dpkg -s tree >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install tree"
+}
+
+task "install-jq" {
+  check = "dpkg -s jq >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install jq"
+}
+
+task "install-build-essential" {
+  check = "dpkg -s build-essential >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install build-essential"
+}
+```
+
+Here is what the corresponding graph looks like:
+
+{{< figure src="/images/dependencies/without-locks.png"
+           caption="The graph output of the above module. Converge will attempt
+           to run each task in parallel." >}}
+
+If you were to execute apply against this graph, you would end up with errors
+that look something like this:
+
+```shell
+E: Could not get lock /var/lib/apt/lists/lock - open (11: Resource temporarily unavailable)
+E: Unable to lock directory /var/lib/apt/lists/
+```
+
+This is because multiple `apt-get` commands cannot be run at the same time.
+
+You could certainly use `depends` to chain these tasks together but this is
+tedious and error prone. Luckily, Converge supports `locks` which makes this
+much easier. We can add a named lock to each task and Converge will modify the
+graph so that these tasks are not run in parallel.
+
+```hcl
+task "install-tree" {
+  check = "dpkg -s tree >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install tree"
+  lock  = "apt"
+}
+
+task "install-jq" {
+  check = "dpkg -s jq >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install jq"
+  lock  = "apt"
+}
+
+task "install-build-essential" {
+  check = "dpkg -s build-essential >/dev/null 2>&1"
+  apply = "apt-get update 2>&1 > /dev/null && apt-get -y install build-essential"
+  lock  = "apt"
+}
+```
+
+And the corresponding graph:
+
+{{< figure src="/images/dependencies/with-locks.png"
+           caption="The graph output of the above module. The tasks in the lock
+           will not run in parallel." >}}
+
+{{< note title="Future Improvements" >}}
+In this example, we are installing packages by calling `apt-get` in Converge
+tasks. We do plan to build higher-level resources to handle package management
+that will handle these details for you.
+{{< /note >}}

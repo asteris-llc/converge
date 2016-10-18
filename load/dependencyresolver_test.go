@@ -40,6 +40,51 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	)
 }
 
+// TestDependencyResolverWithLocks tests the dependency resolution when nodes
+// have a lock
+func TestDependencyResolverWithLocks(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	nodes, err := load.Nodes(context.Background(), "../samples/locks.hcl", false)
+	require.NoError(t, err)
+
+	resolved, err := load.ResolveDependencies(context.Background(), nodes)
+	assert.NoError(t, err)
+
+	t.Run("lock nodes added", func(t *testing.T) {
+		// lock and unlock nodes should be added to the graph
+		lockNodeID := "root/lock.lock.mylock"
+		unlockNodeID := "root/lock.unlock.mylock"
+		assert.Contains(t, graph.Targets(resolved.DownEdges("root")), lockNodeID)
+		assert.Contains(t, graph.Targets(resolved.DownEdges("root")), unlockNodeID)
+	})
+
+	t.Run("locked dependencies", func(t *testing.T) {
+		resolved, err = load.ResolveDependenciesInLocks(context.Background(), resolved)
+		assert.NoError(t, err)
+
+		// each locked node should have an edge to another locked node or to the lock
+		// itself
+		lockedIDs := []string{"root/task.lockme1", "root/task.lockme2", "root/task.lockme3"}
+		hasLockedEdge := func(id string) bool {
+			lockNodeID := "root/lock.lock.mylock"
+			edges := graph.Targets(resolved.DownEdges(id))
+			for _, lockedID := range lockedIDs {
+				for _, edge := range edges {
+					if edge == lockedID || edge == lockNodeID {
+						return true
+					}
+				}
+			}
+			return false
+		}
+
+		for _, lockedID := range lockedIDs {
+			assert.True(t, hasLockedEdge(lockedID))
+		}
+	})
+}
+
 func TestDependencyResolverBadDependency(t *testing.T) {
 	defer logging.HideLogs(t)()
 

@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/parse/preprocessor/lock"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/pkg/errors"
 )
@@ -97,6 +98,21 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 				}
 				continue
 			}
+
+			// add lock nodes if there is a lock on the resource
+			lck, err := lock.NewLock(resource)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error creating lock for %s", resource.String())
+			}
+			if lck != nil {
+				entryLock := graph.ID(current.Parent, lck.LockID)
+				exitLock := graph.ID(current.Parent, lck.UnlockID)
+				out.Add(node.New(entryLock, lck.LockNode))
+				out.Add(node.New(exitLock, lck.UnlockNode))
+				out.ConnectParent(current.Parent, entryLock)
+				out.ConnectParent(current.Parent, exitLock)
+			}
+
 			newID := graph.ID(current.Parent, resource.String())
 			out.Add(node.New(newID, resource))
 			out.ConnectParent(current.Parent, newID)
