@@ -30,14 +30,6 @@ module "go.hcl" "go" {
   depends = ["module.deps"]
 }
 
-module "godeps.hcl" "godeps" {
-  params {
-    gopath = "{{param `gopath`}}"
-  }
-
-  depends = ["module.deps", "module.go"]
-}
-
 module "protoc.hcl" "protoc" {
   params {
     protoc-version = "{{param `protoc-version`}}"
