@@ -4,7 +4,7 @@ RPCLINT=$(shell find ./rpc -type f \( -not -iname 'root.*.go' -iname '*.go' \) )
 TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
-BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs dirname | uniq)
+BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
 BENCH = .
 
 converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
