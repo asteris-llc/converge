@@ -74,10 +74,6 @@ func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
 		return nil, false
 	}
 	elem := elemMeta.Value()
-	elem, canResolve := resource.ResolveTask(elem)
-	if !canResolve {
-		return nil, false
-	}
 	if asSwitch, ok := elem.(*control.SwitchTask); ok {
 		return asSwitch, true
 	}
@@ -90,10 +86,6 @@ func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
 		return nil, false
 	}
 	elem := elemMeta.Value()
-	elem, canResolve := resource.ResolveTask(elem)
-	if !canResolve {
-		return nil, false
-	}
 	if asCase, ok := elem.(*control.CaseTask); ok {
 		return asCase, true
 	}
