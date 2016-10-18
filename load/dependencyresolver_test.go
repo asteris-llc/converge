@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestDependencyResolverResolvesDependencies tests dependency resolution
 func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	defer logging.HideLogs(t)()
 
@@ -40,6 +41,8 @@ func TestDependencyResolverResolvesDependencies(t *testing.T) {
 	)
 }
 
+// TestDependencyResolverResolvesExplicitDepsInBranch tests explicit
+// dependencies inside of case branch nodes
 func TestDependencyResolverResolvesExplicitDepsInBranch(t *testing.T) {
 	defer logging.HideLogs(t)()
 
