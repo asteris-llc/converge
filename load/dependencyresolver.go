@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"sort"
+	"sync"
 	"text/template"
 
 	"github.com/asteris-llc/converge/graph"
@@ -36,8 +38,10 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveDependencies")
 	logger.Debug("resolving dependencies")
 
-	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
-		if meta.ID == "root" { // skip root
+	groupLock := new(sync.RWMutex)
+	groupMap := make(map[string][]string)
+	g, err := g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		if graph.IsRoot(meta.ID) { // skip root
 			return nil
 		}
 
@@ -60,8 +64,60 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 			}
 		}
 
+		// collect groups information
+		group, err := groupName(node)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve group from node %s", meta.ID)
+		}
+		if group != "" {
+			groupLock.Lock()
+			groupMap[group] = append(groupMap[group], meta.ID)
+			groupLock.Unlock()
+		}
+
 		return nil
 	})
+
+	// create dependencies between nodes in each group
+	for _, ids := range groupMap {
+		// sort ids so that intra-group dependencies are prioritized
+		sort.Strings(ids)
+		for i, id := range ids {
+			if i > 0 {
+				from := id
+				to := ids[i-1]
+
+				groupDep := func(id string) string {
+					pid := graph.ParentID(id)
+					if !graph.IsRoot(pid) {
+						id = pid
+					}
+					return id
+				}
+
+				if !graph.AreSiblingIDs(from, to) {
+					from = groupDep(from)
+					to = groupDep(to)
+				}
+
+				g.Connect(from, to)
+			}
+		}
+	}
+
+	return g, err
+}
+
+func groupName(node *parse.Node) (string, error) {
+	group, err := node.GetString("group")
+	switch err {
+	case parse.ErrNotFound:
+		return "", nil
+	case nil:
+		return group, nil
+	default:
+		return "", err
+	}
 }
 
 func getDepends(g *graph.Graph, id string, node *parse.Node) ([]string, error) {

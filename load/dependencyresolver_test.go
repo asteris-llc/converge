@@ -96,3 +96,46 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 		"root/param.message",
 	)
 }
+
+// TestDependencyResolverResolvesGroupDependencies tests whether group
+// dependencies are wired correctly
+func TestDependencyResolverResolvesGroupDependencies(t *testing.T) {
+	t.Parallel()
+	defer logging.HideLogs(t)()
+
+	t.Run("intra-module", func(t *testing.T) {
+		nodes, err := load.Nodes(context.Background(), "../samples/groups.hcl", false)
+		require.NoError(t, err)
+
+		resolved, err := load.ResolveDependencies(context.Background(), nodes)
+		assert.NoError(t, err)
+
+		assert.Empty(t, graph.Targets(resolved.DownEdges("root/task.install-build-essential")))
+		assert.Equal(
+			t,
+			[]string{"root/task.install-build-essential"},
+			graph.Targets(resolved.DownEdges("root/task.install-jq")),
+		)
+		assert.Equal(
+			t,
+			[]string{"root/task.install-jq"},
+			graph.Targets(resolved.DownEdges("root/task.install-tree")),
+		)
+	})
+
+	t.Run("inter-module", func(t *testing.T) {
+		nodes, err := load.Nodes(context.Background(), "../samples/groupedIncludeModule.hcl", false)
+		require.NoError(t, err)
+
+		resolved, err := load.ResolveDependencies(context.Background(), nodes)
+		assert.NoError(t, err)
+
+		// first module is not dependent on other modules
+		assert.NotContains(t, resolved.Dependencies("root/module.test1"), "root/module.test2")
+		assert.NotContains(t, resolved.Dependencies("root/module.test1"), "root/module.test3")
+
+		// other modules should depend on each other
+		assert.Contains(t, resolved.Dependencies("root/module.test2"), "root/module.test1")
+		assert.Contains(t, resolved.Dependencies("root/module.test3"), "root/module.test2")
+	})
+}
