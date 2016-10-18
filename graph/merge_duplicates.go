@@ -35,7 +35,7 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 	logger := logging.GetLogger(ctx).WithField("function", "MergeDuplicates")
 
 	return g.RootFirstTransform(ctx, func(meta *node.Node, out *Graph) error {
-		if meta.ID == "root" {
+		if IsRoot(meta.ID) {
 			return nil
 		}
 

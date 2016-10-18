@@ -74,7 +74,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 }
 
 func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
-	if node == "root" || node == "" {
+	if graph.IsRoot(node) || node == "" {
 		return "", false
 	}
 	siblingID := graph.SiblingID(id, node)

@@ -49,7 +49,7 @@ func SetResources(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger.Debug("loading resources")
 
 	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
-		if meta.ID == "root" {
+		if graph.IsRoot(meta.ID) {
 			return nil
 		}
 

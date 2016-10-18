@@ -181,7 +181,7 @@ func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, sto
 // VertexSplitTraverse and will cause vertex splitting to propogate upwards
 // until it encounters a module
 func TraverseUntilModule(g *graph.Graph, id string) bool {
-	if id == "root" {
+	if graph.IsRoot(id) {
 		return true
 	}
 	elemMeta, ok := g.Get(id)
