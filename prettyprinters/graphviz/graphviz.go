@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	pp "github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/rpc/pb"
 )
 
 // SubgraphMarkerKey is a type alias for an integer and represents the state
@@ -221,9 +222,15 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	maybeSetProperty(attributes, "label", escapeNewline(label))
 
+	srcVert, sok := srcVal.(*pb.GraphComponent_Vertex)
+	destVert, dok := destVal.(*pb.GraphComponent_Vertex)
+	if sok && dok && srcVert.Kind == "module" && destVert.Kind != "module" {
+		return pp.HiddenString(), nil
+	}
+
 	edgeStr := fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
-		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
+		escapeNewline(sourceVertex),
 		buildAttributeString(attributes),
 	)
 	visible := sourceVertex.Visible() && destVertex.Visible()
