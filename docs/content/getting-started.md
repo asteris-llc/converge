@@ -217,7 +217,6 @@ execute differently depending on information such as:
 
 - `param`s passed in by the user
 - information gathered calls to `platform`
-- the status of another resource with `lookup`
 
 To understand how this works, let's consider the following example: You wish to
 create a file, `greeting.txt`. You want that file to contain a greeting in the
@@ -252,7 +251,8 @@ switch "test-switch" {
 Here we define a *conditional* clause using the keyword `switch`, which contains
 several *branches*, defined with they keyword `case`.  Each *branch* contains
 one or more *child* resources that define what should happen when the *branch*
-is executed.
+is executed.  A branch may contain any type of child resource except: modules,
+params, and other conditionals.
 
 *Branch evaluation* refers to the process of evaluating a *predicate* to
 determine whether a branch may be run, and if so looking at the other branches
@@ -285,14 +285,15 @@ value is an error.
 - `default` statements must not have a name or a predicate
 - predicates must evaluate to one of: *t*, *true*, *f*, *false*
 - branches may not contain `module` references
-- predicates may reference `param`s and `lookup` resources outside of the
-- switch statement
+- branches may not contain `param`s
+- predicates may reference `param`s switch statement
+- predicates may not call `lookup`
 - child nodes may refrence `param`s and `lookup` resources outside of the
-- switch statement or within the same branch
+  switch statement or within the same branch
 - no resource may reference anything that is part of a branch that it does not
-- belong to
+  belong to
 - root and module level resources may not reference fields inside of a switch
-- statement
+  statement
 - only the first (top-to-bottom) true branch of a switch will be evaluated
 
 ## What's Next?
