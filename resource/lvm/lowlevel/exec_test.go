@@ -7,26 +7,26 @@ import (
 )
 
 func TestExecRun(t *testing.T) {
-	e := &lowlevel.OsExec{}
+	e := lowlevel.MakeOsExec()
 	err := e.Run("/bin/sh", []string{"-c", "true"})
 	assert.NoError(t, err)
 }
 
 func TestExecRunFail(t *testing.T) {
-	e := &lowlevel.OsExec{}
+	e := lowlevel.MakeOsExec()
 	err := e.Run("sh", []string{"-c", "false"})
 	assert.Error(t, err)
 }
 
 func TestRead(t *testing.T) {
-	e := &lowlevel.OsExec{}
+	e := lowlevel.MakeOsExec()
 	out, err := e.Read("sh", []string{"-c", "echo foo"})
 	assert.NoError(t, err)
 	assert.Equal(t, "foo", out)
 }
 
 func TestQueryFail(t *testing.T) {
-	e := &lowlevel.OsExec{}
+	e := lowlevel.MakeOsExec()
 	_, err := e.Read("sh", []string{"-c", "echo foo && false"})
 	assert.Error(t, err)
 	// FIXME: underlying exec.Command looks not return output on error
@@ -35,7 +35,7 @@ func TestQueryFail(t *testing.T) {
 }
 
 func TestReadMultiline(t *testing.T) {
-	e := &lowlevel.OsExec{}
+	e := lowlevel.MakeOsExec()
 	out, err := e.Read("sh", []string{"-c", "echo foo && echo bar"})
 	assert.NoError(t, err)
 	assert.Equal(t, "foo\nbar", out)

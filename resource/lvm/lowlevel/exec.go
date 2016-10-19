@@ -31,10 +31,14 @@ type Exec interface {
 	Exists(path string) (bool, error)
 }
 
-type OsExec struct {
+type osExec struct {
 }
 
-func (*OsExec) Run(prog string, args []string) error {
+func MakeOsExec() Exec {
+	return &osExec{}
+}
+
+func (*osExec) Run(prog string, args []string) error {
 	log.WithField("module", "lvm").Infof("Executing %s: %v", prog, args)
 	e := exec.Command(prog, args...).Run()
 	if e == nil {
@@ -45,12 +49,12 @@ func (*OsExec) Run(prog string, args []string) error {
 	return e
 }
 
-func (e *OsExec) RunExitCode(prog string, args []string) (int, error) {
+func (e *osExec) RunExitCode(prog string, args []string) (int, error) {
 	err := e.Run(prog, args)
 	return exitStatus(err)
 }
 
-func (*OsExec) ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) {
+func (*osExec) ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) {
 	log.WithField("module", "lvm").Infof("Executing (read) %s: %v", prog, args)
 	out, err := exec.Command(prog, args...).Output()
 	if err != nil {
@@ -64,7 +68,7 @@ func (*OsExec) ReadWithExitCode(prog string, args []string) (stdout string, rc i
 	return strings.Trim(string(out), "\n "), 0, err
 }
 
-func (e *OsExec) Read(prog string, args []string) (stdout string, err error) {
+func (e *osExec) Read(prog string, args []string) (stdout string, err error) {
 	out, rc, err := e.ReadWithExitCode(prog, args)
 	if err != nil {
 		return "", err
@@ -89,27 +93,27 @@ func exitStatus(err error) (int, error) {
 	return 0, err
 }
 
-func (*OsExec) Lookup(prog string) error {
+func (*osExec) Lookup(prog string) error {
 	_, err := exec.LookPath(prog)
 	return err
 }
 
-func (*OsExec) ReadFile(fn string) ([]byte, error) {
+func (*osExec) ReadFile(fn string) ([]byte, error) {
 	log.WithField("module", "lvm").Debugf("Reading %s...", fn)
 	return ioutil.ReadFile(fn)
 }
 
-func (*OsExec) WriteFile(fn string, content []byte, perm os.FileMode) error {
+func (*osExec) WriteFile(fn string, content []byte, perm os.FileMode) error {
 	log.WithField("module", "lvm").Debugf("Writing %s...", fn)
 	return ioutil.WriteFile(fn, content, perm)
 }
 
-func (*OsExec) MkdirAll(path string, perm os.FileMode) error {
+func (*osExec) MkdirAll(path string, perm os.FileMode) error {
 	log.WithField("module", "lvm").Debugf("Make path %s...", path)
 	return os.MkdirAll(path, perm)
 }
 
-func (*OsExec) Exists(path string) (bool, error) {
+func (*osExec) Exists(path string) (bool, error) {
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
@@ -119,6 +123,6 @@ func (*OsExec) Exists(path string) (bool, error) {
 	return true, nil
 }
 
-func (*OsExec) Getuid() int {
+func (*osExec) Getuid() int {
 	return os.Getuid()
 }

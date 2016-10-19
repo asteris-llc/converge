@@ -40,9 +40,16 @@ type RealLVM struct {
 }
 
 func MakeLvmBackend() LVM {
-	return &RealLVM{Backend: &OsExec{}}
+	backend := MakeOsExec()
+	return &RealLVM{Backend: backend}
 }
 
+// MakeRealLVM is actually kludge for DI (intended for creating test-backed RealLVM, and unpublish type inself)
+func MakeRealLVM(backend Exec) LVM {
+	return &RealLVM{Backend: backend}
+}
+
+// FIXME: remove when no more used
 func (lvm *RealLVM) GetBackend() Exec {
 	return lvm.Backend
 }
