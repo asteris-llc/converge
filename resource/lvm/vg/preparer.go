@@ -1,6 +1,8 @@
 package vg
 
 import (
+	"path/filepath"
+
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
@@ -25,7 +27,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		}
 
 		// also resolve symlink here
-		devices[i], err = resolveSymlink(rdev)
+		devices[i], err = filepath.EvalSymlinks(rdev)
 		if err != nil {
 			return nil, err
 		}
