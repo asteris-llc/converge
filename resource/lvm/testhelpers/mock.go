@@ -6,8 +6,11 @@ import (
 	"os"
 )
 
+// MockExecutor is a lowlevel.Exec impleentation for faking system interoperation
 type MockExecutor struct {
 	mock.Mock
+
+	// FIXME: need more proper injection for `lvs` executing, return different output on different calls
 	LvsFirstCall bool // ugly hack
 }
 
@@ -46,6 +49,10 @@ func (me *MockExecutor) ReadFile(fn string) ([]byte, error) {
 	return c.Get(0).([]byte), c.Error(1)
 }
 
+func (me *MockExecutor) Lookup(prog string) error {
+	return me.Called(prog).Error(0)
+}
+
 func (me *MockExecutor) WriteFile(fn string, content []byte, perm os.FileMode) error {
 	c := me.Called(fn, content, perm)
 	return c.Error(0)
@@ -58,4 +65,8 @@ func (me *MockExecutor) MkdirAll(path string, perm os.FileMode) error {
 func (me *MockExecutor) Exists(path string) (bool, error) {
 	c := me.Called(path)
 	return c.Bool(0), c.Error(1)
+}
+
+func (me *MockExecutor) Getuid() int {
+	return me.Called().Int(0)
 }
