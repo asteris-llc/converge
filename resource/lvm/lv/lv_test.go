@@ -17,6 +17,9 @@ func TestCreateLogicalVolume(t *testing.T) {
 	// after creation
 	lvm, me := testhelpers.MakeLvmWithMockExec()
 	me.LvsFirstCall = true
+	me.On("Getuid").Return(0)                  // assume, that we have root
+	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+
 	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
 	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_LVS, nil)

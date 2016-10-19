@@ -16,6 +16,8 @@ import (
 func TestCreateFilesystem(t *testing.T) {
 	lvm, me := testhelpers.MakeLvmWithMockExec()
 	me.LvsFirstCall = true
+	me.On("Getuid").Return(0)
+	me.On("Lookup", "mkfs.xfs").Return(nil)
 	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
 	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_LVS, nil)

@@ -14,6 +14,10 @@ import (
 
 func TestCreateVolumeFromSingleDevice(t *testing.T) {
 	lvm, me := testhelpers.MakeLvmWithMockExec()
+
+	me.On("Getuid").Return(0)                  // assume, that we have root
+	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+
 	me.On("Read", "pvs", mock.Anything).Return("", nil)
 	me.On("Read", "vgs", mock.Anything).Return("", nil)
 	me.On("Run", "vgcreate", []string{"vg0", "/dev/sda1"}).Return(nil)
@@ -34,6 +38,10 @@ func TestCreateVolumeFromSingleDevice(t *testing.T) {
 
 func TestCreateVolumeWhichIsInAnotherGroup(t *testing.T) {
 	lvm, me := testhelpers.MakeLvmWithMockExec()
+
+	me.On("Getuid").Return(0)                  // assume, that we have root
+	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+
 	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
 	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 
@@ -47,6 +55,10 @@ func TestCreateVolumeWhichIsInAnotherGroup(t *testing.T) {
 
 func TestCreateVolumeWhichAlreadyExists(t *testing.T) {
 	lvm, me := testhelpers.MakeLvmWithMockExec()
+
+	me.On("Getuid").Return(0)                  // assume, that we have root
+	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+
 	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
 	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 

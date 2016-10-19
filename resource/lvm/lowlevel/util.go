@@ -2,9 +2,17 @@ package lowlevel
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 type LVM interface {
+	// Check for LVM tools installed and useable
+	Check() error
+
+	// Check for mkfs.* tools installed and useable
+	CheckFilesystemTools(fstype string) error
+
 	QueryLogicalVolumes(vg string) (map[string]*LogicalVolume, error)
 	QueryPhysicalVolumes() (map[string]*PhysicalVolume, error)
 	QueryVolumeGroups() (map[string]*VolumeGroup, error)
@@ -76,4 +84,31 @@ func (lvm *RealLVM) Mountpoint(path string) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (lvm *RealLVM) Check() error {
+	if uid := lvm.Backend.Getuid(); uid != 0 {
+		return fmt.Errorf("lvm require root permissions (uid == 0), but converge run from user id (uid == %d)", uid)
+	}
+	// FIXME: extend list to all used tools or wrap all calls via `lvm $subcommand` and check for lvm only
+	//        second way need careful check, if `lvm $subcommand` and just `$subcommand`  accepot exact same parameters
+	for _, tool := range []string{"lvs", "vgs", "pvs", "lvcreate", "lvreduce", "lvremove", "vgcreate", "vgreduce", "pvcreate"} {
+		if err := lvm.Backend.Lookup(tool); err != nil {
+			return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)
+		}
+	}
+	return nil
+}
+
+func (lvm *RealLVM) CheckFilesystemTools(fstype string) error {
+	// Root check just copied from .Check() because lvm.fs can be used w/o lvm utils,  but require root and mkfs.*
+	if uid := lvm.Backend.Getuid(); uid != 0 {
+		return fmt.Errorf("lvm require root permissions (uid == 0), but converge run from user id (uid == %d)", uid)
+	}
+
+	tool := fmt.Sprintf("mkfs.%s", fstype)
+	if err := lvm.Backend.Lookup(tool); err != nil {
+		return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)
+	}
+	return nil
 }

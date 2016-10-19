@@ -6,6 +6,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/wait"
+	"github.com/pkg/errors"
 )
 
 type ResourceLV struct {
@@ -26,6 +27,11 @@ type Status struct {
 
 func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &Status{}
+
+	if err := r.lvm.Check(); err != nil {
+		return nil, errors.Wrap(err, "lvm.lv")
+	}
+
 	ok, err := r.checkVG()
 	if err != nil {
 		return nil, err

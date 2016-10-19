@@ -11,6 +11,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"github.com/pkg/errors"
 )
 
 type ResourceFS struct {
@@ -33,7 +34,7 @@ type Mount struct {
 }
 
 // FIXME: RequiredBy statement should issued only when non-empty
-const UNIT_TEMPLATE = `[Unit]
+const unit_template = `[Unit]
 Before=local-fs.target {{.Before}}
 
 [Mount]
@@ -47,6 +48,10 @@ RequiredBy={{.RequiredBy}}`
 
 func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
+
+	if err := r.lvm.CheckFilesystemTools(r.mount.Type); err != nil {
+		return nil, errors.Wrap(err, "lvm.fs")
+	}
 
 	if fs, err := r.checkBlkid(r.mount.What); err != nil {
 		return nil, err
@@ -143,7 +148,7 @@ func (r *ResourceFS) unitName() string {
 
 func (r *ResourceFS) renderUnitFile() (string, error) {
 	var b bytes.Buffer
-	tmpl, err := template.New("unit.mount").Parse(UNIT_TEMPLATE)
+	tmpl, err := template.New("unit.mount").Parse(unit_template)
 	if err != nil {
 		return "", err
 	}
