@@ -15,8 +15,6 @@
 package module
 
 import (
-	"fmt"
-
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -37,19 +35,7 @@ func NewPreparer(params map[string]resource.Value) *Preparer {
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	module := &Module{Params: map[string]string{}}
-
-	for key, value := range p.Params {
-		switch v := value.(type) {
-		case string:
-			module.Params[key] = v
-
-		default:
-			module.Params[key] = fmt.Sprintf("%v", value)
-		}
-	}
-
-	return module, nil
+	return &Module{Params: p.Params}, nil
 }
 
 func init() {
