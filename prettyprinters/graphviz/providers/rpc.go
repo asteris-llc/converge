@@ -131,6 +131,7 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 		return pp.VisibleString(fmt.Sprintf("Wait: %s:%d", dest.Host, dest.Port)), nil
 
 	default:
+		fmt.Println("default kind: ", val.Kind)
 		return pp.VisibleString(name), nil
 	}
 }
