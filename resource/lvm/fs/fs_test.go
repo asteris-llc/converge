@@ -31,13 +31,13 @@ func TestCreateFilesystem(t *testing.T) {
 
 	fr := fakerenderer.New()
 
-	r := &fs.ResourceFS{}
 	mount := &fs.Mount{
 		What:  "/dev/mapper/vg0-data",
 		Where: "/mnt/data",
 		Type:  "xfs",
 	}
-	r.Setup(lvm, mount)
+	r, e := fs.NewResourceFS(lvm, mount)
+	require.NoError(t, e)
 	status, err := r.Check(fr)
 	require.NoError(t, err)
 	assert.True(t, status.HasChanges())

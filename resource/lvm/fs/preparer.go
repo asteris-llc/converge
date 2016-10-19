@@ -26,7 +26,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, err
 	}
 
-	r := &ResourceFS{}
 	m := &Mount{
 		What:       device,
 		Where:      mount,
@@ -36,6 +35,5 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Before:     "", // FIXME: render it
 	}
 
-	err = r.Setup(lowlevel.MakeLvmBackend(), m)
-	return r, err
+	return NewResourceFS(lowlevel.MakeLvmBackend(), m)
 }

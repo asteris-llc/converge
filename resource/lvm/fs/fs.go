@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ResourceFS struct {
+type resourceFS struct {
 	mount           *Mount
 	lvm             lowlevel.LVM
 	unitFileName    string
@@ -46,7 +46,7 @@ Type={{.Type}}
 WantedBy=local-fs.target {{.WantedBy}}
 RequiredBy={{.RequiredBy}}`
 
-func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if err := r.lvm.CheckFilesystemTools(r.mount.Type); err != nil {
@@ -90,7 +90,7 @@ func (r *ResourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *ResourceFS) Apply() (resource.TaskStatus, error) {
+func (r *resourceFS) Apply() (resource.TaskStatus, error) {
 	if r.needMkfs {
 		if err := r.lvm.Mkfs(r.mount.What, r.mount.Type); err != nil {
 			return nil, err
@@ -113,39 +113,41 @@ func (r *ResourceFS) Apply() (resource.TaskStatus, error) {
 }
 
 // FIXME: ugly kludge
-func (r *ResourceFS) checkBlkid(name string) (string, error) {
+func (r *resourceFS) checkBlkid(name string) (string, error) {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		return "", nil
 	}
 	return r.lvm.Blkid(name)
 }
 
-func (r *ResourceFS) Setup(lvm lowlevel.LVM, m *Mount) error {
+func NewResourceFS(lvm lowlevel.LVM, m *Mount) (*resourceFS, error) {
 	var err error
-	r.lvm = lvm
-	r.mount = m
+	r := &resourceFS{
+		lvm:   lvm,
+		mount: m,
+	}
 	r.unitFileName = r.unitName()
 	r.unitFileContent, err = r.renderUnitFile()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return r, nil
 }
 
-func (r *ResourceFS) escapedMountpoint() string {
+func (r *resourceFS) escapedMountpoint() string {
 	// FIXME: proper systemd' escaping of r.mountpoint should be
 	return strings.Replace(strings.Trim(r.mount.Where, "/"), "/", "-", -1)
 }
 
-func (r *ResourceFS) unitServiceName() string {
+func (r *resourceFS) unitServiceName() string {
 	return fmt.Sprintf("%s.mount", r.escapedMountpoint())
 }
 
-func (r *ResourceFS) unitName() string {
+func (r *resourceFS) unitName() string {
 	return fmt.Sprintf("/etc/systemd/system/%s", r.unitServiceName())
 }
 
-func (r *ResourceFS) renderUnitFile() (string, error) {
+func (r *resourceFS) renderUnitFile() (string, error) {
 	var b bytes.Buffer
 	tmpl, err := template.New("unit.mount").Parse(unit_template)
 	if err != nil {
@@ -159,5 +161,5 @@ func (r *ResourceFS) renderUnitFile() (string, error) {
 }
 
 func init() {
-	registry.Register("lvm.fs", (*Preparer)(nil), (*ResourceFS)(nil))
+	registry.Register("lvm.fs", (*Preparer)(nil), (*resourceFS)(nil))
 }
