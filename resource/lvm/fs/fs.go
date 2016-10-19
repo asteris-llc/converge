@@ -104,8 +104,7 @@ func (r *ResourceFS) Apply() (resource.TaskStatus, error) {
 
 	// FIXME: need mkdir
 	if r.mountNeedUpdate {
-		// FIXME: abstraction leak
-		if err := r.lvm.GetBackend().Run("systemctl", []string{"start", r.unitServiceName()}); err != nil {
+		if err := r.lvm.StartUnit(r.unitServiceName()); err != nil {
 			return nil, err
 		}
 	}

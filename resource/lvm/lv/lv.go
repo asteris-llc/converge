@@ -5,7 +5,6 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
-	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
 )
 
@@ -82,7 +81,7 @@ func (r *ResourceLV) Apply() (resource.TaskStatus, error) {
 			status.Output = append(status.Output, fmt.Sprintf("WARN: real device path '%s' diverge with planned '%s'", devpath, r.devicePath))
 		}
 		status.DevicePath = devpath
-		if err := r.waitForDevice(devpath); err != nil {
+		if err := r.lvm.WaitForDevice(devpath); err != nil {
 			return status, err
 		}
 	}
@@ -117,21 +116,6 @@ func (r *ResourceLV) deviceMapperPath() (string, error) {
 		return lv.DevicePath, nil
 	}
 	return "", fmt.Errorf("Can't find device mapper path for volume %s/%s", r.group, r.name)
-}
-
-func (r *ResourceLV) waitForDevice(path string) error {
-	retrier := wait.PrepareRetrier("", "", 0)
-	ok, err := retrier.RetryUntil(func() (bool, error) {
-		// FIXME: Abstraction leak. Move all waitForDevice to LVM object?
-		return r.lvm.GetBackend().Exists(path)
-	})
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("device path %s not appeared after %s seconds", path, retrier.Duration.String())
-	}
-	return nil
 }
 
 func init() {

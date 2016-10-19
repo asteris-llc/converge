@@ -3,6 +3,7 @@ package lowlevel
 import (
 	"fmt"
 
+	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
 )
 
@@ -24,15 +25,15 @@ type LVM interface {
 	Mkfs(dev string, fstype string) error
 	Mountpoint(path string) (bool, error)
 	Blkid(dev string) (string, error)
+	WaitForDevice(path string) error
 
 	// systemd units
 	CheckUnit(filename string, content string) (bool, error)
 	UpdateUnit(filename string, content string) error
+	StartUnit(filename string) error
 
 	// FIXME: possible unneeded
 	QueryDeviceMapperName(dmName string) (string, error)
-
-	GetBackend() Exec // FIXME: abstraction leak
 }
 
 type RealLVM struct {
@@ -47,11 +48,6 @@ func MakeLvmBackend() LVM {
 // MakeRealLVM is actually kludge for DI (intended for creating test-backed RealLVM, and unpublish type inself)
 func MakeRealLVM(backend Exec) LVM {
 	return &RealLVM{Backend: backend}
-}
-
-// FIXME: remove when no more used
-func (lvm *RealLVM) GetBackend() Exec {
-	return lvm.Backend
 }
 
 func (lvm *RealLVM) CreateVolumeGroup(vg string, devs []string) error {
@@ -116,6 +112,20 @@ func (lvm *RealLVM) CheckFilesystemTools(fstype string) error {
 	tool := fmt.Sprintf("mkfs.%s", fstype)
 	if err := lvm.Backend.Lookup(tool); err != nil {
 		return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)
+	}
+	return nil
+}
+
+func (lvm *RealLVM) WaitForDevice(path string) error {
+	retrier := wait.PrepareRetrier("", "", 0)
+	ok, err := retrier.RetryUntil(func() (bool, error) {
+		return lvm.Backend.Exists(path)
+	})
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("device path %s not appeared after %s seconds", path, retrier.Duration.String())
 	}
 	return nil
 }
