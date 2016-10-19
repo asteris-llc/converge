@@ -22,3 +22,7 @@ func (lvm *RealLVM) UpdateUnit(filename string, content string) error {
 
 	return lvm.Backend.Run("systemctl", []string{"daemon-reload"})
 }
+
+func (lvm *RealLVM) StartUnit(unitname string) error {
+	return lvm.Backend.Run("systemctl", []string{"start", unitname})
+}
