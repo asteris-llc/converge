@@ -7,8 +7,48 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>Released under the Apache 2.0 license</copyright>
-    <lastBuildDate>Tue, 04 Oct 2016 13:01:50 -0500</lastBuildDate>
+    <lastBuildDate>Wed, 19 Oct 2016 08:54:35 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/0.3.0/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>package.rpm</title>
+      <link>http://converge.aster.is/0.3.0/resources/package-rpm/</link>
+      <pubDate>Wed, 19 Oct 2016 08:54:35 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/0.3.0/resources/package-rpm/</guid>
+      <description>
+
+&lt;p&gt;RPM Package manages system packages with &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt;. It assumes that
+both &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt; are installed on the system, and that the user has
+permissions to install, remove, and query packages.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;package.rpm &amp;quot;mc&amp;quot; {
+  name  = &amp;quot;mc&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of the package or package group.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;State of the package. Present means the package will be installed if
+missing; Absent means the package will be uninstalled if present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>user.group</title>
@@ -892,103 +932,6 @@ an empty string if the value is not set.&lt;/p&gt;
 &lt;p&gt;On Linux systems, this is the value of LSB &lt;code&gt;VERSION_ID&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;Examples: &lt;code&gt;10.11.6&lt;/code&gt; (macOS), &lt;code&gt;835.9.0&lt;/code&gt; (coreOS), &lt;code&gt;8&lt;/code&gt; (debian), &lt;code&gt;16.04&lt;/code&gt; (ubuntu)&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Params and Templates</title>
-      <link>http://converge.aster.is/0.3.0/params-and-templates/</link>
-      <pubDate>Fri, 30 Sep 2016 10:34:07 -0500</pubDate>
-      
-      <guid>http://converge.aster.is/0.3.0/params-and-templates/</guid>
-      <description>
-
-&lt;p&gt;Almost every value in Converge can be templated. We saw the basic usage of
-params in the &lt;a href=&#34;http://converge.aster.is/0.3.0/dependencies/&#34;&gt;using dependencies&lt;/a&gt; guide, but
-there&amp;rsquo;s even more you can do.&lt;/p&gt;
-
-&lt;h2 id=&#34;values&#34;&gt;Values&lt;/h2&gt;
-
-&lt;p&gt;First, it&amp;rsquo;s helpful to realize that you can put almost any value in a param. You
-can have any number, string, or boolean in a param, or a list or map of any
-combination of those. (Note that currently you cannot have a list or map of
-lists or maps, those may be added later.) The resource documentation for any
-given module will give you a guide to the types you can use for each field. Note
-that you can use the string value of any of these values as well, and Converge
-will automatically convert it before providing it to the module. The conversion
-rules are:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;strings&lt;/strong&gt; will be used as-is after expanding all parameters and template
-blocks&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;boolean values&lt;/strong&gt; will be interpreted as-is if they&amp;rsquo;re the literals &lt;code&gt;true&lt;/code&gt; or
-&lt;code&gt;false&lt;/code&gt;. If the value is a string, any capitalization of &lt;code&gt;t&lt;/code&gt; or &lt;code&gt;true&lt;/code&gt; will be
-truth, and any other string value will be false. Numeric values are not
-accepted as boolean values.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Converge will parse &lt;strong&gt;numbers&lt;/strong&gt; according to the bit size and signedness
-specified in the resource. Let&amp;rsquo;s take &lt;code&gt;uint32&lt;/code&gt; as an example: providing a
-negative integer or one above the ceiling for 32-bit unsigned integral values
-will result in an error. Resources also can specify a base for conversion. For
-example, &lt;a href=&#34;http://converge.aster.is/0.3.0/resources/file-mode/&#34;&gt;file.mode&lt;/a&gt;) takes an octal
-(base-8) integral value.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;list&lt;/strong&gt; items will be interpreted using the semantics above&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;map&lt;/strong&gt; keys and values will both be interpreted using the semantics above&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;templates&#34;&gt;Templates&lt;/h2&gt;
-
-&lt;p&gt;Converge provides the following template functions for your use:&lt;/p&gt;
-
-&lt;h3 id=&#34;params&#34;&gt;Params&lt;/h3&gt;
-
-&lt;p&gt;Use of any of these functions will create edges in the graph pointing from your
-resource to the named parameter.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;param&lt;/strong&gt; refers to a parameter as a single stringified value.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;paramList&lt;/strong&gt; refers to a parameter as a list of values. Use this in
-combination with &lt;code&gt;range&lt;/code&gt; to loop over values, as in &lt;code&gt;samples/paramList.hcl&lt;/code&gt; in
-the Converge source.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;paramMap&lt;/strong&gt; refers to a parameter as a map of values. Use this in combination
-with &lt;code&gt;range&lt;/code&gt; to loop over values, as in &lt;code&gt;samples/paramMap.hcl&lt;/code&gt; in the Converge
-source.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;platform&#34;&gt;Platform&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;platform&lt;/strong&gt; retrieves read-only attributes from the system. For example,
-&lt;code&gt;platform.OS&lt;/code&gt; will return with the value of &lt;code&gt;linux&lt;/code&gt; for Linux distributions or
-&lt;code&gt;darwin&lt;/code&gt; for macOS.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;env&lt;/strong&gt; retrieves an item (named by the first argument) from an environment
-variable&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;utility&#34;&gt;Utility&lt;/h3&gt;
-
-&lt;div class=&#34;admonition note&#34;&gt;
-&lt;p class=&#34;admonition-title&#34;&gt;Backwards arguments?&lt;/p&gt;
-&lt;p&gt;Some of the utility functions (like &lt;code&gt;split&lt;/code&gt; and &lt;code&gt;join&lt;/code&gt;) seem to have their
-arguments backwards. This is to allow you to pipe values to them. For example,
-joining a list of strings is &lt;code&gt;{{paramList &amp;quot;x&amp;quot; | join &amp;quot;\n&amp;quot;}}&lt;/code&gt;&lt;/p&gt;
-&lt;/div&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;split&lt;/strong&gt; splits a string (second argument) at the instances of another string
-(first argument).&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;join&lt;/strong&gt; joins a list of anything (second argument) using a string (first
-argument)&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;strong&gt;jsonify&lt;/strong&gt; returns the value as a JSON string&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     

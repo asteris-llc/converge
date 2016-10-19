@@ -304,6 +304,12 @@
 </a>
         
         
+        <a  title="package.rpm" href="http://converge.aster.is/0.3.0/resources/package-rpm/">
+  
+  package.rpm
+</a>
+        
+        
         <a  title="param" href="http://converge.aster.is/0.3.0/resources/param/">
   
   param
@@ -506,6 +512,21 @@ or above.</li>
 <li>The go protoc plugin: <code>go get -a github.com/golang/protobuf/protoc-gen-go</code></li>
 <li>The grpc gateway plugin(s): <code>go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger</code></li>
 </ul>
+
+<h3 id="continuous-integration-and-testing">Continuous Integration and Testing</h3>
+
+<p>We use Wercker for CI with a custom base image. The Dockerfile for that image
+can be found at <code>/ci/Dockerfile</code> in the root of the project, and is pushed as
+<code>asteris/converge-ci</code>. You can test Converge in the container with the
+following invocation:</p>
+
+<pre><code class="language-sh">docker run -i \
+           -t \
+           --rm \
+           --volume $(pwd):/go/src/github.com/asteris-llc/converge \
+           asteris/converge-ci \
+           /bin/bash -c 'cd /go/src/github.com/asteris-llc/converge; make test'
+</code></pre>
 
 <h2 id="license">License</h2>
 

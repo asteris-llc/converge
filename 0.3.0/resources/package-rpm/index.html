@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>docker.container - Converge</title>
+    <title>package.rpm - Converge</title>
     <meta name="generator" content="Hugo 0.17" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/0.3.0/resources/docker-container/">
+    <link rel="canonical" href="http://converge.aster.is/0.3.0/resources/package-rpm/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/0.3.0/resources/docker-container/">
+    <meta property="og:url" content="http://converge.aster.is/0.3.0/resources/package-rpm/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/0.3.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        docker.container
+        package.rpm
       </div>
     </div>
 
@@ -387,27 +387,19 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>docker.container </h1>
+			<h1>package.rpm </h1>
 
 			
 
-<p>Container is responsible for creating docker containers. It assumes that
-there is already a Docker daemon running on the system.</p>
+<p>RPM Package manages system packages with <code>rpm</code> and <code>yum</code>. It assumes that
+both <code>rpm</code> and <code>yum</code> are installed on the system, and that the user has
+permissions to install, remove, and query packages.</p>
 
 <h2 id="example">Example</h2>
 
-<pre><code class="language-hcl">docker.container &quot;nginx&quot; {
-  name  = &quot;nginx&quot;
-  image = &quot;nginx:1.10-alpine&quot;
-  force = &quot;true&quot;
-
-  ports = [
-    &quot;80&quot;,
-  ]
-
-  env {
-    &quot;FOO&quot; = &quot;BAR&quot;
-  }
+<pre><code class="language-hcl">package.rpm &quot;mc&quot; {
+  name  = &quot;mc&quot;
+  state = &quot;present&quot;
 }
 
 </code></pre>
@@ -418,101 +410,16 @@ there is already a Docker daemon running on the system.</p>
 <li><code>name</code> (required string)</li>
 </ul>
 
-<p>name of the container</p>
+<p>Name of the package or package group.</p>
 
 <ul>
-<li><code>image</code> (required string)</li>
+<li><code>state</code> (State)</li>
 </ul>
 
-<p>the image name or ID to use for the container</p>
+<p>Valid values: <code>present</code> and <code>absent</code></p>
 
-<ul>
-<li><code>entrypoint</code> (list of strings)</li>
-</ul>
-
-<p>override the container entrypoint</p>
-
-<ul>
-<li><code>command</code> (list of strings)</li>
-</ul>
-
-<p>override the container command</p>
-
-<ul>
-<li><code>working_dir</code> (string)</li>
-</ul>
-
-<p>override the working directory of the container</p>
-
-<ul>
-<li><code>env</code> (map of string to string)</li>
-</ul>
-
-<p>set environment variables in the container</p>
-
-<ul>
-<li><code>expose</code> (list of strings)</li>
-</ul>
-
-<p>additional ports to expose in the container</p>
-
-<ul>
-<li><code>links</code> (list of strings)</li>
-</ul>
-
-<p>A list of links for the container. Each link entry should be in the form of
-container_name:alias</p>
-
-<ul>
-<li><code>ports</code> (list of strings)</li>
-</ul>
-
-<p>publish container ports to the host. Each item should be in the following
-format:
-ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort.
-Ports can be specified in the format: portnum/proto. If proto is not
-specified, &ldquo;tcp&rdquo; is assumed</p>
-
-<ul>
-<li><code>dns</code> (list of strings)</li>
-</ul>
-
-<p>list of DNS servers for the container to use</p>
-
-<ul>
-<li><code>volumes</code> (list of strings)</li>
-</ul>
-
-<p>bind mounts volumes</p>
-
-<ul>
-<li><code>volumes_from</code> (list of strings)</li>
-</ul>
-
-<p>mounts all volumes from the specified container</p>
-
-<ul>
-<li><code>publish_all_ports</code> (bool)</li>
-</ul>
-
-<p>allocates a random host port for all of a container’s exposed ports.
-Specified as a boolean value</p>
-
-<ul>
-<li><code>status</code> (string)</li>
-</ul>
-
-<p>Valid values: <code>running</code> and <code>created</code></p>
-
-<p>the desired status of the container.</p>
-
-<ul>
-<li><code>force</code> (bool)</li>
-</ul>
-
-<p>indicates whether or not the container will be recreated if the state is
-not what is expected. By default, the module will only check to see if the
-container exists. Specified as a boolean value</p>
+<p>State of the package. Present means the package will be installed if
+missing; Absent means the package will be uninstalled if present.</p>
 
 
 			<aside class="copyright" role="note">
@@ -531,34 +438,18 @@ container exists. Specified as a boolean value</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/0.3.0/resources/user-user/" title="user.user">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              user.user
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/0.3.0/resources/docker-image/" title="docker.image">
+      <a href="http://converge.aster.is/0.3.0/resources/user-group/" title="user.group">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              docker.image
+              user.group
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

@@ -7,8 +7,48 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>Released under the Apache 2.0 license</copyright>
-    <lastBuildDate>Tue, 04 Oct 2016 13:01:50 -0500</lastBuildDate>
+    <lastBuildDate>Wed, 19 Oct 2016 08:54:35 -0500</lastBuildDate>
     <atom:link href="http://converge.aster.is/0.3.0/resources/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>package.rpm</title>
+      <link>http://converge.aster.is/0.3.0/resources/package-rpm/</link>
+      <pubDate>Wed, 19 Oct 2016 08:54:35 -0500</pubDate>
+      
+      <guid>http://converge.aster.is/0.3.0/resources/package-rpm/</guid>
+      <description>
+
+&lt;p&gt;RPM Package manages system packages with &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt;. It assumes that
+both &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt; are installed on the system, and that the user has
+permissions to install, remove, and query packages.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;package.rpm &amp;quot;mc&amp;quot; {
+  name  = &amp;quot;mc&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of the package or package group.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;State of the package. Present means the package will be installed if
+missing; Absent means the package will be uninstalled if present.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>user.group</title>
