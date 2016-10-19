@@ -168,11 +168,8 @@ func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
 	if !ok {
 		return getNearestAncestor(g, graph.ParentID(id), node)
 	}
-	elem, ok := valMeta.Value().(*parse.Node)
+	_, ok = valMeta.Value().(*parse.Node)
 	if !ok {
-		return "", false
-	}
-	if elem.Kind() == "module" {
 		return "", false
 	}
 	return siblingID, true
