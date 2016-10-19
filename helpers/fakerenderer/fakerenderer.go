@@ -28,7 +28,7 @@ func (fr *FakeRenderer) GetID() string {
 	return fr.ID
 }
 
-// Value returns a blank string
+// Value returns the dotvalue
 func (fr *FakeRenderer) Value() (resource.Value, bool) {
 	return fr.DotValue, fr.ValuePresent
 }
