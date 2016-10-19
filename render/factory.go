@@ -34,7 +34,7 @@ type Factory struct {
 }
 
 // ValueThunk lazily evaluates a param
-type ValueThunk func() (string, bool, error)
+type ValueThunk func() (resource.Value, bool, error)
 
 // LazyValue wraps a ValueThunk in an interface and provides a way to cache the
 // thunk evaluation.
@@ -43,7 +43,7 @@ type LazyValue struct {
 }
 
 // Value returns the result of a ValueThunk, evaluating it if necessary
-func (v *LazyValue) Value() (string, bool, error) {
+func (v *LazyValue) Value() (resource.Value, bool, error) {
 	switch result := v.val.(type) {
 	case [3]interface{}:
 		var resultErr error
@@ -54,7 +54,7 @@ func (v *LazyValue) Value() (string, bool, error) {
 	case ValueThunk:
 		val, found, err := result()
 		v.val = [3]interface{}{val, found, err}
-		return val, found, err
+		return resource.Value(val), found, err
 	default:
 		return "", false, errors.New("value is not a thunk")
 	}
@@ -92,9 +92,9 @@ func NewFactory(ctx context.Context, g *graph.Graph) (*Factory, error) {
 
 func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) {
 	name := graph.BaseID(id)
-	f := func() (string, bool, error) { return "", false, nil }
+	f := func() (resource.Value, bool, error) { return resource.Value(""), false, nil }
 	if strings.HasPrefix(name, "param") {
-		f = func() (string, bool, error) {
+		f = func() (resource.Value, bool, error) {
 			parentMeta, ok := gFunc().GetParent(id)
 			if !ok {
 				return "", false, fmt.Errorf("%q was missing from the graph", id)
@@ -109,7 +109,7 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 				return "", false, fmt.Errorf("Parent of param %s was not a module, was %T", id, parentTask)
 			}
 			if val, ok := parent.Params[name[len("param."):]]; ok {
-				return val, true, nil
+				return resource.Value(val), true, nil
 			}
 			return "", false, nil
 		}

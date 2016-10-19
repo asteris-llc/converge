@@ -38,7 +38,7 @@ func (ErrUnresolvable) Error() string { return "node is unresolvable" }
 type Renderer struct {
 	Graph           func() *graph.Graph
 	ID              string
-	DotValue        string
+	DotValue        resource.Value
 	DotValuePresent bool
 	resolverErr     bool
 	Language        *extensions.LanguageExtension
@@ -50,7 +50,7 @@ func (r *Renderer) GetID() string {
 }
 
 // Value of this renderer
-func (r *Renderer) Value() (value string, present bool) {
+func (r *Renderer) Value() (value resource.Value, present bool) {
 	return r.DotValue, r.DotValuePresent
 }
 
