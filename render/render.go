@@ -26,7 +26,6 @@ import (
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
-	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
 )
 
@@ -39,7 +38,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	if err != nil {
 		return nil, err
 	}
-	rendered, err := g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
 		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
 		value, err := pipeline.Exec(meta.Value())
 		if err != nil {
@@ -49,10 +48,6 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 		renderingPlant.Graph = out
 		return nil
 	})
-	if err != nil {
-		return rendered, err
-	}
-	return transform.ResolveConditionals(ctx, rendered)
 }
 
 type pipelineGen struct {
@@ -169,4 +164,8 @@ func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
 		return nil, fmt.Errorf("%s does not implement resource.Task", val.Type())
 	}
 	return asTask, nil
+}
+
+func FakeTaskFromPreparer(r resource.Resource) (resource.Task, error) {
+	return getTypedResourcePointer(r)
 }

@@ -63,7 +63,7 @@ func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error
 
 		vbytes, err := json.Marshal(node)
 		if err != nil {
-			return errors.Wrap(err, "could not marshal vertex")
+			return errors.Wrap(err, fmt.Sprintf("could not marshal vertex for type: %T ", node))
 		}
 
 		err = stream.Send(

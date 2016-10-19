@@ -16,12 +16,14 @@ package transform
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
+	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 )
 
@@ -50,6 +52,30 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				if !ok {
 					continue
 				}
+
+				if childThunk, ok := targetPreparerMeta.Value().(*render.PrepareThunk); ok {
+					junk := make([]byte, 32)
+					rand.Read(junk)
+					thunkPreparer := &render.PrepareThunk{
+						Task: childThunk.Task,
+						Data: junk,
+						Thunk: func(r *render.Factory) (resource.Task, error) {
+							innerThunk, err := childThunk.Thunk(r)
+							if err != nil {
+								return nil, err
+							}
+							cTask := &control.ConditionalTask{
+								Name: targetID,
+								Task: innerThunk,
+							}
+							cTask.SetExecutionController(caseNode)
+							return cTask, nil
+						},
+					}
+					out.Add(targetPreparerMeta.WithValue(thunkPreparer))
+					continue
+				}
+
 				targetPreparer, ok := targetPreparerMeta.Value().(resource.Task)
 				if !ok {
 					continue
@@ -74,6 +100,10 @@ func getSwitchNode(id string, g *graph.Graph) (*control.SwitchTask, bool) {
 		return nil, false
 	}
 	elem := elemMeta.Value()
+	elem, canResolve := resource.ResolveTask(elem)
+	if !canResolve {
+		return nil, false
+	}
 	if asSwitch, ok := elem.(*control.SwitchTask); ok {
 		return asSwitch, true
 	}
@@ -85,7 +115,13 @@ func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
 	if !ok {
 		return nil, false
 	}
+
 	elem := elemMeta.Value()
+
+	elem, canResolve := resource.ResolveTask(elem)
+	if !canResolve {
+		return nil, false
+	}
 	if asCase, ok := elem.(*control.CaseTask); ok {
 		return asCase, true
 	}
