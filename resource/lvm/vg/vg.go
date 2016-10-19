@@ -7,6 +7,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+	"github.com/pkg/errors"
 )
 
 type ResourceVG struct {
@@ -20,6 +21,10 @@ type ResourceVG struct {
 
 func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
+
+	if err := r.lvm.Check(); err != nil {
+		return nil, errors.Wrap(err, "lvm.vg")
+	}
 
 	pvs, err := r.lvm.QueryPhysicalVolumes()
 	if err != nil {
