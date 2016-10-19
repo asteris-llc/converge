@@ -12,11 +12,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Exec is interface to `real system` also used for test injections
+// FIXME: should be reviewed, and possible refactored as base for all
+//        processes/filesystem operrations, to make the easy mockable
+// FIXME: split to ExecInterface, FilesystemInterface (possible also SystemInterface for Getuid)
 type Exec interface {
 	Run(prog string, args []string) error
 	RunExitCode(prog string, args []string) (int, error) // for mountpoint querying
 	Read(prog string, args []string) (stdout string, err error)
 	ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) // for blkid querying
+	Lookup(prog string) error
+	Getuid() int
 
 	// unit read/write injection
 	ReadFile(fn string) ([]byte, error)
@@ -83,6 +89,11 @@ func exitStatus(err error) (int, error) {
 	return 0, err
 }
 
+func (*OsExec) Lookup(prog string) error {
+	_, err := exec.LookPath(prog)
+	return err
+}
+
 func (*OsExec) ReadFile(fn string) ([]byte, error) {
 	log.WithField("module", "lvm").Debugf("Reading %s...", fn)
 	return ioutil.ReadFile(fn)
@@ -106,4 +117,8 @@ func (*OsExec) Exists(path string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (*OsExec) Getuid() int {
+	return os.Getuid()
 }
