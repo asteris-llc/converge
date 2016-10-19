@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/resource/docker/container"
@@ -27,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/resource/file/directory"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/asteris-llc/converge/resource/wait/port"
+
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
 )
@@ -130,8 +132,22 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 
 		return pp.VisibleString(fmt.Sprintf("Wait: %s:%d", dest.Host, dest.Port)), nil
 
+	case "macro.switch":
+		prefix := "/root/macro.switch."
+		var str = name
+		if len(name) > len(prefix) {
+			str = str[len(prefix)-1:]
+		}
+		return pp.VisibleString(str), nil
+
+	case "macro.case":
+		dest := new(control.CaseTask)
+		if err := json.Unmarshal(val.Details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal docker port")
+		}
+		return pp.VisibleString(fmt.Sprintf("case\n\\\"%s\\\"", dest.Predicate)), nil
+
 	default:
-		fmt.Println("default kind: ", val.Kind)
 		return pp.VisibleString(name), nil
 	}
 }
@@ -159,6 +175,12 @@ func (p RPCProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.Proper
 
 	case "docker.image", "docker.container":
 		properties["shape"] = "box3d"
+
+	case "macro.switch":
+		properties["shape"] = "circle"
+
+	case "macro.case":
+		properties["shape"] = "diamond"
 	}
 
 	return properties
@@ -168,6 +190,39 @@ func (p RPCProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.Proper
 // originating from the Root node invisible.
 func (p RPCProvider) EdgeGetProperties(src graphviz.GraphEntity, dst graphviz.GraphEntity) graphviz.PropertySet {
 	properties := make(map[string]string)
+
+	srcVal, ok := src.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
+		return properties
+	}
+
+	dstVal, ok := dst.Value.(*pb.GraphComponent_Vertex)
+	if !ok {
+		return properties
+	}
+
+	var dest *control.CaseTask
+
+	if srcVal.Kind == "macro.case" {
+		dest = new(control.CaseTask)
+		if err := json.Unmarshal(srcVal.Details, dest); err != nil {
+			return properties
+		}
+	} else if dstVal.Kind == "macro.Case" {
+		dest = new(control.CaseTask)
+		if err := json.Unmarshal(dstVal.Details, dest); err != nil {
+			return properties
+		}
+	}
+
+	if nil == dest {
+		return properties
+	}
+
+	if dest.ShouldEvaluate() {
+		properties["color"] = "blue"
+	}
+
 	return properties
 }
 
