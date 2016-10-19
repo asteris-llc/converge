@@ -17,7 +17,7 @@ param "protoc-version" {
 module "deps.hcl" "deps" {
   params {
     gopath = "{{param `gopath`}}"
-    name   = "apt-utils ca-certificates curl git gcc unzip"
+    name   = "apt-utils ca-certificates curl make git gcc graphviz unzip"
   }
 }
 
