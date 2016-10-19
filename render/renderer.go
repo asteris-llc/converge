@@ -15,7 +15,6 @@
 package render
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/param"
+	"github.com/pkg/errors"
 )
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
@@ -204,7 +204,7 @@ func (r *Renderer) lookup(name string) (string, error) {
 			r.resolverErr = true
 			return "", ErrUnresolvable{}
 		}
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("cannot perform a lookup of %s at %s", fqgn, r.ID))
 	}
 
 	return fmt.Sprintf("%v", result), nil
