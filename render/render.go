@@ -31,7 +31,7 @@ import (
 )
 
 // Values for rendering
-type Values map[string]interface{}
+type Values map[string]resource.Value
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {

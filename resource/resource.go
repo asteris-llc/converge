@@ -33,10 +33,13 @@ type Resource interface {
 	Prepare(Renderer) (Task, error)
 }
 
+// Value is anything that can be in a renderer's Value
+type Value interface{}
+
 // Renderer is passed to resources
 type Renderer interface {
 	GetID() string
-	Value() (value string, present bool)
+	Value() (value Value, present bool)
 	Render(name, content string) (string, error)
 }
 

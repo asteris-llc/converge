@@ -14,10 +14,12 @@
 
 package fakerenderer
 
+import "github.com/asteris-llc/converge/resource"
+
 // FakeRenderer is a pass-through renderer for testing resources
 type FakeRenderer struct {
 	ID           string
-	DotValue     string
+	DotValue     resource.Value
 	ValuePresent bool
 }
 
@@ -27,7 +29,7 @@ func (fr *FakeRenderer) GetID() string {
 }
 
 // Value returns a blank string
-func (fr *FakeRenderer) Value() (string, bool) {
+func (fr *FakeRenderer) Value() (resource.Value, bool) {
 	return fr.DotValue, fr.ValuePresent
 }
 

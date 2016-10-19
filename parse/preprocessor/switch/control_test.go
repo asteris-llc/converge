@@ -37,7 +37,7 @@ func (m *MockRenderer) GetID() string {
 }
 
 // Value is a mock value
-func (m *MockRenderer) Value() (string, bool) {
+func (m *MockRenderer) Value() (resource.Value, bool) {
 	args := m.Called()
 	return args.String(0), args.Bool(1)
 }
