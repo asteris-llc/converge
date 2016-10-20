@@ -4,7 +4,7 @@ type VolumeGroup struct {
 	Name string `mapstructure:"LVM2_VG_NAME"`
 }
 
-func (lvm *RealLVM) QueryVolumeGroups() (map[string]*VolumeGroup, error) {
+func (lvm *realLVM) QueryVolumeGroups() (map[string]*VolumeGroup, error) {
 	result := map[string]*VolumeGroup{}
 	vgs, err := lvm.Query("vgs", "all", []string{})
 	if err != nil {

@@ -16,7 +16,7 @@ type MockExecutor struct {
 
 func MakeLvmWithMockExec() (lowlevel.LVM, *MockExecutor) {
 	me := &MockExecutor{}
-	lvm := &lowlevel.RealLVM{Backend: me}
+	lvm := lowlevel.MakeRealLVM(me)
 	return lvm, me
 }
 

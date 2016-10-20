@@ -36,50 +36,50 @@ type LVM interface {
 	QueryDeviceMapperName(dmName string) (string, error)
 }
 
-type RealLVM struct {
-	Backend Exec
+type realLVM struct {
+	backend Exec
 }
 
 func MakeLvmBackend() LVM {
 	backend := MakeOsExec()
-	return &RealLVM{Backend: backend}
+	return &realLVM{backend: backend}
 }
 
 // MakeRealLVM is actually kludge for DI (intended for creating test-backed RealLVM, and unpublish type inself)
 func MakeRealLVM(backend Exec) LVM {
-	return &RealLVM{Backend: backend}
+	return &realLVM{backend: backend}
 }
 
-func (lvm *RealLVM) CreateVolumeGroup(vg string, devs []string) error {
+func (lvm *realLVM) CreateVolumeGroup(vg string, devs []string) error {
 	args := []string{vg}
 	args = append(args, devs...)
-	return lvm.Backend.Run("vgcreate", args)
+	return lvm.backend.Run("vgcreate", args)
 }
 
-func (lvm *RealLVM) ExtendVolumeGroup(vg string, dev string) error {
-	return lvm.Backend.Run("vgextend", []string{vg, dev})
+func (lvm *realLVM) ExtendVolumeGroup(vg string, dev string) error {
+	return lvm.backend.Run("vgextend", []string{vg, dev})
 }
 
-func (lvm *RealLVM) ReduceVolumeGroup(vg string, dev string) error {
-	return lvm.Backend.Run("vgreduce", []string{vg, dev})
+func (lvm *realLVM) ReduceVolumeGroup(vg string, dev string) error {
+	return lvm.backend.Run("vgreduce", []string{vg, dev})
 }
 
-func (lvm *RealLVM) CreatePhysicalVolume(dev string) error {
-	return lvm.Backend.Run("pvcreate", []string{dev})
+func (lvm *realLVM) CreatePhysicalVolume(dev string) error {
+	return lvm.backend.Run("pvcreate", []string{dev})
 }
 
-func (lvm *RealLVM) CreateLogicalVolume(group string, volume string, size int64, sizeOption string, sizeUnit string) error {
+func (lvm *realLVM) CreateLogicalVolume(group string, volume string, size int64, sizeOption string, sizeUnit string) error {
 	sizeStr := fmt.Sprintf("%d%s", size, sizeUnit)
 	option := fmt.Sprintf("-%s", sizeOption)
-	return lvm.Backend.Run("lvcreate", []string{"-n", volume, option, sizeStr, group})
+	return lvm.backend.Run("lvcreate", []string{"-n", volume, option, sizeStr, group})
 }
 
-func (lvm *RealLVM) Mkfs(dev string, fstype string) error {
-	return lvm.Backend.Run("mkfs", []string{"-t", fstype, dev})
+func (lvm *realLVM) Mkfs(dev string, fstype string) error {
+	return lvm.backend.Run("mkfs", []string{"-t", fstype, dev})
 }
 
-func (lvm *RealLVM) Mountpoint(path string) (bool, error) {
-	rc, err := lvm.Backend.RunExitCode("mountpoint", []string{"-q", path})
+func (lvm *realLVM) Mountpoint(path string) (bool, error) {
+	rc, err := lvm.backend.RunExitCode("mountpoint", []string{"-q", path})
 	if err != nil {
 		return false, err
 	}
@@ -89,37 +89,37 @@ func (lvm *RealLVM) Mountpoint(path string) (bool, error) {
 	return false, nil
 }
 
-func (lvm *RealLVM) Check() error {
-	if uid := lvm.Backend.Getuid(); uid != 0 {
+func (lvm *realLVM) Check() error {
+	if uid := lvm.backend.Getuid(); uid != 0 {
 		return fmt.Errorf("lvm require root permissions (uid == 0), but converge run from user id (uid == %d)", uid)
 	}
 	// FIXME: extend list to all used tools or wrap all calls via `lvm $subcommand` and check for lvm only
 	//        second way need careful check, if `lvm $subcommand` and just `$subcommand`  accepot exact same parameters
 	for _, tool := range []string{"lvs", "vgs", "pvs", "lvcreate", "lvreduce", "lvremove", "vgcreate", "vgreduce", "pvcreate"} {
-		if err := lvm.Backend.Lookup(tool); err != nil {
+		if err := lvm.backend.Lookup(tool); err != nil {
 			return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)
 		}
 	}
 	return nil
 }
 
-func (lvm *RealLVM) CheckFilesystemTools(fstype string) error {
+func (lvm *realLVM) CheckFilesystemTools(fstype string) error {
 	// Root check just copied from .Check() because lvm.fs can be used w/o lvm utils,  but require root and mkfs.*
-	if uid := lvm.Backend.Getuid(); uid != 0 {
+	if uid := lvm.backend.Getuid(); uid != 0 {
 		return fmt.Errorf("lvm require root permissions (uid == 0), but converge run from user id (uid == %d)", uid)
 	}
 
 	tool := fmt.Sprintf("mkfs.%s", fstype)
-	if err := lvm.Backend.Lookup(tool); err != nil {
+	if err := lvm.backend.Lookup(tool); err != nil {
 		return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)
 	}
 	return nil
 }
 
-func (lvm *RealLVM) WaitForDevice(path string) error {
+func (lvm *realLVM) WaitForDevice(path string) error {
 	retrier := wait.PrepareRetrier("", "", 0)
 	ok, err := retrier.RetryUntil(func() (bool, error) {
-		return lvm.Backend.Exists(path)
+		return lvm.backend.Exists(path)
 	})
 	if err != nil {
 		return err

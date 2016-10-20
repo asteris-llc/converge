@@ -5,7 +5,7 @@ type LogicalVolume struct {
 	DevicePath string `mapstructure:"LVM2_LV_DM_PATH"`
 }
 
-func (lvm *RealLVM) QueryLogicalVolumes(vg string) (map[string]*LogicalVolume, error) {
+func (lvm *realLVM) QueryLogicalVolumes(vg string) (map[string]*LogicalVolume, error) {
 	result := map[string]*LogicalVolume{}
 	lvs, err := lvm.Query("lvs", "all", []string{vg})
 	if err != nil {
