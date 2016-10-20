@@ -2,7 +2,7 @@
 set -eo pipefail
 
 ROOT=$(pwd)
-SOURCE=${1:-"$ROOT"/samples/conditional.hcl}
+
 
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
@@ -12,107 +12,77 @@ trap finish EXIT
 
 pushd "$TMP"
 
-"$ROOT"/converge apply --local "$SOURCE"
+test_basic_conditionals() {
+    SOURCE=${1:-"$ROOT"/samples/conditional.hcl}
+    "$ROOT"/converge apply --local "$SOURCE"
 
-if [ -f foo-file.txt ]; then
-    echo "foo-file.txt shouldn't exist!"
-    exit 1
-fi
+    if [ -f foo-file.txt ]; then
+        echo "foo-file.txt shouldn't exist!"
+        exit 1
+    fi
 
-if [ -f foo-file-2.txt ]; then
-    echo "foo-file-2.txt shouldn't exist!"
-    exit 1
-fi
+    if [ -f foo-file-2.txt ]; then
+        echo "foo-file-2.txt shouldn't exist!"
+        exit 1
+    fi
 
-"$ROOT"/converge apply --local -p "val=1" "$SOURCE"
+    "$ROOT"/converge apply --local --only-show-changes -p "val=1" "$SOURCE"
 
-if [ ! -f foo-file.txt ]; then
-    echo "foo-file.txt doesn't exist!"
-    exit 1
-fi
+    if [ ! -f foo-file.txt ]; then
+        echo "foo-file.txt doesn't exist!"
+        exit 1
+    fi
 
-if [ ! -f foo-file-2.txt ]; then
-    echo "foo-file-2.txt doesn't exist!"
-    exit 1
-fi
+    if [ ! -f foo-file-2.txt ]; then
+        echo "foo-file-2.txt doesn't exist!"
+        exit 1
+    fi
 
-if [[ "$(cat foo-file.txt)" != "foo1" ]]; then
-    echo "foo-file.txt doesn't have the right content"
-    echo "has '$(at foo-file.txt)', want 'foo1'"
-    exit 1
-fi
+    if [[ "$(cat foo-file.txt)" != "foo1" ]]; then
+        echo "foo-file.txt doesn't have the right content"
+        echo "has '$(cat foo-file.txt)', want 'foo1'"
+        exit 1
+    fi
 
-if [[ "$(cat foo-file-2.txt)" != "foo-file.txt" ]]; then
-    echo "foo-file-2.txt doesn't have the right content"
-    echo "has '$(at foo-file-2.txt)', want 'foo-file.txt'"
-    exit 1
-fi
+    if [[ "$(cat foo-file-2.txt)" != "foo-file.txt" ]]; then
+        echo "foo-file-2.txt doesn't have the right content"
+        echo "has '$(cat foo-file-2.txt)', want 'foo-file.txt'"
+        exit 1
+    fi
+    return 0
+}
 
-SOURCE=${1:-"$ROOT"/samples/conditionalLanguages.hcl}
+test_language_conditionals() {
 
-"$ROOT"/converge apply --local "$SOURCE"
+    SOURCE=${1:-"$ROOT"/samples/conditionalLanguages.hcl}
 
-if [ ! -f greeting.txt ]; then
-    echo "greeting.txt doesn't exist!"
-    exit 1
-fi
+    test_lang_with_params() {
+        "$ROOT"/converge apply --local --only-show-changes $1 "$SOURCE"
 
-if [[ "$(cat greeting.txt)" != "hello" ]]; then
-    echo "greeting.txt doesn't have the right content"
-    echo "has '$(at greeting.txt)', want 'hello'"
-    exit 1
-fi
+        if [ ! -f greeting.txt ]; then
+            echo "greeting.txt doesn't exist!"
+            exit 1
+        fi
 
-"$ROOT"/converge apply --local -p "lang=spanish" "$SOURCE"
+        if [[ "$(cat greeting.txt)" != "$2" ]]; then
+            echo "greeting.txt doesn't have the right content"
+            echo "has '$(cat greeting.txt)', want '$2'"
+            exit 1
+        fi
+        return 0
+    }
 
-if [ ! -f greeting.txt ]; then
-    echo "greeting.txt doesn't exist!"
-    exit 1
-fi
+    test_lang_with_params "" "hello"
+    test_lang_with_params "-p lang=spanish" "hola"
+    test_lang_with_params "-p lang=french" "salut"
+    test_lang_with_params "-p lang=japanese" "もしもし"
+    test_lang_with_params "-p lang=english" "hello"
+    test_lang_with_params "-p lang=esperanto" "hello"
 
-if [[ "$(cat greeting.txt)" != "hola" ]]; then
-    echo "greeting.txt doesn't have the right content"
-    echo "has '$(at greeting.txt)', want 'hola'"
-    exit 1
-fi
+    return 0
+}
 
-"$ROOT"/converge apply --local -p "lang=french" "$SOURCE"
-
-if [ ! -f greeting.txt ]; then
-    echo "greeting.txt doesn't exist!"
-    exit 1
-fi
-
-if [[ "$(cat greeting.txt)" != "salut" ]]; then
-    echo "greeting.txt doesn't have the right content"
-    echo "has '$(at greeting.txt)', want 'salut'"
-    exit 1
-fi
-
-"$ROOT"/converge apply --local -p "lang=japanese" "$SOURCE"
-
-if [ ! -f greeting.txt ]; then
-    echo "greeting.txt doesn't exist!"
-    exit 1
-fi
-
-if [[ "$(cat greeting.txt)" != "もしもし" ]]; then
-    echo "greeting.txt doesn't have the right content"
-    echo "has '$(at greeting.txt)', want 'もしもし'"
-    exit 1
-fi
-
-"$ROOT"/converge apply --local -p "lang=esperanto" "$SOURCE"
-
-if [ ! -f greeting.txt ]; then
-    echo "greeting.txt doesn't exist!"
-    exit 1
-fi
-
-if [[ "$(cat greeting.txt)" != "hello" ]]; then
-    echo "greeting.txt doesn't have the right content"
-    echo "has '$(at greeting.txt)', want 'hello'"
-    exit 1
-fi
+test_basic_conditionals
+test_language_conditionals
 
 popd

@@ -54,6 +54,12 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 				}
 
 				if childThunk, ok := targetPreparerMeta.Value().(*render.PrepareThunk); ok {
+
+					// We're adding a random 32-bit byte slice here ensures that we don't
+					// get hash collisions in the PrepareThunk during duplicate merging.
+					// This is necessary because we can't hash on the Thunk function, and
+					// the Task field is typically a stub value that would overlap for
+					// non-mergable nodes.
 					junk := make([]byte, 32)
 					rand.Read(junk)
 					thunkPreparer := &render.PrepareThunk{

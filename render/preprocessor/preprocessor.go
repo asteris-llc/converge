@@ -269,6 +269,11 @@ func EvalMember(name string, obj interface{}) (reflect.Value, error) {
 	return fields[k], nil
 }
 
+// Returns true if this is a non-nil pointer or interface
+func indirectStruct(v reflect.Value) bool {
+	return (v.Kind() == reflect.Ptr && !v.IsNil()) || v.Kind() == reflect.Interface
+}
+
 // FieldMap generates a map of field names to values for an interface, including
 // embedded structs and interfaces.  If a field is defined in more than one
 // embedded struct or interface then it is excluded (unless it is also present
@@ -283,8 +288,14 @@ func FieldMap(obj interface{}) map[string]reflect.Value {
 	if canBeNil(val) && val.IsNil() {
 		return results
 	}
-	for ; (val.Kind() == reflect.Ptr && !val.IsNil()) || val.Kind() == reflect.Interface; val = val.Elem() {
+
+	for {
+		if !indirectStruct(val) {
+			break
+		}
+		val = val.Elem()
 	}
+
 	for idx := 0; idx < val.Type().NumField(); idx++ {
 		sfield := val.Type().Field(idx)
 		if sfield.Anonymous {
