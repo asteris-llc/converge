@@ -24,7 +24,7 @@ switch "test-switch" {
 
 file.content "foo1" {
   destination = "foo1.txt"
-  content     = "foo1\n"
+  content     = "foo1"
 }
 
 file.content "foo3" {
