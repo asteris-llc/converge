@@ -4,8 +4,8 @@ import (
 	"os"
 )
 
-func (lvm *RealLVM) CheckUnit(filename string, content string) (bool, error) {
-	realContent, err := lvm.Backend.ReadFile(filename)
+func (lvm *realLVM) CheckUnit(filename string, content string) (bool, error) {
+	realContent, err := lvm.backend.ReadFile(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return true, nil
@@ -15,14 +15,14 @@ func (lvm *RealLVM) CheckUnit(filename string, content string) (bool, error) {
 	return string(realContent) != content, nil
 }
 
-func (lvm *RealLVM) UpdateUnit(filename string, content string) error {
-	if err := lvm.Backend.WriteFile(filename, []byte(content), 0644); err != nil {
+func (lvm *realLVM) UpdateUnit(filename string, content string) error {
+	if err := lvm.backend.WriteFile(filename, []byte(content), 0644); err != nil {
 		return err
 	}
 
-	return lvm.Backend.Run("systemctl", []string{"daemon-reload"})
+	return lvm.backend.Run("systemctl", []string{"daemon-reload"})
 }
 
-func (lvm *RealLVM) StartUnit(unitname string) error {
-	return lvm.Backend.Run("systemctl", []string{"start", unitname})
+func (lvm *realLVM) StartUnit(unitname string) error {
+	return lvm.backend.Run("systemctl", []string{"start", unitname})
 }
