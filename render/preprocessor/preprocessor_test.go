@@ -510,7 +510,8 @@ func TestEvalTerms(t *testing.T) {
 	})
 }
 
-// Test cases where we have an embedded interface (like resource.Task)
+// TestAnonymousEmbddedInterfaces test cases where we have an embedded interface
+// (like resource.Task)
 func TestAnonymousEmbddedInterfaces(t *testing.T) {
 	t.Run("has path finds non-embedded fields", func(t *testing.T) {
 		s := &TestAnonEmbedded{TestInterface: &TestImplA{}, FieldD: "d"}
@@ -598,28 +599,35 @@ func TestAnonymousEmbddedInterfaces(t *testing.T) {
 	})
 }
 
+// TestInterface is an interface to ensure we can look through structs
 type TestInterface interface {
 	InterfaceFunc() string
 }
 
+// TestImplA is a stub implementation of TestInterface
 type TestImplA struct {
 	FieldA      string
 	FieldShared string
 }
 
+// InterfaceFunc ensure we've implemented TestInterface
 func (a *TestImplA) InterfaceFunc() string { return "TestImplA" }
 
+// TestImplB is a stub implementation of TestInterface
 type TestImplB struct {
 	FieldB      string
 	FieldShared string
 }
 
+// InterfaceFunc ensure we've implemented TestInterface
 func (a *TestImplB) InterfaceFunc() string { return "TestImplB" }
 
+// EmbeddableStruct is a test struct
 type EmbeddableStruct struct {
 	Embedded string
 }
 
+// TestAnonEmbedded lets us test pulling fields from anonymous interfaces
 type TestAnonEmbedded struct {
 	TestInterface
 	*EmbeddableStruct

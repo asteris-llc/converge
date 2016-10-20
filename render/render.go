@@ -166,6 +166,10 @@ func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
 	return asTask, nil
 }
 
+// FakeTaskFromPreparer provides a wrapper around the internal
+// getTypedResourcePointer function.  It should be removed in a future refactor
+// but is in place until the code for dealing with thunked branch nodes has
+// stabilized.
 func FakeTaskFromPreparer(r resource.Resource) (resource.Task, error) {
 	return getTypedResourcePointer(r)
 }
