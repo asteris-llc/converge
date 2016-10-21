@@ -133,8 +133,8 @@ func TestUpEdges(t *testing.T) {
 	assert.Equal(t, 0, len(g.UpEdges("one")))
 }
 
-// TestDownEdgesInGroup tests that UpEdgesInGroup returns only edges with
-// values in a group
+// TestUpEdgesInGroup tests that UpEdgesInGroup returns only edges with values
+// in a group
 func TestUpEdgesInGroup(t *testing.T) {
 	t.Parallel()
 
