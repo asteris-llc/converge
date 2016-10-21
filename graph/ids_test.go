@@ -68,3 +68,16 @@ func TestIsDescendentIDNot(t *testing.T) {
 
 	assert.False(t, graph.IsDescendentID("a/b", "a/c"))
 }
+
+// TestIsRoot tests the IsRoot function
+func TestIsRoot(t *testing.T) {
+	t.Parallel()
+
+	t.Run("is root", func(t *testing.T) {
+		assert.True(t, graph.IsRoot("root"))
+	})
+
+	t.Run("is not root", func(t *testing.T) {
+		assert.False(t, graph.IsRoot("root/module.test"))
+	})
+}

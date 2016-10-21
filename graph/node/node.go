@@ -14,19 +14,28 @@
 
 package node
 
+// Groupable returns a group
+type Groupable interface {
+	Group() string
+}
+
 // Node tracks the metadata associated with a node in the graph
 type Node struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
+	Group string `json:"group"`
 
 	value interface{}
 }
 
 // New creates a new node
 func New(id string, value interface{}) *Node {
-	return &Node{
+	n := &Node{
 		ID:    id,
 		value: value,
 	}
+	n.setGroup()
+
+	return n
 }
 
 // Value gets the inner value of this node
@@ -39,6 +48,13 @@ func (n *Node) WithValue(value interface{}) *Node {
 	copied := new(Node)
 	*copied = *n
 	copied.value = value
+	copied.setGroup()
 
 	return copied
+}
+
+func (n *Node) setGroup() {
+	if groupable, ok := n.value.(Groupable); ok {
+		n.Group = groupable.Group()
+	}
 }
