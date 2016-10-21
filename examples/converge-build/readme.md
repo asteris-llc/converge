@@ -1,24 +1,45 @@
 # converge-builder
 
-A converge sample that sets a go build environment for converge. After installing these modules, you should be able
-to compile converge.
+A converge sample that sets a go build environment for converge. After installing these 
+modules, you should be able to compile converge.
 
 ## Usage
 
-Download converge from the [releases](https://github.com/asteris-llc/converge/releases) page. Then
-run the following commands based on your platform:
+Download converge from the [releases](https://github.com/asteris-llc/converge/releases) page. 
+Then run the following commands based on your platform:
 
-### Running on CentOS/Redhat/Fedora
+### Running on Linux
+
+CentOS, Fedora, Debian and Ubuntu are currently supported.
+
+First install dependencies (go and ProtocolBuffers) as root:
 
 ```shell
-$ converge apply --local converge-centos.hcl
+$ sudo converge apply --local converge-linux.hcl
 ...
 ```
 
-### Running on Debian/Ubuntu
+Next, install go dependencies as the user who will be building converge
 
 ```shell
-$ converge apply --local converge-deb-ubuntu.hcl
+$ converge apply --local godeps.hcl
+...
+```
+
+By default, go dependencies will be installed into `$HOME/go`. To override this,
+set the `gopath` parameter:
+
+```shell
+$ converge apply --local --param gopath=/build/go godeps.hcl
+...
+```
+
+To run a `make test` of converge, run the `converge-make.hcl` module.
+By default the `master` branch will be built, but this can be overridden
+using the `branch` parameter.
+
+```shell
+$ converge apply --local --param branch=origin/feature/test converge-make.hcl
 ...
 ```
 
