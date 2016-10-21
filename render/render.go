@@ -76,7 +76,7 @@ func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.
 // the node is a valide resource.Resource return it.  If it's not root and not a
 // resource.Resource return an error.
 func (p pipelineGen) maybeTransformRoot(idi interface{}) (interface{}, error) {
-	if p.ID == "root" {
+	if graph.IsRoot(p.ID) {
 		return module.NewPreparer(p.Top), nil
 	}
 	if res, ok := idi.(resource.Resource); ok {

@@ -161,6 +161,15 @@ func TestNodeSource(t *testing.T) {
 	assert.Equal(t, "x", node.Source())
 }
 
+// TestNodeGroup verifies that a group can be parsed
+func TestNodeGroup(t *testing.T) {
+	t.Parallel()
+
+	node, err := fromString(`task "x" { group = "somegroup" }`)
+	assert.NoError(t, err)
+	assert.Equal(t, "somegroup", node.Group())
+}
+
 func TestNodeGet(t *testing.T) {
 	t.Parallel()
 

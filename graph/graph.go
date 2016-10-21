@@ -169,12 +169,40 @@ func (g *Graph) Connect(from, to string) {
 	g.inner.Connect(dag.BasicEdge(from, to))
 }
 
+// SafeConnect connects two vertices together by ID but only if valid
+func (g *Graph) SafeConnect(from, to string) error {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.Connect(dag.BasicEdge(from, to))
+
+	if err := g.Validate(); err != nil {
+		g.inner.RemoveEdge(dag.BasicEdge(from, to))
+		return err
+	}
+	return nil
+}
+
 // Disconnect two vertices by IDs
 func (g *Graph) Disconnect(from, to string) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
 	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+}
+
+// SafeDisconnect disconnects two vertices by IDs but only if valid
+func (g *Graph) SafeDisconnect(from, to string) error {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+
+	if err := g.Validate(); err != nil {
+		g.inner.Connect(dag.BasicEdge(from, to))
+		return err
+	}
+	return nil
 }
 
 // UpEdges returns inward-facing edges of the specified vertex
@@ -203,6 +231,36 @@ func (g *Graph) DownEdges(id string) (out []dag.Edge) {
 	}
 
 	return out
+}
+
+// DownEdgesInGroup returns the outward-facing edges of the specified vertex in
+// the specified group
+func (g *Graph) DownEdgesInGroup(id, group string) (out []string) {
+	var ingroup []string
+	for _, edge := range g.DownEdges(id) {
+		edgeID := edge.Target().(string)
+		if edgeNode, ok := g.Get(edgeID); ok {
+			if edgeNode.Group == group {
+				ingroup = append(ingroup, edgeID)
+			}
+		}
+	}
+	return ingroup
+}
+
+// UpEdgesInGroup returns the outward-facing edges of the specified vertex in
+// the specified group
+func (g *Graph) UpEdgesInGroup(id, group string) (out []string) {
+	var ingroup []string
+	for _, edge := range g.UpEdges(id) {
+		edgeID := edge.Source().(string)
+		if edgeNode, ok := g.Get(edgeID); ok {
+			if edgeNode.Group != "" && edgeNode.Group == group {
+				ingroup = append(ingroup, edgeID)
+			}
+		}
+	}
+	return ingroup
 }
 
 // Descendents gets a list of all descendents (not just children, everything)
@@ -551,7 +609,7 @@ func (g *Graph) Validate() error {
 	return nil
 }
 
-// Vertices will det a list of the IDs for every vertex in the graph, cast to a
+// Vertices will get a list of the IDs for every vertex in the graph, cast to a
 // string.
 func (g *Graph) Vertices() []string {
 	graphVertices := g.inner.Vertices()
@@ -560,6 +618,25 @@ func (g *Graph) Vertices() []string {
 		vertices[v] = graphVertices[v].(string)
 	}
 	return vertices
+}
+
+// GroupNodes will return all nodes in the graph in the specified group
+func (g *Graph) GroupNodes(group string) []*node.Node {
+	var nodes = []*node.Node{}
+	if group == "" {
+		return nodes
+	}
+
+	graphVertices := g.inner.Vertices()
+	for v := range graphVertices {
+		id := graphVertices[v].(string)
+		if meta, ok := g.Get(id); ok {
+			if meta.Group == group {
+				nodes = append(nodes, meta)
+			}
+		}
+	}
+	return nodes
 }
 
 // Contains returns true if the id exists in the map

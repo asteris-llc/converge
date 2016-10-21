@@ -118,6 +118,15 @@ func (n *Node) Source() string {
 	return ""
 }
 
+// Group returns the group that the node is a member of
+func (n *Node) Group() string {
+	group, err := n.GetString("group")
+	if err != nil {
+		return ""
+	}
+	return group
+}
+
 func (n *Node) setValues() (err error) {
 	n.once.Do(func() {
 		n.values = map[string]interface{}{}

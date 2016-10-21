@@ -48,3 +48,8 @@ func BaseID(id string) string {
 func IsDescendentID(parent, child string) bool {
 	return parent != child && strings.HasPrefix(child, parent)
 }
+
+// IsRoot checks if the ID identifies the root
+func IsRoot(id string) bool {
+	return id == "root"
+}

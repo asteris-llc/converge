@@ -103,6 +103,23 @@ func TestDownEdges(t *testing.T) {
 	assert.Equal(t, 0, len(g.DownEdges("two")))
 }
 
+// TestDownEdgesInGroup tests that DownEdgesInGroup returns only edges with
+// values in a group
+func TestDownEdgesInGroup(t *testing.T) {
+	t.Parallel()
+
+	group := "group"
+	g := graph.New()
+	g.Add(newGroupNode("one", group, 1))
+	g.Add(newGroupNode("two", group, 2))
+	g.Add(node.New("three", 3))
+	g.Connect("one", "two")
+	g.Connect("one", "three")
+
+	assert.Equal(t, []string{"two"}, g.DownEdgesInGroup("one", group))
+	assert.Equal(t, 0, len(g.DownEdges("two")))
+}
+
 func TestUpEdges(t *testing.T) {
 	// UpEdges should return string IDs for the upward edges of a given node
 	t.Parallel()
@@ -116,6 +133,66 @@ func TestUpEdges(t *testing.T) {
 	assert.Equal(t, 0, len(g.UpEdges("one")))
 }
 
+// TestUpEdgesInGroup tests that UpEdgesInGroup returns only edges with values
+// in a group
+func TestUpEdgesInGroup(t *testing.T) {
+	t.Parallel()
+
+	group := "test"
+	g := graph.New()
+	g.Add(newGroupNode("one", group, 1))
+	g.Add(newGroupNode("two", group, 2))
+	g.Add(node.New("three", 2)) // no group
+	g.Connect("one", "two")
+	g.Connect("three", "two")
+
+	assert.Equal(t, []string{"one"}, g.UpEdgesInGroup("two", group))
+}
+
+// TestGroupNodes tests that GroupNodes only returns nodes in a specific group
+func TestGroupNodes(t *testing.T) {
+	t.Parallel()
+
+	group := "test"
+	newNode := func(id string, val int) *node.Node {
+		n := node.New(id, val)
+		n.Group = group
+		return n
+	}
+
+	g := graph.New()
+	g.Add(newNode("one", 1))
+	g.Add(newNode("two", 2))
+	g.Add(node.New("three", 2)) // no group
+	g.Connect("one", "two")
+	g.Connect("three", "two")
+
+	assert.Equal(t, []string{"one"}, g.UpEdgesInGroup("two", group))
+}
+
+// TestSafeConnect tests that calling SafeConnect on a an invalid graph will
+// return an error
+func TestSafeConnect(t *testing.T) {
+	t.Parallel()
+	t.Run("valid", func(t *testing.T) {
+		g := graph.New()
+		g.Add(node.New("a", nil))
+		g.Add(node.New("b", nil))
+		err := g.SafeConnect("a", "b")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		g := invalidGraph()
+		g.Add(node.New("a", nil))
+		g.Add(node.New("b", nil))
+		err := g.SafeConnect("a", "b")
+
+		assert.Error(t, err)
+	})
+}
+
 func TestDisconnect(t *testing.T) {
 	t.Parallel()
 
@@ -126,6 +203,37 @@ func TestDisconnect(t *testing.T) {
 	g.Disconnect("one", "two")
 
 	assert.NotContains(t, g.DownEdges("one"), "two")
+}
+
+// TestSafeDisconnect tests that calling SafeDisconnect on a an invalid graph
+// will return an error
+func TestSafeDisconnect(t *testing.T) {
+	t.Parallel()
+	t.Run("valid", func(t *testing.T) {
+		g := graph.New()
+		g.Add(node.New("one", 1))
+		g.Add(node.New("two", 2))
+		g.Add(node.New("three", 2))
+		g.Connect("one", "two")
+		g.Connect("one", "three")
+		g.Connect("two", "three")
+
+		err := g.SafeDisconnect("two", "three")
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		g := invalidGraph()
+		g.Add(node.New("one", 1))
+		g.Add(node.New("two", 2))
+		g.Add(node.New("three", 2))
+		g.Connect("one", "two")
+		g.Connect("one", "three")
+		g.Connect("two", "three")
+		err := g.SafeDisconnect("two", "three")
+
+		assert.Error(t, err)
+	})
 }
 
 func TestDescendents(t *testing.T) {
@@ -546,4 +654,10 @@ func invalidGraph() *graph.Graph {
 	g := graph.New()
 	g.Connect("Bad", "Nodes")
 	return g
+}
+
+func newGroupNode(id, group string, val interface{}) *node.Node {
+	n := node.New(id, val)
+	n.Group = group
+	return n
 }

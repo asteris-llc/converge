@@ -60,3 +60,27 @@ func TestWithValue(t *testing.T) {
 		})
 	})
 }
+
+// TestWithGroupable tests that group is set when the value is Groupable
+func TestWithGroupable(t *testing.T) {
+	t.Parallel()
+
+	t.Run("New", func(t *testing.T) {
+		n := node.New("test", &aGroupable{group: "somegroup"})
+		assert.Equal(t, "somegroup", n.Group)
+	})
+
+	t.Run("WithValue", func(t *testing.T) {
+		fst := node.New("test", 1)
+		assert.Equal(t, "", fst.Group)
+
+		snd := fst.WithValue(&aGroupable{group: "somegroup"})
+		assert.Equal(t, "somegroup", snd.Group)
+	})
+}
+
+type aGroupable struct {
+	group string
+}
+
+func (a *aGroupable) Group() string { return a.group }
