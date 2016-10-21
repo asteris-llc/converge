@@ -1,9 +1,9 @@
 param "go-version" {
-  default = "1.7.1"
+  default = "1.7.3"
 }
 
 param "go-sha256sum" {
-  default = "43ad621c9b014cde8db17393dc108378d37bc853aa351a6c74bf6432c1bbd182"
+  default = "508028aac0654e993564b6e2014bf2d4a9751e3b286661b0b0040046cf18028e"
 }
 
 file.content "go-sha256" {
@@ -11,27 +11,11 @@ file.content "go-sha256" {
   content     = "{{param `go-sha256sum`}} go{{param `go-version`}}-sha256sum.txt"
 }
 
-wait.query "curl-check" {
-  check        = "curl -s https://github.com 2>&1 > /dev/null"
-  interval     = "2s"
-  max_retry    = 60
-  grace_period = "3s"
-  interpreter  = "/bin/bash"
-}
-
-wait.query "tar-check" {
-  check        = "tar --version"
-  interval     = "2s"
-  max_retry    = 60
-  grace_period = "3s"
-  interpreter  = "/bin/bash"
-}
-
 task "go-dl" {
   check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
   apply       = "curl -L -o /tmp/go{{param `go-version`}}.linux-amd64.tar.gz  https://storage.googleapis.com/golang/go{{param `go-version`}}.linux-amd64.tar.gz"
   dir         = "/tmp"
-  depends     = ["wait.query.curl-check", "file.content.go-sha256"]
+  depends     = ["file.content.go-sha256"]
   interpreter = "/bin/bash"
 }
 
@@ -39,7 +23,7 @@ task "go-checksum" {
   check       = "[[ -f /tmp/go{{param `go-version`}}.linux-amd64.tar.gz ]]"
   apply       = "echo checksum failed"
   dir         = "/tmp"
-  depends     = ["wait.query.tar-check", "file.content.go-sha256", "task.go-dl"]
+  depends     = ["file.content.go-sha256", "task.go-dl"]
   interpreter = "/bin/bash"
 }
 

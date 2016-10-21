@@ -3,11 +3,11 @@ param "gopath" {
 }
 
 param "go-version" {
-  default = "1.7.1"
+  default = "1.7.3"
 }
 
 param "go-sha256sum" {
-  default = "43ad621c9b014cde8db17393dc108378d37bc853aa351a6c74bf6432c1bbd182"
+  default = "508028aac0654e993564b6e2014bf2d4a9751e3b286661b0b0040046cf18028e"
 }
 
 param "protoc-version" {
