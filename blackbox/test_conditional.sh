@@ -57,7 +57,7 @@ test_language_conditionals() {
         params=${1:-""}
         expected=${2:-""}
 
-        "$ROOT/converge" apply --local --only-show-changes ${params} "$SOURCE"
+        "$ROOT/converge" apply --local --only-show-changes -p "lang=${params}" "$SOURCE"
 
         if [ ! -f greeting.txt ]; then
             echo "greeting.txt doesn't exist!"
@@ -72,12 +72,11 @@ test_language_conditionals() {
         return 0
     }
 
-    test_lang_with_params "" "hello"
-    test_lang_with_params "-p lang=spanish" "hola"
-    test_lang_with_params "-p lang=french" "salut"
-    test_lang_with_params "-p lang=japanese" "もしもし"
-    test_lang_with_params "-p lang=english" "hello"
-    test_lang_with_params "-p lang=esperanto" "hello"
+    test_lang_with_params "spanish" "hola"
+    test_lang_with_params "french" "salut"
+    test_lang_with_params "japanese" "もしもし"
+    test_lang_with_params "english" "hello"
+    test_lang_with_params "esperanto" "hello"
 
     return 0
 }
