@@ -12,7 +12,22 @@ pushd "$TMP"
 
 test_basic_conditionals() {
     SOURCE="$ROOT"/samples/conditional.hcl
+
+    validate_unexecuted_branches() {
+        if [ -f bar-output.txt ]; then
+            echo "bar-output.txt exists but shouldn't"
+            exit 1
+        fi
+        if [ -f baz-output.txt ]; then
+            echo "baz-output.txt exists but shouldn't"
+            exit 1
+        fi
+        return 0
+    }
+
     "$ROOT"/converge apply --local "$SOURCE"
+
+    validate_unexecuted_branches
 
     if [ -f foo-file.txt ]; then
         echo "foo-file.txt shouldn't exist!"
@@ -25,6 +40,8 @@ test_basic_conditionals() {
     fi
 
     "$ROOT"/converge apply --local --only-show-changes -p "val=1" "$SOURCE"
+
+    validate_unexecuted_branches
 
     if [ ! -f foo-file.txt ]; then
         echo "foo-file.txt doesn't exist!"
