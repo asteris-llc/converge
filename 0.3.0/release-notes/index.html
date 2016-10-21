@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>wait.query - Converge</title>
+    <title>Release Notes - Converge</title>
     <meta name="generator" content="Hugo 0.17" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <link rel="canonical" href="http://converge.aster.is/0.3.0/release-notes/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <meta property="og:url" content="http://converge.aster.is/0.3.0/release-notes/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/0.3.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        wait.query
+        Release Note
       </div>
     </div>
 
@@ -413,99 +413,58 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>wait.query </h1>
+			<h1>Release Notes </h1>
 
 			
 
-<h2 id="example">Example</h2>
+<p>Converge is in active development. APIs are not guaranteed until a 1.0 release.</p>
 
-<pre><code class="language-hcl">wait.query &quot;service-health&quot; {
-  check        = &quot;nc -z localhost 8080&quot;
-  interval     = &quot;1s&quot;
-  max_retry    = 10
-  grace_period = &quot;1s&quot;
-}
+<p><code>Project</code> links to the project for the release.</p>
 
-</code></pre>
+<p><code>Milestone</code> links to issues and pull requests for the release.</p>
 
-<h2 id="parameters">Parameters</h2>
+<h2 id="releases">Releases</h2>
 
-<ul>
-<li><code>interpreter</code> (string)</li>
-</ul>
+<table>
+<thead>
+<tr>
+<th>Release</th>
+<th>Date</th>
+<th>Project</th>
+<th>Milestone</th>
+</tr>
+</thead>
 
-<p>the shell interpreter that will be used for your scripts. <code>/bin/sh</code> is
-used by default.</p>
+<tbody>
+<tr>
+<td><a href="https://github.com/asteris-llc/converge/releases/tag/0.1">0.1.0</a></td>
+<td>2016-06-09</td>
+<td></td>
+<td><a href="https://github.com/asteris-llc/converge/milestone/1?closed=1">Milestone</a></td>
+</tr>
 
-<ul>
-<li><code>check</code> (required string)</li>
-</ul>
+<tr>
+<td><a href="https://github.com/asteris-llc/converge/releases/tag/0.1.1">0.1.1</a></td>
+<td>2016-06-13</td>
+<td></td>
+<td><a href="https://github.com/asteris-llc/converge/milestone/4?closed=1">Milestone</a></td>
+</tr>
 
-<p>the script to run to check if a resource is ready. exit with exit code 0 if
-the resource is healthy, and 1 (or above) otherwise.</p>
+<tr>
+<td><a href="http://converge.aster.is/0.3.0/release-notes/0-2-0/">0.2.0</a></td>
+<td>2016-09-26</td>
+<td><a href="https://github.com/asteris-llc/converge/projects/1">Project</a></td>
+<td><a href="https://github.com/asteris-llc/converge/milestone/8?closed=1">Milestone</a></td>
+</tr>
 
-<ul>
-<li><code>check_flags</code> (list of strings)</li>
-</ul>
-
-<p>flags to pass to the <code>interpreter</code> binary to check validity. For
-<code>/bin/sh</code> this is <code>-n</code>.</p>
-
-<ul>
-<li><code>exec_flags</code> (list of strings)</li>
-</ul>
-
-<p>flags to pass to the interpreter at execution time.</p>
-
-<ul>
-<li><code>timeout</code> (duration string)</li>
-</ul>
-
-<p>the amount of time the command will wait before halting forcefully. The
-format is Go&rsquo;s duration string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;,
-&ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
-
-<ul>
-<li><code>dir</code> (string)</li>
-</ul>
-
-<p>the working directory this command should be run in.</p>
-
-<ul>
-<li><code>env</code> (map of string to string)</li>
-</ul>
-
-<p>any environment variables that should be passed to the command.</p>
-
-<ul>
-<li><code>interval</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait in between checks. The format is Go&rsquo;s duration
-string. A duration string is a possibly signed sequence of decimal numbers,
-each with optional fraction and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or
-&ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If
-the interval is not specified, it will default to 5 seconds.</p>
-
-<ul>
-<li><code>grace_period</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait before running the first check and after a
-successful check. The format is Go&rsquo;s duration string. A duration string is
-a possibly signed sequence of decimal numbers, each with optional fraction
-and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units
-are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If no grace period is
-specified, no grace period will be taken into account.</p>
-
-<ul>
-<li><code>max_retry</code> (int)</li>
-</ul>
-
-<p>the maximum number of attempts before the wait fails. If the maximum number
-of retries is not set, it will default to 5.</p>
+<tr>
+<td><a href="http://converge.aster.is/0.3.0/release-notes/0-3-0/">0.3.0-beta1</a></td>
+<td>2016-10-21</td>
+<td><a href="https://github.com/asteris-llc/converge/projects/2">Project</a></td>
+<td><a href="https://github.com/asteris-llc/converge/milestone/7?closed=1">Milestone</a></td>
+</tr>
+</tbody>
+</table>
 
 
 			<aside class="copyright" role="note">
@@ -524,34 +483,18 @@ of retries is not set, it will default to 5.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/0.3.0/resources/wait-port/" title="wait.port">
-        <span class="direction">
-          Previous
-        </span>
-        <div class="page">
-          <div class="button button-previous" role="button" aria-label="Previous">
-            <i class="icon icon-back"></i>
-          </div>
-          <div class="stretch">
-            <div class="title">
-              wait.port
-            </div>
-          </div>
-        </div>
-      </a>
-  
   </div>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/0.3.0/platform/" title="Platform Detection">
+      <a href="http://converge.aster.is/0.3.0/release-notes/0-3-0/" title="0.3.0">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Platform Detection
+              0.3.0
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>wait.query - Converge</title>
+    <title>0.2.0 - Converge</title>
     <meta name="generator" content="Hugo 0.17" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <link rel="canonical" href="http://converge.aster.is/0.3.0/release-notes/0-2-0/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <meta property="og:url" content="http://converge.aster.is/0.3.0/release-notes/0-2-0/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/0.3.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        wait.query
+        0.2.0
       </div>
     </div>
 
@@ -413,99 +413,45 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>wait.query </h1>
+			<h1>0.2.0 </h1>
 
 			
 
-<h2 id="example">Example</h2>
+<h2 id="release-date">Release Date</h2>
 
-<pre><code class="language-hcl">wait.query &quot;service-health&quot; {
-  check        = &quot;nc -z localhost 8080&quot;
-  interval     = &quot;1s&quot;
-  max_retry    = 10
-  grace_period = &quot;1s&quot;
-}
+<p>2016-09-26</p>
 
-</code></pre>
-
-<h2 id="parameters">Parameters</h2>
+<h2 id="features">Features</h2>
 
 <ul>
-<li><code>interpreter</code> (string)</li>
+<li>Set environments for shell commands</li>
+<li>Support for Docker Containers and Images</li>
+<li>Support for creating &amp; deleting unix users and groups</li>
+<li>RPC using grpc.io</li>
+<li>Expose basic platform information via the platform module</li>
 </ul>
 
-<p>the shell interpreter that will be used for your scripts. <code>/bin/sh</code> is
-used by default.</p>
+<h2 id="bug-fixes">Bug Fixes</h2>
 
-<ul>
-<li><code>check</code> (required string)</li>
-</ul>
+<p>This releases fixes several race condition (#266) and ordering (#254) bugs that would cause Converge to error out of otherwise valid executions.</p>
 
-<p>the script to run to check if a resource is ready. exit with exit code 0 if
-the resource is healthy, and 1 (or above) otherwise.</p>
+<p>If you&rsquo;ve been trying to use boolean values in your params, you&rsquo;re in luck. That works now! (#251)</p>
 
-<ul>
-<li><code>check_flags</code> (list of strings)</li>
-</ul>
+<p>Internally, beta 2 simplifies how <code>check</code> and <code>apply</code> interact (#240) and shrinks the Status interface (#237). Documentation for module authors will be updated by the final release of Converge 0.2.0.</p>
 
-<p>flags to pass to the <code>interpreter</code> binary to check validity. For
-<code>/bin/sh</code> this is <code>-n</code>.</p>
+<p>Lastly, logging was quite a bit too chatty about the stages Converge goes through when loading and executing a graph. This release scales logging back a bit (#248).</p>
 
-<ul>
-<li><code>exec_flags</code> (list of strings)</li>
-</ul>
+<h2 id="examples">Examples</h2>
 
-<p>flags to pass to the interpreter at execution time.</p>
+<p>We have new examples for Docker Swarm mode (#267) and the ELK (Elasticsearch, Logstash, and Kibana) stack (#272). They&rsquo;re located in the <code>examples/</code> directory of the source, and are intended to be standalone end-to-end examples.</p>
 
-<ul>
-<li><code>timeout</code> (duration string)</li>
-</ul>
+<h2 id="linting">Linting</h2>
 
-<p>the amount of time the command will wait before halting forcefully. The
-format is Go&rsquo;s duration string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;,
-&ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
+<p>We started using Code Climate for linting in this release. We have a 4.0 (such good students.) You can <a href="https://codeclimate.com/github/asteris-llc/converge">view our score using Code Climate&rsquo;s web interface</a> or by clicking the badge in the README.</p>
 
-<ul>
-<li><code>dir</code> (string)</li>
-</ul>
+<h2 id="support">Support</h2>
 
-<p>the working directory this command should be run in.</p>
-
-<ul>
-<li><code>env</code> (map of string to string)</li>
-</ul>
-
-<p>any environment variables that should be passed to the command.</p>
-
-<ul>
-<li><code>interval</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait in between checks. The format is Go&rsquo;s duration
-string. A duration string is a possibly signed sequence of decimal numbers,
-each with optional fraction and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or
-&ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If
-the interval is not specified, it will default to 5 seconds.</p>
-
-<ul>
-<li><code>grace_period</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait before running the first check and after a
-successful check. The format is Go&rsquo;s duration string. A duration string is
-a possibly signed sequence of decimal numbers, each with optional fraction
-and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units
-are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If no grace period is
-specified, no grace period will be taken into account.</p>
-
-<ul>
-<li><code>max_retry</code> (int)</li>
-</ul>
-
-<p>the maximum number of attempts before the wait fails. If the maximum number
-of retries is not set, it will default to 5.</p>
+<p>We provide support via <a href="http://converge-slack.aster.is/">the Converge Slack team</a> and through <a href="https://github.com/asteris-llc/converge/issues">GitHub issues</a></p>
 
 
 			<aside class="copyright" role="note">
@@ -524,7 +470,7 @@ of retries is not set, it will default to 5.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/0.3.0/resources/wait-port/" title="wait.port">
+      <a href="http://converge.aster.is/0.3.0/resources/package-rpm/" title="package.rpm">
         <span class="direction">
           Previous
         </span>
@@ -534,7 +480,7 @@ of retries is not set, it will default to 5.</p>
           </div>
           <div class="stretch">
             <div class="title">
-              wait.port
+              package.rpm
             </div>
           </div>
         </div>
@@ -544,14 +490,14 @@ of retries is not set, it will default to 5.</p>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/0.3.0/platform/" title="Platform Detection">
+      <a href="http://converge.aster.is/0.3.0/resources/user-group/" title="user.group">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Platform Detection
+              user.group
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

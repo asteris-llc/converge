@@ -9,18 +9,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>wait.query - Converge</title>
+    <title>0.3.0 - Converge</title>
     <meta name="generator" content="Hugo 0.17" />
 
     
     <meta name="description" content="graph your configurations!">
     
-    <link rel="canonical" href="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <link rel="canonical" href="http://converge.aster.is/0.3.0/release-notes/0-3-0/">
     
     <meta name="author" content="Converge">
     
 
-    <meta property="og:url" content="http://converge.aster.is/0.3.0/resources/wait-query/">
+    <meta property="og:url" content="http://converge.aster.is/0.3.0/release-notes/0-3-0/">
     <meta property="og:title" content="Converge">
     <meta property="og:image" content="http://converge.aster.is/0.3.0/images/logo.png">
     <meta name="apple-mobile-web-app-title" content="Converge">
@@ -97,7 +97,7 @@
     </div>
     <div class="stretch">
       <div class="title">
-        wait.query
+        0.3.0
       </div>
     </div>
 
@@ -413,11 +413,53 @@
 
 	<article class="article">
 		<div class="wrapper">
-			<h1>wait.query </h1>
+			<h1>0.3.0 </h1>
 
 			
 
-<h2 id="example">Example</h2>
+<h2 id="release-date">Release Date</h2>
+
+<p>2016-10-21 0.3.0-beta1</p>
+
+<h2 id="features">Features</h2>
+
+<p>This release includes a number of significant improvements to the core engine including conditionals,
+wait queries, sequential task groups, and the ability to use lists and maps in parameters. The internal API has
+also been simplified to make it easier for programmers to create new modules.</p>
+
+<h3 id="module-improvements">Module Improvements</h3>
+
+<h4 id="rpm-resource">RPM Resource</h4>
+
+<p>RPM package install/uninstall support has been added via <a href="https://github.com/asteris-llc/converge/pull/373">#373</a>.</p>
+
+<pre><code class="language-hcl">rpm.package &quot;mc&quot; {
+    name  = &quot;mc&quot;
+    state = &quot;present&quot;
+}
+</code></pre>
+
+<h4 id="user-and-group">User and group</h4>
+
+<p>Linux user groups can now be modified via <a href="https://github.com/asteris-llc/converge/issues/279">#279</a></p>
+
+<h4 id="wait-query-and-wait-port">wait.query and wait.port</h4>
+
+<p>Converge now supports waiting for a task to complete or port <a href="https://github.com/asteris-llc/converge/pull/334">#334</a>.
+Users can create a dependency for a port to be open or a condition to be met.</p>
+
+<p>Below is an example of waiting for a port to be open using the <code>wait.port</code> resource:</p>
+
+<pre><code class="language-hcl">wait.port &quot;8080&quot; {
+  host         = &quot;localhost&quot;
+  port         = 8080
+  interval     = &quot;1s&quot;
+  max_retry    = 10
+  grace_period = &quot;2s&quot;
+}
+</code></pre>
+
+<p>The following shows using <code>wait.query</code> to wait using a task:</p>
 
 <pre><code class="language-hcl">wait.query &quot;service-health&quot; {
   check        = &quot;nc -z localhost 8080&quot;
@@ -425,87 +467,96 @@
   max_retry    = 10
   grace_period = &quot;1s&quot;
 }
+</code></pre>
+
+<p>Wait is documented at: <a href="http://converge.aster.is/0.3.0/resources/wait-port/">wait.port</a> and <a href="http://converge.aster.is/0.3.0/resources/wait-query/">wait.query</a>.</p>
+
+<h3 id="engine-improvements">Engine Improvements</h3>
+
+<h4 id="conditional-support">Conditional Support</h4>
+
+<p>Support for conditionals via <a href="https://github.com/asteris-llc/converge/pull/362">#362</a>.</p>
+
+<p>In the following example, the contents of file <code>greetings.txt</code> depend on the value of
+the <code>lang</code> parameter:</p>
+
+<pre><code class="language-hcl">param &quot;lang&quot; {
+  default = &quot;&quot;
+}
+
+switch &quot;test-switch&quot; {
+  case &quot;eq `spanish` `{{param `lang`}}`&quot; &quot;spanish&quot; {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;hola\n&quot;
+    }
+  }
+
+  case &quot;eq `french` `{{param `lang`}}`&quot; &quot;french&quot; {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;salut\n&quot;
+    }
+  }
 
 </code></pre>
 
-<h2 id="parameters">Parameters</h2>
+<h4 id="task-groups">Task Groups</h4>
+
+<p>Tasks can be assigned to a group to force multiple tasks to run
+one at a time instead of in parallel. Locks are added as a node in the graph and released
+after all tasks sharing the lock are complete. <a href="https://github.com/asteris-llc/converge/pull/392">#392</a></p>
+
+<p>For example, <code>apt</code> package installs cannot run in parallel. In the following example
+each task with the <code>apt</code> lock is run sequentially.</p>
+
+<pre><code class="language-hcl">task &quot;install-jq&quot; {
+  check = &quot;dpkg -s jq &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get update 2&gt;&amp;1 &gt; /dev/null &amp;&amp; apt-get -y install jq&quot;
+  group  = &quot;apt&quot;
+}
+
+task &quot;install-build-essential&quot; {
+  check = &quot;dpkg -s build-essential &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get update 2&gt;&amp;1 &gt; /dev/null &amp;&amp; apt-get -y install build-essential&quot;
+  group  = &quot;apt&quot;
+}
+</code></pre>
+
+<h4 id="enhanced-parameter-values">Enhanced Parameter Values</h4>
+
+<p><code>bool</code>, <code>list</code>, and <code>map</code> types have been added to parameters via <a href="https://github.com/asteris-llc/converge/pull/340">#340</a>.</p>
+
+<p>See <a href="http://converge.aster.is/0.3.0/params-and-templates/#Values">values</a></p>
+
+<h4 id="output-improvements">Output Improvements</h4>
+
+<p>Rendered graphs have been cleaned and arrows now indicate the order of tasks <a href="https://github.com/asteris-llc/converge/pull/387">#387</a>.</p>
+
+<p>Text output for changes is now aligned via <a href="https://github.com/asteris-llc/converge/pull/317">#317</a>.</p>
+
+<h2 id="bug-fixes">Bug Fixes</h2>
 
 <ul>
-<li><code>interpreter</code> (string)</li>
+<li>docker.container regression <a href="https://github.com/asteris-llc/converge/issues/343">#343</a></li>
+<li>handle parameters with valid zero value <a href="https://github.com/asteris-llc/converge/issues/338">#338</a></li>
+<li>shell module should not set StatusLevel based on process exit code <a href="https://github.com/asteris-llc/converge/issues/323">#323</a></li>
+<li>param dependency fails in <code>samples/shellContext.hcl</code> <a href="https://github.com/asteris-llc/converge/issues/313">#313</a></li>
+<li>Execution Engine Ignoring Warning Levels <a href="https://github.com/asteris-llc/converge/issues/243">#243</a></li>
+<li>Make pipeline functions use mult-return instead of Either <a href="https://github.com/asteris-llc/converge/issues/225">#225</a></li>
+<li>cmd/server.go: use errgroup instead of waitgroup <a href="https://github.com/asteris-llc/converge/pull/363">#363</a></li>
 </ul>
 
-<p>the shell interpreter that will be used for your scripts. <code>/bin/sh</code> is
-used by default.</p>
+<h2 id="examples-documentation">Examples/Documentation</h2>
 
-<ul>
-<li><code>check</code> (required string)</li>
-</ul>
+<p>A Docker image was created in <a href="https://github.com/asteris-llc/converge/pull/372">#372</a> to speed up Wercker builds and automated tests.</p>
 
-<p>the script to run to check if a resource is ready. exit with exit code 0 if
-the resource is healthy, and 1 (or above) otherwise.</p>
+<p>Documentation was updated in <a href="https://github.com/asteris-llc/converge/pull/371">#371</a> so that links like
+<a href="https://converge.aster.is/0.2.0">converge.aster.is/0.2.0</a> will resolve documentation for that version.</p>
 
-<ul>
-<li><code>check_flags</code> (list of strings)</li>
-</ul>
+<h2 id="support">Support</h2>
 
-<p>flags to pass to the <code>interpreter</code> binary to check validity. For
-<code>/bin/sh</code> this is <code>-n</code>.</p>
-
-<ul>
-<li><code>exec_flags</code> (list of strings)</li>
-</ul>
-
-<p>flags to pass to the interpreter at execution time.</p>
-
-<ul>
-<li><code>timeout</code> (duration string)</li>
-</ul>
-
-<p>the amount of time the command will wait before halting forcefully. The
-format is Go&rsquo;s duration string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;,
-&ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
-
-<ul>
-<li><code>dir</code> (string)</li>
-</ul>
-
-<p>the working directory this command should be run in.</p>
-
-<ul>
-<li><code>env</code> (map of string to string)</li>
-</ul>
-
-<p>any environment variables that should be passed to the command.</p>
-
-<ul>
-<li><code>interval</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait in between checks. The format is Go&rsquo;s duration
-string. A duration string is a possibly signed sequence of decimal numbers,
-each with optional fraction and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or
-&ldquo;2h45m&rdquo;. Valid time units are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If
-the interval is not specified, it will default to 5 seconds.</p>
-
-<ul>
-<li><code>grace_period</code> (duration string)</li>
-</ul>
-
-<p>the amount of time to wait before running the first check and after a
-successful check. The format is Go&rsquo;s duration string. A duration string is
-a possibly signed sequence of decimal numbers, each with optional fraction
-and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid time units
-are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;. If no grace period is
-specified, no grace period will be taken into account.</p>
-
-<ul>
-<li><code>max_retry</code> (int)</li>
-</ul>
-
-<p>the maximum number of attempts before the wait fails. If the maximum number
-of retries is not set, it will default to 5.</p>
+<p>We provide support via <a href="http://converge-slack.aster.is/">the Converge Slack team</a> and through <a href="https://github.com/asteris-llc/converge/issues">GitHub issues</a></p>
 
 
 			<aside class="copyright" role="note">
@@ -524,7 +575,7 @@ of retries is not set, it will default to 5.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/0.3.0/resources/wait-port/" title="wait.port">
+      <a href="http://converge.aster.is/0.3.0/release-notes/" title="Release Notes">
         <span class="direction">
           Previous
         </span>
@@ -534,7 +585,7 @@ of retries is not set, it will default to 5.</p>
           </div>
           <div class="stretch">
             <div class="title">
-              wait.port
+              Release Notes
             </div>
           </div>
         </div>
@@ -544,14 +595,14 @@ of retries is not set, it will default to 5.</p>
 
   <div class="next">
   
-      <a href="http://converge.aster.is/0.3.0/platform/" title="Platform Detection">
+      <a href="http://converge.aster.is/0.3.0/resources/package-rpm/" title="package.rpm">
         <span class="direction">
           Next
         </span>
         <div class="page">
           <div class="stretch">
             <div class="title">
-              Platform Detection
+              package.rpm
             </div>
           </div>
           <div class="button button-next" role="button" aria-label="Next">

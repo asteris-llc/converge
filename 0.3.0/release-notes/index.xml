@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Release-notes-rsses on Converge</title>
+    <link>http://converge.aster.is/0.3.0/release-notes/index.xml</link>
+    <description>Recent content in Release-notes-rsses on Converge</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>Released under the Apache 2.0 license</copyright>
+    <lastBuildDate>Thu, 20 Oct 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://converge.aster.is/0.3.0/release-notes/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>0.3.0</title>
+      <link>http://converge.aster.is/0.3.0/release-notes/0-3-0/</link>
+      <pubDate>Thu, 20 Oct 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://converge.aster.is/0.3.0/release-notes/0-3-0/</guid>
+      <description>
+
+&lt;h2 id=&#34;release-date&#34;&gt;Release Date&lt;/h2&gt;
+
+&lt;p&gt;2016-10-21 0.3.0-beta1&lt;/p&gt;
+
+&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
+
+&lt;p&gt;This release includes a number of significant improvements to the core engine including conditionals,
+wait queries, sequential task groups, and the ability to use lists and maps in parameters. The internal API has
+also been simplified to make it easier for programmers to create new modules.&lt;/p&gt;
+
+&lt;h3 id=&#34;module-improvements&#34;&gt;Module Improvements&lt;/h3&gt;
+
+&lt;h4 id=&#34;rpm-resource&#34;&gt;RPM Resource&lt;/h4&gt;
+
+&lt;p&gt;RPM package install/uninstall support has been added via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/373&#34;&gt;#373&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;rpm.package &amp;quot;mc&amp;quot; {
+    name  = &amp;quot;mc&amp;quot;
+    state = &amp;quot;present&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;user-and-group&#34;&gt;User and group&lt;/h4&gt;
+
+&lt;p&gt;Linux user groups can now be modified via &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/279&#34;&gt;#279&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&#34;wait-query-and-wait-port&#34;&gt;wait.query and wait.port&lt;/h4&gt;
+
+&lt;p&gt;Converge now supports waiting for a task to complete or port &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/334&#34;&gt;#334&lt;/a&gt;.
+Users can create a dependency for a port to be open or a condition to be met.&lt;/p&gt;
+
+&lt;p&gt;Below is an example of waiting for a port to be open using the &lt;code&gt;wait.port&lt;/code&gt; resource:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;wait.port &amp;quot;8080&amp;quot; {
+  host         = &amp;quot;localhost&amp;quot;
+  port         = 8080
+  interval     = &amp;quot;1s&amp;quot;
+  max_retry    = 10
+  grace_period = &amp;quot;2s&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The following shows using &lt;code&gt;wait.query&lt;/code&gt; to wait using a task:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;wait.query &amp;quot;service-health&amp;quot; {
+  check        = &amp;quot;nc -z localhost 8080&amp;quot;
+  interval     = &amp;quot;1s&amp;quot;
+  max_retry    = 10
+  grace_period = &amp;quot;1s&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Wait is documented at: &lt;a href=&#34;http://converge.aster.is/0.3.0/resources/wait-port/&#34;&gt;wait.port&lt;/a&gt; and &lt;a href=&#34;http://converge.aster.is/0.3.0/resources/wait-query/&#34;&gt;wait.query&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;engine-improvements&#34;&gt;Engine Improvements&lt;/h3&gt;
+
+&lt;h4 id=&#34;conditional-support&#34;&gt;Conditional Support&lt;/h4&gt;
+
+&lt;p&gt;Support for conditionals via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/362&#34;&gt;#362&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the following example, the contents of file &lt;code&gt;greetings.txt&lt;/code&gt; depend on the value of
+the &lt;code&gt;lang&lt;/code&gt; parameter:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;lang&amp;quot; {
+  default = &amp;quot;&amp;quot;
+}
+
+switch &amp;quot;test-switch&amp;quot; {
+  case &amp;quot;eq `spanish` `{{param `lang`}}`&amp;quot; &amp;quot;spanish&amp;quot; {
+    file.content &amp;quot;foo-file&amp;quot; {
+      destination = &amp;quot;greeting.txt&amp;quot;
+      content     = &amp;quot;hola\n&amp;quot;
+    }
+  }
+
+  case &amp;quot;eq `french` `{{param `lang`}}`&amp;quot; &amp;quot;french&amp;quot; {
+    file.content &amp;quot;foo-file&amp;quot; {
+      destination = &amp;quot;greeting.txt&amp;quot;
+      content     = &amp;quot;salut\n&amp;quot;
+    }
+  }
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;task-groups&#34;&gt;Task Groups&lt;/h4&gt;
+
+&lt;p&gt;Tasks can be assigned to a group to force multiple tasks to run
+one at a time instead of in parallel. Locks are added as a node in the graph and released
+after all tasks sharing the lock are complete. &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/392&#34;&gt;#392&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;For example, &lt;code&gt;apt&lt;/code&gt; package installs cannot run in parallel. In the following example
+each task with the &lt;code&gt;apt&lt;/code&gt; lock is run sequentially.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task &amp;quot;install-jq&amp;quot; {
+  check = &amp;quot;dpkg -s jq &amp;gt;/dev/null 2&amp;gt;&amp;amp;1&amp;quot;
+  apply = &amp;quot;apt-get update 2&amp;gt;&amp;amp;1 &amp;gt; /dev/null &amp;amp;&amp;amp; apt-get -y install jq&amp;quot;
+  group  = &amp;quot;apt&amp;quot;
+}
+
+task &amp;quot;install-build-essential&amp;quot; {
+  check = &amp;quot;dpkg -s build-essential &amp;gt;/dev/null 2&amp;gt;&amp;amp;1&amp;quot;
+  apply = &amp;quot;apt-get update 2&amp;gt;&amp;amp;1 &amp;gt; /dev/null &amp;amp;&amp;amp; apt-get -y install build-essential&amp;quot;
+  group  = &amp;quot;apt&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;enhanced-parameter-values&#34;&gt;Enhanced Parameter Values&lt;/h4&gt;
+
+&lt;p&gt;&lt;code&gt;bool&lt;/code&gt;, &lt;code&gt;list&lt;/code&gt;, and &lt;code&gt;map&lt;/code&gt; types have been added to parameters via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/340&#34;&gt;#340&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&#34;http://converge.aster.is/0.3.0/params-and-templates/#Values&#34;&gt;values&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&#34;output-improvements&#34;&gt;Output Improvements&lt;/h4&gt;
+
+&lt;p&gt;Rendered graphs have been cleaned and arrows now indicate the order of tasks &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/387&#34;&gt;#387&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Text output for changes is now aligned via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/317&#34;&gt;#317&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;bug-fixes&#34;&gt;Bug Fixes&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;docker.container regression &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/343&#34;&gt;#343&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;handle parameters with valid zero value &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/338&#34;&gt;#338&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;shell module should not set StatusLevel based on process exit code &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/323&#34;&gt;#323&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;param dependency fails in &lt;code&gt;samples/shellContext.hcl&lt;/code&gt; &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/313&#34;&gt;#313&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Execution Engine Ignoring Warning Levels &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/243&#34;&gt;#243&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Make pipeline functions use mult-return instead of Either &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/225&#34;&gt;#225&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;cmd/server.go: use errgroup instead of waitgroup &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/363&#34;&gt;#363&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;examples-documentation&#34;&gt;Examples/Documentation&lt;/h2&gt;
+
+&lt;p&gt;A Docker image was created in &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/372&#34;&gt;#372&lt;/a&gt; to speed up Wercker builds and automated tests.&lt;/p&gt;
+
+&lt;p&gt;Documentation was updated in &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/371&#34;&gt;#371&lt;/a&gt; so that links like
+&lt;a href=&#34;https://converge.aster.is/0.2.0&#34;&gt;converge.aster.is/0.2.0&lt;/a&gt; will resolve documentation for that version.&lt;/p&gt;
+
+&lt;h2 id=&#34;support&#34;&gt;Support&lt;/h2&gt;
+
+&lt;p&gt;We provide support via &lt;a href=&#34;http://converge-slack.aster.is/&#34;&gt;the Converge Slack team&lt;/a&gt; and through &lt;a href=&#34;https://github.com/asteris-llc/converge/issues&#34;&gt;GitHub issues&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>0.2.0</title>
+      <link>http://converge.aster.is/0.3.0/release-notes/0-2-0/</link>
+      <pubDate>Sun, 16 Oct 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://converge.aster.is/0.3.0/release-notes/0-2-0/</guid>
+      <description>
+
+&lt;h2 id=&#34;release-date&#34;&gt;Release Date&lt;/h2&gt;
+
+&lt;p&gt;2016-09-26&lt;/p&gt;
+
+&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Set environments for shell commands&lt;/li&gt;
+&lt;li&gt;Support for Docker Containers and Images&lt;/li&gt;
+&lt;li&gt;Support for creating &amp;amp; deleting unix users and groups&lt;/li&gt;
+&lt;li&gt;RPC using grpc.io&lt;/li&gt;
+&lt;li&gt;Expose basic platform information via the platform module&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;bug-fixes&#34;&gt;Bug Fixes&lt;/h2&gt;
+
+&lt;p&gt;This releases fixes several race condition (#266) and ordering (#254) bugs that would cause Converge to error out of otherwise valid executions.&lt;/p&gt;
+
+&lt;p&gt;If you&amp;rsquo;ve been trying to use boolean values in your params, you&amp;rsquo;re in luck. That works now! (#251)&lt;/p&gt;
+
+&lt;p&gt;Internally, beta 2 simplifies how &lt;code&gt;check&lt;/code&gt; and &lt;code&gt;apply&lt;/code&gt; interact (#240) and shrinks the Status interface (#237). Documentation for module authors will be updated by the final release of Converge 0.2.0.&lt;/p&gt;
+
+&lt;p&gt;Lastly, logging was quite a bit too chatty about the stages Converge goes through when loading and executing a graph. This release scales logging back a bit (#248).&lt;/p&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;p&gt;We have new examples for Docker Swarm mode (#267) and the ELK (Elasticsearch, Logstash, and Kibana) stack (#272). They&amp;rsquo;re located in the &lt;code&gt;examples/&lt;/code&gt; directory of the source, and are intended to be standalone end-to-end examples.&lt;/p&gt;
+
+&lt;h2 id=&#34;linting&#34;&gt;Linting&lt;/h2&gt;
+
+&lt;p&gt;We started using Code Climate for linting in this release. We have a 4.0 (such good students.) You can &lt;a href=&#34;https://codeclimate.com/github/asteris-llc/converge&#34;&gt;view our score using Code Climate&amp;rsquo;s web interface&lt;/a&gt; or by clicking the badge in the README.&lt;/p&gt;
+
+&lt;h2 id=&#34;support&#34;&gt;Support&lt;/h2&gt;
+
+&lt;p&gt;We provide support via &lt;a href=&#34;http://converge-slack.aster.is/&#34;&gt;the Converge Slack team&lt;/a&gt; and through &lt;a href=&#34;https://github.com/asteris-llc/converge/issues&#34;&gt;GitHub issues&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
