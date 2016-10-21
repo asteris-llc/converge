@@ -54,16 +54,19 @@ test_language_conditionals() {
     SOURCE="$ROOT/samples/conditionalLanguages.hcl"
 
     test_lang_with_params() {
-        "$ROOT/converge" apply --local --only-show-changes "${1}" "$SOURCE"
+        params=${1:-""}
+        expected=${2:-""}
+
+        "$ROOT/converge" apply --local --only-show-changes ${params} "$SOURCE"
 
         if [ ! -f greeting.txt ]; then
             echo "greeting.txt doesn't exist!"
             exit 1
         fi
 
-        if [[ "$(cat greeting.txt)" != "$2" ]]; then
+        if [[ "$(cat greeting.txt)" != "${expected}" ]]; then
             echo "greeting.txt doesn't have the right content"
-            echo "has '$(cat greeting.txt)', want '$2'"
+            echo "has '$(cat greeting.txt)', want '${expected}'"
             exit 1
         fi
         return 0
