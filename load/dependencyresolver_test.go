@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,17 +111,20 @@ func TestDependencyResolverResolvesGroupDependencies(t *testing.T) {
 		resolved, err := load.ResolveDependencies(context.Background(), nodes)
 		assert.NoError(t, err)
 
-		assert.Empty(t, graph.Targets(resolved.DownEdges("root/task.install-build-essential")))
-		assert.Equal(
-			t,
-			[]string{"root/task.install-build-essential"},
-			graph.Targets(resolved.DownEdges("root/task.install-jq")),
-		)
-		assert.Equal(
-			t,
-			[]string{"root/task.install-jq"},
-			graph.Targets(resolved.DownEdges("root/task.install-tree")),
-		)
+		group := "apt"
+		groupNodes := resolved.GroupNodes(group)
+		assert.NotEmpty(t, groupNodes)
+		for _, node := range groupNodes {
+			assert.True(t, len(resolved.DownEdgesInGroup(node.ID, group)) <= 1)
+			assert.True(t, len(resolved.UpEdgesInGroup(node.ID, group)) <= 1)
+
+			// find the highest node
+			if len(resolved.UpEdges(node.ID)) == 1 {
+				// it should depend on the other nodes
+				assert.Equal(t, 2, len(resolved.Dependencies(node.ID)))
+			}
+
+		}
 	})
 
 	t.Run("inter-module", func(t *testing.T) {
@@ -130,12 +134,28 @@ func TestDependencyResolverResolvesGroupDependencies(t *testing.T) {
 		resolved, err := load.ResolveDependencies(context.Background(), nodes)
 		assert.NoError(t, err)
 
-		// first module is not dependent on other modules
-		assert.NotContains(t, resolved.Dependencies("root/module.test1"), "root/module.test2")
-		assert.NotContains(t, resolved.Dependencies("root/module.test1"), "root/module.test3")
+		group := "groupedModule"
+		groupNodes := resolved.GroupNodes(group)
+		assert.NotEmpty(t, groupNodes)
+		for _, node := range groupNodes {
+			moduleID := graph.ParentID(node.ID)
+			assert.True(t, len(resolved.DownEdgesInGroup(moduleID, group)) <= 1)
+			assert.True(t, len(resolved.UpEdgesInGroup(moduleID, group)) <= 1)
 
-		// other modules should depend on each other
-		assert.Contains(t, resolved.Dependencies("root/module.test2"), "root/module.test1")
-		assert.Contains(t, resolved.Dependencies("root/module.test3"), "root/module.test2")
+			// find the highest node
+			if len(resolved.UpEdges(moduleID)) == 1 {
+				// it should depend on the other modules
+				var moduleDeps []string
+				for _, depID := range resolved.Dependencies(moduleID) {
+					if dep, ok := resolved.Get(depID); ok {
+						depNode, ok := dep.Value().(*parse.Node)
+						if ok && depNode.IsModule() {
+							moduleDeps = append(moduleDeps, dep.ID)
+						}
+					}
+				}
+				assert.Equal(t, 2, len(moduleDeps))
+			}
+		}
 	})
 }
