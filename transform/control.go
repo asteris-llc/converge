@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"github.com/asteris-llc/converge/helpers/faketask"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/render"
@@ -66,6 +67,9 @@ func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 						Task: childThunk.Task,
 						Data: junk,
 						Thunk: func(r *render.Factory) (resource.Task, error) {
+							if !caseNode.ShouldEvaluate() {
+								return faketask.NoOp(), nil
+							}
 							innerThunk, err := childThunk.Thunk(r)
 							if err != nil {
 								return nil, err
