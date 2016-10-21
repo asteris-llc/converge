@@ -51,10 +51,10 @@ test_basic_conditionals() {
 }
 
 test_language_conditionals() {
-    SOURCE="$ROOT"/samples/conditionalLanguages.hcl
+    SOURCE="$ROOT/samples/conditionalLanguages.hcl"
 
     test_lang_with_params() {
-        "$ROOT/converge apply --local --only-show-changes ${1} $SOURCE"
+        "$ROOT/converge" apply --local --only-show-changes ${1} "$SOURCE"
 
         if [ ! -f greeting.txt ]; then
             echo "greeting.txt doesn't exist!"
