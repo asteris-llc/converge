@@ -2,8 +2,6 @@
 set -eo pipefail
 
 ROOT=$(pwd)
-
-
 TMP=$(mktemp -d -t converge.apply.XXXXXXXXXX)
 function finish {
     rm -rf "$TMP"
@@ -13,7 +11,7 @@ trap finish EXIT
 pushd "$TMP"
 
 test_basic_conditionals() {
-    SOURCE=${1:-"$ROOT"/samples/conditional.hcl}
+    SOURCE="$ROOT"/samples/conditional.hcl
     "$ROOT"/converge apply --local "$SOURCE"
 
     if [ -f foo-file.txt ]; then
@@ -53,8 +51,7 @@ test_basic_conditionals() {
 }
 
 test_language_conditionals() {
-
-    SOURCE=${1:-"$ROOT"/samples/conditionalLanguages.hcl}
+    SOURCE="$ROOT"/samples/conditionalLanguages.hcl
 
     test_lang_with_params() {
         "$ROOT"/converge apply --local --only-show-changes $1 "$SOURCE"
