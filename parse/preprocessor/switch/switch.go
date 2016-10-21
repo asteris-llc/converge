@@ -133,5 +133,8 @@ func InnerText(n *parse.Node, data []byte) ([]byte, error) {
 	if end > len(data) {
 		return nil, errors.New("index out-of-bounds error")
 	}
+	if start >= end {
+		return []byte{}, nil
+	}
 	return data[start:end], nil
 }
