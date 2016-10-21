@@ -28,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
+	"github.com/pkg/errors"
 )
 
 type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)
@@ -255,42 +256,66 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	for _, meta := range nodes {
 		l := logger.WithField("id", meta.ID)
 		// align all up edges in a single branch
-		upEdges := withoutRoot(graph.Sources(g.UpEdges(meta.ID)))
-		for i, upEdge := range upEdges {
-			if i > 0 {
-				dest := highestEdge(g, upEdges[i-1])
-				if err := g.SafeDisconnect(upEdge, meta.ID); err != nil {
-					l.Error(err)
-					return g, err
-				}
+		g, err := alignEdgesInGroup(ctx, g, meta.ID, group)
+		if err != nil {
+			l.Error(err)
+			return g, errors.Wrap(err, "failed to align edges in branch")
+		}
+	}
 
+	g, err := connectIsolatedGroupNodes(ctx, g, nodes, group)
+	if err != nil {
+		logger.Error(err)
+		return g, errors.Wrap(err, "failed to connect group nodes")
+	}
+
+	g, err = connectIsolatedGroupBranches(ctx, g, nodes)
+	if err != nil {
+		logger.Error(err)
+		return g, errors.Wrap(err, "failed to connect group branches")
+	}
+
+	return g, nil
+}
+
+func alignEdgesInGroup(ctx context.Context, g *graph.Graph, id, group string) (*graph.Graph, error) {
+	upEdges := withoutRoot(graph.Sources(g.UpEdges(id)))
+	for i, upEdge := range upEdges {
+		if i > 0 {
+			dest := highestEdge(g, upEdges[i-1])
+			if err := g.SafeDisconnect(upEdge, id); err != nil {
+				return g, err
+			}
+
+			if !willCycle(g, upEdge, dest) {
 				if err := g.SafeConnect(upEdge, dest); err != nil {
-					l.Error(err)
 					return g, err
 				}
 			}
+		}
 
-			// if the node has more than one down edge we want to keep the one with
-			// the most dependencies
-			downEdges := g.DownEdgesInGroup(upEdge, group)
-			if len(downEdges) > 1 {
-				var downNodes []*node.Node
-				for _, downEdge := range downEdges {
-					if meta, ok := g.Get(downEdge); ok {
-						downNodes = append(downNodes, meta)
-					}
+		// if the node has more than one down edge we want to keep the one with
+		// the most dependencies
+		downEdges := g.DownEdgesInGroup(upEdge, group)
+		if len(downEdges) > 1 {
+			var downNodes []*node.Node
+			for _, downEdge := range downEdges {
+				if meta, ok := g.Get(downEdge); ok {
+					downNodes = append(downNodes, meta)
 				}
-				sort.Sort(byDependencyCount{g, downNodes})
-				for i := 1; i < len(downNodes); i++ {
-					if err := g.SafeDisconnect(upEdge, downNodes[i].ID); err != nil {
-						l.Error(err)
-						return g, err
-					}
+			}
+			sort.Sort(byDependencyCount{g, downNodes})
+			for i := 1; i < len(downNodes); i++ {
+				if err := g.SafeDisconnect(upEdge, downNodes[i].ID); err != nil {
+					return g, err
 				}
 			}
 		}
 	}
+	return g, nil
+}
 
+func connectIsolatedGroupNodes(ctx context.Context, g *graph.Graph, nodes []*node.Node, group string) (*graph.Graph, error) {
 	// collect remaining group nodes that have no edges
 	var unconnected []*node.Node
 	for _, meta := range nodes {
@@ -319,12 +344,14 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 				to = groupDep(to)
 			}
 			if err := g.SafeConnect(from, to); err != nil {
-				logger.Error(err)
 				return g, err
 			}
 		}
 	}
+	return g, nil
+}
 
+func connectIsolatedGroupBranches(ctx context.Context, g *graph.Graph, nodes []*node.Node) (*graph.Graph, error) {
 	// collect all unconnected group branches
 	var groupBranches []*node.Node
 	for _, meta := range nodes {
@@ -337,13 +364,26 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	// connect branches into a single branch
 	for i, treeRoot := range groupBranches {
 		if i > 0 {
+			from := treeRoot.ID
 			dest := highestEdge(g, groupBranches[i-1].ID)
-			if err := g.SafeConnect(treeRoot.ID, dest); err != nil {
-				logger.Error(err)
-				return g, err
+
+			if !willCycle(g, from, dest) {
+				if err := g.SafeConnect(from, dest); err != nil {
+					return g, err
+				}
 			}
 		}
 	}
-
 	return g, nil
+}
+
+func willCycle(g *graph.Graph, from, to string) bool {
+	var willCycle bool
+	for _, dep := range g.Dependencies(to) {
+		if dep == from {
+			willCycle = true
+			break
+		}
+	}
+	return willCycle
 }
