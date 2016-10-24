@@ -18,16 +18,16 @@ import (
 // it call highlevel functions, and check how it call underlying lvm' commands
 // only simple successful case tracked here, use mock LVM for all high level testing
 func TestCreateLogicalVolume(t *testing.T) {
-	volname := "data" // Match with existing name in TESTDATA_VGS, so fool engine to find proper paths, etc
+	volname := "data" // Match with existing name in testdata.Lvs, so fool engine to find proper paths, etc
 	// after creation
 	lvm, me := testhelpers.MakeLvmWithMockExec()
 	me.LvsFirstCall = true
 	me.On("Getuid").Return(0)                  // assume, that we have root
 	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
-	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_LVS, nil)
+	me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
+	me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
+	me.On("Read", "lvs", mock.Anything).Return(testdata.Lvs, nil)
 	me.On("Run", "lvcreate", []string{"-n", volname, "-L", "100G", "vg0"}).Return(nil)
 	me.On("Exists", "/dev/mapper/vg0-data").Return(true, nil)
 

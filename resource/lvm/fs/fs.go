@@ -24,6 +24,7 @@ type resourceFS struct {
 	needMkfs        bool
 }
 
+// Mount is a structure for holding values to be rendered as .mount unit for systemd
 type Mount struct {
 	What       string
 	Where      string
@@ -131,7 +132,7 @@ func (r *resourceFS) checkBlkid(name string) (string, error) {
 }
 
 // NewResourceFS create new resource.Task node for create/mount FileSystem.
-func NewResourceFS(lvm lowlevel.LVM, m *Mount) (*resourceFS, error) {
+func NewResourceFS(lvm lowlevel.LVM, m *Mount) (resource.Task, error) {
 	var err error
 	r := &resourceFS{
 		lvm:   lvm,

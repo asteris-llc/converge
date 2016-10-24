@@ -22,9 +22,9 @@ func TestCreateFilesystem(t *testing.T) {
 	me.LvsFirstCall = true
 	me.On("Getuid").Return(0)
 	me.On("Lookup", "mkfs.xfs").Return(nil)
-	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
-	me.On("Read", "lvs", mock.Anything).Return(testdata.TESTDATA_LVS, nil)
+	me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
+	me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
+	me.On("Read", "lvs", mock.Anything).Return(testdata.Lvs, nil)
 	me.On("ReadWithExitCode", "blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/mapper/vg0-data"}).Return("", 0, nil)
 	me.On("ReadFile", "/etc/systemd/system/mnt-data.mount").Return([]byte(""), nil)
 	me.On("WriteFile", "/etc/systemd/system/mnt-data.mount", mock.Anything, mock.Anything).Return(nil)

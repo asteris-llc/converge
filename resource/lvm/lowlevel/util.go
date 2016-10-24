@@ -41,6 +41,7 @@ type realLVM struct {
 	backend Exec
 }
 
+// MakeLvmBackend creates default LVM backend
 func MakeLvmBackend() LVM {
 	backend := MakeOsExec()
 	return &realLVM{backend: backend}
