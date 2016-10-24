@@ -23,7 +23,6 @@
 # -v            Converge version to install
 
 set -e
-set -u
 
 # Default to latest stable
 version="0.3.0-beta2"
