@@ -106,7 +106,7 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 		-os="linux" \
 		-os="freebsd" \
 		-os="solaris" \
-		-output="build/$(NAME)_$(shell git describe --dirty)_{{.OS}}_{{.Arch}}/$(NAME)"
+		-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile
 	@mkdir -p build/tgz
