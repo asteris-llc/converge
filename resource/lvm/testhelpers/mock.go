@@ -20,53 +20,53 @@ func MakeLvmWithMockExec() (lowlevel.LVM, *MockExecutor) {
 	return lvm, me
 }
 
-func (me *MockExecutor) Run(prog string, args []string) error {
-	c := me.Called(prog, args)
+func (mex *MockExecutor) Run(prog string, args []string) error {
+	c := mex.Called(prog, args)
 	return c.Error(0)
 }
 
-func (e *MockExecutor) RunWithExitCode(prog string, args []string) (int, error) {
-	c := e.Called(prog, args)
+func (mex *MockExecutor) RunWithExitCode(prog string, args []string) (int, error) {
+	c := mex.Called(prog, args)
 	return c.Int(0), c.Error(1)
 }
 
-func (me *MockExecutor) Read(prog string, args []string) (string, error) {
-	if me.LvsFirstCall {
-		me.LvsFirstCall = false
+func (mex *MockExecutor) Read(prog string, args []string) (string, error) {
+	if mex.LvsFirstCall {
+		mex.LvsFirstCall = false
 		return "", nil
 	}
-	c := me.Called(prog, args)
+	c := mex.Called(prog, args)
 	return c.String(0), c.Error(1)
 }
 
-func (me *MockExecutor) ReadWithExitCode(prog string, args []string) (string, int, error) {
-	c := me.Called(prog, args)
+func (mex *MockExecutor) ReadWithExitCode(prog string, args []string) (string, int, error) {
+	c := mex.Called(prog, args)
 	return c.String(0), c.Int(1), c.Error(2)
 }
 
-func (me *MockExecutor) ReadFile(fn string) ([]byte, error) {
-	c := me.Called(fn)
+func (mex *MockExecutor) ReadFile(fn string) ([]byte, error) {
+	c := mex.Called(fn)
 	return c.Get(0).([]byte), c.Error(1)
 }
 
-func (me *MockExecutor) Lookup(prog string) error {
-	return me.Called(prog).Error(0)
+func (mex *MockExecutor) Lookup(prog string) error {
+	return mex.Called(prog).Error(0)
 }
 
-func (me *MockExecutor) WriteFile(fn string, content []byte, perm os.FileMode) error {
-	c := me.Called(fn, content, perm)
+func (mex *MockExecutor) WriteFile(fn string, content []byte, perm os.FileMode) error {
+	c := mex.Called(fn, content, perm)
 	return c.Error(0)
 }
 
-func (me *MockExecutor) MkdirAll(path string, perm os.FileMode) error {
-	return me.Called(path, perm).Error(0)
+func (mex *MockExecutor) MkdirAll(path string, perm os.FileMode) error {
+	return mex.Called(path, perm).Error(0)
 }
 
-func (me *MockExecutor) Exists(path string) (bool, error) {
-	c := me.Called(path)
+func (mex *MockExecutor) Exists(path string) (bool, error) {
+	c := mex.Called(path)
 	return c.Bool(0), c.Error(1)
 }
 
-func (me *MockExecutor) Getuid() int {
-	return me.Called().Int(0)
+func (mex *MockExecutor) Getuid() int {
+	return mex.Called().Int(0)
 }
