@@ -15,5 +15,8 @@ RUN apt-get install -y unzip && \
     go get -v github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger && \
     apt-get purge -y unzip
 
+# install gox
+RUN go get github.com/mitchellh/gox
+
 WORKDIR /go
 CMD /bin/bash
