@@ -34,7 +34,7 @@ type Mount struct {
 }
 
 // FIXME: RequiredBy statement should issued only when non-empty
-const unit_template = `[Unit]
+const unitTemplate = `[Unit]
 Before=local-fs.target {{.Before}}
 
 [Mount]
@@ -53,9 +53,11 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 		return nil, errors.Wrap(err, "lvm.fs")
 	}
 
-	if fs, err := r.checkBlkid(r.mount.What); err != nil {
-		return nil, err
-	} else {
+	{
+		fs, err := r.checkBlkid(r.mount.What)
+		if err != nil {
+			return nil, err
+		}
 		log.Debugf("blkid detect following fstype: %s, planned fstype: %s", fs, r.mount.Type)
 		if fs == r.mount.Type {
 			r.needMkfs = false
@@ -67,22 +69,30 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 
-	if ok, err := r.lvm.CheckUnit(r.unitFileName, r.unitFileContent); err != nil {
-		return nil, err
-	} else if ok {
-		r.unitNeedUpdate = true
-		status.AddDifference(r.unitFileName, "<none>", r.unitFileContent, "")
+	{
+		ok, err := r.lvm.CheckUnit(r.unitFileName, r.unitFileContent)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			r.unitNeedUpdate = true
+			status.AddDifference(r.unitFileName, "<none>", r.unitFileContent, "")
+		}
 	}
 
 	// FIXME: check what device mounted to Where
-	if ok, err := r.lvm.Mountpoint(r.mount.Where); err != nil {
-		return nil, err
-	} else {
+	{
+		ok, err := r.lvm.Mountpoint(r.mount.Where)
+		if err != nil {
+			return nil, err
+		}
 		r.mountNeedUpdate = r.unitNeedUpdate && !ok
 	}
+
 	if r.mountNeedUpdate {
 		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
 	}
+
 	if resource.AnyChanges(status.Differences) {
 		status.Level = resource.StatusWillChange
 	}
@@ -120,6 +130,7 @@ func (r *resourceFS) checkBlkid(name string) (string, error) {
 	return r.lvm.Blkid(name)
 }
 
+// NewResourceFS create new resource.Task node for create/mount FileSystem.
 func NewResourceFS(lvm lowlevel.LVM, m *Mount) (*resourceFS, error) {
 	var err error
 	r := &resourceFS{
@@ -149,7 +160,7 @@ func (r *resourceFS) unitName() string {
 
 func (r *resourceFS) renderUnitFile() (string, error) {
 	var b bytes.Buffer
-	tmpl, err := template.New("unit.mount").Parse(unit_template)
+	tmpl, err := template.New("unit.mount").Parse(unitTemplate)
 	if err != nil {
 		return "", err
 	}

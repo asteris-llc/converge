@@ -13,6 +13,10 @@ import (
 	"testing"
 )
 
+// TestCreateFilesystem is a full-blown test, using fake execution engine, to look
+// which commands should be executed from given node.
+//
+// It covers only basic case, for detailed testing, tests with mock-LVM should be used
 func TestCreateFilesystem(t *testing.T) {
 	lvm, me := testhelpers.MakeLvmWithMockExec()
 	me.LvsFirstCall = true
