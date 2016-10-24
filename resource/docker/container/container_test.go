@@ -265,7 +265,7 @@ func TestContainerCheckEntrypointNeedsChange(t *testing.T) {
 			return &dc.Container{
 				Name: name,
 				Config: &dc.Config{
-					Entrypoint: []string{},
+					Entrypoint: []string{"start"},
 				},
 			}, nil
 		},
