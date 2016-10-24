@@ -6,7 +6,12 @@ NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
 BENCH = .
 
-converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+converge: $(shell find . -name '*.go' -not -name 'version_number.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+	@echo "package cmd" > cmd/version_number.go
+	@echo >> cmd/version_number.go
+	@echo "const Version = \"$(shell git describe --dirty)\"" >> cmd/version_number.go
+	@echo "set version to $(shell git describe --dirty)"
+
 	go build -ldflags="-s -w" .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
@@ -87,6 +92,11 @@ vendor-clean: ${NOVENDOR}
 	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
+	@echo "package cmd" > cmd/version_number.go
+	@echo >> cmd/version_number.go
+	@echo "const Version = \"$(shell git describe --dirty)\"" >> cmd/version_number.go
+	@echo "set version to $(shell git describe --dirty)"
+
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
@@ -123,4 +133,4 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 	 --swagger_out=logtostderr=true:rpc/pb \
 	 rpc/pb/root.proto
 
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+.PHONY: cmd/version_number.go test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
