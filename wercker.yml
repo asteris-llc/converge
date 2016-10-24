@@ -29,8 +29,8 @@ publish:
           mkdir -p "build/$DEST"
           mv build.tmp/* "build/$DEST"
 
-    - wercker/s3sync@2.1.0:
-        source_dir: go/src/github.com/asteris-llc/converge/build
+    - nextgxdx/s3sync@2.0.5:
+        source_dir: /go/src/github.com/asteris-llc/converge/build
         bucket-url: $AWS_BUCKET_URL
         key-id: $AWS_ACCESS_KEY_ID
         key-secret: $AWS_SECRET_ACCESS_KEY
