@@ -8,12 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ResourceLV struct {
+type resourceLV struct {
 	group      string
 	name       string
-	size       int64
-	sizeOption string
-	sizeUnit   string
+	size       *lowlevel.LvmSize
 	lvm        lowlevel.LVM
 	needCreate bool
 	devicePath string
@@ -24,9 +22,10 @@ type Status struct {
 	DevicePath string
 }
 
-func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &Status{}
 
+	// Check for LVM prerequizites
 	if err := r.lvm.Check(); err != nil {
 		return nil, errors.Wrap(err, "lvm.lv")
 	}
@@ -58,27 +57,29 @@ func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *ResourceLV) Apply() (resource.TaskStatus, error) {
+func (r *resourceLV) Apply() (resource.TaskStatus, error) {
 	status := &Status{}
-    {
-	    ok, err := r.checkVG();
-        if err != nil {
-		    return nil, err
-        }
+	{
+		ok, err := r.checkVG()
+		if err != nil {
+			return nil, err
+		}
 		if !ok {
 			return nil, fmt.Errorf("Group %s not exists", r.group)
 		}
 	}
 
 	if r.needCreate {
-		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size, r.sizeOption, r.sizeUnit); err != nil {
+		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size); err != nil {
 			return nil, err
 		}
 	}
 
-	if devpath, err := r.deviceMapperPath(); err != nil {
-		return nil, err
-	} else {
+	{
+		devpath, err := r.deviceMapperPath()
+		if err != nil {
+			return nil, err
+		}
 		if devpath != r.devicePath {
 			// FIXME: better put it to Messages, to log, both, upgrade to error???
 			status.Output = append(status.Output, fmt.Sprintf("WARN: real device path '%s' diverge with planned '%s'", devpath, r.devicePath))
@@ -91,17 +92,17 @@ func (r *ResourceLV) Apply() (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *ResourceLV) Setup(lvm lowlevel.LVM, group string, name string, sizeToParse string) error {
-	r.group = group
-	r.name = name
-	r.lvm = lvm
-
-	var err error
-	r.size, r.sizeOption, r.sizeUnit, err = lowlevel.ParseSize(sizeToParse)
-	return err
+// NewResourceLV create new resource.Task node for LVM Volume Groups
+func NewResourceLV(lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) *resourceLV {
+	return &resourceLV{
+		group: group,
+		name:  name,
+		lvm:   lvm,
+		size:  size,
+	}
 }
 
-func (r *ResourceLV) checkVG() (bool, error) {
+func (r *resourceLV) checkVG() (bool, error) {
 	vgs, err := r.lvm.QueryVolumeGroups()
 	if err != nil {
 		return false, err
@@ -110,7 +111,7 @@ func (r *ResourceLV) checkVG() (bool, error) {
 	return ok, nil
 }
 
-func (r *ResourceLV) deviceMapperPath() (string, error) {
+func (r *resourceLV) deviceMapperPath() (string, error) {
 	lvs, err := r.lvm.QueryLogicalVolumes(r.group)
 	if err != nil {
 		return "", err
@@ -122,5 +123,5 @@ func (r *ResourceLV) deviceMapperPath() (string, error) {
 }
 
 func init() {
-	registry.Register("lvm.lv", (*Preparer)(nil), (*ResourceLV)(nil))
+	registry.Register("lvm.lv", (*Preparer)(nil), (*resourceLV)(nil))
 }

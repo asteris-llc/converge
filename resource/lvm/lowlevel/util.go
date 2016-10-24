@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// LVM is a public interface to LVM guts for converge highlevel modules
 type LVM interface {
 	// Check for LVM tools installed and useable
 	Check() error
@@ -21,7 +22,7 @@ type LVM interface {
 	ExtendVolumeGroup(vg string, dev string) error
 	ReduceVolumeGroup(vg string, dev string) error
 	CreatePhysicalVolume(dev string) error
-	CreateLogicalVolume(group string, volume string, size int64, sizeOption string, sizeUnit string) error
+	CreateLogicalVolume(group string, volume string, size *LvmSize) error
 	Mkfs(dev string, fstype string) error
 	Mountpoint(path string) (bool, error)
 	Blkid(dev string) (string, error)
@@ -68,9 +69,9 @@ func (lvm *realLVM) CreatePhysicalVolume(dev string) error {
 	return lvm.backend.Run("pvcreate", []string{dev})
 }
 
-func (lvm *realLVM) CreateLogicalVolume(group string, volume string, size int64, sizeOption string, sizeUnit string) error {
-	sizeStr := fmt.Sprintf("%d%s", size, sizeUnit)
-	option := fmt.Sprintf("-%s", sizeOption)
+func (lvm *realLVM) CreateLogicalVolume(group string, volume string, size *LvmSize) error {
+	sizeStr := size.String()
+	option := size.Option()
 	return lvm.backend.Run("lvcreate", []string{"-n", volume, option, sizeStr, group})
 }
 
