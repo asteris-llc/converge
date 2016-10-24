@@ -7,37 +7,25 @@ import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
+// Preparer for LVM's Volume Group
 type Preparer struct {
-	Name    string   `hcl:"name"`
+	Name    string   `hcl:"name",required:"true"`
 	Devices []string `hcl:"devices"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-
+	// Device paths need to be real devices, not symlinks
+	// (otherwise it breaks on GCE)
 	devices := make([]string, len(p.Devices))
 	for i, dev := range p.Devices {
-		rdev, err := render.Render("devices["+string(i)+"]", dev)
-		if err != nil {
-			return nil, err
-		}
-
-		// also resolve symlink here
-		devices[i], err = filepath.EvalSymlinks(rdev)
+		var err error
+		devices[i], err = filepath.EvalSymlinks(dev)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	rvg := &ResourceVG{
-		Name: name,
-	}
-
-	rvg.Setup(lowlevel.MakeLvmBackend(), devices)
-
+	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices)
 	return rvg, nil
 }
