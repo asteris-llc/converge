@@ -5,28 +5,20 @@ import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
+// Preparer for LVM VG resource
 type Preparer struct {
-	Group string `hcl:"group"`
-	Name  string `hcl:"name"`
-	Size  string `hcl:"size"`
+	Group string `hcl:"group",required:"true"`
+	Name  string `hcl:"name",required:"true"`
+	Size  string `hcl:"size",required:"true"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	group, err := render.Render("group", p.Group)
-	if err != nil {
-		return nil, err
-	}
-	name, err := render.Render("name", p.Name)
-	if err != nil {
-		return nil, err
-	}
-	size, err := render.Render("size", p.Size)
+	size, err := lowlevel.ParseSize(p.Size)
 	if err != nil {
 		return nil, err
 	}
 
-	r := &ResourceLV{}
-	err = r.Setup(lowlevel.MakeLvmBackend(), group, name, size)
-	return r, err
+	r := NewResourceLV(lowlevel.MakeLvmBackend(), p.Group, p.Name, size)
+	return r, nil
 }

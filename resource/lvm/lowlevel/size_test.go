@@ -1,52 +1,65 @@
 package lowlevel_test
 
 import (
+	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/stretchr/testify/assert"
+
 	"testing"
 )
 
-func TestParseSizeSimple(t *testing.T) {
-	size, option, unit, err := lowlevel.ParseSize("100G")
-	assert.NoError(t, err)
-	assert.Equal(t, int64(100), size)
-	assert.Equal(t, "L", option)
-	assert.Equal(t, "G", unit)
-}
+func TestParseSize(t *testing.T) {
+	t.Parallel()
+	defer logging.HideLogs(t)()
 
-func TestParseSizeSimplePercents(t *testing.T) {
-	size, option, unit, err := lowlevel.ParseSize("100%FREE")
-	assert.NoError(t, err)
-	assert.Equal(t, int64(100), size)
-	assert.Equal(t, "l", option)
-	assert.Equal(t, "%FREE", unit)
-}
+	t.Run("normal absolute values", func(t *testing.T) {
+		size, err := lowlevel.ParseSize("100G")
+		assert.NoError(t, err)
+		assert.Equal(t, int64(100), size.Size)
+		assert.Equal(t, false, size.Relative)
+		assert.Equal(t, "G", size.Unit)
 
-func TestParsePercents(t *testing.T) {
-	_, _, unit, err := lowlevel.ParseSize("99%FREE")
-	assert.NoError(t, err)
-	assert.Equal(t, "%FREE", unit)
+		assert.Equal(t, "-L", size.Option())
+		assert.Equal(t, "100G", size.String())
+	})
 
-	_, _, unit, err = lowlevel.ParseSize("99%VG")
-	assert.NoError(t, err)
-	assert.Equal(t, "%VG", unit)
+	t.Run("normal relative values", func(t *testing.T) {
+		size, err := lowlevel.ParseSize("100%FREE")
+		assert.NoError(t, err)
+		assert.Equal(t, int64(100), size.Size)
+		assert.Equal(t, true, size.Relative)
+		assert.Equal(t, "%FREE", size.Unit)
 
-	_, _, unit, err = lowlevel.ParseSize("99%PVS")
-	assert.NoError(t, err)
-	assert.Equal(t, "%PVS", unit)
-}
+		assert.Equal(t, "-l", size.Option())
+		assert.Equal(t, "100%FREE", size.String())
+	})
 
-func TestBadPercentageUnit(t *testing.T) {
-	_, _, _, err := lowlevel.ParseSize("100%XXX")
-	assert.Error(t, err)
-}
+	t.Run("percentage units", func(t *testing.T) {
+		size, err := lowlevel.ParseSize("99%FREE")
+		assert.NoError(t, err)
+		assert.Equal(t, "%FREE", size.Unit)
 
-func TestBadPercentage(t *testing.T) {
-	_, _, _, err := lowlevel.ParseSize("146%FREE")
-	assert.Error(t, err)
-}
+		size, err = lowlevel.ParseSize("99%VG")
+		assert.NoError(t, err)
+		assert.Equal(t, "%VG", size.Unit)
 
-func TestBadUnit(t *testing.T) {
-	_, _, _, err := lowlevel.ParseSize("146X")
-	assert.Error(t, err)
+		size, err = lowlevel.ParseSize("99%PVS")
+		assert.NoError(t, err)
+		assert.Equal(t, "%PVS", size.Unit)
+	})
+
+	t.Run("bad percentage unit", func(t *testing.T) {
+		_, err := lowlevel.ParseSize("100%XYZ")
+		assert.Error(t, err)
+	})
+
+	t.Run("bad percentage (overflow)", func(t *testing.T) {
+		_, err := lowlevel.ParseSize("146%FREE")
+		assert.Error(t, err)
+	})
+
+	t.Run("bad unit", func(t *testing.T) {
+		_, err := lowlevel.ParseSize("146X")
+		assert.Error(t, err)
+	})
 }

@@ -3,15 +3,20 @@ package lv_test
 import (
 	//    "github.com/asteris-llc/converge/helpers/comparsion"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/lvm/lv"
 	"github.com/asteris-llc/converge/resource/lvm/testdata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"testing"
 )
 
+// TestCreateLogicalVolume is a full-blown integration test based on fake exec engine
+// it call highlevel functions, and check how it call underlying lvm' commands
+// only simple successful case tracked here, use mock LVM for all high level testing
 func TestCreateLogicalVolume(t *testing.T) {
 	volname := "data" // Match with existing name in TESTDATA_VGS, so fool engine to find proper paths, etc
 	// after creation
@@ -28,8 +33,10 @@ func TestCreateLogicalVolume(t *testing.T) {
 
 	fr := fakerenderer.New()
 
-	r := &lv.ResourceLV{}
-	r.Setup(lvm, "vg0", volname, "100G")
+	size, sizeErr := lowlevel.ParseSize("100G")
+	require.NoError(t, sizeErr)
+
+	r := lv.NewResourceLV(lvm, "vg0", volname, size)
 	status, err := r.Check(fr)
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
