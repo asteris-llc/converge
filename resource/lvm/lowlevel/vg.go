@@ -1,5 +1,8 @@
 package lowlevel
 
+// VolumeGroup is parsed record for LVM Volume Groups (from `vgs` output)
+// Add more fields, if required
+// (at the moment we need only LVM2_VG_NAME to get list all existing groups)
 type VolumeGroup struct {
 	Name string `mapstructure:"LVM2_VG_NAME"`
 }

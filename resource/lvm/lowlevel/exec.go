@@ -18,7 +18,7 @@ import (
 // FIXME: split to ExecInterface, FilesystemInterface (possible also SystemInterface for Getuid)
 type Exec interface {
 	Run(prog string, args []string) error
-	RunExitCode(prog string, args []string) (int, error) // for mountpoint querying
+	RunWithExitCode(prog string, args []string) (int, error) // for mountpoint querying
 	Read(prog string, args []string) (stdout string, err error)
 	ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) // for blkid querying
 	Lookup(prog string) error
@@ -34,6 +34,7 @@ type Exec interface {
 type osExec struct {
 }
 
+// MakeOsExec create Exec backend
 func MakeOsExec() Exec {
 	return &osExec{}
 }
@@ -49,23 +50,24 @@ func (*osExec) Run(prog string, args []string) error {
 	return e
 }
 
-func (e *osExec) RunExitCode(prog string, args []string) (int, error) {
+func (e *osExec) RunWithExitCode(prog string, args []string) (int, error) {
 	err := e.Run(prog, args)
 	return exitStatus(err)
 }
 
 func (*osExec) ReadWithExitCode(prog string, args []string) (stdout string, rc int, err error) {
+	rc = 0
 	log.WithField("module", "lvm").Infof("Executing (read) %s: %v", prog, args)
 	out, err := exec.Command(prog, args...).Output()
+	strOut := strings.Trim(string(out), "\n ")
 	if err != nil {
-		if rc, err := exitStatus(err); err != nil {
+		rc, err = exitStatus(err)
+		if err != nil {
 			log.WithField("module", "lvm").Debugf("%s: terminated with %s", prog, err.Error())
 			return "", 0, errors.Wrapf(err, "reading output of process %s: %s", prog, args)
-		} else {
-			return strings.Trim(string(out), "\n "), rc, nil
 		}
 	}
-	return strings.Trim(string(out), "\n "), 0, err
+	return strOut, rc, err
 }
 
 func (e *osExec) Read(prog string, args []string) (stdout string, err error) {
