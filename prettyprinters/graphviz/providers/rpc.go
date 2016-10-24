@@ -21,8 +21,12 @@ import (
 
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
+	"github.com/asteris-llc/converge/resource/docker/container"
+	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/asteris-llc/converge/resource/file/content"
+	"github.com/asteris-llc/converge/resource/file/directory"
 	"github.com/asteris-llc/converge/resource/param"
+	"github.com/asteris-llc/converge/resource/wait/port"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
 )
@@ -62,7 +66,8 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 	if e.Name == rootNodeID {
 		name = "/"
 	} else {
-		name = strings.Split(e.Name, "root/")[1]
+		parts := strings.Split(e.Name, "/")
+		name = parts[len(parts)-1]
 	}
 
 	val, ok := e.Value.(*pb.GraphComponent_Vertex)
@@ -79,6 +84,14 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 
 		return pp.VisibleString(fmt.Sprintf("File: %s", dest.Destination)), nil
 
+	case "file.directory":
+		var dest = new(directory.Directory)
+		if err := json.Unmarshal(val.Details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal directory")
+		}
+
+		return pp.VisibleString(fmt.Sprintf("Directory: %s", dest.Destination)), nil
+
 	case "module":
 		return pp.VisibleString(fmt.Sprintf("Module: %s", name)), nil
 
@@ -92,6 +105,30 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 			fmt.Sprintf("%s: %s", name, dest.Val),
 			p.ShowParams,
 		), nil
+
+	case "docker.image":
+		var dest = new(image.Image)
+		if err := json.Unmarshal(val.Details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal docker image")
+		}
+
+		return pp.VisibleString(fmt.Sprintf("Docker Image: %s:%s", dest.Name, dest.Tag)), nil
+
+	case "docker.container":
+		var dest = new(container.Container)
+		if err := json.Unmarshal(val.Details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal docker container")
+		}
+
+		return pp.VisibleString(fmt.Sprintf("Docker Container: %s", dest.Name)), nil
+
+	case "wait.port":
+		var dest = new(port.Port)
+		if err := json.Unmarshal(val.Details, dest); err != nil {
+			return nil, errors.Wrap(err, "could not unmarshal docker port")
+		}
+
+		return pp.VisibleString(fmt.Sprintf("Wait: %s:%d", dest.Host, dest.Port)), nil
 
 	default:
 		return pp.VisibleString(name), nil
@@ -113,8 +150,14 @@ func (p RPCProvider) VertexGetProperties(e graphviz.GraphEntity) graphviz.Proper
 	case "task":
 		properties["shape"] = "component"
 
-	case "file.content":
+	case "file.content", "file.directory":
 		properties["shape"] = "tab"
+
+	case "module":
+		properties["shape"] = "folder"
+
+	case "docker.image", "docker.container":
+		properties["shape"] = "box3d"
 	}
 
 	return properties

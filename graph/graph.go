@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/dag"
@@ -28,10 +29,10 @@ import (
 )
 
 // WalkFunc is taken by the walking functions
-type WalkFunc func(string, interface{}) error
+type WalkFunc func(*node.Node) error
 
 // TransformFunc is taken by the transformation functions
-type TransformFunc func(string, *Graph) error
+type TransformFunc func(*node.Node, *Graph) error
 
 type walkerFunc func(context.Context, *Graph, WalkFunc) error
 
@@ -60,12 +61,12 @@ func New() *Graph {
 }
 
 // Add a new value by ID
-func (g *Graph) Add(id string, value interface{}) {
+func (g *Graph) Add(node *node.Node) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
-	g.inner.Add(id)
-	g.values.Set(id, value)
+	g.inner.Add(node.ID)
+	g.values.Set(node.ID, node)
 }
 
 // Remove an existing value by ID
@@ -77,14 +78,19 @@ func (g *Graph) Remove(id string) {
 	g.values.Remove(id)
 }
 
-// Get a value by ID
-func (g *Graph) Get(id string) interface{} {
-	val, _ := g.values.Get(id)
-	return val
+// Get returns the value of the element and a bool indicating if it was
+// found. If it was not found the value of the returned element is nil, but a
+// valid node will be constructed.
+func (g *Graph) Get(id string) (*node.Node, bool) {
+	raw, ok := g.values.Get(id)
+	if !ok {
+		return nil, ok
+	}
+	return raw.(*node.Node), true
 }
 
 // GetParent returns the direct parent vertex of the current node.
-func (g *Graph) GetParent(id string) interface{} {
+func (g *Graph) GetParent(id string) (*node.Node, bool) {
 	var parentID string
 	for _, edge := range g.UpEdges(id) {
 		switch edge.(type) {
@@ -97,12 +103,62 @@ func (g *Graph) GetParent(id string) interface{} {
 	return g.Get(parentID)
 }
 
+// GetParentID is a combination of getting the parent the getting the ID.
+func (g *Graph) GetParentID(id string) (string, bool) {
+	node, ok := g.GetParent(id)
+	if !ok {
+		return "", false
+	}
+	return node.ID, true
+}
+
+// AreSiblings returns true if both nodes share a parent edge, or both nodes are
+// at the root of the graph (and have no parent edge).  It returns false if both
+// IDs are the same.
+func (g *Graph) AreSiblings(fst, snd string) bool {
+	fstParent, fstFound := g.GetParentID(fst)
+	sndParent, sndFound := g.GetParentID(snd)
+	return (fstParent == sndParent) && (fstFound == sndFound) && (fst != snd)
+}
+
+// IsNibling checks to see if second is the child of a sibling of the first.
+func (g *Graph) IsNibling(fst, snd string) bool {
+	sndID, sndHasParent := g.GetParentID(snd)
+	if !sndHasParent {
+		return false
+	}
+	if fst == sndID {
+		return false
+	}
+	if g.AreSiblings(fst, snd) {
+		return true
+	}
+
+	if !sndHasParent {
+		return false
+	}
+	return g.IsNibling(fst, sndID)
+}
+
 // ConnectParent connects a parent node to a child node
 func (g *Graph) ConnectParent(from, to string) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
 	g.inner.Connect(NewParentEdge(from, to))
+}
+
+// Children returns a list of ids whose parent id is set to the specified node
+func (g *Graph) Children(id string) (out []string) {
+	downEdges := g.DownEdges(id)
+	g.innerLock.RLock()
+	defer g.innerLock.RUnlock()
+	for _, edge := range downEdges {
+		if _, ok := edge.(*ParentEdge); ok {
+			out = append(out, edge.Target().(string))
+		}
+	}
+	return
 }
 
 // Connect two vertices together by ID
@@ -113,12 +169,40 @@ func (g *Graph) Connect(from, to string) {
 	g.inner.Connect(dag.BasicEdge(from, to))
 }
 
+// SafeConnect connects two vertices together by ID but only if valid
+func (g *Graph) SafeConnect(from, to string) error {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.Connect(dag.BasicEdge(from, to))
+
+	if err := g.Validate(); err != nil {
+		g.inner.RemoveEdge(dag.BasicEdge(from, to))
+		return err
+	}
+	return nil
+}
+
 // Disconnect two vertices by IDs
 func (g *Graph) Disconnect(from, to string) {
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
 	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+}
+
+// SafeDisconnect disconnects two vertices by IDs but only if valid
+func (g *Graph) SafeDisconnect(from, to string) error {
+	g.innerLock.Lock()
+	defer g.innerLock.Unlock()
+
+	g.inner.RemoveEdge(dag.BasicEdge(from, to))
+
+	if err := g.Validate(); err != nil {
+		g.inner.Connect(dag.BasicEdge(from, to))
+		return err
+	}
+	return nil
 }
 
 // UpEdges returns inward-facing edges of the specified vertex
@@ -147,6 +231,36 @@ func (g *Graph) DownEdges(id string) (out []dag.Edge) {
 	}
 
 	return out
+}
+
+// DownEdgesInGroup returns the outward-facing edges of the specified vertex in
+// the specified group
+func (g *Graph) DownEdgesInGroup(id, group string) (out []string) {
+	var ingroup []string
+	for _, edge := range g.DownEdges(id) {
+		edgeID := edge.Target().(string)
+		if edgeNode, ok := g.Get(edgeID); ok {
+			if edgeNode.Group == group {
+				ingroup = append(ingroup, edgeID)
+			}
+		}
+	}
+	return ingroup
+}
+
+// UpEdgesInGroup returns the outward-facing edges of the specified vertex in
+// the specified group
+func (g *Graph) UpEdgesInGroup(id, group string) (out []string) {
+	var ingroup []string
+	for _, edge := range g.UpEdges(id) {
+		edgeID := edge.Source().(string)
+		if edgeNode, ok := g.Get(edgeID); ok {
+			if edgeNode.Group != "" && edgeNode.Group == group {
+				ingroup = append(ingroup, edgeID)
+			}
+		}
+	}
+	return ingroup
 }
 
 // Descendents gets a list of all descendents (not just children, everything)
@@ -346,7 +460,8 @@ func dependencyWalk(rctx context.Context, g *Graph, cb WalkFunc) error {
 		}
 
 		logger.WithField("id", id).Debug("executing")
-		if err := cb(id, g.Get(id)); err != nil {
+		val, _ := g.Get(id)
+		if err := cb(val); err != nil {
 			setErr(id, err)
 		}
 	}
@@ -420,7 +535,8 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 
 		logger.WithField("id", id).Debug("walking")
 
-		if err := cb(id, g.Get(id)); err != nil {
+		raw, _ := g.Get(id) // we want to call with every value, including nil
+		if err := cb(raw); err != nil {
 			return err
 		}
 
@@ -449,7 +565,8 @@ func (g *Graph) Copy() *Graph {
 	out := New()
 
 	for _, v := range g.Vertices() {
-		out.Add(v, g.Get(v))
+		val, _ := g.Get(v) // we don't care if it's nil here, we're doing a direct copy
+		out.Add(val)
 	}
 
 	for _, e := range g.inner.Edges() {
@@ -492,7 +609,7 @@ func (g *Graph) Validate() error {
 	return nil
 }
 
-// Vertices will det a list of the IDs for every vertex in the graph, cast to a
+// Vertices will get a list of the IDs for every vertex in the graph, cast to a
 // string.
 func (g *Graph) Vertices() []string {
 	graphVertices := g.inner.Vertices()
@@ -503,15 +620,28 @@ func (g *Graph) Vertices() []string {
 	return vertices
 }
 
-// MaybeGet returns the value of the element and a bool indicating if it was
-// found, if it was not found the value of the returned element is nil.
-func (g *Graph) MaybeGet(id string) (interface{}, bool) {
-	return g.values.Get(id)
+// GroupNodes will return all nodes in the graph in the specified group
+func (g *Graph) GroupNodes(group string) []*node.Node {
+	var nodes = []*node.Node{}
+	if group == "" {
+		return nodes
+	}
+
+	graphVertices := g.inner.Vertices()
+	for v := range graphVertices {
+		id := graphVertices[v].(string)
+		if meta, ok := g.Get(id); ok {
+			if meta.Group == group {
+				nodes = append(nodes, meta)
+			}
+		}
+	}
+	return nodes
 }
 
 // Contains returns true if the id exists in the map
 func (g *Graph) Contains(id string) bool {
-	_, found := g.MaybeGet(id)
+	_, found := g.Get(id)
 	return found
 }
 
@@ -550,8 +680,8 @@ func (g *Graph) String() string {
 func transform(ctx context.Context, source *Graph, walker walkerFunc, cb TransformFunc) (*Graph, error) {
 	dest := source.Copy()
 
-	err := walker(ctx, dest, func(id string, _ interface{}) error {
-		return cb(id, dest)
+	err := walker(ctx, dest, func(meta *node.Node) error {
+		return cb(meta, dest)
 	})
 	if err != nil {
 		return dest, err

@@ -15,16 +15,17 @@
 package render
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"reflect"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/param"
+	"github.com/pkg/errors"
 )
 
 // ErrUnresolvable is returned by Render if the template string tries to resolve
@@ -37,7 +38,7 @@ func (ErrUnresolvable) Error() string { return "node is unresolvable" }
 type Renderer struct {
 	Graph           func() *graph.Graph
 	ID              string
-	DotValue        string
+	DotValue        resource.Value
 	DotValuePresent bool
 	resolverErr     bool
 	Language        *extensions.LanguageExtension
@@ -49,7 +50,7 @@ func (r *Renderer) GetID() string {
 }
 
 // Value of this renderer
-func (r *Renderer) Value() (value string, present bool) {
+func (r *Renderer) Value() (value resource.Value, present bool) {
 	return r.DotValue, r.DotValuePresent
 }
 
@@ -70,6 +71,23 @@ func (r *Renderer) Render(name, src string) (string, error) {
 		return "", err
 	}
 	return out.String(), err
+}
+
+func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
+	if graph.IsRoot(node) || node == "" {
+		return "", false
+	}
+	siblingID := graph.SiblingID(id, node)
+	val, ok := g.Get(siblingID)
+	if !ok {
+		return getNearestAncestor(g, graph.ParentID(id), node)
+	}
+	if elem, ok := val.Value().(*parse.Node); ok {
+		if elem.Kind() == "module" {
+			return "", false
+		}
+	}
+	return siblingID, true
 }
 
 func (r *Renderer) param(name string) (string, error) {
@@ -97,7 +115,6 @@ func (r *Renderer) paramList(name string) ([]string, error) {
 		val := vals.Index(i)
 		out = append(out, fmt.Sprintf("%v", val.Interface()))
 	}
-
 	return out, nil
 }
 
@@ -123,13 +140,19 @@ func (r *Renderer) paramMap(name string) (map[string]interface{}, error) {
 }
 
 func (r *Renderer) paramRawValue(name string) (interface{}, error) {
-	task, ok := resource.ResolveTask(r.Graph().Get(graph.SiblingID(r.ID, "param."+name)))
+
+	ancestor, found := getNearestAncestor(r.Graph(), r.ID, "param."+name)
+	if !found {
+		return "", errors.New("param not found (no such ancestor)")
+	}
+	ancestorMeta, _ := r.Graph().Get(ancestor)
+	task, ok := resource.ResolveTask(ancestorMeta.Value())
 
 	if task == nil || !ok {
 		return "", errors.New("param not found")
 	}
 
-	if _, ok := task.(*PrepareThunk); ok {
+	if _, ok = task.(*PrepareThunk); ok {
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
@@ -146,25 +169,32 @@ func (r *Renderer) paramRawValue(name string) (interface{}, error) {
 func (r *Renderer) lookup(name string) (string, error) {
 	g := r.Graph()
 	// fully-qualified graph name
-
 	fqgn := graph.SiblingID(r.ID, name)
-	vertexName, terms, found := preprocessor.VertexSplit(g, fqgn)
+
+	vertexName, terms, found := preprocessor.VertexSplitTraverse(g, name, r.ID, preprocessor.TraverseUntilModule, make(map[string]struct{}))
+
+	if !validateLookup(g, r.ID, vertexName) {
+		return "", fmt.Errorf("%s cannot resolve inner-branch node at %s", r.ID, vertexName)
+	}
 
 	if !found {
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
 
-	if _, isThunk := g.Get(vertexName).(*PrepareThunk); isThunk {
-		log.Println("[INFO] node is unresolvable by proxy-reference to ", vertexName)
+	meta, ok := g.Get(vertexName)
+	if !ok {
+		return "", fmt.Errorf("%s is empty", vertexName)
+	}
+
+	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
+		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
-	val, ok := resource.ResolveTask(g.Get(vertexName))
-
+	val, ok := resource.ResolveTask(meta.Value())
 	if !ok {
-		p := g.Get(vertexName)
-		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, p)
+		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, meta.Value())
 	}
 
 	result, err := preprocessor.EvalTerms(val, preprocessor.SplitTerms(terms)...)
@@ -174,8 +204,22 @@ func (r *Renderer) lookup(name string) (string, error) {
 			r.resolverErr = true
 			return "", ErrUnresolvable{}
 		}
-		return "", err
+		return "", errors.Wrap(err, fmt.Sprintf("cannot perform a lookup of %s at %s", fqgn, r.ID))
 	}
 
 	return fmt.Sprintf("%v", result), nil
+}
+
+// validateLookup ensures that the lookup is valid and resolvable over cases of
+// nesting and conditional evaluation.  It restricts lookups such that a nested
+// value may depend on an outer value, but an outer value may not depend on a
+// nested value.
+func validateLookup(g *graph.Graph, src, dst string) bool {
+	if graph.AreSiblingIDs(src, dst) {
+		return true
+	}
+	if g.IsNibling(src, dst) {
+		return false
+	}
+	return true
 }

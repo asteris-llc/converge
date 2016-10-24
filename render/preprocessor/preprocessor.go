@@ -23,6 +23,8 @@ import (
 	"sync"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/resource/module"
 )
 
 // ErrUnresolvable indicates that a field exists but is unresolvable due to nil
@@ -143,6 +145,62 @@ func VertexSplit(g *graph.Graph, s string) (string, string, bool) {
 	return prefix, s[len(prefix)+1:], true
 }
 
+// VertexSplitTraverse will act like vertex split, looking for a prefix matching
+// the current set of graph nodes, however unlike `VertexSplit`, if a node is
+// not found at the current level it will look at the parent level to the
+// provided starting node, unless stop(parent) returns true.
+func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, stop func(*graph.Graph, string) bool, history map[string]struct{}) (string, string, bool) {
+	history[startingNode] = struct{}{}
+
+	for _, child := range g.Children(startingNode) {
+		if _, ok := history[child]; ok {
+			continue
+		}
+		if stop(g, child) {
+			continue
+		}
+		vertex, middle, found := VertexSplitTraverse(g, toFind, child, stop, history)
+		if found {
+			return vertex, middle, found
+		}
+	}
+	if stop(g, startingNode) {
+		return "", toFind, false
+	}
+
+	fqgn := graph.SiblingID(startingNode, toFind)
+	vertex, middle, found := VertexSplit(g, fqgn)
+	if found {
+		return vertex, middle, found
+	}
+	parentID := graph.ParentID(startingNode)
+	return VertexSplitTraverse(g, toFind, parentID, stop, history)
+}
+
+// TraverseUntilModule is a function intended to be used with
+// VertexSplitTraverse and will cause vertex splitting to propogate upwards
+// until it encounters a module
+func TraverseUntilModule(g *graph.Graph, id string) bool {
+	if graph.IsRoot(id) {
+		return true
+	}
+	elemMeta, ok := g.Get(id)
+	if !ok {
+		return true
+	}
+	elem := elemMeta.Value()
+	if _, ok := elem.(*module.Module); ok {
+		return true
+	}
+	if _, ok := elem.(*module.Preparer); ok {
+		return true
+	}
+	if node, ok := elem.(*parse.Node); ok {
+		return node.Kind() == "module"
+	}
+	return false
+}
+
 // HasField returns true if the provided struct has the defined field
 func HasField(obj interface{}, fieldName string) bool {
 	var v reflect.Type
@@ -199,82 +257,141 @@ func HasMethod(obj interface{}, methodName string) bool {
 
 // EvalMember gets a member from a stuct, dereferencing pointers as necessary
 func EvalMember(name string, obj interface{}) (reflect.Value, error) {
-	name, err := LookupCanonicalFieldName(interfaceToConcreteType(obj), name)
-
-	if err != nil {
-		return reflect.Zero(reflect.TypeOf(obj)), err
-	}
-	v := reflect.ValueOf(obj)
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return reflect.Zero(reflect.TypeOf(obj)), nilPtrError(v)
+	keys, fields := lookupMap(FieldMap(obj))
+	k, ok := keys[strings.ToLower(name)]
+	if !ok {
+		var validValues []string
+		for k := range keys {
+			validValues = append(validValues, k)
 		}
-		v = v.Elem()
+		return reflect.ValueOf(obj), fmt.Errorf("%T has no field %s. Must be one of: %v", obj, name, validValues)
+	}
+	return fields[k], nil
+}
+
+// Returns true if this is a non-nil pointer or interface
+func indirectStruct(v reflect.Value) bool {
+	return (v.Kind() == reflect.Ptr && !v.IsNil()) || v.Kind() == reflect.Interface
+}
+
+// FieldMap generates a map of field names to values for an interface, including
+// embedded structs and interfaces.  If a field is defined in more than one
+// embedded struct or interface then it is excluded (unless it is also present
+// in the parent struct).  Fields in obj will take priority over those in
+// embedded structs.
+func FieldMap(obj interface{}) map[string]reflect.Value {
+	embeddedRefs := make(map[string]int)
+	unembeddedRefs := make(map[string]int)
+
+	results := make(map[string]reflect.Value)
+	val := reflect.ValueOf(obj)
+	if canBeNil(val) && val.IsNil() {
+		return results
 	}
 
-	if _, hasField := v.Type().FieldByName(name); !hasField {
-		return reflect.Zero(reflect.TypeOf(obj)), missingFieldError(name, v)
+	for {
+		if !indirectStruct(val) {
+			break
+		}
+		val = val.Elem()
 	}
 
-	return v.FieldByName(name), nil
+	for idx := 0; idx < val.Type().NumField(); idx++ {
+		sfield := val.Type().Field(idx)
+		if sfield.Anonymous {
+			if canBeNil(val.Field(idx)) && val.Field(idx).IsNil() {
+				results[sfield.Name] = val.Field(idx)
+				continue
+			}
+			for k, v := range FieldMap(val.Field(idx).Interface()) {
+				if val, ok := embeddedRefs[k]; ok {
+					embeddedRefs[k] = val + 1
+				} else {
+					embeddedRefs[k] = 1
+				}
+				if _, ok := results[k]; !ok {
+					results[k] = v
+				}
+			}
+		} else {
+			unembeddedRefs[sfield.Name] = idx
+		}
+		results[sfield.Name] = val.Field(idx)
+	}
+
+	for ref, count := range embeddedRefs {
+		if count <= 1 {
+			continue
+		}
+		if idx, ok := unembeddedRefs[ref]; ok {
+			results[ref] = val.Field(idx)
+		} else {
+			delete(results, ref)
+		}
+	}
+	return results
+}
+
+func canBeNil(r reflect.Value) bool {
+	switch r.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		return true
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return true
+	case reflect.Chan, reflect.Func:
+		return true
+	}
+	return false
 }
 
 // HasPath returns true of the set of terms can resolve to a value
 func HasPath(obj interface{}, terms ...string) error {
-	t := reflect.TypeOf(obj)
 	for _, term := range terms {
-		for t.Kind() == reflect.Ptr {
-			t = t.Elem()
-		}
-
-		if k := t.Kind(); k == reflect.Interface {
-			return nil
-		} else if k != reflect.Struct {
-			return errors.New("cannot access non-structure field")
-		}
-
-		term, err := LookupCanonicalFieldName(t, term)
-		if err != nil {
-			return err
-		}
-
-		field, ok := t.FieldByName(term)
+		term = strings.ToLower(term)
+		lookupMap, fieldMap := lookupMap(FieldMap(obj))
+		key, ok := lookupMap[term]
 		if !ok {
-			validFields, fieldErrs := ListFields(t)
-			if fieldErrs != nil {
-				return fieldErrs
+			var validKeys []string
+			for k := range lookupMap {
+				validKeys = append(validKeys, k)
 			}
-			return fmt.Errorf("term should be one of %v not %q", mapToLower(validFields), term)
+			return fmt.Errorf("%T has no defined field named %s: should be one of: %v", obj, term, validKeys)
 		}
-		t = field.Type
+		val := fieldMap[key]
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			return fmt.Errorf("field is nil")
+		}
+		obj = val.Interface()
 	}
 	return nil
 }
 
+func lookupMap(src map[string]reflect.Value) (map[string]string, map[string]reflect.Value) {
+	keys := make(map[string]string)
+	for k := range src {
+		keys[strings.ToLower(k)] = k
+	}
+	return keys, src
+}
+
 // EvalTerms acts as a left fold over a list of term accessors
 func EvalTerms(obj interface{}, terms ...string) (interface{}, error) {
-	if err := HasPath(obj, terms...); err != nil {
-		return nil, err
-	}
-
-	v := reflect.ValueOf(obj)
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return reflect.Zero(reflect.TypeOf(obj)), ErrUnresolvable
-		}
-		v = v.Elem()
-	}
-
 	for _, term := range terms {
-		if HasField(obj, term) {
-			val, err := EvalMember(term, obj)
-			if err != nil {
-				return nil, ErrUnresolvable
+		term = strings.ToLower(term)
+		lookupMap, fieldMap := lookupMap(FieldMap(obj))
+		key, ok := lookupMap[term]
+		if !ok {
+			var validKeys []string
+			for k := range lookupMap {
+				validKeys = append(validKeys, k)
 			}
-			obj = val.Interface()
-		} else {
+			return nil, fmt.Errorf("%T has no defined field named %s: should be one of: %v", obj, term, validKeys)
+		}
+		val := fieldMap[key]
+		if val.Kind() == reflect.Ptr && val.IsNil() {
 			return nil, ErrUnresolvable
 		}
+		obj = val.Interface()
 	}
 	return obj, nil
 }

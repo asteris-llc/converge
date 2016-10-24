@@ -17,7 +17,7 @@ import:
 - package: github.com/hashicorp/go-multierror
   version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - package: github.com/hashicorp/hcl
-  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  version: 6f5bfed9a0a22222fbe4e731ae3481730ba41e93
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -106,3 +106,6 @@ import:
 - package: github.com/coreos/go-systemd
   version: ^12.0.0
 - package: github.com/arbovm/levenshtein
+- package: golang.org/x/sync
+  subpackages:
+  - errgroup

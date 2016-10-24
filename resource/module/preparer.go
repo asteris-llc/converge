@@ -15,8 +15,6 @@
 package module
 
 import (
-	"fmt"
-
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 )
@@ -27,29 +25,17 @@ import (
 type Preparer struct {
 	// Params is a map of strings to anything you'd like. It will be passed to
 	// the called module as the default values for the `param`s there.
-	Params map[string]interface{} `hcl:"params"`
+	Params map[string]resource.Value `hcl:"params"`
 }
 
 // NewPreparer returns a new preparer for modules
-func NewPreparer(params map[string]interface{}) *Preparer {
+func NewPreparer(params map[string]resource.Value) *Preparer {
 	return &Preparer{Params: params}
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	module := &Module{Params: map[string]string{}}
-
-	for key, value := range p.Params {
-		switch v := value.(type) {
-		case string:
-			module.Params[key] = v
-
-		default:
-			module.Params[key] = fmt.Sprintf("%v", value)
-		}
-	}
-
-	return module, nil
+	return &Module{Params: p.Params}, nil
 }
 
 func init() {

@@ -52,6 +52,9 @@ func (n *Node) Validate() error {
 		return fmt.Errorf("%s: no keys", n.Pos())
 
 	case 1:
+		if n.IsDefault() {
+			break
+		}
 		return fmt.Errorf("%s: missing name", n.Pos())
 
 	case 2:
@@ -59,8 +62,20 @@ func (n *Node) Validate() error {
 			return fmt.Errorf("%s: missing source or name in module call", n.Pos())
 		}
 
+		if n.IsDefault() {
+			return fmt.Errorf("%s: too many keys", n.Pos())
+		}
+
+		if n.IsCase() {
+			return fmt.Errorf("%s: missing name or predicate in case", n.Pos())
+		}
+
 	default:
 		if n.IsModule() && len(n.Keys) == 3 {
+			break
+		}
+
+		if n.IsCase() && len(n.Keys) == 3 {
 			break
 		}
 
@@ -85,12 +100,31 @@ func (n *Node) IsModule() bool {
 	return n.Kind() == "module"
 }
 
+// IsCase tests whether this node is a case statement
+func (n *Node) IsCase() bool {
+	return n.Kind() == "case"
+}
+
+// IsDefault tests whether this node is a default case statement
+func (n *Node) IsDefault() bool {
+	return n.Kind() == "default"
+}
+
 // Source returns where a module call is to be loaded from
 func (n *Node) Source() string {
 	if n.IsModule() {
 		return n.Keys[1].Token.Value().(string)
 	}
 	return ""
+}
+
+// Group returns the group that the node is a member of
+func (n *Node) Group() string {
+	group, err := n.GetString("group")
+	if err != nil {
+		return ""
+	}
+	return group
 }
 
 func (n *Node) setValues() (err error) {

@@ -1,5 +1,5 @@
-hash: 85723d1b10ceb062f2de3695ef836c8b99abb1954667482dd385075814a4bf11
-updated: 2016-09-30T08:17:44.603702069-05:00
+hash: 92cc262955e76ad7e72650b54db249752e643efe55f4ebf8dcf3fa3f40f2ab55
+updated: 2016-10-14T15:54:53.882417772-05:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -17,10 +17,10 @@ imports:
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
-- name: github.com/dgrijalva/jwt-go
-  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/deckarep/golang-set
   version: 52ba7f28f319e9d560acbf47c7fcf9b9ee7aa7d3
+- name: github.com/dgrijalva/jwt-go
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
   version: d55b3ff568f998fc3f471c1f25110da43f59bbc4
   subpackages:
@@ -47,7 +47,7 @@ imports:
 - name: github.com/fgrid/uuid
   version: 6f72a2d331c927473b9b19f590d43ccb5018c844
 - name: github.com/fsnotify/fsnotify
-  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+  version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: github.com/fsouza/go-dockerclient
   version: 5ffc56c4f7ce8d150a5c770dd7166b86bfd486e5
 - name: github.com/godbus/dbus
@@ -73,7 +73,7 @@ imports:
 - name: github.com/hashicorp/go-multierror
   version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - name: github.com/hashicorp/hcl
-  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  version: 6f5bfed9a0a22222fbe4e731ae3481730ba41e93
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -130,7 +130,7 @@ imports:
 - name: github.com/streamrail/concurrent-map
   version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
-  version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
+  version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
   version: c5d7a69bf8a2c9c374798160849c071093e41dd1
   subpackages:
@@ -140,9 +140,15 @@ imports:
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/crypto
-  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
+  version: b35ccbc95a0eaae49fb65c5d627cb7149ed8d1ab
   subpackages:
+  - cast5
   - openpgp
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
@@ -152,12 +158,16 @@ imports:
   - http2/hpack
   - internal/timeseries
   - trace
+- name: golang.org/x/sync
+  version: 1ae7c7b29e06598039be46c5083819ba6fd7a97e
+  subpackages:
+  - errgroup
 - name: golang.org/x/sys
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
   - unix
 - name: google.golang.org/grpc
-  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
+  version: b1a2821ca5a4fd6b6e48ddfbb7d6d7584d839d21
   subpackages:
   - codes
   - credentials

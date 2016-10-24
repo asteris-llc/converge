@@ -22,6 +22,7 @@ import (
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
@@ -29,7 +30,7 @@ import (
 )
 
 // Values for rendering
-type Values map[string]interface{}
+type Values map[string]resource.Value
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
@@ -37,13 +38,13 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	if err != nil {
 		return nil, err
 	}
-	return g.RootFirstTransform(ctx, func(id string, out *graph.Graph) error {
-		pipeline := Pipeline(out, id, renderingPlant, top)
-		value, err := pipeline.Exec(out.Get(id))
+	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
+		value, err := pipeline.Exec(meta.Value())
 		if err != nil {
 			return err
 		}
-		out.Add(id, value)
+		out.Add(meta.WithValue(value))
 		renderingPlant.Graph = out
 		return nil
 	})
@@ -70,13 +71,13 @@ func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.
 // the node is a valide resource.Resource return it.  If it's not root and not a
 // resource.Resource return an error.
 func (p pipelineGen) maybeTransformRoot(idi interface{}) (interface{}, error) {
-	if p.ID == "root" {
+	if graph.IsRoot(p.ID) {
 		return module.NewPreparer(p.Top), nil
 	}
 	if res, ok := idi.(resource.Resource); ok {
 		return res, nil
 	}
-	return nil, typeError("resource.Renderer", idi)
+	return nil, typeError("resource.Resource", idi)
 }
 
 // Run prepare on the node and return the resource.Resource to be wrapped
@@ -163,4 +164,12 @@ func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
 		return nil, fmt.Errorf("%s does not implement resource.Task", val.Type())
 	}
 	return asTask, nil
+}
+
+// FakeTaskFromPreparer provides a wrapper around the internal
+// getTypedResourcePointer function.  It should be removed in a future refactor
+// but is in place until the code for dealing with thunked branch nodes has
+// stabilized.
+func FakeTaskFromPreparer(r resource.Resource) (resource.Task, error) {
+	return getTypedResourcePointer(r)
 }

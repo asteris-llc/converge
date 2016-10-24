@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	pp "github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/rpc/pb"
 )
 
 // SubgraphMarkerKey is a type alias for an integer and represents the state
@@ -130,7 +131,13 @@ func New(opts Options, provider PrintProvider) *Printer {
 // MarkNode will call SubgraphMarker() on the print provider to determine
 // whether the current node is the beginning of a subgraph.
 func (p *Printer) MarkNode(g *graph.Graph, id string) *pp.SubgraphMarker {
-	entity := GraphEntity{Name: id, Value: g.Get(id)}
+	var val interface{}
+	if meta, ok := g.Get(id); ok {
+		val = meta.Value()
+	}
+
+	entity := GraphEntity{Name: id, Value: val}
+
 	sgState := p.printProvider.SubgraphMarker(entity)
 	subgraphID := p.clusterIndex
 	switch sgState {
@@ -155,8 +162,12 @@ func (p *Printer) MarkNode(g *graph.Graph, id string) *pp.SubgraphMarker {
 // VertexGetProperties() on the associated print provider.  It will return a
 // visible Renderable IFF the underlying VertexID is renderable.
 func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
-	graphValue := g.Get(id)
-	graphEntity := GraphEntity{id, graphValue}
+	var val interface{}
+	if meta, ok := g.Get(id); ok {
+		val = meta.Value()
+	}
+
+	graphEntity := GraphEntity{id, val}
 	vertexID, err := p.printProvider.VertexGetID(graphEntity)
 	if err != nil || !vertexID.Visible() {
 		return pp.HiddenString(), err
@@ -183,8 +194,19 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 // DrawEdge prints edge data in a fashion similar to DrawNode.  It will return a
 // visible Renderable IFF the source and destination vertices are visible.
 func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, error) {
-	sourceEntity := GraphEntity{id1, g.Get(id1)}
-	destEntity := GraphEntity{id2, g.Get(id2)}
+	var srcVal, destVal interface{}
+
+	if src, ok := g.Get(id1); ok {
+		srcVal = src.Value()
+	}
+
+	if dest, ok := g.Get(id2); ok {
+		destVal = dest.Value()
+	}
+
+	sourceEntity := GraphEntity{id1, srcVal}
+	destEntity := GraphEntity{id2, destVal}
+
 	sourceVertex, err := p.printProvider.VertexGetID(sourceEntity)
 	if err != nil {
 		return pp.HiddenString(), err
@@ -200,9 +222,15 @@ func (p *Printer) DrawEdge(g *graph.Graph, id1, id2 string) (pp.Renderable, erro
 	attributes := p.printProvider.EdgeGetProperties(sourceEntity, destEntity)
 	maybeSetProperty(attributes, "label", escapeNewline(label))
 
+	srcVert, sok := srcVal.(*pb.GraphComponent_Vertex)
+	destVert, dok := destVal.(*pb.GraphComponent_Vertex)
+	if sok && dok && srcVert.Kind == "module" && destVert.Kind != "module" {
+		return pp.HiddenString(), nil
+	}
+
 	edgeStr := fmt.Sprintf("\"%s\" -> \"%s\" %s;\n",
-		escapeNewline(sourceVertex),
 		escapeNewline(destVertex),
+		escapeNewline(sourceVertex),
 		buildAttributeString(attributes),
 	)
 	visible := sourceVertex.Visible() && destVertex.Visible()

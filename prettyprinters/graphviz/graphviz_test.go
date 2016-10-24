@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 
@@ -57,7 +58,7 @@ func Test_DrawNode_SetsNodeNameToVertexID(t *testing.T) {
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
-	g.Add("test", nil)
+	g.Add(node.New("test", nil))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawNode(g, "test")
 	actual := getDotNodeID(dotCode)
@@ -72,7 +73,7 @@ func Test_DrawNode_WhenVertexIDReturnsError_ReturnsError(t *testing.T) {
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
-	g.Add("test", nil)
+	g.Add(node.New("test", nil))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawNode(g, "test")
 	assert.Equal(t, err, actualErr)
@@ -86,7 +87,7 @@ func Test_DrawNode_SetsLabelToVertexLabel(t *testing.T) {
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
-	g.Add("test", nil)
+	g.Add(node.New("test", nil))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawNode(g, "test")
 	actual := getDotNodeLabel(dotCode)
@@ -101,7 +102,7 @@ func Test_DrawNode_WhenVertexLabelReturnsError_ReturnsError(t *testing.T) {
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(make(graphviz.PropertySet))
 	g := graph.New()
-	g.Add("test", nil)
+	g.Add(node.New("test", nil))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	_, actualErr := printer.DrawNode(g, "test")
 	assert.Equal(t, err, actualErr)
@@ -118,7 +119,7 @@ func Test_DrawNode_WhenAdditionalAttributes_AddsAttributesTo(t *testing.T) {
 	provider.On("SubgraphMarker", mock.Anything).Return(graphviz.SubgraphMarkerNOP)
 	provider.On("VertexGetProperties", mock.Anything).Return(expectedAttrs)
 	g := graph.New()
-	g.Add("test", nil)
+	g.Add(node.New("test", nil))
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotCode, _ := printer.DrawNode(g, "test")
 	actualAttrs := getDotAttributes(dotCode)
@@ -147,8 +148,8 @@ func Test_DrawEdge_SetsSourceAndDestVertexToSourceAndDest(t *testing.T) {
 	printer := graphviz.New(graphviz.DefaultOptions(), provider)
 	dotSource, _ := printer.DrawEdge(edgeTestGraph(), "A", "B")
 	sourceVertex, destVertex := parseDotEdge(dotSource)
-	assert.Equal(t, "A", sourceVertex)
-	assert.Equal(t, "B", destVertex)
+	assert.Equal(t, "B", sourceVertex)
+	assert.Equal(t, "A", destVertex)
 }
 
 func Test_DrawEdge_WhenFirstVertexIDReturnsError_ReturnsError(t *testing.T) {
@@ -421,9 +422,9 @@ func compareAttrMap(a, b map[string]string) bool {
 
 func testGraph() *graph.Graph {
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("child1", nil)
-	g.Add("child2", nil)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("child1", nil))
+	g.Add(node.New("child2", nil))
 	g.Connect("root", "child1")
 	g.Connect("root", "child2")
 	return g
@@ -431,9 +432,9 @@ func testGraph() *graph.Graph {
 
 func edgeTestGraph() *graph.Graph {
 	g := graph.New()
-	g.Add("A", "A")
-	g.Add("B", "B")
-	g.Add("C", "C")
+	g.Add(node.New("A", "A"))
+	g.Add(node.New("B", "B"))
+	g.Add(node.New("C", "C"))
 	g.Connect("A", "B")
 	g.Connect("A", "C")
 	return g

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,10 +35,10 @@ func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {
 	require.NoError(t, err)
 
 	var nodesLeft int
-	if transformed.Get("root/first") != nil {
+	if _, ok := transformed.Get("root/first"); ok {
 		nodesLeft++
 	}
-	if transformed.Get("root/one") != nil {
+	if _, ok := transformed.Get("root/one"); ok {
 		nodesLeft++
 	}
 
@@ -48,7 +49,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 	defer logging.HideLogs(t)()
 
 	g := baseDupGraph()
-	g.Add("root/two", 2)
+	g.Add(node.New("root/two", 2))
 	g.Connect("root", "root/two")
 	g.Connect("root/two", "root/first")
 
@@ -57,7 +58,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 
 		// we need to get a result where root/first is removed so we can test
 		// dependency migration. So if root/first still exists, we need to skip
-		if transformed.Get("root/first") != nil {
+		if _, ok := transformed.Get("root/first"); ok {
 			t.Logf("retrying test after failing %d times", i)
 			continue
 		}
@@ -76,31 +77,32 @@ func TestMergeDuplicatesRemovesChildren(t *testing.T) {
 
 	g := baseDupGraph()
 
-	for _, node := range []string{"root/one", "root/first"} {
-		g.Add(graph.ID(node, "x"), node)
-		g.Connect(node, graph.ID(node, "x"))
+	for _, id := range []string{"root/one", "root/first"} {
+		g.Add(node.New(graph.ID(id, "x"), id))
+		g.Connect(id, graph.ID(id, "x"))
 	}
 
 	transformed, err := graph.MergeDuplicates(context.Background(), g, neverSkip)
 	require.NoError(t, err)
 
 	var removed string
-	if transformed.Get("root/one") == nil {
+	if _, ok := transformed.Get("root/one"); !ok {
 		removed = "root/one"
-	} else if transformed.Get("root/first") == nil {
+	} else if _, ok := transformed.Get("root/first"); !ok {
 		removed = "root/first"
 	} else {
 		assert.FailNow(t, `neither "root/one" nor "root/first" was removed`)
 	}
 
-	assert.Nil(t, transformed.Get(graph.ID(removed, "x")))
+	_, ok := transformed.Get(graph.ID(removed, "x"))
+	assert.False(t, ok, "%q was still present", graph.ID(removed, "x"))
 }
 
 func baseDupGraph() *graph.Graph {
 	g := graph.New()
-	g.Add("root", nil)
-	g.Add("root/one", 1)
-	g.Add("root/first", 1)
+	g.Add(node.New("root", nil))
+	g.Add(node.New("root/one", 1))
+	g.Add(node.New("root/first", 1))
 
 	g.Connect("root", "root/one")
 	g.Connect("root", "root/first")
@@ -108,6 +110,6 @@ func baseDupGraph() *graph.Graph {
 	return g
 }
 
-func neverSkip(string) bool {
+func neverSkip(*node.Node) bool {
 	return false
 }

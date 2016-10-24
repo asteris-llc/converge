@@ -21,9 +21,11 @@ import (
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/pkg/errors"
 )
 
@@ -44,7 +46,7 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 	toLoad := []*source{{"root", root, root}}
 
 	out := graph.New()
-	out.Add("root", nil)
+	out.Add(node.New("root", nil))
 
 	for len(toLoad) > 0 {
 		select {
@@ -71,9 +73,9 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 			signatureURL := url + ".asc"
 
 			logger.WithField("signatureUrl", signatureURL).Debug("fetching")
-			signature, err := fetch.Any(ctx, signatureURL)
-			if err != nil {
-				return nil, errors.Wrap(err, signatureURL)
+			signature, sigErr := fetch.Any(ctx, signatureURL)
+			if sigErr != nil {
+				return nil, errors.Wrap(sigErr, signatureURL)
 			}
 
 			err = keystore.Default().CheckSignature(bytes.NewBuffer(content), bytes.NewBuffer(signature))
@@ -88,8 +90,15 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 		}
 
 		for _, resource := range resources {
+			if control.IsSwitchNode(resource) {
+				out, err = expandSwitchMacro(content, current, resource, out)
+				if err != nil {
+					return out, errors.Wrap(err, "unable to load resource")
+				}
+				continue
+			}
 			newID := graph.ID(current.Parent, resource.String())
-			out.Add(newID, resource)
+			out.Add(node.New(newID, resource))
 			out.ConnectParent(current.Parent, newID)
 
 			if resource.IsModule() {
@@ -104,6 +113,59 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 			}
 		}
 	}
-
 	return out, out.Validate()
+}
+
+// expandSwitchMacro is responsible for adding the generated switch nodes into
+// the graph.  Nodes inside of the switch macro are added as children to the
+// case statements, who are parents of the outer switch statement.  Actual node
+// generation happens in parse/preprocessor/switch and we add the nodes into the
+// graph here.
+func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Graph) (*graph.Graph, error) {
+	if !control.IsSwitchNode(n) {
+		return g, nil
+	}
+	switchObj, err := control.NewSwitch(n, data)
+	if err != nil {
+		return g, err
+	}
+	switchNode, err := switchObj.GenerateNode()
+	if err != nil {
+		return g, err
+	}
+	switchID := graph.ID(current.Parent, switchNode.String())
+	g.Add(node.New(switchID, switchNode))
+	g.ConnectParent(current.Parent, switchID)
+	for _, branch := range switchObj.Branches {
+		branchNode, err := branch.GenerateNode()
+		if err != nil {
+			return g, err
+		}
+		branchID := graph.ID(switchID, branchNode.String())
+		g.Add(node.New(branchID, branchNode))
+		g.ConnectParent(switchID, branchID)
+		for _, innerNode := range branch.InnerNodes {
+			if err := validateInnerNode(innerNode); err != nil {
+				return g, err
+			}
+			innerID := graph.ID(branchID, innerNode.String())
+			g.Add(node.New(innerID, innerNode))
+			g.ConnectParent(branchID, innerID)
+		}
+	}
+	return g, nil
+}
+
+// validateInnerNode ensures that we do not nest control statements nor attempt
+// to add modules under a switch statement.
+func validateInnerNode(node *parse.Node) error {
+	switch node.Kind() {
+	case "module":
+		return errors.New("modules not supported in conditionals")
+	case "switch":
+		return errors.New("nested conditionals are not supported")
+	case "case":
+		return errors.New("nested branches are not supported")
+	}
+	return nil
 }

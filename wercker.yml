@@ -1,31 +1,37 @@
-box: golang
-
 build:
+  box: asteris/converge-ci
   steps:
-    # Sets the go workspace and places you package
+    # Sets the go workspace and places your package
     # at the right place in the workspace tree
     - setup-go-workspace
-
-    # install graphviz
-    - script:
-        name: install graphviz
-        code: |
-          apt-get update
-          apt-get install -y graphviz
-
-    # install protoc
-    - script:
-        name: install protoc
-        code: |
-          apt-get install -y unzip
-          wget https://github.com/google/protobuf/releases/download/v3.0.0/protoc-3.0.0-linux-x86_64.zip
-          unzip protoc-3.0.0-linux-x86_64.zip
-          mv bin/* /usr/bin/
-          mv include/google /usr/include/google
-          go get -v github.com/golang/protobuf/protoc-gen-go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 
     # Test the project
     - script:
         name: go test
         code: |
           make test
+
+publish:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: make packages
+        code: |
+          make package
+
+    - script:
+        name: prepare for sync
+        code: |
+          DEST="$(git describe)"
+          mv build build.tmp
+          mkdir -p "build/$DEST"
+          mv build.tmp/* "build/$DEST"
+
+    - nextgxdx/s3sync@2.0.5:
+        source_dir: /go/src/github.com/asteris-llc/converge/build
+        delete-removed: false
+        bucket-url: $AWS_BUCKET_URL
+        key-id: $AWS_ACCESS_KEY_ID
+        key-secret: $AWS_SECRET_ACCESS_KEY

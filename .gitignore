@@ -33,11 +33,13 @@ samples/**/*.png
 
 # release
 build
+cmd/version_number.go
 
 # docs
-docs_source/extract
-docs_source/resources.mk
-docs_source/public
+docs/extract
+docs/converge
+docs/resources.mk
+docs/public
 
 # examples
 terraform.tfstate*

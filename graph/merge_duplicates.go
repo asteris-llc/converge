@@ -19,12 +19,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/mitchellh/hashstructure"
 )
 
 // SkipMergeFunc will be used to determine whether or not to merge a node
-type SkipMergeFunc func(string) bool
+type SkipMergeFunc func(*node.Node) bool
 
 // MergeDuplicates removes duplicates in the graph
 func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph, error) {
@@ -33,21 +34,24 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 
 	logger := logging.GetLogger(ctx).WithField("function", "MergeDuplicates")
 
-	return g.RootFirstTransform(ctx, func(id string, out *Graph) error {
-		if id == "root" { // root
+	return g.RootFirstTransform(ctx, func(meta *node.Node, out *Graph) error {
+		if IsRoot(meta.ID) {
 			return nil
 		}
 
-		if skip(id) {
-			logger.WithField("id", id).Debug("skipping by request")
+		if skip(meta) {
+			logger.WithField("id", meta.ID).Debug("skipping by request")
 			return nil
+		}
+
+		if meta.Value() == nil {
+			return nil // not much use in hashing a nil value
 		}
 
 		lock.Lock()
 		defer lock.Unlock()
 
-		value := out.Get(id)
-		hash, err := hashstructure.Hash(value, nil)
+		hash, err := hashstructure.Hash(meta.Value(), nil)
 		if err != nil {
 			return err
 		}
@@ -55,29 +59,29 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-			logger.WithField("id", id).Debug("registering as original")
-			values[hash] = id
+			logger.WithField("id", meta.ID).Debug("registering as original")
+			values[hash] = meta.ID
 
 			return nil
 		}
 
-		logger.WithField("id", target).WithField("duplicate", id).Debug("found duplicate")
+		logger.WithField("id", target).WithField("duplicate", meta.ID).Debug("found duplicate")
 
 		// Point all inbound links to value to target instead
-		for _, src := range Sources(g.UpEdges(id)) {
-			logger.WithField("src", src).WithField("duplicate", id).WithField("target", target).Debug("re-pointing dependency")
-			out.Disconnect(src, id)
+		for _, src := range Sources(g.UpEdges(meta.ID)) {
+			logger.WithField("src", src).WithField("duplicate", meta.ID).WithField("target", target).Debug("re-pointing dependency")
+			out.Disconnect(src, meta.ID)
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
-		for _, child := range g.Descendents(id) {
+		for _, child := range g.Descendents(meta.ID) {
 			logger.WithField("child", child).Debug("removing child")
 			out.Remove(child)
 		}
 
 		// Remove value
-		out.Remove(id)
+		out.Remove(meta.ID)
 
 		return nil
 	})
@@ -87,7 +91,7 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 // TODO: find a better home
 
 // SkipModuleAndParams skips trimming modules and params
-func SkipModuleAndParams(id string) bool {
-	base := BaseID(id)
+func SkipModuleAndParams(meta *node.Node) bool {
+	base := BaseID(meta.ID)
 	return strings.HasPrefix(base, "module") || strings.HasPrefix(base, "param")
 }
