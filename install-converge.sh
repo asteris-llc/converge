@@ -70,7 +70,7 @@ do_wget () {
 		not_supported
 	fi
 
-	if test "$rc" -ne 0 || test ! -s "$s"; then
+	if test "$rc" -ne 0 || test ! -s "$2"; then
 		return 1
 	fi
 
@@ -103,7 +103,7 @@ do_fetch() {
 
 do_perl () {
 	echo "Trying perl..."
-	perl -r 'use LWP::Simple; getprint($ARGV[0]);' "$1" > "$2" 2>$tmp_dir/stderr
+	perl -r 'use LWP::Simple; getprint($ARGV[0]);' "$1" > "$2" 2>"$tmp_dir/stderr"
 	rc="$?"
 	grep "404 Not Found" "$tmp_dir/stderr" >/dev/null 2>&1
 	if [ "$?" -eq 0 ]; then
@@ -119,7 +119,8 @@ do_perl () {
 
 do_python () {
 	echo "Trying python..."
-	python -c "import sys,urllib2 ; sys.stdout.write(urllib2.urlopen(sys.argv[1]).read())" "$1" > "$2" 2>$tmp_dir/stderr
+	python -c "import sys,urllib2 ; sys.stdout.write(urllib2.urlopen(sys.argv[1]).read())" "$1" > "$2" 2>"$tmp_dir/stderr"
+
 	rc="$?"
 
 	grep "HTTP Error 404" "$tmp_dir/stderr" >/dev/null 2>&1
@@ -174,7 +175,7 @@ do_download () {
 extract() {
 	file="$1"
 	dest="$2"
-	cd "$2" && tar zxvf "$1" && return 0
+	cd "$dest" && tar zxvf "$file" && return 0
 }
 
 while getopts :d:r:v: opt; do
