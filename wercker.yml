@@ -25,11 +25,12 @@ publish:
         name: prepare for sync
         code: |
           DEST="$(git describe --dirty)"
-          mkdir -p "nightly/$DEST"
-          mv build/tgz/* "nightly/$DEST"
+          mv build build.tmp
+          mkdir -p "build/$DEST"
+          mv build.tmp/* "build/$DEST"
 
     - wercker/s3sync@2.1.0:
-        source_dir: nightly
+        source_dir: build
         bucket-url: $AWS_BUCKET_URL
         key-id: $AWS_ACCESS_KEY_ID
         key-secret: $AWS_SECRET_ACCESS_KEY
