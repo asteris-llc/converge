@@ -3,36 +3,29 @@ package fs
 import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
+
+	"strings"
 )
 
 type Preparer struct {
-	Device string `hcl:"device"`
-	Mount  string `hcl:"mount"`
-	Fstype string `hcl:"fstype"`
+	Device     string   `hcl:"device",required:"true"`
+	Mount      string   `hcl:"mount",required:"true"`
+	Fstype     string   `hcl:"fstype",reqired:"true"`
+	RequiredBy []string `hcl:"requiredBy"`
+	WantedBy   []string `hcl:"requiredBy"`
+	Before     []string `hcl:"requiredBy"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	device, err := render.Render("device", p.Device)
-	if err != nil {
-		return nil, err
-	}
-	mount, err := render.Render("mount", p.Mount)
-	if err != nil {
-		return nil, err
-	}
-	fstype, err := render.Render("fstype", p.Fstype)
-	if err != nil {
-		return nil, err
-	}
 
 	m := &Mount{
-		What:       device,
-		Where:      mount,
-		Type:       fstype,
-		RequiredBy: "", // FIXME: render it
-		WantedBy:   "", // FIXME: render it
-		Before:     "", // FIXME: render it
+		What:       p.Device,
+		Where:      p.Mount,
+		Type:       p.Fstype,
+		RequiredBy: strings.Join(p.RequiredBy, " "),
+		WantedBy:   strings.Join(p.WantedBy, " "),
+		Before:     strings.Join(p.Before, " "),
 	}
 
 	return NewResourceFS(lowlevel.MakeLvmBackend(), m)
