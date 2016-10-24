@@ -4,6 +4,8 @@ import (
 	"strings"
 )
 
+// PhysicalVolume is parsed record for LVM Physical Volume (from `pvs` output)
+// Add more fields, if required
 type PhysicalVolume struct {
 	Name   string `mapstructure:"LVM2_PV_NAME"`
 	Group  string `mapstructure:"LVM2_VG_NAME"`

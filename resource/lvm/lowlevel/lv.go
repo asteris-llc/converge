@@ -1,5 +1,7 @@
 package lowlevel
 
+// LogicalVolume is parsed record for LVM Logical Volume (from `lvs` output)
+// Add more fields, if required
 type LogicalVolume struct {
 	Name       string `mapstructure:"LVM2_LV_NAME"`
 	DevicePath string `mapstructure:"LVM2_LV_DM_PATH"`

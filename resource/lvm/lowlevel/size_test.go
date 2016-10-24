@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestParseSize tests ParseSize()
 func TestParseSize(t *testing.T) {
 	t.Parallel()
 	defer logging.HideLogs(t)()

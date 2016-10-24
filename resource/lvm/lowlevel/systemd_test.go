@@ -11,43 +11,50 @@ import (
 	"testing"
 )
 
-func TestUnitFileNotExists(t *testing.T) {
-	filename := "/test-unit-file-which-never-exists.xxx"
-	currentContent := "this is a test"
-	lvm := lowlevel.MakeLvmBackend()
-	ok, err := lvm.CheckUnit(filename, currentContent)
-	assert.NoError(t, err)
-	assert.True(t, ok)
+// TestLVMCheckUnit tests LVM.CheckUnit
+func TestLVMCheckUnit(t *testing.T) {
+	t.Run("unit file not exists", func(t *testing.T) {
+		filename := "/test-unit-file-which-never-exists.xxx"
+		currentContent := "this is a test"
+		lvm := lowlevel.MakeLvmBackend()
+		ok, err := lvm.CheckUnit(filename, currentContent)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+	})
+
+	t.Run("unit file content diffs", func(t *testing.T) {
+		originalContent := "a test this is"
+		currentContent := "this is a test"
+		tmpfile, err := ioutil.TempFile("", "test-unit-file-contents-diff")
+
+		require.NoError(t, err)
+		defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
+
+		_, err = tmpfile.Write([]byte(originalContent))
+		require.NoError(t, err)
+		require.NoError(t, tmpfile.Sync())
+
+		lvm := lowlevel.MakeLvmBackend()
+		ok, err := lvm.CheckUnit(tmpfile.Name(), currentContent)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+	})
+
 }
 
-func TestUnitFileContentDiffs(t *testing.T) {
-	originalContent := "a test this is"
-	currentContent := "this is a test"
-	tmpfile, err := ioutil.TempFile("", "test-unit-file-contents-diff")
+// TestLVMUpdateUnit tests LVM.UpdateUnit()
+func TestLVMUpdateUnit(t *testing.T) {
+	t.Run("update unit file", func(t *testing.T) {
+		currentContent := "this is a test"
+		filename := "/systemd/test.unit"
 
-	require.NoError(t, err)
-	defer func() { require.NoError(t, os.RemoveAll(tmpfile.Name())) }()
+		lvm, me := testhelpers.MakeLvmWithMockExec()
 
-	_, err = tmpfile.Write([]byte(originalContent))
-	require.NoError(t, err)
-	require.NoError(t, tmpfile.Sync())
+		// FIXME:   should be 0644 here, but call mismatch. Looks like BUG
+		me.On("WriteFile", filename, []byte(currentContent), mock.Anything).Return(nil)
+		me.On("Run", "systemctl", []string{"daemon-reload"}).Return(nil)
 
-	lvm := lowlevel.MakeLvmBackend()
-	ok, err := lvm.CheckUnit(tmpfile.Name(), currentContent)
-	assert.NoError(t, err)
-	assert.True(t, ok)
-}
-
-func TestUnitFileUpdate(t *testing.T) {
-	currentContent := "this is a test"
-	filename := "/systemd/test.unit"
-
-	lvm, me := testhelpers.MakeLvmWithMockExec()
-
-	// FIXME:   should be 0644 here, but call mismatch. Looks like BUG
-	me.On("WriteFile", filename, []byte(currentContent), mock.Anything).Return(nil)
-	me.On("Run", "systemctl", []string{"daemon-reload"}).Return(nil)
-
-	err := lvm.UpdateUnit(filename, currentContent)
-	assert.NoError(t, err)
+		err := lvm.UpdateUnit(filename, currentContent)
+		assert.NoError(t, err)
+	})
 }

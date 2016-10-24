@@ -41,6 +41,7 @@ func (size *LvmSize) CommandLine() [2]string {
 	return [2]string{o, s}
 }
 
+// ParseSize parsing and validating sizes in format acceptable by LVM tools
 func ParseSize(sizeToParse string) (*LvmSize, error) {
 	var err error
 	size := &LvmSize{}
@@ -52,7 +53,7 @@ func ParseSize(sizeToParse string) (*LvmSize, error) {
 			return nil, errors.Wrap(err, "Parse LVM size")
 		}
 		if size.Size > 100 {
-			return nil, fmt.Errorf("size in %% can't be more than 100%%: %d", size)
+			return nil, fmt.Errorf("size in %% can't be more than 100%%: %d", size.Size)
 		}
 	} else if m := sizeRE.FindStringSubmatch(sizeToParse); m != nil {
 		size.Relative = false

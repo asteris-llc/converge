@@ -80,7 +80,7 @@ func (lvm *realLVM) Mkfs(dev string, fstype string) error {
 }
 
 func (lvm *realLVM) Mountpoint(path string) (bool, error) {
-	rc, err := lvm.backend.RunExitCode("mountpoint", []string{"-q", path})
+	rc, err := lvm.backend.RunWithExitCode("mountpoint", []string{"-q", path})
 	if err != nil {
 		return false, err
 	}
