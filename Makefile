@@ -1,5 +1,4 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
-VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
 RPCLINT=$(shell find ./rpc -type f \( -not -iname 'root.*.go' -iname '*.go' \) )
 TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
@@ -97,7 +96,7 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 		-os="linux" \
 		-os="freebsd" \
 		-os="solaris" \
-		-output="build/$(NAME)_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
+		-output="build/$(NAME)_$(shell git describe --dirty)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile
 	@mkdir -p build/tgz
