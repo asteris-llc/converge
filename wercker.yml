@@ -24,7 +24,7 @@ publish:
     - script:
         name: prepare for sync
         code: |
-          DEST="$(git describe --dirty)"
+          DEST="$(git describe)"
           mv build build.tmp
           mkdir -p "build/$DEST"
           mv build.tmp/* "build/$DEST"
