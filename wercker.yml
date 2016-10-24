@@ -10,3 +10,26 @@ build:
         name: go test
         code: |
           make test
+
+publish:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: make packages
+        code: |
+          make package
+
+    - script:
+        name: prepare for sync
+        code: |
+          DEST="$(git describe --dirty)"
+          mkdir -p "nightly/$DEST"
+          mv build/tgz/* "nightly/$DEST"
+
+    - wercker/s3sync@2.1.0:
+        source_dir: nightly
+        bucket-url: $AWS_BUCKET_URL
+        key-id: $AWS_ACCESS_KEY_ID
+        key-secret: $AWS_SECRET_ACCESS_KEY
