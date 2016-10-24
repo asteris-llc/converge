@@ -16,7 +16,7 @@ RUN apt-get install -y unzip && \
     apt-get purge -y unzip
 
 # install gox
-RUN go get github.com/mitchellh/gox
+RUN go get -v github.com/mitchellh/gox
 
 WORKDIR /go
 CMD /bin/bash
