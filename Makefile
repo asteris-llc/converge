@@ -94,8 +94,8 @@ vendor-clean: ${NOVENDOR}
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@echo "package cmd" > cmd/version_number.go
 	@echo >> cmd/version_number.go
-	@echo "const Version = \"$(shell git describe --dirty)\"" >> cmd/version_number.go
-	@echo "set version to $(shell git describe --dirty)"
+	@echo "const Version = \"$(shell git describe)\"" >> cmd/version_number.go
+	@echo "set version to $(shell git describe)"
 
 	@rm -rf build/
 	@mkdir -p build/
