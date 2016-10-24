@@ -198,6 +198,9 @@ case $machine in
 	"i386" | "i86pc" | "x86" | "i686")
 		machine="386"
 		;;
+	"armv6l" | "armv7l")
+		machine="arm"
+		;;
 	"arm" | "arm64" | "ppc64" | "ppc64le")
 		# Nothing required
 		;;
