@@ -60,13 +60,16 @@ func (r *ResourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 func (r *ResourceLV) Apply() (resource.TaskStatus, error) {
 	status := &Status{}
-	if ok, err := r.checkVG(); err != nil {
-		return nil, err
-	} else {
+    {
+	    ok, err := r.checkVG();
+        if err != nil {
+		    return nil, err
+        }
 		if !ok {
 			return nil, fmt.Errorf("Group %s not exists", r.group)
 		}
 	}
+
 	if r.needCreate {
 		if err := r.lvm.CreateLogicalVolume(r.group, r.name, r.size, r.sizeOption, r.sizeUnit); err != nil {
 			return nil, err
