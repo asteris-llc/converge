@@ -31,8 +31,8 @@ install_dir="/usr/local/bin"
 
 base_url="https://github.com/asteris-llc/converge/releases/download"
 
-machine=`uname -m`
-os=`uname -s`
+machine=$(uname -m)
+os=$(uname -s)
 
 # Get a temporary directory
 if [ -z "$TMPDIR" ]; then
@@ -40,15 +40,15 @@ if [ -z "$TMPDIR" ]; then
 else
 	tmp="$TMPDIR"
 fi
-tmp_dir="$tmp/install-converge.sh.$$"
-(umask 077 && mkdir $tmp_dir) || exit 1
+tmp_dir="${tmp}/install-converge.sh.$$"
+(umask 077 && mkdir "${tmp_dir}") || exit 1
 
 
 usage () {
 	echo "Usage: install-converge.h [-v <version>]"
 	echo " -d            Directory for converge binary (default ${install_dir})"
 	echo " -v            Converge version to install   (default ${version})"
-	if test ${#} -gt 0; then
+	if test "${#}" -gt 0; then
 		echo
 		echo "${@}"
 	fi
@@ -63,14 +63,14 @@ not_supported () {
 
 do_wget () {
 	echo "Trying wget..."
-	wget -O "$2" "$1" 2>$tmp_dir/stderr
-	rc=$?
-	grep "ERROR404" $tmp_dir/stderr 2>&1 >/dev/null
-	if [ $? -eq 0 ]; then
+	wget -O "$2" "$1" 2>"$tmp_dir/stderr"
+	rc="$?"
+	grep "ERROR404" "$tmp_dir/stderr" >/dev/null 2>&1 
+	if [ "$?" -eq 0 ]; then
 		not_supported
 	fi
 
-	if test $rc -ne 0 || test ! -s "$s"; then
+	if test "$rc" -ne 0 || test ! -s "$s"; then
 		return 1
 	fi
 
@@ -79,15 +79,15 @@ do_wget () {
 
 do_curl () {
 	echo "Trying curl..."
-	echo $1
-	curl --retry 5 -sL -D $tmp_dir/stderr "$1" > "$2"
-	rc=$?
-	grep "404 Not Found" $tmp_dir/stderr 2>&1 >/dev/null
-	if [ $? -eq 0 ]; then
+	echo "$1"
+	curl --retry 5 -sL -D "$tmp_dir/stderr" "$1" > "$2"
+	rc="$?"
+	grep "404 Not Found" "$tmp_dir/stderr" >/dev/null 2>&1
+	if [ "$?" -eq 0 ]; then
 		not_supported
 	fi
 
-	if test $rc -ne 0 || test ! -s "$2"; then
+	if test "$rc" -ne 0 || test ! -s "$2"; then
 		return 1
 	fi
 
@@ -96,21 +96,21 @@ do_curl () {
 
 do_fetch() {
 	echo "Trying fetch..."
-	fetch -o "$2" "$1" 2>$tmp_dir/stderr
-	test $? -ne 0 && return 1
+	fetch -o "$2" "$1" 2>"$tmp_dir/stderr"
+	test "$?" -ne 0 && return 1
 	return 0
 }
 
 do_perl () {
 	echo "Trying perl..."
 	perl -r 'use LWP::Simple; getprint($ARGV[0]);' "$1" > "$2" 2>$tmp_dir/stderr
-	rc=$?
-	grep "404 Not Found" $tmp_dir/stderr 2>&1 >/dev/null
-	if [ $? -eq 0 ]; then
+	rc="$?"
+	grep "404 Not Found" "$tmp_dir/stderr" >/dev/null 2>&1
+	if [ "$?" -eq 0 ]; then
 		not_supported
 	fi
 
-	if test $rc -ne 0 || test ! -s "$2"; then
+	if test "$rc" -ne 0 || test ! -s "$2"; then
 		return 1
 	fi
 
@@ -119,15 +119,15 @@ do_perl () {
 
 do_python () {
 	echo "Trying python..."
-	python -c "import sys,urllib2 ; sys.stdout.write(urllib2.urlopen(sys.argv[1]).read())" "$1" > "$2" 2>$tmp_dur/stderr
-	rc=$?
+	python -c "import sys,urllib2 ; sys.stdout.write(urllib2.urlopen(sys.argv[1]).read())" "$1" > "$2" 2>$tmp_dir/stderr
+	rc="$?"
 
-	grep "HTTP Error 404" $tmp_dir/stderr 2>&1 >/dev/null
+	grep "HTTP Error 404" "$tmp_dir/stderr" >/dev/null 2>&1
 	if test $? -eq 0; then
 		not_supported
 	fi
 
-	if test $rc -ne 0 || test ! -s "$2"; then
+	if test "$rc" -ne 0 || test ! -s "$2"; then
 		return 1
 	fi
 
@@ -135,7 +135,7 @@ do_python () {
 }
 
 exists() {
-  if command -v $1 >/dev/null 2>&1
+  if command -v "$1" >/dev/null 2>&1
   then
     return 0
   else
@@ -148,23 +148,23 @@ do_download () {
 	dest="$2"
 
 	if exists wget; then
-		do_wget $url $dest && return 0
+		do_wget "$url" "$dest" && return 0
 	fi
 
 	if exists curl; then
-		do_curl $url $dest && return 0
+		do_curl "$url" "$dest" && return 0
 	fi
 
 	if exists fetch; then
-		do_fetch $url $dest && return 0
+		do_fetch "$url" "$dest" && return 0
 	fi
 
 	if exists perl; then
-		do_perl $url $dest && return 0
+		do_perl "$url" "$dest" && return 0
 	fi
 
 	if exists python; then
-		do_python $url $dest && return 0
+		do_python "$url" "$dest" && return 0
 	fi
 
 	echo "Unable to retrieve package"
@@ -174,7 +174,7 @@ do_download () {
 extract() {
 	file="$1"
 	dest="$2"
-	cd $2 && tar zxvf $1 && return 0
+	cd "$2" && tar zxvf "$1" && return 0
 }
 
 while getopts :d:r:v: opt; do
@@ -191,7 +191,7 @@ while getopts :d:r:v: opt; do
 	esac
 done
 
-case $machine in
+case "${machine}" in
 	"x86_64" | "amd64" | "x64")
 		machine="amd64"
 		;;
@@ -205,12 +205,12 @@ case $machine in
 		# Nothing required
 		;;
 	*)
-		echo "Unsupported machine type: $machine"
+		echo "Unsupported machine type: ${machine}"
 		exit 1
 		;;
 esac
 
-case $os in
+case "${os}" in
 	"Darwin")
 		os="darwin"
 		;;
@@ -232,10 +232,10 @@ case $os in
 		;;
 esac
 
-do_download "${base_url}/${version}/converge_${version}_${os}_${machine}.tar.gz" ${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz
-extract ${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz ${install_dir}
-chmod 0755 ${install_dir}/converge
+do_download "${base_url}/${version}/converge_${version}_${os}_${machine}.tar.gz" "${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz"
+extract "${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz" "${install_dir}"
+chmod 0755 "${install_dir}/converge"
 
 if [ -n "$tmp_dir" ]; then
-	rm -r ${tmp_dir}
+	rm -r "${tmp_dir}"
 fi
