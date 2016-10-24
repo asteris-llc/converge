@@ -15,7 +15,7 @@ import (
 // TestCreateVolume is a full-blown test, using fake engine to trace from high-level
 // graph node vg.resourceVG, to commands passed to LVM tools. It cover only straighforward
 // cases. Use mock-LVM for real tests of highlevel stuff.
-func TestCreateVolumeFromSingleDevice(t *testing.T) {
+func TestCreateVolume(t *testing.T) {
 	t.Run("single device", func(t *testing.T) {
 		lvm, me := testhelpers.MakeLvmWithMockExec()
 
@@ -45,8 +45,8 @@ func TestCreateVolumeFromSingleDevice(t *testing.T) {
 		me.On("Getuid").Return(0)                  // assume, that we have root
 		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-		me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-		me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
+		me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
+		me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
 
 		fr := fakerenderer.New()
 
@@ -61,8 +61,8 @@ func TestCreateVolumeFromSingleDevice(t *testing.T) {
 		me.On("Getuid").Return(0)                  // assume, that we have root
 		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-		me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-		me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
+		me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
+		me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
 
 		fr := fakerenderer.New()
 

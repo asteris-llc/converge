@@ -10,7 +10,7 @@ import (
 
 func TestQueryPhysicalVolumes(t *testing.T) {
 	lvm, e := testhelpers.MakeLvmWithMockExec()
-	e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(testdata.TESTDATA_PVS, nil)
+	e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(testdata.Pvs, nil)
 	pvs, err := lvm.QueryPhysicalVolumes()
 	require.NoError(t, err)
 	require.Contains(t, pvs, "/dev/md127")
@@ -22,7 +22,7 @@ func TestQueryPhysicalVolumes(t *testing.T) {
 
 func TestQueryVolumeGroups(t *testing.T) {
 	lvm, e := testhelpers.MakeLvmWithMockExec()
-	e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(testdata.TESTDATA_PVS, nil)
+	e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(testdata.Vgs, nil)
 	vgs, err := lvm.QueryVolumeGroups()
 	require.NoError(t, err)
 	require.Contains(t, vgs, "vg0")
@@ -30,7 +30,7 @@ func TestQueryVolumeGroups(t *testing.T) {
 
 func TestQueryLogicalVolume(t *testing.T) {
 	lvm, e := testhelpers.MakeLvmWithMockExec()
-	e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(testdata.TESTDATA_LVS, nil)
+	e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(testdata.Lvs, nil)
 	lvs, err := lvm.QueryLogicalVolumes("vg0")
 	require.NoError(t, err)
 	require.Contains(t, lvs, "data")

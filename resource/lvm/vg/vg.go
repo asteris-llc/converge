@@ -54,7 +54,7 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	// process removed devices
-	for d, _ := range pvs {
+	for d := range pvs {
 		found := false
 		for _, d2 := range r.deviceList {
 			if d2 == d {

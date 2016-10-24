@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Preparer for LVM FS Task
 type Preparer struct {
 	Device     string   `hcl:"device",required:"true"`
 	Mount      string   `hcl:"mount",required:"true"`

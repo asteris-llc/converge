@@ -17,6 +17,7 @@ type resourceLV struct {
 	devicePath string
 }
 
+// Status is a resource.Status extended by DevicePath of created volume
 type Status struct {
 	resource.Status
 	DevicePath string
@@ -93,7 +94,7 @@ func (r *resourceLV) Apply() (resource.TaskStatus, error) {
 }
 
 // NewResourceLV create new resource.Task node for LVM Volume Groups
-func NewResourceLV(lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) *resourceLV {
+func NewResourceLV(lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) resource.Task {
 	return &resourceLV{
 		group: group,
 		name:  name,
