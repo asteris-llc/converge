@@ -16,10 +16,7 @@ param "user-name" {
 
 file.content "overlay-module" {
   destination = "/etc/modules-load.d/overlay.conf"
-
-  content = <<EOF
-overlay
-EOF
+  content     = "overlay"
 }
 
 task "load-overlay-module" {
@@ -34,12 +31,14 @@ file.directory "service-directory" {
 }
 
 file.content "docker-storage-driver" {
-  destination  = "/etc/systemd/system/docker.service.d/overlay.conf"
+  destination = "/etc/systemd/system/docker.service.d/overlay.conf"
+
   content = <<EOF
 [Service]
 ExecStart=
 ExecStart=/usr/bin/dockerd --storage-driver=overlay
 EOF
+
   depends = ["file.directory.service-directory"]
 }
 
