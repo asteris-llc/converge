@@ -28,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/systemd"
 	"github.com/asteris-llc/converge/resource/systemd/unit"
+	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,9 +39,100 @@ func TestTaskInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Task)(nil), new(unit.Unit))
 }
 
+func TestCheckingActiveStates(t *testing.T) {
+
+	if !HasSystemd() {
+		return
+	}
+	fr := fakerenderer.FakeRenderer{}
+	found, svc := FindUnitWith(
+		[]UnitCheck{
+			HasActiveStateCheck(systemd.ASActive),
+		})
+	if !found {
+		t.Log("Could not find an active unit on this system")
+	} else {
+
+		task := unit.Unit{Name: svc.Name, Active: true}
+		status, err := task.Check(&fr)
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	}
+
+	found, svc = FindUnitWith(
+		[]UnitCheck{
+			HasActiveStateCheck(systemd.ASInactive),
+		})
+	if !found {
+		t.Log("Could not find an inactive unit on this system")
+	} else {
+
+		task := unit.Unit{Name: svc.Name, Active: false}
+		status, err := task.Check(&fr)
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	}
+}
+
+func TestCheckingUnitFileStates(t *testing.T) {
+
+	if !HasSystemd() {
+		return
+	}
+	fr := fakerenderer.FakeRenderer{}
+	found, svc := FindUnitWith(
+		[]UnitCheck{
+			HasActiveStateCheck(systemd.ASActive),
+			HasUnitFileStateCheck(systemd.UFSMasked),
+		})
+	if !found {
+		t.Log("Could not find a masked unit on this system")
+	} else {
+
+		task := unit.Unit{Name: svc.Name, Active: true, UnitFileState: systemd.UFSMasked}
+		status, err := task.Check(&fr)
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	}
+
+	found, svc = FindUnitWith(
+		[]UnitCheck{
+			HasActiveStateCheck(systemd.ASInactive),
+			HasUnitFileStateCheck(systemd.UFSEnabled),
+		})
+	if !found {
+		t.Log("Could not find an enabled unit on this system")
+	} else {
+
+		task := unit.Unit{Name: svc.Name, Active: false}
+		status, err := task.Check(&fr)
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	}
+
+	found, svc = FindUnitWith(
+		[]UnitCheck{
+			HasActiveStateCheck(systemd.ASInactive),
+			HasUnitFileStateCheck(systemd.UFSDisabled),
+		})
+	if !found {
+		t.Log("Could not find a disabled unit on this system")
+	} else {
+
+		task := unit.Unit{Name: svc.Name, Active: false}
+		status, err := task.Check(&fr)
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	}
+}
+
 // TestInactiveToActiveUnit test  if unit can activate a unit
 func TestInactiveToActiveUnit(t *testing.T) {
-	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -50,18 +142,17 @@ func TestInactiveToActiveUnit(t *testing.T) {
 	assert.NoError(t, err)
 	defer svc.Remove()
 
-	foo := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
+	foo := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled-runtime", StartMode: "replace"}
 	foo.Apply()
 	status, err := foo.Check(&fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name))
+	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled-runtime\", expected one of [\"enabled-runtime, static\"]", svc.Name))
 	assert.False(t, status.HasChanges())
 }
 
 // TestDisabledtoEnabledUnit test  if unit can enable a unit
 func TestDisabledtoEnabledUnit(t *testing.T) {
-	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -85,7 +176,6 @@ func TestDisabledtoEnabledUnit(t *testing.T) {
 
 // TestDisabledtoEnabledRuntimeUnit test  if unit can make a unitfile enabled at runtime
 func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
-	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -109,7 +199,6 @@ func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 
 // TestEnabledToDisabledUnit test if unit can disable a unit
 func TestEnabledToDisabledUnit(t *testing.T) {
-	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -133,7 +222,6 @@ func TestEnabledToDisabledUnit(t *testing.T) {
 
 // TestStaticToDisabledUnit tests if unit can disable a static unit
 func TestStaticToDisabledUnit(t *testing.T) {
-	// t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -144,7 +232,8 @@ func TestStaticToDisabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	static := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "static", StartMode: "replace"}
-	static.Apply()
+	_, err = static.Apply()
+	assert.NoError(t, err)
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
 	_, err = disabled.Apply()
 	assert.NoError(t, err)
@@ -185,6 +274,58 @@ func TestLinkedUnit(t *testing.T) {
 	assert.False(t, status.HasChanges())
 }
 
+var units []dbus.UnitStatus
+
+func GetUnits() error {
+	conn, err := systemd.GetDbusConnection()
+	if err != nil {
+		return err
+	}
+	defer conn.Return()
+	units, err = conn.Connection.ListUnits()
+	return err
+}
+
+func FilterLoaded() {
+	newUnits := []dbus.UnitStatus{}
+	for i := range units {
+		if systemd.LoadState(units[i].LoadState).Equal(systemd.LSLoaded) {
+			newUnits = append(newUnits, units[i])
+		}
+	}
+	units = newUnits
+}
+
+type UnitCheck func(dbus.UnitStatus) bool
+
+func HasActiveStateCheck(state systemd.ActiveState) UnitCheck {
+	return func(svc dbus.UnitStatus) bool {
+		return systemd.ActiveState(svc.ActiveState).Equal(state)
+	}
+}
+
+func HasUnitFileStateCheck(state systemd.UnitFileState) UnitCheck {
+	return func(svc dbus.UnitStatus) bool {
+		return systemd.UnitFileState(svc.SubState).Equal(state)
+	}
+}
+
+func FindUnitWith(checks []UnitCheck) (bool, dbus.UnitStatus) {
+	for _, unit := range units {
+		passedChecks := true
+		for _, check := range checks {
+			if !check(unit) {
+				passedChecks = false
+				break
+			}
+		}
+		if passedChecks {
+			return true, unit
+		}
+	}
+	return false, dbus.UnitStatus{}
+}
+
 // HelloUnit is a simple service file that is not static
 const HelloUnit = `
 [Unit]
@@ -214,12 +355,14 @@ type TmpService struct {
 func (t *TmpService) Remove() {
 	base := filepath.Base(t.Path)
 
+	kill := "systemctl kill " + base
 	disable := "systemctl disable " + base
 	daemonReload := "systemctl daemon-reload"
 	resetFailed := "systemctl reset-failed"
 
 	generator := &shell.CommandGenerator{Interpreter: "/bin/bash"}
 	generator.Run(disable)
+	generator.Run(kill)
 
 	os.Remove(t.Path)
 	locations := []string{"/run/systemd/system/", "/etc/systemd/system/", "/usr/lib/systemd/system/"}
@@ -227,8 +370,8 @@ func (t *TmpService) Remove() {
 		os.Remove(filepath.Join(l, base))
 	}
 
-	generator.Run(daemonReload)
 	generator.Run(resetFailed)
+	generator.Run(daemonReload)
 }
 
 var count uint32
@@ -236,8 +379,8 @@ var count uint32
 // NewTmpService creates a service file on the system either in
 // "/tmp", "/etc/systemd/system", or "/run/systemd/system".
 func NewTmpService(prefix string, static bool) (svc *TmpService, err error) {
-	atomic.AddUint32(&count, 1)
-	name := fmt.Sprintf("foo%d.service", count)
+	number := atomic.AddUint32(&count, 1)
+	name := fmt.Sprintf("foo%d.service", number)
 	var path string
 	if prefix == "/tmp" {
 		path = filepath.Join(prefix, name)
@@ -270,4 +413,11 @@ func HasSystemd() bool {
 	}
 	defer conn.Return()
 	return true
+}
+
+func init() {
+	if HasSystemd() {
+		GetUnits()
+		FilterLoaded()
+	}
 }

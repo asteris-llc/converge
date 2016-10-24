@@ -97,6 +97,11 @@ func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
 	asStatus, asErr := systemd.CheckProperty(dbusConn, unitName, "ActiveState", validActiveStates)
 	asStatus = systemd.AppendStatus(asStatus, linkStatus)
 
+	if t.UnitFileState == "" {
+		t.Status = asStatus
+		return asStatus, asErr
+	}
+
 	// Then check that there is a valid ufs state
 	validUnitFileStates := []*dbus.Property{
 		systemd.PropUnitFileState(t.UnitFileState),
@@ -225,6 +230,11 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 		return t.Status, err
 	}
 	systemd.ApplyDaemonReload()
+
+	if t.UnitFileState == "" {
+		t.Status = startedLinkedStatus
+		return t.Status, err
+	}
 	// Get the current UnitFileState
 	prop, err := dbusConn.GetUnitProperty(unitName, "UnitFileState")
 	if err != nil {
@@ -282,9 +292,16 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 			t.Status = systemd.AppendStatus(reLinkedStatus, startedLinkedStatus)
 			return t.Status, err
 		}
+	case systemd.UFSStatic:
+		statusMsg := "cannot force unit to be static"
+		t.Status = systemd.AppendStatus(&resource.Status{
+			Level:  resource.StatusCantChange,
+			Output: []string{statusMsg},
+		}, startedLinkedStatus)
+		return t, nil
 	}
 
-	statusMsg := fmt.Errorf("unit %q is in unknown state, %s", unitName, state)
+	statusMsg := fmt.Errorf("unit %q is in unknown state, %s", unitName, t.UnitFileState)
 	t.Status = systemd.AppendStatus(&resource.Status{
 		Level:  resource.StatusFatal,
 		Output: []string{statusMsg.Error()},

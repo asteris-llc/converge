@@ -36,13 +36,14 @@ func CheckProperty(conn *dbus.Conn, unit string, propertyName string, wants []*d
 		Actual:   prop,
 		Expected: wants,
 	}
-	diffs := map[string]resource.Diff{
-		//unit:propertyname:shouldbe="1,2,3"
-		fmt.Sprintf("%s:%s:shouldbe=%q", unit, propertyName, possibilities): &propDiff,
-	}
+	var diffs map[string]resource.Diff
 	warningLevel := resource.StatusNoChange
 	if !found {
 		warningLevel = resource.StatusWillChange
+		diffs = map[string]resource.Diff{
+			//unit:propertyname:shouldbe="1,2,3"
+			fmt.Sprintf("%s:%s:shouldbe=%q", unit, propertyName, possibilities): &propDiff,
+		}
 	}
 	statusMsg := fmt.Sprintf("property %q of unit %q is %q, expected one of [%q]", propertyName, unit, prop.Value.Value(), possibilities)
 	return &resource.Status{

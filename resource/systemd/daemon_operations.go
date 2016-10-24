@@ -14,6 +14,11 @@
 
 package systemd
 
+import (
+	"runtime"
+	"sync"
+)
+
 // CheckDaemonReload checks whether the systemd daemon needs to be reloaded.
 // it does not check if a unit is failed and needs to be reset though.
 func CheckDaemonReload(unit string) (bool, error) {
@@ -29,14 +34,34 @@ func CheckDaemonReload(unit string) (bool, error) {
 	return shouldReload && ok, nil
 }
 
-// ApplyDaemonReload reloads the daemon
-func ApplyDaemonReload() error {
+var reloadToken = make(chan struct{}, 1)
+var reloadOnce sync.Once
+
+func applyDaemonReload() error {
 	conn, err := GetDbusConnection()
 	if err != nil {
 		return err
 	}
 	defer conn.Return()
 	err = conn.Connection.Reload()
+	return err
+}
+
+// ApplyDaemonReload reloads the daemon
+func ApplyDaemonReload() (err error) {
+	reloadOnce.Do(func() {
+		reloadToken <- struct{}{}
+	})
+	for true {
+		select {
+		case canReload := <-reloadToken:
+			err = applyDaemonReload()
+			reloadToken <- canReload
+			return err
+		default:
+			runtime.Gosched()
+		}
+	}
 	return err
 }
 
@@ -56,8 +81,10 @@ func CheckResetFailed(unit string) (bool, error) {
 	return ok && ASFailed.Equal(ActiveState(shouldReset)), nil
 }
 
-// ApplyResetFailed resets the failed state of a unit.
-func ApplyResetFailed(unit string) error {
+var resetToken = make(chan struct{}, 1)
+var resetOnce sync.Once
+
+func applyResetFailed(unit string) error {
 	conn, err := GetDbusConnection()
 	if err != nil {
 		return err
@@ -65,6 +92,25 @@ func ApplyResetFailed(unit string) error {
 	defer conn.Return()
 	err = conn.Connection.ResetFailedUnit(unit)
 	return err
+}
+
+// ApplyResetFailed resets the failed state of a unit.
+func ApplyResetFailed(unit string) (err error) {
+	resetOnce.Do(func() {
+		resetToken <- struct{}{}
+	})
+	for true {
+		select {
+		case canReset := <-resetToken:
+			err = applyResetFailed(unit)
+			resetToken <- canReset
+			return err
+		default:
+			runtime.Gosched()
+		}
+	}
+	return err
+
 }
 
 const daemonWontReloadMsg = "daemon does not need to be reloaded"

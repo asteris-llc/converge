@@ -53,7 +53,7 @@ type Preparer struct {
 
 	See [dbus](https://godoc.org/github.com/coreos/go-systemd/dbus) for more info
 	*/
-	UnitFileState string `hcl:"state" required:"true" valid_values:"enabled,enabled-runtime,linked,linked-runtime,masked,masked-runtime,disabled"`
+	UnitFileState string `hcl:"state" required:"false" valid_values:"enabled,enabled-runtime,linked,linked-runtime,masked,masked-runtime,disabled"`
 
 	/* Mode for the call to StartUnit()
 	StartUnit() enqeues a start job, and possibly depending jobs.

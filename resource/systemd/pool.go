@@ -58,7 +58,11 @@ func GetDbusConnection() (*Conn, error) {
 			if err != nil {
 				return nil, err
 			}
-			connectionPool <- dbusConn
+			select {
+			case connectionPool <- dbusConn:
+			default:
+				dbusConn.Close()
+			}
 		}
 	}
 }
