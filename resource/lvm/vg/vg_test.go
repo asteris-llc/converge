@@ -12,61 +12,63 @@ import (
 	"testing"
 )
 
+// TestCreateVolume is a full-blown test, using fake engine to trace from high-level
+// graph node vg.resourceVG, to commands passed to LVM tools. It cover only straighforward
+// cases. Use mock-LVM for real tests of highlevel stuff.
 func TestCreateVolumeFromSingleDevice(t *testing.T) {
-	lvm, me := testhelpers.MakeLvmWithMockExec()
+	t.Run("single device", func(t *testing.T) {
+		lvm, me := testhelpers.MakeLvmWithMockExec()
 
-	me.On("Getuid").Return(0)                  // assume, that we have root
-	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+		me.On("Getuid").Return(0)                  // assume, that we have root
+		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-	me.On("Read", "pvs", mock.Anything).Return("", nil)
-	me.On("Read", "vgs", mock.Anything).Return("", nil)
-	me.On("Run", "vgcreate", []string{"vg0", "/dev/sda1"}).Return(nil)
+		me.On("Read", "pvs", mock.Anything).Return("", nil)
+		me.On("Read", "vgs", mock.Anything).Return("", nil)
+		me.On("Run", "vgcreate", []string{"vg0", "/dev/sda1"}).Return(nil)
 
-	fr := fakerenderer.New()
+		fr := fakerenderer.New()
 
-	r := &vg.ResourceVG{Name: "vg0"}
-	r.Setup(lvm, []string{"/dev/sda1"})
-	status, err := r.Check(fr)
-	assert.NoError(t, err)
-	assert.True(t, status.HasChanges())
-	comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"})
+		status, err := r.Check(fr)
+		assert.NoError(t, err)
+		assert.True(t, status.HasChanges())
+		comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
 
-	status, err = r.Apply()
-	assert.NoError(t, err)
-	me.AssertCalled(t, "Run", "vgcreate", []string{"vg0", "/dev/sda1"})
-}
+		status, err = r.Apply()
+		assert.NoError(t, err)
+		me.AssertCalled(t, "Run", "vgcreate", []string{"vg0", "/dev/sda1"})
+	})
 
-func TestCreateVolumeWhichIsInAnotherGroup(t *testing.T) {
-	lvm, me := testhelpers.MakeLvmWithMockExec()
+	t.Run("multiple devices", func(t *testing.T) {
+		lvm, me := testhelpers.MakeLvmWithMockExec()
 
-	me.On("Getuid").Return(0)                  // assume, that we have root
-	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+		me.On("Getuid").Return(0)                  // assume, that we have root
+		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
+		me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
+		me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 
-	fr := fakerenderer.New()
+		fr := fakerenderer.New()
 
-	r := &vg.ResourceVG{Name: "vg1"}
-	r.Setup(lvm, []string{"/dev/md127"})
-	_, err := r.Check(fr)
-	assert.Error(t, err)
-}
+		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"})
+		_, err := r.Check(fr)
+		assert.Error(t, err)
+	})
 
-func TestCreateVolumeWhichAlreadyExists(t *testing.T) {
-	lvm, me := testhelpers.MakeLvmWithMockExec()
+	t.Run("volume which already exists", func(t *testing.T) {
+		lvm, me := testhelpers.MakeLvmWithMockExec()
 
-	me.On("Getuid").Return(0)                  // assume, that we have root
-	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
+		me.On("Getuid").Return(0)                  // assume, that we have root
+		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-	me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
-	me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
+		me.On("Read", "pvs", mock.Anything).Return(testdata.TESTDATA_PVS, nil)
+		me.On("Read", "vgs", mock.Anything).Return(testdata.TESTDATA_VGS, nil)
 
-	fr := fakerenderer.New()
+		fr := fakerenderer.New()
 
-	r := &vg.ResourceVG{Name: "vg0"}
-	r.Setup(lvm, []string{"/dev/md127"})
-	status, err := r.Check(fr)
-	assert.NoError(t, err)
-	assert.False(t, status.HasChanges())
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"})
+		status, err := r.Check(fr)
+		assert.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
 }

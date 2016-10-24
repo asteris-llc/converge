@@ -10,16 +10,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ResourceVG struct {
-	Name            string
-	Exists          bool
-	DevicesToAdd    []string
-	DevicesToRemove []string
-	lvm             lowlevel.LVM
-	DeviceList      []string
+type resourceVG struct {
+	name       string
+	deviceList []string
+	lvm        lowlevel.LVM
+
+	exists          bool
+	devicesToAdd    []string
+	devicesToRemove []string
 }
 
-func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if err := r.lvm.Check(); err != nil {
@@ -32,42 +33,44 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	// check if group exists
-	if vgs, err := r.lvm.QueryVolumeGroups(); err != nil {
-		return nil, err
-	} else {
-		_, r.Exists = vgs[r.Name]
+	{
+		vgs, err := r.lvm.QueryVolumeGroups()
+		if err != nil {
+			return nil, err
+		}
+		_, r.exists = vgs[r.name]
 	}
 
 	// process new devices
-	for _, dev := range r.DeviceList {
+	for _, dev := range r.deviceList {
 		if pv, ok := pvs[dev]; ok {
-			if pv.Group != r.Name {
-				return nil, fmt.Errorf("Can't add device %s to VG %s, it already member of VG %s", dev, r.Name, pv.Group)
+			if pv.Group != r.name {
+				return nil, fmt.Errorf("Can't add device %s to VG %s, it already member of VG %s", dev, r.name, pv.Group)
 			}
 		} else {
-			r.DevicesToAdd = append(r.DevicesToAdd, dev)
-			status.AddDifference(dev, "<none>", fmt.Sprintf("member of volume group %s", r.Name), "")
+			r.devicesToAdd = append(r.devicesToAdd, dev)
+			status.AddDifference(dev, "<none>", fmt.Sprintf("member of volume group %s", r.name), "")
 		}
 	}
 
 	// process removed devices
 	for d, _ := range pvs {
 		found := false
-		for _, d2 := range r.DeviceList {
+		for _, d2 := range r.deviceList {
 			if d2 == d {
 				found = true
 			}
 		}
 		if !found {
-			if pv, ok := pvs[d]; ok && pv.Group == r.Name {
-				r.DevicesToRemove = append(r.DevicesToRemove, d)
-				status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.Name), "<removed>", "")
+			if pv, ok := pvs[d]; ok && pv.Group == r.name {
+				r.devicesToRemove = append(r.devicesToRemove, d)
+				status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.name), "<removed>", "")
 			}
 		}
 	}
 
-	if !r.Exists {
-		status.AddDifference(r.Name, "<not exists>", strings.Join(r.DevicesToAdd, ", "), "")
+	if !r.exists {
+		status.AddDifference(r.name, "<not exists>", strings.Join(r.devicesToAdd, ", "), "")
 	}
 
 	if resource.AnyChanges(status.Differences) {
@@ -76,20 +79,20 @@ func (r *ResourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *ResourceVG) Apply() (status resource.TaskStatus, err error) {
-	if r.Exists {
-		for _, d := range r.DevicesToAdd {
-			if err := r.lvm.ExtendVolumeGroup(r.Name, d); err != nil {
+func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
+	if r.exists {
+		for _, d := range r.devicesToAdd {
+			if err := r.lvm.ExtendVolumeGroup(r.name, d); err != nil {
 				return nil, err
 			}
 		}
-		for _, d := range r.DevicesToRemove {
-			if err := r.lvm.ReduceVolumeGroup(r.Name, d); err != nil {
+		for _, d := range r.devicesToRemove {
+			if err := r.lvm.ReduceVolumeGroup(r.name, d); err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		if err := r.lvm.CreateVolumeGroup(r.Name, r.DevicesToAdd); err != nil {
+		if err := r.lvm.CreateVolumeGroup(r.name, r.devicesToAdd); err != nil {
 			return nil, err
 		}
 	}
@@ -97,11 +100,15 @@ func (r *ResourceVG) Apply() (status resource.TaskStatus, err error) {
 	return &resource.Status{}, nil
 }
 
-func (r *ResourceVG) Setup(lvm lowlevel.LVM, devs []string) {
-	r.lvm = lvm
-	r.DeviceList = devs
+// NewResourceVG creates new resource.Task node for Volume Group
+func NewResourceVG(lvm lowlevel.LVM, name string, devs []string) resource.Task {
+	return &resourceVG{
+		lvm:        lvm,
+		deviceList: devs,
+		name:       name,
+	}
 }
 
 func init() {
-	registry.Register("lvm.vg", (*Preparer)(nil), (*ResourceVG)(nil))
+	registry.Register("lvm.vg", (*Preparer)(nil), (*resourceVG)(nil))
 }
