@@ -1,5 +1,4 @@
 NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
-VERSION = $(shell awk -F\" '/^const Version/ { print $$2 }' cmd/version.go)
 RPCLINT=$(shell find ./rpc -type f \( -not -iname 'root.*.go' -iname '*.go' \) )
 TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
 TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
@@ -7,7 +6,12 @@ NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
 BENCH = .
 
-converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+converge: $(shell find . -name '*.go' -not -name 'version_number.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+	@echo "package cmd" > cmd/version_number.go
+	@echo >> cmd/version_number.go
+	@echo "const Version = \"$(shell git describe --dirty)\"" >> cmd/version_number.go
+	@echo "set version to $(shell git describe --dirty)"
+
 	go build -ldflags="-s -w" .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
@@ -88,6 +92,11 @@ vendor-clean: ${NOVENDOR}
 	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
+	@echo "package cmd" > cmd/version_number.go
+	@echo >> cmd/version_number.go
+	@echo "const Version = \"$(shell git describe)\"" >> cmd/version_number.go
+	@echo "set version to $(shell git describe)"
+
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
@@ -97,7 +106,7 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 		-os="linux" \
 		-os="freebsd" \
 		-os="solaris" \
-		-output="build/$(NAME)_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
+		-output="build/$(NAME)_$(shell git describe --dirty)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile
 	@mkdir -p build/tgz
@@ -124,4 +133,4 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 	 --swagger_out=logtostderr=true:rpc/pb \
 	 rpc/pb/root.proto
 
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+.PHONY: cmd/version_number.go test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
