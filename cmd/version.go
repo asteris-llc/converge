@@ -20,6 +20,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version is pulled from git during a build
+var Version = "unset"
+
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
