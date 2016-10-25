@@ -193,8 +193,9 @@ func (g *Graph) Disconnect(from, to string) {
 
 // SafeDisconnect disconnects two vertices by IDs but only if valid
 func (g *Graph) SafeDisconnect(from, to string) error {
-	if _, ok := g.GetParentID(to); ok {
-		return errors.New("parent edge removal considered unsafe")
+	if parentID, ok := g.GetParentID(to); ok && parentID == from {
+		// return errors.New("parent edge removal considered unsafe")
+		return nil
 	}
 
 	g.innerLock.Lock()
