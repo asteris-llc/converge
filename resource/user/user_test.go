@@ -688,6 +688,44 @@ func TestDiffAdd(t *testing.T) {
 		assert.Equal(t, u.HomeDir, u.Status.Diffs()["home_dir"].Current())
 	})
 
+	t.Run("username", func(t *testing.T) {
+		t.Run("group exists-provide groupname", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = existingGroupName
+			u.GroupName = existingGroupName
+			u.Status = resource.NewStatus()
+
+			expected := &user.AddUserOptions{
+				Group: u.GroupName,
+			}
+
+			options, err := u.DiffAdd(u.Status)
+
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
+			assert.True(t, u.Status.HasChanges())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
+			assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["group"].Original())
+			assert.Equal(t, u.GroupName, u.Status.Diffs()["group"].Current())
+		})
+
+		t.Run("error-group exists", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = existingGroupName
+			u.Status = resource.NewStatus()
+
+			options, err := u.DiffAdd(u.Status)
+
+			assert.EqualError(t, err, fmt.Sprintf("group %s exists", u.Username))
+			assert.Nil(t, options)
+			assert.Equal(t, resource.StatusCantChange, u.Status.StatusCode())
+			assert.Equal(t, "if you want to add this user to that group, use the groupname field", u.Status.Messages()[0])
+			assert.True(t, u.Status.HasChanges())
+		})
+	})
+
 	t.Run("uid", func(t *testing.T) {
 		t.Run("uid not found", func(t *testing.T) {
 			u := user.NewUser(new(user.System))
