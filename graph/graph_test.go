@@ -504,6 +504,43 @@ func TestParent(t *testing.T) {
 	assert.Equal(t, should, actual)
 }
 
+func TestParentID(t *testing.T) {
+	t.Parallel()
+	t.Run("valid", func(t *testing.T) {
+		parentID := graph.ID("root")
+		childID := graph.ID("root", "child")
+		g := graph.New()
+		g.Add(node.New(parentID, 1))
+		g.Add(node.New(childID, 2))
+		g.ConnectParent(parentID, childID)
+
+		actualParentID, ok := g.GetParentID(childID)
+		require.True(t, ok)
+		assert.Equal(t, parentID, actualParentID)
+	})
+	t.Run("root", func(t *testing.T) {
+		g := graph.New()
+		g.Add(node.New("root", 1))
+		_, ok := g.GetParentID("root")
+		assert.False(t, ok)
+	})
+	t.Run("one-two-three", func(t *testing.T) {
+		g := graph.New()
+		g.Add(node.New("one", 1))
+		g.Add(node.New("two", 2))
+		g.Add(node.New("three", 2))
+		g.Connect("one", "two")
+		g.Connect("one", "three")
+		g.Connect("two", "three")
+		_, ok := g.GetParentID("one")
+		assert.False(t, ok)
+		_, ok = g.GetParentID("two")
+		assert.False(t, ok)
+		_, ok = g.GetParentID("three")
+		assert.False(t, ok)
+	})
+}
+
 func TestRootFirstWalk(t *testing.T) {
 	// the graph should walk nodes root-to-leaf
 	defer logging.HideLogs(t)()
