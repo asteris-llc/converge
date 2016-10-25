@@ -41,8 +41,15 @@ else
 	tmp="$TMPDIR"
 fi
 tmp_dir="${tmp}/install-converge.sh.$$"
-(umask 077 && mkdir -p "${tmp_dir}") || exit 1
+(umask 077 && mkdir "${tmp_dir}") || exit 1
 
+
+check_dir () {
+	if [ ! -d "$1" ]; then
+		echo "Directory $1 does not exist, exiting"
+		exit 1
+	fi
+}
 
 usage () {
 	echo "Usage: install-converge.sh [-v <version>]"
@@ -233,6 +240,7 @@ case "${os}" in
 		;;
 esac
 
+check_dir "${install_dir}"
 do_download "${base_url}/${version}/converge_${version}_${os}_${machine}.tar.gz" "${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz"
 extract "${tmp_dir}/converge_${version}_${os}_${machine}.tar.gz" "${install_dir}"
 chmod 0755 "${install_dir}/converge"
