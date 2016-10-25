@@ -33,7 +33,6 @@ samples/**/*.png
 
 # release
 build
-cmd/version_number.go
 
 # docs
 docs/extract
