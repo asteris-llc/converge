@@ -300,9 +300,8 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 		u.Status.RaiseLevel(resource.StatusCantChange)
 		u.Status.AddMessage("if you want to add this user to that group, use the groupname field")
 		return nil, fmt.Errorf("group %s exists", u.Username)
-	} else {
-		u.Status.AddDifference("username", fmt.Sprintf("<%s>", string(StateAbsent)), u.Username, "")
 	}
+	u.Status.AddDifference("username", fmt.Sprintf("<%s>", string(StateAbsent)), u.Username, "")
 
 	if u.UID != "" {
 		usr, err := user.LookupId(u.UID)
@@ -367,10 +366,9 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 		if usr != nil {
 			u.Status.RaiseLevel(resource.StatusCantChange)
 			return nil, fmt.Errorf("user %s already exists", u.NewUsername)
-		} else {
-			options.Username = u.NewUsername
-			status.AddDifference("username", u.Username, u.NewUsername, "")
 		}
+		options.Username = u.NewUsername
+		status.AddDifference("username", u.Username, u.NewUsername, "")
 	}
 
 	if u.UID != "" {
