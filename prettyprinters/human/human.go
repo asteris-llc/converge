@@ -136,7 +136,7 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	Has Changes: {{if .HasChanges}}{{yellow "yes"}}{{else}}no{{end}}
 	Changes:
 		{{- range $key, $values := .Changes}}
-		{{cyan $key}}:	{{diff ($values.Original) ($values.Current) | bold}}
+		{{cyan $key}}:	{{diff ($values.Original) ($values.Current)}}
 		{{- else}} No changes {{- end}}
 
 `)
@@ -190,7 +190,9 @@ func (p *Printer) diff(before, after string) (string, error) {
 	// remember when modifying these that diff is responsible for leading
 	// whitespace
 	if !strings.Contains(strings.TrimSpace(before), "\n") && !strings.Contains(strings.TrimSpace(after), "\n") {
-		return fmt.Sprintf("%q\t%s\t%q", strings.TrimSpace(before), p.getFunc("bold")("=>"), strings.TrimSpace(after)), nil
+		return p.getFunc("bold")(
+			fmt.Sprintf("%q\t=>\t%q", strings.TrimSpace(before), strings.TrimSpace(after)),
+		), nil
 	}
 
 	tmpl, err := p.template(`before:
