@@ -215,7 +215,7 @@ func (r *Renderer) lookup(name string) (string, error) {
 // value may depend on an outer value, but an outer value may not depend on a
 // nested value.
 func validateLookup(g *graph.Graph, src, dst string) bool {
-	if graph.AreSiblingIDs(src, dst) {
+	if g.AreSiblings(src, dst) {
 		return true
 	}
 	if g.IsNibling(src, dst) {
