@@ -34,7 +34,7 @@ The `install-converge.sh` script will download and install the converge binary
 to your `/usr/local/bin/` directory:
 
 ```sh
-sudo ./install-converge -v 0.3.0
+sudo ./install-converge.sh -v 0.3.0
 ```
 
 
