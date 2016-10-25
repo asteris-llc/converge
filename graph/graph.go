@@ -99,8 +99,8 @@ func (g *Graph) GetParent(id string) (*node.Node, bool) {
 			break
 		}
 	}
-
-	return g.Get(parentID)
+	result, ok := g.Get(parentID)
+	return result, ok
 }
 
 // GetParentID is a combination of getting the parent the getting the ID.
@@ -193,6 +193,10 @@ func (g *Graph) Disconnect(from, to string) {
 
 // SafeDisconnect disconnects two vertices by IDs but only if valid
 func (g *Graph) SafeDisconnect(from, to string) error {
+	if _, ok := g.GetParentID(to); ok {
+		return errors.New("parent edge removal considered unsafe")
+	}
+
 	g.innerLock.Lock()
 	defer g.innerLock.Unlock()
 
