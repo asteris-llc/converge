@@ -1,10 +1,11 @@
-task "epel-install" {
-  check = "test -f /etc/yum.repos.d/epel.repo"
-  apply = "yum makecache; yum install -y epel-release"
+package.rpm "epel-install" {
+  name  = "epel-release"
+  state = "present"
 }
 
-task "jq-install" {
-  check   = "yum list installed jq"
-  apply   = "yum makecache; yum install -y jq"
-  depends = ["task.epel-install"]
+package.rpm "jq-install" {
+  name  = "jq"
+  state = "present"
+
+  depends = ["package.rpm.epel-install"]
 }
