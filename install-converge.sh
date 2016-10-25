@@ -18,7 +18,7 @@
 # If possible, the Operating System and processor
 # type will be detected.
 
-# install-converge.h [-v <version>]
+# install-converge.sh [-v <version>]
 # -d            Directory for converge binary (default /usr/local/bin/)
 # -v            Converge version to install
 
@@ -41,11 +41,11 @@ else
 	tmp="$TMPDIR"
 fi
 tmp_dir="${tmp}/install-converge.sh.$$"
-(umask 077 && mkdir "${tmp_dir}") || exit 1
+(umask 077 && mkdir -p "${tmp_dir}") || exit 1
 
 
 usage () {
-	echo "Usage: install-converge.h [-v <version>]"
+	echo "Usage: install-converge.sh [-v <version>]"
 	echo " -d            Directory for converge binary (default ${install_dir})"
 	echo " -v            Converge version to install   (default ${version})"
 	if test "${#}" -gt 0; then
