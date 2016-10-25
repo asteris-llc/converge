@@ -293,7 +293,16 @@ func noOptionsSet(u *User) bool {
 func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 	options := new(AddUserOptions)
 
-	u.Status.AddDifference("username", fmt.Sprintf("<%s>", string(StateAbsent)), u.Username, "")
+	// if a group exists with the same name as the user being added, a groupname
+	// must also be indicated so the user may be added to that group
+	grp, _ := user.LookupGroup(u.Username)
+	if grp != nil && grp.Name == u.Username && u.GroupName == "" {
+		u.Status.RaiseLevel(resource.StatusCantChange)
+		u.Status.AddMessage("if you want to add this user to that group, use the groupname field")
+		return nil, fmt.Errorf("group %s exists", u.Username)
+	} else {
+		u.Status.AddDifference("username", fmt.Sprintf("<%s>", string(StateAbsent)), u.Username, "")
+	}
 
 	if u.UID != "" {
 		usr, err := user.LookupId(u.UID)
