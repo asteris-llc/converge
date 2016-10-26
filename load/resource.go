@@ -15,7 +15,6 @@
 package load
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
@@ -41,6 +40,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/user"
 	_ "github.com/asteris-llc/converge/resource/wait"
 	_ "github.com/asteris-llc/converge/resource/wait/port"
+	"golang.org/x/net/context"
 )
 
 // SetResources loads the resources for each graph node

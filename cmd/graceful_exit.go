@@ -15,11 +15,11 @@
 package cmd
 
 import (
-	"context"
 	"os"
 	"os/signal"
 
 	log "github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
 // GracefulExit traps interrupt signals for a graceful exit

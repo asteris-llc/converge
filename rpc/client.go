@@ -15,10 +15,10 @@
 package rpc
 
 import (
-	"context"
 	"crypto/tls"
 
 	"github.com/asteris-llc/converge/rpc/pb"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

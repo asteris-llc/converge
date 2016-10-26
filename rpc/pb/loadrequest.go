@@ -15,14 +15,13 @@
 package pb
 
 import (
-	"context"
-
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Load gets a graph from a LocationRequest

@@ -15,7 +15,6 @@
 package rpc
 
 import (
-	"context"
 	"encoding/json"
 
 	"google.golang.org/grpc/metadata"
@@ -28,6 +27,7 @@ import (
 	"github.com/asteris-llc/converge/prettyprinters/human"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 var (

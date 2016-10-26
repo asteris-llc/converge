@@ -17,7 +17,6 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -30,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/openpgp"
+	"golang.org/x/net/context"
 )
 
 var keyCmd = &cobra.Command{

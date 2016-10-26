@@ -15,7 +15,6 @@
 package load_test
 
 import (
-	"context"
 	"sort"
 	"testing"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestNodesBasic tests loading basic.hcl
