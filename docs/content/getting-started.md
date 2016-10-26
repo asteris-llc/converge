@@ -295,6 +295,7 @@ value is an error.
 - root and module level resources may not reference fields inside of a switch
   statement
 - only the first (top-to-bottom) true branch of a switch will be evaluated
+- `group` statements are not allowed in conditional resources in version 0.3.0
 
 ## What's Next?
 

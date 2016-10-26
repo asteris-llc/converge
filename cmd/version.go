@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version describes the version for packaging
-const Version = "0.3.0-beta2"
+// Version is pulled from git during a build
+var Version = "unset"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{

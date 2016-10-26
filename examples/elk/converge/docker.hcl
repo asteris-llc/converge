@@ -16,10 +16,7 @@ param "user-name" {
 
 file.content "overlay-module" {
   destination = "/etc/modules-load.d/overlay.conf"
-
-  content = <<EOF
-overlay
-EOF
+  content     = "overlay"
 }
 
 task "load-overlay-module" {
@@ -34,13 +31,41 @@ file.directory "service-directory" {
 }
 
 file.content "docker-storage-driver" {
-  destination  = "/etc/systemd/system/docker.service.d/overlay.conf"
+  destination = "/etc/systemd/system/docker.service.d/overlay.conf"
+
   content = <<EOF
 [Service]
 ExecStart=
 ExecStart=/usr/bin/dockerd --storage-driver=overlay
 EOF
+
   depends = ["file.directory.service-directory"]
+}
+
+package.rpm "docker-install" {
+  name  = "{{param `docker-package`}}"
+  state = "present"
+
+  depends = ["file.content.docker-repo"]
+}
+
+task "docker-user-group" {
+  check = "groups {{param `user-name`}} | grep -i {{param `docker-group`}}"
+  apply = "usermod -aG {{param `docker-group`}} {{param `user-name`}}"
+
+  depends = ["package.rpm.docker-install"]
+}
+
+task "docker-enable" {
+  check   = "systemctl is-enabled {{param `docker-service`}}"
+  apply   = "systemctl daemon-reload; systemctl enable {{param `docker-service`}}"
+  depends = ["task.docker-user-group"]
+}
+
+task "docker-start" {
+  check   = "systemctl is-active {{param `docker-service`}}"
+  apply   = "systemctl daemon-reload; systemctl start {{param `docker-service`}}"
+  depends = ["task.docker-enable"]
 }
 
 file.content "docker-repo" {
@@ -54,28 +79,4 @@ enabled=1
 gpgcheck=1
 gpgkey=https://yum.dockerproject.org/gpg
 EOF
-}
-
-task "docker-install" {
-  check   = "yum list installed {{param `docker-package`}}"
-  apply   = "yum makecache; yum install -y {{param `docker-package`}}"
-  depends = ["file.content.docker-repo"]
-}
-
-task "docker-user-group" {
-  check   = "groups {{param `user-name`}} | grep -i {{param `docker-group`}}"
-  apply   = "usermod -aG {{param `docker-group`}} {{param `user-name`}}"
-  depends = ["task.docker-install"]
-}
-
-task "docker-enable" {
-  check   = "systemctl is-enabled {{param `docker-service`}}"
-  apply   = "systemctl daemon-reload; systemctl enable {{param `docker-service`}}"
-  depends = ["task.docker-user-group"]
-}
-
-task "docker-start" {
-  check   = "systemctl is-active {{param `docker-service`}}"
-  apply   = "systemctl daemon-reload; systemctl start {{param `docker-service`}}"
-  depends = ["task.docker-enable"]
 }

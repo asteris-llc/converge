@@ -10,3 +10,28 @@ build:
         name: go test
         code: |
           make test
+
+publish:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: make packages
+        code: |
+          make package
+
+    - script:
+        name: prepare for sync
+        code: |
+          DEST="$(git describe)"
+          mv build build.tmp
+          mkdir -p "build/$DEST"
+          mv build.tmp/* "build/$DEST"
+
+    - nextgxdx/s3sync@2.0.5:
+        source_dir: /go/src/github.com/asteris-llc/converge/build
+        delete-removed: false
+        bucket-url: $AWS_BUCKET_URL
+        key-id: $AWS_ACCESS_KEY_ID
+        key-secret: $AWS_SECRET_ACCESS_KEY
