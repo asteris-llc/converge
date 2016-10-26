@@ -133,8 +133,6 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 			}
 			if resource.AnyChanges(u.Status.Differences) {
 				u.Status.AddMessage("modify user")
-			} else {
-				u.Status.AddMessage(fmt.Sprintf("no modifications indicated for user %s", u.Username))
 			}
 		}
 	case StateAbsent:
