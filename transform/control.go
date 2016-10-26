@@ -32,7 +32,7 @@ import (
 // in a conditional resource.
 func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "ResolveConditionals")
-	logger.Info("resolving conditional macros")
+	logger.Debug("resolving conditional macros")
 	return g.Transform(ctx, func(meta *node.Node, out *graph.Graph) error {
 		id := meta.ID
 		switchNode, ok := getSwitchNode(id, g)
