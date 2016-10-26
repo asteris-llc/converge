@@ -1,6 +1,10 @@
+param "device" {
+    default = "/dev/sdb"
+}
+
 lvm.vg "vg-test" {
   name = "test"
-  devices = [ "/dev/sdb" ]
+  devices = [ "{{ param `device` }}" ]
 }
 
 lvm.lv "lv-test" {
