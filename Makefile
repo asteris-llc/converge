@@ -100,7 +100,7 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 		-os="freebsd" \
 		-os="solaris" \
 		-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
-	find build -type file -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
+	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
 package: xcompile
 	@mkdir -p build/tgz
