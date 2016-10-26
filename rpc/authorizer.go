@@ -15,9 +15,9 @@
 package rpc
 
 import (
-	"context"
 	"strings"
 
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )
 

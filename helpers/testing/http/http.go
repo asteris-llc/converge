@@ -15,7 +15,6 @@
 package http
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -26,6 +25,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/rpc"
+	"golang.org/x/net/context"
 )
 
 // ServeFile constructs a SingleFileServer on a random port, returning that

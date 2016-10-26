@@ -16,7 +16,6 @@ package load
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 
 	"github.com/asteris-llc/converge/fetch"
@@ -27,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type source struct {

@@ -15,7 +15,6 @@
 package render
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -24,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
+	"golang.org/x/net/context"
 )
 
 // Factory generates Renderers

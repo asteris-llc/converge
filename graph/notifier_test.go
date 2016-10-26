@@ -15,7 +15,6 @@
 package graph_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestNotifyTransform(t *testing.T) {

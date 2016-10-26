@@ -15,7 +15,6 @@
 package load
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"sort"
@@ -29,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)

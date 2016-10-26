@@ -15,7 +15,6 @@
 package rpc_test
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func testServeFunc(w http.ResponseWriter, r *http.Request) {

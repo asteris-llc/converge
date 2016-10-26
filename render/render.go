@@ -15,7 +15,6 @@
 package render
 
 import (
-	"context"
 	"crypto/rand"
 	"fmt"
 	"reflect"
@@ -27,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Values for rendering

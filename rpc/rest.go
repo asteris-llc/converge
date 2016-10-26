@@ -15,11 +15,11 @@
 package rpc
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"golang.org/x/net/context"
 )
 
 func restGatewayMux(ctx context.Context, addr string, opts *ClientOpts) (http.Handler, error) {

@@ -15,7 +15,6 @@
 package apply_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/apply"
@@ -27,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestApplyNoOp(t *testing.T) {

@@ -15,7 +15,6 @@
 package fetch_test
 
 import (
-	"context"
 	"path"
 	"testing"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/testing/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestHTTP(t *testing.T) {
