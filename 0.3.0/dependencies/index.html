@@ -595,6 +595,14 @@ out!</p>
 
 <h2 id="grouping">Grouping</h2>
 
+<div class="admonition note">
+<p class="admonition-title">Conditionals</p>
+<p>There is a known bug in converge 0.3.0 that prevents groups from functioning
+inside of conditional statements.  If you try to add a <code>group</code> to a statement
+inside of a <code>case</code> or <code>default</code> you may experience random failures in during
+execution.  A fix for this limitation is planned for 0.4.0</p>
+</div>
+
 <p>There can be some scenarios where a group of tasks are not explicitly dependent
 on each other but also cannot be run in parallel. A good example of this is
 package management tools like

@@ -20,7 +20,7 @@
 
 &lt;h2 id=&#34;release-date&#34;&gt;Release Date&lt;/h2&gt;
 
-&lt;p&gt;2016-10-21 0.3.0-beta1&lt;/p&gt;
+&lt;p&gt;2016-10-26 0.3.0-beta3&lt;/p&gt;
 
 &lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
 
@@ -105,8 +105,12 @@ switch &amp;quot;test-switch&amp;quot; {
 &lt;h4 id=&#34;task-groups&#34;&gt;Task Groups&lt;/h4&gt;
 
 &lt;p&gt;Tasks can be assigned to a group to force multiple tasks to run
-one at a time instead of in parallel. Locks are added as a node in the graph and released
-after all tasks sharing the lock are complete. &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/392&#34;&gt;#392&lt;/a&gt;&lt;/p&gt;
+one at a time instead of in parallel. When a node is added to a task
+group the engine creates a dependency on another node in the group.&lt;/p&gt;
+
+&lt;p&gt;Please note that task groups are not supported in conditionals in 0.3.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/asteris-llc/converge/pull/392&#34;&gt;#392&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;For example, &lt;code&gt;apt&lt;/code&gt; package installs cannot run in parallel. In the following example
 each task with the &lt;code&gt;apt&lt;/code&gt; lock is run sequentially.&lt;/p&gt;
