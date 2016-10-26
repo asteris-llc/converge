@@ -100,13 +100,14 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 		-os="freebsd" \
 		-os="solaris" \
 		-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
+	find build -type file -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
 package: xcompile
 	@mkdir -p build/tgz
 	for f in $(shell find build -name converge | cut -d/ -f2); do \
-	  (cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz converge); \
-    echo $$f; \
-  done
+		(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
+	done
+	(cd build/tgz; shasum -a 512 * > tgz.sha256sum)
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
