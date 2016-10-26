@@ -39,18 +39,6 @@ func TestSiblingID(t *testing.T) {
 	assert.Equal(t, "x/z", graph.SiblingID("x/y", "z"))
 }
 
-func TestAreSiblingIDs(t *testing.T) {
-	t.Parallel()
-
-	assert.True(t, graph.AreSiblingIDs("x/y", "x/z"))
-}
-
-func TestAreSiblingIDsNot(t *testing.T) {
-	t.Parallel()
-
-	assert.False(t, graph.AreSiblingIDs("a/b", "x/y"))
-}
-
 func TestBaseID(t *testing.T) {
 	t.Parallel()
 
