@@ -8,47 +8,12 @@ module "docker.hcl" "docker" {
   params = {
     user-name = "{{param `user-name`}}"
   }
-
-  depends = ["module.packages"]
 }
+
+module "filebeat.hcl" "filebeat" {}
 
 param "elasticsearch-data-directory" {
   default = "/data/elasticsearch"
-}
-
-param "filebeat-service" {
-  default = "filebeat"
-}
-
-task "filebeat-install" {
-  check   = "yum list installed filebeat"
-  apply   = "rpm -ivh https://download.elastic.co/beats/filebeat/filebeat-1.3.0-x86_64.rpm"
-  depends = ["module.docker"]
-}
-
-file.content "filebeat-yml" {
-  destination = "/etc/filebeat/filebeat.yml"
-
-  content = <<EOF
-filebeat:
-  prospectors:
-    - paths:
-        - /var/log/*.log
-        - /var/log/messages
-      input_type: log
-  registry_file: /var/lib/filebeat/registry
-output:
-  elasticsearch:
-    hosts: ["localhost:9200"]
-EOF
-
-  depends = ["task.filebeat-install"]
-}
-
-task "filebeat-enable" {
-  check   = "systemctl is-enabled {{param `filebeat-service`}}"
-  apply   = "systemctl enable {{param `filebeat-service`}}"
-  depends = ["file.content.filebeat-yml"]
 }
 
 wait.query "elasticsearch-wait" {
@@ -66,13 +31,7 @@ EOF
 task "filebeat-elasticsearch-template" {
   check   = "[[  \"$(curl 'http://localhost:9200/_template/filebeat' 2>/dev/null)\" != \"{}\" ]] || exit 1"
   apply   = "curl -XPUT 'http://localhost:9200/_template/filebeat' -d@/etc/filebeat/filebeat.template.json 2>/dev/null"
-  depends = ["task.filebeat-enable", "docker.container.elasticsearch-container", "wait.query.elasticsearch-wait"]
-}
-
-task "filebeat-start" {
-  check   = "systemctl is-active {{param `filebeat-service`}}"
-  apply   = "systemctl start {{param `filebeat-service`}}"
-  depends = ["task.filebeat-enable", "docker.container.elasticsearch-container"]
+  depends = ["module.filebeat", "docker.container.elasticsearch-container", "wait.query.elasticsearch-wait"]
 }
 
 file.directory "elasticsearch-data-directory" {
