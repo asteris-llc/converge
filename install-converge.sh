@@ -25,7 +25,7 @@
 set -e
 
 # Default to latest stable
-version="0.3.0-beta2"
+version="0.3.0-rc1"
 
 install_dir="/usr/local/bin"
 
