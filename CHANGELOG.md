@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/asteris-llc/converge/compare/0.3.0-beta2...0.3.0-beta3)
 
+[Summarized Release Notes](http://converge.aster.is/0.3.0/release-notes/0-3-0/)
+
 ### Enhancements
 
 - \[389\] switch log level from Info to Debug [\#428](https://github.com/asteris-llc/converge/pull/428) ([mason-fish](https://github.com/mason-fish))
