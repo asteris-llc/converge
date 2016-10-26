@@ -176,7 +176,6 @@ func TestCheck(t *testing.T) {
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
 					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("no modifications indicated for user %s", u.Username), status.Messages()[0])
 					assert.False(t, status.HasChanges())
 				} else {
 					assert.EqualError(t, err, "user: not supported on this system")
