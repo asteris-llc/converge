@@ -345,17 +345,21 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 	}
 
 	if u.CreateHome {
+		dirDiff := u.HomeDir
+		if u.HomeDir == "" {
+			dirDiff = "<default home>"
+		}
 		options.CreateHome = true
-		status.AddDifference("create_home", fmt.Sprintf("<%s>", string(StateAbsent)), u.HomeDir, "")
+		status.AddDifference("create_home", fmt.Sprintf("<%s>", string(StateAbsent)), dirDiff, "")
 		if u.SkelDir != "" {
 			options.SkelDir = u.SkelDir
-			status.AddDifference("skel_dir contents", u.SkelDir, u.HomeDir, "")
+			status.AddDifference("skel_dir contents", u.SkelDir, dirDiff, "")
 		}
 	}
 
 	if u.HomeDir != "" {
 		options.Directory = u.HomeDir
-		status.AddDifference("home_dir", fmt.Sprintf("<%s>", string(StateAbsent)), u.HomeDir, "")
+		status.AddDifference("home_dir name", "<default home>", u.HomeDir, "")
 	}
 
 	if resource.AnyChanges(u.Status.Differences) {
@@ -431,7 +435,7 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 	if u.HomeDir != "" {
 		if currUser.HomeDir != u.HomeDir {
 			options.Directory = u.HomeDir
-			status.AddDifference("home_dir", currUser.HomeDir, u.HomeDir, "")
+			status.AddDifference("home_dir name", currUser.HomeDir, u.HomeDir, "")
 			if u.MoveDir {
 				options.MoveDir = true
 				status.AddDifference("home_dir contents", currUser.HomeDir, u.HomeDir, "")
