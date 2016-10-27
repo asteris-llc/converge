@@ -20,7 +20,7 @@
 
 &lt;h2 id=&#34;release-date&#34;&gt;Release Date&lt;/h2&gt;
 
-&lt;p&gt;2016-10-26 0.3.0-beta3&lt;/p&gt;
+&lt;p&gt;2016-10-27 0.3.0&lt;/p&gt;
 
 &lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
 
@@ -140,17 +140,20 @@ task &amp;quot;install-build-essential&amp;quot; {
 
 &lt;p&gt;Text output for changes is now aligned via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/317&#34;&gt;#317&lt;/a&gt;.&lt;/p&gt;
 
+&lt;h4 id=&#34;installation-script&#34;&gt;Installation Script&lt;/h4&gt;
+
+&lt;p&gt;An installation script (&lt;code&gt;install-converge.sh&lt;/code&gt;) has been added that downloads the correct
+binary of converge after detecting the underlying Operating System and Processor.&lt;/p&gt;
+
+&lt;p&gt;This can be used to install converge during system boot.&lt;/p&gt;
+
+&lt;p&gt;For example, the &lt;a href=&#34;https://github.com/asteris-llc/terraform-provisioner-converge&#34;&gt;terraform provisioner&lt;/a&gt;
+uses this script download the latest release of converge before configuring a node.&lt;/p&gt;
+
 &lt;h2 id=&#34;bug-fixes&#34;&gt;Bug Fixes&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;docker.container regression &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/343&#34;&gt;#343&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;handle parameters with valid zero value &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/338&#34;&gt;#338&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;shell module should not set StatusLevel based on process exit code &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/323&#34;&gt;#323&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;param dependency fails in &lt;code&gt;samples/shellContext.hcl&lt;/code&gt; &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/313&#34;&gt;#313&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;Execution Engine Ignoring Warning Levels &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/243&#34;&gt;#243&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;Make pipeline functions use mult-return instead of Either &lt;a href=&#34;https://github.com/asteris-llc/converge/issues/225&#34;&gt;#225&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;cmd/server.go: use errgroup instead of waitgroup &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/363&#34;&gt;#363&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Please refer to the &lt;a href=&#34;https://github.com/asteris-llc/converge/blob/master/CHANGELOG.md&#34;&gt;changelog&lt;/a&gt; for
+a detailed report.&lt;/p&gt;
 
 &lt;h2 id=&#34;examples-documentation&#34;&gt;Examples/Documentation&lt;/h2&gt;
 
@@ -158,6 +161,8 @@ task &amp;quot;install-build-essential&amp;quot; {
 
 &lt;p&gt;Documentation was updated in &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/371&#34;&gt;#371&lt;/a&gt; so that links like
 &lt;a href=&#34;https://converge.aster.is/0.2.0&#34;&gt;converge.aster.is/0.2.0&lt;/a&gt; will resolve documentation for that version.&lt;/p&gt;
+
+&lt;p&gt;The elasticsearch example has been updated to use new features in 0.3.0 &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/419&#34;&gt;#419&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;support&#34;&gt;Support&lt;/h2&gt;
 

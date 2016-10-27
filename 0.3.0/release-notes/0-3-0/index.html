@@ -419,7 +419,7 @@
 
 <h2 id="release-date">Release Date</h2>
 
-<p>2016-10-26 0.3.0-beta3</p>
+<p>2016-10-27 0.3.0</p>
 
 <h2 id="features">Features</h2>
 
@@ -539,17 +539,20 @@ task &quot;install-build-essential&quot; {
 
 <p>Text output for changes is now aligned via <a href="https://github.com/asteris-llc/converge/pull/317">#317</a>.</p>
 
+<h4 id="installation-script">Installation Script</h4>
+
+<p>An installation script (<code>install-converge.sh</code>) has been added that downloads the correct
+binary of converge after detecting the underlying Operating System and Processor.</p>
+
+<p>This can be used to install converge during system boot.</p>
+
+<p>For example, the <a href="https://github.com/asteris-llc/terraform-provisioner-converge">terraform provisioner</a>
+uses this script download the latest release of converge before configuring a node.</p>
+
 <h2 id="bug-fixes">Bug Fixes</h2>
 
-<ul>
-<li>docker.container regression <a href="https://github.com/asteris-llc/converge/issues/343">#343</a></li>
-<li>handle parameters with valid zero value <a href="https://github.com/asteris-llc/converge/issues/338">#338</a></li>
-<li>shell module should not set StatusLevel based on process exit code <a href="https://github.com/asteris-llc/converge/issues/323">#323</a></li>
-<li>param dependency fails in <code>samples/shellContext.hcl</code> <a href="https://github.com/asteris-llc/converge/issues/313">#313</a></li>
-<li>Execution Engine Ignoring Warning Levels <a href="https://github.com/asteris-llc/converge/issues/243">#243</a></li>
-<li>Make pipeline functions use mult-return instead of Either <a href="https://github.com/asteris-llc/converge/issues/225">#225</a></li>
-<li>cmd/server.go: use errgroup instead of waitgroup <a href="https://github.com/asteris-llc/converge/pull/363">#363</a></li>
-</ul>
+<p>Please refer to the <a href="https://github.com/asteris-llc/converge/blob/master/CHANGELOG.md">changelog</a> for
+a detailed report.</p>
 
 <h2 id="examples-documentation">Examples/Documentation</h2>
 
@@ -557,6 +560,8 @@ task &quot;install-build-essential&quot; {
 
 <p>Documentation was updated in <a href="https://github.com/asteris-llc/converge/pull/371">#371</a> so that links like
 <a href="https://converge.aster.is/0.2.0">converge.aster.is/0.2.0</a> will resolve documentation for that version.</p>
+
+<p>The elasticsearch example has been updated to use new features in 0.3.0 <a href="https://github.com/asteris-llc/converge/pull/419">#419</a></p>
 
 <h2 id="support">Support</h2>
 
