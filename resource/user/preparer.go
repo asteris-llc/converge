@@ -61,8 +61,9 @@ type Preparer struct {
 	// SkelDir is only valid is CreatHome is specified.
 	SkelDir string `hcl:"skel_dir"`
 
-	// HomeDir is the user's login directory. By default, the login
-	// name is appended to the home directory.
+	// HomeDir is the name of the user's login directory. If not set, the home
+	// directory is defined by appending the value of Username to the HOME
+	// variable in /etc/default/useradd, resulting in /HOME/Username.
 	// This field can be indicated when adding or modifying a user.
 	HomeDir string `hcl:"home_dir"`
 
