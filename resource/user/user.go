@@ -41,6 +41,8 @@ type User struct {
 	GroupName   string
 	GID         string
 	Name        string
+	CreateHome  bool
+	SkelDir     string
 	HomeDir     string
 	MoveDir     bool
 	State       State
@@ -52,10 +54,12 @@ type User struct {
 // AddUserOptions are the options specified in the configuration to be used
 // when adding a user
 type AddUserOptions struct {
-	UID       string
-	Group     string
-	Comment   string
-	Directory string
+	UID        string
+	Group      string
+	Comment    string
+	CreateHome bool
+	SkelDir    string
+	Directory  string
 }
 
 // ModUserOptions are the options specified in the configuration to be used
@@ -338,6 +342,15 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 	if u.Name != "" {
 		options.Comment = u.Name
 		status.AddDifference("comment", fmt.Sprintf("<%s>", string(StateAbsent)), u.Name, "")
+	}
+
+	if u.CreateHome {
+		options.CreateHome = true
+		status.AddDifference("create_home", fmt.Sprintf("<%s>", string(StateAbsent)), u.HomeDir, "")
+		if u.SkelDir != "" {
+			options.SkelDir = u.SkelDir
+			status.AddDifference("skel_dir contents", u.SkelDir, u.HomeDir, "")
+		}
 	}
 
 	if u.HomeDir != "" {
