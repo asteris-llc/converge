@@ -659,14 +659,18 @@ func TestDiffAdd(t *testing.T) {
 		u.UID = fakeUID
 		u.GroupName = existingGroupName
 		u.Name = "test"
+		u.CreateHome = true
+		u.SkelDir = "/tmp/skel"
 		u.HomeDir = "/tmp/test"
 		u.Status = resource.NewStatus()
 
 		expected := &user.AddUserOptions{
-			UID:       u.UID,
-			Group:     u.GroupName,
-			Comment:   u.Name,
-			Directory: u.HomeDir,
+			UID:        u.UID,
+			Group:      u.GroupName,
+			Comment:    u.Name,
+			CreateHome: u.CreateHome,
+			SkelDir:    u.SkelDir,
+			Directory:  u.HomeDir,
 		}
 
 		options, err := u.DiffAdd(u.Status)
@@ -683,6 +687,10 @@ func TestDiffAdd(t *testing.T) {
 		assert.Equal(t, u.UID, u.Status.Diffs()["uid"].Current())
 		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["comment"].Original())
 		assert.Equal(t, u.Name, u.Status.Diffs()["comment"].Current())
+		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["create_home"].Original())
+		assert.Equal(t, u.HomeDir, u.Status.Diffs()["create_home"].Current())
+		assert.Equal(t, u.SkelDir, u.Status.Diffs()["skel_dir contents"].Original())
+		assert.Equal(t, u.HomeDir, u.Status.Diffs()["skel_dir contents"].Current())
 		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["home_dir"].Original())
 		assert.Equal(t, u.HomeDir, u.Status.Diffs()["home_dir"].Current())
 	})
@@ -883,25 +891,93 @@ func TestDiffAdd(t *testing.T) {
 	})
 
 	t.Run("directory", func(t *testing.T) {
-		u := user.NewUser(new(user.System))
-		u.Username = fakeUsername
-		u.HomeDir = "/tmp/test"
-		u.Status = resource.NewStatus()
+		t.Run("home_dir name", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.HomeDir = "/tmp/test"
+			u.Status = resource.NewStatus()
 
-		expected := &user.AddUserOptions{
-			Directory: u.HomeDir,
-		}
+			expected := &user.AddUserOptions{
+				Directory: u.HomeDir,
+			}
 
-		options, err := u.DiffAdd(u.Status)
+			options, err := u.DiffAdd(u.Status)
 
-		assert.NoError(t, err)
-		assert.Equal(t, expected, options)
-		assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
-		assert.True(t, u.Status.HasChanges())
-		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
-		assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
-		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["home_dir"].Original())
-		assert.Equal(t, u.HomeDir, u.Status.Diffs()["home_dir"].Current())
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
+			assert.True(t, u.Status.HasChanges())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
+			assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["home_dir"].Original())
+			assert.Equal(t, u.HomeDir, u.Status.Diffs()["home_dir"].Current())
+		})
+
+		t.Run("create_home", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.CreateHome = true
+			u.Status = resource.NewStatus()
+
+			expected := &user.AddUserOptions{
+				CreateHome: u.CreateHome,
+			}
+
+			options, err := u.DiffAdd(u.Status)
+
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
+			assert.True(t, u.Status.HasChanges())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
+			assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["create_home"].Original())
+			assert.Equal(t, u.HomeDir, u.Status.Diffs()["create_home"].Current())
+		})
+
+		t.Run("create_home with skel_dir", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.CreateHome = true
+			u.SkelDir = "/tmp/skel"
+			u.Status = resource.NewStatus()
+
+			expected := &user.AddUserOptions{
+				CreateHome: u.CreateHome,
+				SkelDir:    u.SkelDir,
+			}
+
+			options, err := u.DiffAdd(u.Status)
+
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
+			assert.True(t, u.Status.HasChanges())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
+			assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["create_home"].Original())
+			assert.Equal(t, u.HomeDir, u.Status.Diffs()["create_home"].Current())
+			assert.Equal(t, u.SkelDir, u.Status.Diffs()["skel_dir contents"].Original())
+			assert.Equal(t, u.HomeDir, u.Status.Diffs()["skel_dir contents"].Current())
+		})
+
+		t.Run("no create_home and skel_dir", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.SkelDir = "/tmp/skel"
+			u.Status = resource.NewStatus()
+
+			expected := &user.AddUserOptions{}
+
+			options, err := u.DiffAdd(u.Status)
+
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, u.Status.StatusCode())
+			assert.True(t, u.Status.HasChanges())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), u.Status.Diffs()["username"].Original())
+			assert.Equal(t, u.Username, u.Status.Diffs()["username"].Current())
+		})
 	})
 
 	t.Run("no options", func(t *testing.T) {

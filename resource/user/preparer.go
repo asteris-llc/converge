@@ -50,6 +50,17 @@ type Preparer struct {
 	// This field can be indicated when adding or modifying a user.
 	Name string `hcl:"name"`
 
+	// CreateHome when set to true will create the home directory for the user.
+	// The files and directories contained in the skeleton directory (which can be
+	// defined with the SkelDir option) will be copied to the home directory.
+	CreateHome bool `hcl:"create_home"`
+
+	// SkelDir contains files and directories to be copied in the user's home
+	// directory when adding a user. If not set, the skeleton directory is defined
+	// by the SKEL variable in /etc/default/useradd or, by default, /etc/skel.
+	// SkelDir is only valid is CreatHome is specified.
+	SkelDir string `hcl:"skel_dir"`
+
 	// HomeDir is the user's login directory. By default, the login
 	// name is appended to the home directory.
 	// This field can be indicated when adding or modifying a user.
@@ -76,6 +87,10 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, fmt.Errorf("user \"gid\" parameter out of range")
 	}
 
+	if p.SkelDir != "" && !p.CreateHome {
+		return nil, fmt.Errorf("user \"create_home\" parameter required with \"skel_dir\" parameter")
+	}
+
 	if p.MoveDir && p.HomeDir == "" {
 		return nil, fmt.Errorf("user \"home_dir\" parameter required with \"move_dir\" parameter")
 	}
@@ -89,6 +104,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	usr.NewUsername = p.NewUsername
 	usr.GroupName = p.GroupName
 	usr.Name = p.Name
+	usr.CreateHome = p.CreateHome
+	usr.SkelDir = p.SkelDir
 	usr.HomeDir = p.HomeDir
 	usr.MoveDir = p.MoveDir
 	usr.State = p.State

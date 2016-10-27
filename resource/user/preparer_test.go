@@ -99,6 +99,20 @@ func TestPrepare(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
+		t.Run("create_home and skel_dir parameters", func(t *testing.T) {
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", CreateHome: true, SkelDir: "/etc/skel", HomeDir: "tmp", State: user.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("create_home parameter", func(t *testing.T) {
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", CreateHome: true, HomeDir: "tmp", State: user.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.NoError(t, err)
+		})
+
 		t.Run("no name parameter", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", HomeDir: "tmp", State: user.StateAbsent}
 			_, err := p.Prepare(&fr)
@@ -141,6 +155,13 @@ func TestPrepare(t *testing.T) {
 			_, err := p.Prepare(&fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))
+		})
+
+		t.Run("no create_home with skel_dir", func(t *testing.T) {
+			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", SkelDir: "/etc/skel", HomeDir: "tmp", State: user.StateAbsent}
+			_, err := p.Prepare(&fr)
+
+			assert.EqualError(t, err, fmt.Sprintf("user \"create_home\" parameter required with \"skel_dir\" parameter"))
 		})
 
 		t.Run("no home_dir with move_dir", func(t *testing.T) {

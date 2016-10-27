@@ -37,6 +37,12 @@ func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	if options.Comment != "" {
 		args = append(args, "-c", options.Comment)
 	}
+	if options.CreateHome {
+		args = append(args, "-m")
+		if options.SkelDir != "" {
+			args = append(args, "-k", options.SkelDir)
+		}
+	}
 	if options.Directory != "" {
 		args = append(args, "-d", options.Directory)
 	}
