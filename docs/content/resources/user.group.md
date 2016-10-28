@@ -1,7 +1,7 @@
 ---
 title: "user.group"
 slug: "user-group"
-date: "2016-10-04T13:01:50-05:00"
+date: "2016-10-28T08:47:08-05:00"
 menu:
   main:
     parent: resources
@@ -43,5 +43,6 @@ The group Name will be changed to NewName.
   Valid values: `present` and `absent`
 
   State is whether the group should be present.
+The default value is present.
 
 
