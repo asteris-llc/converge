@@ -1,4 +1,4 @@
-// Copyright 2015 go-dockerclient authors. All rights reserved.
+// Copyright 2013 go-dockerclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/fsouza/go-dockerclient"
 )
 
@@ -1545,7 +1546,7 @@ func TestBuildImageWithContentTypeTar(t *testing.T) {
 		t.Errorf("BuildImage: miss Dockerfile")
 		return
 	}
-	if _, ok := server.imgIDs[imageName]; ok == false {
+	if _, ok := server.imgIDs[imageName]; !ok {
 		t.Errorf("BuildImage: image %s not builded", imageName)
 	}
 }
@@ -1556,7 +1557,7 @@ func TestBuildImageWithRemoteDockerfile(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/build?t=teste&remote=http://localhost/Dockerfile", nil)
 	server.buildImage(recorder, request)
-	if _, ok := server.imgIDs[imageName]; ok == false {
+	if _, ok := server.imgIDs[imageName]; !ok {
 		t.Errorf("BuildImage: image %s not builded", imageName)
 	}
 }
@@ -2005,12 +2006,17 @@ func TestListVolumes(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Errorf("ListVolumes: wrong status.  Want %d. Got %d.", http.StatusCreated, recorder.Code)
 	}
-	var got []docker.Volume
+	var got map[string][]docker.Volume
 	err := json.NewDecoder(recorder.Body).Decode(&got)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(got, expected) {
+
+	gotVolumes, ok := got["Volumes"]
+	if !ok {
+		t.Fatal(fmt.Errorf("ListVolumes failed can not find Volumes"))
+	}
+	if !reflect.DeepEqual(gotVolumes, expected) {
 		t.Errorf("ListVolumes.  Want %#v.  Got %#v.", expected, got)
 	}
 }
@@ -2229,6 +2235,36 @@ func TestInfoDocker(t *testing.T) {
 	}
 }
 
+func TestInfoDockerWithSwarm(t *testing.T) {
+	srv1, srv2, err := setUpSwarm()
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/info", nil)
+	srv1.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("InfoDocker: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	var infoData docker.DockerInfo
+	err = json.Unmarshal(recorder.Body.Bytes(), &infoData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedSwarm := swarm.Info{
+		NodeID: srv1.nodeID,
+		RemoteManagers: []swarm.Peer{
+			{NodeID: srv1.nodeID, Addr: srv1.SwarmAddress()},
+			{NodeID: srv2.nodeID, Addr: srv2.SwarmAddress()},
+		},
+	}
+	infoData.Swarm.Cluster.CreatedAt = time.Time{}
+	infoData.Swarm.Cluster.UpdatedAt = time.Time{}
+	if !reflect.DeepEqual(infoData.Swarm, expectedSwarm) {
+		t.Fatalf("InfoDocker: wrong swarm info. Want:\n%#v\nGot:\n%#v", expectedSwarm, infoData.Swarm)
+	}
+}
+
 func TestVersionDocker(t *testing.T) {
 	server, _ := NewServer("127.0.0.1:0", nil, nil)
 	server.buildMuxer()
@@ -2237,5 +2273,21 @@ func TestVersionDocker(t *testing.T) {
 	server.ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("VersionDocker: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+}
+
+func TestNetworkCreate(t *testing.T) {
+	server, _ := NewServer("127.0.0.1:0", nil, nil)
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/networks/create", nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("NetworkCreate: wrong status code. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	var resp map[string]string
+	json.Unmarshal(recorder.Body.Bytes(), &resp)
+	if resp["ID"] == "" {
+		t.Fatal("NetworkCreate: network id can't be empty.")
 	}
 }
