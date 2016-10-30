@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/image"
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestImageInterface(t *testing.T) {
@@ -61,7 +62,7 @@ func TestImageCheckImageNeedsChange(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	status, err := image.Check(fakerenderer.New())
+	status, err := image.Check(context.Background(), fakerenderer.New())
 	assert.Nil(t, err)
 	assert.True(t, status.HasChanges())
 	assert.Equal(t, "<image-missing>", status.Diffs()["image"].Original())
@@ -79,7 +80,7 @@ func TestImageCheckImageNoChange(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	status, err := image.Check(fakerenderer.New())
+	status, err := image.Check(context.Background(), fakerenderer.New())
 	assert.Nil(t, err)
 	assert.False(t, status.HasChanges())
 	assert.Equal(t, "ubuntu:precise", status.Diffs()["image"].Original())
@@ -97,7 +98,7 @@ func TestImageCheckFailed(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	status, err := image.Check(fakerenderer.New())
+	status, err := image.Check(context.Background(), fakerenderer.New())
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "find image failed")
 	}
@@ -115,7 +116,7 @@ func TestImageApply(t *testing.T) {
 	}
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
-	_, applyError := image.Apply()
+	_, applyError := image.Apply(context.Background())
 	assert.NoError(t, applyError)
 }
 
@@ -131,7 +132,7 @@ func TestImageApplyTimedOut(t *testing.T) {
 	image := &image.Image{Name: "ubuntu", Tag: "precise"}
 	image.SetClient(c)
 
-	_, err := image.Apply()
+	_, err := image.Apply(context.Background())
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, "inactivity time exceeded timeout")
 	}

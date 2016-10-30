@@ -14,7 +14,10 @@
 
 package rpm
 
-import "github.com/asteris-llc/converge/resource"
+import (
+	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
+)
 
 // Package is an API for package state
 type Package struct {
@@ -36,7 +39,7 @@ const (
 )
 
 // Check if the package has to be 'present', or 'absent'
-func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (p *Package) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 	if p.State == p.PackageState() {
 		return p, nil
@@ -47,7 +50,7 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply desired package state
-func (p *Package) Apply() (resource.TaskStatus, error) {
+func (p *Package) Apply(context.Context) (resource.TaskStatus, error) {
 	var err error
 	p.Status = resource.NewStatus()
 	if p.State == p.PackageState() {

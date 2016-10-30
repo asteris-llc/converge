@@ -18,6 +18,7 @@ import (
 	"errors"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // FakeTask for testing things that require real tasks
@@ -28,12 +29,12 @@ type FakeTask struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (ft *FakeTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{Output: []string{ft.Status}, Level: ft.Level}, ft.Error
 }
 
 // Apply returns values set on struct
-func (ft *FakeTask) Apply() (resource.TaskStatus, error) {
+func (ft *FakeTask) Apply(context.Context) (resource.TaskStatus, error) {
 	return &resource.Status{Output: []string{ft.Status}, Level: ft.Level}, ft.Error
 }
 
@@ -70,12 +71,12 @@ type NilTask struct {
 }
 
 // Check always raise error
-func (*NilTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (*NilTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return nil, errors.New("check error")
 }
 
 // Apply always raise error
-func (*NilTask) Apply() (resource.TaskStatus, error) {
+func (*NilTask) Apply(context.Context) (resource.TaskStatus, error) {
 	return nil, errors.New("apply error")
 }
 
@@ -93,13 +94,13 @@ type FakeSwapper struct {
 }
 
 // Check returns values set on struct
-func (ft *FakeSwapper) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (ft *FakeSwapper) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{Output: []string{ft.Status}, Level: ft.level()}, ft.Error
 }
 
 // Apply negates the current WillChange value set on struct and returns
 // configured error
-func (ft *FakeSwapper) Apply() (resource.TaskStatus, error) {
+func (ft *FakeSwapper) Apply(context.Context) (resource.TaskStatus, error) {
 	ft.WillChange = !ft.WillChange
 	return &resource.Status{Output: []string{ft.Status}, Level: ft.level()}, ft.Error
 }

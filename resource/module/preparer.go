@@ -17,6 +17,7 @@ package module
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for modules
@@ -34,7 +35,7 @@ func NewPreparer(params map[string]resource.Value) *Preparer {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	return &Module{Params: p.Params}, nil
 }
 

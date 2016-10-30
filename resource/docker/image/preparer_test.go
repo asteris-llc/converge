@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestPreparerInterface(t *testing.T) {
@@ -30,6 +31,6 @@ func TestPreparerInterface(t *testing.T) {
 
 func TestPreparerInvalidTimeout(t *testing.T) {
 	p := &image.Preparer{InactivityTimeout: "invalid"}
-	_, err := p.Prepare(fakerenderer.New())
+	_, err := p.Prepare(context.Background(), fakerenderer.New())
 	assert.Error(t, err)
 }

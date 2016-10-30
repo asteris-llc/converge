@@ -16,6 +16,7 @@ package shell
 
 import (
 	"bytes"
+
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,6 +29,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/transform"
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -77,7 +79,7 @@ type Preparer struct {
 }
 
 // Prepare a new shell task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	env := transform.StringsMapToStringSlice(
 		p.Env,
 		func(k, v string) string {

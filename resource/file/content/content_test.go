@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestContentInterface(t *testing.T) {
@@ -43,7 +44,7 @@ func TestContentCheckEmptyFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check(fakerenderer.New())
+	status, err := tmpl.Check(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()[tmpfile.Name()]
 	assert.Equal(t, "", fileDiff.Original())
@@ -57,7 +58,7 @@ func TestContentCheckMissingFile(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check(fakerenderer.New())
+	status, err := tmpl.Check(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 	fileDiff := status.Diffs()["missing-file"]
 	assert.Equal(t, "<file-missing>", fileDiff.Original())
@@ -77,7 +78,7 @@ func TestContentCheckEmptyDir(t *testing.T) {
 
 	expected := tmpdir + " is a directory"
 
-	status, err := tmpl.Check(fakerenderer.New())
+	status, err := tmpl.Check(context.Background(), fakerenderer.New())
 	assert.Contains(t, status.Messages(), expected)
 	assert.True(t, status.HasChanges())
 	if assert.Error(t, err) {
@@ -103,7 +104,7 @@ func TestContentCheckSetsValueToOKWhenEverythingIsOK(t *testing.T) {
 		Content:     "this is a test",
 	}
 
-	status, err := tmpl.Check(fakerenderer.New())
+	status, err := tmpl.Check(context.Background(), fakerenderer.New())
 	assert.Contains(t, status.Messages(), "OK")
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
@@ -126,7 +127,7 @@ func TestContentCheckSetsDiffs(t *testing.T) {
 		Content:     currentContent,
 	}
 
-	status, err := tmpl.Check(fakerenderer.New())
+	status, err := tmpl.Check(context.Background(), fakerenderer.New())
 	diffs := status.Diffs()
 	fileDiff, ok := diffs[tmpfile.Name()]
 	assert.True(t, ok)
@@ -145,7 +146,7 @@ func TestContentApply(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply()
+	_, applyErr := tmpl.Apply(context.Background())
 	assert.NoError(t, applyErr)
 
 	// read the new file
@@ -164,7 +165,7 @@ func TestContentApplyPermissionDefault(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply()
+	_, applyErr := tmpl.Apply(context.Background())
 	assert.NoError(t, applyErr)
 
 	// stat the new file
@@ -188,7 +189,7 @@ func TestContentApplyKeepPermission(t *testing.T) {
 		Content:     "1",
 	}
 
-	_, applyErr := tmpl.Apply()
+	_, applyErr := tmpl.Apply(context.Background())
 	assert.NoError(t, applyErr)
 
 	// check permissions matched

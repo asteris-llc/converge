@@ -21,6 +21,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/wait"
+	"golang.org/x/net/context"
 )
 
 // Port represents a port check
@@ -33,7 +34,7 @@ type Port struct {
 }
 
 // Check if the port is open
-func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (p *Port) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 
 	err := p.CheckConnection()
@@ -56,7 +57,7 @@ func (p *Port) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply retries the check until it passes or returns max failure threshold
-func (p *Port) Apply() (resource.TaskStatus, error) {
+func (p *Port) Apply(context.Context) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 
 	_, err := p.RetryUntil(func() (bool, error) {

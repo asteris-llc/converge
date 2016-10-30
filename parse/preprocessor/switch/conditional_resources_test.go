@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestExecutionController ensures that execution controllers are respected
@@ -35,7 +36,7 @@ func TestExecutionController(t *testing.T) {
 		ctrl := newMockExecutionController(false)
 		expected := &resource.Status{}
 		c.SetExecutionController(ctrl)
-		actual, err := c.Check(fakerenderer.New())
+		actual, err := c.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.Equal(t, expected, actual)
 		ctrl.AssertNotCalled(t, "Check", any)
@@ -44,7 +45,7 @@ func TestExecutionController(t *testing.T) {
 		ctrl := newMockExecutionController(false)
 		expected := &resource.Status{}
 		c.SetExecutionController(ctrl)
-		actual, err := c.Apply()
+		actual, err := c.Apply(context.Background())
 		require.NoError(t, err)
 		assert.Equal(t, expected, actual)
 		ctrl.AssertNotCalled(t, "Apply")
@@ -52,13 +53,13 @@ func TestExecutionController(t *testing.T) {
 	t.Run("When controller returns true calls check", func(t *testing.T) {
 		ctrl := newMockExecutionController(true)
 		c.SetExecutionController(ctrl)
-		c.Check(fakerenderer.New())
+		c.Check(context.Background(), fakerenderer.New())
 		mockTask.AssertCalled(t, "Check", any)
 	})
 	t.Run("When controller returns true calls check", func(t *testing.T) {
 		ctrl := newMockExecutionController(true)
 		c.SetExecutionController(ctrl)
-		c.Apply()
+		c.Apply(context.Background())
 		mockTask.AssertCalled(t, "Apply")
 	})
 }

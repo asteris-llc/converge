@@ -29,6 +29,7 @@ import (
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -100,7 +101,7 @@ func TestCheck(t *testing.T) {
 			t.Run("NewName not provided", func(t *testing.T) {
 				t.Run("no add-group already exists", func(t *testing.T) {
 					g.Name = currName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -114,7 +115,7 @@ func TestCheck(t *testing.T) {
 
 				t.Run("add group", func(t *testing.T) {
 					g.Name = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -133,7 +134,7 @@ func TestCheck(t *testing.T) {
 				t.Run("no modify-group does not exist", func(t *testing.T) {
 					g.Name = fakeName
 					g.NewName = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot modify group")
@@ -148,7 +149,7 @@ func TestCheck(t *testing.T) {
 				t.Run("no modify-new group already exists", func(t *testing.T) {
 					g.Name = currName
 					g.NewName = tempGroup.Name
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot modify group")
@@ -163,7 +164,7 @@ func TestCheck(t *testing.T) {
 				t.Run("modify group", func(t *testing.T) {
 					g.Name = currName
 					g.NewName = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -186,7 +187,7 @@ func TestCheck(t *testing.T) {
 				t.Run("add group with gid", func(t *testing.T) {
 					g.GID = fakeGid
 					g.Name = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -203,7 +204,7 @@ func TestCheck(t *testing.T) {
 				t.Run("no add-group gid already exists", func(t *testing.T) {
 					g.GID = currGid
 					g.Name = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot add group")
@@ -218,7 +219,7 @@ func TestCheck(t *testing.T) {
 				t.Run("modify group gid", func(t *testing.T) {
 					g.GID = fakeGid
 					g.Name = currName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -235,7 +236,7 @@ func TestCheck(t *testing.T) {
 				t.Run("no add or modify-group name and gid belong to different groups", func(t *testing.T) {
 					g.GID = gid
 					g.Name = currName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot add or modify group")
@@ -251,7 +252,7 @@ func TestCheck(t *testing.T) {
 					g.GID = currGid
 					g.Name = currName
 					g.State = group.StatePresent
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot add or modify group")
@@ -269,7 +270,7 @@ func TestCheck(t *testing.T) {
 					g.GID = fakeGid
 					g.Name = currName
 					g.NewName = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.NoError(t, err)
@@ -287,7 +288,7 @@ func TestCheck(t *testing.T) {
 					g.GID = fakeGid
 					g.Name = currName
 					g.NewName = tempGroup.Name
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot modify group")
@@ -303,7 +304,7 @@ func TestCheck(t *testing.T) {
 					g.GID = gid
 					g.Name = currName
 					g.NewName = fakeName
-					status, err := g.Check(fakerenderer.New())
+					status, err := g.Check(context.Background(), fakerenderer.New())
 
 					if runtime.GOOS == "linux" {
 						assert.EqualError(t, err, "cannot modify group")
@@ -325,7 +326,7 @@ func TestCheck(t *testing.T) {
 		t.Run("gid not provided", func(t *testing.T) {
 			t.Run("no delete-group does not exist", func(t *testing.T) {
 				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -339,7 +340,7 @@ func TestCheck(t *testing.T) {
 
 			t.Run("delete group", func(t *testing.T) {
 				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -357,7 +358,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-group name and gid do not exist", func(t *testing.T) {
 				g.GID = fakeGid
 				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -372,7 +373,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-group name does not exist", func(t *testing.T) {
 				g.GID = currGid
 				g.Name = fakeName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, "cannot delete group")
@@ -387,7 +388,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-group gid does not exist", func(t *testing.T) {
 				g.GID = fakeGid
 				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, "cannot delete group")
@@ -406,7 +407,7 @@ func TestCheck(t *testing.T) {
 				}
 				g.GID = gid
 				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, "cannot delete group")
@@ -421,7 +422,7 @@ func TestCheck(t *testing.T) {
 			t.Run("delete group with gid", func(t *testing.T) {
 				g.GID = currGid
 				g.Name = currName
-				status, err := g.Check(fakerenderer.New())
+				status, err := g.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -441,7 +442,7 @@ func TestCheck(t *testing.T) {
 		g.GID = fakeGid
 		g.Name = fakeName
 		g.State = "test"
-		_, err := g.Check(fakerenderer.New())
+		_, err := g.Check(context.Background(), fakerenderer.New())
 
 		if runtime.GOOS == "linux" {
 			assert.EqualError(t, err, fmt.Sprintf("group: unrecognized state %s", g.State))
@@ -470,7 +471,7 @@ func TestApply(t *testing.T) {
 
 					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("AddGroup", g.Name, g.GID).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 					assert.NoError(t, err)
@@ -489,7 +490,7 @@ func TestApply(t *testing.T) {
 
 					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 					assert.EqualError(t, err, "group add: ")
@@ -509,7 +510,7 @@ func TestApply(t *testing.T) {
 
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("AddGroup", g.Name, g.GID).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 					assert.EqualError(t, err, fmt.Sprintf("will not attempt add: group %s", g.Name))
@@ -533,7 +534,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("ModGroup", g.Name, &options).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.NoError(t, err)
@@ -555,7 +556,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.EqualError(t, err, "group modify: ")
@@ -578,7 +579,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroup", g.NewName).Return(grp, nil)
 					m.On("ModGroup", g.Name, &options).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertNotCalled(t, "ModGroup", g.Name, &options)
 					assert.EqualError(t, err, fmt.Sprintf("will not attempt modify: group %s", g.Name))
@@ -603,7 +604,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("AddGroup", g.Name, g.GID).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 					assert.NoError(t, err)
@@ -624,7 +625,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("AddGroup", g.Name, g.GID).Return(fmt.Errorf(""))
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "AddGroup", g.Name, g.GID)
 					assert.EqualError(t, err, "group add: ")
@@ -646,7 +647,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroupID", g.GID).Return(grp, nil)
 					m.On("AddGroup", g.Name, g.GID).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 					assert.EqualError(t, err, fmt.Sprintf("will not attempt add/modify: group %s with gid %s", g.Name, g.GID))
@@ -668,7 +669,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("ModGroup", g.Name, &options).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.NoError(t, err)
@@ -690,7 +691,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.EqualError(t, err, "group modify: ")
@@ -712,7 +713,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.Name).Return(grp, nil)
 					m.On("LookupGroupID", g.GID).Return(grp, nil)
 					m.On("ModGroup", g.Name, g.GID).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertNotCalled(t, "ModGroup", g.Name, g.GID)
 					assert.EqualError(t, err, fmt.Sprintf("will not attempt add/modify: group %s with gid %s", g.Name, g.GID))
@@ -738,7 +739,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("ModGroup", g.Name, &options).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.NoError(t, err)
@@ -762,7 +763,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.NewName).Return(new(user.Group), user.UnknownGroupError(""))
 					m.On("LookupGroupID", g.GID).Return(new(user.Group), user.UnknownGroupIdError(""))
 					m.On("ModGroup", g.Name, &options).Return(fmt.Errorf(""))
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertCalled(t, "ModGroup", g.Name, &options)
 					assert.EqualError(t, err, "group modify: ")
@@ -787,7 +788,7 @@ func TestApply(t *testing.T) {
 					m.On("LookupGroup", g.NewName).Return(grp, nil)
 					m.On("LookupGroupID", g.GID).Return(grp, nil)
 					m.On("ModGroup", g.Name, &options).Return(nil)
-					status, err := g.Apply()
+					status, err := g.Apply(context.Background())
 
 					m.AssertNotCalled(t, "ModGroup", g.Name, &options)
 					assert.EqualError(t, err, fmt.Sprintf("will not attempt modify: group %s with new name %s and new gid %s", g.Name, g.NewName, g.GID))
@@ -811,7 +812,7 @@ func TestApply(t *testing.T) {
 
 				m.On("LookupGroup", g.Name).Return(grp, nil)
 				m.On("DelGroup", g.Name).Return(nil)
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertCalled(t, "DelGroup", g.Name)
 				assert.NoError(t, err)
@@ -830,7 +831,7 @@ func TestApply(t *testing.T) {
 
 				m.On("LookupGroup", g.Name).Return(grp, nil)
 				m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertCalled(t, "DelGroup", g.Name)
 				assert.EqualError(t, err, "group delete: ")
@@ -850,7 +851,7 @@ func TestApply(t *testing.T) {
 
 				m.On("LookupGroup", g.Name).Return(new(user.Group), user.UnknownGroupError(""))
 				m.On("DelGroup", g.Name).Return(nil)
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertNotCalled(t, "DelGroup", g.Name)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s", g.Name))
@@ -873,7 +874,7 @@ func TestApply(t *testing.T) {
 				m.On("LookupGroup", g.Name).Return(grp, nil)
 				m.On("LookupGroupID", g.GID).Return(grp, nil)
 				m.On("DelGroup", g.Name).Return(nil)
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertCalled(t, "DelGroup", g.Name)
 				assert.NoError(t, err)
@@ -894,7 +895,7 @@ func TestApply(t *testing.T) {
 				m.On("LookupGroup", g.Name).Return(grp, nil)
 				m.On("LookupGroupID", g.GID).Return(grp, nil)
 				m.On("DelGroup", g.Name).Return(fmt.Errorf(""))
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertCalled(t, "DelGroup", g.Name)
 				assert.EqualError(t, err, "group delete: ")
@@ -920,7 +921,7 @@ func TestApply(t *testing.T) {
 				m.On("LookupGroup", g.Name).Return(grp1, nil)
 				m.On("LookupGroupID", g.GID).Return(grp2, nil)
 				m.On("DelGroup", g.Name).Return(nil)
-				status, err := g.Apply()
+				status, err := g.Apply(context.Background())
 
 				m.AssertNotCalled(t, "DelGroup", g.Name)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt delete: group %s with gid %s", g.Name, g.GID))
@@ -944,7 +945,7 @@ func TestApply(t *testing.T) {
 		m.On("LookupGroupID", g.GID).Return(grp, nil)
 		m.On("AddGroup", g.Name, g.GID)
 		m.On("DelGroup", g.Name)
-		_, err := g.Apply()
+		_, err := g.Apply(context.Background())
 
 		m.AssertNotCalled(t, "AddGroup", g.Name, g.GID)
 		m.AssertNotCalled(t, "DelGroup", g.Name)
