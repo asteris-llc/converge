@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/container"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that the Preparer interface is properly
@@ -34,7 +35,7 @@ func TestPreparerInterface(t *testing.T) {
 func TestPreparerInvalidStatus(t *testing.T) {
 	t.Run("status is invalid", func(t *testing.T) {
 		p := &container.Preparer{Name: "test", Image: "nginx", Status: "exited"}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		if assert.Error(t, err) {
 			assert.EqualError(t, err, "status must be 'running' or 'created'")
 		}
@@ -42,7 +43,7 @@ func TestPreparerInvalidStatus(t *testing.T) {
 
 	t.Run("name is invalid", func(t *testing.T) {
 		p := &container.Preparer{Name: "", Image: "nginx"}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		if assert.Error(t, err) {
 			assert.EqualError(t, err, "name must be provided")
 		}
@@ -50,7 +51,7 @@ func TestPreparerInvalidStatus(t *testing.T) {
 
 	t.Run("image is invalid", func(t *testing.T) {
 		p := &container.Preparer{Name: "nginx", Image: ""}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		if assert.Error(t, err) {
 			assert.EqualError(t, err, "image must be provided")
 		}

@@ -19,6 +19,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for file Mode
@@ -35,7 +36,7 @@ type Preparer struct {
 }
 
 // Prepare this resource for use
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	modeTask := &Mode{
 		Destination: p.Destination,
 		Mode:        os.FileMode(*p.Mode),

@@ -17,6 +17,7 @@ package rpm
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for RPM Package
@@ -34,7 +35,7 @@ type Preparer struct {
 }
 
 // Prepare a new packge
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.State == "" {
 		p.State = "present"
 	}

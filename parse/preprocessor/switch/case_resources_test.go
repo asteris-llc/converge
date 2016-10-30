@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPrepare tests that CasePreparer works as expected
@@ -31,7 +32,7 @@ func TestPrepare(t *testing.T) {
 		mockRenderer.On("Render", any, any).Return("predicate1", nil)
 
 		prep := &control.CasePreparer{Predicate: "something"}
-		result, err := prep.Prepare(mockRenderer)
+		result, err := prep.Prepare(context.Background(), mockRenderer)
 		assert.NoError(t, err)
 		mockRenderer.AssertCalled(t, "Render", "predicate", "something")
 		caseTask, ok := result.(*control.CaseTask)
@@ -41,7 +42,7 @@ func TestPrepare(t *testing.T) {
 
 	t.Run("sets the name", func(t *testing.T) {
 		prep := &control.CasePreparer{Name: "name1"}
-		result, err := prep.Prepare(defaultMockRenderer())
+		result, err := prep.Prepare(context.Background(), defaultMockRenderer())
 		assert.NoError(t, err)
 		caseTask, ok := result.(*control.CaseTask)
 		assert.True(t, ok)
@@ -208,7 +209,7 @@ func TestEvaluatePredicate(t *testing.T) {
 // TestCheck provides basic assurances about the operation of check
 func TestCheck(t *testing.T) {
 	c := &control.CaseTask{}
-	stat, err := c.Check(fakerenderer.New())
+	stat, err := c.Check(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 	assert.Equal(t, &resource.Status{}, stat)
 }
@@ -216,7 +217,7 @@ func TestCheck(t *testing.T) {
 // TestApply provides basic assurances about the operation of apply
 func TestApply(t *testing.T) {
 	c := &control.CaseTask{}
-	stat, err := c.Apply()
+	stat, err := c.Apply(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, &resource.Status{}, stat)
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -138,7 +139,7 @@ func TestCheck(t *testing.T) {
 		t.Run("add tests", func(t *testing.T) {
 			t.Run("add user", func(t *testing.T) {
 				u.Username = fakeUsername
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -155,7 +156,7 @@ func TestCheck(t *testing.T) {
 			t.Run("cannot add user", func(t *testing.T) {
 				u.Username = fakeUsername
 				u.GroupName = fakeGroupName
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, fmt.Sprintf("cannot add user %s: group %s does not exist", u.Username, u.GroupName))
@@ -171,7 +172,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no modifications", func(t *testing.T) {
 				u.Username = currUsername
 				u.GroupName = "" // clear this field set from previous t.Run
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -185,7 +186,7 @@ func TestCheck(t *testing.T) {
 			t.Run("cannot modify user", func(t *testing.T) {
 				u.Username = currUsername
 				u.GroupName = fakeGroupName
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, fmt.Sprintf("cannot modify user %s: group %s does not exist", u.Username, u.GroupName))
@@ -200,7 +201,7 @@ func TestCheck(t *testing.T) {
 				u.Username = currUsername
 				u.NewUsername = fakeUsername
 				u.GroupName = "" // clear this field set from previous t.Run
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -223,7 +224,7 @@ func TestCheck(t *testing.T) {
 		t.Run("uid not provided", func(t *testing.T) {
 			t.Run("no delete-user does not exist", func(t *testing.T) {
 				u.Username = fakeUsername
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -237,7 +238,7 @@ func TestCheck(t *testing.T) {
 
 			t.Run("delete user", func(t *testing.T) {
 				u.Username = currUsername
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -255,7 +256,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-user name and uid do not exist", func(t *testing.T) {
 				u.Username = fakeUsername
 				u.UID = fakeUID
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -270,7 +271,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-user name does not exist", func(t *testing.T) {
 				u.Username = fakeUsername
 				u.UID = currUID
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user does not exist", u.Username, u.UID))
@@ -284,7 +285,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-user uid does not exist", func(t *testing.T) {
 				u.Username = currUsername
 				u.UID = fakeUID
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: uid does not exist", u.Username, u.UID))
@@ -298,7 +299,7 @@ func TestCheck(t *testing.T) {
 			t.Run("no delete-user name and uid belong to different users", func(t *testing.T) {
 				u.Username = currUsername
 				u.UID = existingUID
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user and uid belong to different users", u.Username, u.UID))
@@ -312,7 +313,7 @@ func TestCheck(t *testing.T) {
 			t.Run("delete user with uid", func(t *testing.T) {
 				u.Username = currUsername
 				u.UID = currUID
-				status, err := u.Check(fakerenderer.New())
+				status, err := u.Check(context.Background(), fakerenderer.New())
 
 				if runtime.GOOS == "linux" {
 					assert.NoError(t, err)
@@ -332,7 +333,7 @@ func TestCheck(t *testing.T) {
 		u.Username = currUsername
 		u.UID = currUID
 		u.State = "test"
-		status, err := u.Check(fakerenderer.New())
+		status, err := u.Check(context.Background(), fakerenderer.New())
 
 		if runtime.GOOS == "linux" {
 			assert.EqualError(t, err, fmt.Sprintf("user: unrecognized state %s", u.State))
@@ -364,7 +365,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				d.On("DiffAdd", u.Status).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "AddUser", u.Username, &options)
 				assert.NoError(t, err)
@@ -391,7 +392,7 @@ func TestApply(t *testing.T) {
 				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
 				d.On("DiffAdd", u.Status).Return(nil, optErr)
 				m.On("AddUser", u.Username, &options).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertNotCalled(t, "AddUser", u.Username, &options)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt to add user %s: %s", u.Username, optErr))
@@ -412,7 +413,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				d.On("DiffAdd", u.Status).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(fmt.Errorf(""))
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "AddUser", u.Username, &options)
 				assert.EqualError(t, err, "user add: ")
@@ -437,7 +438,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, nil)
 				d.On("DiffMod", u.Status, currUser).Return(options, nil)
 				m.On("ModUser", u.Username, &options).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "ModUser", u.Username, &options)
 				assert.NoError(t, err)
@@ -464,7 +465,7 @@ func TestApply(t *testing.T) {
 				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
 				d.On("DiffMod", u.Status, currUser).Return(nil, optErr)
 				m.On("ModUser", u.Username, &options).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertNotCalled(t, "ModUser", u.Username, &options)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt to modify user %s: %s", u.Username, optErr))
@@ -486,7 +487,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, nil)
 				d.On("DiffMod", u.Status, currUser).Return(options, nil)
 				m.On("ModUser", u.Username, &options).Return(fmt.Errorf(""))
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "ModUser", u.Username, &options)
 				assert.EqualError(t, err, "user modify: ")
@@ -509,7 +510,7 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "DelUser", u.Username)
 				assert.NoError(t, err)
@@ -527,7 +528,7 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, "user delete: ")
@@ -546,7 +547,7 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s", u.Username))
@@ -569,7 +570,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("LookupID", u.UID).Return(usr, nil)
 				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "DelUser", u.Username)
 				assert.NoError(t, err)
@@ -590,7 +591,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("LookupID", u.UID).Return(usr, nil)
 				m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, "user delete: ")
@@ -612,7 +613,7 @@ func TestApply(t *testing.T) {
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				m.On("LookupID", u.UID).Return(usr, nil)
 				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply()
+				status, err := u.Apply(context.Background())
 
 				m.AssertNotCalled(t, "DelUser", u.Username)
 				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s with uid %s", u.Username, u.UID))
@@ -639,7 +640,7 @@ func TestApply(t *testing.T) {
 		d.On("DiffAdd", u.Status).Return(options, nil)
 		m.On("AddUser", u.Username, &options).Return(nil)
 		m.On("DelUser", u.Username).Return(nil)
-		status, err := u.Apply()
+		status, err := u.Apply(context.Background())
 
 		d.AssertNotCalled(t, "DiffAdd", u)
 		m.AssertNotCalled(t, "AddUser", u.Username, &options)

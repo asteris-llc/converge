@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type pipelineGen struct {
@@ -48,7 +49,7 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
-func (g *pipelineGen) GetTask(idi interface{}) (interface{}, error) {
+func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}, error) {
 	if plan, ok := idi.(*plan.Result); ok {
 		return resultWrapper{Plan: plan}, nil
 	}
@@ -60,7 +61,7 @@ func (g *pipelineGen) GetTask(idi interface{}) (interface{}, error) {
 // it returns `Right (Left apply.Result)` and otherwise returns `Right (Right
 // plan.Result)`. The return values are structured to short-circuit `PlanNode`
 // if we have failures.
-func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
+func (g *pipelineGen) DependencyCheck(ctx context.Context, taskI interface{}) (interface{}, error) {
 	result, ok := taskI.(resultWrapper)
 	if !ok {
 		return nil, errors.New("input node is not a task wrapper")
@@ -91,7 +92,7 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
 // maybeSkipAppliation will return a result if it's given a *Result, if it's
 // given a taskWrapper it will return a result if there are no changes,
 // otherwise it returns the taskWrapper
-func (g *pipelineGen) maybeSkipApplication(resultI interface{}) (interface{}, error) {
+func (g *pipelineGen) maybeSkipApplication(ctx context.Context, resultI interface{}) (interface{}, error) {
 	if asResult, ok := resultI.(*Result); ok {
 		return asResult, nil
 	}
@@ -114,7 +115,7 @@ func (g *pipelineGen) maybeSkipApplication(resultI interface{}) (interface{}, er
 // *plan.Result and, if the input value is Left, returns it as a Right value,
 // otherwise it attempts to run apply on the *plan.Result.Task and returns an
 // appropriate Left or Right value.
-func (g *pipelineGen) applyNode(val interface{}) (interface{}, error) {
+func (g *pipelineGen) applyNode(ctx context.Context, val interface{}) (interface{}, error) {
 	if asResult, ok := val.(*Result); ok {
 		return asResult, nil
 	}
@@ -123,7 +124,7 @@ func (g *pipelineGen) applyNode(val interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("apply expected a resultWrappert but got %T", val)
 	}
 
-	status, err := twrapper.Plan.Task.Apply()
+	status, err := twrapper.Plan.Task.Apply(ctx)
 
 	if status == nil {
 		status = &resource.Status{}
@@ -148,7 +149,7 @@ func (g *pipelineGen) applyNode(val interface{}) (interface{}, error) {
 // maybeRunFinalCheck :: *Result -> Either error *Result; looks to see if the
 // current result ran, and if so it re-runs plan and sets PostCheck to the
 // resulting status.
-func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) (interface{}, error) {
+func (g *pipelineGen) maybeRunFinalCheck(ctx context.Context, resultI interface{}) (interface{}, error) {
 	result, ok := resultI.(*Result)
 	if !ok {
 		return nil, fmt.Errorf("expected *Result but got %T", resultI)
@@ -157,7 +158,7 @@ func (g *pipelineGen) maybeRunFinalCheck(resultI interface{}) (interface{}, erro
 		return result, nil
 	}
 	task := result.Plan.Task
-	val, pipelineError := plan.Pipeline(g.Graph, g.ID, g.RenderingPlant).Exec(task)
+	val, pipelineError := plan.Pipeline(ctx, g.Graph, g.ID, g.RenderingPlant).Exec(ctx, task)
 	if pipelineError != nil {
 		return nil, pipelineError
 	}

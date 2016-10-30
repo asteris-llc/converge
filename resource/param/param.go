@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Param controls parameter flow inside execution
@@ -28,14 +29,14 @@ type Param struct {
 }
 
 // Check just returns the current value of the parameter. It should never have to change.
-func (p *Param) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (p *Param) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.Status{Output: []string{p.String()}}
 
 	return p, nil
 }
 
 // Apply doesn't do anything since params are final values
-func (p *Param) Apply() (resource.TaskStatus, error) {
+func (p *Param) Apply(context.Context) (resource.TaskStatus, error) {
 	return p, nil
 }
 

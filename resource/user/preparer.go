@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for User
@@ -77,7 +78,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.UID != nil && *p.UID == math.MaxUint32 {
 		// the maximum uid on linux is MaxUint32 - 1
 		return nil, fmt.Errorf("user \"uid\" parameter out of range")

@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -51,7 +52,7 @@ func TestPortCheck(t *testing.T) {
 			ConnectionCheck: mock,
 			Retrier:         &wait.Retrier{RetryCount: retries},
 		}
-		r, checkErr := p.Check(fakerenderer.New())
+		r, checkErr := p.Check(context.Background(), fakerenderer.New())
 		require.IsType(t, (*port.Port)(nil), r)
 		return r.(*port.Port), checkErr
 	}
@@ -107,7 +108,7 @@ func TestPortApply(t *testing.T) {
 				Interval: 10 * time.Millisecond,
 			},
 		}
-		r, err := p.Apply()
+		r, err := p.Apply(context.Background())
 		require.IsType(t, (*port.Port)(nil), r)
 		return r.(*port.Port), err
 	}

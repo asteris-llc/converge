@@ -17,6 +17,7 @@ package content
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for Content
@@ -31,7 +32,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	return &Content{
 		Destination: p.Destination,
 		Content:     p.Content,
