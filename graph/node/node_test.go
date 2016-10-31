@@ -79,6 +79,46 @@ func TestWithGroupable(t *testing.T) {
 	})
 }
 
+// TestMetadata tests metadata behavior in nodes
+func TestMetadata(t *testing.T) {
+	t.Parallel()
+
+	t.Run("AddMetadata", func(t *testing.T) {
+		t.Run("not-exists", func(t *testing.T) {
+			n := node.New("test", struct{}{})
+			assert.NoError(t, n.AddMetadata("test", struct{}{}))
+		})
+		t.Run("duplicate", func(t *testing.T) {
+			value := struct{}{}
+			n := node.New("test", struct{}{})
+			n.AddMetadata("test", value)
+			assert.NoError(t, n.AddMetadata("test", value))
+		})
+		t.Run("exists", func(t *testing.T) {
+			n := node.New("test", struct{}{})
+			n.AddMetadata("test", "value")
+			assert.Equal(t, node.ErrMetadataNotUnique, n.AddMetadata("test", "value'"))
+		})
+	})
+
+	t.Run("LookupMetadata", func(t *testing.T) {
+		t.Run("not-exist", func(t *testing.T) {
+			n := node.New("test", struct{}{})
+			_, ok := n.LookupMetadata("key")
+			assert.False(t, ok)
+		})
+		t.Run("exist", func(t *testing.T) {
+			expected := "value1"
+			n := node.New("test", struct{}{})
+			n.AddMetadata("key", expected)
+			actual, ok := n.LookupMetadata("key")
+			assert.True(t, ok)
+			assert.Equal(t, expected, actual)
+		})
+	})
+	t.Run("WithValue", func(t *testing.T) {})
+}
+
 type aGroupable struct {
 	group string
 }

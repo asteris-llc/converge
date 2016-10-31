@@ -14,24 +14,32 @@
 
 package node
 
+import "errors"
+
 // Groupable returns a group
 type Groupable interface {
 	Group() string
 }
+
+// ErrMetadataNotUnique indicates that the user attempted to overwrite a node
+// metadata field.
+var ErrMetadataNotUnique = errors.New("metadata field is non-unique")
 
 // Node tracks the metadata associated with a node in the graph
 type Node struct {
 	ID    string `json:"id"`
 	Group string `json:"group"`
 
-	value interface{}
+	metadata map[string]interface{}
+	value    interface{}
 }
 
 // New creates a new node
 func New(id string, value interface{}) *Node {
 	n := &Node{
-		ID:    id,
-		value: value,
+		ID:       id,
+		value:    value,
+		metadata: make(map[string]interface{}),
 	}
 	n.setGroup()
 
@@ -57,4 +65,27 @@ func (n *Node) setGroup() {
 	if groupable, ok := n.value.(Groupable); ok {
 		n.Group = groupable.Group()
 	}
+}
+
+// AddMetadata will allow you to add metadata to the node.  If the key already
+// exists it will return ErrMetadataNotUnique to ensure immutability
+func (n *Node) AddMetadata(key string, value interface{}) error {
+	if n.metadata == nil {
+		n.metadata = make(map[string]interface{})
+	}
+	if found, ok := n.metadata[key]; ok && found != value {
+		return ErrMetadataNotUnique
+	}
+	n.metadata[key] = value
+	return nil
+}
+
+// LookupMetadata extracts a metdatadata field from the node. If the value is
+// found, it returns (value, true), and (nil, false) otherwise.
+func (n *Node) LookupMetadata(key string) (interface{}, bool) {
+	if n.metadata == nil {
+		n.metadata = make(map[string]interface{})
+	}
+	result, ok := n.metadata[key]
+	return result, ok
 }
