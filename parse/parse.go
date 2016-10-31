@@ -15,6 +15,8 @@
 package parse
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
@@ -40,6 +42,12 @@ func Parse(content []byte) (resources []*Node, err error) {
 			return n, false
 		}
 
+		for _, v := range resources {
+			if v.ID() == item.ID() {
+				err = multierror.Append(fmt.Errorf("duplicate resource %s", item.ID()))
+				return n, false
+			}
+		}
 		resources = append(resources, item)
 
 		return n, false

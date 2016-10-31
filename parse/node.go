@@ -251,10 +251,16 @@ func (n *Node) badTypeError(key, typ string, val interface{}) error {
 	)
 }
 
-func (n *Node) String() string {
+// ID formats and returns the node ID as kind.name
+func (n *Node) ID() string {
 	return fmt.Sprintf(
 		"%s.%s",
 		n.Kind(),
 		n.Name(),
 	)
+}
+
+// String returns the node ID
+func (n *Node) String() string {
+	return n.ID()
 }
