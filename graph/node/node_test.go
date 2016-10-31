@@ -116,7 +116,18 @@ func TestMetadata(t *testing.T) {
 			assert.Equal(t, expected, actual)
 		})
 	})
-	t.Run("WithValue", func(t *testing.T) {})
+
+	t.Run("WithValue", func(t *testing.T) {
+		key := "key1"
+		expectedValue := "value1"
+		n := node.New("test", struct{}{})
+		n.AddMetadata(key, expectedValue)
+
+		n1 := n.WithValue(1)
+		actualValue, ok := n1.LookupMetadata(key)
+		assert.True(t, ok)
+		assert.Equal(t, expectedValue, actualValue)
+	})
 }
 
 type aGroupable struct {
