@@ -30,6 +30,7 @@ import (
 	"testing"
 )
 
+// TestVGCheck is test for VG.Check
 func TestVGCheck(t *testing.T) {
 	t.Run("check prerequisites failure", func(t *testing.T) {
 		lvm, m := testhelpers.MakeFakeLvm()
@@ -91,6 +92,7 @@ func TestVGCheck(t *testing.T) {
 	})
 }
 
+// TestVGApply is test for VG.Apply()
 func TestVGApply(t *testing.T) {
 	t.Run("single device", func(t *testing.T) {
 		lvm, m := testhelpers.MakeFakeLvm()
