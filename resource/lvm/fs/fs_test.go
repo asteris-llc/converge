@@ -42,6 +42,7 @@ func TestCreateFilesystem(t *testing.T) {
 	me.On("ReadWithExitCode", "blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/mapper/vg0-data"}).Return("", 0, nil)
 	me.On("ReadFile", "/etc/systemd/system/mnt-data.mount").Return([]byte(""), nil)
 	me.On("WriteFile", "/etc/systemd/system/mnt-data.mount", mock.Anything, mock.Anything).Return(nil)
+	me.On("Exists", "/dev/mapper/vg0-data").Return(true, nil)
 	me.On("Run", "mkfs", []string{"-t", "xfs", "/dev/mapper/vg0-data"}).Return(nil)
 	me.On("RunWithExitCode", "mountpoint", []string{"-q", "/mnt/data"}).Return(1, nil)
 	me.On("Run", "systemctl", []string{"daemon-reload"}).Return(nil)

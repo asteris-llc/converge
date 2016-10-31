@@ -17,7 +17,6 @@ package fs
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"text/template"
 
@@ -70,7 +69,7 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	{
-		fs, err := r.checkBlkid(r.mount.What)
+		fs, err := r.lvm.Blkid(r.mount.What)
 		if err != nil {
 			return nil, err
 		}
@@ -140,14 +139,6 @@ func (r *resourceFS) Apply() (resource.TaskStatus, error) {
 	}
 
 	return &resource.Status{}, nil
-}
-
-// FIXME: ugly kludge
-func (r *resourceFS) checkBlkid(name string) (string, error) {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return "", nil
-	}
-	return r.lvm.Blkid(name)
 }
 
 // NewResourceFS create new resource.Task node for create/mount FileSystem.
