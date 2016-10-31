@@ -46,9 +46,6 @@ type LVM interface {
 	CheckUnit(filename string, content string) (bool, error)
 	UpdateUnit(filename string, content string) error
 	StartUnit(filename string) error
-
-	// FIXME: possible unneeded
-	QueryDeviceMapperName(dmName string) (string, error)
 }
 
 type realLVM struct {

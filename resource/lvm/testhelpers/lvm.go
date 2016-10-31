@@ -122,11 +122,3 @@ func (f *FakeLVM) UpdateUnit(filename string, content string) error {
 func (f *FakeLVM) StartUnit(unitname string) error {
 	return f.Called(unitname).Error(0)
 }
-
-// FIXME: possible unneeded
-
-//  QueryDeviceMapperName is mock for LVM.QueryDeviceMapperName()
-func (f *FakeLVM) QueryDeviceMapperName(dmName string) (string, error) {
-	c := f.Called(dmName)
-	return c.String(0), c.Error(1)
-}
