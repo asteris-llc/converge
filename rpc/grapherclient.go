@@ -15,13 +15,13 @@
 package rpc
 
 import (
-	"context"
 	"io"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

@@ -15,7 +15,6 @@
 package transform
 
 import (
-	"context"
 	"crypto/rand"
 	"errors"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // ResolveConditionals will walk the graph and wrap tasks whose parent is a case

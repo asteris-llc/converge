@@ -16,9 +16,9 @@ package prettyprinters
 
 import (
 	"bytes"
-	"context"
 
 	"github.com/asteris-llc/converge/graph"
+	"golang.org/x/net/context"
 )
 
 // New creates a new prettyprinter instance from the specified

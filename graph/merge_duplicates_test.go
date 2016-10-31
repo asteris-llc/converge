@@ -15,7 +15,6 @@
 package graph_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -23,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {

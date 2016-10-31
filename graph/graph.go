@@ -15,7 +15,6 @@
 package graph
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform/dag"
 	"github.com/pkg/errors"
 	cmap "github.com/streamrail/concurrent-map"
+	"golang.org/x/net/context"
 )
 
 // WalkFunc is taken by the walking functions

@@ -15,11 +15,10 @@
 package rpc
 
 import (
-	"context"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/fgrid/uuid"
+	"golang.org/x/net/context"
 )
 
 func getLogger(ctx context.Context) *logrus.Entry {
