@@ -16,11 +16,11 @@ package prettyprinters
 
 import (
 	"bytes"
-	"context"
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"golang.org/x/net/context"
 )
 
 // Subgraph are treated as a semi-lattice with the root graph as the ⊥ (join)

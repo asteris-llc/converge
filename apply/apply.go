@@ -15,7 +15,6 @@
 package apply
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/asteris-llc/converge/executor"
@@ -24,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // MkPipelineF is a function to generate a pipeline given an id

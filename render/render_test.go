@@ -15,7 +15,6 @@
 package render_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestRenderSingleNode(t *testing.T) {

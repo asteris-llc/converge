@@ -15,7 +15,6 @@
 package rpc_test
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -25,6 +24,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestJWTAuth(t *testing.T) {

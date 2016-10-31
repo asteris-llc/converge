@@ -15,13 +15,13 @@
 package graph
 
 import (
-	"context"
 	"strings"
 	"sync"
 
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/mitchellh/hashstructure"
+	"golang.org/x/net/context"
 )
 
 // SkipMergeFunc will be used to determine whether or not to merge a node
