@@ -22,12 +22,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/httputils"
 	icmd "github.com/docker/docker/pkg/integration/cmd"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/stringutils"
-	"github.com/docker/engine-api/types"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/docker/go-units"
 	"github.com/go-check/check"
@@ -84,6 +84,7 @@ func init() {
 		volumesConfigPath = strings.Replace(volumesConfigPath, `\`, `/`, -1)
 		containerStoragePath = strings.Replace(containerStoragePath, `\`, `/`, -1)
 	}
+	isolation = info.Isolation
 }
 
 func convertBasesize(basesizeBytes int64) (int64, error) {
@@ -519,7 +520,7 @@ func validateArgs(args ...string) error {
 			foundBusybox = key
 		}
 		if (foundBusybox != -1) && (key == foundBusybox+1) && (strings.ToLower(value) == "top") {
-			return errors.New("Cannot use 'busybox top' in tests on Windows. Use runSleepingContainer()")
+			return errors.New("cannot use 'busybox top' in tests on Windows. Use runSleepingContainer()")
 		}
 	}
 	return nil
@@ -577,21 +578,21 @@ func (f *FakeContext) Add(file, content string) error {
 }
 
 func (f *FakeContext) addFile(file string, content []byte) error {
-	filepath := path.Join(f.Dir, file)
-	dirpath := path.Dir(filepath)
+	fp := filepath.Join(f.Dir, filepath.FromSlash(file))
+	dirpath := filepath.Dir(fp)
 	if dirpath != "." {
 		if err := os.MkdirAll(dirpath, 0755); err != nil {
 			return err
 		}
 	}
-	return ioutil.WriteFile(filepath, content, 0644)
+	return ioutil.WriteFile(fp, content, 0644)
 
 }
 
 // Delete a file at a path
 func (f *FakeContext) Delete(file string) error {
-	filepath := path.Join(f.Dir, file)
-	return os.RemoveAll(filepath)
+	fp := filepath.Join(f.Dir, filepath.FromSlash(file))
+	return os.RemoveAll(fp)
 }
 
 // Close deletes the context
@@ -753,6 +754,10 @@ func newRemoteFileServer(ctx *FakeContext) (*remoteFileServer, error) {
 		image     = fmt.Sprintf("fileserver-img-%s", strings.ToLower(stringutils.GenerateRandomAlphaOnlyString(10)))
 		container = fmt.Sprintf("fileserver-cnt-%s", strings.ToLower(stringutils.GenerateRandomAlphaOnlyString(10)))
 	)
+
+	if err := ensureHTTPServerImage(); err != nil {
+		return nil, err
+	}
 
 	// Build the image
 	if err := fakeContextAddDockerfile(ctx, `FROM httpserver
@@ -1435,7 +1440,7 @@ func runSleepingContainerInImage(c *check.C, image string, extraArgs ...string) 
 	args := []string{"run", "-d"}
 	args = append(args, extraArgs...)
 	args = append(args, image)
-	args = append(args, defaultSleepCommand...)
+	args = append(args, sleepCommandForDaemonPlatform()...)
 	return dockerCmd(c, args...)
 }
 

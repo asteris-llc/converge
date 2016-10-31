@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/server/httputils"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/streamformatter"
 	"github.com/docker/docker/registry"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
-	"github.com/docker/engine-api/types/versions"
 	"golang.org/x/net/context"
 )
 
@@ -248,7 +248,7 @@ func (s *imageRouter) getImagesJSON(ctx context.Context, w http.ResponseWriter, 
 	}
 
 	// FIXME: The filter parameter could just be a match filter
-	images, err := s.backend.Images(r.Form.Get("filters"), r.Form.Get("filter"), httputils.BoolValue(r, "all"))
+	images, err := s.backend.Images(r.Form.Get("filters"), r.Form.Get("filter"), httputils.BoolValue(r, "all"), false)
 	if err != nil {
 		return err
 	}
@@ -313,4 +313,25 @@ func (s *imageRouter) getImagesSearch(ctx context.Context, w http.ResponseWriter
 		return err
 	}
 	return httputils.WriteJSON(w, http.StatusOK, query.Results)
+}
+
+func (s *imageRouter) postImagesPrune(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+	if err := httputils.ParseForm(r); err != nil {
+		return err
+	}
+
+	if err := httputils.CheckForJSON(r); err != nil {
+		return err
+	}
+
+	var cfg types.ImagesPruneConfig
+	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+		return err
+	}
+
+	pruneReport, err := s.backend.ImagesPrune(&cfg)
+	if err != nil {
+		return err
+	}
+	return httputils.WriteJSON(w, http.StatusOK, pruneReport)
 }

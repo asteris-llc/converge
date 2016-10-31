@@ -2,20 +2,25 @@ package authorization
 
 import (
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/pkg/plugingetter"
 	"golang.org/x/net/context"
 )
 
 // Middleware uses a list of plugins to
 // handle authorization in the API requests.
 type Middleware struct {
+	mu      sync.Mutex
 	plugins []Plugin
 }
 
 // NewMiddleware creates a new Middleware
 // with a slice of plugins names.
-func NewMiddleware(names []string) *Middleware {
+func NewMiddleware(names []string, pg plugingetter.PluginGetter) *Middleware {
+	SetPluginGetter(pg)
 	return &Middleware{
 		plugins: newPlugins(names),
 	}
@@ -23,14 +28,19 @@ func NewMiddleware(names []string) *Middleware {
 
 // SetPlugins sets the plugin used for authorization
 func (m *Middleware) SetPlugins(names []string) {
+	m.mu.Lock()
 	m.plugins = newPlugins(names)
+	m.mu.Unlock()
 }
 
 // WrapHandler returns a new handler function wrapping the previous one in the request chain.
 func (m *Middleware) WrapHandler(handler func(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error) func(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
 
-		if len(m.plugins) == 0 {
+		m.mu.Lock()
+		plugins := m.plugins
+		m.mu.Unlock()
+		if len(plugins) == 0 {
 			return handler(ctx, w, r, vars)
 		}
 
@@ -46,24 +56,40 @@ func (m *Middleware) WrapHandler(handler func(ctx context.Context, w http.Respon
 			userAuthNMethod = "TLS"
 		}
 
-		authCtx := NewCtx(m.plugins, user, userAuthNMethod, r.Method, r.RequestURI)
+		authCtx := NewCtx(plugins, user, userAuthNMethod, r.Method, r.RequestURI)
 
 		if err := authCtx.AuthZRequest(w, r); err != nil {
 			logrus.Errorf("AuthZRequest for %s %s returned error: %s", r.Method, r.RequestURI, err)
+			if strings.Contains(err.Error(), ErrInvalidPlugin.Error()) {
+				m.mu.Lock()
+				m.plugins = authCtx.plugins
+				m.mu.Unlock()
+			}
 			return err
 		}
 
 		rw := NewResponseModifier(w)
 
-		if err := handler(ctx, rw, r, vars); err != nil {
-			logrus.Errorf("Handler for %s %s returned error: %s", r.Method, r.RequestURI, err)
+		var errD error
+
+		if errD = handler(ctx, rw, r, vars); errD != nil {
+			logrus.Errorf("Handler for %s %s returned error: %s", r.Method, r.RequestURI, errD)
+		}
+
+		if err := authCtx.AuthZResponse(rw, r); errD == nil && err != nil {
+			logrus.Errorf("AuthZResponse for %s %s returned error: %s", r.Method, r.RequestURI, err)
+			if strings.Contains(err.Error(), ErrInvalidPlugin.Error()) {
+				m.mu.Lock()
+				m.plugins = authCtx.plugins
+				m.mu.Unlock()
+			}
 			return err
 		}
 
-		if err := authCtx.AuthZResponse(rw, r); err != nil {
-			logrus.Errorf("AuthZResponse for %s %s returned error: %s", r.Method, r.RequestURI, err)
-			return err
+		if errD != nil {
+			return errD
 		}
+
 		return nil
 	}
 }

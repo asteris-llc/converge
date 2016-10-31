@@ -12,15 +12,15 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/system"
-	"github.com/docker/engine-api/types"
 	"github.com/docker/libtrust"
 )
 
 // Common constants for daemon and client.
 const (
-	// Version of Current REST API
+	// DefaultVersion of Current REST API
 	DefaultVersion string = "1.25"
 
 	// MinVersion represents Minimum REST API version supported
@@ -57,8 +57,8 @@ func (r byPortInfo) Less(i, j int) bool {
 // it's used by command 'docker ps'
 func DisplayablePorts(ports []types.Port) string {
 	type portGroup struct {
-		first int
-		last  int
+		first uint16
+		last  uint16
 	}
 	groupMap := make(map[string]*portGroup)
 	var result []string
@@ -99,7 +99,7 @@ func DisplayablePorts(ports []types.Port) string {
 	return strings.Join(result, ", ")
 }
 
-func formGroup(key string, start, last int) string {
+func formGroup(key string, start, last uint16) string {
 	parts := strings.Split(key, "/")
 	groupType := parts[0]
 	var ip string
@@ -107,7 +107,7 @@ func formGroup(key string, start, last int) string {
 		ip = parts[0]
 		groupType = parts[1]
 	}
-	group := strconv.Itoa(start)
+	group := strconv.Itoa(int(start))
 	if start != last {
 		group = fmt.Sprintf("%s-%d", group, last)
 	}

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
-	"github.com/docker/engine-api/types"
 	units "github.com/docker/go-units"
 	"github.com/spf13/pflag"
 )
@@ -34,7 +34,11 @@ type Config struct {
 	Ulimits              map[string]*units.Ulimit `json:"default-ulimits,omitempty"`
 	Runtimes             map[string]types.Runtime `json:"runtimes,omitempty"`
 	DefaultRuntime       string                   `json:"default-runtime,omitempty"`
+	CPURealtimePeriod    int64                    `json:"cpu-rt-period,omitempty"`
+	CPURealtimeRuntime   int64                    `json:"cpu-rt-runtime,omitempty"`
 	OOMScoreAdjust       int                      `json:"oom-score-adjust,omitempty"`
+	Init                 bool                     `json:"init,omitempty"`
+	InitPath             string                   `json:"init-path,omitempty"`
 }
 
 // bridgeConfig stores all the bridge driver specific
@@ -48,6 +52,7 @@ type bridgeConfig struct {
 	EnableIPForward             bool   `json:"ip-forward,omitempty"`
 	EnableIPMasq                bool   `json:"ip-masq,omitempty"`
 	EnableUserlandProxy         bool   `json:"userland-proxy,omitempty"`
+	UserlandProxyPath           string `json:"userland-proxy-path,omitempty"`
 	DefaultIP                   net.IP `json:"ip,omitempty"`
 	IP                          string `json:"bip,omitempty"`
 	FixedCIDRv6                 string `json:"fixed-cidr-v6,omitempty"`
@@ -82,6 +87,7 @@ func (config *Config) InstallFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&config.bridgeConfig.InterContainerCommunication, "icc", true, "Enable inter-container communication")
 	flags.Var(opts.NewIPOpt(&config.bridgeConfig.DefaultIP, "0.0.0.0"), "ip", "Default IP when binding container ports")
 	flags.BoolVar(&config.bridgeConfig.EnableUserlandProxy, "userland-proxy", true, "Use userland proxy for loopback traffic")
+	flags.StringVar(&config.bridgeConfig.UserlandProxyPath, "userland-proxy-path", "", "Path to the userland proxy binary")
 	flags.BoolVar(&config.EnableCors, "api-enable-cors", false, "Enable CORS headers in the remote API, this is deprecated by --api-cors-header")
 	flags.MarkDeprecated("api-enable-cors", "Please use --api-cors-header")
 	flags.StringVar(&config.CgroupParent, "cgroup-parent", "", "Set parent cgroup for all containers")
@@ -91,6 +97,10 @@ func (config *Config) InstallFlags(flags *pflag.FlagSet) {
 	flags.Var(runconfigopts.NewNamedRuntimeOpt("runtimes", &config.Runtimes, stockRuntimeName), "add-runtime", "Register an additional OCI compatible runtime")
 	flags.StringVar(&config.DefaultRuntime, "default-runtime", stockRuntimeName, "Default OCI runtime for containers")
 	flags.IntVar(&config.OOMScoreAdjust, "oom-score-adjust", -500, "Set the oom_score_adj for the daemon")
+	flags.BoolVar(&config.Init, "init", false, "Run an init in the container to forward signals and reap processes")
+	flags.StringVar(&config.InitPath, "init-path", "", "Path to the docker-init binary")
+	flags.Int64Var(&config.CPURealtimePeriod, "cpu-rt-period", 0, "Limit the CPU real-time period in microseconds")
+	flags.Int64Var(&config.CPURealtimeRuntime, "cpu-rt-runtime", 0, "Limit the CPU real-time runtime in microseconds")
 
 	config.attachExperimentalFlags(flags)
 }

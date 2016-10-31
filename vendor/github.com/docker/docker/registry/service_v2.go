@@ -8,8 +8,7 @@ import (
 )
 
 func (s *DefaultService) lookupV2Endpoints(hostname string) (endpoints []APIEndpoint, err error) {
-	var cfg = tlsconfig.ServerDefault
-	tlsConfig := &cfg
+	tlsConfig := tlsconfig.ServerDefault()
 	if hostname == DefaultNamespace || hostname == DefaultV1Registry.Host {
 		// v2 mirrors
 		for _, mirror := range s.config.Mirrors {
@@ -45,7 +44,7 @@ func (s *DefaultService) lookupV2Endpoints(hostname string) (endpoints []APIEndp
 		return endpoints, nil
 	}
 
-	tlsConfig, err = s.TLSConfig(hostname)
+	tlsConfig, err = s.tlsConfig(hostname)
 	if err != nil {
 		return nil, err
 	}

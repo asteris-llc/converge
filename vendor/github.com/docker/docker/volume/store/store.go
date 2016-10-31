@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"github.com/docker/docker/pkg/locker"
@@ -21,14 +23,24 @@ const (
 )
 
 type volumeMetadata struct {
-	Name   string
-	Labels map[string]string
+	Name    string
+	Labels  map[string]string
+	Options map[string]string
 }
 
 type volumeWrapper struct {
 	volume.Volume
-	labels map[string]string
-	scope  string
+	labels  map[string]string
+	scope   string
+	options map[string]string
+}
+
+func (v volumeWrapper) Options() map[string]string {
+	options := map[string]string{}
+	for key, value := range v.options {
+		options[key] = value
+	}
+	return options
 }
 
 func (v volumeWrapper) Labels() map[string]string {
@@ -52,10 +64,11 @@ func (v volumeWrapper) CachedPath() string {
 // reference counting of volumes in the system.
 func New(rootPath string) (*VolumeStore, error) {
 	vs := &VolumeStore{
-		locks:  &locker.Locker{},
-		names:  make(map[string]volume.Volume),
-		refs:   make(map[string][]string),
-		labels: make(map[string]map[string]string),
+		locks:   &locker.Locker{},
+		names:   make(map[string]volume.Volume),
+		refs:    make(map[string][]string),
+		labels:  make(map[string]map[string]string),
+		options: make(map[string]map[string]string),
 	}
 
 	if rootPath != "" {
@@ -70,13 +83,13 @@ func New(rootPath string) (*VolumeStore, error) {
 		var err error
 		vs.db, err = bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "error while opening volume store metadata database")
 		}
 
 		// initialize volumes bucket
 		if err := vs.db.Update(func(tx *bolt.Tx) error {
 			if _, err := tx.CreateBucketIfNotExists([]byte(volumeBucketName)); err != nil {
-				return err
+				return errors.Wrap(err, "error while setting up volume store metadata database")
 			}
 
 			return nil
@@ -111,6 +124,7 @@ func (s *VolumeStore) Purge(name string) {
 	delete(s.names, name)
 	delete(s.refs, name)
 	delete(s.labels, name)
+	delete(s.options, name)
 	s.globalLock.Unlock()
 }
 
@@ -125,7 +139,9 @@ type VolumeStore struct {
 	refs map[string][]string
 	// labels stores volume labels for each volume
 	labels map[string]map[string]string
-	db     *bolt.DB
+	// options stores volume options for each volume
+	options map[string]map[string]string
+	db      *bolt.DB
 }
 
 // List proxies to all registered volume drivers to get the full list of volumes
@@ -184,7 +200,7 @@ func (s *VolumeStore) list() ([]volume.Volume, []string, error) {
 				return
 			}
 			for i, v := range vs {
-				vs[i] = volumeWrapper{v, s.labels[v.Name()], d.Scope()}
+				vs[i] = volumeWrapper{v, s.labels[v.Name()], d.Scope(), s.options[v.Name()]}
 			}
 
 			chVols <- vols{vols: vs}
@@ -264,7 +280,7 @@ func (s *VolumeStore) create(name, driverName string, opts, labels map[string]st
 		}
 	}
 
-	vd, err := volumedrivers.GetDriver(driverName)
+	vd, err := volumedrivers.CreateDriver(driverName)
 
 	if err != nil {
 		return nil, &OpErr{Op: "create", Name: name, Err: err}
@@ -281,12 +297,14 @@ func (s *VolumeStore) create(name, driverName string, opts, labels map[string]st
 	}
 	s.globalLock.Lock()
 	s.labels[name] = labels
+	s.options[name] = opts
 	s.globalLock.Unlock()
 
 	if s.db != nil {
 		metadata := &volumeMetadata{
-			Name:   name,
-			Labels: labels,
+			Name:    name,
+			Labels:  labels,
+			Options: opts,
 		}
 
 		volData, err := json.Marshal(metadata)
@@ -299,11 +317,11 @@ func (s *VolumeStore) create(name, driverName string, opts, labels map[string]st
 			err := b.Put([]byte(name), volData)
 			return err
 		}); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "error while persisting volume metadata")
 		}
 	}
 
-	return volumeWrapper{v, labels, vd.Scope()}, nil
+	return volumeWrapper{v, labels, vd.Scope(), opts}, nil
 }
 
 // GetWithRef gets a volume with the given name from the passed in driver and stores the ref
@@ -326,7 +344,7 @@ func (s *VolumeStore) GetWithRef(name, driverName, ref string) (volume.Volume, e
 
 	s.setNamed(v, ref)
 
-	return volumeWrapper{v, s.labels[name], vd.Scope()}, nil
+	return volumeWrapper{v, s.labels[name], vd.Scope(), s.options[name]}, nil
 }
 
 // Get looks if a volume with the given name exists and returns it if so
@@ -348,6 +366,7 @@ func (s *VolumeStore) Get(name string) (volume.Volume, error) {
 // it is expected that callers of this function hold any necessary locks
 func (s *VolumeStore) getVolume(name string) (volume.Volume, error) {
 	labels := map[string]string{}
+	options := map[string]string{}
 
 	if s.db != nil {
 		// get meta
@@ -366,6 +385,7 @@ func (s *VolumeStore) getVolume(name string) (volume.Volume, error) {
 				return err
 			}
 			labels = meta.Labels
+			options = meta.Options
 
 			return nil
 		}); err != nil {
@@ -386,7 +406,7 @@ func (s *VolumeStore) getVolume(name string) (volume.Volume, error) {
 		if err != nil {
 			return nil, err
 		}
-		return volumeWrapper{vol, labels, vd.Scope()}, nil
+		return volumeWrapper{vol, labels, vd.Scope(), options}, nil
 	}
 
 	logrus.Debugf("Probing all drivers for volume with name: %s", name)
@@ -401,7 +421,7 @@ func (s *VolumeStore) getVolume(name string) (volume.Volume, error) {
 			continue
 		}
 
-		return volumeWrapper{v, labels, d.Scope()}, nil
+		return volumeWrapper{v, labels, d.Scope(), options}, nil
 	}
 	return nil, errNoSuchVolume
 }
@@ -416,7 +436,7 @@ func (s *VolumeStore) Remove(v volume.Volume) error {
 		return &OpErr{Err: errVolumeInUse, Name: v.Name(), Op: "remove", Refs: refs}
 	}
 
-	vd, err := volumedrivers.GetDriver(v.DriverName())
+	vd, err := volumedrivers.RemoveDriver(v.DriverName())
 	if err != nil {
 		return &OpErr{Err: err, Name: vd.Name(), Op: "remove"}
 	}
@@ -476,7 +496,11 @@ func (s *VolumeStore) FilterByDriver(name string) ([]volume.Volume, error) {
 		return nil, &OpErr{Err: err, Name: name, Op: "list"}
 	}
 	for i, v := range ls {
-		ls[i] = volumeWrapper{v, s.labels[v.Name()], vd.Scope()}
+		options := map[string]string{}
+		for key, value := range s.options[v.Name()] {
+			options[key] = value
+		}
+		ls[i] = volumeWrapper{v, s.labels[v.Name()], vd.Scope(), options}
 	}
 	return ls, nil
 }

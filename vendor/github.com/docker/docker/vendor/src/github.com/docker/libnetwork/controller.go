@@ -49,9 +49,12 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/discovery"
+	"github.com/docker/docker/pkg/locker"
+	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/plugins"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/libnetwork/cluster"
@@ -72,6 +75,9 @@ import (
 type NetworkController interface {
 	// ID provides a unique identity for the controller
 	ID() string
+
+	// BuiltinDrivers returns list of builtin drivers
+	BuiltinDrivers() []string
 
 	// Config method returns the bootup configuration for the controller
 	Config() config.Config
@@ -149,6 +155,7 @@ type controller struct {
 	ingressSandbox         *sandbox
 	sboxOnce               sync.Once
 	agent                  *agent
+	networkLocker          *locker.Locker
 	agentInitDone          chan struct{}
 	keys                   []*types.EncryptionKey
 	clusterConfigAvailable bool
@@ -169,13 +176,14 @@ func New(cfgOptions ...config.Option) (NetworkController, error) {
 		svcRecords:      make(map[string]svcInfo),
 		serviceBindings: make(map[serviceKey]*service),
 		agentInitDone:   make(chan struct{}),
+		networkLocker:   locker.New(),
 	}
 
 	if err := c.initStores(); err != nil {
 		return nil, err
 	}
 
-	drvRegistry, err := drvregistry.New(c.getStore(datastore.LocalScope), c.getStore(datastore.GlobalScope), c.RegisterDriver, nil)
+	drvRegistry, err := drvregistry.New(c.getStore(datastore.LocalScope), c.getStore(datastore.GlobalScope), c.RegisterDriver, nil, c.cfg.PluginGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -307,8 +315,21 @@ func (c *controller) clusterAgentInit() {
 			c.Lock()
 			c.clusterConfigAvailable = false
 			c.agentInitDone = make(chan struct{})
+			c.keys = nil
 			c.Unlock()
+
+			// We are leaving the cluster. Make sure we
+			// close the gossip so that we stop all
+			// incoming gossip updates before cleaning up
+			// any remaining service bindings. But before
+			// deleting the networks since the networks
+			// should still be present when cleaning up
+			// service bindings
 			c.agentClose()
+			c.cleanupServiceBindings("")
+
+			c.clearIngress(true)
+
 			return
 		}
 	}
@@ -317,7 +338,13 @@ func (c *controller) clusterAgentInit() {
 // AgentInitWait waits for agent initialization to be completed in the
 // controller.
 func (c *controller) AgentInitWait() {
-	<-c.agentInitDone
+	c.Lock()
+	agentInitDone := c.agentInitDone
+	c.Unlock()
+
+	if agentInitDone != nil {
+		<-agentInitDone
+	}
 }
 
 func (c *controller) makeDriverConfig(ntype string) map[string]interface{} {
@@ -440,6 +467,17 @@ func (c *controller) ID() string {
 	return c.id
 }
 
+func (c *controller) BuiltinDrivers() []string {
+	drivers := []string{}
+	for _, i := range getInitializers() {
+		if i.ntype == "remote" {
+			continue
+		}
+		drivers = append(drivers, i.ntype)
+	}
+	return drivers
+}
+
 func (c *controller) validateHostDiscoveryConfig() bool {
 	if c.cfg == nil || c.cfg.Cluster.Discovery == "" || c.cfg.Cluster.Address == "" {
 		return false
@@ -559,6 +597,10 @@ func (c *controller) isDistributedControl() bool {
 	return !c.isManager() && !c.isAgent()
 }
 
+func (c *controller) GetPluginGetter() plugingetter.PluginGetter {
+	return c.drvRegistry.GetPluginGetter()
+}
+
 func (c *controller) RegisterDriver(networkType string, driver driverapi.Driver, capability driverapi.Capability) error {
 	c.Lock()
 	hd := c.discovery
@@ -575,6 +617,15 @@ func (c *controller) RegisterDriver(networkType string, driver driverapi.Driver,
 // NewNetwork creates a new network of the specified network type. The options
 // are network specific and modeled in a generic way.
 func (c *controller) NewNetwork(networkType, name string, id string, options ...NetworkOption) (Network, error) {
+	if id != "" {
+		c.networkLocker.Lock(id)
+		defer c.networkLocker.Unlock(id)
+
+		if _, err := c.NetworkByID(id); err == nil {
+			return nil, NetworkNameError(id)
+		}
+	}
+
 	if !config.IsValidName(name) {
 		return nil, ErrInvalidName(name)
 	}
@@ -590,6 +641,7 @@ func (c *controller) NewNetwork(networkType, name string, id string, options ...
 		generic:     map[string]interface{}{netlabel.GenericData: make(map[string]string)},
 		ipamType:    ipamapi.DefaultIPAM,
 		id:          id,
+		created:     time.Now(),
 		ctrlr:       c,
 		persist:     true,
 		drvOnce:     &sync.Once{},
@@ -660,6 +712,9 @@ func (c *controller) NewNetwork(networkType, name string, id string, options ...
 	}
 
 	joinCluster(network)
+	if !c.isDistributedControl() {
+		arrangeIngressFilterRule()
+	}
 
 	return network, nil
 }
@@ -699,9 +754,11 @@ func (c *controller) reservePools() {
 				c.Gateway = n.ipamV4Info[i].Gateway.IP.String()
 			}
 		}
-		for i, c := range n.ipamV6Config {
-			if c.Gateway == "" && n.ipamV6Info[i].Gateway != nil {
-				c.Gateway = n.ipamV6Info[i].Gateway.IP.String()
+		if n.enableIPv6 {
+			for i, c := range n.ipamV6Config {
+				if c.Gateway == "" && n.ipamV6Info[i].Gateway != nil {
+					c.Gateway = n.ipamV6Info[i].Gateway.IP.String()
+				}
 			}
 		}
 		// Reserve pools
@@ -747,6 +804,8 @@ func (c *controller) addNetwork(n *network) error {
 	if err := d.CreateNetwork(n.id, n.generic, n, n.getIPData(4), n.getIPData(6)); err != nil {
 		return err
 	}
+
+	n.startResolver()
 
 	return nil
 }
@@ -825,8 +884,9 @@ func (c *controller) NewSandbox(containerID string, options ...SandboxOption) (s
 		if s.containerID == containerID {
 			// If not a stub, then we already have a complete sandbox.
 			if !s.isStub {
+				sbID := s.ID()
 				c.Unlock()
-				return nil, types.ForbiddenErrorf("container %s is already present: %v", containerID, s)
+				return nil, types.ForbiddenErrorf("container %s is already present in sandbox %s", containerID, sbID)
 			}
 
 			// We already have a stub sandbox from the
@@ -866,6 +926,7 @@ func (c *controller) NewSandbox(containerID string, options ...SandboxOption) (s
 
 	if sb.ingress {
 		c.ingressSandbox = sb
+		sb.id = "ingress_sbox"
 	}
 	c.Unlock()
 	defer func() {
@@ -1001,9 +1062,14 @@ func SandboxKeyWalker(out *Sandbox, key string) SandboxWalker {
 }
 
 func (c *controller) loadDriver(networkType string) error {
-	// Plugins pkg performs lazy loading of plugins that acts as remote drivers.
-	// As per the design, this Get call will result in remote driver discovery if there is a corresponding plugin available.
-	_, err := plugins.Get(networkType, driverapi.NetworkPluginEndpointType)
+	var err error
+
+	if pg := c.GetPluginGetter(); pg != nil {
+		_, err = pg.Get(networkType, driverapi.NetworkPluginEndpointType, plugingetter.LOOKUP)
+	} else {
+		_, err = plugins.Get(networkType, driverapi.NetworkPluginEndpointType)
+	}
+
 	if err != nil {
 		if err == plugins.ErrNotFound {
 			return types.NotFoundErrorf(err.Error())
@@ -1015,7 +1081,15 @@ func (c *controller) loadDriver(networkType string) error {
 }
 
 func (c *controller) loadIPAMDriver(name string) error {
-	if _, err := plugins.Get(name, ipamapi.PluginEndpointType); err != nil {
+	var err error
+
+	if pg := c.GetPluginGetter(); pg != nil {
+		_, err = pg.Get(name, ipamapi.PluginEndpointType, plugingetter.LOOKUP)
+	} else {
+		_, err = plugins.Get(name, ipamapi.PluginEndpointType)
+	}
+
+	if err != nil {
 		if err == plugins.ErrNotFound {
 			return types.NotFoundErrorf(err.Error())
 		}
@@ -1044,7 +1118,32 @@ func (c *controller) getIPAMDriver(name string) (ipamapi.Ipam, *ipamapi.Capabili
 }
 
 func (c *controller) Stop() {
+	c.clearIngress(false)
 	c.closeStores()
 	c.stopExternalKeyListener()
 	osl.GC()
+}
+
+func (c *controller) clearIngress(clusterLeave bool) {
+	c.Lock()
+	ingressSandbox := c.ingressSandbox
+	c.ingressSandbox = nil
+	c.Unlock()
+
+	if ingressSandbox != nil {
+		if err := ingressSandbox.Delete(); err != nil {
+			log.Warnf("Could not delete ingress sandbox while leaving: %v", err)
+		}
+	}
+
+	n, err := c.NetworkByName("ingress")
+	if err != nil && clusterLeave {
+		log.Warnf("Could not find ingress network while leaving: %v", err)
+	}
+
+	if n != nil {
+		if err := n.Delete(); err != nil {
+			log.Warnf("Could not delete ingress network while leaving: %v", err)
+		}
+	}
 }

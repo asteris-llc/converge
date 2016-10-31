@@ -1,5 +1,3 @@
-// +build experimental
-
 package distribution
 
 import (
@@ -14,11 +12,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/docker/api/types"
 	dockerdist "github.com/docker/docker/distribution"
 	archive "github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
-	"github.com/docker/engine-api/types"
 	"golang.org/x/net/context"
 )
 
@@ -62,14 +60,26 @@ func (pd *pullData) Layer() (io.ReadCloser, error) {
 	return rsc, nil
 }
 
-// Pull downloads the plugin from Store
-func Pull(name string, rs registry.Service, metaheader http.Header, authConfig *types.AuthConfig) (PullData, error) {
+// GetRef returns the distribution reference for a given name.
+func GetRef(name string) (reference.Named, error) {
 	ref, err := reference.ParseNamed(name)
 	if err != nil {
-		logrus.Debugf("pull.go: error in ParseNamed: %v", err)
 		return nil, err
 	}
+	return ref, nil
+}
 
+// GetTag returns the tag associated with the given reference name.
+func GetTag(ref reference.Named) string {
+	tag := DefaultTag
+	if ref, ok := ref.(reference.NamedTagged); ok {
+		tag = ref.Tag()
+	}
+	return tag
+}
+
+// Pull downloads the plugin from Store
+func Pull(ref reference.Named, rs registry.Service, metaheader http.Header, authConfig *types.AuthConfig) (PullData, error) {
 	repoInfo, err := rs.ResolveRepository(ref)
 	if err != nil {
 		logrus.Debugf("pull.go: error in ResolveRepository: %v", err)

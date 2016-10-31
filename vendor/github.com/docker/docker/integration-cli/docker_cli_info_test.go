@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/pkg/integration/checker"
-	"github.com/docker/docker/utils"
 	"github.com/go-check/check"
 )
 
@@ -33,16 +32,21 @@ func (s *DockerSuite) TestInfoEnsureSucceeds(c *check.C) {
 		"Storage Driver:",
 		"Volume:",
 		"Network:",
-		"Security Options:",
 		"Live Restore Enabled:",
+	}
+
+	if daemonPlatform == "linux" {
+		stringsToCheck = append(stringsToCheck, "Security Options:")
 	}
 
 	if DaemonIsLinux.Condition() {
 		stringsToCheck = append(stringsToCheck, "Runtimes:", "Default Runtime: runc")
 	}
 
-	if utils.ExperimentalBuild() {
+	if experimentalDaemon {
 		stringsToCheck = append(stringsToCheck, "Experimental: true")
+	} else {
+		stringsToCheck = append(stringsToCheck, "Experimental: false")
 	}
 
 	for _, linePrefix := range stringsToCheck {
@@ -135,9 +139,9 @@ func (s *DockerSuite) TestInfoDisplaysRunningContainers(c *check.C) {
 }
 
 func (s *DockerSuite) TestInfoDisplaysPausedContainers(c *check.C) {
-	testRequires(c, DaemonIsLinux)
+	testRequires(c, IsPausable)
 
-	out, _ := dockerCmd(c, "run", "-d", "busybox", "top")
+	out, _ := runSleepingContainer(c, "-d")
 	cleanedContainerID := strings.TrimSpace(out)
 
 	dockerCmd(c, "pause", cleanedContainerID)
@@ -199,4 +203,32 @@ func (s *DockerSuite) TestInsecureRegistries(c *check.C) {
 	c.Assert(out, checker.Contains, "Insecure Registries:\n")
 	c.Assert(out, checker.Contains, fmt.Sprintf(" %s\n", registryHost))
 	c.Assert(out, checker.Contains, fmt.Sprintf(" %s\n", registryCIDR))
+}
+
+func (s *DockerDaemonSuite) TestRegistryMirrors(c *check.C) {
+	testRequires(c, SameHostDaemon, DaemonIsLinux)
+
+	registryMirror1 := "https://192.168.1.2"
+	registryMirror2 := "http://registry.mirror.com:5000"
+
+	err := s.d.Start("--registry-mirror="+registryMirror1, "--registry-mirror="+registryMirror2)
+	c.Assert(err, checker.IsNil)
+
+	out, err := s.d.Cmd("info")
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Registry Mirrors:\n")
+	c.Assert(out, checker.Contains, fmt.Sprintf(" %s", registryMirror1))
+	c.Assert(out, checker.Contains, fmt.Sprintf(" %s", registryMirror2))
+}
+
+// Test case for #24392
+func (s *DockerDaemonSuite) TestInfoLabels(c *check.C) {
+	testRequires(c, SameHostDaemon, DaemonIsLinux)
+
+	err := s.d.Start("--label", `test.empty=`, "--label", `test.empty=`, "--label", `test.label="1"`, "--label", `test.label="2"`)
+	c.Assert(err, checker.IsNil)
+
+	out, err := s.d.Cmd("info")
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "WARNING: labels with duplicate keys and conflicting values have been deprecated")
 }

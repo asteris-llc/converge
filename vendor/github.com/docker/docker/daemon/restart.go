@@ -13,15 +13,20 @@ import (
 // timeout, ContainerRestart will wait forever until a graceful
 // stop. Returns an error if the container cannot be found, or if
 // there is an underlying error at any stage of the restart.
-func (daemon *Daemon) ContainerRestart(name string, seconds int) error {
+func (daemon *Daemon) ContainerRestart(name string, seconds *int) error {
 	container, err := daemon.GetContainer(name)
 	if err != nil {
 		return err
 	}
-	if err := daemon.containerRestart(container, seconds); err != nil {
+	if seconds == nil {
+		stopTimeout := container.StopTimeout()
+		seconds = &stopTimeout
+	}
+	if err := daemon.containerRestart(container, *seconds); err != nil {
 		return fmt.Errorf("Cannot restart container %s: %v", name, err)
 	}
 	return nil
+
 }
 
 // containerRestart attempts to gracefully stop and then start the
@@ -36,25 +41,27 @@ func (daemon *Daemon) containerRestart(container *container.Container, seconds i
 		defer daemon.Unmount(container)
 	}
 
-	// set AutoRemove flag to false before stop so the container won't be
-	// removed during restart process
-	autoRemove := container.HostConfig.AutoRemove
+	if container.IsRunning() {
+		// set AutoRemove flag to false before stop so the container won't be
+		// removed during restart process
+		autoRemove := container.HostConfig.AutoRemove
 
-	container.HostConfig.AutoRemove = false
-	err := daemon.containerStop(container, seconds)
-	// restore AutoRemove irrespective of whether the stop worked or not
-	container.HostConfig.AutoRemove = autoRemove
-	// containerStop will write HostConfig to disk, we shall restore AutoRemove
-	// in disk too
-	if toDiskErr := container.ToDiskLocking(); toDiskErr != nil {
-		logrus.Errorf("Write container to disk error: %v", toDiskErr)
+		container.HostConfig.AutoRemove = false
+		err := daemon.containerStop(container, seconds)
+		// restore AutoRemove irrespective of whether the stop worked or not
+		container.HostConfig.AutoRemove = autoRemove
+		// containerStop will write HostConfig to disk, we shall restore AutoRemove
+		// in disk too
+		if toDiskErr := container.ToDiskLocking(); toDiskErr != nil {
+			logrus.Errorf("Write container to disk error: %v", toDiskErr)
+		}
+
+		if err != nil {
+			return err
+		}
 	}
 
-	if err != nil {
-		return err
-	}
-
-	if err = daemon.containerStart(container); err != nil {
+	if err := daemon.containerStart(container, "", "", true); err != nil {
 		return err
 	}
 

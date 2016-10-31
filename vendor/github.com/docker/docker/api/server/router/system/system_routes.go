@@ -8,14 +8,14 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api"
+	"github.com/docker/docker/api/errors"
 	"github.com/docker/docker/api/server/httputils"
-	"github.com/docker/docker/errors"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/events"
+	"github.com/docker/docker/api/types/filters"
+	timetypes "github.com/docker/docker/api/types/time"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/pkg/ioutils"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/events"
-	"github.com/docker/engine-api/types/filters"
-	timetypes "github.com/docker/engine-api/types/time"
-	"github.com/docker/engine-api/types/versions"
 	"golang.org/x/net/context"
 )
 
@@ -38,7 +38,7 @@ func (s *systemRouter) getInfo(ctx context.Context, w http.ResponseWriter, r *ht
 		info.Swarm = s.clusterProvider.Info()
 	}
 
-	if versions.LessThan("1.25", httputils.VersionFromContext(ctx)) {
+	if versions.LessThan(httputils.VersionFromContext(ctx), "1.25") {
 		// TODO: handle this conversion in engine-api
 		type oldInfo struct {
 			*types.Info
@@ -54,6 +54,15 @@ func (s *systemRouter) getVersion(ctx context.Context, w http.ResponseWriter, r 
 	info.APIVersion = api.DefaultVersion
 
 	return httputils.WriteJSON(w, http.StatusOK, info)
+}
+
+func (s *systemRouter) getDiskUsage(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+	du, err := s.backend.SystemDiskUsage()
+	if err != nil {
+		return err
+	}
+
+	return httputils.WriteJSON(w, http.StatusOK, du)
 }
 
 func (s *systemRouter) getEvents(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {

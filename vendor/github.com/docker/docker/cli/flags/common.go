@@ -53,7 +53,7 @@ func (commonOpts *CommonOptions) InstallFlags(flags *pflag.FlagSet) {
 	}
 
 	flags.BoolVarP(&commonOpts.Debug, "debug", "D", false, "Enable debug mode")
-	flags.StringVarP(&commonOpts.LogLevel, "log-level", "l", "info", "Set the logging level")
+	flags.StringVarP(&commonOpts.LogLevel, "log-level", "l", "info", "Set the logging level (debug, info, warn, error, fatal)")
 	flags.BoolVar(&commonOpts.TLS, "tls", false, "Use TLS; implied by --tlsverify")
 	flags.BoolVar(&commonOpts.TLSVerify, FlagTLSVerify, dockerTLSVerify, "Use TLS and verify the remote")
 
@@ -101,9 +101,8 @@ func (commonOpts *CommonOptions) SetDefaultOptions(flags *pflag.FlagSet) {
 	}
 }
 
-// SetDaemonLogLevel sets the logrus logging level
-// TODO: this is a bad name, it applies to the client as well.
-func SetDaemonLogLevel(logLevel string) {
+// SetLogLevel sets the logrus logging level
+func SetLogLevel(logLevel string) {
 	if logLevel != "" {
 		lvl, err := logrus.ParseLevel(logLevel)
 		if err != nil {
