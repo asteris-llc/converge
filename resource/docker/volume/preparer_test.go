@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestPreparerInterfaces ensures that the correct interfaces are implemented by
+// TestPreparerInterface ensures that the correct interfaces are implemented by
 // the preparer
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
