@@ -49,7 +49,7 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 			}
 		} else {
 			r.devicesToAdd = append(r.devicesToAdd, dev)
-			status.AddDifference(dev, "<none>", fmt.Sprintf("member of volume group %s", r.name), "")
+			status.AddDifference(dev, "<no group>", fmt.Sprintf("<group %s>", r.name), "")
 		}
 	}
 
@@ -64,7 +64,7 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 		if !found {
 			if pv, ok := pvs[d]; ok && pv.Group == r.name {
 				r.devicesToRemove = append(r.devicesToRemove, d)
-				status.AddDifference(d, fmt.Sprintf("member of volume group %s", r.name), "<removed>", "")
+				status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<removed>", "")
 			}
 		}
 	}
