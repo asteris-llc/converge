@@ -59,7 +59,7 @@ func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 		_, ok = lvs[r.name]
 		r.needCreate = !ok
 	} else {
-		status.Output = append(status.Output, fmt.Sprintf("group %s not exist, assume that it will be created"))
+		status.Output = append(status.Output, fmt.Sprintf("group %s not exist, assume that it will be created", r.group))
 		r.needCreate = true
 	}
 

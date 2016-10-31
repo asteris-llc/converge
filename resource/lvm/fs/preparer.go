@@ -25,7 +25,7 @@ import (
 type Preparer struct {
 	Device     string   `hcl:"device",required:"true"`
 	Mount      string   `hcl:"mount",required:"true"`
-	Fstype     string   `hcl:"fstype",reqired:"true"`
+	Fstype     string   `hcl:"fstype",required:"true"`
 	RequiredBy []string `hcl:"requiredBy"`
 	WantedBy   []string `hcl:"requiredBy"`
 	Before     []string `hcl:"requiredBy"`

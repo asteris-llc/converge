@@ -22,8 +22,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FIXME: should be caseless RE
+// NB: Implement proper case handling as LVM does
+//   upper case is S.I. (power of 10)
+//   lower case is powers of 1024
+//   also special suffixes `S` and `s` exists for sectors
+// Related ssue: https://github.com/asteris-llc/converge/issues/448
+
+// Cover values for `66%FREE` and likewise (refer LVM manpages for details).
+// See also size_test.go for more usage examples
 var pctRE = regexp.MustCompile("^(?i)(\\d+)%(PVS|VG|FREE)$")
+
+// Cover values for `50G` and likewise (refer LVM manpages for details).
+// See also size_test.go for more usage examples.
+// Difference between lower/upper cases letters not supported now, see NB above
 var sizeRE = regexp.MustCompile("^(?i)(\\d+)([bskmgtpe])b?$")
 
 // LvmSize represent parsed and validated LVM compatible size
@@ -32,8 +43,6 @@ type LvmSize struct {
 	Relative bool
 	Unit     string
 }
-
-// FIXME: add accessors and unpublish fields to make it immutable?
 
 // String reconstruct size to LVM compatible form
 func (size *LvmSize) String() string {
