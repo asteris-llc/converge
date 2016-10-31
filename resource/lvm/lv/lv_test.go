@@ -15,7 +15,7 @@
 package lv_test
 
 import (
-	//    "github.com/asteris-llc/converge/helpers/comparsion"
+	"github.com/asteris-llc/converge/helpers/comparison"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/lvm/lv"
@@ -54,8 +54,7 @@ func TestCreateLogicalVolume(t *testing.T) {
 	status, err := r.Check(fr)
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	// FIXME: proper diffs
-	//    comparsion.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
+	comparison.AssertDiff(t, status.Diffs(), "data", "<not exists>", "created /dev/mapper/vg0-data")
 
 	status, err = r.Apply()
 	assert.NoError(t, err)

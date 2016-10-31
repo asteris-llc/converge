@@ -18,8 +18,8 @@ import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	"io/ioutil"
 	"os"
 	"testing"
@@ -64,11 +64,11 @@ func TestLVMUpdateUnit(t *testing.T) {
 
 		lvm, me := testhelpers.MakeLvmWithMockExec()
 
-		// FIXME:   should be 0644 here, but call mismatch. Looks like BUG
-		me.On("WriteFile", filename, []byte(currentContent), mock.Anything).Return(nil)
+		me.On("WriteFile", filename, []byte(currentContent), (os.FileMode)(0644)).Return(nil)
 		me.On("Run", "systemctl", []string{"daemon-reload"}).Return(nil)
 
 		err := lvm.UpdateUnit(filename, currentContent)
 		assert.NoError(t, err)
+		me.AssertCalled(t, "WriteFile", filename, []byte(currentContent), (os.FileMode)(0644))
 	})
 }
