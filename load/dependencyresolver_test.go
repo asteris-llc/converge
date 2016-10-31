@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
@@ -96,6 +97,54 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 		graph.Targets(resolved.DownEdges("root/task.render")),
 		"root/param.message",
 	)
+}
+
+func TestDependencyResolverHandlesConditionalMetadata(t *testing.T) {
+	t.Parallel()
+	type test struct {
+		Value int
+	}
+	gr := graph.New()
+	gr.Add(node.New("root", nil))
+	gr.Add(node.New("root/param.a", struct{}{}))
+	gr.Add(node.New("root/task.query.a", test{Value: 1}))
+
+	gr.Add(node.New("root/test-param", struct{}{}))
+	gr.Add(node.New("root/test-lookup", struct{}{}))
+	gr.Add(node.New("root/test-param-and-lookup", struct{}{}))
+	gr.Add(node.New("root/test-none", struct{}{}))
+
+	gr.ConnectParent("root", "root/param.a")
+	gr.ConnectParent("root", "root/task.query.a")
+	gr.ConnectParent("root", "root/test-param")
+	gr.ConnectParent("root", "root/test-lookup")
+	gr.ConnectParent("root", "root/test-param-and-lookup")
+	gr.ConnectParent("root", "root/test-none")
+
+	node, ok := gr.Get("root/test-param")
+	require.True(t, ok)
+	node.AddMetadata("conditional-predicate-raw", "{{param `a`}}")
+
+	node, ok = gr.Get("root/test-lookup")
+	require.True(t, ok)
+	node.AddMetadata("conditional-predicate-raw", "{{lookup `task.query.a.value`}}")
+
+	node, ok = gr.Get("root/test-param-and-lookup")
+	require.True(t, ok)
+	node.AddMetadata("conditional-predicate-raw", "eq {{param `a`}} {{lookup `task.query.a.value`}}")
+
+	node, ok = gr.Get("root/test-none")
+	require.True(t, ok)
+	node.AddMetadata("conditional-predicate-raw", "true")
+
+	_, err := load.ResolveDependencies(context.Background(), gr)
+	require.NoError(t, err)
+
+	t.Run("params", func(t *testing.T) {
+
+	})
+	t.Run("lookups", func(t *testing.T) {})
+	t.Run("params-and-lookups", func(t *testing.T) {})
 }
 
 // TestDependencyResolverResolvesGroupDependencies tests whether group
