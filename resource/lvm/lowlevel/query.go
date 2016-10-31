@@ -21,6 +21,10 @@ import (
 )
 
 func (lvm *realLVM) Blkid(dev string) (string, error) {
+	if ok, err := lvm.backend.Exists(dev); err != nil || !ok {
+		return "", err
+	}
+
 	blkid, rc, err := lvm.backend.ReadWithExitCode("blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", dev})
 	if err != nil {
 		return "", err

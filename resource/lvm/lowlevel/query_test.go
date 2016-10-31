@@ -30,6 +30,7 @@ func TestLVMBlkid(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
 		expected := []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", "/dev/sda1"}
+		e.On("Exists", "/dev/sda1").Return(true, nil)
 		e.On("ReadWithExitCode", "blkid", expected).Return("xfs", 0, nil)
 		fs, err := lvm.Blkid("/dev/sda1")
 		assert.Equal(t, "xfs", fs)
@@ -39,6 +40,7 @@ func TestLVMBlkid(t *testing.T) {
 
 	t.Run("error during blkid call", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
+		e.On("Exists", "/dev/sda1").Return(true, nil)
 		e.On("ReadWithExitCode", "blkid", mock.Anything).Return("", 0, fmt.Errorf("failed"))
 		_, err := lvm.Blkid("/dev/sda1")
 		assert.Error(t, err)
@@ -47,8 +49,18 @@ func TestLVMBlkid(t *testing.T) {
 	t.Run("blkid exit with nonzero (missing device)", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
 		e.On("ReadWithExitCode", "blkid", mock.Anything).Return("", 2, nil)
+		e.On("Exists", "/dev/sda1").Return(true, nil)
 		fs, err := lvm.Blkid("/dev/sda1")
 		assert.NoError(t, err)
+		assert.Equal(t, "", fs)
+	})
+
+	t.Run("blkid no-device-exists check", func(t *testing.T) {
+		lvm, e := testhelpers.MakeLvmWithMockExec()
+		e.On("ReadWithExitCode", "blkid", mock.Anything).Return("", 2, nil)
+		e.On("Exists", "/dev/sda1").Return(true, fmt.Errorf("failed"))
+		fs, err := lvm.Blkid("/dev/sda1")
+		assert.Error(t, err)
 		assert.Equal(t, "", fs)
 	})
 }
