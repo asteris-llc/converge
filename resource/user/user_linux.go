@@ -37,6 +37,12 @@ func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	if options.Comment != "" {
 		args = append(args, "-c", options.Comment)
 	}
+	if options.CreateHome {
+		args = append(args, "-m")
+		if options.SkelDir != "" {
+			args = append(args, "-k", options.SkelDir)
+		}
+	}
 	if options.Directory != "" {
 		args = append(args, "-d", options.Directory)
 	}
@@ -55,6 +61,36 @@ func (s *System) DelUser(userName string) error {
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("userdel: %s", err)
+	}
+	return nil
+}
+
+// ModUser modifies a user
+func (s *System) ModUser(userName string, options *ModUserOptions) error {
+	args := []string{userName}
+	if options.Username != "" {
+		args = append(args, "-l", options.Username)
+	}
+	if options.UID != "" {
+		args = append(args, "-u", options.UID)
+	}
+	if options.Group != "" {
+		args = append(args, "-g", options.Group)
+	}
+	if options.Comment != "" {
+		args = append(args, "-c", options.Comment)
+	}
+	if options.Directory != "" {
+		args = append(args, "-d", options.Directory)
+		if options.MoveDir {
+			args = append(args, "-m")
+		}
+	}
+
+	cmd := exec.Command("usermod", args...)
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("usermod: %s", err)
 	}
 	return nil
 }
