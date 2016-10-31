@@ -58,8 +58,10 @@ func TestExecRead(t *testing.T) {
 		e := lowlevel.MakeOsExec()
 		_, err := e.Read("/bin/sh", []string{"-c", "echo foo && false"})
 		assert.Error(t, err)
-		// FIXME: underlying exec.Command looks not return output on error
-		//        would be nice to have all output in logs in case of error
+		// NB: underlying exec.Command looks not return output on error
+		//     would be nice to have all output in logs in case of error
+		// Related issue: https://github.com/asteris-llc/converge/issues/455
+		//     (part about clear determined behaviour of os.exec.Command wrapper)
 		// assert.Equal(t, "foo", out)
 	})
 

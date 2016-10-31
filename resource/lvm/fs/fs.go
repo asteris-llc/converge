@@ -48,7 +48,8 @@ type Mount struct {
 	RequiredBy string
 }
 
-// FIXME: RequiredBy statement should issued only when non-empty
+// NB: RequiredBy statement should issued only when non-empty
+// Related issue: https://github.com/asteris-llc/converge/issues/452
 const unitTemplate = `[Unit]
 Before=local-fs.target {{.Before}}
 
@@ -78,7 +79,7 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 			r.needMkfs = false
 		} else if fs == "" {
 			r.needMkfs = true
-			status.AddDifference("format", fs, r.mount.Type, "")
+			status.AddDifference("format", "<unformatted>", r.mount.Type, "")
 		} else {
 			return nil, fmt.Errorf("%s already contain other filesystem with different type %s", r.mount.What, fs)
 		}
@@ -95,7 +96,12 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 		}
 	}
 
-	// FIXME: check what device mounted to Where
+	// NB: Here we need to ensure, that r. mount.Where is exists, and have proper permissions
+	// Related issue: https://github.com/asteris-llc/converge/issues/449
+
+	// NB: We need to ensure, that no other filesystems mounted to Where
+	// (now we check only if it mountpoint or not)
+	// Related issue: https://github.com/asteris-llc/converge/issues/450
 	{
 		ok, err := r.lvm.Mountpoint(r.mount.Where)
 		if err != nil {
@@ -127,7 +133,6 @@ func (r *resourceFS) Apply() (resource.TaskStatus, error) {
 		}
 	}
 
-	// FIXME: need mkdir
 	if r.mountNeedUpdate {
 		if err := r.lvm.StartUnit(r.unitServiceName()); err != nil {
 			return nil, err
@@ -161,7 +166,8 @@ func NewResourceFS(lvm lowlevel.LVM, m *Mount) (resource.Task, error) {
 }
 
 func (r *resourceFS) escapedMountpoint() string {
-	// FIXME: proper systemd' escaping of r.mountpoint should be
+	// NB: proper systemd' escaping of r.mountpoint should be implemented here
+	// Related issue: https://github.com/asteris-llc/converge/issues/451
 	return strings.Replace(strings.Trim(r.mount.Where, "/"), "/", "-", -1)
 }
 

@@ -109,8 +109,9 @@ func (lvm *realLVM) Check() error {
 	if uid := lvm.backend.Getuid(); uid != 0 {
 		return fmt.Errorf("lvm require root permissions (uid == 0), but converge run from user id (uid == %d)", uid)
 	}
-	// FIXME: extend list to all used tools or wrap all calls via `lvm $subcommand` and check for lvm only
-	//        second way need careful check, if `lvm $subcommand` and just `$subcommand`  accepot exact same parameters
+	// NB: extend list to all used tools or wrap all calls via `lvm $subcommand` and check for lvm only
+	//     second way need careful check, if `lvm $subcommand` and just `$subcommand`  accepot exact same parameters
+	// Related issue: https://github.com/asteris-llc/converge/issues/457
 	for _, tool := range []string{"lvs", "vgs", "pvs", "lvcreate", "lvreduce", "lvremove", "vgcreate", "vgreduce", "pvcreate"} {
 		if err := lvm.backend.Lookup(tool); err != nil {
 			return errors.Wrapf(err, "lvm: can't find required tool %s in $PATH", tool)

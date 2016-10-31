@@ -27,9 +27,10 @@ import (
 )
 
 // Exec is interface to `real system` also used for test injections
-// FIXME: should be reviewed, and possible refactored as base for all
-//        processes/filesystem operrations, to make the easy mockable
-// FIXME: split to ExecInterface, FilesystemInterface (possible also SystemInterface for Getuid)
+// NB: should be reviewed, and possible refactored as base for all
+//     processes/filesystem operrations, to make the easy mockable
+// NB: possoble split to ExecInterface, FilesystemInterface (possible also SystemInterface for Getuid)
+// Related issue: https://github.com/asteris-llc/converge/issues/455
 type Exec interface {
 	Run(prog string, args []string) error
 	RunWithExitCode(prog string, args []string) (int, error) // for mountpoint querying

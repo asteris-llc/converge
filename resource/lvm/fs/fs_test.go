@@ -15,7 +15,7 @@
 package fs_test
 
 import (
-	//    "github.com/asteris-llc/converge/helpers/comparison"
+	"github.com/asteris-llc/converge/helpers/comparison"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource/lvm/fs"
 	"github.com/asteris-llc/converge/resource/lvm/testdata"
@@ -59,8 +59,7 @@ func TestCreateFilesystem(t *testing.T) {
 	status, err := r.Check(fr)
 	require.NoError(t, err)
 	assert.True(t, status.HasChanges())
-	// FIXME: proper diffs
-	//    comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
+	comparison.AssertDiff(t, status.Diffs(), "format", "<unformatted>", "xfs")
 
 	status, err = r.Apply()
 	require.NoError(t, err)

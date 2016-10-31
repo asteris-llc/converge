@@ -24,7 +24,8 @@ import (
 type MockExecutor struct {
 	mock.Mock
 
-	// FIXME: need more proper injection for `lvs` executing, return different output on different calls
+	// NB: need more proper injection for `lvs` executing, return different output on different calls
+	// Related issue: https://github.com/asteris-llc/converge/issues/456
 	LvsFirstCall bool // ugly hack
 }
 

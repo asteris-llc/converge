@@ -96,7 +96,9 @@ func (r *resourceLV) Apply() (resource.TaskStatus, error) {
 			return nil, err
 		}
 		if devpath != r.devicePath {
-			// FIXME: better put it to Messages, to log, both, upgrade to error???
+			// NB: better put it to Messages, to log, both, upgrade to error???
+			// would be nice to have it configurable, anb some good internal API for logging like this one
+			// Related issue: https://github.com/asteris-llc/converge/issues/454
 			status.Output = append(status.Output, fmt.Sprintf("WARN: real device path '%s' diverge with planned '%s'", devpath, r.devicePath))
 		}
 		status.DevicePath = devpath
