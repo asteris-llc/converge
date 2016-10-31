@@ -40,6 +40,14 @@ type Switch struct {
 	Node     *parse.Node
 }
 
+// BranchNames returns the branches in user-specified order
+func (s *Switch) BranchNames() (out []string) {
+	for _, branch := range s.Branches {
+		out = append(out, branch.Name)
+	}
+	return out
+}
+
 // IsSwitchNode returns true if the parse node represents a switch statement
 func IsSwitchNode(n *parse.Node) bool {
 	if len(n.Keys) < 0 {
