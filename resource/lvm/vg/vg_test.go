@@ -106,7 +106,6 @@ func TestVGApply(t *testing.T) {
 	})
 
 	t.Run("multiple devices", func(t *testing.T) {
-		t.Skip() // BUG BUG BUG!!! IDK why, but only 1st device passed to CreateVolumeGroup()
 		lvm, m := testhelpers.MakeFakeLvm()
 		m.On("Check").Return(nil)
 		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
@@ -145,7 +144,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"})
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"}, false)
 		status, err := r.Check(fr)
 		assert.NoError(t, err)
 		assert.True(t, status.HasChanges())
@@ -167,7 +166,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"})
+		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"}, false)
 		_, err := r.Check(fr)
 		assert.Error(t, err)
 	})
@@ -183,7 +182,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"})
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"}, false)
 		status, err := r.Check(fr)
 		assert.NoError(t, err)
 		assert.False(t, status.HasChanges())
@@ -191,14 +190,14 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	r := vg.NewResourceVG(lvm, "vg0", devs)
+	r := vg.NewResourceVG(lvm, "vg0", devs, false)
 	status, err := r.Check(fakerenderer.New())
 	assert.Error(t, err)
 	return status
 }
 
 func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, devs []string) (resource.TaskStatus, resource.Task) {
-	r := vg.NewResourceVG(lvm, "vg0", devs)
+	r := vg.NewResourceVG(lvm, "vg0", devs, false)
 	status, err := r.Check(fakerenderer.New())
 	require.NoError(t, err)
 	require.NotNil(t, status)
@@ -206,7 +205,7 @@ func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, devs []string) (resource
 }
 
 func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	checkStatus, vg := simpleCheckSuccess(t, lvm, []string{"/dev/sda1"})
+	checkStatus, vg := simpleCheckSuccess(t, lvm, devs)
 	require.True(t, checkStatus.HasChanges())
 
 	status, err := vg.Apply()
@@ -215,7 +214,7 @@ func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, devs []string) resource.
 }
 
 func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	checkStatus, vg := simpleCheckSuccess(t, lvm, []string{"/dev/sda1"})
+	checkStatus, vg := simpleCheckSuccess(t, lvm, devs)
 	require.True(t, checkStatus.HasChanges())
 
 	status, err := vg.Apply()

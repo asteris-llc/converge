@@ -83,6 +83,11 @@ func (f *FakeLVM) CreateLogicalVolume(group string, volume string, size *lowleve
 	return f.Called(group, volume, size).Error(0)
 }
 
+// RemovePhysicalVolume is mock for LVM.RemovePhysicalVolume()
+func (f *FakeLVM) RemovePhysicalVolume(dev string, force bool) error {
+	return f.Called(dev, force).Error(0)
+}
+
 // Mkfs is mock for LVM.Mkfs()
 func (f *FakeLVM) Mkfs(dev string, fstype string) error {
 	return f.Called(dev, fstype).Error(0)
