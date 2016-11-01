@@ -1,5 +1,5 @@
-hash: 92cc262955e76ad7e72650b54db249752e643efe55f4ebf8dcf3fa3f40f2ab55
-updated: 2016-10-14T15:54:53.882417772-05:00
+hash: 14d928c29dc830d308176fd9c7ecd4d35beefc1b157f28275b3ba7e33407220e
+updated: 2016-11-01T10:41:27.328992027-05:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -161,7 +161,7 @@ imports:
   subpackages:
   - unix
 - name: google.golang.org/grpc
-  version: b1a2821ca5a4fd6b6e48ddfbb7d6d7584d839d21
+  version: b7f1379d3cbbbeb2ca3405852012e237aa05459e
   subpackages:
   - codes
   - credentials
