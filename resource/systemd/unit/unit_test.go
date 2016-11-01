@@ -17,11 +17,12 @@ package unit_test
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/user"
 	"path/filepath"
-	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
@@ -40,6 +41,7 @@ func TestTaskInterface(t *testing.T) {
 }
 
 func TestCheckingActiveStates(t *testing.T) {
+	t.Parallel()
 
 	if !HasSystemd() {
 		return
@@ -77,6 +79,7 @@ func TestCheckingActiveStates(t *testing.T) {
 }
 
 func TestCheckingUnitFileStates(t *testing.T) {
+	t.Parallel()
 
 	if !HasSystemd() {
 		return
@@ -133,6 +136,7 @@ func TestCheckingUnitFileStates(t *testing.T) {
 
 // TestInactiveToActiveUnit test  if unit can activate a unit
 func TestInactiveToActiveUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -153,6 +157,7 @@ func TestInactiveToActiveUnit(t *testing.T) {
 
 // TestDisabledtoEnabledUnit test  if unit can enable a unit
 func TestDisabledtoEnabledUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -176,6 +181,7 @@ func TestDisabledtoEnabledUnit(t *testing.T) {
 
 // TestDisabledtoEnabledRuntimeUnit test  if unit can make a unitfile enabled at runtime
 func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -199,6 +205,7 @@ func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 
 // TestEnabledToDisabledUnit test if unit can disable a unit
 func TestEnabledToDisabledUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -222,6 +229,7 @@ func TestEnabledToDisabledUnit(t *testing.T) {
 
 // TestStaticToDisabledUnit tests if unit can disable a static unit
 func TestStaticToDisabledUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 
 	if !IsRoot() || !HasSystemd() {
@@ -246,6 +254,7 @@ func TestStaticToDisabledUnit(t *testing.T) {
 
 // TestLinkedUnit test if unit can link a unit file
 func TestLinkedUnit(t *testing.T) {
+	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 	if !IsRoot() || !HasSystemd() {
 		return
@@ -374,12 +383,12 @@ func (t *TmpService) Remove() {
 	generator.Run(daemonReload)
 }
 
-var count uint32
+var randGen *rand.Rand
 
 // NewTmpService creates a service file on the system either in
 // "/tmp", "/etc/systemd/system", or "/run/systemd/system".
 func NewTmpService(prefix string, static bool) (svc *TmpService, err error) {
-	number := atomic.AddUint32(&count, 1)
+	number := randGen.Uint32()
 	name := fmt.Sprintf("foo%d.service", number)
 	var path string
 	if prefix == "/tmp" {
@@ -416,6 +425,7 @@ func HasSystemd() bool {
 }
 
 func init() {
+	randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if HasSystemd() {
 		GetUnits()
 		FilterLoaded()

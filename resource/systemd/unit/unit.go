@@ -301,7 +301,7 @@ func (t *Unit) Apply() (resource.TaskStatus, error) {
 		return t, nil
 	}
 
-	statusMsg := fmt.Errorf("unit %q is in unknown state, %s", unitName, t.UnitFileState)
+	statusMsg := fmt.Errorf("unit %q is in unknown state, %s", unitName, state)
 	t.Status = systemd.AppendStatus(&resource.Status{
 		Level:  resource.StatusFatal,
 		Output: []string{statusMsg.Error()},

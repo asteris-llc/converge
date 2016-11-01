@@ -112,5 +112,3 @@ func ApplyResetFailed(unit string) (err error) {
 	return err
 
 }
-
-const daemonWontReloadMsg = "daemon does not need to be reloaded"
