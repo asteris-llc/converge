@@ -15,7 +15,6 @@
 package graph_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
@@ -23,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestMergeDuplicatesRemovesDuplicates(t *testing.T) {
@@ -50,7 +50,7 @@ func TestMergeDuplicatesMigratesDependencies(t *testing.T) {
 
 	g := baseDupGraph()
 	g.Add(node.New("root/two", 2))
-	g.Connect("root", "root/two")
+	g.ConnectParent("root", "root/two")
 	g.Connect("root/two", "root/first")
 
 	for i := 1; i <= 5; i++ {
@@ -104,8 +104,8 @@ func baseDupGraph() *graph.Graph {
 	g.Add(node.New("root/one", 1))
 	g.Add(node.New("root/first", 1))
 
-	g.Connect("root", "root/one")
-	g.Connect("root", "root/first")
+	g.ConnectParent("root", "root/one")
+	g.ConnectParent("root", "root/first")
 
 	return g
 }

@@ -15,7 +15,6 @@
 package prettyprinters_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
+	"golang.org/x/net/context"
 )
 
 func Example_usingADefaultProvider() {

@@ -29,6 +29,12 @@ type Preparer struct {
 	// Username is the user login name.
 	Username string `hcl:"username" required:"true"`
 
+	// NewUsername is used when modifying a user.
+	// Username will be changed to NewUsername. No changes to the home directory
+	// name or location of the contents will be made. This can be done using
+	// HomeDir and MoveDir options.
+	NewUsername string `hcl:"new_username"`
+
 	// UID is the user ID.
 	UID *uint32 `hcl:"uid"`
 
@@ -41,13 +47,32 @@ type Preparer struct {
 	GID *uint32 `hcl:"gid" mutually_exclusive:"gid,groupname"`
 
 	// Name is the user description.
+	// This field can be indicated when adding or modifying a user.
 	Name string `hcl:"name"`
 
-	// HomeDir is the user's login directory. By default,  the login
-	// name is appended to the home directory.
+	// CreateHome when set to true will create the home directory for the user.
+	// The files and directories contained in the skeleton directory (which can be
+	// defined with the SkelDir option) will be copied to the home directory.
+	CreateHome bool `hcl:"create_home"`
+
+	// SkelDir contains files and directories to be copied in the user's home
+	// directory when adding a user. If not set, the skeleton directory is defined
+	// by the SKEL variable in /etc/default/useradd or, by default, /etc/skel.
+	// SkelDir is only valid is CreatHome is specified.
+	SkelDir string `hcl:"skel_dir"`
+
+	// HomeDir is the name of the user's login directory. If not set, the home
+	// directory is defined by appending the value of Username to the HOME
+	// variable in /etc/default/useradd, resulting in /HOME/Username.
+	// This field can be indicated when adding or modifying a user.
 	HomeDir string `hcl:"home_dir"`
 
+	// MoveDir is used to move the contents of HomeDir when modifying a user.
+	// HomeDir must also be indicated if MoveDir is set to true.
+	MoveDir bool `hcl:"move_dir"`
+
 	// State is whether the user should be present.
+	// The default value is present.
 	State State `hcl:"state" valid_values:"present,absent"`
 }
 
@@ -63,15 +88,27 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		return nil, fmt.Errorf("user \"gid\" parameter out of range")
 	}
 
+	if p.SkelDir != "" && !p.CreateHome {
+		return nil, fmt.Errorf("user \"create_home\" parameter required with \"skel_dir\" parameter")
+	}
+
+	if p.MoveDir && p.HomeDir == "" {
+		return nil, fmt.Errorf("user \"home_dir\" parameter required with \"move_dir\" parameter")
+	}
+
 	if p.State == "" {
 		p.State = StatePresent
 	}
 
 	usr := NewUser(new(System))
 	usr.Username = p.Username
+	usr.NewUsername = p.NewUsername
 	usr.GroupName = p.GroupName
 	usr.Name = p.Name
+	usr.CreateHome = p.CreateHome
+	usr.SkelDir = p.SkelDir
 	usr.HomeDir = p.HomeDir
+	usr.MoveDir = p.MoveDir
 	usr.State = p.State
 
 	if p.UID != nil {

@@ -15,9 +15,8 @@
 package logging
 
 import (
-	"context"
-
 	"github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
 var loggerKey = struct{}{}

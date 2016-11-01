@@ -15,7 +15,6 @@
 package rpc
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -27,6 +26,7 @@ import (
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/net/context"
 )
 
 func TestGrapherGraph(t *testing.T) {

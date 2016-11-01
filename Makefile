@@ -5,14 +5,10 @@ TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vend
 NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
 BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
 BENCH = .
+REPO = github.com/asteris-llc/converge
 
-converge: $(shell find . -name '*.go' -not -name 'version_number.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
-	@echo "package cmd" > cmd/version_number.go
-	@echo >> cmd/version_number.go
-	@echo "const Version = \"$(shell git describe --dirty)\"" >> cmd/version_number.go
-	@echo "set version to $(shell git describe --dirty)"
-
-	go build -ldflags="-s -w" .
+converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+	go build -ldflags="-X ${REPO}/cmd.Version=$(shell git describe --dirty) -s -w" .
 
 test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
 	@echo
@@ -92,28 +88,26 @@ vendor-clean: ${NOVENDOR}
 	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
-	@echo "package cmd" > cmd/version_number.go
-	@echo >> cmd/version_number.go
-	@echo "const Version = \"$(shell git describe)\"" >> cmd/version_number.go
 	@echo "set version to $(shell git describe)"
 
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
-    -ldflags="-s -w" \
+    -ldflags="-X ${REPO}/cmd.Version=$(shell git describe) -s -w" \
 		-osarch="darwin/386" \
 		-osarch="darwin/amd64" \
 		-os="linux" \
 		-os="freebsd" \
 		-os="solaris" \
 		-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
+	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
 package: xcompile
 	@mkdir -p build/tgz
 	for f in $(shell find build -name converge | cut -d/ -f2); do \
-	  (cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz converge); \
-    echo $$f; \
-  done
+		(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
+	done
+	(cd build/tgz; shasum -a 512 * > tgz.sha256sum)
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
@@ -133,4 +127,4 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 	 --swagger_out=logtostderr=true:rpc/pb \
 	 rpc/pb/root.proto
 
-.PHONY: cmd/version_number.go test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check

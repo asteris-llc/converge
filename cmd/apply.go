@@ -15,9 +15,9 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
@@ -27,6 +27,7 @@ import (
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 )
 
 // applyCmd represents the plan command
@@ -109,6 +110,7 @@ real happens.`,
 				g.Connect(edge.Source, edge.Dest)
 			}
 
+			var applyError bool
 			// get vertices
 			err = iterateOverStream(
 				stream,
@@ -127,7 +129,11 @@ real happens.`,
 					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
 						if details != nil {
-							g.Add(node.New(resp.Id, details.ToPrintable()))
+							printable := details.ToPrintable()
+							if printable.Error() != nil {
+								applyError = true
+							}
+							g.Add(node.New(resp.Id, printable))
 						}
 					}
 				},
@@ -149,6 +155,9 @@ real happens.`,
 
 			fmt.Print("\n")
 			fmt.Print(out)
+			if applyError {
+				os.Exit(1)
+			}
 		}
 	},
 }

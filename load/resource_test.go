@@ -15,7 +15,6 @@
 package load_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestSetResourcesTask(t *testing.T) {

@@ -15,11 +15,11 @@
 package fetch_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestAnyBadURL(t *testing.T) {

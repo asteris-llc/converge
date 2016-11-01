@@ -15,7 +15,6 @@
 package graph_test
 
 import (
-	"context"
 	"errors"
 	"math/rand"
 	"sort"
@@ -29,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestGet(t *testing.T) {
@@ -511,7 +511,7 @@ func TestRootFirstWalk(t *testing.T) {
 	g := graph.New()
 	g.Add(node.New("root", nil))
 	g.Add(node.New("root/child", nil))
-	g.Connect("root", "root/child")
+	g.ConnectParent("root", "root/child")
 
 	var out []string
 	assert.NoError(
@@ -537,8 +537,8 @@ func TestRootFirstWalkSiblingDep(t *testing.T) {
 	g.Add(node.New("root/child", nil))
 	g.Add(node.New("root/sibling", nil))
 
-	g.Connect("root", "root/child")
-	g.Connect("root", "root/sibling")
+	g.ConnectParent("root", "root/child")
+	g.ConnectParent("root", "root/sibling")
 	g.Connect("root/child", "root/sibling")
 
 	var out []string

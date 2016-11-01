@@ -15,10 +15,11 @@
 package fetch
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"golang.org/x/net/context"
 )
 
 // HTTP fetches content over HTTP

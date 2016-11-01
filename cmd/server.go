@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"context"
 	"os"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/grpclog"
 )

@@ -16,7 +16,6 @@ package load
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 
 	"github.com/asteris-llc/converge/fetch"
@@ -27,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/parse"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type source struct {
@@ -97,7 +97,7 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 				}
 				continue
 			}
-			newID := graph.ID(current.Parent, resource.String())
+			newID := graph.ID(current.Parent, resource.ID())
 			out.Add(node.New(newID, resource))
 			out.ConnectParent(current.Parent, newID)
 
@@ -133,7 +133,7 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 	if err != nil {
 		return g, err
 	}
-	switchID := graph.ID(current.Parent, switchNode.String())
+	switchID := graph.ID(current.Parent, switchNode.ID())
 	g.Add(node.New(switchID, switchNode))
 	g.ConnectParent(current.Parent, switchID)
 	for _, branch := range switchObj.Branches {
@@ -141,14 +141,14 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 		if err != nil {
 			return g, err
 		}
-		branchID := graph.ID(switchID, branchNode.String())
+		branchID := graph.ID(switchID, branchNode.ID())
 		g.Add(node.New(branchID, branchNode))
 		g.ConnectParent(switchID, branchID)
 		for _, innerNode := range branch.InnerNodes {
 			if err := validateInnerNode(innerNode); err != nil {
 				return g, err
 			}
-			innerID := graph.ID(branchID, innerNode.String())
+			innerID := graph.ID(branchID, innerNode.ID())
 			g.Add(node.New(innerID, innerNode))
 			g.ConnectParent(branchID, innerID)
 		}

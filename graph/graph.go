@@ -15,7 +15,6 @@
 package graph
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform/dag"
 	"github.com/pkg/errors"
 	cmap "github.com/streamrail/concurrent-map"
+	"golang.org/x/net/context"
 )
 
 // WalkFunc is taken by the walking functions
@@ -523,7 +523,7 @@ func rootFirstWalk(ctx context.Context, g *Graph, cb WalkFunc) error {
 		// make sure all sibling dependencies are finished first
 		var skip bool
 		for _, edge := range g.DownEdges(id) {
-			if _, ok := done[edge.Target().(string)]; AreSiblingIDs(id, edge.Target().(string)) && !ok {
+			if _, ok := done[edge.Target().(string)]; g.AreSiblings(id, edge.Target().(string)) && !ok {
 				logger.WithField("id", id).WithField("target", edge).Debug("still waiting for sibling")
 				todo = append(todo, id)
 				skip = true

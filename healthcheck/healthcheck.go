@@ -15,12 +15,12 @@
 package healthcheck
 
 import (
-	"context"
 	"errors"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Check defines the interface for a health check

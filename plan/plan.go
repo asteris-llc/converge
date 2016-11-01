@@ -15,13 +15,13 @@
 package plan
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/render"
+	"golang.org/x/net/context"
 )
 
 // ErrTreeContainsErrors is a signal value to indicate errors in the graph

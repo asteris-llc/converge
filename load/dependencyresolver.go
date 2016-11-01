@@ -15,7 +15,6 @@
 package load
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"sort"
@@ -29,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/render/preprocessor"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type dependencyGenerator func(g *graph.Graph, id string, node *parse.Node) ([]string, error)
@@ -159,7 +159,7 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 		if _, ok := nodeRefs[vertex]; !ok {
 			nodeRefs[vertex] = struct{}{}
 			out = append(out, vertex)
-			if peerVertex, ok := getPeerVertex(id, vertex); ok {
+			if peerVertex, ok := getPeerVertex(g, id, vertex); ok {
 				out = append(out, peerVertex)
 			}
 		}
@@ -167,14 +167,14 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 	return out, err
 }
 
-func getPeerVertex(src, dst string) (string, bool) {
+func getPeerVertex(g *graph.Graph, src, dst string) (string, bool) {
 	if dst == "." || graph.IsRoot(dst) {
 		return "", false
 	}
-	if graph.AreSiblingIDs(src, dst) {
+	if g.AreSiblings(src, dst) {
 		return dst, true
 	}
-	return getPeerVertex(src, graph.ParentID(dst))
+	return getPeerVertex(g, src, graph.ParentID(dst))
 }
 
 func getNearestAncestor(g *graph.Graph, id, node string) (string, bool) {
@@ -339,7 +339,7 @@ func connectIsolatedGroupNodes(ctx context.Context, g *graph.Graph, nodes []*nod
 		if i > 0 {
 			from := meta.ID
 			to := unconnected[i-1].ID
-			if !graph.AreSiblingIDs(from, to) {
+			if !g.AreSiblings(from, to) {
 				from = groupDep(from)
 				to = groupDep(to)
 			}
