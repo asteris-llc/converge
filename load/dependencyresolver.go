@@ -79,7 +79,9 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 
 	for group := range groupMap {
-		groupDeps(ctx, g, group)
+		if g, err := groupDeps(ctx, g, group); err != nil {
+			return g, err
+		}
 	}
 	return g, err
 }
@@ -226,11 +228,30 @@ func withoutSelf(self string, in []string) (out []string) {
 	return out
 }
 
-func highestEdge(g *graph.Graph, id string) string {
-	edges := graph.Sources(g.UpEdges(id))
+func highestGroupEdge(g *graph.Graph, id, group string) string {
+	edges := g.UpEdgesInGroup(id, group)
 	for _, edge := range edges {
 		if !graph.IsRoot(edge) && edge != id {
-			return highestEdge(g, edge)
+			return highestGroupEdge(g, edge, group)
+		}
+	}
+	return id
+}
+
+func moduleEdge(g *graph.Graph, id string) string {
+	edges := graph.Sources(g.UpEdges(id))
+	for _, edge := range edges {
+		if graph.IsRoot(edge) {
+			return edge
+		}
+
+		if meta, ok := g.Get(edge); ok {
+			if node, ok := meta.Value().(*parse.Node); ok {
+				if node.IsModule() {
+					return meta.ID
+				}
+				return moduleEdge(g, meta.ID)
+			}
 		}
 	}
 	return id
@@ -248,8 +269,9 @@ func (b byDependencyCount) Less(i, j int) bool {
 }
 
 func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph, error) {
-	logger := logging.GetLogger(ctx).WithField("function", "groupDeps")
+	logger := logging.GetLogger(ctx).WithField("function", "groupDeps").WithField("group", group)
 
+	addGroupDependenciesToGroup(ctx, g, group)
 	nodes := g.GroupNodes(group)
 	sort.Sort(byDependencyCount{g, nodes})
 
@@ -269,7 +291,7 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 		return g, errors.Wrap(err, "failed to connect group nodes")
 	}
 
-	g, err = connectIsolatedGroupBranches(ctx, g, nodes)
+	g, err = connectIsolatedGroupBranches(ctx, g, nodes, group)
 	if err != nil {
 		logger.Error(err)
 		return g, errors.Wrap(err, "failed to connect group branches")
@@ -278,11 +300,34 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	return g, nil
 }
 
+func addGroupDependenciesToGroup(ctx context.Context, g *graph.Graph, group string) {
+	// add nodes that are dependent on a group node to the group
+	for _, node := range g.Nodes() {
+		if node.Group != "" {
+			continue
+		}
+		depIDs := g.Dependencies(node.ID)
+		for _, depID := range depIDs {
+			if dep, ok := g.Get(depID); ok {
+				if pnode, ok := node.Value().(*parse.Node); ok {
+					switch pnode.Kind() {
+					case "macro.case", "macro.switch": // ignore conditional nodes
+						continue
+					}
+					if dep.Group == group && !graph.IsRoot(node.ID) && !pnode.IsModule() {
+						node.Group = group
+					}
+				}
+			}
+		}
+	}
+}
+
 func alignEdgesInGroup(ctx context.Context, g *graph.Graph, id, group string) (*graph.Graph, error) {
-	upEdges := withoutRoot(graph.Sources(g.UpEdges(id)))
+	upEdges := withoutRoot(g.UpEdgesInGroup(id, group))
 	for i, upEdge := range upEdges {
 		if i > 0 {
-			dest := highestEdge(g, upEdges[i-1])
+			dest := highestGroupEdge(g, upEdges[i-1], group)
 			if err := g.SafeDisconnect(upEdge, id); err != nil {
 				return g, err
 			}
@@ -320,7 +365,7 @@ func connectIsolatedGroupNodes(ctx context.Context, g *graph.Graph, nodes []*nod
 	var unconnected []*node.Node
 	for _, meta := range nodes {
 		downEdges := withoutSelf(meta.ID, g.DownEdgesInGroup(meta.ID, group))
-		upEdges := withoutModule(g, withoutRoot(graph.Sources(g.UpEdges(meta.ID))))
+		upEdges := withoutModule(g, withoutRoot(g.UpEdgesInGroup(meta.ID, group)))
 		if len(downEdges) == 0 && len(upEdges) == 0 {
 			unconnected = append(unconnected, meta)
 		}
@@ -351,25 +396,27 @@ func connectIsolatedGroupNodes(ctx context.Context, g *graph.Graph, nodes []*nod
 	return g, nil
 }
 
-func connectIsolatedGroupBranches(ctx context.Context, g *graph.Graph, nodes []*node.Node) (*graph.Graph, error) {
+func connectIsolatedGroupBranches(ctx context.Context, g *graph.Graph, nodes []*node.Node, group string) (*graph.Graph, error) {
 	// collect all unconnected group branches
 	var groupBranches []*node.Node
 	for _, meta := range nodes {
-		downEdges := graph.Targets(g.DownEdges(meta.ID))
+		downEdges := g.DownEdgesInGroup(meta.ID, group)
 		if len(downEdges) == 0 {
 			groupBranches = append(groupBranches, meta)
 		}
 	}
 
-	// connect branches into a single branch
+	// connect branches into a single branch (if in the same module)
 	for i, treeRoot := range groupBranches {
 		if i > 0 {
 			from := treeRoot.ID
-			dest := highestEdge(g, groupBranches[i-1].ID)
+			dest := highestGroupEdge(g, groupBranches[i-1].ID, group)
 
-			if !willCycle(g, from, dest) {
-				if err := g.SafeConnect(from, dest); err != nil {
-					return g, err
+			if moduleEdge(g, from) == moduleEdge(g, dest) {
+				if !willCycle(g, from, dest) {
+					if err := g.SafeConnect(from, dest); err != nil {
+						return g, err
+					}
 				}
 			}
 		}
