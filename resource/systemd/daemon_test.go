@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test that every goroutine reloads daemon in order it's called.
+// TestDaemonReload tests that every goroutine reloads daemon in order it's called.
 func TestDaemonReload(t *testing.T) {
 	t.Parallel()
 	var wg sync.WaitGroup
@@ -54,7 +54,7 @@ func TestDaemonReload(t *testing.T) {
 	}
 }
 
-// Test that every goroutine resets failed units in order it's called.
+// TestResettingFailed tests that every goroutine resets failed units in order it's called.
 func TestResettingFailed(t *testing.T) {
 	t.Parallel()
 	var wg sync.WaitGroup

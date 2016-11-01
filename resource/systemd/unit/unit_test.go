@@ -40,6 +40,8 @@ func TestTaskInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Task)(nil), new(unit.Unit))
 }
 
+// TestCheckingActiveStates checks if unit resource can monitor the active state
+// of some units.
 func TestCheckingActiveStates(t *testing.T) {
 	t.Parallel()
 
@@ -78,6 +80,8 @@ func TestCheckingActiveStates(t *testing.T) {
 	}
 }
 
+// TestCheckingUnitFileStates checks if the unit resource can monitor the
+// ufs of selected units.
 func TestCheckingUnitFileStates(t *testing.T) {
 	t.Parallel()
 
@@ -285,6 +289,7 @@ func TestLinkedUnit(t *testing.T) {
 
 var units []dbus.UnitStatus
 
+// GetUnits loads the units availible on the system
 func GetUnits() error {
 	conn, err := systemd.GetDbusConnection()
 	if err != nil {
@@ -295,6 +300,7 @@ func GetUnits() error {
 	return err
 }
 
+// FilterLoaded should be caled after GetUnits. Removes all unloaded units.
 func FilterLoaded() {
 	newUnits := []dbus.UnitStatus{}
 	for i := range units {
@@ -305,20 +311,26 @@ func FilterLoaded() {
 	units = newUnits
 }
 
+// UnitCheck function that checks the UnitStatus for a property.
 type UnitCheck func(dbus.UnitStatus) bool
 
+// HasActiveStateCheck returns a UnitCheck that determines if the Unit has the
+// expected active state
 func HasActiveStateCheck(state systemd.ActiveState) UnitCheck {
 	return func(svc dbus.UnitStatus) bool {
 		return systemd.ActiveState(svc.ActiveState).Equal(state)
 	}
 }
 
+// HasUnitFileStateCheck returns a UnitCheck that determines if the Unit has the
+// expected unit file state
 func HasUnitFileStateCheck(state systemd.UnitFileState) UnitCheck {
 	return func(svc dbus.UnitStatus) bool {
 		return systemd.UnitFileState(svc.SubState).Equal(state)
 	}
 }
 
+// FindUnitWith returns the first unit that passes all the UnitChecks
 func FindUnitWith(checks []UnitCheck) (bool, dbus.UnitStatus) {
 	for _, unit := range units {
 		passedChecks := true
