@@ -36,6 +36,7 @@ type LVM interface {
 	ExtendVolumeGroup(vg string, dev string) error
 	ReduceVolumeGroup(vg string, dev string) error
 	CreatePhysicalVolume(dev string) error
+	RemovePhysicalVolume(dev string, force bool) error
 	CreateLogicalVolume(group string, volume string, size *LvmSize) error
 	Mkfs(dev string, fstype string) error
 	Mountpoint(path string) (bool, error)
@@ -79,6 +80,15 @@ func (lvm *realLVM) ReduceVolumeGroup(vg string, dev string) error {
 
 func (lvm *realLVM) CreatePhysicalVolume(dev string) error {
 	return lvm.backend.Run("pvcreate", []string{dev})
+}
+
+func (lvm *realLVM) RemovePhysicalVolume(dev string, force bool) error {
+	args := []string{}
+	if force {
+		args = append(args, "--force", "--force", "--yes")
+	}
+	args = append(args, dev)
+	return lvm.backend.Run("pvremove", args)
 }
 
 func (lvm *realLVM) CreateLogicalVolume(group string, volume string, size *LvmSize) error {

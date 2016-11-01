@@ -23,8 +23,9 @@ import (
 
 // Preparer for LVM's Volume Group
 type Preparer struct {
-	Name    string   `hcl:"name",required:"true"`
-	Devices []string `hcl:"devices"`
+	Name        string   `hcl:"name",required:"true"`
+	Devices     []string `hcl:"devices"`
+	ForceRemove bool     `hcl:"forceRemove"`
 }
 
 // Prepare a new task
@@ -40,6 +41,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		}
 	}
 
-	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices)
+	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices, p.ForceRemove)
 	return rvg, nil
 }

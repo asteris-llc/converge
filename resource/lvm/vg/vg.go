@@ -25,9 +25,10 @@ import (
 )
 
 type resourceVG struct {
-	name       string
-	deviceList []string
-	lvm        lowlevel.LVM
+	name        string
+	deviceList  []string
+	forceRemove bool
+	lvm         lowlevel.LVM
 
 	exists          bool
 	devicesToAdd    []string
@@ -104,6 +105,9 @@ func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
 			if err := r.lvm.ReduceVolumeGroup(r.name, d); err != nil {
 				return nil, err
 			}
+			if err := r.lvm.RemovePhysicalVolume(d, r.forceRemove); err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		if err := r.lvm.CreateVolumeGroup(r.name, r.devicesToAdd); err != nil {
@@ -115,11 +119,12 @@ func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
 }
 
 // NewResourceVG creates new resource.Task node for Volume Group
-func NewResourceVG(lvm lowlevel.LVM, name string, devs []string) resource.Task {
+func NewResourceVG(lvm lowlevel.LVM, name string, devs []string, forceRemove bool) resource.Task {
 	return &resourceVG{
-		lvm:        lvm,
-		deviceList: devs,
-		name:       name,
+		lvm:         lvm,
+		deviceList:  devs,
+		name:        name,
+		forceRemove: forceRemove,
 	}
 }
 
