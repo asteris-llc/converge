@@ -149,6 +149,28 @@ func TestUpEdgesInGroup(t *testing.T) {
 	assert.Equal(t, []string{"one"}, g.UpEdgesInGroup("two", group))
 }
 
+// TestNodes tests that Nodes returns nodes in the graph
+func TestNodes(t *testing.T) {
+	t.Parallel()
+
+	g := graph.New()
+	g.Add(node.New("one", 1))
+	g.Add(node.New("two", 2))
+	g.Add(node.New("three", 2))
+	g.Connect("one", "two")
+	g.Connect("three", "two")
+
+	nodes := g.Nodes()
+	nodeIDs := make([]string, len(nodes))
+	for i, node := range nodes {
+		nodeIDs[i] = node.ID
+	}
+	sort.Strings(nodeIDs)
+
+	assert.Equal(t, len(g.Vertices()), len(nodes))
+	assert.Equal(t, []string{"one", "three", "two"}, nodeIDs)
+}
+
 // TestGroupNodes tests that GroupNodes only returns nodes in a specific group
 func TestGroupNodes(t *testing.T) {
 	t.Parallel()
@@ -167,7 +189,14 @@ func TestGroupNodes(t *testing.T) {
 	g.Connect("one", "two")
 	g.Connect("three", "two")
 
-	assert.Equal(t, []string{"one"}, g.UpEdgesInGroup("two", group))
+	nodes := g.GroupNodes(group)
+	nodeIDs := make([]string, len(nodes))
+	for i, node := range nodes {
+		nodeIDs[i] = node.ID
+	}
+	sort.Strings(nodeIDs)
+
+	assert.Equal(t, []string{"one", "two"}, nodeIDs)
 }
 
 // TestSafeConnect tests that calling SafeConnect on a an invalid graph will

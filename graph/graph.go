@@ -620,6 +620,19 @@ func (g *Graph) Vertices() []string {
 	return vertices
 }
 
+// Nodes will return all nodes in the graph
+func (g *Graph) Nodes() []*node.Node {
+	var nodes = []*node.Node{}
+	graphVertices := g.inner.Vertices()
+	for v := range graphVertices {
+		id := graphVertices[v].(string)
+		if meta, ok := g.Get(id); ok {
+			nodes = append(nodes, meta)
+		}
+	}
+	return nodes
+}
+
 // GroupNodes will return all nodes in the graph in the specified group
 func (g *Graph) GroupNodes(group string) []*node.Node {
 	var nodes = []*node.Node{}
