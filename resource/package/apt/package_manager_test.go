@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/asteris-llc/converge/resource/package/apt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +32,7 @@ func TestAptInstalledVersion(t *testing.T) {
 	t.Run("when installed", func(t *testing.T) {
 		expected := "foo-0.1.2.3"
 		runner := newRunner(expected, nil)
-		y := &deb.Manager{Sys: runner}
+		y := &apt.Manager{Sys: runner}
 		result, found := y.InstalledVersion("foo1")
 		assert.True(t, found)
 		assert.Equal(t, expected, string(result))
@@ -39,7 +40,7 @@ func TestAptInstalledVersion(t *testing.T) {
 
 	t.Run("when not installed", func(t *testing.T) {
 		expected := ""
-		y := &deb.Manager{Sys: newRunner("", makeExitError("", 1))}
+		y := &apt.Manager{Sys: newRunner("", makeExitError("", 1))}
 		result, found := y.InstalledVersion("foo1")
 		assert.False(t, found)
 		assert.Equal(t, expected, string(result))
@@ -54,7 +55,7 @@ func TestAptInstallPackage(t *testing.T) {
 	t.Run("when installed", func(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", nil)
-		y := &deb.Manager{Sys: runner}
+		y := &apt.Manager{Sys: runner}
 		_, err := y.InstallPackage(pkg)
 		assert.NoError(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 1)
@@ -63,7 +64,7 @@ func TestAptInstallPackage(t *testing.T) {
 	t.Run("when not installed", func(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", makeExitError("", 1))
-		y := &deb.Manager{Sys: runner}
+		y := &apt.Manager{Sys: runner}
 		y.InstallPackage(pkg)
 		runner.AssertNumberOfCalls(t, "Run", 2)
 	})
@@ -71,7 +72,7 @@ func TestAptInstallPackage(t *testing.T) {
 	t.Run("when installation error", func(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", makeExitError("", 1))
-		y := &deb.Manager{Sys: runner}
+		y := &apt.Manager{Sys: runner}
 		_, err := y.InstallPackage(pkg)
 		assert.Error(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 2)
@@ -105,7 +106,7 @@ func makeExitError(stderr string, exitCode uint32) error {
 
 // queryString generates an dpkg query string
 func queryString(pkg string) string {
-	return "dpkg -s " + pkg
+	return "dpkg-query -W -f'${Package},${Status},${Version}\n' " + pkg
 }
 
 // installString generates a Apt install string
