@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource/package/rpm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterfaces ensures that the correct interfaces are implemented by
@@ -37,7 +38,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 	t.Parallel()
 	t.Run("when-state-present", func(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1", State: "present"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		asRPM, ok := task.(*rpm.Package)
 		require.True(t, ok)
@@ -45,7 +46,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 	})
 	t.Run("when-state-absent", func(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1", State: "absent"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		asRPM, ok := task.(*rpm.Package)
 		require.True(t, ok)
@@ -53,7 +54,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 	})
 	t.Run("when-state-missing", func(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		asRPM, ok := task.(*rpm.Package)
 		require.True(t, ok)

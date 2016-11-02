@@ -17,6 +17,7 @@ package control
 import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // ConditionalTask represents a task that may or may not be executed. It's
@@ -39,20 +40,20 @@ func (c *ConditionalTask) SetExecutionController(ctrl EvaluationController) {
 }
 
 // Apply will conditionally apply a task
-func (c *ConditionalTask) Apply() (resource.TaskStatus, error) {
+func (c *ConditionalTask) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	if c.controller.ShouldEvaluate() {
-		return c.Task.Apply()
+		return c.Task.Apply(ctx)
 	}
 	return &resource.Status{}, nil
 }
 
 // Check will conditionally check a task
-func (c *ConditionalTask) Check(r resource.Renderer) (resource.TaskStatus, error) {
+func (c *ConditionalTask) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	if c == nil {
 		return &resource.Status{}, errors.New("conditional task is nil")
 	}
 	if c.controller.ShouldEvaluate() {
-		return c.Task.Check(r)
+		return c.Task.Check(ctx, r)
 	}
 	return &resource.Status{}, nil
 }

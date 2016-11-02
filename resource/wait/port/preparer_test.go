@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource/wait/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that the Preparer interface is properly
@@ -40,7 +41,7 @@ func TestPreparerPrepare(t *testing.T) {
 	t.Run("initializes port", func(t *testing.T) {
 		var portTask *port.Port
 		p := &port.Preparer{Port: 8080, Host: "hostname"}
-		r, err := p.Prepare(fakerenderer.New())
+		r, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*port.Port)(nil), r)
 		portTask = r.(*port.Port)
@@ -60,7 +61,7 @@ func TestPreparerPrepare(t *testing.T) {
 
 	t.Run("invalid port", func(t *testing.T) {
 		p := &port.Preparer{Port: 0, Host: "hostname"}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		assert.Error(t, err)
 	})
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/asteris-llc/converge/resource/file/directory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestDirectoryCheck(t *testing.T) {
@@ -36,7 +37,7 @@ func TestDirectoryCheck(t *testing.T) {
 	t.Run("already-exists", func(t *testing.T) {
 		dir := directory.Directory{Destination: tmpDir}
 
-		plan, err := dir.Check(fakerenderer.New())
+		plan, err := dir.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 
 		assert.False(t, plan.HasChanges())
@@ -53,7 +54,7 @@ func TestDirectoryCheck(t *testing.T) {
 		dest := path.Join(tmpDir, "x")
 		dir := directory.Directory{Destination: dest}
 
-		plan, err := dir.Check(fakerenderer.New())
+		plan, err := dir.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 
 		assert.True(t, plan.HasChanges())
@@ -74,7 +75,7 @@ func TestDirectoryCheck(t *testing.T) {
 			CreateAll:   true,
 		}
 
-		plan, err := dir.Check(fakerenderer.New())
+		plan, err := dir.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 
 		assert.True(t, plan.HasChanges())
@@ -101,7 +102,7 @@ func TestDirectoryCheck(t *testing.T) {
 			CreateAll:   false,
 		}
 
-		plan, err := dir.Check(fakerenderer.New())
+		plan, err := dir.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 
 		assert.True(t, plan.HasChanges())
@@ -120,7 +121,7 @@ func TestDirectoryCheck(t *testing.T) {
 		defer os.Remove(dest)
 
 		dir := directory.Directory{Destination: dest}
-		plan, err := dir.Check(fakerenderer.New())
+		plan, err := dir.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 
 		assert.True(t, plan.HasChanges())
@@ -143,7 +144,7 @@ func TestDirectoryApply(t *testing.T) {
 		dest := path.Join(tmpDir, "one-level")
 		dir := directory.Directory{Destination: dest}
 
-		apply, err := dir.Apply()
+		apply, err := dir.Apply(context.Background())
 		require.NoError(t, err)
 
 		assert.Equal(
@@ -161,7 +162,7 @@ func TestDirectoryApply(t *testing.T) {
 			CreateAll:   true,
 		}
 
-		apply, err := dir.Apply()
+		apply, err := dir.Apply(context.Background())
 		require.NoError(t, err)
 
 		assert.Equal(
@@ -179,7 +180,7 @@ func TestDirectoryApply(t *testing.T) {
 
 		dir := directory.Directory{Destination: dest}
 
-		_, err := dir.Apply()
+		_, err := dir.Apply(context.Background())
 		require.Error(t, err)
 	})
 }

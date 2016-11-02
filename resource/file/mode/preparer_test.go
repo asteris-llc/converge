@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that file mode has been properly implemented
@@ -36,6 +37,6 @@ func TestValidPreparer(t *testing.T) {
 	var testMode uint32 = 777
 	fr := fakerenderer.FakeRenderer{}
 	prep := mode.Preparer{Destination: "path/to/file", Mode: &testMode}
-	_, err := prep.Prepare(&fr)
+	_, err := prep.Prepare(context.Background(), &fr)
 	assert.NoError(t, err)
 }

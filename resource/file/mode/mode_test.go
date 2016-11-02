@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/resource/file/mode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestTemplateInterface tests whether file mode is properly implemented
@@ -43,7 +44,7 @@ func TestCheck(t *testing.T) {
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
 	assert.NoError(t, mode.Validate())
 
-	status, err := mode.Check(fakerenderer.New())
+	status, err := mode.Check(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rw-------\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.True(t, status.HasChanges())
@@ -57,9 +58,9 @@ func TestApply(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	mode := mode.Mode{Destination: tmpfile.Name(), Mode: os.FileMode(int(0777))}
-	_, err = mode.Apply()
+	_, err = mode.Apply(context.Background())
 	require.NoError(t, err)
-	status, err := mode.Check(fakerenderer.New())
+	status, err := mode.Check(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 	assert.Contains(t, status.Messages(), fmt.Sprintf("%q's mode is \"-rwxrwxrwx\" expected \"-rwxrwxrwx\"", tmpfile.Name()))
 	assert.False(t, status.HasChanges())
