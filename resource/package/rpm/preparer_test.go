@@ -31,7 +31,7 @@ func TestPreparerInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(rpm.Preparer))
 }
 
-// TestPrepareCreatesPackage tests rpm.Package creation from the preparerer
+// TestPreparerCreatesPackage tests rpm.Package creation from the preparerer
 // ensuring that the state field is respected.
 func TestPreparerCreatesPackage(t *testing.T) {
 	t.Parallel()
