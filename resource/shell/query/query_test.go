@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/asteris-llc/converge/resource/shell/query"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func Test_Query_ImplementsTaskInterface(t *testing.T) {
@@ -31,7 +32,7 @@ func Test_Query_ImplementsTaskInterface(t *testing.T) {
 func Test_Apply_ReturnsError(t *testing.T) {
 	t.Parallel()
 	sh := testQuery()
-	_, actual := sh.Apply()
+	_, actual := sh.Apply(context.Background())
 	assert.Error(t, actual)
 }
 

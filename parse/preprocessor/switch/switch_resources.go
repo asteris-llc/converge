@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // SwitchPreparer represents a switch resource; the task it generates simply
@@ -28,7 +29,7 @@ type SwitchPreparer struct {
 }
 
 // Prepare does stuff
-func (s *SwitchPreparer) Prepare(resource.Renderer) (resource.Task, error) {
+func (s *SwitchPreparer) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
 	task := &SwitchTask{Branches: s.Branches}
 
 	return task, nil
@@ -77,12 +78,12 @@ func (s *SwitchTask) SortCases() {
 }
 
 // Check does stuff
-func (s *SwitchTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (s *SwitchTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 
 // Apply does stuff
-func (s *SwitchTask) Apply() (resource.TaskStatus, error) {
+func (s *SwitchTask) Apply(context.Context) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 

@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
+	"golang.org/x/net/context"
 )
 
 // Preparer handles querying
@@ -34,7 +35,7 @@ type Preparer struct {
 }
 
 // Prepare creates a new query type
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	shPrep := &shell.Preparer{
 		Interpreter: p.Interpreter,
 		Check:       p.Query,
@@ -45,7 +46,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Env:         p.Env,
 	}
 
-	task, err := shPrep.Prepare(render)
+	task, err := shPrep.Prepare(ctx, render)
 
 	if err != nil {
 		return &Query{}, err

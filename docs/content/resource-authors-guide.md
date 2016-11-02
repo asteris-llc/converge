@@ -52,11 +52,11 @@ struct MyShellTask struct {
     ApplyStmt string
 }
 
-func (t *MyShellTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (t *MyShellTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
     // your check implementation, returning t (which embeds a TaskStatus)
 }
 
-func (t *MyShellTask) Apply() (resource.TaskStatus, error) {
+func (t *MyShellTask) Apply(context.Context) (resource.TaskStatus, error) {
     // your apply implementation, returning t (which embeds a TaskStatus)
 }
 ```
@@ -115,7 +115,7 @@ type Preparer struct {
     Apply string `hcl:"apply"`
 }
 
-func (p *Preparer) Prepare(resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
     return &MyShellTask{CheckStmt: check, ApplyStmt: apply}, nil
 }
 ```

@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	"golang.org/x/net/context"
 )
 
 // Preparer for docker containers
@@ -85,7 +86,7 @@ type Preparer struct {
 }
 
 // Prepare a docker container
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	env := transform.StringsMapToStringSlice(
 		p.Env,
 		func(k, v string) string {

@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Content renders content to disk
@@ -30,7 +31,7 @@ type Content struct {
 }
 
 // Check if the content needs to be rendered
-func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (t *Content) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	contentDiff := resource.TextDiff{Values: [2]string{"", t.Content}}
 	stat, err := os.Stat(t.Destination)
@@ -78,7 +79,7 @@ func (t *Content) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply writes the content to disk
-func (t *Content) Apply() (resource.TaskStatus, error) {
+func (t *Content) Apply(context.Context) (resource.TaskStatus, error) {
 	var perm os.FileMode
 	var preChange string
 	diffs := make(map[string]resource.Diff)

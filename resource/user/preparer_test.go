@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/user"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that the Preparer interface is properly implemeted
@@ -45,98 +46,98 @@ func TestPrepare(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Run("no uid", func(t *testing.T) {
 			p := user.Preparer{GID: &testID, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("min allowable uid", func(t *testing.T) {
 			p := user.Preparer{UID: &minID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("max allowable uid", func(t *testing.T) {
 			p := user.Preparer{UID: &maxID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no group", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, Username: "test", Name: "test", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("with groupname", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, Username: "test", GroupName: currGroupName, Name: "test", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("with gid", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, Username: "test", GID: &testID, Name: "test", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("min allowable gid", func(t *testing.T) {
 			p := user.Preparer{GID: &minID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("max allowable gid", func(t *testing.T) {
 			p := user.Preparer{GID: &maxID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("create_home and skel_dir parameters", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", CreateHome: true, SkelDir: "/etc/skel", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("create_home parameter", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", CreateHome: true, HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no name parameter", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no home_dir parameter", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", Name: "test", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("no state parameter", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", Name: "test", HomeDir: "tmp"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
 
 		t.Run("home_dir and move_dir parameters", func(t *testing.T) {
 			p := user.Preparer{Username: "test", MoveDir: true, HomeDir: "tmp"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
@@ -145,28 +146,28 @@ func TestPrepare(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Run("uid out of range", func(t *testing.T) {
 			p := user.Preparer{UID: &invalidID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"uid\" parameter out of range"))
 		})
 
 		t.Run("gid out of range", func(t *testing.T) {
 			p := user.Preparer{GID: &invalidID, Username: "test"}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"gid\" parameter out of range"))
 		})
 
 		t.Run("no create_home with skel_dir", func(t *testing.T) {
 			p := user.Preparer{UID: &testID, GID: &testID, Username: "test", SkelDir: "/etc/skel", HomeDir: "tmp", State: user.StateAbsent}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"create_home\" parameter required with \"skel_dir\" parameter"))
 		})
 
 		t.Run("no home_dir with move_dir", func(t *testing.T) {
 			p := user.Preparer{Username: "test", MoveDir: true}
-			_, err := p.Prepare(&fr)
+			_, err := p.Prepare(context.Background(), &fr)
 
 			assert.EqualError(t, err, fmt.Sprintf("user \"home_dir\" parameter required with \"move_dir\" parameter"))
 		})

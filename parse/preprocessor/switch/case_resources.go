@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // CasePreparer contains generated case macro information
@@ -30,7 +31,7 @@ type CasePreparer struct {
 }
 
 // Prepare does stuff
-func (c *CasePreparer) Prepare(r resource.Renderer) (resource.Task, error) {
+func (c *CasePreparer) Prepare(ctx context.Context, r resource.Renderer) (resource.Task, error) {
 	predicate, err := r.Render("predicate", c.Predicate)
 	if err != nil {
 		return nil, err
@@ -143,12 +144,12 @@ func EvaluatePredicate(predicate string) (bool, error) {
 }
 
 // Check does stuff
-func (c *CaseTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (c *CaseTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 
 // Apply does stuff
-func (c *CaseTask) Apply() (resource.TaskStatus, error) {
+func (c *CaseTask) Apply(context.Context) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
 }
 

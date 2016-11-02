@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestParamInterface(t *testing.T) {
@@ -34,7 +35,7 @@ func TestParamCheck(t *testing.T) {
 
 	param := &param.Param{Val: "test"}
 
-	status, err := param.Check(fakerenderer.New())
+	status, err := param.Check(context.Background(), fakerenderer.New())
 	assert.Contains(t, status.Messages(), param.Val)
 	assert.False(t, status.HasChanges())
 	assert.NoError(t, err)
@@ -44,6 +45,6 @@ func TestParamApply(t *testing.T) {
 	t.Parallel()
 
 	param := new(param.Param)
-	_, err := param.Apply()
+	_, err := param.Apply(context.Background())
 	assert.NoError(t, err)
 }

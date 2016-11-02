@@ -40,7 +40,7 @@ func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, erro
 	}
 	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
 		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
-		value, err := pipeline.Exec(meta.Value())
+		value, err := pipeline.Exec(ctx, meta.Value())
 		if err != nil {
 			return err
 		}
@@ -70,7 +70,7 @@ func Pipeline(g *graph.Graph, id string, factory *Factory, top Values) executor.
 // preparer for it and add in all of the command-line parameters; otherwise if
 // the node is a valide resource.Resource return it.  If it's not root and not a
 // resource.Resource return an error.
-func (p pipelineGen) maybeTransformRoot(idi interface{}) (interface{}, error) {
+func (p pipelineGen) maybeTransformRoot(ctx context.Context, idi interface{}) (interface{}, error) {
 	if graph.IsRoot(p.ID) {
 		return module.NewPreparer(p.Top), nil
 	}
@@ -81,7 +81,7 @@ func (p pipelineGen) maybeTransformRoot(idi interface{}) (interface{}, error) {
 }
 
 // Run prepare on the node and return the resource.Resource to be wrapped
-func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
+func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interface{}, error) {
 	res, ok := idi.(resource.Resource)
 	if !ok {
 		return nil, typeError("resource.Resource", idi)
@@ -91,13 +91,13 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	prepared, err := res.Prepare(renderer)
+	prepared, err := res.Prepare(ctx, renderer)
 	if err != nil {
 		if _, ok := errors.Cause(err).(ErrUnresolvable); ok {
 
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
-			fakePrep, fakePrepErr := getTypedResourcePointer(res)
+			fakePrep, fakePrepErr := getTypedResourcePointer(ctx, res)
 			if fakePrepErr != nil {
 				return fakePrepErr, nil
 			}
@@ -107,7 +107,7 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 				if rendErr != nil {
 					return nil, rendErr
 				}
-				return res.Prepare(dynamicRenderer)
+				return res.Prepare(ctx, dynamicRenderer)
 			}), nil
 		}
 		return nil, err
@@ -116,7 +116,7 @@ func (p pipelineGen) prepareNode(idi interface{}) (interface{}, error) {
 }
 
 // Takes a resource.Task and wraps it in resource.TaskWrapper
-func (p pipelineGen) wrapTask(taski interface{}) (interface{}, error) {
+func (p pipelineGen) wrapTask(ctx context.Context, taski interface{}) (interface{}, error) {
 	if task, ok := taski.(*PrepareThunk); ok {
 		return task, nil
 	}
@@ -148,8 +148,8 @@ func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *P
 	}
 }
 
-func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
-	fakeTask, err := r.Prepare(fakerenderer.New())
+func getTypedResourcePointer(ctx context.Context, r resource.Resource) (resource.Task, error) {
+	fakeTask, err := r.Prepare(ctx, fakerenderer.New())
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +170,6 @@ func getTypedResourcePointer(r resource.Resource) (resource.Task, error) {
 // getTypedResourcePointer function.  It should be removed in a future refactor
 // but is in place until the code for dealing with thunked branch nodes has
 // stabilized.
-func FakeTaskFromPreparer(r resource.Resource) (resource.Task, error) {
-	return getTypedResourcePointer(r)
+func FakeTaskFromPreparer(ctx context.Context, r resource.Resource) (resource.Task, error) {
+	return getTypedResourcePointer(ctx, r)
 }

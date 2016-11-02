@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Shell is a structure representing a task.
@@ -32,10 +33,11 @@ type Shell struct {
 	CheckStatus  *CommandResults
 	HealthStatus *resource.HealthStatus
 	renderer     resource.Renderer
+	ctx          context.Context
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
-func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
+func (s *Shell) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	s.renderer = r
 	results, err := s.CmdGenerator.Run(s.CheckStmt)
 	if err != nil {
@@ -51,7 +53,7 @@ func (s *Shell) Check(r resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply is a NOP for health checks
-func (s *Shell) Apply() (resource.TaskStatus, error) {
+func (s *Shell) Apply(context.Context) (resource.TaskStatus, error) {
 	if cg, ok := s.CmdGenerator.(*CommandGenerator); ok {
 		s.CmdGenerator = cg
 	}
@@ -149,7 +151,7 @@ func (s *Shell) Error() error {
 func (s *Shell) updateHealthStatus() error {
 	if s.Status == nil {
 		fmt.Println("[INFO] health status requested with no plan, running check")
-		if _, err := s.Check(s.renderer); err != nil {
+		if _, err := s.Check(s.ctx, s.renderer); err != nil {
 			return err
 		}
 	}

@@ -14,9 +14,11 @@
 
 package executor
 
+import "golang.org/x/net/context"
+
 // PipelineFunc represents a pipelined function that uses multi-return instead
 // of either.
-type PipelineFunc func(interface{}) (interface{}, error)
+type PipelineFunc func(context.Context, interface{}) (interface{}, error)
 
 // Pipeline is a type alias for a lazy list of pipeline functions
 type Pipeline struct {
@@ -44,11 +46,11 @@ func (p Pipeline) Connect(end Pipeline) Pipeline {
 }
 
 // Exec executes the pipeline
-func (p Pipeline) Exec(zeroValue interface{}) (interface{}, error) {
+func (p Pipeline) Exec(ctx context.Context, zeroValue interface{}) (interface{}, error) {
 	var err error
 	var val = zeroValue
 	for _, f := range p.CallStack {
-		val, err = f(val)
+		val, err = f(ctx, val)
 		if err != nil {
 			return nil, err
 		}
