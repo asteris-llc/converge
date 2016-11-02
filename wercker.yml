@@ -42,7 +42,7 @@ publish:
     - script:
         name: upload new manifest
         code: |
-          s3cmd ls --recursive $AWS_BUCKET_URL | grep -v index.html > manifest.txt
+          s3cmd ls --recursive $AWS_BUCKET_URL | grep -v index.html | grep -v manifest.txt > manifest.txt
           s3cmd put \
                 --access_key=$AWS_ACCESS_KEY_ID \
                 --secret_key=$AWS_SECRET_ACCESS_KEY \
