@@ -31,11 +31,15 @@ type Preparer struct {
 
 	// State of the package. Present means the package will be installed if
 	// missing; Absent means the package will be uninstalled if present.
-	State pkg.State `hcl:"state" valid_values:"present,absent" default:"present"`
+	State pkg.State `hcl:"state" valid_values:"present,absent"`
 }
 
 // Prepare a new package
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+	if p.State == "" {
+		p.State = "present"
+	}
+
 	return &pkg.Package{
 		Name:   p.Name,
 		State:  p.State,
