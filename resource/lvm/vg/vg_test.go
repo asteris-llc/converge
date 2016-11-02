@@ -144,7 +144,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"}, false)
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"}, false, false)
 		status, err := r.Check(fr)
 		assert.NoError(t, err)
 		assert.True(t, status.HasChanges())
@@ -166,7 +166,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"}, false)
+		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"}, false, false)
 		_, err := r.Check(fr)
 		assert.Error(t, err)
 	})
@@ -182,7 +182,7 @@ func TestCreateVolume(t *testing.T) {
 
 		fr := fakerenderer.New()
 
-		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"}, false)
+		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"}, false, false)
 		status, err := r.Check(fr)
 		assert.NoError(t, err)
 		assert.False(t, status.HasChanges())
@@ -190,14 +190,14 @@ func TestCreateVolume(t *testing.T) {
 }
 
 func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	r := vg.NewResourceVG(lvm, "vg0", devs, false)
+	r := vg.NewResourceVG(lvm, "vg0", devs, false, false)
 	status, err := r.Check(fakerenderer.New())
 	assert.Error(t, err)
 	return status
 }
 
 func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, devs []string) (resource.TaskStatus, resource.Task) {
-	r := vg.NewResourceVG(lvm, "vg0", devs, false)
+	r := vg.NewResourceVG(lvm, "vg0", devs, false, false)
 	status, err := r.Check(fakerenderer.New())
 	require.NoError(t, err)
 	require.NotNil(t, status)

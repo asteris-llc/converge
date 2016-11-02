@@ -22,10 +22,23 @@ import (
 )
 
 // Preparer for LVM's Volume Group
+//
+// Volume group is responsible for creation LVM Volume Groups
+// from given block devices.
 type Preparer struct {
-	Name        string   `hcl:"name",required:"true"`
-	Devices     []string `hcl:"devices"`
-	ForceRemove bool     `hcl:"forceRemove"`
+	// Name of created volume group
+	Name string `hcl:"name" required:"true"`
+
+	// Devices is list of entities to include into volume group
+	Devices []string `hcl:"devices"`
+
+	// Remove is enable removal devices omitted from `Devices` list from
+	// from volume group
+	Remove bool `hcl:"remove"`
+
+	// ForceRemove control destruction of volumes after removing
+	// from volume group
+	ForceRemove bool `hcl:"forceRemove"`
 }
 
 // Prepare a new task
@@ -41,6 +54,6 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		}
 	}
 
-	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices, p.ForceRemove)
+	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices, p.Remove, p.ForceRemove)
 	return rvg, nil
 }

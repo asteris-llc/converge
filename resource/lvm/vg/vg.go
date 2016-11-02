@@ -27,6 +27,7 @@ import (
 type resourceVG struct {
 	name        string
 	deviceList  []string
+	remove      bool
 	forceRemove bool
 	lvm         lowlevel.LVM
 
@@ -69,17 +70,19 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	// process removed devices
-	for d := range pvs {
-		found := false
-		for _, d2 := range r.deviceList {
-			if d2 == d {
-				found = true
+	if r.remove {
+		for d := range pvs {
+			found := false
+			for _, d2 := range r.deviceList {
+				if d2 == d {
+					found = true
+				}
 			}
-		}
-		if !found {
-			if pv, ok := pvs[d]; ok && pv.Group == r.name {
-				r.devicesToRemove = append(r.devicesToRemove, d)
-				status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<removed>", "")
+			if !found {
+				if pv, ok := pvs[d]; ok && pv.Group == r.name {
+					r.devicesToRemove = append(r.devicesToRemove, d)
+					status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<removed>", "")
+				}
 			}
 		}
 	}
@@ -119,11 +122,12 @@ func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
 }
 
 // NewResourceVG creates new resource.Task node for Volume Group
-func NewResourceVG(lvm lowlevel.LVM, name string, devs []string, forceRemove bool) resource.Task {
+func NewResourceVG(lvm lowlevel.LVM, name string, devs []string, remove bool, forceRemove bool) resource.Task {
 	return &resourceVG{
 		lvm:         lvm,
 		deviceList:  devs,
 		name:        name,
+		remove:      remove,
 		forceRemove: forceRemove,
 	}
 }
