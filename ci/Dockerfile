@@ -6,6 +6,9 @@ RUN apt-get update
 # install graphviz
 RUN apt-get install -y graphviz
 
+# install s3cmd
+RUN apt-get install -y s3cmd
+
 # install protoc
 RUN apt-get install -y unzip && \
     wget https://github.com/google/protobuf/releases/download/v3.0.0/protoc-3.0.0-linux-x86_64.zip && \
