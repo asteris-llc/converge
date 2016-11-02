@@ -17,9 +17,11 @@ package rpm_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/package/rpm"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPreparerInterfaces ensures that the correct interfaces are implemented by
@@ -27,4 +29,32 @@ import (
 func TestPreparerInterfaces(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(rpm.Preparer))
+}
+
+func TestPreparerCreatesPackage(t *testing.T) {
+	t.Parallel()
+	t.Run("when-state-present", func(t *testing.T) {
+		p := &rpm.Preparer{Name: "test1", State: "present"}
+		task, err := p.Prepare(fakerenderer.New())
+		require.NoError(t, err)
+		asRPM, ok := task.(*rpm.Package)
+		require.True(t, ok)
+		assert.Equal(t, "present", string(asRPM.State))
+	})
+	t.Run("when-state-absent", func(t *testing.T) {
+		p := &rpm.Preparer{Name: "test1", State: "absent"}
+		task, err := p.Prepare(fakerenderer.New())
+		require.NoError(t, err)
+		asRPM, ok := task.(*rpm.Package)
+		require.True(t, ok)
+		assert.Equal(t, "absent", string(asRPM.State))
+	})
+	t.Run("when-state-missing", func(t *testing.T) {
+		p := &rpm.Preparer{Name: "test1"}
+		task, err := p.Prepare(fakerenderer.New())
+		require.NoError(t, err)
+		asRPM, ok := task.(*rpm.Package)
+		require.True(t, ok)
+		assert.Equal(t, "present", string(asRPM.State))
+	})
 }
