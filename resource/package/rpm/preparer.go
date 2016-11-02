@@ -17,6 +17,7 @@ package rpm
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/package"
 )
 
 // Preparer for RPM Package
@@ -33,7 +34,7 @@ type Preparer struct {
 	State State `hcl:"state" valid_values:"present,absent"`
 }
 
-// Prepare a new packge
+// Prepare a new package
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	if p.State == "" {
 		p.State = "present"
@@ -42,10 +43,10 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	return &Package{
 		Name:   p.Name,
 		State:  p.State,
-		PkgMgr: &YumManager{Sys: ExecCaller{}},
+		PkgMgr: &YumManager{Sys: pkg.ExecCaller{}},
 	}, nil
 }
 
 func init() {
-	registry.Register("package.rpm", (*Preparer)(nil), (*Package)(nil))
+	registry.Register("package.rpm", (*Preparer)(nil), (*pkg.Package)(nil))
 }
