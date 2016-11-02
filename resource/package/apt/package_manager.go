@@ -47,6 +47,6 @@ func (y *Manager) InstallPackage(p string) (string, error) {
 
 // RemovePackage removes a package, returning an error if something went wrong
 func (y *Manager) RemovePackage(pkg string) (string, error) {
-	res, err := y.Sys.Run(fmt.Sprintf("apt-get remove -y %s", pkg))
+	res, err := y.Sys.Run(fmt.Sprintf("apt-get purge -y %s", pkg))
 	return string(res), err
 }

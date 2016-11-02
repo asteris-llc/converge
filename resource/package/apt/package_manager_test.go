@@ -21,7 +21,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/asteris-llc/converge/resource/package/apt"
 )
 
 // TestAptInstalledVersion validates that installation status is successfully
@@ -104,7 +103,7 @@ func makeExitError(stderr string, exitCode uint32) error {
 	return err
 }
 
-// queryString generates an RPM query string
+// queryString generates an dpkg query string
 func queryString(pkg string) string {
 	return "dpkg -s " + pkg
 }
