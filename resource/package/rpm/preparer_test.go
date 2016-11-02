@@ -19,6 +19,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/package"
 	"github.com/asteris-llc/converge/resource/package/rpm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestPreparerInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(rpm.Preparer))
 }
 
-// TestPreparerCreatesPackage tests rpm.Package creation from the preparerer
+// TestPreparerCreatesPackage tests pkg.Package creation from the preparerer
 // ensuring that the state field is respected.
 func TestPreparerCreatesPackage(t *testing.T) {
 	t.Parallel()
@@ -39,7 +40,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1", State: "present"}
 		task, err := p.Prepare(fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*rpm.Package)
+		asRPM, ok := task.(*pkg.Package)
 		require.True(t, ok)
 		assert.Equal(t, "present", string(asRPM.State))
 	})
@@ -47,7 +48,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1", State: "absent"}
 		task, err := p.Prepare(fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*rpm.Package)
+		asRPM, ok := task.(*pkg.Package)
 		require.True(t, ok)
 		assert.Equal(t, "absent", string(asRPM.State))
 	})
@@ -55,7 +56,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		p := &rpm.Preparer{Name: "test1"}
 		task, err := p.Prepare(fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*rpm.Package)
+		asRPM, ok := task.(*pkg.Package)
 		require.True(t, ok)
 		assert.Equal(t, "present", string(asRPM.State))
 	})
