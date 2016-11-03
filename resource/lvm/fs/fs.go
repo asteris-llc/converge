@@ -67,49 +67,16 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 		return nil, errors.Wrap(err, "lvm.fs")
 	}
 
-	{
-		fs, err := r.lvm.Blkid(r.mount.What)
-		if err != nil {
-			return nil, err
-		}
-		log.Debugf("blkid detect following fstype: %s, planned fstype: %s", fs, r.mount.Type)
-		if fs == r.mount.Type {
-			r.needMkfs = false
-		} else if fs == "" {
-			r.needMkfs = true
-			status.AddDifference("format", "<unformatted>", r.mount.Type, "")
-		} else {
-			return nil, fmt.Errorf("%s already contain other filesystem with different type %s", r.mount.What, fs)
-		}
+	if err := r.checkBlkid(status); err != nil {
+		return nil, err
 	}
 
-	{
-		ok, err := r.lvm.CheckUnit(r.unitFileName, r.unitFileContent)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			r.unitNeedUpdate = true
-			status.AddDifference(r.unitFileName, "<none>", r.unitFileContent, "")
-		}
+	if err := r.checkUnit(status); err != nil {
+		return nil, err
 	}
 
-	// NB: Here we need to ensure, that r. mount.Where is exists, and have proper permissions
-	// Related issue: https://github.com/asteris-llc/converge/issues/449
-
-	// NB: We need to ensure, that no other filesystems mounted to Where
-	// (now we check only if it mountpoint or not)
-	// Related issue: https://github.com/asteris-llc/converge/issues/450
-	{
-		ok, err := r.lvm.Mountpoint(r.mount.Where)
-		if err != nil {
-			return nil, err
-		}
-		r.mountNeedUpdate = r.unitNeedUpdate && !ok
-	}
-
-	if r.mountNeedUpdate {
-		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
+	if err := r.checkMountpoint(status); err != nil {
+		return nil, err
 	}
 
 	if resource.AnyChanges(status.Differences) {
@@ -153,6 +120,54 @@ func NewResourceFS(lvm lowlevel.LVM, m *Mount) (resource.Task, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+func (r *resourceFS) checkBlkid(status *resource.Status) error {
+	fs, err := r.lvm.Blkid(r.mount.What)
+	if err != nil {
+		return errors.Wrapf(err, "retrieving current FS type of %s", r.mount.What)
+	}
+	log.Debugf("blkid detect following fstype: %s, planned fstype: %s", fs, r.mount.Type)
+	if fs == r.mount.Type {
+		r.needMkfs = false
+	} else if fs == "" {
+		r.needMkfs = true
+		status.AddDifference("format", "<unformatted>", r.mount.Type, "")
+	} else {
+		return fmt.Errorf("%s already contain other filesystem with different type %s", r.mount.What, fs)
+	}
+	return nil
+}
+
+// NB: Here we need to ensure, that r. mount.Where is exists, and have proper permissions
+// Related issue: https://github.com/asteris-llc/converge/issues/449
+//
+// NB: We need to ensure, that no other filesystems mounted to Where
+// (now we check only if it mountpoint or not)
+// Related issue: https://github.com/asteris-llc/converge/issues/450
+func (r *resourceFS) checkMountpoint(status *resource.Status) error {
+	ok, err := r.lvm.Mountpoint(r.mount.Where)
+	if err != nil {
+		return err
+	}
+	r.mountNeedUpdate = r.unitNeedUpdate && !ok
+
+	if r.mountNeedUpdate {
+		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
+	}
+	return nil
+}
+
+func (r *resourceFS) checkUnit(status *resource.Status) error {
+	ok, err := r.lvm.CheckUnit(r.unitFileName, r.unitFileContent)
+	if err != nil {
+		return err
+	}
+	if ok {
+		r.unitNeedUpdate = true
+		status.AddDifference(r.unitFileName, "<none>", r.unitFileContent, "")
+	}
+	return nil
 }
 
 func (r *resourceFS) escapedMountpoint() string {

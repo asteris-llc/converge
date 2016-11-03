@@ -44,7 +44,7 @@ func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 		return nil, errors.Wrap(err, "lvm.lv")
 	}
 
-	ok, err := r.checkVG()
+	ok, err := r.checkVG(false)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +73,8 @@ func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 func (r *resourceLV) Apply() (resource.TaskStatus, error) {
 	status := &Status{}
-	{
-		ok, err := r.checkVG()
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, fmt.Errorf("Group %s not exists", r.group)
-		}
+	if _, err := r.checkVG(true); err != nil {
+		return nil, err
 	}
 
 	if r.needCreate {
@@ -89,22 +83,21 @@ func (r *resourceLV) Apply() (resource.TaskStatus, error) {
 		}
 	}
 
-	{
-		devpath, err := r.deviceMapperPath()
-		if err != nil {
-			return nil, err
-		}
-		if devpath != r.devicePath {
-			// NB: better put it to Messages, to log, both, upgrade to error???
-			// would be nice to have it configurable, anb some good internal API for logging like this one
-			// Related issue: https://github.com/asteris-llc/converge/issues/454
-			status.Output = append(status.Output, fmt.Sprintf("WARN: real device path '%s' diverge with planned '%s'", devpath, r.devicePath))
-		}
-		status.DevicePath = devpath
-		if err := r.lvm.WaitForDevice(devpath); err != nil {
-			return status, err
-		}
+	devpath, err := r.deviceMapperPath()
+	if err != nil {
+		return nil, err
 	}
+	if devpath != r.devicePath {
+		// NB: better put it to Messages, to log, both, upgrade to error???
+		// would be nice to have it configurable, anb some good internal API for logging like this one
+		// Related issue: https://github.com/asteris-llc/converge/issues/454
+		status.Output = append(status.Output, fmt.Sprintf("WARN: real device path '%s' diverge with planned '%s'", devpath, r.devicePath))
+	}
+	status.DevicePath = devpath
+	if err := r.lvm.WaitForDevice(devpath); err != nil {
+		return status, err
+	}
+
 	return status, nil
 }
 
@@ -118,12 +111,17 @@ func NewResourceLV(lvm lowlevel.LVM, group string, name string, size *lowlevel.L
 	}
 }
 
-func (r *resourceLV) checkVG() (bool, error) {
+func (r *resourceLV) checkVG(escalate bool) (bool, error) {
 	vgs, err := r.lvm.QueryVolumeGroups()
 	if err != nil {
 		return false, err
 	}
 	_, ok := vgs[r.group]
+
+	// escalate trigger !ok to error
+	if !ok && escalate {
+		return ok, fmt.Errorf("Group %s not exists", r.group)
+	}
 	return ok, nil
 }
 
