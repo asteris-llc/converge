@@ -136,7 +136,7 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 	switchID := graph.ID(current.Parent, switchNode.ID())
 	g.Add(node.New(switchID, switchNode))
 	g.ConnectParent(current.Parent, switchID)
-	for _, branch := range switchObj.Branches {
+	for idx, branch := range switchObj.Branches {
 		branchNode, err := branch.GenerateNode()
 		if err != nil {
 			return g, err
@@ -156,6 +156,10 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 			condNode.AddMetadata("conditional-peers", switchObj.BranchNames())
 			g.Add(condNode)
 			g.ConnectParent(branchID, innerID)
+		}
+		if idx > 0 {
+			parent, _ := switchObj.Branches[idx-1].GenerateNode()
+			g.Connect(branchID, graph.ID(switchID, parent.ID()))
 		}
 	}
 	return g, nil
