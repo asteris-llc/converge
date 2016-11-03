@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // State type for Group
@@ -69,7 +70,7 @@ func NewGroup(system SystemUtils) *Group {
 }
 
 // Check if a user group exists
-func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	var (
 		groupByGid     *user.Group
 		gidErr         error
@@ -224,7 +225,7 @@ func (g *Group) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply changes for group
-func (g *Group) Apply() (resource.TaskStatus, error) {
+func (g *Group) Apply(context.Context) (resource.TaskStatus, error) {
 	var (
 		groupByGid *user.Group
 		gidErr     error

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Module holds stringified values for parameters
@@ -29,14 +30,14 @@ type Module struct {
 }
 
 // Check just returns the current value of the moduleeter. It should never have to change.
-func (m *Module) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (m *Module) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	m.Status = resource.Status{Output: []string{m.String()}}
 
 	return m, nil
 }
 
 // Apply doesn't do anything since modules are final values
-func (m *Module) Apply() (resource.TaskStatus, error) {
+func (m *Module) Apply(context.Context) (resource.TaskStatus, error) {
 	return m, nil
 }
 

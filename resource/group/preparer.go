@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for Group
@@ -42,7 +43,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.GID != nil && *p.GID == math.MaxUint32 {
 		// the maximum gid on linux is MaxUint32 - 1
 		return nil, fmt.Errorf("group \"gid\" parameter out of range")

@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/wait"
+	"golang.org/x/net/context"
 )
 
 // Preparer handles wait.query tasks
@@ -52,7 +53,7 @@ type Preparer struct {
 }
 
 // Prepare creates a new wait.port type
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.Port <= 0 {
 		return nil, errors.New("port is required and must be greater than zero")
 	}

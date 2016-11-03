@@ -12,15 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package pkg
+package rpm
 
 import (
-	"os/exec"
-	"syscall"
-
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
+
+// Package is an API for package state
+type Package struct {
+	Name   string
+	State  State
+	PkgMgr PackageManager
+	*resource.Status
+}
 
 // State type for Package
 type State string
@@ -33,64 +38,8 @@ const (
 	StateAbsent State = "absent"
 )
 
-// PackageVersion is a type alias for a string, since various packages may use
-// different naming conventions
-type PackageVersion string
-
-// PackageManager describes an interface for managing packages and helps make
-// `Check` and `Apply` testable.
-type PackageManager interface {
-	// If the package is installed, returns the version and true, otherwise
-	// returns an empty string and false.
-	InstalledVersion(string) (PackageVersion, bool)
-
-	// Installs a package, returning an error if something went wrong
-	InstallPackage(string) (string, error)
-
-	// Removes a package, returning an error if something went wrong
-	RemovePackage(string) (string, error)
-}
-
-// Package is an API for package state
-type Package struct {
-	Name   string
-	State  State
-	PkgMgr PackageManager
-	*resource.Status
-}
-
-// SysCaller allows us to mock exec.Command
-type SysCaller interface {
-	Run(string) ([]byte, error)
-}
-
-// ExecCaller is a dummy struct to handle wrapping exec.Command in the SysCaller
-// interface.
-type ExecCaller struct{}
-
-// Run executes `cmd` as a /bin/sh script and returns the output and error
-func (e ExecCaller) Run(cmd string) ([]byte, error) {
-	return exec.Command("sh", "-c", cmd).Output()
-}
-
-// GetExitCode returns the exit code of an error
-func GetExitCode(err error) (uint32, error) {
-	if err == nil {
-		return 0, nil
-	}
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		return 255, errors.Wrap(err, "not a valid exitError")
-	}
-	status, ok := exitErr.Sys().(syscall.WaitStatus)
-	if !ok {
-		return 255, errors.Wrap(err, "failed to get sys waitstatus")
-	}
-	return uint32(status.ExitStatus()), nil
-}
-
 // Check if the package has to be 'present', or 'absent'
-func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (p *Package) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	p.Status = resource.NewStatus()
 	if p.State == p.PackageState() {
 		return p, nil
@@ -101,7 +50,7 @@ func (p *Package) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply desired package state
-func (p *Package) Apply() (resource.TaskStatus, error) {
+func (p *Package) Apply(context.Context) (resource.TaskStatus, error) {
 	var err error
 	p.Status = resource.NewStatus()
 	if p.State == p.PackageState() {

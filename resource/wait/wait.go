@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Wait waits for a shell task to return 0 or reaches max failure threshold
@@ -29,7 +30,7 @@ type Wait struct {
 }
 
 // Apply retries the check until it passes or returns max failure threshold
-func (w *Wait) Apply() (resource.TaskStatus, error) {
+func (w *Wait) Apply(context.Context) (resource.TaskStatus, error) {
 	_, err := w.RetryUntil(func() (bool, error) {
 		results, err := w.CmdGenerator.Run(w.CheckStmt)
 		if err != nil {

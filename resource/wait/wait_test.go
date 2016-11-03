@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestApply tests that apply retries a task
@@ -54,7 +55,7 @@ func TestApply(t *testing.T) {
 		m.On("Run", mock.Anything).
 			Return(&shell.CommandResults{ExitStatus: 0}, nil)
 
-		_, err := wait.Apply()
+		_, err := wait.Apply(context.Background())
 		require.NoError(t, err)
 
 		t.Run("retry count", func(t *testing.T) {
@@ -80,7 +81,7 @@ func TestApply(t *testing.T) {
 			ExitStatus:     1,
 		}, nil)
 
-		_, err := wait.Apply()
+		_, err := wait.Apply(context.Background())
 		require.NoError(t, err)
 
 		t.Run("retry count", func(t *testing.T) {
@@ -96,7 +97,7 @@ func TestApply(t *testing.T) {
 		m.On("Run", mock.Anything).
 			Return(&shell.CommandResults{ExitStatus: 0}, errors.New("cmd failed"))
 
-		_, err := wait.Apply()
+		_, err := wait.Apply(context.Background())
 		assert.Error(t, err)
 	})
 }

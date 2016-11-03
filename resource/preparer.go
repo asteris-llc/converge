@@ -24,6 +24,7 @@ import (
 	"github.com/arbovm/levenshtein"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Preparer wraps and implements resource.Resource in order to deserialize into
@@ -50,7 +51,7 @@ func NewPreparerWithSource(r Resource, source map[string]interface{}) *Preparer 
 }
 
 // Prepare the destination to prepare itself.
-func (p *Preparer) Prepare(r Renderer) (Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, r Renderer) (Task, error) {
 	value := reflect.ValueOf(p.Destination)
 	typ := value.Type()
 	wasPtr := false // so we can re-wrap later if we need to
@@ -95,7 +96,7 @@ func (p *Preparer) Prepare(r Renderer) (Task, error) {
 		return nil, errors.New("unwrapped was not a Resource")
 	}
 
-	return resource.Prepare(r)
+	return resource.Prepare(ctx, r)
 }
 
 func (p *Preparer) validateExtra(typ reflect.Type) error {

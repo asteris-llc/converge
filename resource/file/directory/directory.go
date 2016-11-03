@@ -16,12 +16,12 @@ package directory
 
 import (
 	"fmt"
-	"path"
-
 	"os"
+	"path"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Directory makes sure a directory is present on disk
@@ -33,7 +33,7 @@ type Directory struct {
 }
 
 // Check if the directory exists
-func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (d *Directory) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
 	dest := d.Destination
@@ -79,7 +79,7 @@ func (d *Directory) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply creates the directory
-func (d *Directory) Apply() (resource.TaskStatus, error) {
+func (d *Directory) Apply(context.Context) (resource.TaskStatus, error) {
 	var err error
 
 	if d.CreateAll {

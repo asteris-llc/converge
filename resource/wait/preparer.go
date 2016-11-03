@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
+	"golang.org/x/net/context"
 )
 
 // Preparer handles wait.query tasks
@@ -74,7 +75,7 @@ type Preparer struct {
 }
 
 // Prepare creates a new wait type
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.Check == "" {
 		return nil, errors.New("Check is required and cannot be empty")
 	}
@@ -89,7 +90,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Env:         p.Env,
 	}
 
-	task, err := shPrep.Prepare(render)
+	task, err := shPrep.Prepare(ctx, render)
 
 	if err != nil {
 		return &Wait{}, err

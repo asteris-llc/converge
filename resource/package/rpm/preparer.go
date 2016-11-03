@@ -17,7 +17,7 @@ package rpm
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/package"
+	"golang.org/x/net/context"
 )
 
 // Preparer for RPM Package
@@ -31,22 +31,22 @@ type Preparer struct {
 
 	// State of the package. Present means the package will be installed if
 	// missing; Absent means the package will be uninstalled if present.
-	State pkg.State `hcl:"state" valid_values:"present,absent"`
+	State State `hcl:"state" valid_values:"present,absent"`
 }
 
-// Prepare a new package
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+// Prepare a new packge
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.State == "" {
 		p.State = "present"
 	}
 
-	return &pkg.Package{
+	return &Package{
 		Name:   p.Name,
 		State:  p.State,
-		PkgMgr: &YumManager{Sys: pkg.ExecCaller{}},
+		PkgMgr: &YumManager{Sys: ExecCaller{}},
 	}, nil
 }
 
 func init() {
-	registry.Register("package.rpm", (*Preparer)(nil), (*pkg.Package)(nil))
+	registry.Register("package.rpm", (*Preparer)(nil), (*Package)(nil))
 }

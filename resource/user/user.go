@@ -20,6 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // State type for User
@@ -95,7 +96,7 @@ func NewUser(system SystemUtils) *User {
 }
 
 // Check if a user user exists
-func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (u *User) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	var (
 		userByID *user.User
 		uidErr   error
@@ -181,7 +182,7 @@ func (u *User) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply changes for user
-func (u *User) Apply() (resource.TaskStatus, error) {
+func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 	var (
 		userByID *user.User
 		uidErr   error

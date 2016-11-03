@@ -26,6 +26,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -59,7 +60,7 @@ type Container struct {
 }
 
 // Check that a docker container with the specified configuration exists
-func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (c *Container) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	c.Status = resource.NewStatus()
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
@@ -84,7 +85,7 @@ func (c *Container) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply starts a docker container with the specified configuration
-func (c *Container) Apply() (resource.TaskStatus, error) {
+func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
 	c.Status = resource.NewStatus()
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
