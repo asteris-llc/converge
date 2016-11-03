@@ -23,10 +23,10 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/asteris-llc/converge/helpers/testing/graphutils"
 	"github.com/asteris-llc/converge/load"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 // TestNodesBasic tests loading basic.hcl
@@ -106,6 +106,7 @@ func TestNodeWithConditionals(t *testing.T) {
 		require.True(t, found)
 		assertMetadataMatches(t, node, "conditional-switch-name", "test-switch")
 	})
+
 	t.Run("metadata-predicates", func(t *testing.T) {
 		langs := []string{"spanish", "french", "japanese"}
 		for _, lang := range langs {
@@ -114,11 +115,13 @@ func TestNodeWithConditionals(t *testing.T) {
 			assertMetadataMatches(t, node, "conditional-predicate-raw", fmt.Sprintf("eq `%s` `{{param `lang`}}`", lang))
 		}
 	})
+
 	t.Run("metadata-default-predicate", func(t *testing.T) {
 		node, found := g.Get("root/macro.switch.test-switch/macro.case.default/file.content.greeting")
 		require.True(t, found)
 		assertMetadataMatches(t, node, "conditional-predicate-raw", "true")
 	})
+
 	t.Run("metadata-name", func(t *testing.T) {
 		names := []string{"spanish", "french", "japanese", "default"}
 		for _, name := range names {
@@ -127,6 +130,7 @@ func TestNodeWithConditionals(t *testing.T) {
 			assertMetadataMatches(t, node, "conditional-name", name)
 		}
 	})
+
 	t.Run("metadata-peers", func(t *testing.T) {
 		names := []string{"spanish", "french", "japanese", "default"}
 		expected := []string{"spanish", "french", "japanese", "default"}
@@ -134,6 +138,15 @@ func TestNodeWithConditionals(t *testing.T) {
 			node, found := g.Get(fmt.Sprintf("root/macro.switch.test-switch/macro.case.%s/file.content.greeting", name))
 			require.True(t, found)
 			assertMetadataMatches(t, node, "conditional-peers", expected)
+		}
+	})
+
+	t.Run("peer-dependencies", func(t *testing.T) {
+		peers := []string{"spanish", "french", "japanese", "default"}
+		for idx := 1; idx < len(peers); idx++ {
+			me := fmt.Sprintf("root/macro.switch.test-switch/macro.case.%s", peers[idx])
+			parent := fmt.Sprintf("root/macro.switch.test-switch/macro.case.%s", peers[idx-1])
+			assert.True(t, graphutils.DependsOn(g, me, parent))
 		}
 	})
 }
