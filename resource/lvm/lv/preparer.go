@@ -19,11 +19,24 @@ import (
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
 
-// Preparer for LVM VG resource
+// Preparer for LVM LV resource
+//
+// Logical volume creation
 type Preparer struct {
-	Group string `hcl:"group",required:"true"`
-	Name  string `hcl:"name",required:"true"`
-	Size  string `hcl:"size",required:"true"`
+	// Group where volume will be created
+	Group string `hcl:"group" required:"true"`
+
+	// Name of volume, which will be created
+	Name string `hcl:"name" required:"true"`
+
+	// Size of volume. Can be relative or absolute.
+	// Relative size set in forms like `100%FREE`
+	// (words after percent sign can be `FREE`, `VG`, `PV`)
+	// Absolute size specified with suffix `BbKkMmGgTtPp`, upper case
+	// suffix mean S.I. sizes (power of 10), lower case mean powers of 1024.
+	// Also special suffixes `Ss`, which mean sectors.
+	// Refer to LVM manpages for details.
+	Size string `hcl:"size" required:"true"`
 }
 
 // Prepare a new task
