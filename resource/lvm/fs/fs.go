@@ -21,7 +21,6 @@ import (
 	"text/template"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
@@ -181,8 +180,4 @@ func (r *resourceFS) renderUnitFile() (string, error) {
 		return "", err
 	}
 	return b.String(), nil
-}
-
-func init() {
-	registry.Register("lvm.fs", (*Preparer)(nil), (*resourceFS)(nil))
 }

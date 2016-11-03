@@ -15,6 +15,7 @@
 package lv
 
 import (
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
@@ -48,4 +49,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	r := NewResourceLV(lowlevel.MakeLvmBackend(), p.Group, p.Name, size)
 	return r, nil
+}
+
+func init() {
+	registry.Register("lvm.logicalvolume", (*Preparer)(nil), (*resourceLV)(nil))
 }
