@@ -39,7 +39,7 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if err := r.lvm.Check(); err != nil {
-		return nil, errors.Wrap(err, "lvm.vg")
+		return nil, errors.Wrap(err, "lvm.volumegroup")
 	}
 
 	pvs, err := r.lvm.QueryPhysicalVolumes()
@@ -48,12 +48,8 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	}
 
 	// check if group exists
-	{
-		vgs, err := r.lvm.QueryVolumeGroups()
-		if err != nil {
-			return nil, err
-		}
-		_, r.exists = vgs[r.name]
+	if err := r.checkIfGroupExists(); err != nil {
+		return nil, err
 	}
 
 	// process new devices
@@ -122,6 +118,15 @@ func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
 	}
 
 	return &resource.Status{}, nil
+}
+
+func (r *resourceVG) checkIfGroupExists() error {
+	vgs, err := r.lvm.QueryVolumeGroups()
+	if err != nil {
+		return err
+	}
+	_, r.exists = vgs[r.name]
+	return nil
 }
 
 // NewResourceVG creates new resource.Task node for Volume Group
