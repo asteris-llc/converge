@@ -14,7 +14,11 @@
 
 package resource
 
-import "fmt"
+import (
+	"fmt"
+
+	"golang.org/x/net/context"
+)
 
 // ThunkTask represents an abstract task over a thunk, used when we need to
 // serialized a thunked value.
@@ -24,12 +28,12 @@ type ThunkTask struct {
 }
 
 // Check returns a task status with thunk information
-func (t *ThunkTask) Check(Renderer) (TaskStatus, error) {
+func (t *ThunkTask) Check(context.Context, Renderer) (TaskStatus, error) {
 	return t.ToStatus(), nil
 }
 
 // Apply returns a task status with thunk information
-func (t *ThunkTask) Apply() (TaskStatus, error) {
+func (t *ThunkTask) Apply(context.Context) (TaskStatus, error) {
 	return t.ToStatus(), nil
 }
 

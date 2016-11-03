@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 type pipelineGen struct {
@@ -35,7 +36,7 @@ type taskWrapper struct {
 }
 
 // Pipeline generates a pipeline to evaluate a single graph node
-func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
+func Pipeline(ctx context.Context, g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
 	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
@@ -44,13 +45,13 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 }
 
 // GetTask returns Right Task if the value is a task, or Left Error if not
-func (g *pipelineGen) GetTask(idi interface{}) (interface{}, error) {
+func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}, error) {
 	if thunk, ok := idi.(*render.PrepareThunk); ok {
 		thunked, err := thunk.Thunk(g.RenderingPlant)
 		if err != nil {
 			return nil, err
 		}
-		return g.GetTask(thunked)
+		return g.GetTask(ctx, thunked)
 	}
 
 	if task, ok := idi.(resource.Task); ok {
@@ -65,7 +66,7 @@ func (g *pipelineGen) GetTask(idi interface{}) (interface{}, error) {
 // it returns `Right (Left Status)` and otherwise returns `Right (Right
 // Task)`. The return values are structured to short-circuit `PlanNode` if we
 // have failures.
-func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
+func (g *pipelineGen) DependencyCheck(ctx context.Context, taskI interface{}) (interface{}, error) {
 	task, ok := taskI.(taskWrapper)
 	if !ok {
 		return nil, errors.New("input node is not a task wrapper")
@@ -96,7 +97,7 @@ func (g *pipelineGen) DependencyCheck(taskI interface{}) (interface{}, error) {
 // if the input value is Left, returns it as a Right value, otherwise it
 // attempts to run plan on the TaskWrapper and returns an appropriate Left or
 // Right value.
-func (g *pipelineGen) PlanNode(taski interface{}) (interface{}, error) {
+func (g *pipelineGen) PlanNode(ctx context.Context, taski interface{}) (interface{}, error) {
 	twrapper, ok := taski.(taskWrapper)
 	if !ok {
 		asResult, ok := taski.(*Result)
@@ -110,7 +111,7 @@ func (g *pipelineGen) PlanNode(taski interface{}) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to get renderer for %s", g.ID)
 	}
-	status, err := twrapper.Task.Check(renderer)
+	status, err := twrapper.Task.Check(ctx, renderer)
 
 	// create empty Status structure, if it not created in .Check()
 	if status == nil {

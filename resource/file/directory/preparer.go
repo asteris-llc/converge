@@ -17,6 +17,7 @@ package directory
 import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Preparer for Directory
@@ -31,7 +32,7 @@ type Preparer struct {
 }
 
 // Prepare the new directory
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	return &Directory{
 		Destination: p.Destination,
 		CreateAll:   p.CreateAll,

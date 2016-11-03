@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that the Preparer interface is properly
@@ -40,14 +41,14 @@ func TestPreparerPrepare(t *testing.T) {
 
 	t.Run("invalid check", func(t *testing.T) {
 		p := &wait.Preparer{Check: ""}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		assert.Error(t, err)
 	})
 
 	t.Run("initializes task", func(t *testing.T) {
 		var waitTask *wait.Wait
 		p := &wait.Preparer{Check: "test"}
-		r, err := p.Prepare(fakerenderer.New())
+		r, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*wait.Wait)(nil), r)
 		waitTask = r.(*wait.Wait)

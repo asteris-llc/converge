@@ -14,6 +14,8 @@
 
 package resource
 
+import "golang.org/x/net/context"
+
 // Tasker is a struct that is or contains an embedded resource.Task
 type Tasker interface {
 	GetTask() (Task, bool)
@@ -24,13 +26,13 @@ type Tasker interface {
 // Check will be called again if Apply succeeds with no error to get the final
 // status of the resource.
 type Task interface {
-	Check(Renderer) (TaskStatus, error)
-	Apply() (TaskStatus, error)
+	Check(context.Context, Renderer) (TaskStatus, error)
+	Apply(context.Context) (TaskStatus, error)
 }
 
 // Resource adds metadata about the executed tasks
 type Resource interface {
-	Prepare(Renderer) (Task, error)
+	Prepare(context.Context, Renderer) (Task, error)
 }
 
 // Value is anything that can be in a renderer's Value

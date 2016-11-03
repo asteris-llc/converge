@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/shell"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func Test_Preparer_ImplementsResourceInterface(t *testing.T) {
@@ -31,14 +32,14 @@ func Test_Preparer_ImplementsResourceInterface(t *testing.T) {
 func Test_Prepare_ReturnsError_WhenScriptFailsSyntaxCheck(t *testing.T) {
 	t.Parallel()
 	p := shPreparer("if [[ -x")
-	_, err := p.Prepare(fakerenderer.New())
+	_, err := p.Prepare(context.Background(), fakerenderer.New())
 	assert.Error(t, err)
 }
 
 func Test_Prepare_ReturnsNilError_WhenScriptPassesSyntaxCheck(t *testing.T) {
 	t.Parallel()
 	p := shPreparer("true")
-	_, err := p.Prepare(fakerenderer.New())
+	_, err := p.Prepare(context.Background(), fakerenderer.New())
 	assert.NoError(t, err)
 }
 
@@ -52,7 +53,7 @@ func Test_Prepare_ReturnsError_WhenSyntaxError(t *testing.T) {
 		CheckFlags:  checkFlag,
 		Check:       expectedStatement,
 	}
-	_, err := p.Prepare(fakerenderer.New())
+	_, err := p.Prepare(context.Background(), fakerenderer.New())
 	assert.Error(t, err)
 }
 

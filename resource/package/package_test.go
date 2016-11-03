@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPackageInterfaces ensures the correct interfaces are implemented
@@ -56,28 +57,28 @@ func TestCheck(t *testing.T) {
 	t.Run("when present/present", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StatePresent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
-		status, err := p.Check(fakerenderer.New())
+		status, err := p.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
 	t.Run("when absent/absent", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StateAbsent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
-		status, err := p.Check(fakerenderer.New())
+		status, err := p.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
 	t.Run("when should be removed", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StateAbsent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
-		status, err := p.Check(fakerenderer.New())
+		status, err := p.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.True(t, status.HasChanges())
 	})
 	t.Run("when should be installed", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StatePresent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
-		status, err := p.Check(fakerenderer.New())
+		status, err := p.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.True(t, status.HasChanges())
 	})
@@ -90,21 +91,21 @@ func TestApply(t *testing.T) {
 	t.Run("when present/present", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StatePresent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
-		status, err := p.Apply()
+		status, err := p.Apply(context.Background())
 		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
 	t.Run("when absent/absent", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StateAbsent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", makeExitError("", 1))}
-		status, err := p.Apply()
+		status, err := p.Apply(context.Background())
 		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
 	t.Run("when should be removed", func(t *testing.T) {
 		p := &pkg.Package{State: pkg.StateAbsent}
 		p.PkgMgr = &rpm.YumManager{newRunner("", nil)}
-		status, err := p.Apply()
+		status, err := p.Apply(context.Background())
 		require.NoError(t, err)
 		assert.True(t, status.HasChanges())
 	})

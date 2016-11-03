@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/asteris-llc/converge/resource"
+	"golang.org/x/net/context"
 )
 
 // Mode monitors the mode of a file
@@ -30,7 +31,7 @@ type Mode struct {
 }
 
 // Check whether the Destination has the right Mode
-func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (t *Mode) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	diffs := make(map[string]resource.Diff)
 	stat, err := os.Stat(t.Destination)
 	if os.IsNotExist(err) {
@@ -67,7 +68,7 @@ func (t *Mode) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply the changes the Mode
-func (t *Mode) Apply() (resource.TaskStatus, error) {
+func (t *Mode) Apply(context.Context) (resource.TaskStatus, error) {
 	err := os.Chmod(t.Destination, t.Mode.Perm())
 
 	if err != nil {

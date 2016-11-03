@@ -56,7 +56,7 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 		return nil, err
 	}
 	pipeline := func(g *graph.Graph, id string) executor.Pipeline {
-		return plan.Pipeline(g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant))
+		return plan.Pipeline(ctx, g, id, renderingPlant).Connect(Pipeline(g, id, renderingPlant))
 	}
 	return execPipeline(ctx, in, pipeline, renderingPlant, notify)
 }
@@ -70,7 +70,7 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 			renderingPlant.Graph = out
 			pipeline := pipelineF(out, meta.ID)
 
-			val, pipelineError := pipeline.Exec(meta.Value())
+			val, pipelineError := pipeline.Exec(ctx, meta.Value())
 
 			if pipelineError != nil {
 				hasErrors = ErrTreeContainsErrors

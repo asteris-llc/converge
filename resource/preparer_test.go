@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerPrepare tests the Unmarshalling of Preparer into Resource
@@ -43,7 +44,7 @@ func TestPreparerPrepare(t *testing.T) {
 			Destination: target,
 		}
 
-		_, err := prep.Prepare(fakerenderer.New())
+		_, err := prep.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err, "%v", err)
 
 		return target
@@ -205,7 +206,7 @@ func TestPreparerPrepare(t *testing.T) {
 				Destination: new(testPreparerTarget),
 			}
 
-			_, err := prep.Prepare(fakerenderer.New())
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
 			assert.EqualError(t, err, "value did not pass validation. Must be one of \"a\", was \"invalid\"")
 		})
 	})
@@ -224,7 +225,7 @@ func TestPreparerPrepare(t *testing.T) {
 				Destination: new(testRequiredTarget),
 			}
 
-			_, err := prep.Prepare(fakerenderer.New())
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
 			assert.NoError(t, err)
 		})
 
@@ -234,7 +235,7 @@ func TestPreparerPrepare(t *testing.T) {
 				Destination: new(testRequiredTarget),
 			}
 
-			_, err := prep.Prepare(fakerenderer.New())
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
 			assert.EqualError(t, err, `"required" is required`)
 		})
 	})
@@ -250,7 +251,7 @@ func TestPreparerPrepare(t *testing.T) {
 				Destination: new(testMutuallyExclusiveTarget),
 			}
 
-			_, err := prep.Prepare(fakerenderer.New())
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
 			assert.EqualError(t, err, `only one of "a" or "b" can be set`)
 		})
 	})
@@ -298,9 +299,13 @@ type testPreparerTarget struct {
 	Pointer *string `hcl:"pointer"`
 }
 
-func (tpt *testPreparerTarget) Prepare(resource.Renderer) (resource.Task, error)     { return tpt, nil }
-func (tpt *testPreparerTarget) Check(resource.Renderer) (resource.TaskStatus, error) { return nil, nil }
-func (tpt *testPreparerTarget) Apply() (resource.TaskStatus, error)                  { return nil, nil }
+func (tpt *testPreparerTarget) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
+	return tpt, nil
+}
+func (tpt *testPreparerTarget) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	return nil, nil
+}
+func (tpt *testPreparerTarget) Apply(context.Context) (resource.TaskStatus, error) { return nil, nil }
 
 // testRequiredTarget tests required fields. Those are invalid when empty, so
 // we've got to include it separately
@@ -308,9 +313,13 @@ type testRequiredTarget struct {
 	Required string `hcl:"required" required:"true"`
 }
 
-func (tpt *testRequiredTarget) Prepare(resource.Renderer) (resource.Task, error)     { return tpt, nil }
-func (tpt *testRequiredTarget) Check(resource.Renderer) (resource.TaskStatus, error) { return nil, nil }
-func (tpt *testRequiredTarget) Apply() (resource.TaskStatus, error)                  { return nil, nil }
+func (tpt *testRequiredTarget) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
+	return tpt, nil
+}
+func (tpt *testRequiredTarget) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	return nil, nil
+}
+func (tpt *testRequiredTarget) Apply(context.Context) (resource.TaskStatus, error) { return nil, nil }
 
 // testMutuallyExclusiveTarget tests mutually_exclusive fields. Those are
 // invalid when empty, so we've got to include it separately
@@ -319,10 +328,12 @@ type testMutuallyExclusiveTarget struct {
 	B string `hcl:"b" mutually_exclusive:"a,b"`
 }
 
-func (tpt *testMutuallyExclusiveTarget) Prepare(resource.Renderer) (resource.Task, error) {
+func (tpt *testMutuallyExclusiveTarget) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
 	return tpt, nil
 }
-func (tpt *testMutuallyExclusiveTarget) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (tpt *testMutuallyExclusiveTarget) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return nil, nil
 }
-func (tpt *testMutuallyExclusiveTarget) Apply() (resource.TaskStatus, error) { return nil, nil }
+func (tpt *testMutuallyExclusiveTarget) Apply(context.Context) (resource.TaskStatus, error) {
+	return nil, nil
+}

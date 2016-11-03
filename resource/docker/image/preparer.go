@@ -20,6 +20,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	"golang.org/x/net/context"
 )
 
 // Preparer for docker images
@@ -42,7 +43,7 @@ type Preparer struct {
 }
 
 // Prepare a new docker image
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	timeout, err := render.Render("inactivity_timeout", p.InactivityTimeout)
 	if err != nil {
 		return nil, err

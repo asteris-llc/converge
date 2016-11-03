@@ -29,9 +29,22 @@ publish:
           mkdir -p "build/$DEST"
           mv build.tmp/* "build/$DEST"
 
-    - nextgxdx/s3sync@2.0.5:
-        source_dir: /go/src/github.com/asteris-llc/converge/build
-        delete-removed: false
-        bucket-url: $AWS_BUCKET_URL
-        key-id: $AWS_ACCESS_KEY_ID
-        key-secret: $AWS_SECRET_ACCESS_KEY
+    - script:
+        name: upload builds to S3
+        code: |
+          s3cmd put \
+                --access_key=$AWS_ACCESS_KEY_ID \
+                --secret_key=$AWS_SECRET_ACCESS_KEY \
+                --recursive \
+                build/* \
+                $AWS_BUCKET_URL
+
+    - script:
+        name: upload new manifest
+        code: |
+          s3cmd ls --recursive $AWS_BUCKET_URL | grep -v index.html | grep -v manifest.txt > manifest.txt
+          s3cmd put \
+                --access_key=$AWS_ACCESS_KEY_ID \
+                --secret_key=$AWS_SECRET_ACCESS_KEY \
+                manifest.txt \
+                $AWS_BUCKET_URL/manifest.txt

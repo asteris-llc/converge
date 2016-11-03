@@ -23,6 +23,7 @@ import (
 	"github.com/asteris-llc/converge/resource/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestPreparerInterface(t *testing.T) {
@@ -39,7 +40,7 @@ func TestPreparerDefault(t *testing.T) {
 	for _, val := range vals {
 		prep := &param.Preparer{Default: val}
 
-		result, err := prep.Prepare(fakerenderer.New())
+		result, err := prep.Prepare(context.Background(), fakerenderer.New())
 		assert.NoError(t, err)
 
 		resultParam, ok := result.(*param.Param)
@@ -55,7 +56,7 @@ func TestPreparerProvided(t *testing.T) {
 
 	prep := &param.Preparer{Default: "x"}
 
-	result, err := prep.Prepare(fakerenderer.NewWithValue("y"))
+	result, err := prep.Prepare(context.Background(), fakerenderer.NewWithValue("y"))
 
 	resultParam, ok := result.(*param.Param)
 	require.True(t, ok, fmt.Sprintf("expected %T, got %T", resultParam, result))
@@ -70,7 +71,7 @@ func TestPreparerRequired(t *testing.T) {
 	name := "required-param"
 	id := fmt.Sprintf("root/module.nested/param.%s", name)
 	prep := new(param.Preparer)
-	_, err := prep.Prepare(fakerenderer.NewWithID(id))
+	_, err := prep.Prepare(context.Background(), fakerenderer.NewWithID(id))
 
 	if assert.Error(t, err) {
 		assert.EqualError(t, err, fmt.Sprintf("%s param is required", name))

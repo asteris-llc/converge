@@ -17,6 +17,7 @@ package control_test
 import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/net/context"
 )
 
 // any makes for less typing compared to mock.Anything
@@ -86,13 +87,13 @@ type MockTask struct {
 }
 
 // Apply mocks apply
-func (m *MockTask) Apply() (resource.TaskStatus, error) {
+func (m *MockTask) Apply(context.Context) (resource.TaskStatus, error) {
 	args := m.Called()
 	return args.Get(0).(resource.TaskStatus), args.Error(1)
 }
 
 // Check mocks check
-func (m *MockTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (m *MockTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	args := m.Called(1)
 	return args.Get(0).(resource.TaskStatus), args.Error(1)
 }

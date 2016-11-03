@@ -45,9 +45,9 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 		notify.Transform(func(meta *node.Node, out *graph.Graph) error {
 			renderingPlant.Graph = out
 
-			pipeline := Pipeline(out, meta.ID, renderingPlant)
+			pipeline := Pipeline(ctx, out, meta.ID, renderingPlant)
 
-			val, pipelineErr := pipeline.Exec(meta.Value())
+			val, pipelineErr := pipeline.Exec(ctx, meta.Value())
 			if pipelineErr != nil {
 				return pipelineErr
 			}

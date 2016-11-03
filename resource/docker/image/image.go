@@ -19,6 +19,7 @@ import (
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	"golang.org/x/net/context"
 )
 
 // Image is responsible for pulling docker images
@@ -31,7 +32,7 @@ type Image struct {
 }
 
 // Check system for presence of docker image
-func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (i *Image) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	i.Status = resource.NewStatus()
 	repoTag := i.RepoTag()
 	image, err := i.client.FindImage(repoTag)
@@ -53,7 +54,7 @@ func (i *Image) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply pulls a docker image
-func (i *Image) Apply() (resource.TaskStatus, error) {
+func (i *Image) Apply(context.Context) (resource.TaskStatus, error) {
 	if err := i.client.PullImage(i.Name, i.Tag); err != nil {
 		return &resource.Status{
 			Level:  resource.StatusFatal,
