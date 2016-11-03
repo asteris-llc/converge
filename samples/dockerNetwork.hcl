@@ -6,5 +6,9 @@ docker.network "test-network" {
     environment = "test"
   }
 
+  options {
+    "com.docker.network.bridge.enable_icc" = "true"
+  }
+
   force = true
 }

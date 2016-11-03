@@ -141,6 +141,29 @@ func TestNetworkCheck(t *testing.T) {
 				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
 				comparison.AssertDiff(t, status.Diffs(), "driver", network.DefaultDriver, "weave")
 			})
+
+			t.Run("options", func(t *testing.T) {
+				nw := &network.Network{
+					Name:    nwName,
+					State:   "present",
+					Options: map[string]interface{}{"com.docker.network.bridge.enable_icc": "true"},
+					Force:   true,
+				}
+				c := &mockClient{}
+				nw.SetClient(c)
+				c.On("FindNetwork", nwName).Return(&dc.Network{
+					Name:    nwName,
+					Driver:  network.DefaultDriver,
+					Options: nil,
+				}, nil)
+
+				status, err := nw.Check(fakerenderer.New())
+				require.NoError(t, err)
+				assert.True(t, status.HasChanges())
+				assert.True(t, len(status.Diffs()) > 1)
+				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), "options", "", "com.docker.network.bridge.enable_icc=true")
+			})
 		})
 	})
 
