@@ -22,13 +22,32 @@ import (
 )
 
 // Preparer for LVM FS Task
+//
+// Filesystem do formatting and mounting for LVM volumes
+// (also capable to format usual block devices as well)
 type Preparer struct {
-	Device     string   `hcl:"device",required:"true"`
-	Mount      string   `hcl:"mount",required:"true"`
-	Fstype     string   `hcl:"fstype",required:"true"`
+	// Device path to be mount
+	// Examples: `/dev/sda1`, `/dev/mapper/vg0-data`
+	Device string `hcl:"device" required:"true"`
+
+	// Mountpoint where device will be mounted
+	// (should be an existing directory)
+	// Example: /mnt/data
+	Mountpoint string `hcl:"mount" required:"true"`
+
+	// Fstype is filesystem type
+	// (actually any linux filesystem, except `ZFS`)
+	// Example:  `ext4`, `xfs`
+	Fstype string `hcl:"fstype" required:"true"`
+
+	// RequiredBy is a list of dependencies, to pass to systemd .mount unit
 	RequiredBy []string `hcl:"requiredBy"`
-	WantedBy   []string `hcl:"requiredBy"`
-	Before     []string `hcl:"requiredBy"`
+
+	// WantedBy is a list of dependencies, to pass to systemd .mount unit
+	WantedBy []string `hcl:"wantedBy"`
+
+	// Before is a list of dependencies, to pass to systemd .mount unit
+	Before []string `hcl:"before"`
 }
 
 // Prepare a new task
@@ -36,7 +55,7 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	m := &Mount{
 		What:       p.Device,
-		Where:      p.Mount,
+		Where:      p.Mountpoint,
 		Type:       p.Fstype,
 		RequiredBy: strings.Join(p.RequiredBy, " "),
 		WantedBy:   strings.Join(p.WantedBy, " "),
