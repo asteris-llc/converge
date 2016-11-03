@@ -144,7 +144,7 @@ func TestAptInstallPackage(t *testing.T) {
 
 // TestAptRemovePackage validates that we successfully ask Apt to uninstall a
 // package
-func TestRemovePackage(t *testing.T) {
+func TestAptRemovePackage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("when installed", func(t *testing.T) {
