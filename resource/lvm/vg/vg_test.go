@@ -35,7 +35,7 @@ func TestVGCheck(t *testing.T) {
 	t.Run("check prerequisites failure", func(t *testing.T) {
 		lvm, m := testhelpers.MakeFakeLvm()
 		m.On("Check").Return(fmt.Errorf("failed"))
-		_ = simpleCheckFailure(t, lvm, []string{"/dev/sda1"})
+		_ = simpleCheckFailure(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 	})
 
 	t.Run("QueryVolumeGroups failure", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestVGCheck(t *testing.T) {
 		m.On("Check").Return(nil)
 		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
 		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), fmt.Errorf("failed"))
-		_ = simpleCheckFailure(t, lvm, []string{"/dev/sda1"})
+		_ = simpleCheckFailure(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 	})
 
 	t.Run("QueryPhysicalVolumes failure", func(t *testing.T) {
@@ -51,80 +51,144 @@ func TestVGCheck(t *testing.T) {
 		m.On("Check").Return(nil)
 		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), fmt.Errorf("failed"))
 		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
-		_ = simpleCheckFailure(t, lvm, []string{"/dev/sda1"})
+		_ = simpleCheckFailure(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 	})
 
 	t.Run("single device", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
-		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
+		lvm, _ := testhelpers.MakeFakeLvmEmpty()
 
-		status, _ := simpleCheckSuccess(t, lvm, []string{"/dev/sda1"})
+		status, _ := simpleCheckSuccess(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 		assert.True(t, status.HasChanges())
 		comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
 	})
 
 	t.Run("multiple devices", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
-		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
+		lvm, _ := testhelpers.MakeFakeLvmEmpty()
 
-		status, _ := simpleCheckSuccess(t, lvm, []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"})
+		status, _ := simpleCheckSuccess(t, lvm, "vg0", []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"}, false, false)
 		assert.True(t, status.HasChanges())
 		comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1, /dev/sdb1, /dev/sdc1")
 	})
 
 	t.Run("device from another VG", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(map[string]*lowlevel.VolumeGroup{
-			"vg1": &lowlevel.VolumeGroup{Name: "vg1"},
-		}, nil)
-		m.On("QueryPhysicalVolumes").Return(map[string]*lowlevel.PhysicalVolume{
-			"/dev/sda1": &lowlevel.PhysicalVolume{
-				Name:  "/dev/sdb1",
-				Group: "vg1",
-			},
-		}, nil)
-		_ = simpleCheckFailure(t, lvm, []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"})
+		lvm, _ := testhelpers.MakeFakeLvmNonEmpty()
+		_ = simpleCheckFailure(t, lvm, "vg0", []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"}, false, false)
+	})
+
+	t.Run("device remove", func(t *testing.T) {
+		lvm, _ := testhelpers.MakeFakeLvmNonEmpty()
+		status, _ := simpleCheckSuccess(t, lvm, "vg1", []string{"/dev/sdc1"}, true, false)
+		assert.True(t, status.HasChanges())
+		comparison.AssertDiff(t, status.Diffs(), "/dev/sdd1", "<group vg1>", "<removed>")
+
+		// `/dev/sdc1` should remain intact
+		assert.NotContains(t, "/dev/sdc1", status.Diffs())
+	})
+
+	t.Run("device force remove", func(t *testing.T) {
+		lvm, _ := testhelpers.MakeFakeLvmNonEmpty()
+		status, _ := simpleCheckSuccess(t, lvm, "vg1", []string{"/dev/sdc1"}, true, true)
+		assert.True(t, status.HasChanges())
+		comparison.AssertDiff(t, status.Diffs(), "/dev/sdd1", "<group vg1>", "<destructed>")
+
+		// `/dev/sdc1` should remain intact
+		assert.NotContains(t, "/dev/sdc1", status.Diffs())
+	})
+
+	t.Run("one device add", func(t *testing.T) {
+		lvm, _ := testhelpers.MakeFakeLvmNonEmpty()
+		status, _ := simpleCheckSuccess(t, lvm, "vg1", []string{"/dev/sdc1", "/dev/sdd1", "/dev/sde1"}, false, false)
+		assert.True(t, status.HasChanges())
+		comparison.AssertDiff(t, status.Diffs(), "/dev/sde1", "<no group>", "<group vg1>")
+
+		// `/dev/sdc1` and `/dev/sdd1` should remain intact
+		assert.NotContains(t, "/dev/sdc1", status.Diffs())
+		assert.NotContains(t, "/dev/sdd1", status.Diffs())
+	})
+
+	t.Run("once device add, one remove", func(t *testing.T) {
+		lvm, _ := testhelpers.MakeFakeLvmNonEmpty()
+		status, _ := simpleCheckSuccess(t, lvm, "vg1", []string{"/dev/sdc1", "/dev/sde1"}, true, false)
+		assert.True(t, status.HasChanges())
+		comparison.AssertDiff(t, status.Diffs(), "/dev/sde1", "<no group>", "<group vg1>")
+		comparison.AssertDiff(t, status.Diffs(), "/dev/sdd1", "<group vg1>", "<removed>")
+
+		// `/dev/sdc1` should remain intact
+		assert.NotContains(t, "/dev/sdc1", status.Diffs())
 	})
 }
 
 // TestVGApply is test for VG.Apply()
 func TestVGApply(t *testing.T) {
 	t.Run("single device", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
-		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
+		lvm, m := testhelpers.MakeFakeLvmEmpty()
 		m.On("CreateVolumeGroup", mock.Anything, mock.Anything).Return(nil)
 
-		_ = simpleApplySuccess(t, lvm, []string{"/dev/sda1"})
+		_ = simpleApplySuccess(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 		m.AssertCalled(t, "CreateVolumeGroup", "vg0", []string{"/dev/sda1"})
 	})
 
 	t.Run("multiple devices", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
-		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
+		lvm, m := testhelpers.MakeFakeLvmEmpty()
 		m.On("CreateVolumeGroup", "vg0", []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"}).Return(nil)
 
-		_ = simpleApplySuccess(t, lvm, []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"})
+		_ = simpleApplySuccess(t, lvm, "vg0", []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"}, false, false)
 		m.AssertCalled(t, "CreateVolumeGroup", "vg0", []string{"/dev/sda1", "/dev/sdb1", "/dev/sdc1"})
 	})
 
-	t.Run("CreatePhysicalVolume  failure", func(t *testing.T) {
-		lvm, m := testhelpers.MakeFakeLvm()
-		m.On("Check").Return(nil)
-		m.On("QueryVolumeGroups").Return(make(map[string]*lowlevel.VolumeGroup), nil)
-		m.On("QueryPhysicalVolumes").Return(make(map[string]*lowlevel.PhysicalVolume), nil)
+	t.Run("one device add", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ExtendVolumeGroup", "vg1", mock.Anything).Return(nil)
+		_ = simpleApplySuccess(t, lvm, "vg1", []string{"/dev/sdc1", "/dev/sdd1", "/dev/sde1", "/dev/sda"}, false, false)
+		m.AssertCalled(t, "ExtendVolumeGroup", "vg1", "/dev/sde1")
+		m.AssertCalled(t, "ExtendVolumeGroup", "vg1", "/dev/sda")
+	})
+
+	t.Run("device remove", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ReduceVolumeGroup", "vg1", mock.Anything).Return(nil)
+		m.On("RemovePhysicalVolume", mock.Anything, mock.Anything).Return(nil)
+		_ = simpleApplySuccess(t, lvm, "vg1", []string{"/dev/sdc1"}, true, false)
+		m.AssertCalled(t, "ReduceVolumeGroup", "vg1", "/dev/sdd1")
+		m.AssertNotCalled(t, "RemovePhysicalVolume", mock.Anything)
+	})
+
+	t.Run("device force remove", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ReduceVolumeGroup", "vg1", mock.Anything).Return(nil)
+		m.On("RemovePhysicalVolume", mock.Anything, mock.Anything).Return(nil)
+		_ = simpleApplySuccess(t, lvm, "vg1", []string{"/dev/sdc1"}, true, true)
+		m.AssertCalled(t, "ReduceVolumeGroup", "vg1", "/dev/sdd1")
+		m.AssertCalled(t, "RemovePhysicalVolume", "/dev/sdd1", mock.Anything)
+	})
+
+	t.Run("CreatePhysicalVolume failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmEmpty()
 		m.On("CreateVolumeGroup", mock.Anything, mock.Anything).Return(fmt.Errorf("failed"))
 
-		_ = simpleApplyFailure(t, lvm, []string{"/dev/sda1"})
+		_ = simpleApplyFailure(t, lvm, "vg0", []string{"/dev/sda1"}, false, false)
 		m.AssertCalled(t, "CreateVolumeGroup", "vg0", []string{"/dev/sda1"})
+	})
+	t.Run("ExtendVolumeGroup failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ExtendVolumeGroup", "vg1", mock.Anything).Return(fmt.Errorf("failed"))
+		_ = simpleApplyFailure(t, lvm, "vg1", []string{"/dev/sdc1", "/dev/sdd1", "/dev/sde1", "/dev/sda"}, false, false)
+		m.AssertCalled(t, "ExtendVolumeGroup", "vg1", mock.Anything)
+	})
+	t.Run("ReduceVolumeGroup failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ReduceVolumeGroup", "vg1", mock.Anything).Return(fmt.Errorf("failure"))
+		m.On("RemovePhysicalVolume", mock.Anything, mock.Anything).Return(nil)
+		_ = simpleApplyFailure(t, lvm, "vg1", []string{"/dev/sdc1"}, true, true)
+		// also check that "RemovePhysicalVolume" not called, if ReduceVolumeGroup failed
+		m.AssertNotCalled(t, "RemovePhysicalVolume", mock.Anything)
+	})
+	t.Run("RemovePhysicalVolume failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvmNonEmpty()
+		m.On("ReduceVolumeGroup", "vg1", mock.Anything).Return(nil)
+		m.On("RemovePhysicalVolume", mock.Anything, mock.Anything).Return(fmt.Errorf("failure"))
+		_ = simpleApplyFailure(t, lvm, "vg1", []string{"/dev/sdc1"}, true, true)
+		m.AssertCalled(t, "RemovePhysicalVolume", "/dev/sdd1", mock.Anything)
 	})
 }
 
@@ -189,23 +253,23 @@ func TestCreateVolume(t *testing.T) {
 	})
 }
 
-func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	r := vg.NewResourceVG(lvm, "vg0", devs, false, false)
+func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) resource.TaskStatus {
+	r := vg.NewResourceVG(lvm, group, devs, remove, forceRemove)
 	status, err := r.Check(fakerenderer.New())
 	assert.Error(t, err)
 	return status
 }
 
-func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, devs []string) (resource.TaskStatus, resource.Task) {
-	r := vg.NewResourceVG(lvm, "vg0", devs, false, false)
+func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) (resource.TaskStatus, resource.Task) {
+	r := vg.NewResourceVG(lvm, group, devs, remove, forceRemove)
 	status, err := r.Check(fakerenderer.New())
 	require.NoError(t, err)
 	require.NotNil(t, status)
 	return status, r
 }
 
-func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	checkStatus, vg := simpleCheckSuccess(t, lvm, devs)
+func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) resource.TaskStatus {
+	checkStatus, vg := simpleCheckSuccess(t, lvm, group, devs, remove, forceRemove)
 	require.True(t, checkStatus.HasChanges())
 
 	status, err := vg.Apply()
@@ -213,8 +277,8 @@ func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, devs []string) resource.
 	return status
 }
 
-func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM, devs []string) resource.TaskStatus {
-	checkStatus, vg := simpleCheckSuccess(t, lvm, devs)
+func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) resource.TaskStatus {
+	checkStatus, vg := simpleCheckSuccess(t, lvm, group, devs, remove, forceRemove)
 	require.True(t, checkStatus.HasChanges())
 
 	status, err := vg.Apply()
