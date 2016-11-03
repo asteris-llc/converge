@@ -67,6 +67,7 @@ func (n *Network) Check(resource.Renderer) (resource.TaskStatus, error) {
 	if n.State == StatePresent && nw != nil && n.Force {
 		n.AddDifference("labels", mapCompareStr(nw.Labels), mapCompareStr(n.Labels), "")
 		n.AddDifference("driver", nw.Driver, n.Driver, DefaultDriver)
+		n.AddDifference("options", mapCompareStr(nw.Options), mapCompareStr(toStrMap(n.Options)), "")
 	}
 
 	if resource.AnyChanges(n.Differences) {
@@ -144,6 +145,14 @@ func networkState(nw *dc.Network) State {
 		return StatePresent
 	}
 	return StateAbsent
+}
+
+func toStrMap(m map[string]interface{}) map[string]string {
+	strmap := make(map[string]string)
+	for k, v := range m {
+		strmap[k] = v.(string)
+	}
+	return strmap
 }
 
 func mapCompareStr(m map[string]string) string {
