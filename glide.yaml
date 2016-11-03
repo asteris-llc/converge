@@ -79,6 +79,10 @@ import:
 - package: golang.org/x/crypto
   subpackages:
   - openpgp
+- package: github.com/godbus/dbus
+  version: ^4.0.0
+- package: github.com/coreos/go-systemd
+  version: ^12.0.0
 - package: github.com/arbovm/levenshtein
 - package: golang.org/x/sync
   subpackages:

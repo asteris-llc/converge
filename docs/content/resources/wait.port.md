@@ -7,10 +7,7 @@ menu:
     parent: resources
 ---
 
-
-
-
-## Example
+# Example
 
 ```hcl
 wait.port "8080" {
@@ -23,8 +20,7 @@ wait.port "8080" {
 
 ```
 
-
-## Parameters
+# Parameters
 
 - `host` (string)
 
@@ -56,5 +52,3 @@ specified, no grace period will be taken into account.
 
   the maximum number of attempts before the wait fails. If the maximum number
 of retries is not set, it will default to 5.
-
-
