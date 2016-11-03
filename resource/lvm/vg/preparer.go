@@ -17,6 +17,7 @@ package vg
 import (
 	"path/filepath"
 
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 )
@@ -56,4 +57,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices, p.Remove, p.ForceRemove)
 	return rvg, nil
+}
+
+func init() {
+	registry.Register("lvm.volumegroup", (*Preparer)(nil), (*resourceVG)(nil))
 }

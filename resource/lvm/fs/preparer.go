@@ -15,6 +15,7 @@
 package fs
 
 import (
+	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 
@@ -63,4 +64,8 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	return NewResourceFS(lowlevel.MakeLvmBackend(), m)
+}
+
+func init() {
+	registry.Register("filesystem", (*Preparer)(nil), (*resourceFS)(nil))
 }

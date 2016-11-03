@@ -16,7 +16,6 @@ package lv
 
 import (
 	"fmt"
-	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
@@ -137,8 +136,4 @@ func (r *resourceLV) deviceMapperPath() (string, error) {
 		return lv.DevicePath, nil
 	}
 	return "", fmt.Errorf("Can't find device mapper path for volume %s/%s", r.group, r.name)
-}
-
-func init() {
-	registry.Register("lvm.lv", (*Preparer)(nil), (*resourceLV)(nil))
 }

@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
@@ -130,8 +129,4 @@ func NewResourceVG(lvm lowlevel.LVM, name string, devs []string, remove bool, fo
 		remove:      remove,
 		forceRemove: forceRemove,
 	}
-}
-
-func init() {
-	registry.Register("lvm.vg", (*Preparer)(nil), (*resourceVG)(nil))
 }
