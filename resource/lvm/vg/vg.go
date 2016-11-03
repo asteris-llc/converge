@@ -80,7 +80,11 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 			if !found {
 				if pv, ok := pvs[d]; ok && pv.Group == r.name {
 					r.devicesToRemove = append(r.devicesToRemove, d)
-					status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<removed>", "")
+					if r.forceRemove {
+						status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<destructed>", "")
+					} else {
+						status.AddDifference(d, fmt.Sprintf("<group %s>", r.name), "<removed>", "")
+					}
 				}
 			}
 		}
