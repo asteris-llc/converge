@@ -31,20 +31,52 @@ func TestAptInstalledVersion(t *testing.T) {
 
 	t.Run("when installed", func(t *testing.T) {
 		expected := "foo-0.1.2.3"
-		runner := newRunner(expected, nil)
-		y := &apt.Manager{Sys: runner}
-		result, found := y.InstalledVersion("foo1")
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgInstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		result, found := a.InstalledVersion("foo")
 		assert.True(t, found)
 		assert.Equal(t, expected, string(result))
 	})
 
 	t.Run("when not installed", func(t *testing.T) {
 		expected := ""
-		y := &apt.Manager{Sys: newRunner("", makeExitError("", 1))}
-		result, found := y.InstalledVersion("foo1")
+		a := &apt.Manager{Sys: newRunner("", makeExitError("", 1))}
+		result, found := a.InstalledVersion("foo1")
 		assert.False(t, found)
 		assert.Equal(t, expected, string(result))
 	})
+
+	t.Run("when held", func(t *testing.T) {
+		expected := "foo-0.1.2.3"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgHold)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		result, found := a.InstalledVersion("foo")
+		assert.True(t, found)
+		assert.Equal(t, expected, string(result))
+	})
+
+	t.Run("when removed", func(t *testing.T) {
+		expected := ""
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgRemoved)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		result, found := a.InstalledVersion("foo")
+		assert.False(t, found)
+		assert.Equal(t, expected, string(result))
+	})
+
+	t.Run("when uninstalled", func(t *testing.T) {
+		expected := ""
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgUninstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		result, found := a.InstalledVersion("foo")
+		assert.False(t, found)
+		assert.Equal(t, expected, string(result))
+	})
+
 }
 
 // TestAptInstallPackage validates that we successfully ask Apt to install a
@@ -54,9 +86,10 @@ func TestAptInstallPackage(t *testing.T) {
 
 	t.Run("when installed", func(t *testing.T) {
 		pkg := "foo1"
-		runner := newRunner("", nil)
-		y := &apt.Manager{Sys: runner}
-		_, err := y.InstallPackage(pkg)
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgInstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.InstallPackage(pkg)
 		assert.NoError(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 1)
 	})
@@ -64,19 +97,105 @@ func TestAptInstallPackage(t *testing.T) {
 	t.Run("when not installed", func(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", makeExitError("", 1))
-		y := &apt.Manager{Sys: runner}
-		y.InstallPackage(pkg)
+		a := &apt.Manager{Sys: runner}
+		a.InstallPackage(pkg)
 		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when removed", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgRemoved)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.InstallPackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when uninstalled", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgUninstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.InstallPackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when held", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgHold)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.InstallPackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 1)
 	})
 
 	t.Run("when installation error", func(t *testing.T) {
 		pkg := "foo1"
 		runner := newRunner("", makeExitError("", 1))
-		y := &apt.Manager{Sys: runner}
-		_, err := y.InstallPackage(pkg)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.InstallPackage(pkg)
 		assert.Error(t, err)
 		runner.AssertNumberOfCalls(t, "Run", 2)
 	})
+}
+
+// TestAptRemovePackage validates that we successfully ask Apt to uninstall a
+// package
+func TestRemovePackage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when installed", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgInstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.RemovePackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when held", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgHold)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.RemovePackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 2)
+	})
+
+	t.Run("when uninstalled", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgUninstalled)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.RemovePackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 1)
+	})
+
+	t.Run("when removed", func(t *testing.T) {
+		pkg := "foo1"
+		out := fmt.Sprintf("foo,%s,0.1.2.3", apt.PkgRemoved)
+		runner := newRunner(out, nil)
+		a := &apt.Manager{Sys: runner}
+		_, err := a.RemovePackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 1)
+	})
+
+	t.Run("when package never installed", func(t *testing.T) {
+		pkg := "foo1"
+		runner := newRunner("", makeExitError("", 1))
+		a := &apt.Manager{Sys: runner}
+		_, err := a.RemovePackage(pkg)
+		assert.NoError(t, err)
+		runner.AssertNumberOfCalls(t, "Run", 1)
+	})
+
 }
 
 // MockRunner mocks out SysCaller
@@ -102,19 +221,4 @@ func makeExitError(stderr string, exitCode uint32) error {
 	cmd := fmt.Sprintf("echo %q 1>&2; exit %d", stderr, exitCode)
 	_, err := exec.Command("/bin/bash", "-c", cmd).Output()
 	return err
-}
-
-// queryString generates an dpkg query string
-func queryString(pkg string) string {
-	return "dpkg-query -W -f'${Package},${Status},${Version}\n' " + pkg
-}
-
-// installString generates a Apt install string
-func installString(pkg string) string {
-	return "apt-get install -y " + pkg
-}
-
-// removeString generates a Apt remove string
-func removeString(pkg string) string {
-	return "apt-get remove -y " + pkg
 }

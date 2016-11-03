@@ -43,43 +43,51 @@ type Manager struct {
 }
 
 // InstalledVersion gets the installed version of package, if available
-func (y *Manager) InstalledVersion(p string) (pkg.PackageVersion, bool) {
+func (a *Manager) InstalledVersion(p string) (pkg.PackageVersion, bool) {
 	var version string
 	var installed bool
 
-	result, err := y.Sys.Run(fmt.Sprintf("dpkg-query -W -f'${Package},${Status},${Version}\n' %s", p))
+	result, err := a.Sys.Run(fmt.Sprintf("dpkg-query -W -f'${Package},${Status},${Version}\n' %s", p))
 	exitCode, _ := pkg.GetExitCode(err)
 	if exitCode != 0 {
 		return "", false
 	}
+	// Deal with situations where dpkg exits 0 with packages that have been uninstalled
 	for _, line := range strings.Split(strings.TrimSpace(string(result)), "\n") {
 		l := strings.Split(line, ",")
-		status, ver := l[1], l[2]
+		if len(l) == 3 {
+			name, status, ver := l[0], l[1], l[2]
 
-		// if any package is not installed, return immediately
-		if strings.HasPrefix(status, PkgRemoved) || strings.HasPrefix(status, PkgUninstalled) {
-			return "", false
-		}
+			if strings.Contains(status, PkgRemoved) || strings.Contains(status, PkgUninstalled) {
+				return "", false
+			}
 
-		if strings.HasPrefix(status, PkgInstalled) || strings.HasPrefix(status, PkgHold) {
-			version = ver
-			installed = true
+			if strings.Contains(status, PkgInstalled) || strings.Contains(status, PkgHold) {
+				version = fmt.Sprintf("%s-%s", name, ver)
+				installed = true
+			}
 		}
 	}
 	return (pkg.PackageVersion)(version), installed
 }
 
 // InstallPackage installs a package, returning an error if something went wrong
-func (y *Manager) InstallPackage(p string) (string, error) {
-	if _, isInstalled := y.InstalledVersion(p); isInstalled {
+func (a *Manager) InstallPackage(p string) (string, error) {
+	if _, isInstalled := a.InstalledVersion(p); isInstalled {
 		return "already installed", nil
 	}
-	res, err := y.Sys.Run(fmt.Sprintf("apt-get install -y %s", p))
+	res, err := a.Sys.Run(fmt.Sprintf("apt-get install -y %s", p))
 	return string(res), err
 }
 
 // RemovePackage removes a package, returning an error if something went wrong
-func (y *Manager) RemovePackage(pkg string) (string, error) {
-	res, err := y.Sys.Run(fmt.Sprintf("apt-get purge -y %s", pkg))
-	return string(res), err
+func (a *Manager) RemovePackage(p string) (string, error) {
+	switch _, isInstalled := a.InstalledVersion(p); isInstalled {
+	case true:
+		res, err := a.Sys.Run(fmt.Sprintf("apt-get purge -y %s", p))
+		return string(res), err
+	default:
+		return "package is not installed ", nil
+	}
+
 }
