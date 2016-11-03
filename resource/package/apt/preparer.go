@@ -18,6 +18,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/package"
+	"golang.org/x/net/context"
 )
 
 // Preparer for Debian Package
@@ -35,7 +36,7 @@ type Preparer struct {
 }
 
 // Prepare a new package
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.State == "" {
 		p.State = "present"
 	}
