@@ -149,16 +149,19 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 				return g, err
 			}
 			innerID := graph.ID(branchID, innerNode.ID())
+
 			condNode := node.New(innerID, innerNode)
 			condNode.AddMetadata("conditional-switch-name", switchObj.Name)
 			condNode.AddMetadata("conditional-predicate-raw", branch.Predicate)
 			condNode.AddMetadata("conditional-name", branch.Name)
 			condNode.AddMetadata("conditional-peers", switchObj.BranchNames())
+
 			g.Add(condNode)
 			g.ConnectParent(branchID, innerID)
 		}
 		if idx > 0 {
 			parent, _ := switchObj.Branches[idx-1].GenerateNode()
+
 			g.Connect(branchID, graph.ID(switchID, parent.ID()))
 		}
 	}

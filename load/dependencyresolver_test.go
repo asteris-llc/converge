@@ -15,16 +15,17 @@
 package load_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/asteris-llc/converge/helpers/testing/graphutils"
+	"github.com/asteris-llc/converge/helpers/testing/hclutils"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/parse"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 // TestDependencyResolverResolvesDependencies tests dependency resolution
@@ -104,47 +105,65 @@ func TestDependencyResolverHandlesConditionalMetadata(t *testing.T) {
 	type test struct {
 		Value int
 	}
-	gr := graph.New()
-	gr.Add(node.New("root", nil))
-	gr.Add(node.New("root/param.a", struct{}{}))
-	gr.Add(node.New("root/task.query.a", test{Value: 1}))
 
-	gr.Add(node.New("root/test-param", struct{}{}))
-	gr.Add(node.New("root/test-lookup", struct{}{}))
-	gr.Add(node.New("root/test-param-and-lookup", struct{}{}))
-	gr.Add(node.New("root/test-none", struct{}{}))
+	src := `
+param "a" {
+	default = "a"
+}
 
-	gr.ConnectParent("root", "root/param.a")
-	gr.ConnectParent("root", "root/task.query.a")
-	gr.ConnectParent("root", "root/test-param")
-	gr.ConnectParent("root", "root/test-lookup")
-	gr.ConnectParent("root", "root/test-param-and-lookup")
-	gr.ConnectParent("root", "root/test-none")
+task.query "a" {
+	interpreter = "/bin/bash"
+	query = "echo -n a"
+}
 
-	node, ok := gr.Get("root/test-param")
+task.query "test-param" {
+	query = "echo test-param"
+}
+
+task.query "test-lookup" {
+	query = "echo test-lookup"
+}
+
+task.query "test-param-and-lookup" {
+	query = "echo test-param-andlookup"
+}
+
+task.query "test-none" {
+	query = "test-none"
+}
+`
+	gr, err := hclutils.LoadFromString("ResolverHandlesConditionalMetadata", src)
+	require.NoError(t, err)
+
+	node, ok := gr.Get("root/task.query.test-param")
 	require.True(t, ok)
 	node.AddMetadata("conditional-predicate-raw", "{{param `a`}}")
 
-	node, ok = gr.Get("root/test-lookup")
+	node, ok = gr.Get("root/task.query.test-lookup")
 	require.True(t, ok)
 	node.AddMetadata("conditional-predicate-raw", "{{lookup `task.query.a.value`}}")
 
-	node, ok = gr.Get("root/test-param-and-lookup")
+	node, ok = gr.Get("root/task.query.test-param-and-lookup")
 	require.True(t, ok)
 	node.AddMetadata("conditional-predicate-raw", "eq {{param `a`}} {{lookup `task.query.a.value`}}")
 
-	node, ok = gr.Get("root/test-none")
+	node, ok = gr.Get("root/task.query.test-none")
 	require.True(t, ok)
 	node.AddMetadata("conditional-predicate-raw", "true")
 
-	_, err := load.ResolveDependencies(context.Background(), gr)
+	g, err := load.ResolveDependencies(context.Background(), gr)
 	require.NoError(t, err)
 
 	t.Run("params", func(t *testing.T) {
-
+		assert.True(t, graphutils.DependsOn(g, "root/task.query.test-param", "root/param.a"))
 	})
-	t.Run("lookups", func(t *testing.T) {})
-	t.Run("params-and-lookups", func(t *testing.T) {})
+	t.Run("lookups", func(t *testing.T) {
+		assert.True(t, graphutils.DependsOn(g, "root/task.query.test-lookup", "root/task.query.a"))
+	})
+	t.Run("params-and-lookups", func(t *testing.T) {
+		assert.True(t, graphutils.DependsOn(g, "root/task.query.test-param-and-lookup", "root/param.a"))
+		assert.True(t, graphutils.DependsOn(g, "root/task.query.test-param-and-lookup", "root/task.query.a"))
+	})
 }
 
 // TestDependencyResolverResolvesGroupDependencies tests whether group
