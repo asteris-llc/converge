@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/volume"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface ensures that the correct interfaces are implemented by
@@ -35,7 +36,7 @@ func TestPreparerInterface(t *testing.T) {
 func TestPreparerPrepare(t *testing.T) {
 	t.Run("state defaults to present", func(t *testing.T) {
 		p := &volume.Preparer{Name: "test-volume"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*volume.Volume)(nil), task)
 		vol := task.(*volume.Volume)
@@ -44,7 +45,7 @@ func TestPreparerPrepare(t *testing.T) {
 
 	t.Run("driver defaults to local", func(t *testing.T) {
 		p := &volume.Preparer{Name: "test-volume"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*volume.Volume)(nil), task)
 		vol := task.(*volume.Volume)

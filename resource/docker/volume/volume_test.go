@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestVolumeInterface verifies that Volume implements the resource.Task
@@ -50,7 +51,7 @@ func TestVolumeCheck(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(nil, nil)
 
-			status, err := vol.Check(fakerenderer.New())
+			status, err := vol.Check(context.Background(), fakerenderer.New())
 			assert.Nil(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -63,7 +64,7 @@ func TestVolumeCheck(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 
-			status, err := vol.Check(fakerenderer.New())
+			status, err := vol.Check(context.Background(), fakerenderer.New())
 			assert.Nil(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -81,7 +82,7 @@ func TestVolumeCheck(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(nil, nil)
 
-			status, err := vol.Check(fakerenderer.New())
+			status, err := vol.Check(context.Background(), fakerenderer.New())
 			assert.Nil(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -97,7 +98,7 @@ func TestVolumeCheck(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 
-			status, err := vol.Check(fakerenderer.New())
+			status, err := vol.Check(context.Background(), fakerenderer.New())
 			assert.Nil(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -116,7 +117,7 @@ func TestVolumeCheck(t *testing.T) {
 				vol.SetClient(c)
 				c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 
-				status, err := vol.Check(fakerenderer.New())
+				status, err := vol.Check(context.Background(), fakerenderer.New())
 				assert.Nil(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -137,7 +138,7 @@ func TestVolumeCheck(t *testing.T) {
 					Return(&dc.Volume{Name: "test-volume", Driver: "local"}, nil)
 				vol.SetClient(c)
 
-				status, err := vol.Check(fakerenderer.New())
+				status, err := vol.Check(context.Background(), fakerenderer.New())
 				assert.Nil(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -153,7 +154,7 @@ func TestVolumeCheck(t *testing.T) {
 		vol.SetClient(c)
 		c.On("FindVolume", "test-volume").Return(nil, errors.New("error"))
 
-		status, err := vol.Check(fakerenderer.New())
+		status, err := vol.Check(context.Background(), fakerenderer.New())
 		require.Error(t, err)
 		assert.Equal(t, resource.StatusFatal, status.StatusCode())
 	})
@@ -170,7 +171,7 @@ func TestVolumeApply(t *testing.T) {
 		vol.SetClient(c)
 		c.On("FindVolume", "test-volume").Return(nil, errors.New("error"))
 
-		status, err := vol.Apply()
+		status, err := vol.Apply(context.Background())
 		require.Error(t, err)
 		assert.Equal(t, resource.StatusFatal, status.StatusCode())
 	})
@@ -183,7 +184,7 @@ func TestVolumeApply(t *testing.T) {
 			c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 			c.On("RemoveVolume", mock.AnythingOfType("string")).Return(nil)
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "RemoveVolume", "test-volume")
@@ -195,7 +196,7 @@ func TestVolumeApply(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(nil, nil)
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			c.AssertNotCalled(t, "RemoveVolume", "test-volume")
@@ -208,7 +209,7 @@ func TestVolumeApply(t *testing.T) {
 			c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 			c.On("RemoveVolume", mock.AnythingOfType("string")).Return(errors.New("test-volume"))
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})
@@ -223,7 +224,7 @@ func TestVolumeApply(t *testing.T) {
 			c.On("CreateVolume", mock.AnythingOfType("docker.CreateVolumeOptions")).
 				Return(&dc.Volume{Name: "test-volume"}, nil)
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "CreateVolume", mock.AnythingOfType("docker.CreateVolumeOptions"))
@@ -236,7 +237,7 @@ func TestVolumeApply(t *testing.T) {
 			vol.SetClient(c)
 			c.On("FindVolume", "test-volume").Return(&dc.Volume{Name: "test-volume"}, nil)
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			c.AssertNotCalled(t, "CreateVolume", mock.AnythingOfType("docker.CreateVolumeOptions"))
@@ -253,7 +254,7 @@ func TestVolumeApply(t *testing.T) {
 			c.On("CreateVolume", mock.AnythingOfType("docker.CreateVolumeOptions")).
 				Return(&dc.Volume{Name: "test-volume"}, nil)
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "RemoveVolume", "test-volume")
@@ -268,7 +269,7 @@ func TestVolumeApply(t *testing.T) {
 			c.On("CreateVolume", mock.AnythingOfType("docker.CreateVolumeOptions")).
 				Return(nil, errors.New("error"))
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})
@@ -281,7 +282,7 @@ func TestVolumeApply(t *testing.T) {
 				Return(&dc.Volume{Name: "test-volume", Driver: "flocker"}, nil)
 			c.On("RemoveVolume", mock.AnythingOfType("string")).Return(errors.New("error"))
 
-			status, err := vol.Apply()
+			status, err := vol.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})
