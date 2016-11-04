@@ -1,6 +1,7 @@
 docker.container,../resource/docker/container/preparer.go,../samples/dockerContainer.hcl,Preparer
 docker.image,../resource/docker/image/preparer.go,../samples/dockerImage.hcl,Preparer
 docker.volume,../resource/docker/volume/preparer.go,../samples/dockerVolume.hcl,Preparer
+docker.network,../resource/docker/network/preparer.go,../samples/dockerNetwork.hcl,Preparer
 file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Preparer
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer

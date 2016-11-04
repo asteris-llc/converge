@@ -46,12 +46,12 @@ type Preparer struct {
 	// custom IPAM configuration. multiple IPAM configurations are permitted. Each
 	// IPAM configuration block should contain one or more of the following items:
 	//
-	// subnet:      subnet in CIDR format
-	// gateway:     ipv4 or ipv6 gateway for the corresponding subnet
-	// ip_range:    container ips are allocated from this sub-ranges (CIDR format)
-	// aux_address: auxiliary ipv4 or ipv6 addresses used by the network driver.
-	//              Aux addresses are specified as a map with a name key and an ip
-	//              address value
+	//   * subnet:      subnet in CIDR format
+	//   * gateway:     ipv4 or ipv6 gateway for the corresponding subnet
+	//   * ip_range:    container ips are allocated from this sub-ranges (CIDR format)
+	//   * aux_address: auxiliary ipv4 or ipv6 addresses used by the network driver.
+	//                  Aux addresses are specified as a map with a name key and an IP
+	//                  address value
 	IPAMConfig []ipamConfigMap `hcl:"ipam_config"`
 
 	// restricts external access to the network
