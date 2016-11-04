@@ -52,6 +52,12 @@ type Preparer struct {
 	//              address value
 	IPAMConfig []ipamConfigMap `hcl:"ipam_config"`
 
+	// restricts external access to the network
+	Internal bool `hcl:"internal"`
+
+	// enable ipv6 networking
+	IPv6 bool `hcl:"ipv6"`
+
 	// indicates whether the volume should exist.
 	State State `hcl:"state" valid_values:"present,absent"`
 
@@ -77,13 +83,15 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 	}
 
 	nw := &Network{
-		Name:    p.Name,
-		Driver:  p.Driver,
-		Labels:  p.Labels,
-		Options: p.Options,
-		IPAM:    p.buildIPAMOptions(),
-		State:   p.State,
-		Force:   p.Force,
+		Name:     p.Name,
+		Driver:   p.Driver,
+		Labels:   p.Labels,
+		Options:  p.Options,
+		IPAM:     p.buildIPAMOptions(),
+		Internal: p.Internal,
+		IPv6:     p.IPv6,
+		State:    p.State,
+		Force:    p.Force,
 	}
 	nw.SetClient(dockerClient)
 	return nw, nil

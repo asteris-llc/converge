@@ -8,9 +8,11 @@ docker.network "test-network" {
   }
 
   options {
-    "com.docker.network.bridge.enable_icc"           = "true"
+    "com.docker.network.bridge.enable_icc" = "true"
   }
 
+  internal    = false
+  ipv6        = false
   ipam_driver = "default"
 
   ipam_config {
