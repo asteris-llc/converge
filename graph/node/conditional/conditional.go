@@ -96,3 +96,17 @@ func IsTrue(meta *node.Node) (bool, error) {
 	meta.AddMetadata(MetaPredicate, truth)
 	return truth, nil
 }
+
+// ShouldEvaluate returns true if the node is the first of it's peers that is
+// true.
+func ShouldEvaluate(g *graph.Graph, meta *node.Node) (bool, error) {
+	for _, node := range PeerNodes(g, meta) {
+		if meta == node {
+			break
+		}
+		if ok, err := IsTrue(node); ok || err != nil {
+			return false, err
+		}
+	}
+	return IsTrue(meta)
+}

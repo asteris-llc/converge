@@ -163,6 +163,129 @@ func TestIsTrue(t *testing.T) {
 	})
 }
 
+func TestShouldEvaluate(t *testing.T) {
+	t.Run("when-single-node", func(t *testing.T) {
+		t.Run("when-true", func(t *testing.T) {
+			g := sampleGraph()
+			meta, _ := g.Get("root/b")
+			graphutils.AddMetadata(g, "root/b", conditional.MetaPredicate, true)
+			result, err := conditional.ShouldEvaluate(g, meta)
+			assert.NoError(t, err)
+			assert.True(t, result)
+		})
+		t.Run("when-false", func(t *testing.T) {
+			g := sampleGraph()
+			meta, _ := g.Get("root/b")
+			graphutils.AddMetadata(g, "root/b", conditional.MetaPredicate, false)
+			result, err := conditional.ShouldEvaluate(g, meta)
+			assert.NoError(t, err)
+			assert.False(t, result)
+		})
+	})
+
+	t.Run("when-first-node", func(t *testing.T) {
+		t.Run("when-others-true", func(t *testing.T) {
+			t.Run("when-true", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/a")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, true)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.True(t, result)
+			})
+			t.Run("when-false", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/a")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, true)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.False(t, result)
+			})
+		})
+
+		t.Run("when-others-false", func(t *testing.T) {
+			t.Run("when-true", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/a")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, false)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.True(t, result)
+			})
+			t.Run("when-false", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/a")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, false)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.False(t, result)
+			})
+		})
+	})
+
+	t.Run("when-not-first", func(t *testing.T) {
+		t.Run("when-prev-true", func(t *testing.T) {
+			t.Run("when-true", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/b")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, true)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.False(t, result)
+			})
+			t.Run("when-false", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/b")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, true)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.False(t, result)
+			})
+		})
+		t.Run("when-prev-false", func(t *testing.T) {
+			t.Run("when-true", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/b")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, true)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, false)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.True(t, result)
+			})
+			t.Run("when-false", func(t *testing.T) {
+				g := sampleGraph()
+				meta, _ := g.Get("root/d/b")
+				graphutils.AddMetadata(g, "root/d/a", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/b", conditional.MetaPredicate, false)
+				graphutils.AddMetadata(g, "root/d/c", conditional.MetaPredicate, false)
+				result, err := conditional.ShouldEvaluate(g, meta)
+				assert.NoError(t, err)
+				assert.False(t, result)
+			})
+		})
+	})
+
+	t.Run("when-error", func(t *testing.T) {
+		g := sampleGraph()
+		meta, _ := g.Get("root/a")
+		_, err := conditional.ShouldEvaluate(g, meta)
+		assert.Error(t, err)
+	})
+}
+
 func peersToIDs(in []*node.Node) (out []string) {
 	out = make([]string, 0)
 	for _, n := range in {
