@@ -620,7 +620,7 @@ func TestContainerCheck(t *testing.T) {
 		}
 		container.SetClient(c)
 
-		status, err := container.Check(fakerenderer.New())
+		status, err := container.Check(context.Background(), fakerenderer.New())
 		assert.NoError(t, err)
 		assert.True(t, status.HasChanges())
 		comparison.AssertDiff(t, status.Diffs(), "network_mode", "bridge", "host")
@@ -652,7 +652,7 @@ func TestContainerCheck(t *testing.T) {
 		}
 		container.SetClient(c)
 
-		status, err := container.Check(fakerenderer.New())
+		status, err := container.Check(context.Background(), fakerenderer.New())
 		assert.NoError(t, err)
 		assert.True(t, status.HasChanges())
 		comparison.AssertDiff(t, status.Diffs(), "networks", "my-network", "another-network, test-network")

@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestNetworkInterface verifies that Network implements the resource.Task
@@ -52,7 +53,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
 
-			status, err := nw.Check(fakerenderer.New())
+			status, err := nw.Check(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -65,7 +66,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
-			status, err := nw.Check(fakerenderer.New())
+			status, err := nw.Check(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -80,7 +81,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
 
-			status, err := nw.Check(fakerenderer.New())
+			status, err := nw.Check(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -93,7 +94,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
-			status, err := nw.Check(fakerenderer.New())
+			status, err := nw.Check(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
@@ -112,7 +113,7 @@ func TestNetworkCheck(t *testing.T) {
 				nw.SetClient(c)
 				c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -134,7 +135,7 @@ func TestNetworkCheck(t *testing.T) {
 					Driver: network.DefaultDriver,
 				}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -156,7 +157,7 @@ func TestNetworkCheck(t *testing.T) {
 					Options: nil,
 				}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -182,7 +183,7 @@ func TestNetworkCheck(t *testing.T) {
 					Name: nwName,
 				}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -204,7 +205,7 @@ func TestNetworkCheck(t *testing.T) {
 					Internal: false,
 				}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -226,7 +227,7 @@ func TestNetworkCheck(t *testing.T) {
 					EnableIPv6: false,
 				}, nil)
 
-				status, err := nw.Check(fakerenderer.New())
+				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
@@ -242,7 +243,7 @@ func TestNetworkCheck(t *testing.T) {
 		nw.SetClient(c)
 		c.On("FindNetwork", nwName).Return(nil, errors.New("error"))
 
-		status, err := nw.Check(fakerenderer.New())
+		status, err := nw.Check(context.Background(), fakerenderer.New())
 		require.Error(t, err)
 		assert.Equal(t, resource.StatusFatal, status.StatusCode())
 	})
@@ -261,7 +262,7 @@ func TestNetworkApply(t *testing.T) {
 		nw.SetClient(c)
 		c.On("FindNetwork", nwName).Return(nil, errors.New("error"))
 
-		status, err := nw.Apply()
+		status, err := nw.Apply(context.Background())
 		require.Error(t, err)
 		assert.Equal(t, resource.StatusFatal, status.StatusCode())
 	})
@@ -275,7 +276,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("CreateNetwork", mock.AnythingOfType("docker.CreateNetworkOptions")).
 				Return(&dc.Network{Name: nwName}, nil)
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "CreateNetwork", mock.AnythingOfType("docker.CreateNetworkOptions"))
@@ -288,7 +289,7 @@ func TestNetworkApply(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			c.AssertNotCalled(t, "CreateNetwork", mock.AnythingOfType("docker.CreateNetworkOptions"))
@@ -304,7 +305,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("CreateNetwork", mock.AnythingOfType("docker.CreateNetworkOptions")).
 				Return(&dc.Network{Name: nwName}, nil)
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "RemoveNetwork", nwName)
@@ -319,7 +320,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("CreateNetwork", mock.AnythingOfType("docker.CreateNetworkOptions")).
 				Return(nil, errors.New("error"))
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})
@@ -331,7 +332,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName, Driver: "test"}, nil)
 			c.On("RemoveNetwork", mock.AnythingOfType("string")).Return(errors.New("error"))
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})
@@ -345,7 +346,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 			c.On("RemoveNetwork", nwName).Return(nil)
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			c.AssertCalled(t, "RemoveNetwork", nwName)
@@ -357,7 +358,7 @@ func TestNetworkApply(t *testing.T) {
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			c.AssertNotCalled(t, "RemoveNetwork", nwName)
@@ -370,7 +371,7 @@ func TestNetworkApply(t *testing.T) {
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 			c.On("RemoveNetwork", nwName).Return(errors.New("error"))
 
-			status, err := nw.Apply()
+			status, err := nw.Apply(context.Background())
 			require.Error(t, err)
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 		})

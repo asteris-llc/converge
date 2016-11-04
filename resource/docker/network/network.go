@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 	dc "github.com/fsouza/go-dockerclient"
+	"golang.org/x/net/context"
 )
 
 // State type for Network
@@ -60,7 +61,7 @@ type Network struct {
 }
 
 // Check system for docker network
-func (n *Network) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	n.Status = resource.NewStatus()
 	nw, err := n.client.FindNetwork(n.Name)
 
@@ -83,7 +84,7 @@ func (n *Network) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply ensures the network matches the desired state
-func (n *Network) Apply() (resource.TaskStatus, error) {
+func (n *Network) Apply(context.Context) (resource.TaskStatus, error) {
 	n.Status = resource.NewStatus()
 
 	var (
