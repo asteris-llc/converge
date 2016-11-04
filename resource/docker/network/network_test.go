@@ -189,6 +189,50 @@ func TestNetworkCheck(t *testing.T) {
 				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
 				comparison.AssertDiff(t, status.Diffs(), "ipam_config", "", "subnet: 192.168.129.0/24")
 			})
+
+			t.Run("internal", func(t *testing.T) {
+				nw := &network.Network{
+					Name:     nwName,
+					State:    "present",
+					Internal: true,
+					Force:    true,
+				}
+				c := &mockClient{}
+				nw.SetClient(c)
+				c.On("FindNetwork", nwName).Return(&dc.Network{
+					Name:     nwName,
+					Internal: false,
+				}, nil)
+
+				status, err := nw.Check(fakerenderer.New())
+				require.NoError(t, err)
+				assert.True(t, status.HasChanges())
+				assert.True(t, len(status.Diffs()) > 1)
+				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), "internal", "false", "true")
+			})
+
+			t.Run("ipv6", func(t *testing.T) {
+				nw := &network.Network{
+					Name:  nwName,
+					State: "present",
+					IPv6:  true,
+					Force: true,
+				}
+				c := &mockClient{}
+				nw.SetClient(c)
+				c.On("FindNetwork", nwName).Return(&dc.Network{
+					Name:       nwName,
+					EnableIPv6: false,
+				}, nil)
+
+				status, err := nw.Check(fakerenderer.New())
+				require.NoError(t, err)
+				assert.True(t, status.HasChanges())
+				assert.True(t, len(status.Diffs()) > 1)
+				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), "ipv6", "false", "true")
+			})
 		})
 	})
 

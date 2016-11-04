@@ -17,6 +17,7 @@ package network
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/asteris-llc/converge/helpers/transform"
@@ -47,13 +48,15 @@ type Network struct {
 	*resource.Status
 	client docker.NetworkClient
 
-	Name    string
-	Driver  string
-	Labels  map[string]string
-	Options map[string]interface{}
-	IPAM    dc.IPAMOptions
-	State   State
-	Force   bool
+	Name     string
+	Driver   string
+	Labels   map[string]string
+	Options  map[string]interface{}
+	IPAM     dc.IPAMOptions
+	Internal bool
+	IPv6     bool
+	State    State
+	Force    bool
 }
 
 // Check system for docker network
@@ -109,11 +112,13 @@ func (n *Network) Apply() (resource.TaskStatus, error) {
 		}
 
 		opts := dc.CreateNetworkOptions{
-			Name:    n.Name,
-			Driver:  n.Driver,
-			Labels:  n.Labels,
-			Options: n.Options,
-			IPAM:    n.IPAM,
+			Name:       n.Name,
+			Driver:     n.Driver,
+			Labels:     n.Labels,
+			Options:    n.Options,
+			IPAM:       n.IPAM,
+			Internal:   n.Internal,
+			EnableIPv6: n.IPv6,
 		}
 
 		nw, err = n.client.CreateNetwork(opts)
@@ -148,6 +153,8 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 	n.AddDifference("labels", mapCompareStr(nw.Labels), mapCompareStr(n.Labels), "")
 	n.AddDifference("driver", nw.Driver, n.Driver, DefaultDriver)
 	n.AddDifference("options", mapCompareStr(nw.Options), mapCompareStr(toStrMap(n.Options)), "")
+	n.AddDifference("internal", strconv.FormatBool(nw.Internal), strconv.FormatBool(n.Internal), "false")
+	n.AddDifference("ipv6", strconv.FormatBool(nw.EnableIPv6), strconv.FormatBool(n.IPv6), "false")
 	n.AddDifference("ipam_driver", nw.IPAM.Driver, n.IPAM.Driver, DefaultIPAMDriver)
 
 	// we cannot reliably detect a diff of the ipam config if the desired ipam
