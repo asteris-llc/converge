@@ -38,7 +38,7 @@ type Preparer struct {
 	Options map[string]string `hcl:"options"`
 
 	// indicates whether the volume should exist.
-	State State `hcl:"state" valid_values:"present,absent" default:"present"`
+	State State `hcl:"state" valid_values:"present,absent"`
 
 	// indicates whether or not the volume will be recreated if the state is not
 	// what is expected. By default, the module will only check to see if the
