@@ -16,6 +16,7 @@ package query
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -29,7 +30,7 @@ type Preparer struct {
 	Query       string            `hcl:"query"`
 	CheckFlags  []string          `hcl:"check_flags"`
 	ExecFlags   []string          `hcl:"exec_flags"`
-	Timeout     string            `hcl:"timeout" doc_type:"duration string"`
+	Timeout     time.Duration     `hcl:"timeout"`
 	Dir         string            `hcl:"dir"`
 	Env         map[string]string `hcl:"env"`
 }
