@@ -4,6 +4,7 @@ docker.container "nginx" {
   force = "true"
 
   network_mode = "bridge"
+  networks     = ["test-network", "test"]
 
   ports = [
     "80",

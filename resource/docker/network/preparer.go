@@ -79,6 +79,10 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		p.Driver = DefaultDriver
 	}
 
+	if p.IPAMDriver == "" {
+		p.IPAMDriver = DefaultIPAMDriver
+	}
+
 	if p.State == "" {
 		p.State = "present"
 	}
