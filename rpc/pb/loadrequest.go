@@ -19,7 +19,6 @@ import (
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/load"
 	"github.com/asteris-llc/converge/render"
-	"github.com/asteris-llc/converge/transform"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -44,13 +43,7 @@ func (lr *LoadRequest) Load(ctx context.Context) (*graph.Graph, error) {
 		return nil, errors.Wrapf(err, "rendering %s", lr.Location)
 	}
 
-	resolved, err := transform.ResolveConditionals(ctx, rendered)
-	if err != nil {
-		logger.WithError(err).Error("could not resolve conditionals")
-		return nil, errors.Wrapf(err, "resolving conditionals %s", lr.Location)
-	}
-
-	merged, err := graph.MergeDuplicates(ctx, resolved, graph.SkipModuleAndParams)
+	merged, err := graph.MergeDuplicates(ctx, rendered, graph.SkipModuleAndParams)
 	if err != nil {
 		logger.WithError(err).Error("could not merge")
 		return nil, errors.Wrapf(err, "merging %s", lr.Location)
