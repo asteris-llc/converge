@@ -34,9 +34,8 @@ type Case struct {
 // the case clause
 func (c *Case) GenerateNode() (*parse.Node, error) {
 	switchHCL := fmt.Sprintf(
-		"macro.case %q {predicate = %q, name = %q}",
+		"macro.case %q {name = %q}",
 		c.Name,
-		c.Predicate,
 		c.Name,
 	)
 	nodes, err := parse.Parse([]byte(switchHCL))
