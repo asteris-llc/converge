@@ -18,6 +18,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	"golang.org/x/net/context"
 )
 
 // Preparer for docker volumes
@@ -47,7 +48,7 @@ type Preparer struct {
 }
 
 // Prepare a docker volume
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	dockerClient, err := docker.NewDockerClient()
 	if err != nil {
 		return nil, err

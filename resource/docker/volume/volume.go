@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 	dc "github.com/fsouza/go-dockerclient"
+	"golang.org/x/net/context"
 )
 
 // State type for Volume
@@ -49,7 +50,7 @@ type Volume struct {
 }
 
 // Check system for docker volume
-func (v *Volume) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (v *Volume) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	v.Status = resource.NewStatus()
 	vol, err := v.client.FindVolume(v.Name)
 
@@ -78,7 +79,7 @@ func (v *Volume) Check(resource.Renderer) (resource.TaskStatus, error) {
 }
 
 // Apply ensures the volume matches the desired state
-func (v *Volume) Apply() (resource.TaskStatus, error) {
+func (v *Volume) Apply(context.Context) (resource.TaskStatus, error) {
 	v.Status = resource.NewStatus()
 
 	var (
