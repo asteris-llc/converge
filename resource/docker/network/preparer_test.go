@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface ensures that the correct interfaces are implemented by
@@ -35,7 +36,7 @@ func TestPreparerInterface(t *testing.T) {
 func TestPreparerPrepare(t *testing.T) {
 	t.Run("name is required", func(t *testing.T) {
 		p := &network.Preparer{Name: ""}
-		_, err := p.Prepare(fakerenderer.New())
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		if assert.Error(t, err) {
 			assert.EqualError(t, err, "name must be provided")
 		}
@@ -43,7 +44,7 @@ func TestPreparerPrepare(t *testing.T) {
 
 	t.Run("state defaults to present", func(t *testing.T) {
 		p := &network.Preparer{Name: "test-network"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*network.Network)(nil), task)
 		nw := task.(*network.Network)
@@ -52,7 +53,7 @@ func TestPreparerPrepare(t *testing.T) {
 
 	t.Run("driver defaults to bridge", func(t *testing.T) {
 		p := &network.Preparer{Name: "test-network"}
-		task, err := p.Prepare(fakerenderer.New())
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		require.IsType(t, (*network.Network)(nil), task)
 		nw := task.(*network.Network)

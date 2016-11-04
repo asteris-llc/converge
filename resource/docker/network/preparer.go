@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
 	dc "github.com/fsouza/go-dockerclient"
+	"golang.org/x/net/context"
 )
 
 // Preparer for docker networks
@@ -70,7 +71,7 @@ type Preparer struct {
 }
 
 // Prepare a docker network
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if p.Name == "" {
 		return nil, errors.New("name must be provided")
 	}
