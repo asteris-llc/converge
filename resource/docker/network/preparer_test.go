@@ -33,6 +33,14 @@ func TestPreparerInterface(t *testing.T) {
 
 // TestPreparerPrepare tests the Prepare function
 func TestPreparerPrepare(t *testing.T) {
+	t.Run("name is required", func(t *testing.T) {
+		p := &network.Preparer{Name: ""}
+		_, err := p.Prepare(fakerenderer.New())
+		if assert.Error(t, err) {
+			assert.EqualError(t, err, "name must be provided")
+		}
+	})
+
 	t.Run("state defaults to present", func(t *testing.T) {
 		p := &network.Preparer{Name: "test-network"}
 		task, err := p.Prepare(fakerenderer.New())
