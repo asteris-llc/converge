@@ -69,6 +69,9 @@ type Preparer struct {
 	// the mode of the  container network
 	NetworkMode string `hcl:"network_mode"`
 
+	// the networks to connect the container to
+	Networks []string `hcl:"networks"`
+
 	// bind mounts volumes
 	Volumes []string `hcl:"volumes"`
 
@@ -114,6 +117,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		Expose:          p.Expose,
 		Links:           p.Links,
 		NetworkMode:     p.NetworkMode,
+		Networks:        p.Networks,
 		PublishAllPorts: p.PublishAllPorts,
 		PortBindings:    p.Ports,
 		DNS:             p.DNS,

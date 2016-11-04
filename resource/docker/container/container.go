@@ -38,7 +38,10 @@ const (
 )
 
 // these variable names can be injected by the docker engine
-var engineEnvVars = []string{"https_proxy", "http_proxy", "no_proxy", "ftp_proxy"}
+var (
+	engineEnvVars   = []string{"https_proxy", "http_proxy", "no_proxy", "ftp_proxy"}
+	builtinNetworks = []string{"default", "bridge", "host", "none", "container"}
+)
 
 // Container is responsible for creating docker containers
 type Container struct {
@@ -58,6 +61,7 @@ type Container struct {
 	VolumesFrom     []string
 	PublishAllPorts bool
 	NetworkMode     string
+	Networks        []string
 	CStatus         string
 	Force           bool
 	client          docker.APIClient
@@ -121,6 +125,13 @@ func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
 	container, err := c.client.CreateContainer(opts)
 	if err != nil {
 		return c, err
+	}
+
+	for _, name := range c.Networks {
+		err = c.client.ConnectNetwork(name, container)
+		if err != nil {
+			return c, err
+		}
 	}
 
 	if c.CStatus == "" || c.CStatus == containerStatusRunning {
@@ -227,11 +238,42 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	actual, expected = c.compareBinds(container)
 	status.AddDifference("binds", actual, expected, "")
 
+	// Networks
+	actual, expected = c.compareNetworks(container)
+	status.AddDifference("networks", actual, expected, "")
+
 	// Image
 	existingRepoTag := preferredRepoTag(c.Image, image)
 	status.AddDifference("image", existingRepoTag, c.Image, "")
 
 	return nil
+}
+
+func (c *Container) compareNetworks(container *dc.Container) (actual, expected string) {
+	if container.NetworkSettings == nil {
+		return "", ""
+	}
+
+	var containerNetworks []string
+	for name := range container.NetworkSettings.Networks {
+		var isBuiltin bool
+		for _, builtin := range builtinNetworks {
+			if strings.EqualFold(name, builtin) {
+				isBuiltin = true
+				break
+			}
+		}
+		if !isBuiltin {
+			containerNetworks = append(containerNetworks, name)
+		}
+	}
+	sort.Strings(containerNetworks)
+
+	expectedNetworks := make([]string, len(c.Networks))
+	copy(expectedNetworks, c.Networks)
+	sort.Strings(expectedNetworks)
+
+	return strings.Join(containerNetworks, ", "), strings.Join(expectedNetworks, ", ")
 }
 
 func (c *Container) compareEnv(container *dc.Container, image *dc.Image) (actual, expected string) {

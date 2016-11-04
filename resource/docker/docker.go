@@ -30,6 +30,7 @@ type APIClient interface {
 	FindContainer(string) (*dc.Container, error)
 	CreateContainer(dc.CreateContainerOptions) (*dc.Container, error)
 	StartContainer(string, string) error
+	ConnectNetwork(string, *dc.Container) error
 }
 
 // VolumeClient manages Docker volumes
@@ -263,6 +264,20 @@ func (c *Client) FindVolume(name string) (*dc.Volume, error) {
 		return nil, errors.Wrap(err, "failed to inspect volume")
 	}
 	return volume, nil
+}
+
+// ConnectNetwork connects the container to a network
+func (c *Client) ConnectNetwork(name string, container *dc.Container) error {
+	log.WithField("module", "docker").WithFields(
+		log.Fields{"name": container.Name, "network": name, "id": container.ID},
+	).Debug("connecting to network")
+
+	err := c.Client.ConnectNetwork(name, dc.NetworkConnectionOptions{Container: container.ID})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to connect container %s (%s) to network %s", container.Name, container.ID, name)
+	}
+
+	return err
 }
 
 // FindNetwork finds the network with the specified name
