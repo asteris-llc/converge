@@ -18,6 +18,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
+	dc "github.com/fsouza/go-dockerclient"
 )
 
 // Preparer for docker networks
@@ -36,6 +37,20 @@ type Preparer struct {
 
 	// driver specific options
 	Options map[string]interface{} `hcl:"options"`
+
+	// ip address management driver
+	IPAMDriver string `hcl:"ipam_driver"`
+
+	// custom IPAM configuration. multiple IPAM configurations are permitted. Each
+	// IPAM configuration block should contain one or more of the following items:
+	//
+	// subnet:      subnet in CIDR format
+	// gateway:     ipv4 or ipv6 gateway for the corresponding subnet
+	// ip_range:    container ips are allocated from this sub-ranges (CIDR format)
+	// aux_address: auxiliary ipv4 or ipv6 addresses used by the network driver.
+	//              Aux addresses are specified as a map with a name key and an ip
+	//              address value
+	IPAMConfig []ipamConfigMap `hcl:"ipam_config"`
 
 	// indicates whether the volume should exist.
 	State State `hcl:"state" valid_values:"present,absent"`
@@ -66,11 +81,62 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 		Driver:  p.Driver,
 		Labels:  p.Labels,
 		Options: p.Options,
+		IPAM:    p.buildIPAMOptions(),
 		State:   p.State,
 		Force:   p.Force,
 	}
 	nw.SetClient(dockerClient)
 	return nw, nil
+}
+
+func (p *Preparer) buildIPAMOptions() dc.IPAMOptions {
+	ipamOptions := dc.IPAMOptions{
+		Driver: p.IPAMDriver,
+	}
+
+	for _, ipamConfigMap := range p.IPAMConfig {
+		ipamConfig := ipamConfigMap.IPAMConfig()
+		if ipamConfig.Subnet != "" || len(ipamConfig.AuxAddress) > 0 {
+			ipamOptions.Config = append(ipamOptions.Config, ipamConfig)
+		}
+	}
+
+	return ipamOptions
+}
+
+type ipamConfigMap map[string]interface{}
+
+func (i ipamConfigMap) IPAMConfig() dc.IPAMConfig {
+	config := dc.IPAMConfig{}
+	subnet := i.value("subnet")
+	if subnet != "" {
+		config.Subnet = subnet
+		config.Gateway = i.value("gateway")
+		config.IPRange = i.value("ip_range")
+	}
+
+	if val, ok := i["aux_addresses"]; ok {
+		if auxMap, ok := val.(map[string]interface{}); ok {
+			auxAddrs := make(map[string]string)
+			for name, ipval := range auxMap {
+				if ip, ok := ipval.(string); ok {
+					auxAddrs[name] = ip
+				}
+			}
+			config.AuxAddress = auxAddrs
+		}
+	}
+
+	return config
+}
+
+func (i ipamConfigMap) value(key string) string {
+	if val, ok := i[key]; ok {
+		if strval, ok := val.(string); ok {
+			return strval
+		}
+	}
+	return ""
 }
 
 func init() {

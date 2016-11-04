@@ -153,7 +153,6 @@ func TestNetworkCheck(t *testing.T) {
 				nw.SetClient(c)
 				c.On("FindNetwork", nwName).Return(&dc.Network{
 					Name:    nwName,
-					Driver:  network.DefaultDriver,
 					Options: nil,
 				}, nil)
 
@@ -163,6 +162,32 @@ func TestNetworkCheck(t *testing.T) {
 				assert.True(t, len(status.Diffs()) > 1)
 				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
 				comparison.AssertDiff(t, status.Diffs(), "options", "", "com.docker.network.bridge.enable_icc=true")
+			})
+
+			t.Run("ipam options", func(t *testing.T) {
+				nw := &network.Network{
+					Name:  nwName,
+					State: "present",
+					IPAM: dc.IPAMOptions{
+						Driver: network.DefaultIPAMDriver,
+						Config: []dc.IPAMConfig{
+							dc.IPAMConfig{Subnet: "192.168.129.0/24"},
+						},
+					},
+					Force: true,
+				}
+				c := &mockClient{}
+				nw.SetClient(c)
+				c.On("FindNetwork", nwName).Return(&dc.Network{
+					Name: nwName,
+				}, nil)
+
+				status, err := nw.Check(fakerenderer.New())
+				require.NoError(t, err)
+				assert.True(t, status.HasChanges())
+				assert.True(t, len(status.Diffs()) > 1)
+				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), "ipam_config", "", "subnet: 192.168.129.0/24")
 			})
 		})
 	})
