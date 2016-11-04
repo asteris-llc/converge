@@ -60,7 +60,7 @@ func (v *Volume) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	v.Status.AddDifference(v.Name, string(volumeState(vol)), string(v.State), "")
 
-	if v.State == StatePresent && v.Force {
+	if v.State == StatePresent && vol != nil && v.Force {
 		expectedLabels := mapToString(v.Labels)
 		actualLabels := mapToString(vol.Labels)
 		v.Status.AddDifference("labels", actualLabels, expectedLabels, "")
