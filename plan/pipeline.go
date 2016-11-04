@@ -15,12 +15,14 @@
 package plan
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/graph/node/conditional"
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
@@ -42,6 +44,7 @@ func Pipeline(ctx context.Context, g *graph.Graph, id string, factory *render.Fa
 	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
+		AndThen(gen.MaybeResolveConditional).
 		AndThen(gen.DependencyCheck).
 		AndThen(gen.PlanNode)
 }
@@ -63,30 +66,23 @@ func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}
 	return nil, fmt.Errorf("expected resource.Task but got %T", idi)
 }
 
-// MaybeShortcircuitConditional evaluates the conditional predicate in the node,
+// MaybeResolveConditional evaluates the conditional predicate in the node,
 // if one exists, and then replaces the node with a Nop if it should not be
 // evaluated.
-func (g *pipelineGen) MaybeShortcircuitConditional(idi interface{}) (interface{}, error) {
+func (g *pipelineGen) MaybeResolveConditional(_ context.Context, idi interface{}) (interface{}, error) {
 	meta, ok := g.Graph.Get(g.ID)
 	if !ok {
+		return nil, errors.New("unexpectedly unable to find " + g.ID + " in graph")
+	}
+	if !conditional.IsConditional(meta) {
 		return idi, nil
 	}
-	predicateUnmarshalled, ok := meta.LookupMetadata("conditional-predicate-rendered")
-	if !ok {
+	if ok, err := conditional.ShouldEvaluate(g.Graph, meta); err != nil {
+		return nil, errors.Wrap(err, "unable to handle conditional node")
+	} else if ok {
 		return idi, nil
 	}
-
-	predicate, ok := predicateUnmarshalled.(string)
-
-	if !ok {
-		return nil, fmt.Errorf("%s: predicate should have string type but was %T", g.ID, predicateUnmarshalled)
-	}
-
-	if !parseTruth(predicate) {
-		return taskWrapper{Task: &control.NopTask{}}, nil
-	}
-
-	return idi, nil
+	return taskWrapper{Task: &control.NopTask{}}, nil
 }
 
 func parseTruth(predicate string) bool {

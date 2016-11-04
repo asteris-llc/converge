@@ -64,13 +64,13 @@ type NopTask struct {
 }
 
 // Check does nothing, verbosely
-func (n *NopTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (n *NopTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	n.AddMessage("Skipiping check; short-circuited in conditional")
 	return n, nil
 }
 
 // Apply does nothing, verbosely
-func (n *NopTask) Apply() (resource.TaskStatus, error) {
+func (n *NopTask) Apply(context.Context) (resource.TaskStatus, error) {
 	n.AddMessage("Skipiping application; short-circuited in conditional")
 	return n, nil
 }
