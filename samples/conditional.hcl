@@ -1,9 +1,9 @@
 param "val" {
-  default = "2"
+  default = 2
 }
 
 switch "test-switch" {
-  case "eq 1 {{param `val`}}" "a" {
+  case "{{eq `1` (param `val`)}}" "a" {
     file.content "foo-file" {
       destination = "foo-file.txt"
       content     = "{{lookup `file.content.foo1.content`}}"

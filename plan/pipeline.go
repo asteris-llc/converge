@@ -77,12 +77,25 @@ func (g *pipelineGen) MaybeResolveConditional(_ context.Context, idi interface{}
 	if !conditional.IsConditional(meta) {
 		return idi, nil
 	}
+	conditional.RenderPredicate(meta, func(id, toRender string) (string, error) {
+		r, err := g.Renderer(g.ID)
+		if err != nil {
+			return "", err
+		}
+		result, err := r.Render(id, toRender)
+		fmt.Println("predicate renderer returned: ", result, err)
+		return result, err
+	})
 	if ok, err := conditional.ShouldEvaluate(g.Graph, meta); err != nil {
 		return nil, errors.Wrap(err, "unable to handle conditional node")
 	} else if ok {
 		return idi, nil
 	}
-	return taskWrapper{Task: &control.NopTask{}}, nil
+	var predStr string
+	if predicateValue, ok := meta.LookupMetadata(conditional.MetaRenderedPredicate); ok {
+		predStr = predicateValue.(string)
+	}
+	return taskWrapper{Task: &control.NopTask{Predicate: predStr}}, nil
 }
 
 func parseTruth(predicate string) bool {

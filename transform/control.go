@@ -15,19 +15,15 @@
 package transform
 
 import (
-	"crypto/rand"
-	"errors"
-
 	"github.com/asteris-llc/converge/graph"
-	"github.com/asteris-llc/converge/graph/node"
-	"github.com/asteris-llc/converge/helpers/faketask"
-	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/parse/preprocessor/switch"
-	"github.com/asteris-llc/converge/render"
-	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
 )
 
+func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
+	return g, nil
+}
+
+/*
 // ResolveConditionals will walk the graph and wrap tasks whose parent is a case
 // in a conditional resource.
 func ResolveConditionals(ctx context.Context, g *graph.Graph) (*graph.Graph, error) {
@@ -137,3 +133,4 @@ func getCaseNode(id string, g *graph.Graph) (*control.CaseTask, bool) {
 	}
 	return nil, false
 }
+*/

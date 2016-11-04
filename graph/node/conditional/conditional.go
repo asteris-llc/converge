@@ -2,6 +2,7 @@ package conditional
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/asteris-llc/converge/graph"
@@ -67,9 +68,14 @@ func RenderPredicate(meta *node.Node, renderFunc func(string, string) (string, e
 	}
 	unrendered, ok := meta.LookupMetadata(MetaUnrenderedPredicate)
 	if !ok {
-		return "", errors.New("predicate required for conditional node")
+		return "", errors.New("\tpredicate required for conditional node")
 	}
-	result, err := renderFunc(meta.ID, unrendered.(string))
+	toRender := unrendered.(string)
+	result, err := renderFunc(meta.ID, toRender)
+	if err != nil {
+		return "", err
+	}
+	result, err = renderFunc(meta.ID, fmt.Sprintf("{{ %s }}", result))
 	if err != nil {
 		return "", err
 	}
