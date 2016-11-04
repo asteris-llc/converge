@@ -66,6 +66,9 @@ type Preparer struct {
 	// list of DNS servers for the container to use
 	DNS []string `hcl:"dns"`
 
+	// the mode of the  container network
+	NetworkMode string `hcl:"network_mode"`
+
 	// bind mounts volumes
 	Volumes []string `hcl:"volumes"`
 
@@ -110,6 +113,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		Env:             env,
 		Expose:          p.Expose,
 		Links:           p.Links,
+		NetworkMode:     p.NetworkMode,
 		PublishAllPorts: p.PublishAllPorts,
 		PortBindings:    p.Ports,
 		DNS:             p.DNS,
@@ -132,6 +136,9 @@ func validateContainer(container *Container) error {
 			!strings.EqualFold(container.CStatus, containerStatusCreated) {
 			return errors.New("status must be 'running' or 'created'")
 		}
+	}
+	if container.NetworkMode == "" {
+		container.NetworkMode = DefaultNetworkMode
 	}
 	return nil
 }

@@ -32,6 +32,9 @@ import (
 const (
 	containerStatusRunning = "running"
 	containerStatusCreated = "created"
+
+	// DefaultNetworkMode is the mode of the container network
+	DefaultNetworkMode = "default"
 )
 
 // these variable names can be injected by the docker engine
@@ -54,6 +57,7 @@ type Container struct {
 	Volumes         []string
 	VolumesFrom     []string
 	PublishAllPorts bool
+	NetworkMode     string
 	CStatus         string
 	Force           bool
 	client          docker.APIClient
@@ -105,6 +109,7 @@ func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
 		PortBindings:    toPortBindingMap(c.PortBindings),
 		Binds:           binds,
 		VolumesFrom:     c.VolumesFrom,
+		NetworkMode:     c.NetworkMode,
 	}
 
 	opts := dc.CreateContainerOptions{
@@ -156,6 +161,12 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 			strings.Join(container.HostConfig.VolumesFrom, ", "),
 			strings.Join(c.VolumesFrom, ", "),
 			"")
+		status.AddDifference(
+			"network_mode",
+			container.HostConfig.NetworkMode,
+			c.NetworkMode,
+			DefaultNetworkMode,
+		)
 	}
 
 	image, err := c.client.FindImage(container.Image)

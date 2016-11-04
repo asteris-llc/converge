@@ -3,6 +3,8 @@ docker.container "nginx" {
   image = "nginx:1.10-alpine"
   force = "true"
 
+  network_mode = "bridge"
+
   ports = [
     "80",
   ]
