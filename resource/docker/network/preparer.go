@@ -15,6 +15,8 @@
 package network
 
 import (
+	"errors"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
@@ -69,9 +71,8 @@ type Preparer struct {
 
 // Prepare a docker network
 func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
-	dockerClient, err := docker.NewDockerClient()
-	if err != nil {
-		return nil, err
+	if p.Name == "" {
+		return nil, errors.New("name must be provided")
 	}
 
 	if p.Driver == "" {
@@ -80,6 +81,11 @@ func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
 
 	if p.State == "" {
 		p.State = "present"
+	}
+
+	dockerClient, err := docker.NewDockerClient()
+	if err != nil {
+		return nil, err
 	}
 
 	nw := &Network{
