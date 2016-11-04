@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -82,19 +83,28 @@ func (p pipelineGen) maybeTransformRoot(ctx context.Context, idi interface{}) (i
 
 // Run prepare on the node and return the resource.Resource to be wrapped
 func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interface{}, error) {
+	var metadataErr error
+
 	res, ok := idi.(resource.Resource)
 	if !ok {
 		return nil, typeError("resource.Resource", idi)
 	}
+
 	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	prepared, err := res.Prepare(ctx, renderer)
-	if err != nil {
-		if _, ok := errors.Cause(err).(ErrUnresolvable); ok {
+	if p.shouldRenderMetadata() {
+		_, metadataErr = p.renderMetadata(renderer)
+	}
 
+	prepared, err := res.Prepare(ctx, renderer)
+
+	merged := mergeMaybeUnresolvables(err, metadataErr)
+
+	if merged != nil {
+		if errIsUnresolvable(merged) {
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
 			fakePrep, fakePrepErr := getTypedResourcePointer(ctx, res)
@@ -107,12 +117,71 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 				if rendErr != nil {
 					return nil, rendErr
 				}
+				if p.shouldRenderMetadata() {
+					_, rendErr := p.renderMetadata(dynamicRenderer)
+					if rendErr != nil {
+						return nil, rendErr
+					}
+				}
 				return res.Prepare(ctx, dynamicRenderer)
 			}), nil
 		}
 		return nil, err
 	}
 	return prepared, nil
+}
+
+func mergeMaybeUnresolvables(err1, err2 error) error {
+	if err1 == nil {
+		return err2
+	}
+	if err2 == nil {
+		return err1
+	}
+	if errIsUnresolvable(err1) && errIsUnresolvable(err2) {
+		return err1
+	}
+	if !errIsUnresolvable(err1) {
+		return err1
+	}
+	if !errIsUnresolvable(err2) {
+		return err2
+	}
+	return multierror.Append(err1, err2)
+}
+
+func errIsUnresolvable(err error) bool {
+	_, ok := errors.Cause(err).(ErrUnresolvable)
+	return ok
+}
+
+func (p pipelineGen) shouldRenderMetadata() bool {
+	meta, ok := p.Graph.Get(p.ID)
+	if !ok {
+		return false
+	}
+	_, ok = meta.LookupMetadata("conditional-predicate-raw")
+	return ok
+}
+
+func (p pipelineGen) renderMetadata(r *Renderer) (string, error) {
+	meta, ok := p.Graph.Get(p.ID)
+	if !ok {
+		return "", errors.New(p.ID + " does not exist in graph, cannot render metadata")
+	}
+	rendered, ok := meta.LookupMetadata("conditional-predicate-rendered")
+	if ok {
+		return rendered.(string), nil
+	}
+	unrendered, ok := meta.LookupMetadata("conditional-predicate-raw")
+	if !ok {
+		return "", nil
+	}
+	result, err := r.Render(p.ID, unrendered.(string))
+	if err == nil {
+		meta.AddMetadata("conditional-predicate-rendered", result)
+	}
+	return result, err
 }
 
 // Takes a resource.Task and wraps it in resource.TaskWrapper

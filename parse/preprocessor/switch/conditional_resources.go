@@ -57,3 +57,20 @@ func (c *ConditionalTask) Check(ctx context.Context, r resource.Renderer) (resou
 	}
 	return &resource.Status{}, nil
 }
+
+// NopTask does nothing, verbosely
+type NopTask struct {
+	resource.Status
+}
+
+// Check does nothing, verbosely
+func (n *NopTask) Check(resource.Renderer) (resource.TaskStatus, error) {
+	n.AddMessage("Skipiping check; short-circuited in conditional")
+	return n, nil
+}
+
+// Apply does nothing, verbosely
+func (n *NopTask) Apply() (resource.TaskStatus, error) {
+	n.AddMessage("Skipiping application; short-circuited in conditional")
+	return n, nil
+}

@@ -17,9 +17,11 @@ package plan
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
+	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -59,6 +61,45 @@ func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}
 	}
 
 	return nil, fmt.Errorf("expected resource.Task but got %T", idi)
+}
+
+// MaybeShortcircuitConditional evaluates the conditional predicate in the node,
+// if one exists, and then replaces the node with a Nop if it should not be
+// evaluated.
+func (g *pipelineGen) MaybeShortcircuitConditional(idi interface{}) (interface{}, error) {
+	meta, ok := g.Graph.Get(g.ID)
+	if !ok {
+		return idi, nil
+	}
+	predicateUnmarshalled, ok := meta.LookupMetadata("conditional-predicate-rendered")
+	if !ok {
+		return idi, nil
+	}
+
+	predicate, ok := predicateUnmarshalled.(string)
+
+	if !ok {
+		return nil, fmt.Errorf("%s: predicate should have string type but was %T", g.ID, predicateUnmarshalled)
+	}
+
+	if !parseTruth(predicate) {
+		return taskWrapper{Task: &control.NopTask{}}, nil
+	}
+
+	return idi, nil
+}
+
+func parseTruth(predicate string) bool {
+	switch strings.ToLower(predicate) {
+	case "t", "true":
+		return true
+	}
+	return false
+}
+
+// ShouldEvaluate returns true if the node is unconditional, or if it is
+func (g *pipelineGen) ShouldEvaluate() bool {
+	return true
 }
 
 // DependencyCheck looks for failing dependency nodes.  If an error is

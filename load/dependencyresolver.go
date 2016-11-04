@@ -112,6 +112,17 @@ func getParams(g *graph.Graph, id string, node *parse.Node) (out []string, err e
 		return nil, err
 	}
 
+	meta, found := g.Get(id)
+	if !found {
+		return nil, errors.New("error: node is not in the provided graph")
+	}
+
+	if metaIface, ok := meta.LookupMetadata("conditional-predicate-raw"); ok {
+		if str, ok := metaIface.(string); ok {
+			nodeStrings = append(nodeStrings, str)
+		}
+	}
+
 	type stub struct{}
 	language := extensions.MinimalLanguage()
 	language.On("param", extensions.RememberCalls(&out, ""))
@@ -144,6 +155,18 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 	if err != nil {
 		return nil, err
 	}
+
+	meta, found := g.Get(id)
+	if !found {
+		return nil, errors.New("error: node is not in the provided graph")
+	}
+
+	if metaIface, ok := meta.LookupMetadata("conditional-predicate-raw"); ok {
+		if str, ok := metaIface.(string); ok {
+			nodeStrings = append(nodeStrings, str)
+		}
+	}
+
 	language := extensions.MinimalLanguage()
 	language.On(extensions.RefFuncName, extensions.RememberCalls(&calls, 0))
 	for _, s := range nodeStrings {
