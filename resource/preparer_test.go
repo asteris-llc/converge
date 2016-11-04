@@ -119,7 +119,7 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, err := prep.Prepare(fakerenderer.New())
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.EqualError(t, err, fmt.Sprintf("could not convert %s to duration: time: missing unit in duration %s", val, val))
 			})
 
@@ -130,7 +130,7 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, err := prep.Prepare(fakerenderer.New())
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.EqualError(t, err, fmt.Sprintf("cannot handle duration conversion of %v", reflect.ValueOf(val).Kind()))
 			})
 		})
