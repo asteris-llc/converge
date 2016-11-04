@@ -17,20 +17,12 @@ package image_test
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(image.Preparer))
-}
-
-func TestPreparerInvalidTimeout(t *testing.T) {
-	p := &image.Preparer{InactivityTimeout: "invalid"}
-	_, err := p.Prepare(context.Background(), fakerenderer.New())
-	assert.Error(t, err)
 }
