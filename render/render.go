@@ -22,6 +22,7 @@ import (
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"github.com/asteris-llc/converge/graph/node/conditional"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
@@ -160,8 +161,7 @@ func (p pipelineGen) shouldRenderMetadata() bool {
 	if !ok {
 		return false
 	}
-	_, ok = meta.LookupMetadata("conditional-predicate-raw")
-	return ok
+	return conditional.IsConditional(meta)
 }
 
 func (p pipelineGen) renderMetadata(r *Renderer) (string, error) {
@@ -169,19 +169,10 @@ func (p pipelineGen) renderMetadata(r *Renderer) (string, error) {
 	if !ok {
 		return "", errors.New(p.ID + " does not exist in graph, cannot render metadata")
 	}
-	rendered, ok := meta.LookupMetadata("conditional-predicate-rendered")
-	if ok {
-		return rendered.(string), nil
-	}
-	unrendered, ok := meta.LookupMetadata("conditional-predicate-raw")
-	if !ok {
+	if !conditional.IsConditional(meta) {
 		return "", nil
 	}
-	result, err := r.Render(p.ID, unrendered.(string))
-	if err == nil {
-		meta.AddMetadata("conditional-predicate-rendered", result)
-	}
-	return result, err
+	return conditional.RenderPredicate(meta, r.Render)
 }
 
 // Takes a resource.Task and wraps it in resource.TaskWrapper
@@ -192,7 +183,7 @@ func (p pipelineGen) wrapTask(ctx context.Context, taski interface{}) (interface
 	if task, ok := taski.(resource.Task); ok {
 		return resource.WrapTask(task), nil
 	}
-	return nil, typeError("resource.Task", taski)
+	return nil, typeError("render.wrapTask: resource.Task", taski)
 }
 
 func typeError(expected string, actual interface{}) error {

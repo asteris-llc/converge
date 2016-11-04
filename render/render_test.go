@@ -168,6 +168,7 @@ task.query "b" {
 			"root/task.query.a", "conditional-predicate-raw", "{{param `a`}}",
 		)
 		require.NoError(t, err)
+		gr.Connect("root/task.query.a", "root/param.a")
 		g, err := render.Render(context.Background(), gr, render.Values{})
 		require.NoError(t, err)
 		meta, err := graphutils.GetMetadata(g, "root/task.query.a", "conditional-predicate-rendered")
@@ -184,6 +185,7 @@ task.query "b" {
 			"root/task.query.b", "conditional-predicate-raw", "{{lookup `task.query.a.status.stdout`}}",
 		)
 		require.NoError(t, err)
+		gr.Connect("root/task.query.b", "root/task.query.a")
 		g, err := render.Render(context.Background(), gr, render.Values{})
 		value, ok := g.Get("root/task.query.b")
 		require.True(t, ok)
