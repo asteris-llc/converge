@@ -25,6 +25,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	nilDur   *time.Duration
+	zeroDur  time.Duration
+	threeSec time.Duration
+	fiveSec  time.Duration
+	nilInt   *int
+	retry    int
+	err      error
+)
+
+func init() {
+	zeroDur = time.Duration(0)
+
+	threeSec, err = time.ParseDuration("3s")
+	if err != nil {
+		panic(err)
+	}
+
+	fiveSec, err = time.ParseDuration("5s")
+	if err != nil {
+		panic(err)
+	}
+
+	retry = 10
+}
+
 // TestRetryUntil tests the behavior of the RetryUntil function
 func TestRetryUntil(t *testing.T) {
 	t.Parallel()
@@ -102,38 +128,32 @@ func TestPrepareRetrier(t *testing.T) {
 	t.Parallel()
 
 	t.Run("sets max retries", func(t *testing.T) {
-		r := wait.PrepareRetrier("3s", "5s", 10)
+		r := wait.PrepareRetrier(&threeSec, &fiveSec, &retry)
 		assert.Equal(t, 10, r.MaxRetry)
 	})
 
 	t.Run("default max retries", func(t *testing.T) {
-		r := wait.PrepareRetrier("3s", "5s", 0)
+		r := wait.PrepareRetrier(&threeSec, &fiveSec, nilInt)
 		assert.Equal(t, wait.DefaultRetries, r.MaxRetry)
 	})
 
 	t.Run("sets interval", func(t *testing.T) {
-		r := wait.PrepareRetrier("3s", "", 1)
+		r := wait.PrepareRetrier(&threeSec, &zeroDur, &retry)
 		assert.Equal(t, 3*time.Second, r.Interval)
 	})
 
 	t.Run("default interval", func(t *testing.T) {
-		tests := []string{"", "0s", "0", "unparseable"}
-		for _, test := range tests {
-			r := wait.PrepareRetrier(test, "5s", 1)
-			assert.Equal(t, wait.DefaultInterval, r.Interval)
-		}
+		r := wait.PrepareRetrier(nilDur, &fiveSec, &retry)
+		assert.Equal(t, wait.DefaultInterval, r.Interval)
 	})
 
 	t.Run("sets grace period", func(t *testing.T) {
-		r := wait.PrepareRetrier("", "2s", 1)
-		assert.Equal(t, 2*time.Second, r.GracePeriod)
+		r := wait.PrepareRetrier(&zeroDur, &threeSec, &retry)
+		assert.Equal(t, 3*time.Second, r.GracePeriod)
 	})
 
 	t.Run("default grace period", func(t *testing.T) {
-		tests := []string{"", "0s", "0", "unparseable"}
-		for _, test := range tests {
-			r := wait.PrepareRetrier("5s", test, 1)
-			assert.Equal(t, wait.DefaultGracePeriod, r.GracePeriod)
-		}
+		r := wait.PrepareRetrier(&fiveSec, nilDur, &retry)
+		assert.Equal(t, wait.DefaultGracePeriod, r.GracePeriod)
 	})
 }
