@@ -14,15 +14,11 @@
 
 package wait
 
-import (
-	"time"
-
-	log "github.com/Sirupsen/logrus"
-)
+import "time"
 
 const (
 	// DefaultInterval is the default amount of time to wait in between checks
-	DefaultInterval = 5 * time.Second
+	DefaultInterval = time.Duration(5 * time.Second)
 
 	// DefaultGracePeriod is the amount of time to wait before running the first
 	// check and after a successful check
@@ -82,30 +78,29 @@ waitLoop:
 }
 
 // PrepareRetrier generates a Retrier from preparer input
-func PrepareRetrier(interval, gracePeriod string, maxRetry int) *Retrier {
-	if maxRetry <= 0 {
-		maxRetry = DefaultRetries
-	}
-	return &Retrier{
-		MaxRetry:    maxRetry,
-		GracePeriod: parseDuration(gracePeriod, "grace_period", DefaultGracePeriod),
-		Interval:    parseDuration(interval, "interval", DefaultInterval),
-	}
-}
+func PrepareRetrier(interval, gracePeriod *time.Duration, maxRetry *int) *Retrier {
+	// set the default values for the retrier interval, grace period, and retries
+	retrierInterval := DefaultInterval
+	retrierGracePeriod := DefaultGracePeriod
+	retrierMaxRetry := DefaultRetries
 
-func parseDuration(durstr, field string, defdur time.Duration) time.Duration {
-	if durstr != "" {
-		if dur, err := time.ParseDuration(durstr); err == nil {
-			if dur != time.Duration(0) {
-				return dur
-			}
-		} else {
-			log.WithFields(log.Fields{
-				"module": "preparer",
-				"field":  field,
-				"value":  durstr,
-			}).Warn("could not parse as a duration.")
-		}
+	// if any of the fields were set by the preparer, use those values instead of
+	// the defaults
+	if interval != nil {
+		retrierInterval = *interval
 	}
-	return defdur
+
+	if gracePeriod != nil {
+		retrierGracePeriod = *gracePeriod
+	}
+
+	if maxRetry != nil {
+		retrierMaxRetry = *maxRetry
+	}
+
+	return &Retrier{
+		MaxRetry:    retrierMaxRetry,
+		GracePeriod: retrierGracePeriod,
+		Interval:    retrierInterval,
+	}
 }

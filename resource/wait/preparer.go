@@ -60,7 +60,7 @@ type Preparer struct {
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 	// "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". If
 	// the interval is not specified, it will default to 5 seconds.
-	Interval string `hcl:"interval" doc_type:"duration string"`
+	Interval *time.Duration `hcl:"interval"`
 
 	// the amount of time to wait before running the first check and after a
 	// successful check. The format is Go's duration string. A duration string is
@@ -68,11 +68,11 @@ type Preparer struct {
 	// and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units
 	// are "ns", "us" (or "µs"), "ms", "s", "m", "h". If no grace period is
 	// specified, no grace period will be taken into account.
-	GracePeriod string `hcl:"grace_period" doc_type:"duration string"`
+	GracePeriod *time.Duration `hcl:"grace_period"`
 
 	// the maximum number of attempts before the wait fails. If the maximum number
 	// of retries is not set, it will default to 5.
-	MaxRetry int `hcl:"max_retry"`
+	MaxRetry *int `hcl:"max_retry"`
 }
 
 // Prepare creates a new wait type
