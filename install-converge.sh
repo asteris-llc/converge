@@ -182,7 +182,7 @@ do_download () {
 extract() {
 	file="$1"
 	dest="$2"
-	cd "$dest" && tar zxvf "$file" && return 0
+	cd "$dest" && tar zxvf "$file" converge && return 0
 }
 
 while getopts :d:r:v: opt; do
