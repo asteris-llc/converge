@@ -15,11 +15,15 @@
 package apt_test
 
 import (
+	"context"
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/package"
 	"github.com/asteris-llc/converge/resource/package/apt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPreparerInterfaces ensures that the correct interfaces are implemented by
@@ -27,4 +31,50 @@ import (
 func TestPreparerInterfaces(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(apt.Preparer))
+}
+
+// estPreparerCreatesPackage tests to make sure the preparer creates valid configurations
+func TestPreparerCreatesPackage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when-state-present", func(t *testing.T) {
+		p := &apt.Preparer{Name: "test1", State: "present"}
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		asAPT, ok := task.(*pkg.Package)
+		require.True(t, ok)
+		assert.Equal(t, "present", string(asAPT.State))
+	})
+
+	t.Run("when-state-absent", func(t *testing.T) {
+		p := &apt.Preparer{Name: "test1", State: "absent"}
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		asAPT, ok := task.(*pkg.Package)
+		require.True(t, ok)
+		assert.Equal(t, "absent", string(asAPT.State))
+	})
+	t.Run("when-state-missing", func(t *testing.T) {
+		p := &apt.Preparer{Name: "test1"}
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		asAPT, ok := task.(*pkg.Package)
+		require.True(t, ok)
+		assert.Equal(t, "present", string(asAPT.State))
+	})
+
+	t.Run("when-name-null", func(t *testing.T) {
+		p := &apt.Preparer{Name: "", State: "present"}
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.Error(t, err)
+		assert.EqualError(t, err, "package name cannot be empty")
+	})
+
+	t.Run("when-name-space", func(t *testing.T) {
+		p := &apt.Preparer{Name: " ", State: "present"}
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.Error(t, err)
+		assert.EqualError(t, err, "package name cannot be empty")
+	})
+
 }
