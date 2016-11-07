@@ -1,7 +1,7 @@
 ---
 title: "package.rpm"
 slug: "package-rpm"
-date: "2016-10-19T08:54:35-05:00"
+date: "2016-11-07T13:35:34-06:00"
 menu:
   main:
     parent: resources

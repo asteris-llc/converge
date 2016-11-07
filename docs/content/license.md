@@ -1,6 +1,6 @@
 ---
 title: "License"
-date: "2016-08-24T16:29:08-05:00"
+date: "2016-11-07T13:35:24-06:00"
 menu:
   main:
     weight: 10

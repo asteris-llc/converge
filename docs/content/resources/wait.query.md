@@ -1,7 +1,7 @@
 ---
 title: "wait.query"
 slug: "wait-query"
-date: "2016-10-03T10:23:34-04:00"
+date: "2016-11-07T13:35:42-06:00"
 menu:
   main:
     parent: resources
@@ -44,13 +44,16 @@ the resource is healthy, and 1 (or above) otherwise.
 
   flags to pass to the interpreter at execution time.
 
-- `timeout` (duration string)
+- `timeout` (duration)
 
-  the amount of time the command will wait before halting forcefully. The
-format is Go's duration string. A duration string is a possibly signed
-sequence of decimal numbers, each with optional fraction and a unit
-suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
-"us" (or "µs"), "ms", "s", "m", "h".
+  the amount of time the command will wait before halting forcefully.
+
+Acceptable formats are a number in nanoseconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 nanosecond count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 - `dir` (string)
 
@@ -60,24 +63,32 @@ suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns",
 
   any environment variables that should be passed to the command.
 
-- `interval` (duration string)
+- `interval` (optional duration)
 
-  the amount of time to wait in between checks. The format is Go's duration
-string. A duration string is a possibly signed sequence of decimal numbers,
+  the amount of time to wait in between checks. If the interval is not
+specified, it will default to 5 seconds.
+
+Acceptable formats are a number in nanoseconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 nanosecond count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
-"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". If
-the interval is not specified, it will default to 5 seconds.
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-- `grace_period` (duration string)
+- `grace_period` (optional duration)
 
   the amount of time to wait before running the first check and after a
-successful check. The format is Go's duration string. A duration string is
-a possibly signed sequence of decimal numbers, each with optional fraction
-and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units
-are "ns", "us" (or "µs"), "ms", "s", "m", "h". If no grace period is
-specified, no grace period will be taken into account.
+successful check. If no grace period is specified, no grace period will be
+taken into account.
 
-- `max_retry` (int)
+Acceptable formats are a number in nanoseconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 nanosecond count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+- `max_retry` (optional int)
 
   the maximum number of attempts before the wait fails. If the maximum number
 of retries is not set, it will default to 5.
