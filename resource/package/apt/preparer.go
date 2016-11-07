@@ -15,6 +15,10 @@
 package apt
 
 import (
+	"errors"
+
+	"strings"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/package"
@@ -37,6 +41,11 @@ type Preparer struct {
 
 // Prepare a new package
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
+
+	if strings.TrimSpace(p.Name) == "" {
+		return &pkg.Package{}, errors.New("package name cannot be empty")
+	}
+
 	if p.State == "" {
 		p.State = "present"
 	}
