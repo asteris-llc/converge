@@ -33,7 +33,7 @@ func TestPreparerInterfaces(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(apt.Preparer))
 }
 
-// estPreparerCreatesPackage tests to make sure the preparer creates valid configurations
+// TestPreparerCreatesPackage tests to make sure the preparer creates valid configurations
 func TestPreparerCreatesPackage(t *testing.T) {
 	t.Parallel()
 
