@@ -1,11 +1,9 @@
-// +build experimental
-
 package plugin
 
 import (
 	"net/http"
 
-	enginetypes "github.com/docker/engine-api/types"
+	enginetypes "github.com/docker/docker/api/types"
 )
 
 // Backend for Plugin

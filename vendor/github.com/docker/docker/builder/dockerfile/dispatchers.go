@@ -18,11 +18,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/pkg/signal"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
-	"github.com/docker/engine-api/types/container"
-	"github.com/docker/engine-api/types/strslice"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -277,6 +277,11 @@ func workdir(b *Builder, args []string, attributes map[string]bool, original str
 	if err != nil {
 		return err
 	}
+
+	// NOTE: You won't find the "mkdir" for the directory in here. Rather we
+	// just set the value in the image's runConfig.WorkingDir property
+	// and container.SetupWorkingDirectory() will create it automatically
+	// for us the next time the image is used to create a container.
 
 	return b.commit("", b.runConfig.Cmd, fmt.Sprintf("WORKDIR %v", b.runConfig.WorkingDir))
 }

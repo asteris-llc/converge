@@ -72,19 +72,7 @@ message ServiceSpec {
 	// UpdateConfig controls the rate and policy of updates.
 	UpdateConfig update = 6;
 
-	// NetworkAttachmentConfig specifies how a service should be attached to a particular network.
-	//
-	// For now, this is a simple struct, but this can include future information
-	// instructing Swarm on how this service should work on the particular
-	// network.
-	message NetworkAttachmentConfig {
-		// Target specifies the target network for attachment. This value may be a
-		// network name or identifier. Only identifiers are supported at this time.
-		string target = 1;
-		// Aliases specifies a list of discoverable alternate names for the service on this Target.
-		repeated string aliases = 2;
-	}
-	repeated NetworkAttachmentConfig networks = 7;
+	repeated NetworkAttachmentConfig networks = 7 [deprecated=true];
 
 	// Service endpoint specifies the user provided configuration
 	// to properly discover and load balance a service.
@@ -103,6 +91,7 @@ message GlobalService {
 
 message TaskSpec {
 	oneof runtime {
+		NetworkAttachmentSpec attachment = 8;
 		ContainerSpec container = 1;
 	}
 
@@ -118,7 +107,27 @@ message TaskSpec {
 	// LogDriver specifies the log driver to use for the task. Any runtime will
 	// direct logs into the specified driver for the duration of the task.
 	Driver log_driver = 6;
+
+	// Networks specifies the list of network attachment
+	// configurations (which specify the network and per-network
+	// aliases) that this task spec is bound to.
+	repeated NetworkAttachmentConfig networks = 7;
+
+	// ForceUpdate is a counter that triggers an update even if no relevant
+	// parameters have been changed. We do this to allow forced restarts
+	// using the same reconcilation-based mechanism that performs rolling
+	// updates.
+	uint64 force_update = 9;
 }
+
+// NetworkAttachmentSpec specifies runtime parameters required to attach
+// a container to a network.
+message NetworkAttachmentSpec {
+	// ContainerID spcifies a unique ID of the container for which
+	// this attachment is for.
+	string container_id = 1 [(gogoproto.customname) = "ContainerID"];
+}
+
 
 // Container specifies runtime parameters for a container.
 message ContainerSpec {
@@ -151,6 +160,10 @@ message ContainerSpec {
 	// If Command and Args are provided, Args will be appended to Command.
 	repeated string args = 4;
 
+	// Hostname specifies the hostname that will be set on containers created by docker swarm.
+	// All containers for a given service will have the same hostname
+	string hostname = 14;
+
 	// Env specifies the environment variables for the container in NAME=VALUE
 	// format. These must be compliant with  [IEEE Std
 	// 1003.1-2001](http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html).
@@ -169,6 +182,10 @@ message ContainerSpec {
 	// Groups specifies supplementary groups available to the user.
 	repeated string groups = 11;
 
+	// TTY declares that a TTY should be attached to the standard streams,
+	// including stdin if it is still open.
+	bool tty = 13 [(gogoproto.customname) = "TTY"];
+
 	repeated Mount mounts = 8 [(gogoproto.nullable) = false];
 
 	// StopGracePeriod the grace period for stopping the container before
@@ -186,6 +203,34 @@ message ContainerSpec {
 
 	// PullOptions parameterize the behavior of image pulls.
 	PullOptions pull_options = 10;
+
+	// SecretReference contains references to zero or more secrets that
+	// will be exposed to the container.
+	repeated SecretReference secrets = 12;
+
+	// DNSConfig specifies DNS related configurations in resolver configuration file (resolv.conf)
+	// Detailed documentation is available in:
+	// http://man7.org/linux/man-pages/man5/resolv.conf.5.html
+	// TODO: domain is not supported yet
+	message DNSConfig {
+		// Nameservers specifies the IP addresses of the name servers
+		repeated string nameservers = 1;
+
+		// Search specifies the search list for host-name lookup
+		repeated string search = 2;
+
+		// Options allows certain internal resolver variables to be modified
+		repeated string options = 3;
+	}
+
+	// DNSConfig allows one to specify DNS related configuration in resolv.conf
+	DNSConfig dns_config = 15 [(gogoproto.customname) = "DNSConfig"];
+
+	// Healthcheck describes how to check the container is healthy. If the
+	// container is considered unhealthy, it will be destroyed, its creating
+	// task will exit and a new task will be rescheduled elsewhere. A container
+	// is considered unhealthy after `Retries` number of consecutive failures.
+	HealthConfig healthcheck = 16;
 }
 
 // EndpointSpec defines the properties that can be configured to
@@ -234,6 +279,15 @@ message NetworkSpec {
 	bool internal = 4;
 
 	IPAMOptions ipam = 5 [(gogoproto.customname) = "IPAM"];
+
+	// Attachable allows external(to swarm) entities to manually
+	// attach to this network. With this flag enabled, external
+	// entities such as containers running in an worker node in
+	// the cluster can manually attach to this network and access
+	// the services attached to this network. If this flag is not
+	// enabled(default case) no manual attachment to this network
+	// can happen.
+	bool attachable = 6;
 }
 
 // ClusterSpec specifies global cluster settings.
@@ -259,4 +313,12 @@ message ClusterSpec {
 
 	// TaskDefaults specifies the default values to use for task creation.
 	TaskDefaults task_defaults = 7 [(gogoproto.nullable) = false];
+}
+
+// SecretSpec specifies a user-provided secret.
+message SecretSpec {
+	Annotations annotations = 1 [(gogoproto.nullable) = false];
+
+	// Data is the secret payload - the maximum size is 500KB (that is, 500*1024 bytes)
+	bytes data = 2;
 }

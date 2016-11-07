@@ -11,16 +11,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/pkg/integration/checker"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/versions"
 	"github.com/go-check/check"
 )
 
 var expectedNetworkInterfaceStats = strings.Split("rx_bytes rx_dropped rx_errors rx_packets tx_bytes tx_dropped tx_errors tx_packets", " ")
 
-func (s *DockerSuite) TestApiStatsNoStreamGetCpu(c *check.C) {
-	testRequires(c, DaemonIsLinux)
+func (s *DockerSuite) TestAPIStatsNoStreamGetCpu(c *check.C) {
 	out, _ := dockerCmd(c, "run", "-d", "busybox", "/bin/sh", "-c", "while true;do echo 'Hello'; usleep 100000; done")
 
 	id := strings.TrimSpace(out)
@@ -37,15 +36,30 @@ func (s *DockerSuite) TestApiStatsNoStreamGetCpu(c *check.C) {
 	body.Close()
 
 	var cpuPercent = 0.0
-	cpuDelta := float64(v.CPUStats.CPUUsage.TotalUsage - v.PreCPUStats.CPUUsage.TotalUsage)
-	systemDelta := float64(v.CPUStats.SystemUsage - v.PreCPUStats.SystemUsage)
-	cpuPercent = (cpuDelta / systemDelta) * float64(len(v.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+
+	if daemonPlatform != "windows" {
+		cpuDelta := float64(v.CPUStats.CPUUsage.TotalUsage - v.PreCPUStats.CPUUsage.TotalUsage)
+		systemDelta := float64(v.CPUStats.SystemUsage - v.PreCPUStats.SystemUsage)
+		cpuPercent = (cpuDelta / systemDelta) * float64(len(v.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+	} else {
+		// Max number of 100ns intervals between the previous time read and now
+		possIntervals := uint64(v.Read.Sub(v.PreRead).Nanoseconds()) // Start with number of ns intervals
+		possIntervals /= 100                                         // Convert to number of 100ns intervals
+		possIntervals *= uint64(v.NumProcs)                          // Multiple by the number of processors
+
+		// Intervals used
+		intervalsUsed := v.CPUStats.CPUUsage.TotalUsage - v.PreCPUStats.CPUUsage.TotalUsage
+
+		// Percentage avoiding divide-by-zero
+		if possIntervals > 0 {
+			cpuPercent = float64(intervalsUsed) / float64(possIntervals) * 100.0
+		}
+	}
 
 	c.Assert(cpuPercent, check.Not(checker.Equals), 0.0, check.Commentf("docker stats with no-stream get cpu usage failed: was %v", cpuPercent))
 }
 
-func (s *DockerSuite) TestApiStatsStoppedContainerInGoroutines(c *check.C) {
-	testRequires(c, DaemonIsLinux)
+func (s *DockerSuite) TestAPIStatsStoppedContainerInGoroutines(c *check.C) {
 	out, _ := dockerCmd(c, "run", "-d", "busybox", "/bin/sh", "-c", "echo 1")
 	id := strings.TrimSpace(out)
 
@@ -80,16 +94,19 @@ func (s *DockerSuite) TestApiStatsStoppedContainerInGoroutines(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestApiStatsNetworkStats(c *check.C) {
+func (s *DockerSuite) TestAPIStatsNetworkStats(c *check.C) {
 	testRequires(c, SameHostDaemon)
-	testRequires(c, DaemonIsLinux)
 
 	out, _ := runSleepingContainer(c)
 	id := strings.TrimSpace(out)
 	c.Assert(waitRun(id), checker.IsNil)
 
 	// Retrieve the container address
-	contIP := findContainerIP(c, id, "bridge")
+	net := "bridge"
+	if daemonPlatform == "windows" {
+		net = "nat"
+	}
+	contIP := findContainerIP(c, id, net)
 	numPings := 1
 
 	var preRxPackets uint64
@@ -130,27 +147,37 @@ func (s *DockerSuite) TestApiStatsNetworkStats(c *check.C) {
 		postTxPackets += v.TxPackets
 	}
 
-	// Verify the stats contain at least the expected number of packets (account for ARP)
-	expRxPkts := 1 + preRxPackets + uint64(numPings)
-	expTxPkts := 1 + preTxPackets + uint64(numPings)
+	// Verify the stats contain at least the expected number of packets
+	// On Linux, account for ARP.
+	expRxPkts := preRxPackets + uint64(numPings)
+	expTxPkts := preTxPackets + uint64(numPings)
+	if daemonPlatform != "windows" {
+		expRxPkts++
+		expTxPkts++
+	}
 	c.Assert(postTxPackets, checker.GreaterOrEqualThan, expTxPkts,
 		check.Commentf("Reported less TxPackets than expected. Expected >= %d. Found %d. %s", expTxPkts, postTxPackets, pingouts))
 	c.Assert(postRxPackets, checker.GreaterOrEqualThan, expRxPkts,
 		check.Commentf("Reported less Txbytes than expected. Expected >= %d. Found %d. %s", expRxPkts, postRxPackets, pingouts))
 }
 
-func (s *DockerSuite) TestApiStatsNetworkStatsVersioning(c *check.C) {
+func (s *DockerSuite) TestAPIStatsNetworkStatsVersioning(c *check.C) {
 	testRequires(c, SameHostDaemon)
-	testRequires(c, DaemonIsLinux)
 
 	out, _ := runSleepingContainer(c)
 	id := strings.TrimSpace(out)
 	c.Assert(waitRun(id), checker.IsNil)
 	wg := sync.WaitGroup{}
 
-	for i := 17; i <= 21; i++ {
+	// Windows API versions prior to 1.21 doesn't support stats.
+	startAt := 17
+	if daemonPlatform == "windows" {
+		startAt = 21
+	}
+
+	for i := startAt; i <= 21; i++ {
 		wg.Add(1)
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 			apiVersion := fmt.Sprintf("v1.%d", i)
 			statsJSONBlob := getVersionedStats(c, id, apiVersion)
@@ -161,7 +188,7 @@ func (s *DockerSuite) TestApiStatsNetworkStatsVersioning(c *check.C) {
 				c.Assert(jsonBlobHasGTE121NetworkStats(statsJSONBlob), checker.Equals, true,
 					check.Commentf("Stats JSON blob from API %s %#v does not look like a >=v1.21 API stats structure", apiVersion, statsJSONBlob))
 			}
-		}()
+		}(i)
 	}
 	wg.Wait()
 }
@@ -236,7 +263,7 @@ func jsonBlobHasGTE121NetworkStats(blob map[string]interface{}) bool {
 	return true
 }
 
-func (s *DockerSuite) TestApiStatsContainerNotFound(c *check.C) {
+func (s *DockerSuite) TestAPIStatsContainerNotFound(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	status, _, err := sockRequest("GET", "/containers/nonexistent/stats", nil)
@@ -248,7 +275,7 @@ func (s *DockerSuite) TestApiStatsContainerNotFound(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNotFound)
 }
 
-func (s *DockerSuite) TestApiStatsNoStreamConnectedContainers(c *check.C) {
+func (s *DockerSuite) TestAPIStatsNoStreamConnectedContainers(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	out1, _ := runSleepingContainer(c)

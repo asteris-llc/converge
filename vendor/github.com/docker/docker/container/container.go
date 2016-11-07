@@ -16,12 +16,16 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/Sirupsen/logrus"
+	containertypes "github.com/docker/docker/api/types/container"
+	mounttypes "github.com/docker/docker/api/types/mount"
+	networktypes "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/daemon/exec"
 	"github.com/docker/docker/daemon/logger"
 	"github.com/docker/docker/daemon/logger/jsonfilelog"
 	"github.com/docker/docker/daemon/network"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
+	"github.com/docker/docker/libcontainerd"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/promise"
@@ -31,8 +35,6 @@ import (
 	"github.com/docker/docker/runconfig"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
 	"github.com/docker/docker/volume"
-	containertypes "github.com/docker/engine-api/types/container"
-	networktypes "github.com/docker/engine-api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libnetwork"
 	"github.com/docker/libnetwork/netlabel"
@@ -42,6 +44,11 @@ import (
 )
 
 const configFileName = "config.v2.json"
+
+const (
+	// DefaultStopTimeout is the timeout (in seconds) for the syscall signal used to stop a container.
+	DefaultStopTimeout = 10
+)
 
 var (
 	errInvalidEndpoint = fmt.Errorf("invalid endpoint while building port map info")
@@ -291,9 +298,7 @@ func (container *Container) GetRootResourcePath(path string) (string, error) {
 // ExitOnNext signals to the monitor that it should not restart the container
 // after we send the kill signal.
 func (container *Container) ExitOnNext() {
-	if container.restartManager != nil {
-		container.restartManager.Cancel()
-	}
+	container.RestartManager().Cancel()
 }
 
 // HostConfigPath returns the path to the container's JSON hostconfig
@@ -304,6 +309,11 @@ func (container *Container) HostConfigPath() (string, error) {
 // ConfigPath returns the path to the container's JSON config
 func (container *Container) ConfigPath() (string, error) {
 	return container.GetRootResourcePath(configFileName)
+}
+
+// CheckpointDir returns the directory checkpoints are stored in
+func (container *Container) CheckpointDir() string {
+	return filepath.Join(container.Root, "checkpoints")
 }
 
 // StartLogger starts a new logger driver for the container.
@@ -539,13 +549,14 @@ func copyEscapable(dst io.Writer, src io.ReadCloser, keys []byte) (written int64
 // ShouldRestart decides whether the daemon should restart the container or not.
 // This is based on the container's restart policy.
 func (container *Container) ShouldRestart() bool {
-	shouldRestart, _, _ := container.restartManager.ShouldRestart(uint32(container.ExitCode()), container.HasBeenManuallyStopped, container.FinishedAt.Sub(container.StartedAt))
+	shouldRestart, _, _ := container.RestartManager().ShouldRestart(uint32(container.ExitCode()), container.HasBeenManuallyStopped, container.FinishedAt.Sub(container.StartedAt))
 	return shouldRestart
 }
 
 // AddMountPointWithVolume adds a new mount point configured with a volume to the container.
 func (container *Container) AddMountPointWithVolume(destination string, vol volume.Volume, rw bool) {
 	container.MountPoints[destination] = &volume.MountPoint{
+		Type:        mounttypes.TypeVolume,
 		Name:        vol.Name(),
 		Driver:      vol.DriverName(),
 		Destination: destination,
@@ -571,6 +582,14 @@ func (container *Container) StopSignal() int {
 		stopSignal, _ = signal.ParseSignal(signal.DefaultStopSignal)
 	}
 	return int(stopSignal)
+}
+
+// StopTimeout returns the timeout (in seconds) used to stop the container.
+func (container *Container) StopTimeout() int {
+	if container.Config.StopTimeout != nil {
+		return *container.Config.StopTimeout
+	}
+	return DefaultStopTimeout
 }
 
 // InitDNSHostConfig ensures that the dns fields are never nil.
@@ -700,7 +719,9 @@ func (container *Container) BuildEndpointInfo(n libnetwork.Network, ep libnetwor
 	}
 
 	if _, ok := networkSettings.Networks[n.Name()]; !ok {
-		networkSettings.Networks[n.Name()] = new(networktypes.EndpointSettings)
+		networkSettings.Networks[n.Name()] = &network.EndpointSettings{
+			EndpointSettings: &networktypes.EndpointSettings{},
+		}
 	}
 	networkSettings.Networks[n.Name()].NetworkID = n.ID()
 	networkSettings.Networks[n.Name()].EndpointID = ep.ID()
@@ -773,7 +794,7 @@ func (container *Container) BuildJoinOptions(n libnetwork.Network) ([]libnetwork
 }
 
 // BuildCreateEndpointOptions builds endpoint options from a given network.
-func (container *Container) BuildCreateEndpointOptions(n libnetwork.Network, epConfig *networktypes.EndpointSettings, sb libnetwork.Sandbox) ([]libnetwork.EndpointOption, error) {
+func (container *Container) BuildCreateEndpointOptions(n libnetwork.Network, epConfig *networktypes.EndpointSettings, sb libnetwork.Sandbox, daemonDNS []string) ([]libnetwork.EndpointOption, error) {
 	var (
 		bindings      = make(nat.PortMap)
 		pbList        []types.PortBinding
@@ -783,7 +804,8 @@ func (container *Container) BuildCreateEndpointOptions(n libnetwork.Network, epC
 
 	defaultNetName := runconfig.DefaultDaemonNetworkMode().NetworkName()
 
-	if n.Name() == defaultNetName || container.NetworkSettings.IsAnonymousEndpoint {
+	if (!container.EnableServiceDiscoveryOnDefaultNetwork() && n.Name() == defaultNetName) ||
+		container.NetworkSettings.IsAnonymousEndpoint {
 		createOptions = append(createOptions, libnetwork.CreateOptionAnonymous())
 	}
 
@@ -905,6 +927,19 @@ func (container *Container) BuildCreateEndpointOptions(n libnetwork.Network, epC
 		}
 	}
 
+	var dns []string
+
+	if len(container.HostConfig.DNS) > 0 {
+		dns = container.HostConfig.DNS
+	} else if len(daemonDNS) > 0 {
+		dns = daemonDNS
+	}
+
+	if len(dns) > 0 {
+		createOptions = append(createOptions,
+			libnetwork.CreateOptionDNS(dns))
+	}
+
 	createOptions = append(createOptions,
 		libnetwork.CreateOptionPortMapping(pbList),
 		libnetwork.CreateOptionExposedPorts(exposeList))
@@ -918,7 +953,7 @@ func (container *Container) UpdateMonitor(restartPolicy containertypes.RestartPo
 		SetPolicy(containertypes.RestartPolicy)
 	}
 
-	if rm, ok := container.RestartManager(false).(policySetter); ok {
+	if rm, ok := container.RestartManager().(policySetter); ok {
 		rm.SetPolicy(restartPolicy)
 	}
 }
@@ -933,16 +968,22 @@ func (container *Container) FullHostname() string {
 }
 
 // RestartManager returns the current restartmanager instance connected to container.
-func (container *Container) RestartManager(reset bool) restartmanager.RestartManager {
-	if reset {
-		container.RestartCount = 0
-		container.restartManager = nil
-	}
+func (container *Container) RestartManager() restartmanager.RestartManager {
 	if container.restartManager == nil {
 		container.restartManager = restartmanager.New(container.HostConfig.RestartPolicy, container.RestartCount)
 	}
-
 	return container.restartManager
+}
+
+// ResetRestartManager initializes new restartmanager based on container config
+func (container *Container) ResetRestartManager(resetCount bool) {
+	if container.restartManager != nil {
+		container.restartManager.Cancel()
+	}
+	if resetCount {
+		container.RestartCount = 0
+	}
+	container.restartManager = nil
 }
 
 type attachContext struct {
@@ -951,7 +992,7 @@ type attachContext struct {
 	mu     sync.Mutex
 }
 
-// InitAttachContext initialize or returns existing context for attach calls to
+// InitAttachContext initializes or returns existing context for attach calls to
 // track container liveness.
 func (container *Container) InitAttachContext() context.Context {
 	container.attachContext.mu.Lock()
@@ -962,7 +1003,7 @@ func (container *Container) InitAttachContext() context.Context {
 	return container.attachContext.ctx
 }
 
-// CancelAttachContext cancel attach context. All attach calls should detach
+// CancelAttachContext cancels attach context. All attach calls should detach
 // after this call.
 func (container *Container) CancelAttachContext() {
 	container.attachContext.mu.Lock()
@@ -971,4 +1012,47 @@ func (container *Container) CancelAttachContext() {
 		container.attachContext.ctx = nil
 	}
 	container.attachContext.mu.Unlock()
+}
+
+func (container *Container) startLogging() error {
+	if container.HostConfig.LogConfig.Type == "none" {
+		return nil // do not start logging routines
+	}
+
+	l, err := container.StartLogger(container.HostConfig.LogConfig)
+	if err != nil {
+		return fmt.Errorf("Failed to initialize logging driver: %v", err)
+	}
+
+	copier := logger.NewCopier(map[string]io.Reader{"stdout": container.StdoutPipe(), "stderr": container.StderrPipe()}, l)
+	container.LogCopier = copier
+	copier.Run()
+	container.LogDriver = l
+
+	// set LogPath field only for json-file logdriver
+	if jl, ok := l.(*jsonfilelog.JSONFileLogger); ok {
+		container.LogPath = jl.LogPath()
+	}
+
+	return nil
+}
+
+// InitializeStdio is called by libcontainerd to connect the stdio.
+func (container *Container) InitializeStdio(iop libcontainerd.IOPipe) error {
+	if err := container.startLogging(); err != nil {
+		container.Reset(false)
+		return err
+	}
+
+	container.StreamConfig.CopyToPipe(iop)
+
+	if container.Stdin() == nil && !container.Config.Tty {
+		if iop.Stdin != nil {
+			if err := iop.Stdin.Close(); err != nil {
+				logrus.Warnf("error closing stdin: %+v", err)
+			}
+		}
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -12,7 +13,7 @@ import (
 	"github.com/go-check/check"
 )
 
-func (s *DockerSuite) TestVolumeCliCreate(c *check.C) {
+func (s *DockerSuite) TestVolumeCLICreate(c *check.C) {
 	dockerCmd(c, "volume", "create")
 
 	_, err := runCommand(exec.Command(dockerBinary, "volume", "create", "-d", "nosuchdriver"))
@@ -28,7 +29,7 @@ func (s *DockerSuite) TestVolumeCliCreate(c *check.C) {
 	c.Assert(name, check.Equals, "test2")
 }
 
-func (s *DockerSuite) TestVolumeCliCreateOptionConflict(c *check.C) {
+func (s *DockerSuite) TestVolumeCLICreateOptionConflict(c *check.C) {
 	dockerCmd(c, "volume", "create", "test")
 	out, _, err := dockerCmdWithError("volume", "create", "test", "--driver", "nosuchdriver")
 	c.Assert(err, check.NotNil, check.Commentf("volume create exception name already in use with another driver"))
@@ -43,7 +44,7 @@ func (s *DockerSuite) TestVolumeCliCreateOptionConflict(c *check.C) {
 	c.Assert(err, check.NotNil, check.Commentf("Conflicting options: either specify --name or provide positional arg, not both"))
 }
 
-func (s *DockerSuite) TestVolumeCliInspect(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIInspect(c *check.C) {
 	c.Assert(
 		exec.Command(dockerBinary, "volume", "inspect", "doesntexist").Run(),
 		check.Not(check.IsNil),
@@ -60,7 +61,7 @@ func (s *DockerSuite) TestVolumeCliInspect(c *check.C) {
 	c.Assert(strings.TrimSpace(out), check.Equals, "test")
 }
 
-func (s *DockerSuite) TestVolumeCliInspectMulti(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIInspectMulti(c *check.C) {
 	dockerCmd(c, "volume", "create", "test1")
 	dockerCmd(c, "volume", "create", "test2")
 	dockerCmd(c, "volume", "create", "not-shown")
@@ -80,7 +81,7 @@ func (s *DockerSuite) TestVolumeCliInspectMulti(c *check.C) {
 	c.Assert(out, checker.Not(checker.Contains), "not-shown")
 }
 
-func (s *DockerSuite) TestVolumeCliLs(c *check.C) {
+func (s *DockerSuite) TestVolumeCLILs(c *check.C) {
 	prefix, _ := getPrefixAndSlashFromDaemonPlatform()
 	dockerCmd(c, "volume", "create", "aaa")
 
@@ -106,9 +107,7 @@ func (s *DockerSuite) TestVolumeLsFormat(c *check.C) {
 
 	expected := []string{"aaa", "soo", "test"}
 	var names []string
-	for _, l := range lines {
-		names = append(names, l)
-	}
+	names = append(names, lines...)
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -132,9 +131,7 @@ func (s *DockerSuite) TestVolumeLsFormatDefaultFormat(c *check.C) {
 
 	expected := []string{"aaa default", "soo default", "test default"}
 	var names []string
-	for _, l := range lines {
-		names = append(names, l)
-	}
+	names = append(names, lines...)
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -154,7 +151,7 @@ func assertVolList(c *check.C, out string, expectVols []string) {
 	c.Assert(volList, checker.DeepEquals, expectVols)
 }
 
-func (s *DockerSuite) TestVolumeCliLsFilterDangling(c *check.C) {
+func (s *DockerSuite) TestVolumeCLILsFilterDangling(c *check.C) {
 	prefix, _ := getPrefixAndSlashFromDaemonPlatform()
 	dockerCmd(c, "volume", "create", "testnotinuse1")
 	dockerCmd(c, "volume", "create", "testisinuse1")
@@ -217,19 +214,19 @@ func (s *DockerSuite) TestVolumeCliLsFilterDangling(c *check.C) {
 
 }
 
-func (s *DockerSuite) TestVolumeCliLsErrorWithInvalidFilterName(c *check.C) {
+func (s *DockerSuite) TestVolumeCLILsErrorWithInvalidFilterName(c *check.C) {
 	out, _, err := dockerCmdWithError("volume", "ls", "-f", "FOO=123")
 	c.Assert(err, checker.NotNil)
 	c.Assert(out, checker.Contains, "Invalid filter")
 }
 
-func (s *DockerSuite) TestVolumeCliLsWithIncorrectFilterValue(c *check.C) {
+func (s *DockerSuite) TestVolumeCLILsWithIncorrectFilterValue(c *check.C) {
 	out, _, err := dockerCmdWithError("volume", "ls", "-f", "dangling=invalid")
 	c.Assert(err, check.NotNil)
 	c.Assert(out, checker.Contains, "Invalid filter")
 }
 
-func (s *DockerSuite) TestVolumeCliRm(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIRm(c *check.C) {
 	prefix, _ := getPrefixAndSlashFromDaemonPlatform()
 	out, _ := dockerCmd(c, "volume", "create")
 	id := strings.TrimSpace(out)
@@ -268,7 +265,7 @@ func (s *DockerSuite) TestVolumeCliRm(c *check.C) {
 	)
 }
 
-func (s *DockerSuite) TestVolumeCliNoArgs(c *check.C) {
+func (s *DockerSuite) TestVolumeCLINoArgs(c *check.C) {
 	out, _ := dockerCmd(c, "volume")
 	// no args should produce the cmd usage output
 	usage := "Usage:	docker volume COMMAND"
@@ -286,7 +283,7 @@ func (s *DockerSuite) TestVolumeCliNoArgs(c *check.C) {
 	c.Assert(stderr, checker.Contains, "unknown flag: --no-such-flag")
 }
 
-func (s *DockerSuite) TestVolumeCliInspectTmplError(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIInspectTmplError(c *check.C) {
 	out, _ := dockerCmd(c, "volume", "create")
 	name := strings.TrimSpace(out)
 
@@ -296,7 +293,7 @@ func (s *DockerSuite) TestVolumeCliInspectTmplError(c *check.C) {
 	c.Assert(out, checker.Contains, "Template parsing error")
 }
 
-func (s *DockerSuite) TestVolumeCliCreateWithOpts(c *check.C) {
+func (s *DockerSuite) TestVolumeCLICreateWithOpts(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	dockerCmd(c, "volume", "create", "-d", "local", "test", "--opt=type=tmpfs", "--opt=device=tmpfs", "--opt=o=size=1m,uid=1000")
@@ -319,7 +316,7 @@ func (s *DockerSuite) TestVolumeCliCreateWithOpts(c *check.C) {
 	c.Assert(found, checker.Equals, true)
 }
 
-func (s *DockerSuite) TestVolumeCliCreateLabel(c *check.C) {
+func (s *DockerSuite) TestVolumeCLICreateLabel(c *check.C) {
 	testVol := "testvolcreatelabel"
 	testLabel := "foo"
 	testValue := "bar"
@@ -331,7 +328,7 @@ func (s *DockerSuite) TestVolumeCliCreateLabel(c *check.C) {
 	c.Assert(strings.TrimSpace(out), check.Equals, testValue)
 }
 
-func (s *DockerSuite) TestVolumeCliCreateLabelMultiple(c *check.C) {
+func (s *DockerSuite) TestVolumeCLICreateLabelMultiple(c *check.C) {
 	testVol := "testvolcreatelabel"
 
 	testLabels := map[string]string{
@@ -358,7 +355,7 @@ func (s *DockerSuite) TestVolumeCliCreateLabelMultiple(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestVolumeCliLsFilterLabels(c *check.C) {
+func (s *DockerSuite) TestVolumeCLILsFilterLabels(c *check.C) {
 	testVol1 := "testvolcreatelabel-1"
 	out, _, err := dockerCmdWithError("volume", "create", "--label", "foo=bar1", testVol1)
 	c.Assert(err, check.IsNil)
@@ -388,7 +385,7 @@ func (s *DockerSuite) TestVolumeCliLsFilterLabels(c *check.C) {
 	c.Assert(len(outArr), check.Equals, 1, check.Commentf("\n%s", out))
 }
 
-func (s *DockerSuite) TestVolumeCliRmForceUsage(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIRmForceUsage(c *check.C) {
 	out, _ := dockerCmd(c, "volume", "create")
 	id := strings.TrimSpace(out)
 
@@ -400,7 +397,7 @@ func (s *DockerSuite) TestVolumeCliRmForceUsage(c *check.C) {
 	c.Assert(len(outArr), check.Equals, 1, check.Commentf("%s\n", out))
 }
 
-func (s *DockerSuite) TestVolumeCliRmForce(c *check.C) {
+func (s *DockerSuite) TestVolumeCLIRmForce(c *check.C) {
 	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
 	name := "test"
@@ -421,4 +418,25 @@ func (s *DockerSuite) TestVolumeCliRmForce(c *check.C) {
 	dockerCmd(c, "volume", "create", "test")
 	out, _ = dockerCmd(c, "volume", "ls")
 	c.Assert(out, checker.Contains, name)
+}
+
+func (s *DockerSuite) TestVolumeCliInspectWithVolumeOpts(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	// Without options
+	name := "test1"
+	dockerCmd(c, "volume", "create", "-d", "local", name)
+	out, _ := dockerCmd(c, "volume", "inspect", "--format={{ .Options }}", name)
+	c.Assert(strings.TrimSpace(out), checker.Contains, "map[]")
+
+	// With options
+	name = "test2"
+	k1, v1 := "type", "tmpfs"
+	k2, v2 := "device", "tmpfs"
+	k3, v3 := "o", "size=1m,uid=1000"
+	dockerCmd(c, "volume", "create", "-d", "local", name, "--opt", fmt.Sprintf("%s=%s", k1, v1), "--opt", fmt.Sprintf("%s=%s", k2, v2), "--opt", fmt.Sprintf("%s=%s", k3, v3))
+	out, _ = dockerCmd(c, "volume", "inspect", "--format={{ .Options }}", name)
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k1, v1))
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k2, v2))
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k3, v3))
 }

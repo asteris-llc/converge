@@ -3,10 +3,10 @@ package daemon
 import (
 	"fmt"
 
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/volume"
-	containertypes "github.com/docker/engine-api/types/container"
 )
 
 // createContainerPlatformSpecificSettings performs platform specific container create functionality
@@ -16,9 +16,17 @@ func (daemon *Daemon) createContainerPlatformSpecificSettings(container *contain
 		hostConfig.Isolation = daemon.defaultIsolation
 	}
 
+	if err := daemon.Mount(container); err != nil {
+		return nil
+	}
+	defer daemon.Unmount(container)
+	if err := container.SetupWorkingDirectory(0, 0); err != nil {
+		return err
+	}
+
 	for spec := range config.Volumes {
 
-		mp, err := volume.ParseMountSpec(spec, hostConfig.VolumeDriver)
+		mp, err := volume.ParseMountRaw(spec, hostConfig.VolumeDriver)
 		if err != nil {
 			return fmt.Errorf("Unrecognised volume spec: %v", err)
 		}

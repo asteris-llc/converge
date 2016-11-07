@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ import (
 	"github.com/Sirupsen/logrus"
 
 	"github.com/docker/docker/daemon/graphdriver"
+	"github.com/docker/docker/daemon/graphdriver/quota"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/directory"
@@ -24,6 +26,7 @@ import (
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/parsers/kernel"
+	"github.com/docker/go-units"
 
 	"github.com/opencontainers/runc/libcontainer/label"
 )
@@ -76,15 +79,25 @@ const (
 	idLength = 26
 )
 
-// Driver contains information about the home directory and the list of active mounts that are created using this driver.
-type Driver struct {
-	home    string
-	uidMaps []idtools.IDMap
-	gidMaps []idtools.IDMap
-	ctr     *graphdriver.RefCounter
+type overlayOptions struct {
+	overrideKernelCheck bool
+	quota               quota.Quota
 }
 
-var backingFs = "<unknown>"
+// Driver contains information about the home directory and the list of active mounts that are created using this driver.
+type Driver struct {
+	home     string
+	uidMaps  []idtools.IDMap
+	gidMaps  []idtools.IDMap
+	ctr      *graphdriver.RefCounter
+	quotaCtl *quota.Control
+	options  overlayOptions
+}
+
+var (
+	backingFs             = "<unknown>"
+	projectQuotaSupported = false
+)
 
 func init() {
 	graphdriver.Register(driverName, Init)
@@ -92,7 +105,7 @@ func init() {
 
 // Init returns the a native diff driver for overlay filesystem.
 // If overlay filesystem is not supported on the host, graphdriver.ErrNotSupported is returned as error.
-// If a overlay filesystem is not supported over a existing filesystem then error graphdriver.ErrIncompatibleFS is returned.
+// If an overlay filesystem is not supported over an existing filesystem then error graphdriver.ErrIncompatibleFS is returned.
 func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (graphdriver.Driver, error) {
 	opts, err := parseOptions(options)
 	if err != nil {
@@ -150,11 +163,16 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 		ctr:     graphdriver.NewRefCounter(graphdriver.NewFsChecker(graphdriver.FsMagicOverlay)),
 	}
 
-	return d, nil
-}
+	if backingFs == "xfs" {
+		// Try to enable project quota support over xfs.
+		if d.quotaCtl, err = quota.NewControl(home); err == nil {
+			projectQuotaSupported = true
+		}
+	}
 
-type overlayOptions struct {
-	overrideKernelCheck bool
+	logrus.Debugf("backingFs=%s,  projectQuotaSupported=%v", backingFs, projectQuotaSupported)
+
+	return d, nil
 }
 
 func parseOptions(options []string) (*overlayOptions, error) {
@@ -171,6 +189,7 @@ func parseOptions(options []string) (*overlayOptions, error) {
 			if err != nil {
 				return nil, err
 			}
+
 		default:
 			return nil, fmt.Errorf("overlay2: Unknown option %s\n", key)
 		}
@@ -253,8 +272,8 @@ func (d *Driver) CreateReadWrite(id, parent, mountLabel string, storageOpt map[s
 // The parent filesystem is used to configure these directories for the overlay.
 func (d *Driver) Create(id, parent, mountLabel string, storageOpt map[string]string) (retErr error) {
 
-	if len(storageOpt) != 0 {
-		return fmt.Errorf("--storage-opt is not supported for overlay")
+	if len(storageOpt) != 0 && !projectQuotaSupported {
+		return fmt.Errorf("--storage-opt is supported only for overlay over xfs with 'pquota' mount option")
 	}
 
 	dir := d.dir(id)
@@ -276,6 +295,20 @@ func (d *Driver) Create(id, parent, mountLabel string, storageOpt map[string]str
 			os.RemoveAll(dir)
 		}
 	}()
+
+	if len(storageOpt) > 0 {
+		driver := &Driver{}
+		if err := d.parseStorageOpt(storageOpt, driver); err != nil {
+			return err
+		}
+
+		if driver.options.quota.Size > 0 {
+			// Set container disk quota limit
+			if err := d.quotaCtl.SetQuota(dir, driver.options.quota); err != nil {
+				return err
+			}
+		}
+	}
 
 	if err := idtools.MkdirAs(path.Join(dir, "diff"), 0755, rootUID, rootGID); err != nil {
 		return err
@@ -310,6 +343,26 @@ func (d *Driver) Create(id, parent, mountLabel string, storageOpt map[string]str
 	if lower != "" {
 		if err := ioutil.WriteFile(path.Join(dir, lowerFile), []byte(lower), 0666); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// Parse overlay storage options
+func (d *Driver) parseStorageOpt(storageOpt map[string]string, driver *Driver) error {
+	// Read size to set the disk project quota per container
+	for key, val := range storageOpt {
+		key := strings.ToLower(key)
+		switch key {
+		case "size":
+			size, err := units.RAMInBytes(val)
+			if err != nil {
+				return err
+			}
+			driver.options.quota.Size = uint64(size)
+		default:
+			return fmt.Errorf("Unknown option %s", key)
 		}
 	}
 
@@ -421,6 +474,15 @@ func (d *Driver) Get(id string, mountLabel string) (s string, err error) {
 
 	pageSize := syscall.Getpagesize()
 
+	// Go can return a larger page size than supported by the system
+	// as of go 1.7. This will be fixed in 1.8 and this block can be
+	// removed when building with 1.8.
+	// See https://github.com/golang/go/commit/1b9499b06989d2831e5b156161d6c07642926ee1
+	// See https://github.com/docker/docker/issues/27384
+	if pageSize > 4096 {
+		pageSize = 4096
+	}
+
 	// Use relative paths and mountFrom when the mount data has exceeded
 	// the page size. The mount syscall fails if the mount data cannot
 	// fit within a page and relative links make the mount data much
@@ -475,7 +537,7 @@ func (d *Driver) Exists(id string) bool {
 }
 
 // ApplyDiff applies the new layer into a root
-func (d *Driver) ApplyDiff(id string, parent string, diff archive.Reader) (size int64, err error) {
+func (d *Driver) ApplyDiff(id string, parent string, diff io.Reader) (size int64, err error) {
 	applyDir := d.getDiffPath(id)
 
 	logrus.Debugf("Applying tar in %s", applyDir)
@@ -506,7 +568,7 @@ func (d *Driver) DiffSize(id, parent string) (size int64, err error) {
 
 // Diff produces an archive of the changes between the specified
 // layer and its parent layer which may be "".
-func (d *Driver) Diff(id, parent string) (archive.Archive, error) {
+func (d *Driver) Diff(id, parent string) (io.ReadCloser, error) {
 	diffPath := d.getDiffPath(id)
 	logrus.Debugf("Tar with options on %s", diffPath)
 	return archive.TarWithOptions(diffPath, &archive.TarOptions{

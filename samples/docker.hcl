@@ -16,6 +16,10 @@ docker.image "nginx" {
   inactivity_timeout = "60s"
 }
 
+docker.volume "nginx-content" {
+  name = "nginx-html"
+}
+
 docker.container "nginx" {
   name  = "{{param `container`}}"
   image = "{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}"
@@ -31,6 +35,10 @@ docker.container "nginx" {
 
   ports = [
     "80",
+  ]
+
+  volumes = [
+    "{{lookup `docker.volume.nginx-content.name`}}:/usr/share/nginx/html",
   ]
 
   env {

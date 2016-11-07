@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
-	"github.com/docker/engine-api/types/strslice"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -214,7 +214,7 @@ func TestFrom(t *testing.T) {
 		}
 
 		if b.noBaseImage != true {
-			t.Fatalf("Image should not have any base image, got: %s", b.noBaseImage)
+			t.Fatalf("Image should not have any base image, got: %v", b.noBaseImage)
 		}
 	}
 }
