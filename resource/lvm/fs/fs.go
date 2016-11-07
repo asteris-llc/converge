@@ -100,7 +100,7 @@ func (r *resourceFS) Apply(context.Context) (resource.TaskStatus, error) {
 	}
 
 	if r.mountNeedUpdate {
-        service := r.unitServiceName()
+		service := r.unitServiceName()
 		if err := r.lvm.StartUnit(service); err != nil {
 			return nil, errors.Wrapf(err, "starting service %s", service)
 		}
@@ -190,11 +190,11 @@ func (r *resourceFS) renderUnitFile() (string, error) {
 	var b bytes.Buffer
 	tmpl, err := template.New("unit.mount").Parse(unitTemplate)
 	if err != nil {
-        return "", errors.Wrapf(err, "renderUnitFile(): template syntax")
+		return "", errors.Wrapf(err, "renderUnitFile(): template syntax")
 	}
 	err = tmpl.Execute(&b, r.mount)
 	if err != nil {
-        return "", errors.Wrapf(err, "renderUnitFile(): template executing")
+		return "", errors.Wrapf(err, "renderUnitFile(): template executing")
 	}
 	return b.String(), nil
 }

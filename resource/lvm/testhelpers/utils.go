@@ -30,7 +30,7 @@ func MakeFakeLvmEmpty() (lowlevel.LVM, *FakeLVM) {
 	return lvm, m
 }
 
-// MakeFakeLvmEmpty create fake LVM for test injections
+// MakeFakeLvmNonEmpty create fake LVM for test injections
 // This one created non-empty, it have group `vg`, consisting of
 // two devices -- /dev/sdc1 and /dev/sdd1
 func MakeFakeLvmNonEmpty() (lowlevel.LVM, *FakeLVM) {
