@@ -21,7 +21,6 @@ import (
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -31,13 +30,11 @@ func TestPrepare(t *testing.T) {
 		mockRenderer := &MockRenderer{}
 		mockRenderer.On("Render", any, any).Return("predicate1", nil)
 
-		prep := &control.CasePreparer{Predicate: "something"}
+		prep := &control.CasePreparer{}
 		result, err := prep.Prepare(context.Background(), mockRenderer)
 		assert.NoError(t, err)
-		mockRenderer.AssertCalled(t, "Render", "predicate", "something")
-		caseTask, ok := result.(*control.CaseTask)
+		_, ok := result.(*control.CaseTask)
 		assert.True(t, ok)
-		assert.Equal(t, "predicate1", caseTask.Predicate)
 	})
 
 	t.Run("sets the name", func(t *testing.T) {
@@ -75,135 +72,6 @@ func TestSetGetParent(t *testing.T) {
 	c := &control.CaseTask{}
 	c.SetParent(parent)
 	assert.Equal(t, parent, c.GetParent())
-}
-
-// TestShouldEvaluate ensures that we correctly understand when to evaluate and
-// when to avoid evaluation.
-func TestShouldEvaluate(t *testing.T) {
-	trueCase := &control.CaseTask{Name: "trueCase", Predicate: "true"}
-	falseCase := &control.CaseTask{Name: "false", Predicate: "false"}
-	thisCase := &control.CaseTask{Name: "thisCase", Predicate: "true"}
-
-	t.Run("when parent is nil", func(t *testing.T) {
-		thisCase.SetParent(nil)
-		assert.False(t, thisCase.ShouldEvaluate())
-	})
-	t.Run("when a previous case is true", func(t *testing.T) {
-		parent := &control.SwitchTask{Branches: []string{"trueCase", "thisCase"}}
-		parent.AppendCase(trueCase)
-		parent.AppendCase(thisCase)
-		assert.False(t, thisCase.ShouldEvaluate())
-	})
-	t.Run("when no previous case is true", func(t *testing.T) {
-		parent := &control.SwitchTask{Branches: []string{"falseCase", "thisCase"}}
-		parent.AppendCase(falseCase)
-		parent.AppendCase(thisCase)
-		assert.True(t, thisCase.ShouldEvaluate())
-	})
-	t.Run("when not in parent branches", func(t *testing.T) {
-		parent := &control.SwitchTask{}
-		thisCase.SetParent(parent)
-		assert.False(t, thisCase.ShouldEvaluate())
-	})
-}
-
-// TestIsTrue ensures that truth is correctly reported for predicates
-func TestIsTrue(t *testing.T) {
-	t.Run("when case is nil", func(t *testing.T) {
-		var c *control.CaseTask
-		isTrue, error := c.IsTrue()
-		assert.Error(t, error)
-		assert.False(t, isTrue)
-	})
-	t.Run("when parent is nil", func(t *testing.T) {
-		c := &control.CaseTask{}
-		c.SetParent(nil)
-		isTrue, error := c.IsTrue()
-		assert.Error(t, error)
-		assert.False(t, isTrue)
-	})
-	t.Run("previous case is true", func(t *testing.T) {
-		trueCase := &control.CaseTask{Name: "trueCase", Predicate: "true"}
-		thisCase := &control.CaseTask{Name: "thisCase", Predicate: "true"}
-
-		parent := &control.SwitchTask{Branches: []string{"trueCase", "thisCase"}}
-		parent.AppendCase(trueCase)
-		parent.AppendCase(thisCase)
-
-		isTrue, error := thisCase.IsTrue()
-		assert.NoError(t, error)
-		assert.False(t, isTrue)
-	})
-	t.Run("no previous case is true", func(t *testing.T) {
-		falseCase := &control.CaseTask{Name: "falseCase", Predicate: "false"}
-		thisCase := &control.CaseTask{Name: "thisCase", Predicate: "true"}
-
-		parent := &control.SwitchTask{Branches: []string{"falseCase", "thisCase"}}
-		parent.AppendCase(falseCase)
-		parent.AppendCase(thisCase)
-
-		isTrue, error := thisCase.IsTrue()
-		assert.NoError(t, error)
-		assert.True(t, isTrue)
-	})
-	t.Run("unevaluated status", func(t *testing.T) {
-		t.Run("returns true when predicate is true", func(t *testing.T) {
-			thisCase := &control.CaseTask{Name: "thisCase", Predicate: "true"}
-			parentCase(thisCase)
-			isTrue, error := thisCase.IsTrue()
-			assert.NoError(t, error)
-			assert.True(t, isTrue)
-		})
-		t.Run("returns false when predicate is false", func(t *testing.T) {
-			thisCase := &control.CaseTask{Name: "thisCase", Predicate: "false"}
-			parentCase(thisCase)
-			isTrue, error := thisCase.IsTrue()
-			assert.NoError(t, error)
-			assert.False(t, isTrue)
-		})
-		t.Run("caches results", func(t *testing.T) {
-			thisCase := &control.CaseTask{Name: "thisCase", Predicate: "false", Status: nil}
-			parentCase(thisCase)
-			isTrue, error := thisCase.IsTrue()
-			assert.NoError(t, error)
-			assert.False(t, isTrue)
-			require.NotNil(t, thisCase.Status)
-			assert.False(t, *(thisCase.Status))
-			thisCase.Predicate = "true"
-			isTrue, error = thisCase.IsTrue()
-			assert.NoError(t, error)
-			assert.False(t, isTrue)
-		})
-	})
-}
-
-// TestEvaluatePredicate tests predicate evaluation
-func TestEvaluatePredicate(t *testing.T) {
-	t.Run("returns an error when invalid predicate", func(t *testing.T) {
-		truth, err := control.EvaluatePredicate("foo | bar")
-		assert.Error(t, err)
-		assert.False(t, truth)
-	})
-	t.Run("returns an error when empty predicate", func(t *testing.T) {
-		truth, err := control.EvaluatePredicate("")
-		assert.Error(t, err)
-		assert.False(t, truth)
-	})
-	t.Run("returns an error when invalid truth value", func(t *testing.T) {
-		truth, err := control.EvaluatePredicate("\"foo\"")
-		assert.Error(t, err)
-		assert.False(t, truth)
-	})
-	t.Run("returns true when true", func(t *testing.T) {
-		truth, err := control.EvaluatePredicate("true")
-		assert.NoError(t, err)
-		assert.True(t, truth)
-	})
-	t.Run("returns false when false", func(t *testing.T) {
-		truth, err := control.EvaluatePredicate("false")
-		assert.NoError(t, err)
-		assert.False(t, truth)
-	})
 }
 
 // TestCheck provides basic assurances about the operation of check
