@@ -17,7 +17,7 @@ package lowlevel
 import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 	"strings"
 )
 
