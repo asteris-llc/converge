@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type resourceVG struct {
@@ -35,7 +36,7 @@ type resourceVG struct {
 	devicesToRemove []string
 }
 
-func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceVG) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if err := r.lvm.Check(); err != nil {
@@ -96,7 +97,7 @@ func (r *resourceVG) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *resourceVG) Apply() (status resource.TaskStatus, err error) {
+func (r *resourceVG) Apply(context.Context) (status resource.TaskStatus, err error) {
 	if r.exists {
 		for _, d := range r.devicesToAdd {
 			if err := r.lvm.ExtendVolumeGroup(r.name, d); err != nil {

@@ -19,6 +19,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type resourceLV struct {
@@ -36,7 +37,7 @@ type Status struct {
 	DevicePath string
 }
 
-func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceLV) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := &Status{}
 
 	// Check for LVM prerequizites
@@ -71,7 +72,7 @@ func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *resourceLV) Apply() (resource.TaskStatus, error) {
+func (r *resourceLV) Apply(context.Context) (resource.TaskStatus, error) {
 	status := &Status{}
 	if _, err := r.checkVG(true); err != nil {
 		return nil, err
