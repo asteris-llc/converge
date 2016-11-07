@@ -101,12 +101,10 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 	}
 
 	prepared, err := res.Prepare(ctx, renderer)
-	fmt.Printf("%s prepared :: %T\n", p.ID, prepared)
 
 	merged := mergeMaybeUnresolvables(err, metadataErr)
 
 	if merged != nil {
-		fmt.Printf("%s there was a merge error: %v\n", p.ID, merged)
 		if errIsUnresolvable(merged) {
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
