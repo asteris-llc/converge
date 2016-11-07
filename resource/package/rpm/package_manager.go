@@ -16,58 +16,24 @@ package rpm
 
 import (
 	"fmt"
-	"os/exec"
-	"syscall"
 
-	"github.com/pkg/errors"
+	"github.com/asteris-llc/converge/resource/package"
 )
-
-// PackageVersion is a type alias for a string, since various packages may use
-// different naming conventions
-type PackageVersion string
-
-// PackageManager describes an interface for managing packages and helps make
-// `Check` and `Apply` testable.
-type PackageManager interface {
-	// If the package is installed, returns the version and true, otherwise
-	// returns an empty string and false.
-	InstalledVersion(string) (PackageVersion, bool)
-
-	// Installs a package, returning an error if something went wrong
-	InstallPackage(string) (string, error)
-
-	// Removes a package, returning an error if something went wrong
-	RemovePackage(string) (string, error)
-}
-
-// SysCaller allows us to mock exec.Command
-type SysCaller interface {
-	Run(string) ([]byte, error)
-}
-
-// ExecCaller is a dummy struct to handle wrapping exec.Command in the SysCaller
-// interface.
-type ExecCaller struct{}
-
-// Run executs `cmd` as a /bin/sh script and returns the output and error
-func (e ExecCaller) Run(cmd string) ([]byte, error) {
-	return exec.Command("sh", "-c", cmd).Output()
-}
 
 // YumManager provides a concrete implementation of PackageManager for yum
 // packages.
 type YumManager struct {
-	Sys SysCaller
+	Sys pkg.SysCaller
 }
 
 // InstalledVersion gets the installed version of package, if available
-func (y *YumManager) InstalledVersion(pkg string) (PackageVersion, bool) {
-	result, err := y.Sys.Run(fmt.Sprintf("rpm -q %s", pkg))
-	exitCode, _ := getExitCode(err)
+func (y *YumManager) InstalledVersion(p string) (pkg.PackageVersion, bool) {
+	result, err := y.Sys.Run(fmt.Sprintf("rpm -q %s", p))
+	exitCode, _ := pkg.GetExitCode(err)
 	if exitCode != 0 {
 		return "", false
 	}
-	return (PackageVersion)(result), true
+	return (pkg.PackageVersion)(result), true
 }
 
 // InstallPackage installs a package, returning an error if something went wrong
@@ -83,19 +49,4 @@ func (y *YumManager) InstallPackage(pkg string) (string, error) {
 func (y *YumManager) RemovePackage(pkg string) (string, error) {
 	res, err := y.Sys.Run(fmt.Sprintf("yum remove -y %s", pkg))
 	return string(res), err
-}
-
-func getExitCode(err error) (uint32, error) {
-	if err == nil {
-		return 0, nil
-	}
-	exitErr, ok := err.(*exec.ExitError)
-	if !ok {
-		return 255, errors.Wrap(err, "not a valid exitError")
-	}
-	status, ok := exitErr.Sys().(syscall.WaitStatus)
-	if !ok {
-		return 255, errors.Wrap(err, "failed to get sys waitstatus")
-	}
-	return uint32(status.ExitStatus()), nil
 }

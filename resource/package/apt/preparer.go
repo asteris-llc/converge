@@ -12,19 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rpm
+package apt
 
 import (
+	"errors"
+
+	"strings"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/package"
 	"golang.org/x/net/context"
 )
 
-// Preparer for RPM Package
+// Preparer for Debian Package
 //
-// RPM Package manages system packages with `rpm` and `yum`. It assumes that
-// both `rpm` and `yum` are installed on the system, and that the user has
+// Apt Package manages system packages with `apt` and `dpkg`. It assumes that
+// both `apt` and `dpkg` are installed on the system, and that the user has
 // permissions to install, remove, and query packages.
 type Preparer struct {
 	// Name of the package or package group.
@@ -35,8 +39,13 @@ type Preparer struct {
 	State pkg.State `hcl:"state" valid_values:"present,absent"`
 }
 
-// Prepare a new packge
+// Prepare a new package
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
+
+	if strings.TrimSpace(p.Name) == "" {
+		return &pkg.Package{}, errors.New("package name cannot be empty")
+	}
+
 	if p.State == "" {
 		p.State = "present"
 	}
@@ -44,10 +53,10 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 	return &pkg.Package{
 		Name:   p.Name,
 		State:  p.State,
-		PkgMgr: &YumManager{Sys: pkg.ExecCaller{}},
+		PkgMgr: &Manager{Sys: pkg.ExecCaller{}},
 	}, nil
 }
 
 func init() {
-	registry.Register("package.rpm", (*Preparer)(nil), (*pkg.Package)(nil))
+	registry.Register("package.apt", (*Preparer)(nil), (*pkg.Package)(nil))
 }
