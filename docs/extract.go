@@ -30,6 +30,15 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const durationComment = `
+Acceptable formats are a number in nanoseconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 nanosecond count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+`
+
 var (
 	typeName      string
 	fPath         string
@@ -184,10 +193,15 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		return te
 
 	case *ast.Field:
+		typ := stringify(n.Type)
+		doc := te.Docs(n.Doc, n.Comment)
+		if strings.Contains(typ, "duration") {
+			doc += durationComment
+		}
 		field := &Field{
 			Name: n.Names[0].String(),
-			Type: stringify(n.Type),
-			Doc:  te.Docs(n.Doc, n.Comment),
+			Type: typ,
+			Doc:  doc,
 		}
 
 		if n.Tag != nil {
@@ -274,6 +288,17 @@ func stringify(node ast.Expr) string {
 
 	case *ast.StarExpr:
 		return fmt.Sprintf("optional %s", stringify(n.X))
+
+	case *ast.SelectorExpr:
+		selExp := fmt.Sprintf("%s.%s", stringify(n.X), stringify(n.Sel))
+		switch selExp {
+		case "time.Duration":
+			return "duration"
+		case "resource.Value":
+			return "anything"
+		default:
+			return fmt.Sprintf("%T", n)
+		}
 
 	default:
 		return fmt.Sprintf("%T", n)
