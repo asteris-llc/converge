@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 
 	"fmt"
 	"testing"
@@ -128,12 +129,12 @@ func TestCreateLogicalVolume(t *testing.T) {
 	require.NoError(t, sizeErr)
 
 	r := lv.NewResourceLV(lvm, "vg0", volname, size)
-	status, err := r.Check(fr)
+	status, err := r.Check(context.Background(), fr)
 	assert.NoError(t, err)
 	assert.True(t, status.HasChanges())
 	comparison.AssertDiff(t, status.Diffs(), "data", "<not exists>", "created /dev/mapper/vg0-data")
 
-	status, err = r.Apply()
+	status, err = r.Apply(context.Background())
 	assert.NoError(t, err)
 	me.AssertCalled(t, "Run", "lvcreate", []string{"-n", volname, "-L", "100G", "vg0"})
 }
@@ -147,7 +148,7 @@ func simpleSize(t *testing.T, sizeStr string) *lowlevel.LvmSize {
 func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) (resource.TaskStatus, resource.Task) {
 	fr := fakerenderer.New()
 	res := lv.NewResourceLV(lvm, group, name, size)
-	status, err := res.Check(fr)
+	status, err := res.Check(context.Background(), fr)
 	assert.NoError(t, err)
 	assert.NotNil(t, status)
 	return status, res
@@ -156,7 +157,7 @@ func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, group string, name strin
 func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) resource.TaskStatus {
 	fr := fakerenderer.New()
 	res := lv.NewResourceLV(lvm, group, name, size)
-	status, err := res.Check(fr)
+	status, err := res.Check(context.Background(), fr)
 	assert.Error(t, err)
 	return status
 }
@@ -164,7 +165,7 @@ func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, group string, name strin
 func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) resource.TaskStatus {
 	checkStatus, res := simpleCheckSuccess(t, lvm, group, name, size)
 	require.True(t, checkStatus.HasChanges())
-	status, err := res.Apply()
+	status, err := res.Apply(context.Background())
 	require.NoError(t, err)
 	return status
 }
@@ -172,7 +173,7 @@ func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, group string, name strin
 func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM, group string, name string, size *lowlevel.LvmSize) resource.TaskStatus {
 	checkStatus, res := simpleCheckSuccess(t, lvm, group, name, size)
 	require.True(t, checkStatus.HasChanges())
-	status, err := res.Apply()
+	status, err := res.Apply(context.Background())
 	assert.Error(t, err)
 	return status
 }

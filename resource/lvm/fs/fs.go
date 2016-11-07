@@ -24,6 +24,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 type resourceFS struct {
@@ -60,7 +61,7 @@ Type={{.Type}}
 WantedBy=local-fs.target {{.WantedBy}}
 RequiredBy={{.RequiredBy}}`
 
-func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
+func (r *resourceFS) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := &resource.Status{}
 
 	if err := r.lvm.CheckFilesystemTools(r.mount.Type); err != nil {
@@ -86,7 +87,7 @@ func (r *resourceFS) Check(resource.Renderer) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func (r *resourceFS) Apply() (resource.TaskStatus, error) {
+func (r *resourceFS) Apply(context.Context) (resource.TaskStatus, error) {
 	if r.needMkfs {
 		if err := r.lvm.Mkfs(r.mount.What, r.mount.Type); err != nil {
 			return nil, err

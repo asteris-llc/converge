@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 
 	"fmt"
 	"testing"
@@ -209,12 +210,12 @@ func TestCreateVolume(t *testing.T) {
 		fr := fakerenderer.New()
 
 		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/sda1"}, false, false)
-		status, err := r.Check(fr)
+		status, err := r.Check(context.Background(), fr)
 		assert.NoError(t, err)
 		assert.True(t, status.HasChanges())
 		comparison.AssertDiff(t, status.Diffs(), "vg0", "<not exists>", "/dev/sda1")
 
-		status, err = r.Apply()
+		status, err = r.Apply(context.Background())
 		assert.NoError(t, err)
 		me.AssertCalled(t, "Run", "vgcreate", []string{"vg0", "/dev/sda1"})
 	})
@@ -231,7 +232,7 @@ func TestCreateVolume(t *testing.T) {
 		fr := fakerenderer.New()
 
 		r := vg.NewResourceVG(lvm, "vg1", []string{"/dev/md127"}, false, false)
-		_, err := r.Check(fr)
+		_, err := r.Check(context.Background(), fr)
 		assert.Error(t, err)
 	})
 
@@ -247,7 +248,7 @@ func TestCreateVolume(t *testing.T) {
 		fr := fakerenderer.New()
 
 		r := vg.NewResourceVG(lvm, "vg0", []string{"/dev/md127"}, false, false)
-		status, err := r.Check(fr)
+		status, err := r.Check(context.Background(), fr)
 		assert.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
@@ -255,14 +256,14 @@ func TestCreateVolume(t *testing.T) {
 
 func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) resource.TaskStatus {
 	r := vg.NewResourceVG(lvm, group, devs, remove, forceRemove)
-	status, err := r.Check(fakerenderer.New())
+	status, err := r.Check(context.Background(), fakerenderer.New())
 	assert.Error(t, err)
 	return status
 }
 
 func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM, group string, devs []string, remove bool, forceRemove bool) (resource.TaskStatus, resource.Task) {
 	r := vg.NewResourceVG(lvm, group, devs, remove, forceRemove)
-	status, err := r.Check(fakerenderer.New())
+	status, err := r.Check(context.Background(), fakerenderer.New())
 	require.NoError(t, err)
 	require.NotNil(t, status)
 	return status, r
@@ -272,7 +273,7 @@ func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM, group string, devs []str
 	checkStatus, vg := simpleCheckSuccess(t, lvm, group, devs, remove, forceRemove)
 	require.True(t, checkStatus.HasChanges())
 
-	status, err := vg.Apply()
+	status, err := vg.Apply(context.Background())
 	require.NoError(t, err)
 	return status
 }
@@ -281,7 +282,7 @@ func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM, group string, devs []str
 	checkStatus, vg := simpleCheckSuccess(t, lvm, group, devs, remove, forceRemove)
 	require.True(t, checkStatus.HasChanges())
 
-	status, err := vg.Apply()
+	status, err := vg.Apply(context.Background())
 	require.Error(t, err)
 	return status
 }
