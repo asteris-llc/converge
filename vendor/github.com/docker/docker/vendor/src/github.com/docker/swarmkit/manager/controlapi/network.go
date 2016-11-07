@@ -1,12 +1,11 @@
 package controlapi
 
 import (
+	"fmt"
 	"net"
 
-	"github.com/docker/libnetwork/ipamapi"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/identity"
-	"github.com/docker/swarmkit/manager/allocator/networkallocator"
 	"github.com/docker/swarmkit/manager/state/store"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -59,10 +58,6 @@ func validateIPAM(ipam *api.IPAMOptions) error {
 		return err
 	}
 
-	if ipam.Driver != nil && ipam.Driver.Name != ipamapi.DefaultIPAM {
-		return grpc.Errorf(codes.InvalidArgument, "invalid IPAM specified")
-	}
-
 	for _, ipamConf := range ipam.Configs {
 		if err := validateIPAMConfiguration(ipamConf); err != nil {
 			return err
@@ -83,10 +78,6 @@ func validateNetworkSpec(spec *api.NetworkSpec) error {
 
 	if err := validateDriver(spec.DriverConfig); err != nil {
 		return err
-	}
-
-	if spec.DriverConfig != nil && spec.DriverConfig.Name != networkallocator.DefaultDriver {
-		return grpc.Errorf(codes.InvalidArgument, "invalid driver specified")
 	}
 
 	if err := validateIPAM(spec.IPAM); err != nil {
@@ -171,7 +162,12 @@ func (s *Server) RemoveNetwork(ctx context.Context, request *api.RemoveNetworkRe
 	}
 
 	for _, s := range services {
-		for _, na := range s.Spec.Networks {
+		specNetworks := s.Spec.Task.Networks
+		if len(specNetworks) == 0 {
+			specNetworks = s.Spec.Networks
+		}
+
+		for _, na := range specNetworks {
 			if na.Target == request.NetworkID {
 				return nil, grpc.Errorf(codes.FailedPrecondition, "network %s is in use", request.NetworkID)
 			}
@@ -181,7 +177,11 @@ func (s *Server) RemoveNetwork(ctx context.Context, request *api.RemoveNetworkRe
 	err = s.store.Update(func(tx store.Tx) error {
 		nw := store.GetNetwork(tx, request.NetworkID)
 		if _, ok := nw.Spec.Annotations.Labels["com.docker.swarm.internal"]; ok {
-			return grpc.Errorf(codes.PermissionDenied, "%s is a pre-defined network and cannot be removed", request.NetworkID)
+			networkDescription := nw.ID
+			if nw.Spec.Annotations.Name != "" {
+				networkDescription = fmt.Sprintf("%s (%s)", nw.Spec.Annotations.Name, nw.ID)
+			}
+			return grpc.Errorf(codes.PermissionDenied, "%s is a pre-defined network and cannot be removed", networkDescription)
 		}
 		return store.DeleteNetwork(tx, request.NetworkID)
 	})

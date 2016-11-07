@@ -129,7 +129,7 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		utils.EnableDebug()
 	}
 
-	if utils.ExperimentalBuild() {
+	if cli.Config.Experimental {
 		logrus.Warn("Running experimental build")
 	}
 
@@ -248,6 +248,15 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		return fmt.Errorf("Error starting daemon: %v", err)
 	}
 
+	if cli.Config.MetricsAddress != "" {
+		if !d.HasExperimental() {
+			return fmt.Errorf("metrics-addr is only supported when experimental is enabled")
+		}
+		if err := startMetricsServer(cli.Config.MetricsAddress); err != nil {
+			return err
+		}
+	}
+
 	name, _ := os.Hostname()
 
 	c, err := cluster.New(cluster.Config{
@@ -256,10 +265,16 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		Backend:                d,
 		NetworkSubnetsProvider: d,
 		DefaultAdvertiseAddr:   cli.Config.SwarmDefaultAdvertiseAddr,
+		RuntimeRoot:            cli.getSwarmRunRoot(),
 	})
 	if err != nil {
 		logrus.Fatalf("Error creating cluster component: %v", err)
 	}
+
+	// Restart all autostart containers which has a swarm endpoint
+	// and is not yet running now that we have successfully
+	// initialized the cluster.
+	d.RestartSwarmContainers()
 
 	logrus.Info("Daemon has completed initialization")
 
@@ -269,10 +284,13 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		"graphdriver": d.GraphDriverName(),
 	}).Info("Docker daemon")
 
+	cli.d = d
+
+	// initMiddlewares needs cli.d to be populated. Dont change this init order.
 	cli.initMiddlewares(api, serverConfig)
+	d.SetCluster(c)
 	initRouter(api, d, c)
 
-	cli.d = d
 	cli.setupConfigReloadTrap()
 
 	// The serve API routine never exits unless an error occurs
@@ -288,7 +306,7 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 	// Wait for serve API to complete
 	errAPI := <-serveAPIWait
 	c.Cleanup()
-	shutdownDaemon(d, 15)
+	shutdownDaemon(d)
 	containerdRemote.Cleanup()
 	if errAPI != nil {
 		return fmt.Errorf("Shutting down due to ServeAPI error: %v", errAPI)
@@ -334,16 +352,22 @@ func (cli *DaemonCli) stop() {
 // shutdownDaemon just wraps daemon.Shutdown() to handle a timeout in case
 // d.Shutdown() is waiting too long to kill container or worst it's
 // blocked there
-func shutdownDaemon(d *daemon.Daemon, timeout time.Duration) {
+func shutdownDaemon(d *daemon.Daemon) {
+	shutdownTimeout := d.ShutdownTimeout()
 	ch := make(chan struct{})
 	go func() {
 		d.Shutdown()
 		close(ch)
 	}()
+	if shutdownTimeout < 0 {
+		<-ch
+		logrus.Debug("Clean shutdown succeeded")
+		return
+	}
 	select {
 	case <-ch:
 		logrus.Debug("Clean shutdown succeeded")
-	case <-time.After(timeout * time.Second):
+	case <-time.After(time.Duration(shutdownTimeout) * time.Second):
 		logrus.Error("Force shutdown daemon")
 	}
 }
@@ -382,6 +406,23 @@ func loadDaemonCliConfig(opts daemonOptions) (*daemon.Config, error) {
 		return nil, err
 	}
 
+	// Labels of the docker engine used to allow multiple values associated with the same key.
+	// This is deprecated in 1.13, and, be removed after 3 release cycles.
+	// The following will check the conflict of labels, and report a warning for deprecation.
+	//
+	// TODO: After 3 release cycles (1.16) an error will be returned, and labels will be
+	// sanitized to consolidate duplicate key-value pairs (config.Labels = newLabels):
+	//
+	// newLabels, err := daemon.GetConflictFreeLabels(config.Labels)
+	// if err != nil {
+	//	return nil, err
+	// }
+	// config.Labels = newLabels
+	//
+	if _, err := daemon.GetConflictFreeLabels(config.Labels); err != nil {
+		logrus.Warnf("Engine labels with duplicate keys and conflicting values have been deprecated: %s", err)
+	}
+
 	// Regardless of whether the user sets it to true or false, if they
 	// specify TLSVerify at all then we need to turn on TLS
 	if config.IsValueSet(cliflags.FlagTLSVerify) {
@@ -389,7 +430,7 @@ func loadDaemonCliConfig(opts daemonOptions) (*daemon.Config, error) {
 	}
 
 	// ensure that the log level is the one set after merging configurations
-	cliflags.SetDaemonLogLevel(config.LogLevel)
+	cliflags.SetLogLevel(config.LogLevel)
 
 	return config, nil
 }
@@ -397,24 +438,32 @@ func loadDaemonCliConfig(opts daemonOptions) (*daemon.Config, error) {
 func initRouter(s *apiserver.Server, d *daemon.Daemon, c *cluster.Cluster) {
 	decoder := runconfig.ContainerDecoder{}
 
-	routers := []router.Router{
+	routers := []router.Router{}
+
+	// we need to add the checkpoint router before the container router or the DELETE gets masked
+	routers = addExperimentalRouters(routers, d, decoder)
+
+	routers = append(routers, []router.Router{
 		container.NewRouter(d, decoder),
 		image.NewRouter(d, decoder),
 		systemrouter.NewRouter(d, c),
 		volume.NewRouter(d),
 		build.NewRouter(dockerfile.NewBuildManager(d)),
 		swarmrouter.NewRouter(c),
-	}
+	}...)
+
 	if d.NetworkControllerEnabled() {
 		routers = append(routers, network.NewRouter(d, c))
 	}
-	routers = addExperimentalRouters(routers)
 
 	s.InitRouter(utils.IsDebugEnabled(), routers...)
 }
 
 func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config) {
 	v := cfg.Version
+
+	exp := middleware.NewExperimentalMiddleware(cli.d.HasExperimental())
+	s.UseMiddleware(exp)
 
 	vm := middleware.NewVersionMiddleware(v, api.DefaultVersion, api.MinVersion)
 	s.UseMiddleware(vm)
@@ -427,6 +476,6 @@ func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config
 	u := middleware.NewUserAgentMiddleware(v)
 	s.UseMiddleware(u)
 
-	cli.authzMiddleware = authorization.NewMiddleware(cli.Config.AuthorizationPlugins)
+	cli.authzMiddleware = authorization.NewMiddleware(cli.Config.AuthorizationPlugins, cli.d.PluginStore)
 	s.UseMiddleware(cli.authzMiddleware)
 }

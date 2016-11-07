@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/utils"
 	"github.com/go-check/check"
 )
 
@@ -31,11 +30,11 @@ var (
 		"Test requires a Linux daemon",
 	}
 	ExperimentalDaemon = testRequirement{
-		func() bool { return utils.ExperimentalBuild() },
+		func() bool { return experimentalDaemon },
 		"Test requires an experimental daemon",
 	}
 	NotExperimentalDaemon = testRequirement{
-		func() bool { return !utils.ExperimentalBuild() },
+		func() bool { return !experimentalDaemon },
 		"Test requires a non experimental daemon",
 	}
 	IsAmd64 = testRequirement{
@@ -153,6 +152,19 @@ var (
 		},
 		"Test requires support for IPv6",
 	}
+	UserNamespaceROMount = testRequirement{
+		func() bool {
+			// quick case--userns not enabled in this test run
+			if os.Getenv("DOCKER_REMAP_ROOT") == "" {
+				return true
+			}
+			if _, _, err := dockerCmdWithError("run", "--rm", "--read-only", "busybox", "date"); err != nil {
+				return false
+			}
+			return true
+		},
+		"Test cannot be run if user namespaces enabled but readonly mounts fail on this kernel.",
+	}
 	UserNamespaceInKernel = testRequirement{
 		func() bool {
 			if _, err := os.Stat("/proc/self/uid_map"); os.IsNotExist(err) {
@@ -187,6 +199,24 @@ var (
 			return true
 		},
 		"Test cannot be run when remapping root",
+	}
+	IsPausable = testRequirement{
+		func() bool {
+			if daemonPlatform == "windows" {
+				return isolation == "hyperv"
+			}
+			return true
+		},
+		"Test requires containers are pausable.",
+	}
+	NotPausable = testRequirement{
+		func() bool {
+			if daemonPlatform == "windows" {
+				return isolation == "process"
+			}
+			return false
+		},
+		"Test requires containers are not pausable.",
 	}
 )
 

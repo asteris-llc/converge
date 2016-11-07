@@ -28,6 +28,7 @@ import (
 	// import empty to register types for SetResources
 	_ "github.com/asteris-llc/converge/resource/docker/container"
 	_ "github.com/asteris-llc/converge/resource/docker/image"
+	_ "github.com/asteris-llc/converge/resource/docker/volume"
 	_ "github.com/asteris-llc/converge/resource/file/content"
 	_ "github.com/asteris-llc/converge/resource/file/directory"
 	_ "github.com/asteris-llc/converge/resource/file/mode"

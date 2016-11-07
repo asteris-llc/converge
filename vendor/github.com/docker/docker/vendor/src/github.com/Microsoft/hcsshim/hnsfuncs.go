@@ -30,11 +30,17 @@ type VsidPolicy struct {
 	VSID uint
 }
 
+type PaPolicy struct {
+	Type string
+	PA   string
+}
+
 // Subnet is assoicated with a network and represents a list
 // of subnets available to the network
 type Subnet struct {
-	AddressPrefix  string `json:",omitempty"`
-	GatewayAddress string `json:",omitempty"`
+	AddressPrefix  string            `json:",omitempty"`
+	GatewayAddress string            `json:",omitempty"`
+	Policies       []json.RawMessage `json:",omitempty"`
 }
 
 // MacPool is assoicated with a network and represents a list
@@ -46,16 +52,18 @@ type MacPool struct {
 
 // HNSNetwork represents a network in HNS
 type HNSNetwork struct {
-	Id                 string            `json:",omitempty"`
-	Name               string            `json:",omitempty"`
-	Type               string            `json:",omitempty"`
-	NetworkAdapterName string            `json:",omitempty"`
-	SourceMac          string            `json:",omitempty"`
-	Policies           []json.RawMessage `json:",omitempty"`
-	MacPools           []MacPool         `json:",omitempty"`
-	Subnets            []Subnet          `json:",omitempty"`
-	DNSSuffix          string            `json:",omitempty"`
-	DNSServerList      string            `json:",omitempty"`
+	Id                   string            `json:",omitempty"`
+	Name                 string            `json:",omitempty"`
+	Type                 string            `json:",omitempty"`
+	NetworkAdapterName   string            `json:",omitempty"`
+	SourceMac            string            `json:",omitempty"`
+	Policies             []json.RawMessage `json:",omitempty"`
+	MacPools             []MacPool         `json:",omitempty"`
+	Subnets              []Subnet          `json:",omitempty"`
+	DNSSuffix            string            `json:",omitempty"`
+	DNSServerList        string            `json:",omitempty"`
+	DNSServerCompartment uint32            `json:",omitempty"`
+	ManagementIP         string            `json:",omitempty"`
 }
 
 // HNSEndpoint represents a network endpoint in HNS
@@ -70,7 +78,9 @@ type HNSEndpoint struct {
 	DNSSuffix          string            `json:",omitempty"`
 	DNSServerList      string            `json:",omitempty"`
 	GatewayAddress     string            `json:",omitempty"`
+	EnableInternalDNS  bool              `json:",omitempty"`
 	PrefixLength       uint8             `json:",omitempty"`
+	IsRemoteEndpoint   bool              `json:",omitempty"`
 }
 
 type hnsNetworkResponse struct {

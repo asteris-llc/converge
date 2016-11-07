@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/libnetwork/driverapi"
 	"github.com/docker/libnetwork/netlabel"
+	"github.com/docker/libnetwork/ns"
 	"github.com/docker/libnetwork/options"
 	"github.com/docker/libnetwork/osl"
 	"github.com/docker/libnetwork/types"
@@ -44,8 +45,8 @@ func (d *driver) CreateNetwork(nid string, option map[string]interface{}, nInfo 
 	case "", modeBridge:
 		// default to macvlan bridge mode if -o macvlan_mode is empty
 		config.MacvlanMode = modeBridge
-	case modeOpt:
-		config.MacvlanMode = modeOpt
+	case modePrivate:
+		config.MacvlanMode = modePrivate
 	case modePassthru:
 		config.MacvlanMode = modePassthru
 	case modeVepa:
@@ -149,6 +150,15 @@ func (d *driver) DeleteNetwork(nid string) error {
 						n.config.Parent, err)
 				}
 			}
+		}
+	}
+	for _, ep := range n.endpoints {
+		if link, err := ns.NlHandle().LinkByName(ep.srcName); err == nil {
+			ns.NlHandle().LinkDel(link)
+		}
+
+		if err := d.storeDelete(ep); err != nil {
+			logrus.Warnf("Failed to remove macvlan endpoint %s from store: %v", ep.id[0:7], err)
 		}
 	}
 	// delete the *network

@@ -32,6 +32,13 @@ type APIClient interface {
 	StartContainer(string, string) error
 }
 
+// VolumeClient manages Docker volumes
+type VolumeClient interface {
+	FindVolume(string) (*dc.Volume, error)
+	CreateVolume(dc.CreateVolumeOptions) (*dc.Volume, error)
+	RemoveVolume(string) error
+}
+
 // Client provides api access to Docker
 type Client struct {
 	*dc.Client
@@ -212,4 +219,41 @@ func (c *Client) StartContainer(name, containerID string) error {
 		err = errors.Wrapf(err, "failed to start container %s (%s)", name, containerID)
 	}
 	return err
+}
+
+// CreateVolume creates a docker volume
+func (c *Client) CreateVolume(opts dc.CreateVolumeOptions) (*dc.Volume, error) {
+	log.WithFields(log.Fields{
+		"module":   "docker",
+		"function": "CreateVolume",
+	}).Debugf("creating volume %s: %+v", opts.Name, opts)
+
+	vol, err := c.Client.CreateVolume(opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create volume")
+	}
+	return vol, nil
+}
+
+// RemoveVolume removes a docker volume
+func (c *Client) RemoveVolume(name string) error {
+	log.WithFields(log.Fields{
+		"module":   "docker",
+		"function": "RemoveVolume",
+	}).Debugf("removing volume %s", name)
+
+	err := c.Client.RemoveVolume(name)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove volume")
+	}
+	return nil
+}
+
+// FindVolume finds the volume with the specified name
+func (c *Client) FindVolume(name string) (*dc.Volume, error) {
+	volume, err := c.Client.InspectVolume(name)
+	if err != nil && err != dc.ErrNoSuchVolume {
+		return nil, errors.Wrap(err, "failed to inspect volume")
+	}
+	return volume, nil
 }

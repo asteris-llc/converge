@@ -41,7 +41,13 @@ type NetworkDB struct {
 
 	// List of all peer nodes in the cluster not-limited to any
 	// network.
-	nodes map[string]*memberlist.Node
+	nodes map[string]*node
+
+	// List of all peer nodes which have failed
+	failedNodes map[string]*node
+
+	// List of all peer nodes which have left
+	leftNodes map[string]*node
 
 	// A multi-dimensional map of network/node attachmemts. The
 	// first key is a node name and the second key is a network ID
@@ -66,6 +72,9 @@ type NetworkDB struct {
 	// Broadcast queue for network event gossip.
 	networkBroadcasts *memberlist.TransmitLimitedQueue
 
+	// Broadcast queue for node event gossip.
+	nodeBroadcasts *memberlist.TransmitLimitedQueue
+
 	// A central stop channel to stop all go routines running on
 	// behalf of the NetworkDB instance.
 	stopCh chan struct{}
@@ -82,6 +91,13 @@ type NetworkDB struct {
 	keyring *memberlist.Keyring
 }
 
+type node struct {
+	memberlist.Node
+	ltime serf.LamportTime
+	// Number of hours left before the reaper removes the node
+	reapTime time.Duration
+}
+
 // network describes the node/network attachment.
 type network struct {
 	// Network ID
@@ -93,8 +109,9 @@ type network struct {
 	// Node leave is in progress.
 	leaving bool
 
-	// The time this node knew about the node's network leave.
-	leaveTime time.Time
+	// Number of seconds still left before a deleted network entry gets
+	// removed from networkDB
+	reapTime time.Duration
 
 	// The broadcast queue for table event gossip. This is only
 	// initialized for this node's network attachment entries.
@@ -106,6 +123,10 @@ type network struct {
 type Config struct {
 	// NodeName is the cluster wide unique name for this node.
 	NodeName string
+
+	// BindAddr is the IP on which networkdb listens. It can be
+	// 0.0.0.0 to listen on all addresses on the host.
+	BindAddr string
 
 	// AdvertiseAddr is the node's IP address that we advertise for
 	// cluster communication.
@@ -135,8 +156,9 @@ type entry struct {
 	// the cluster for certain amount of time after deletion.
 	deleting bool
 
-	// The wall clock time when this node learned about this deletion.
-	deleteTime time.Time
+	// Number of seconds still left before a deleted table entry gets
+	// removed from networkDB
+	reapTime time.Duration
 }
 
 // New creates a new instance of NetworkDB using the Config passed by
@@ -146,7 +168,9 @@ func New(c *Config) (*NetworkDB, error) {
 		config:         c,
 		indexes:        make(map[int]*radix.Tree),
 		networks:       make(map[string]map[string]*network),
-		nodes:          make(map[string]*memberlist.Node),
+		nodes:          make(map[string]*node),
+		failedNodes:    make(map[string]*node),
+		leftNodes:      make(map[string]*node),
 		networkNodes:   make(map[string][]string),
 		bulkSyncAckTbl: make(map[string]chan struct{}),
 		broadcaster:    events.NewBroadcaster(),
@@ -266,11 +290,11 @@ func (nDB *NetworkDB) DeleteEntry(tname, nid, key string) error {
 	}
 
 	entry := &entry{
-		ltime:      nDB.tableClock.Increment(),
-		node:       nDB.config.NodeName,
-		value:      value,
-		deleting:   true,
-		deleteTime: time.Now(),
+		ltime:    nDB.tableClock.Increment(),
+		node:     nDB.config.NodeName,
+		value:    value,
+		deleting: true,
+		reapTime: reapInterval,
 	}
 
 	if err := nDB.sendTableEvent(TableEventTypeDelete, nid, tname, key, entry); err != nil {
@@ -286,7 +310,7 @@ func (nDB *NetworkDB) DeleteEntry(tname, nid, key string) error {
 	return nil
 }
 
-func (nDB *NetworkDB) deleteNetworkNodeEntries(deletedNode string) {
+func (nDB *NetworkDB) deleteNetworkEntriesForNode(deletedNode string) {
 	nDB.Lock()
 	for nid, nodes := range nDB.networkNodes {
 		updatedNodes := make([]string, 0, len(nodes))
@@ -300,6 +324,8 @@ func (nDB *NetworkDB) deleteNetworkNodeEntries(deletedNode string) {
 
 		nDB.networkNodes[nid] = updatedNodes
 	}
+
+	delete(nDB.networks, deletedNode)
 	nDB.Unlock()
 }
 
@@ -317,15 +343,17 @@ func (nDB *NetworkDB) deleteNodeTableEntries(node string) {
 		key := params[2]
 
 		entry := &entry{
-			ltime:      oldEntry.ltime,
-			node:       node,
-			value:      oldEntry.value,
-			deleting:   true,
-			deleteTime: time.Now(),
+			ltime:    oldEntry.ltime,
+			node:     node,
+			value:    oldEntry.value,
+			deleting: true,
+			reapTime: reapInterval,
 		}
 
 		nDB.indexes[byTable].Insert(fmt.Sprintf("/%s/%s/%s", tname, nid, key), entry)
 		nDB.indexes[byNetwork].Insert(fmt.Sprintf("/%s/%s/%s", nid, tname, key), entry)
+
+		nDB.broadcaster.Write(makeEvent(opDelete, tname, nid, key, entry.value))
 		return false
 	})
 	nDB.Unlock()
@@ -387,7 +415,7 @@ func (nDB *NetworkDB) JoinNetwork(nid string) error {
 	}
 
 	logrus.Debugf("%s: joined network %s", nDB.config.NodeName, nid)
-	if _, err := nDB.bulkSync(nid, networkNodes, true); err != nil {
+	if _, err := nDB.bulkSync(networkNodes, true); err != nil {
 		logrus.Errorf("Error bulk syncing while joining network %s: %v", nid, err)
 	}
 
@@ -453,19 +481,33 @@ func (nDB *NetworkDB) LeaveNetwork(nid string) error {
 	return nil
 }
 
+// addNetworkNode adds the node to the list of nodes which participate
+// in the passed network only if it is not already present. Caller
+// should hold the NetworkDB lock while calling this
+func (nDB *NetworkDB) addNetworkNode(nid string, nodeName string) {
+	nodes := nDB.networkNodes[nid]
+	for _, node := range nodes {
+		if node == nodeName {
+			return
+		}
+	}
+
+	nDB.networkNodes[nid] = append(nDB.networkNodes[nid], nodeName)
+}
+
 // Deletes the node from the list of nodes which participate in the
 // passed network. Caller should hold the NetworkDB lock while calling
 // this
 func (nDB *NetworkDB) deleteNetworkNode(nid string, nodeName string) {
 	nodes := nDB.networkNodes[nid]
-	for i, name := range nodes {
+	newNodes := make([]string, 0, len(nodes)-1)
+	for _, name := range nodes {
 		if name == nodeName {
-			nodes[i] = nodes[len(nodes)-1]
-			nodes = nodes[:len(nodes)-1]
-			break
+			continue
 		}
+		newNodes = append(newNodes, name)
 	}
-	nDB.networkNodes[nid] = nodes
+	nDB.networkNodes[nid] = newNodes
 }
 
 // findCommonnetworks find the networks that both this node and the
@@ -476,10 +518,46 @@ func (nDB *NetworkDB) findCommonNetworks(nodeName string) []string {
 
 	var networks []string
 	for nid := range nDB.networks[nDB.config.NodeName] {
-		if _, ok := nDB.networks[nodeName][nid]; ok {
-			networks = append(networks, nid)
+		if n, ok := nDB.networks[nodeName][nid]; ok {
+			if !n.leaving {
+				networks = append(networks, nid)
+			}
 		}
 	}
 
 	return networks
+}
+
+func (nDB *NetworkDB) updateLocalNetworkTime() {
+	nDB.Lock()
+	defer nDB.Unlock()
+
+	ltime := nDB.networkClock.Increment()
+	for _, n := range nDB.networks[nDB.config.NodeName] {
+		n.ltime = ltime
+	}
+}
+
+func (nDB *NetworkDB) updateLocalTableTime() {
+	nDB.Lock()
+	defer nDB.Unlock()
+
+	ltime := nDB.tableClock.Increment()
+	nDB.indexes[byTable].Walk(func(path string, v interface{}) bool {
+		entry := v.(*entry)
+		if entry.node != nDB.config.NodeName {
+			return false
+		}
+
+		params := strings.Split(path[1:], "/")
+		tname := params[0]
+		nid := params[1]
+		key := params[2]
+		entry.ltime = ltime
+
+		nDB.indexes[byTable].Insert(fmt.Sprintf("/%s/%s/%s", tname, nid, key), entry)
+		nDB.indexes[byNetwork].Insert(fmt.Sprintf("/%s/%s/%s", nid, tname, key), entry)
+
+		return false
+	})
 }

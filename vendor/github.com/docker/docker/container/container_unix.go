@@ -11,13 +11,14 @@ import (
 	"syscall"
 
 	"github.com/Sirupsen/logrus"
+	containertypes "github.com/docker/docker/api/types/container"
+	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/symlink"
 	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/utils"
 	"github.com/docker/docker/volume"
-	containertypes "github.com/docker/engine-api/types/container"
 	"github.com/opencontainers/runc/libcontainer/label"
 )
 
@@ -52,13 +53,13 @@ type ExitStatus struct {
 // environment variables related to links.
 // Sets PATH, HOSTNAME and if container.Config.Tty is set: TERM.
 // The defaults set here do not override the values in container.Config.Env
-func (container *Container) CreateDaemonEnvironment(linkedEnv []string) []string {
+func (container *Container) CreateDaemonEnvironment(tty bool, linkedEnv []string) []string {
 	// Setup environment
 	env := []string{
 		"PATH=" + system.DefaultPathEnv,
 		"HOSTNAME=" + container.Config.Hostname,
 	}
-	if container.Config.Tty {
+	if tty {
 		env = append(env, "TERM=xterm")
 	}
 	env = append(env, linkedEnv...)
@@ -406,7 +407,7 @@ func copyOwnership(source, destination string) error {
 }
 
 // TmpfsMounts returns the list of tmpfs mounts
-func (container *Container) TmpfsMounts() []Mount {
+func (container *Container) TmpfsMounts() ([]Mount, error) {
 	var mounts []Mount
 	for dest, data := range container.HostConfig.Tmpfs {
 		mounts = append(mounts, Mount{
@@ -415,7 +416,20 @@ func (container *Container) TmpfsMounts() []Mount {
 			Data:        data,
 		})
 	}
-	return mounts
+	for dest, mnt := range container.MountPoints {
+		if mnt.Type == mounttypes.TypeTmpfs {
+			data, err := volume.ConvertTmpfsOptions(mnt.Spec.TmpfsOptions)
+			if err != nil {
+				return nil, err
+			}
+			mounts = append(mounts, Mount{
+				Source:      "tmpfs",
+				Destination: dest,
+				Data:        data,
+			})
+		}
+	}
+	return mounts, nil
 }
 
 // cleanResourcePath cleans a resource path and prepares to combine with mnt path
@@ -427,4 +441,9 @@ func cleanResourcePath(path string) string {
 // can be mounted locally. A no-op on non-Windows platforms
 func (container *Container) canMountFS() bool {
 	return true
+}
+
+// EnableServiceDiscoveryOnDefaultNetwork Enable service discovery on default network
+func (container *Container) EnableServiceDiscoveryOnDefaultNetwork() bool {
+	return false
 }

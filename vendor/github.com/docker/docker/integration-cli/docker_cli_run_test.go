@@ -184,7 +184,7 @@ func (s *DockerSuite) TestRunLinksContainerWithContainerName(c *check.C) {
 }
 
 //test --link use container id to link target
-func (s *DockerSuite) TestRunLinksContainerWithContainerId(c *check.C) {
+func (s *DockerSuite) TestRunLinksContainerWithContainerID(c *check.C) {
 	// TODO Windows: This test cannot run on a Windows daemon as the networking
 	// settings are not populated back yet on inspect.
 	testRequires(c, DaemonIsLinux)
@@ -1709,7 +1709,7 @@ func (s *DockerSuite) TestRunState(c *check.C) {
 }
 
 // Test for #1737
-func (s *DockerSuite) TestRunCopyVolumeUidGid(c *check.C) {
+func (s *DockerSuite) TestRunCopyVolumeUIDGID(c *check.C) {
 	// Not applicable on Windows as it does not support uid or gid in this way
 	testRequires(c, DaemonIsLinux)
 	name := "testrunvolumesuidgid"
@@ -1769,14 +1769,14 @@ func (s *DockerSuite) TestRunCleanupCmdOnEntrypoint(c *check.C) {
 	out = strings.TrimSpace(out)
 	expected := "root"
 	if daemonPlatform == "windows" {
-		if WindowsBaseImage == "windowsservercore" {
+		if strings.Contains(WindowsBaseImage, "windowsservercore") {
 			expected = `user manager\containeradministrator`
 		} else {
 			expected = `ContainerAdministrator` // nanoserver
 		}
 	}
 	if out != expected {
-		c.Fatalf("Expected output %s, got %q", expected, out)
+		c.Fatalf("Expected output %s, got %q. %s", expected, out, WindowsBaseImage)
 	}
 }
 
@@ -1864,7 +1864,7 @@ func (s *DockerSuite) TestRunInteractiveWithRestartPolicy(c *check.C) {
 		dockerCmdWithResult("stop", name).Assert(c, icmd.Success)
 	}()
 
-	result = icmd.WaitOnCmd(10*time.Second, result)
+	result = icmd.WaitOnCmd(60*time.Second, result)
 	c.Assert(result, icmd.Matches, icmd.Expected{ExitCode: 11})
 }
 
@@ -2025,13 +2025,8 @@ func (s *DockerSuite) TestRunBindMounts(c *check.C) {
 // Ensure that CIDFile gets deleted if it's empty
 // Perform this test by making `docker run` fail
 func (s *DockerSuite) TestRunCidFileCleanupIfEmpty(c *check.C) {
-	// Windows Server 2016 RS1 builds load the windowsservercore image from a tar rather than
-	// a .WIM file, and the tar layer has the default CMD set (same as the Linux ubuntu image),
-	// where-as the TP5 .WIM had a blank CMD. Hence this test is not applicable on RS1 or later
-	// builds as the command won't fail as it's not blank
-	if daemonPlatform == "windows" && windowsDaemonKV >= 14375 {
-		c.Skip("Not applicable on Windows RS1 or later builds")
-	}
+	// Skip on Windows. Base image on Windows has a CMD set in the image.
+	testRequires(c, DaemonIsLinux)
 
 	tmpDir, err := ioutil.TempDir("", "TestRunCidFile")
 	if err != nil {
@@ -2276,18 +2271,19 @@ func (s *DockerSuite) TestRunCreateVolumeEtc(c *check.C) {
 }
 
 func (s *DockerSuite) TestVolumesNoCopyData(c *check.C) {
-	// TODO Windows (Post TP5). Windows does not support volumes which
+	// TODO Windows (Post RS1). Windows does not support volumes which
 	// are pre-populated such as is built in the dockerfile used in this test.
 	testRequires(c, DaemonIsLinux)
+	prefix, slash := getPrefixAndSlashFromDaemonPlatform()
 	if _, err := buildImage("dataimage",
 		`FROM busybox
-		RUN mkdir -p /foo
-		RUN touch /foo/bar`,
+		RUN ["mkdir", "-p", "/foo"]
+		RUN ["touch", "/foo/bar"]`,
 		true); err != nil {
 		c.Fatal(err)
 	}
 
-	dockerCmd(c, "run", "--name", "test", "-v", "/foo", "busybox")
+	dockerCmd(c, "run", "--name", "test", "-v", prefix+slash+"foo", "busybox")
 
 	if out, _, err := dockerCmdWithError("run", "--volumes-from", "test", "dataimage", "ls", "-lh", "/foo/bar"); err == nil || !strings.Contains(out, "No such file or directory") {
 		c.Fatalf("Data was copied on volumes-from but shouldn't be:\n%q", out)
@@ -2402,30 +2398,6 @@ func (s *DockerSuite) TestRunExposePort(c *check.C) {
 	c.Assert(out, checker.Contains, "invalid range format for --expose")
 }
 
-func (s *DockerSuite) TestRunUnknownCommand(c *check.C) {
-	out, _, _ := dockerCmdWithStdoutStderr(c, "create", "busybox", "/bin/nada")
-
-	cID := strings.TrimSpace(out)
-	_, _, err := dockerCmdWithError("start", cID)
-
-	// Windows and Linux are different here by architectural design. Linux will
-	// fail to start the container, so an error is expected. Windows will
-	// successfully start the container, and once started attempt to execute
-	// the command which will fail.
-	if daemonPlatform == "windows" {
-		// Wait for it to exit.
-		waitExited(cID, 30*time.Second)
-		c.Assert(err, check.IsNil)
-	} else {
-		c.Assert(err, check.NotNil)
-	}
-
-	rc := inspectField(c, cID, "State.ExitCode")
-	if rc == "0" {
-		c.Fatalf("ExitCode(%v) cannot be 0", rc)
-	}
-}
-
 func (s *DockerSuite) TestRunModeIpcHost(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux, NotUserNamespace)
@@ -2512,7 +2484,7 @@ func (s *DockerSuite) TestRunModeIpcContainerNotRunning(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainer(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainer(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
@@ -2537,7 +2509,7 @@ func (s *DockerSuite) TestRunModePidContainer(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainerNotExists(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainerNotExists(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, DaemonIsLinux)
 	out, _, err := dockerCmdWithError("run", "-d", "--pid", "container:abcd1234", "busybox", "top")
@@ -2546,7 +2518,7 @@ func (s *DockerSuite) TestRunModePidContainerNotExists(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainerNotRunning(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainerNotRunning(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
@@ -2604,7 +2576,7 @@ func (s *DockerSuite) TestContainerNetworkMode(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidHost(c *check.C) {
+func (s *DockerSuite) TestRunModePIDHost(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux, NotUserNamespace)
 
@@ -2651,7 +2623,7 @@ func (s *DockerSuite) TestRunModeUTSHost(c *check.C) {
 	c.Assert(out, checker.Contains, runconfig.ErrConflictUTSHostname.Error())
 }
 
-func (s *DockerSuite) TestRunTLSverify(c *check.C) {
+func (s *DockerSuite) TestRunTLSVerify(c *check.C) {
 	// Remote daemons use TLS and this test is not applicable when TLS is required.
 	testRequires(c, SameHostDaemon)
 	if out, code, err := dockerCmdWithError("ps"); err != nil || code != 0 {
@@ -2661,7 +2633,7 @@ func (s *DockerSuite) TestRunTLSverify(c *check.C) {
 	// Regardless of whether we specify true or false we need to
 	// test to make sure tls is turned on if --tlsverify is specified at all
 	result := dockerCmdWithResult("--tlsverify=false", "ps")
-	result.Assert(c, icmd.Expected{ExitCode: 1, Err: "trying to connect"})
+	result.Assert(c, icmd.Expected{ExitCode: 1, Err: "error during connect"})
 
 	result = dockerCmdWithResult("--tlsverify=true", "ps")
 	result.Assert(c, icmd.Expected{ExitCode: 1, Err: "cert"})
@@ -2858,16 +2830,20 @@ func (s *DockerSuite) TestRunContainerWithWritableRootfs(c *check.C) {
 
 func (s *DockerSuite) TestRunContainerWithReadonlyRootfs(c *check.C) {
 	// Not applicable on Windows which does not support --read-only
-	testRequires(c, DaemonIsLinux)
+	testRequires(c, DaemonIsLinux, UserNamespaceROMount)
 
-	testReadOnlyFile(c, "/file", "/etc/hosts", "/etc/resolv.conf", "/etc/hostname", "/sys/kernel", "/dev/.dont.touch.me")
+	testPriv := true
+	// don't test privileged mode subtest if user namespaces enabled
+	if root := os.Getenv("DOCKER_REMAP_ROOT"); root != "" {
+		testPriv = false
+	}
+	testReadOnlyFile(c, testPriv, "/file", "/etc/hosts", "/etc/resolv.conf", "/etc/hostname", "/sys/kernel", "/dev/.dont.touch.me")
 }
 
 func (s *DockerSuite) TestPermissionsPtsReadonlyRootfs(c *check.C) {
 	// Not applicable on Windows due to use of Unix specific functionality, plus
 	// the use of --read-only which is not supported.
-	// --read-only + userns has remount issues
-	testRequires(c, DaemonIsLinux, NotUserNamespace)
+	testRequires(c, DaemonIsLinux, UserNamespaceROMount)
 
 	// Ensure we have not broken writing /dev/pts
 	out, status := dockerCmd(c, "run", "--read-only", "--rm", "busybox", "mount")
@@ -2880,9 +2856,7 @@ func (s *DockerSuite) TestPermissionsPtsReadonlyRootfs(c *check.C) {
 	}
 }
 
-func testReadOnlyFile(c *check.C, filenames ...string) {
-	// Not applicable on Windows which does not support --read-only
-	testRequires(c, DaemonIsLinux, NotUserNamespace)
+func testReadOnlyFile(c *check.C, testPriv bool, filenames ...string) {
 	touch := "touch " + strings.Join(filenames, " ")
 	out, _, err := dockerCmdWithError("run", "--read-only", "--rm", "busybox", "sh", "-c", touch)
 	c.Assert(err, checker.NotNil)
@@ -2890,6 +2864,10 @@ func testReadOnlyFile(c *check.C, filenames ...string) {
 	for _, f := range filenames {
 		expected := "touch: " + f + ": Read-only file system"
 		c.Assert(out, checker.Contains, expected)
+	}
+
+	if !testPriv {
+		return
 	}
 
 	out, _, err = dockerCmdWithError("run", "--read-only", "--privileged", "--rm", "busybox", "sh", "-c", touch)
@@ -2903,8 +2881,7 @@ func testReadOnlyFile(c *check.C, filenames ...string) {
 
 func (s *DockerSuite) TestRunContainerWithReadonlyEtcHostsAndLinkedContainer(c *check.C) {
 	// Not applicable on Windows which does not support --link
-	// --read-only + userns has remount issues
-	testRequires(c, DaemonIsLinux, NotUserNamespace)
+	testRequires(c, DaemonIsLinux, UserNamespaceROMount)
 
 	dockerCmd(c, "run", "-d", "--name", "test-etc-hosts-ro-linked", "busybox", "top")
 
@@ -2916,8 +2893,7 @@ func (s *DockerSuite) TestRunContainerWithReadonlyEtcHostsAndLinkedContainer(c *
 
 func (s *DockerSuite) TestRunContainerWithReadonlyRootfsWithDNSFlag(c *check.C) {
 	// Not applicable on Windows which does not support either --read-only or --dns.
-	// --read-only + userns has remount issues
-	testRequires(c, DaemonIsLinux, NotUserNamespace)
+	testRequires(c, DaemonIsLinux, UserNamespaceROMount)
 
 	out, _ := dockerCmd(c, "run", "--read-only", "--dns", "1.1.1.1", "busybox", "/bin/cat", "/etc/resolv.conf")
 	if !strings.Contains(string(out), "1.1.1.1") {
@@ -2927,8 +2903,7 @@ func (s *DockerSuite) TestRunContainerWithReadonlyRootfsWithDNSFlag(c *check.C) 
 
 func (s *DockerSuite) TestRunContainerWithReadonlyRootfsWithAddHostFlag(c *check.C) {
 	// Not applicable on Windows which does not support --read-only
-	// --read-only + userns has remount issues
-	testRequires(c, DaemonIsLinux, NotUserNamespace)
+	testRequires(c, DaemonIsLinux, UserNamespaceROMount)
 
 	out, _ := dockerCmd(c, "run", "--read-only", "--add-host", "testreadonly:127.0.0.1", "busybox", "/bin/cat", "/etc/hosts")
 	if !strings.Contains(string(out), "testreadonly") {
@@ -2983,7 +2958,7 @@ func (s *DockerSuite) TestRunContainerWithRmFlagCannotStartContainer(c *check.C)
 	}
 }
 
-func (s *DockerSuite) TestRunPidHostWithChildIsKillable(c *check.C) {
+func (s *DockerSuite) TestRunPIDHostWithChildIsKillable(c *check.C) {
 	// Not applicable on Windows as uses Unix specific functionality
 	testRequires(c, DaemonIsLinux, NotUserNamespace)
 	name := "ibuildthecloud"
@@ -3283,8 +3258,7 @@ func (s *DockerSuite) TestRunNetworkFilesBindMountRO(c *check.C) {
 
 func (s *DockerSuite) TestRunNetworkFilesBindMountROFilesystem(c *check.C) {
 	// Not applicable on Windows as uses Unix specific functionality
-	// --read-only + userns has remount issues
-	testRequires(c, SameHostDaemon, DaemonIsLinux, NotUserNamespace)
+	testRequires(c, SameHostDaemon, DaemonIsLinux, UserNamespaceROMount)
 
 	filename := createTmpFile(c, "test123")
 	defer os.Remove(filename)
@@ -3458,16 +3432,16 @@ func (s *DockerTrustSuite) TestTrustedRunFromBadTrustServer(c *check.C) {
 		c.Fatalf("Missing expected output on trusted push:\n%s", out)
 	}
 
-	// Now, try running with the original client from this new trust server. This should fallback to our cached timestamp and metadata.
+	// Now, try running with the original client from this new trust server. This should fail because the new root is invalid.
 	runCmd = exec.Command(dockerBinary, "run", repoName)
 	s.trustedCmd(runCmd)
 	out, _, err = runCommandWithOutput(runCmd)
 
-	if err != nil {
-		c.Fatalf("Error falling back to cached trust data: %s\n%s", err, out)
+	if err == nil {
+		c.Fatalf("Continuing with cached data even though it's an invalid root rotation: %s\n%s", err, out)
 	}
-	if !strings.Contains(string(out), "Error while downloading remote metadata, using cached timestamp") {
-		c.Fatalf("Missing expected output on trusted push:\n%s", out)
+	if !strings.Contains(out, "could not rotate trust to a new trusted root") {
+		c.Fatalf("Missing expected output on trusted run:\n%s", out)
 	}
 }
 
@@ -4227,7 +4201,7 @@ func (s *DockerSuite) TestRunVolumesMountedAsSlave(c *check.C) {
 	}
 
 	// Prepare a source directory with file in it. We will bind mount this
-	// direcotry and see if file shows up.
+	// directory and see if file shows up.
 	tmpDir2, err := ioutil.TempDir("", "volume-source2")
 	if err != nil {
 		c.Fatal(err)
@@ -4271,15 +4245,9 @@ func (s *DockerSuite) TestRunVolumesMountedAsSlave(c *check.C) {
 
 func (s *DockerSuite) TestRunNamedVolumesMountedAsShared(c *check.C) {
 	testRequires(c, DaemonIsLinux, NotUserNamespace)
-	out, exitcode, _ := dockerCmdWithError("run", "-v", "foo:/test:shared", "busybox", "touch", "/test/somefile")
-
-	if exitcode == 0 {
-		c.Fatalf("expected non-zero exit code; received %d", exitcode)
-	}
-
-	if expected := "Invalid volume specification"; !strings.Contains(out, expected) {
-		c.Fatalf(`Expected %q in output; got: %s`, expected, out)
-	}
+	out, exitCode, _ := dockerCmdWithError("run", "-v", "foo:/test:shared", "busybox", "touch", "/test/somefile")
+	c.Assert(exitCode, checker.Not(checker.Equals), 0)
+	c.Assert(out, checker.Contains, "invalid mount config")
 }
 
 func (s *DockerSuite) TestRunNamedVolumeCopyImageData(c *check.C) {
@@ -4516,4 +4484,86 @@ exec "$@"`,
 	_, _, err = dockerCmdWithError("run", "--entrypoint=", "-t", name)
 	c.Assert(err, check.NotNil)
 	c.Assert(err.Error(), checker.Contains, "No command specified")
+}
+
+func (s *DockerDaemonSuite) TestRunWithUlimitAndDaemonDefault(c *check.C) {
+	c.Assert(s.d.StartWithBusybox("--debug", "--default-ulimit=nofile=65535"), checker.IsNil)
+
+	name := "test-A"
+	_, err := s.d.Cmd("run", "--name", name, "-d", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(s.d.waitRun(name), check.IsNil)
+
+	out, err := s.d.Cmd("inspect", "--format", "{{.HostConfig.Ulimits}}", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "[nofile=65535:65535]")
+
+	name = "test-B"
+	_, err = s.d.Cmd("run", "--name", name, "--ulimit=nofile=42", "-d", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(s.d.waitRun(name), check.IsNil)
+
+	out, err = s.d.Cmd("inspect", "--format", "{{.HostConfig.Ulimits}}", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "[nofile=42:42]")
+}
+
+func (s *DockerSuite) TestRunStoppedLoggingDriverNoLeak(c *check.C) {
+	nroutines, err := getGoroutineNumber()
+	c.Assert(err, checker.IsNil)
+
+	out, _, err := dockerCmdWithError("run", "--name=fail", "--log-driver=splunk", "busybox", "true")
+	c.Assert(err, checker.NotNil)
+	c.Assert(out, checker.Contains, "Failed to initialize logging driver", check.Commentf("error should be about logging driver, got output %s", out))
+
+	// NGoroutines is not updated right away, so we need to wait before failing
+	c.Assert(waitForGoroutines(nroutines), checker.IsNil)
+}
+
+// Handles error conditions for --credentialspec. Validating E2E success cases
+// requires additional infrastructure (AD for example) on CI servers.
+func (s *DockerSuite) TestRunCredentialSpecFailures(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	attempts := []struct{ value, expectedError string }{
+		{"rubbish", "invalid credential spec security option - value must be prefixed file:// or registry://"},
+		{"rubbish://", "invalid credential spec security option - value must be prefixed file:// or registry://"},
+		{"file://", "no value supplied for file:// credential spec security option"},
+		{"registry://", "no value supplied for registry:// credential spec security option"},
+		{`file://c:\blah.txt`, "path cannot be absolute"},
+		{`file://doesnotexist.txt`, "The system cannot find the file specified"},
+	}
+	for _, attempt := range attempts {
+		_, _, err := dockerCmdWithError("run", "--security-opt=credentialspec="+attempt.value, "busybox", "true")
+		c.Assert(err, checker.NotNil, check.Commentf("%s expected non-nil err", attempt.value))
+		c.Assert(err.Error(), checker.Contains, attempt.expectedError, check.Commentf("%s expected %s got %s", attempt.value, attempt.expectedError, err))
+	}
+}
+
+// Windows specific test to validate credential specs with a well-formed spec.
+// Note it won't actually do anything in CI configuration with the spec, but
+// it should not fail to run a container.
+func (s *DockerSuite) TestRunCredentialSpecWellFormed(c *check.C) {
+	testRequires(c, DaemonIsWindows, SameHostDaemon)
+	validCS := readFile(`fixtures\credentialspecs\valid.json`, c)
+	writeFile(filepath.Join(dockerBasePath, `credentialspecs\valid.json`), validCS, c)
+	dockerCmd(c, "run", `--security-opt=credentialspec=file://valid.json`, "busybox", "true")
+}
+
+// Windows specific test to ensure that a servicing app container is started
+// if necessary once a container exits. It does this by forcing a no-op
+// servicing event and verifying the event from Hyper-V-Compute
+func (s *DockerSuite) TestRunServicingContainer(c *check.C) {
+	testRequires(c, DaemonIsWindows, SameHostDaemon)
+
+	out, _ := dockerCmd(c, "run", "-d", WindowsBaseImage, "cmd", "/c", "mkdir c:\\programdata\\Microsoft\\Windows\\ContainerUpdates\\000_000_d99f45d0-ffc8-4af7-bd9c-ea6a62e035c9_200 && sc control cexecsvc 255")
+	containerID := strings.TrimSpace(out)
+	err := waitExited(containerID, 60*time.Second)
+	c.Assert(err, checker.IsNil)
+
+	cmd := exec.Command("powershell", "echo", `(Get-WinEvent -ProviderName "Microsoft-Windows-Hyper-V-Compute" -FilterXPath 'Event[System[EventID=2010]]' -MaxEvents 1).Message`)
+	out2, _, err := runCommandWithOutput(cmd)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out2, checker.Contains, `"Servicing":true`, check.Commentf("Servicing container does not appear to have been started: %s", out2))
+	c.Assert(out2, checker.Contains, `Windows Container (Servicing)`, check.Commentf("Didn't find 'Windows Container (Servicing): %s", out2))
+	c.Assert(out2, checker.Contains, containerID+"_servicing", check.Commentf("Didn't find '%s_servicing': %s", containerID+"_servicing", out2))
 }

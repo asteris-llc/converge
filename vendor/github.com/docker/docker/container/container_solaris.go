@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/volume"
-	"github.com/docker/engine-api/types/container"
 )
 
 // Container holds fields specific to the Solaris implementation. See
@@ -28,7 +28,7 @@ type ExitStatus struct {
 }
 
 // CreateDaemonEnvironment creates a new environment variable slice for this container.
-func (container *Container) CreateDaemonEnvironment(linkedEnv []string) []string {
+func (container *Container) CreateDaemonEnvironment(_ bool, linkedEnv []string) []string {
 	return nil
 }
 
@@ -92,4 +92,9 @@ func (container *Container) BuildHostnameFile() error {
 // can be mounted locally. A no-op on non-Windows platforms
 func (container *Container) canMountFS() bool {
 	return true
+}
+
+// EnableServiceDiscoveryOnDefaultNetwork Enable service discovery on default network
+func (container *Container) EnableServiceDiscoveryOnDefaultNetwork() bool {
+	return false
 }

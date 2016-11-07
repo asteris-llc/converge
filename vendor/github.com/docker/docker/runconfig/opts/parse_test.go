@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
+	networktypes "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/runconfig"
-	"github.com/docker/engine-api/types/container"
-	networktypes "github.com/docker/engine-api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/spf13/pflag"
 )
@@ -663,6 +663,33 @@ func TestParseEnvfileVariables(t *testing.T) {
 	}
 	if len(config.Env) != 2 || config.Env[0] != "ENV1=value1" || config.Env[1] != "ENV2=value2" {
 		t.Fatalf("Expected a config with [ENV1=value1 ENV2=value2], got %v", config.Env)
+	}
+}
+
+func TestParseEnvfileVariablesWithBOMUnicode(t *testing.T) {
+	// UTF8 with BOM
+	config, _, _, err := parseRun([]string{"--env-file=fixtures/utf8.env", "img", "cmd"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := []string{"FOO=BAR", "HELLO=" + string([]byte{0xe6, 0x82, 0xa8, 0xe5, 0xa5, 0xbd}), "BAR=FOO"}
+	if len(config.Env) != len(env) {
+		t.Fatalf("Expected a config with %d env variables, got %v: %v", len(env), len(config.Env), config.Env)
+	}
+	for i, v := range env {
+		if config.Env[i] != v {
+			t.Fatalf("Expected a config with [%s], got %v", v, []byte(config.Env[i]))
+		}
+	}
+
+	// UTF16 with BOM
+	e := "contains invalid utf8 bytes at line"
+	if _, _, _, err := parseRun([]string{"--env-file=fixtures/utf16.env", "img", "cmd"}); err == nil || !strings.Contains(err.Error(), e) {
+		t.Fatalf("Expected an error with message '%s', got %v", e, err)
+	}
+	// UTF16BE with BOM
+	if _, _, _, err := parseRun([]string{"--env-file=fixtures/utf16be.env", "img", "cmd"}); err == nil || !strings.Contains(err.Error(), e) {
+		t.Fatalf("Expected an error with message '%s', got %v", e, err)
 	}
 }
 

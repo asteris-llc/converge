@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/stringid"
@@ -65,6 +66,7 @@ type NetworkInfo interface {
 	Internal() bool
 	Labels() map[string]string
 	Dynamic() bool
+	Created() time.Time
 }
 
 // EndpointWalker is a client provided function which will be used to walk the Endpoints.
@@ -166,6 +168,7 @@ type network struct {
 	name         string
 	networkType  string
 	id           string
+	created      time.Time
 	scope        string
 	labels       map[string]string
 	ipamType     string
@@ -184,6 +187,8 @@ type network struct {
 	persist      bool
 	stopWatchCh  chan struct{}
 	drvOnce      *sync.Once
+	resolverOnce sync.Once
+	resolver     []Resolver
 	internal     bool
 	inDelete     bool
 	ingress      bool
@@ -204,6 +209,13 @@ func (n *network) ID() string {
 	defer n.Unlock()
 
 	return n.id
+}
+
+func (n *network) Created() time.Time {
+	n.Lock()
+	defer n.Unlock()
+
+	return n.created
 }
 
 func (n *network) Type() string {
@@ -318,6 +330,7 @@ func (n *network) CopyTo(o datastore.KVObject) error {
 	dstN := o.(*network)
 	dstN.name = n.name
 	dstN.id = n.id
+	dstN.created = n.created
 	dstN.networkType = n.networkType
 	dstN.scope = n.scope
 	dstN.dynamic = n.dynamic
@@ -395,6 +408,7 @@ func (n *network) MarshalJSON() ([]byte, error) {
 	netMap := make(map[string]interface{})
 	netMap["name"] = n.name
 	netMap["id"] = n.id
+	netMap["created"] = n.created
 	netMap["networkType"] = n.networkType
 	netMap["scope"] = n.scope
 	netMap["labels"] = n.labels
@@ -449,6 +463,14 @@ func (n *network) UnmarshalJSON(b []byte) (err error) {
 	}
 	n.name = netMap["name"].(string)
 	n.id = netMap["id"].(string)
+	// "created" is not available in older versions
+	if v, ok := netMap["created"]; ok {
+		// n.created is time.Time but marshalled as string
+		if err = n.created.UnmarshalText([]byte(v.(string))); err != nil {
+			log.Warnf("failed to unmarshal creation time %v: %v", v, err)
+			n.created = time.Time{}
+		}
+	}
 	n.networkType = netMap["networkType"].(string)
 	n.enableIPv6 = netMap["enableIPv6"].(bool)
 
@@ -756,6 +778,19 @@ func (n *network) delete(force bool) error {
 		log.Warnf("Failed to update store after ipam release for network %s (%s): %v", n.Name(), n.ID(), err)
 	}
 
+	// We are about to delete the network. Leave the gossip
+	// cluster for the network to stop all incoming network
+	// specific gossip updates before cleaning up all the service
+	// bindings for the network. But cleanup service binding
+	// before deleting the network from the store since service
+	// bindings cleanup requires the network in the store.
+	n.cancelDriverWatches()
+	if err = n.leaveCluster(); err != nil {
+		log.Errorf("Failed leaving network %s from the agent cluster: %v", n.Name(), err)
+	}
+
+	c.cleanupServiceBindings(n.ID())
+
 	// deleteFromStore performs an atomic delete operation and the
 	// network.epCnt will help prevent any possible
 	// race between endpoint join and network delete
@@ -768,12 +803,6 @@ func (n *network) delete(force bool) error {
 
 	if err = c.deleteFromStore(n); err != nil {
 		return fmt.Errorf("error deleting network from store: %v", err)
-	}
-
-	n.cancelDriverWatches()
-
-	if err = n.leaveCluster(); err != nil {
-		log.Errorf("Failed leaving network %s from the agent cluster: %v", n.Name(), err)
 	}
 
 	return nil
@@ -796,6 +825,9 @@ func (n *network) deleteNetwork() error {
 		}
 	}
 
+	for _, resolver := range n.resolver {
+		resolver.Stop()
+	}
 	return nil
 }
 
@@ -1047,6 +1079,12 @@ func delNameToIP(svcMap map[string][]net.IP, name string, epIP net.IP) {
 }
 
 func (n *network) addSvcRecords(name string, epIP net.IP, epIPv6 net.IP, ipMapUpdate bool) {
+	// Do not add service names for ingress network as this is a
+	// routing only network
+	if n.ingress {
+		return
+	}
+
 	c := n.getController()
 	c.Lock()
 	defer c.Unlock()
@@ -1074,6 +1112,12 @@ func (n *network) addSvcRecords(name string, epIP net.IP, epIPv6 net.IP, ipMapUp
 }
 
 func (n *network) deleteSvcRecords(name string, epIP net.IP, epIPv6 net.IP, ipMapUpdate bool) {
+	// Do not delete service names from ingress network as this is a
+	// routing only network
+	if n.ingress {
+		return
+	}
+
 	c := n.getController()
 	c.Lock()
 	defer c.Unlock()
@@ -1118,7 +1162,7 @@ func (n *network) getSvcRecords(ep *endpoint) []etchosts.Record {
 			continue
 		}
 		if len(ip) == 0 {
-			log.Warnf("Found empty list of IP addresses for service %s on network %s (%s)", h, n.Name(), n.ID())
+			log.Warnf("Found empty list of IP addresses for service %s on network %s (%s)", h, n.name, n.id)
 			continue
 		}
 		recs = append(recs, etchosts.Record{
@@ -1520,4 +1564,127 @@ func (n *network) TableEventRegister(tableName string) error {
 // Special drivers are ones which do not need to perform any network plumbing
 func (n *network) hasSpecialDriver() bool {
 	return n.Type() == "host" || n.Type() == "null"
+}
+
+func (n *network) ResolveName(req string, ipType int) ([]net.IP, bool) {
+	var ipv6Miss bool
+
+	c := n.getController()
+	c.Lock()
+	sr, ok := c.svcRecords[n.ID()]
+	c.Unlock()
+
+	if !ok {
+		return nil, false
+	}
+
+	req = strings.TrimSuffix(req, ".")
+	var ip []net.IP
+	n.Lock()
+	ip, ok = sr.svcMap[req]
+
+	if ipType == types.IPv6 {
+		// If the name resolved to v4 address then its a valid name in
+		// the docker network domain. If the network is not v6 enabled
+		// set ipv6Miss to filter the DNS query from going to external
+		// resolvers.
+		if ok && n.enableIPv6 == false {
+			ipv6Miss = true
+		}
+		ip = sr.svcIPv6Map[req]
+	}
+	n.Unlock()
+
+	if ip != nil {
+		return ip, false
+	}
+
+	return nil, ipv6Miss
+}
+
+func (n *network) ResolveIP(ip string) string {
+	var svc string
+
+	c := n.getController()
+	c.Lock()
+	sr, ok := c.svcRecords[n.ID()]
+	c.Unlock()
+
+	if !ok {
+		return ""
+	}
+
+	nwName := n.Name()
+
+	n.Lock()
+	defer n.Unlock()
+	svc, ok = sr.ipMap[ip]
+
+	if ok {
+		return svc + "." + nwName
+	}
+
+	return svc
+}
+
+func (n *network) ResolveService(name string) ([]*net.SRV, []net.IP) {
+	c := n.getController()
+
+	srv := []*net.SRV{}
+	ip := []net.IP{}
+
+	log.Debugf("Service name To resolve: %v", name)
+
+	// There are DNS implementaions that allow SRV queries for names not in
+	// the format defined by RFC 2782. Hence specific validations checks are
+	// not done
+	parts := strings.Split(name, ".")
+	if len(parts) < 3 {
+		return nil, nil
+	}
+
+	portName := parts[0]
+	proto := parts[1]
+	svcName := strings.Join(parts[2:], ".")
+
+	c.Lock()
+	sr, ok := c.svcRecords[n.ID()]
+	c.Unlock()
+
+	if !ok {
+		return nil, nil
+	}
+
+	svcs, ok := sr.service[svcName]
+	if !ok {
+		return nil, nil
+	}
+
+	for _, svc := range svcs {
+		if svc.portName != portName {
+			continue
+		}
+		if svc.proto != proto {
+			continue
+		}
+		for _, t := range svc.target {
+			srv = append(srv,
+				&net.SRV{
+					Target: t.name,
+					Port:   t.port,
+				})
+
+			ip = append(ip, t.ip)
+		}
+	}
+
+	return srv, ip
+}
+
+func (n *network) ExecFunc(f func()) error {
+	return types.NotImplementedErrorf("ExecFunc not supported by network")
+}
+
+func (n *network) NdotsSet() bool {
+	return false
 }

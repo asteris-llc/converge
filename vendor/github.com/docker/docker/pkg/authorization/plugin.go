@@ -1,9 +1,18 @@
 package authorization
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/plugins"
+)
+
+var (
+	// ErrInvalidPlugin indicates that the plugin cannot be used. This is
+	// because the plugin was not found or does not implement necessary
+	// functionality
+	ErrInvalidPlugin = errors.New("invalid plugin")
 )
 
 // Plugin allows third party plugins to authorize requests and responses
@@ -31,6 +40,18 @@ func newPlugins(names []string) []Plugin {
 		plugins = append(plugins, newAuthorizationPlugin(name))
 	}
 	return plugins
+}
+
+var getter plugingetter.PluginGetter
+
+// SetPluginGetter sets the plugingetter
+func SetPluginGetter(pg plugingetter.PluginGetter) {
+	getter = pg
+}
+
+// GetPluginGetter gets the plugingetter
+func GetPluginGetter() plugingetter.PluginGetter {
+	return getter
 }
 
 // authorizationPlugin is an internal adapter to docker plugin system
@@ -80,9 +101,16 @@ func (a *authorizationPlugin) initPlugin() error {
 	var err error
 	a.once.Do(func() {
 		if a.plugin == nil {
-			plugin, e := plugins.Get(a.name, AuthZApiImplements)
+			var plugin plugingetter.CompatPlugin
+			var e error
+
+			if pg := GetPluginGetter(); pg != nil {
+				plugin, e = pg.Get(a.name, AuthZApiImplements, plugingetter.LOOKUP)
+			} else {
+				plugin, e = plugins.Get(a.name, AuthZApiImplements)
+			}
 			if e != nil {
-				err = e
+				err = ErrInvalidPlugin
 				return
 			}
 			a.plugin = plugin.Client()
