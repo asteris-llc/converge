@@ -61,4 +61,19 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "present", string(asRPM.State))
 	})
+
+	t.Run("when-name-null", func(t *testing.T) {
+		p := &rpm.Preparer{Name: "", State: "present"}
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.Error(t, err)
+		assert.EqualError(t, err, "package name cannot be empty")
+	})
+
+	t.Run("when-name-space", func(t *testing.T) {
+		p := &rpm.Preparer{Name: " ", State: "present"}
+		_, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.Error(t, err)
+		assert.EqualError(t, err, "package name cannot be empty")
+	})
+
 }
