@@ -79,7 +79,7 @@ func (p pipelineGen) maybeTransformRoot(ctx context.Context, idi interface{}) (i
 	if res, ok := idi.(resource.Resource); ok {
 		return res, nil
 	}
-	return nil, typeError("resource.Resource", idi)
+	return nil, typeError("render.maybeTransformRoot", p.ID, "resource.Resource", idi)
 }
 
 // Run prepare on the node and return the resource.Resource to be wrapped
@@ -88,7 +88,7 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 
 	res, ok := idi.(resource.Resource)
 	if !ok {
-		return nil, typeError("resource.Resource", idi)
+		return nil, typeError("render.prepareNode", p.ID, "resource.Resource", idi)
 	}
 
 	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
@@ -110,7 +110,7 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 			// track the expected return type of the thunk
 			fakePrep, fakePrepErr := getTypedResourcePointer(ctx, res)
 			if fakePrepErr != nil {
-				return fakePrepErr, nil
+				return nil, fakePrepErr
 			}
 
 			return createThunk(fakePrep, func(factory *Factory) (resource.Task, error) {
@@ -127,8 +127,6 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 				return res.Prepare(ctx, dynamicRenderer)
 			}), nil
 		}
-		return nil, err
-	} else if errIsBadTemplate(merged) {
 		return nil, merged
 	}
 	return prepared, nil
@@ -190,12 +188,11 @@ func (p pipelineGen) wrapTask(ctx context.Context, taski interface{}) (interface
 	if task, ok := taski.(resource.Task); ok {
 		return resource.WrapTask(task), nil
 	}
-	fmt.Println("type error in ", p.ID)
-	return nil, typeError("render.wrapTask: resource.Task", taski)
+	return nil, typeError("render.wrapTask", p.ID, "resource.Task", taski)
 }
 
-func typeError(expected string, actual interface{}) error {
-	return fmt.Errorf("type error: expected type %s but received type %T", expected, actual)
+func typeError(where, what, expected string, actual interface{}) error {
+	return fmt.Errorf("type error in %s: expected %s to be type %s but received type %T", where, what, expected, actual)
 }
 
 // PrepareThunk returns a possibly lazily evaluated preparer

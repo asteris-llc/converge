@@ -77,6 +77,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 		if r.resolverErr {
 			return "", ErrUnresolvable{}
 		}
+		fmt.Println("template error: ", err)
 		return "", ErrBadTemplate{Err: err}
 	}
 	return out.String(), err
@@ -197,6 +198,12 @@ func (r *Renderer) lookup(name string) (string, error) {
 
 	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
 		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
+		r.resolverErr = true
+		return "", ErrUnresolvable{}
+	}
+
+	if _, isPreparer := meta.Value().(*resource.Preparer); isPreparer {
+		log.WithField("preparer-reference", vertexName).Warn("node is unresolvable")
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
