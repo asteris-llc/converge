@@ -22,6 +22,7 @@ import (
 // FakeLVM is mock object implementing lowlevel.LVM
 type FakeLVM struct {
 	mock.Mock
+	LvsOutput map[string]*lowlevel.LogicalVolume
 }
 
 // MakeFakeLvm create fake LVM for test injections
@@ -42,6 +43,9 @@ func (f *FakeLVM) CheckFilesystemTools(fstype string) error {
 
 // QueryLogicalVolumes is mock for LVM.QueryLogicalVolumes
 func (f *FakeLVM) QueryLogicalVolumes(vg string) (map[string]*lowlevel.LogicalVolume, error) {
+	if len(f.LvsOutput) > 0 {
+		return f.LvsOutput, nil
+	}
 	c := f.Called(vg)
 	return c.Get(0).(map[string]*lowlevel.LogicalVolume), c.Error(1)
 }

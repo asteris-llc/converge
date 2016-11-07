@@ -41,7 +41,7 @@ func (r *resourceLV) Check(resource.Renderer) (resource.TaskStatus, error) {
 
 	// Check for LVM prerequizites
 	if err := r.lvm.Check(); err != nil {
-		return nil, errors.Wrap(err, "lvm.lv")
+		return nil, errors.Wrap(err, "lvm.logicalvolume")
 	}
 
 	ok, err := r.checkVG(false)

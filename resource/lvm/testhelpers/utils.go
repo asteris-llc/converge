@@ -49,5 +49,11 @@ func MakeFakeLvmNonEmpty() (lowlevel.LVM, *FakeLVM) {
 			Group: "vg1",
 		},
 	}, nil)
+	m.On("QueryLogicalVolumes", mock.Anything).Return(map[string]*lowlevel.LogicalVolume{
+		"vol": &lowlevel.LogicalVolume{
+			Name:       "vol",
+			DevicePath: "/dev/mapper/vg1-vol",
+		},
+	}, nil)
 	return lvm, m
 }

@@ -17,15 +17,135 @@ package fs_test
 import (
 	"github.com/asteris-llc/converge/helpers/comparison"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/fs"
+	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/lvm/testdata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"fmt"
 	"testing"
 )
+
+// TestFSCheck tests Check() from filesystem resource
+func TestFSCheck(t *testing.T) {
+	t.Run("normal flow", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowCheck(m, "xfs", true, true)
+		status, _ := simpleCheckSuccess(t, lvm)
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("missing tools failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		m.On("CheckFilesystemTools", mock.Anything).Return(fmt.Errorf("failure"))
+		_ = simpleCheckFailure(t, lvm)
+		m.AssertCalled(t, "CheckFilesystemTools", "xfs")
+	})
+
+	t.Run("Blkid() failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		m.On("CheckFilesystemTools", mock.Anything).Return(nil)
+		m.On("Blkid", mock.Anything).Return("", fmt.Errorf("failure"))
+		_ = simpleCheckFailure(t, lvm)
+		m.AssertCalled(t, "Blkid", "/dev/mapper/vg0-data")
+	})
+
+	t.Run("Blkid() report, that filesystem already formatted with different fs", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		m.On("CheckFilesystemTools", mock.Anything).Return(nil)
+		m.On("Blkid", mock.Anything).Return("ext4", nil)
+		_ = simpleCheckFailure(t, lvm)
+		m.AssertCalled(t, "Blkid", "/dev/mapper/vg0-data")
+	})
+
+	t.Run("CheckUnit() failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		m.On("CheckFilesystemTools", mock.Anything).Return(nil)
+		m.On("Blkid", mock.Anything).Return("xfs", nil)
+		m.On("CheckUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything).Return(false, fmt.Errorf("failure"))
+		_ = simpleCheckFailure(t, lvm)
+		m.AssertCalled(t, "CheckUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything)
+	})
+
+	t.Run("Mountpoint failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		m.On("CheckFilesystemTools", mock.Anything).Return(nil)
+		m.On("Blkid", mock.Anything).Return("xfs", nil)
+		m.On("CheckUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything).Return(false, nil)
+		m.On("Mountpoint", "/mnt/data").Return(false, fmt.Errorf("failure"))
+		_ = simpleCheckFailure(t, lvm)
+		m.AssertCalled(t, "Mountpoint", "/mnt/data")
+	})
+
+	t.Run("do nothing (no changes)", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowCheck(m, "xfs", false, true) // "xfs", no unit diffs, mount is mounted
+		status, _ := simpleCheckSuccess(t, lvm)
+		assert.False(t, status.HasChanges())
+	})
+}
+
+// TestFSApply tests Apply() from filesystem resource
+func TestFSApply(t *testing.T) {
+	t.Run("normal flow", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowApply(m, "", true, true)
+		_ = simpleApplySuccess(t, lvm)
+		m.AssertCalled(t, "Mkfs", "/dev/mapper/vg0-data", "xfs")
+		m.AssertCalled(t, "UpdateUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything)
+		m.AssertCalled(t, "StartUnit", "mnt-data.mount")
+	})
+
+	t.Run("no mkfs, only unit update and mount", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowApply(m, "xfs", true, false) // "xfs", no unit diffs, mount is NOT mounted
+		_ = simpleApplySuccess(t, lvm)
+		m.AssertNotCalled(t, "Mkfs", "/dev/mapper/vg0-data", "xfs")
+		m.AssertCalled(t, "UpdateUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything)
+		// start unit is cascade action after UpdateUnit
+		m.AssertCalled(t, "StartUnit", "mnt-data.mount")
+	})
+
+	t.Run("no mkfs, no unit, only mount", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowApply(m, "xfs", false, false)
+		_ = simpleApplySuccess(t, lvm)
+		m.AssertNotCalled(t, "Mkfs", "/dev/mapper/vg0-data", "xfs")
+		m.AssertNotCalled(t, "UpdateUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything)
+		m.AssertCalled(t, "StartUnit", "mnt-data.mount")
+	})
+
+	t.Run("Mkfs() failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowCheck(m, "", false, false)
+		m.On("Mkfs", mock.Anything, mock.Anything).Return(fmt.Errorf("failure"))
+		_ = simpleApplyFailure(t, lvm)
+		m.AssertCalled(t, "Mkfs", "/dev/mapper/vg0-data", "xfs")
+	})
+
+	t.Run("UpdateUnit() failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowCheck(m, "", true, true)
+		m.On("Mkfs", mock.Anything, mock.Anything).Return(nil)
+		m.On("UpdateUnit", mock.Anything, mock.Anything).Return(fmt.Errorf("failure"))
+		_ = simpleApplyFailure(t, lvm)
+		m.AssertCalled(t, "UpdateUnit", "/etc/systemd/system/mnt-data.mount", mock.Anything)
+	})
+
+	t.Run("StartUnit() failure", func(t *testing.T) {
+		lvm, m := testhelpers.MakeFakeLvm()
+		setupNormalFlowCheck(m, "", true, true)
+		m.On("Mkfs", mock.Anything, mock.Anything).Return(nil)
+		m.On("UpdateUnit", mock.Anything, mock.Anything).Return(nil)
+		m.On("StartUnit", mock.Anything).Return(fmt.Errorf("failure"))
+		_ = simpleApplyFailure(t, lvm)
+		m.AssertCalled(t, "StartUnit", "mnt-data.mount")
+	})
+}
 
 // TestCreateFilesystem is a full-blown test, using fake execution engine, to look
 // which commands should be executed from given node.
@@ -50,11 +170,7 @@ func TestCreateFilesystem(t *testing.T) {
 
 	fr := fakerenderer.New()
 
-	mount := &fs.Mount{
-		What:  "/dev/mapper/vg0-data",
-		Where: "/mnt/data",
-		Type:  "xfs",
-	}
+	mount := defaultMount()
 	r, e := fs.NewResourceFS(lvm, mount)
 	require.NoError(t, e)
 	status, err := r.Check(fr)
@@ -62,7 +178,70 @@ func TestCreateFilesystem(t *testing.T) {
 	assert.True(t, status.HasChanges())
 	comparison.AssertDiff(t, status.Diffs(), "format", "<unformatted>", "xfs")
 
+	// Only basic actions checked here
 	status, err = r.Apply()
 	require.NoError(t, err)
 	me.AssertCalled(t, "Run", "mkfs", []string{"-t", "xfs", "/dev/mapper/vg0-data"})
+	me.AssertCalled(t, "Run", "systemctl", []string{"start", "mnt-data.mount"})
+}
+
+func defaultMount() *fs.Mount {
+	mount := &fs.Mount{
+		What:  "/dev/mapper/vg0-data",
+		Where: "/mnt/data",
+		Type:  "xfs",
+	}
+	return mount
+}
+
+func simpleCheckSuccess(t *testing.T, lvm lowlevel.LVM) (resource.TaskStatus, resource.Task) {
+	fr := fakerenderer.New()
+	res, e := fs.NewResourceFS(lvm, defaultMount())
+	require.NoError(t, e)
+	status, err := res.Check(fr)
+	assert.NoError(t, err)
+	assert.NotNil(t, status)
+	return status, res
+}
+
+func simpleCheckFailure(t *testing.T, lvm lowlevel.LVM) resource.TaskStatus {
+	fr := fakerenderer.New()
+	res, e := fs.NewResourceFS(lvm, defaultMount())
+	require.NoError(t, e)
+	status, err := res.Check(fr)
+	assert.Error(t, err)
+	assert.Nil(t, status)
+	return status
+}
+
+func simpleApplySuccess(t *testing.T, lvm lowlevel.LVM) resource.TaskStatus {
+	checkStatus, res := simpleCheckSuccess(t, lvm)
+	require.True(t, checkStatus.HasChanges())
+	status, err := res.Apply()
+	assert.NoError(t, err)
+	assert.NotNil(t, status)
+	return status
+}
+
+func simpleApplyFailure(t *testing.T, lvm lowlevel.LVM) resource.TaskStatus {
+	checkStatus, res := simpleCheckSuccess(t, lvm)
+	require.True(t, checkStatus.HasChanges())
+	status, err := res.Apply()
+	assert.Error(t, err)
+	assert.Nil(t, status)
+	return status
+}
+
+func setupNormalFlowCheck(m *testhelpers.FakeLVM, blkid string, triggerUnit bool, triggerMountpoint bool) {
+	m.On("CheckFilesystemTools", mock.Anything).Return(nil) // pretend that we compat with any FS
+	m.On("Blkid", mock.Anything).Return(blkid, nil)
+	m.On("CheckUnit", mock.Anything, mock.Anything).Return(triggerUnit, nil)
+	m.On("Mountpoint", mock.Anything).Return(triggerMountpoint, nil)
+}
+
+func setupNormalFlowApply(m *testhelpers.FakeLVM, blkid string, triggerUnit bool, triggerMountpoint bool) {
+	setupNormalFlowCheck(m, blkid, triggerUnit, triggerMountpoint)
+	m.On("Mkfs", mock.Anything, mock.Anything).Return(nil)
+	m.On("UpdateUnit", mock.Anything, mock.Anything).Return(nil)
+	m.On("StartUnit", mock.Anything).Return(nil)
 }
