@@ -165,12 +165,6 @@ If the user provides a zero, the value will be `*0`. Otherwise, it wil be `nil`.
 Other than `hcl` (which is used to specify the field name you'll accept) the
 following struct tags control the values you get:
 
-- `doc_type`: control the exact printed type in the documentation. Example:
-  fields that accept
-  a [duration string](https://golang.org/pkg/time/#ParseDuration) (such
-  as [task.timeout]({{< ref "resources/task.md" >}})) are commonly strings
-  with a `doc_type` of "duration string"
-
 - `base`: used with numeric types to indicate a base for parsing. Does not work
   with floats. Example: [file.mode]({{< ref "resources/file.mode.md" >}})
   needs an octal number, and specifies that in this tag.
