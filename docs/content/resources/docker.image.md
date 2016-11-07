@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-10-04T13:01:49-05:00"
+date: "2016-11-07T13:35:28-06:00"
 menu:
   main:
     parent: resources
@@ -34,12 +34,16 @@ docker.image "busybox" {
 
   tag of the image to pull
 
-- `inactivity_timeout` (duration_string)
+- `inactivity_timeout` (duration)
 
   the amount of time to wait after a period of inactivity. The timeout is
-reset each time new data arrives. The format is Go's duration string. A
-duration string is a possibly signed sequence of decimal numbers, each with
-optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
-Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+reset each time new data arrives.
+
+Acceptable formats are a number in nanoseconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 nanosecond count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 

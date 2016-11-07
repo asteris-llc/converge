@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-10-28T08:47:08-05:00"
+date: "2016-11-07T13:35:40-06:00"
 menu:
   main:
     parent: resources
