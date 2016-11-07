@@ -75,62 +75,41 @@ func PeerNodes(g *graph.Graph, meta *node.Node) (out []*node.Node) {
 
 // PeerBranches returns the branches nodes that are peers to the current node.
 func PeerBranches(g *graph.Graph, meta *node.Node) (out []*node.Node) {
-	fmt.Printf("Getting peer branches for: %s\n", meta.ID)
 	if !IsConditional(meta) {
-		fmt.Printf("\t not a conditional node\n")
 		return
 	}
 	kind, ok := meta.LookupMetadata(MetaType)
 	if !ok {
-		fmt.Printf("\t No type information for node\n")
 		return
 	}
-	fmt.Printf("\t type: %s\n", kind)
 	switch kind {
 	case NodeCatSwitch:
-		fmt.Printf("\t skipping switch root node\n")
 		return
 	case NodeCatResource:
 		parent, ok := g.GetParent(meta.ID)
-		fmt.Printf("\t found a resource node, deferring to parent: %s\n", parent)
 		if !ok {
-			fmt.Printf("\t\t no parent node found\n")
 			return
 		}
 		return PeerBranches(g, parent)
 	}
-	fmt.Printf("\t found a branch node; getting embedded peers list...\n")
 	peerStrsI, ok := meta.LookupMetadata(MetaPeers)
 	if !ok {
-		fmt.Printf("\t no peers in metadata\n")
 		return
 	}
-	fmt.Printf("\t trying to convert peer list to a string slice...\n")
 	peerStrs, ok := peerStrsI.([]string)
 	if !ok {
-		fmt.Printf("\t peers are not a string slice, returning\n")
 		return
 	}
-	fmt.Printf("\t raw peer list: %v\n", peerStrs)
-	fmt.Printf("\t trying to get parent id...\n")
 	parentID, ok := g.GetParentID(meta.ID)
 	if !ok {
-		fmt.Printf("\t no parent for current node, returning")
 		return
 	}
-	fmt.Printf("\t my parent: %s\n", parentID)
-	fmt.Printf("\t getting peer nodes...\n")
 	for _, peer := range peerStrs {
 		peerPath := graph.ID(parentID, peer)
-		fmt.Printf("\t\t %s\n", peerPath)
 		if meta, ok := g.Get(peerPath); ok {
-			fmt.Printf("\t\t found in graph... adding\n")
 			out = append(out, meta)
-		} else {
-			fmt.Printf("\t\t not found in graph, skipping\n")
 		}
 	}
-	fmt.Printf("finished processing peer branches: got %d peers\n", len(out))
 	return
 }
 

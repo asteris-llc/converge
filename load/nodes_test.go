@@ -133,7 +133,7 @@ func TestNodeWithConditionals(t *testing.T) {
 
 	t.Run("metadata-peers", func(t *testing.T) {
 		names := []string{"spanish", "french", "japanese", "default"}
-		expected := []string{"spanish", "french", "japanese", "default"}
+		expected := []string{"macro.case.spanish", "macro.case.french", "macro.case.japanese", "macro.case.default"}
 		for _, name := range names {
 			node, found := g.Get(fmt.Sprintf("root/macro.switch.test-switch/macro.case.%s/file.content.greeting", name))
 			require.True(t, found)
