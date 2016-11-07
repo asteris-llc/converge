@@ -65,7 +65,7 @@ func (r *resourceFS) Check(context.Context, resource.Renderer) (resource.TaskSta
 	status := &resource.Status{}
 
 	if err := r.lvm.CheckFilesystemTools(r.mount.Type); err != nil {
-		return nil, errors.Wrap(err, "lvm.fs")
+		return nil, errors.Wrapf(err, "filesystem prerequisites for %s", r.mount.Type)
 	}
 
 	if err := r.checkBlkid(status); err != nil {
@@ -90,18 +90,19 @@ func (r *resourceFS) Check(context.Context, resource.Renderer) (resource.TaskSta
 func (r *resourceFS) Apply(context.Context) (resource.TaskStatus, error) {
 	if r.needMkfs {
 		if err := r.lvm.Mkfs(r.mount.What, r.mount.Type); err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "mkfs")
 		}
 	}
 	if r.unitNeedUpdate {
 		if err := r.lvm.UpdateUnit(r.unitFileName, r.unitFileContent); err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "updating unit file %s", r.unitFileName)
 		}
 	}
 
 	if r.mountNeedUpdate {
-		if err := r.lvm.StartUnit(r.unitServiceName()); err != nil {
-			return nil, err
+        service := r.unitServiceName()
+		if err := r.lvm.StartUnit(service); err != nil {
+			return nil, errors.Wrapf(err, "starting service %s", service)
 		}
 	}
 
@@ -149,7 +150,7 @@ func (r *resourceFS) checkBlkid(status *resource.Status) error {
 func (r *resourceFS) checkMountpoint(status *resource.Status) error {
 	ok, err := r.lvm.Mountpoint(r.mount.Where)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "querying mountpoint %s", r.mount.Where)
 	}
 	r.mountNeedUpdate = r.unitNeedUpdate || !ok
 
@@ -189,11 +190,11 @@ func (r *resourceFS) renderUnitFile() (string, error) {
 	var b bytes.Buffer
 	tmpl, err := template.New("unit.mount").Parse(unitTemplate)
 	if err != nil {
-		return "", err
+        return "", errors.Wrapf(err, "renderUnitFile(): template syntax")
 	}
 	err = tmpl.Execute(&b, r.mount)
 	if err != nil {
-		return "", err
+        return "", errors.Wrapf(err, "renderUnitFile(): template executing")
 	}
 	return b.String(), nil
 }

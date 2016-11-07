@@ -17,12 +17,13 @@ package lowlevel
 import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+    "github.com/pkg/errors"
 	"strings"
 )
 
 func (lvm *realLVM) Blkid(dev string) (string, error) {
 	if ok, err := lvm.backend.Exists(dev); err != nil || !ok {
-		return "", err
+		return "", errors.Wrapf(err, "check for device")
 	}
 
 	blkid, rc, err := lvm.backend.ReadWithExitCode("blkid", []string{"-c", "/dev/null", "-o", "value", "-s", "TYPE", dev})
@@ -45,7 +46,7 @@ func (lvm *realLVM) Blkid(dev string) (string, error) {
 func (lvm *realLVM) QueryDeviceMapperName(dmName string) (string, error) {
 	out, err := lvm.backend.Read("dmsetup", []string{"info", "-C", "--noheadings", "-o", "name", dmName})
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "query devicemapper")
 	}
 	return fmt.Sprintf("/dev/mapper/%s", out), nil
 }
@@ -56,7 +57,7 @@ func (lvm *realLVM) Query(prog string, out string, extras []string) ([]map[strin
 	args = append(args, extras...)
 	output, err := lvm.backend.Read(prog, args)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "querying %s", prog)
 	}
 	for _, line := range strings.Split(output, "\n") {
 		values := map[string]interface{}{}

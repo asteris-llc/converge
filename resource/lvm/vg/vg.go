@@ -101,20 +101,20 @@ func (r *resourceVG) Apply(context.Context) (status resource.TaskStatus, err err
 	if r.exists {
 		for _, d := range r.devicesToAdd {
 			if err := r.lvm.ExtendVolumeGroup(r.name, d); err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "extending volume group")
 			}
 		}
 		for _, d := range r.devicesToRemove {
 			if err := r.lvm.ReduceVolumeGroup(r.name, d); err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "reducing volume group")
 			}
 			if err := r.lvm.RemovePhysicalVolume(d, r.forceRemove); err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "removing physical volume")
 			}
 		}
 	} else {
 		if err := r.lvm.CreateVolumeGroup(r.name, r.devicesToAdd); err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "creating volume group")
 		}
 	}
 
@@ -124,7 +124,7 @@ func (r *resourceVG) Apply(context.Context) (status resource.TaskStatus, err err
 func (r *resourceVG) checkIfGroupExists() error {
 	vgs, err := r.lvm.QueryVolumeGroups()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "querying existing volume groups")
 	}
 	_, r.exists = vgs[r.name]
 	return nil
