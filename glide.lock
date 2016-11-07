@@ -18,8 +18,15 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: d55b3ff568f998fc3f471c1f25110da43f59bbc4
+  version: a0629eab7302bef57c9ce9930b24f59f751303d7
   subpackages:
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/filters
+  - api/types/mount
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/versions
   - opts
   - pkg/archive
   - pkg/fileutils
@@ -31,13 +38,10 @@ imports:
   - pkg/promise
   - pkg/stdcopy
   - pkg/system
-- name: github.com/docker/engine-api
-  version: 8d8fffdf863b12d03c76abf6ca1377e6f8f4e549
+- name: github.com/docker/go-connections
+  version: 1494b6df4050e60923d68cd8cc6a19e7af9f1c01
   subpackages:
-  - types/filters
-  - types/mount
-  - types/swarm
-  - types/versions
+  - nat
 - name: github.com/docker/go-units
   version: eb879ae3e2b84e2a142af415b679ddeda47ec71c
 - name: github.com/fgrid/uuid
@@ -45,7 +49,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: github.com/fsouza/go-dockerclient
-  version: 5ffc56c4f7ce8d150a5c770dd7166b86bfd486e5
+  version: b21e1152923f46354476a3befa5b7aab0f441b4c
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
@@ -94,6 +98,8 @@ imports:
   version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mattn/go-isatty
   version: 56b76bdf51f7708750eac80fa38b952bb9f32639
+- name: github.com/Microsoft/go-winio
+  version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/mitchellh/hashstructure
   version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
@@ -160,6 +166,7 @@ imports:
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
   subpackages:
   - unix
+  - windows
 - name: google.golang.org/grpc
   version: b7f1379d3cbbbeb2ca3405852012e237aa05459e
   subpackages:
