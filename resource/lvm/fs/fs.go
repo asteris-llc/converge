@@ -150,7 +150,7 @@ func (r *resourceFS) checkMountpoint(status *resource.Status) error {
 	if err != nil {
 		return err
 	}
-	r.mountNeedUpdate = r.unitNeedUpdate && !ok
+	r.mountNeedUpdate = r.unitNeedUpdate || !ok
 
 	if r.mountNeedUpdate {
 		status.AddDifference(r.mount.Where, "<none>", fmt.Sprintf("mount %s", r.mount.Where), "")
