@@ -34,6 +34,15 @@ type ErrUnresolvable struct{}
 
 func (ErrUnresolvable) Error() string { return "node is unresolvable" }
 
+// ErrBadTemplate is returned by Render if the template string causes an error.
+// It is likely to be returned in cases where a predicate function is rendered
+// and does not result in a boolean value.
+type ErrBadTemplate struct{ Err error }
+
+func (e ErrBadTemplate) Error() string {
+	return fmt.Sprintf("%s: cannot execute template", e.Err)
+}
+
 // Renderer to be passed to preparers, which will render strings
 type Renderer struct {
 	Graph           func() *graph.Graph
@@ -68,7 +77,7 @@ func (r *Renderer) Render(name, src string) (string, error) {
 		if r.resolverErr {
 			return "", ErrUnresolvable{}
 		}
-		return "", err
+		return "", ErrBadTemplate{Err: err}
 	}
 	return out.String(), err
 }

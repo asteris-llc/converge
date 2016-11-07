@@ -101,10 +101,12 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 	}
 
 	prepared, err := res.Prepare(ctx, renderer)
+	fmt.Printf("%s prepared :: %T\n", p.ID, prepared)
 
 	merged := mergeMaybeUnresolvables(err, metadataErr)
 
 	if merged != nil {
+		fmt.Printf("%s there was a merge error: %v\n", p.ID, merged)
 		if errIsUnresolvable(merged) {
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
@@ -128,6 +130,8 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 			}), nil
 		}
 		return nil, err
+	} else if errIsBadTemplate(merged) {
+		return nil, merged
 	}
 	return prepared, nil
 }
@@ -153,6 +157,11 @@ func mergeMaybeUnresolvables(err1, err2 error) error {
 
 func errIsUnresolvable(err error) bool {
 	_, ok := errors.Cause(err).(ErrUnresolvable)
+	return ok
+}
+
+func errIsBadTemplate(err error) bool {
+	_, ok := errors.Cause(err).(ErrBadTemplate)
 	return ok
 }
 
@@ -183,6 +192,7 @@ func (p pipelineGen) wrapTask(ctx context.Context, taski interface{}) (interface
 	if task, ok := taski.(resource.Task); ok {
 		return resource.WrapTask(task), nil
 	}
+	fmt.Println("type error in ", p.ID)
 	return nil, typeError("render.wrapTask: resource.Task", taski)
 }
 
