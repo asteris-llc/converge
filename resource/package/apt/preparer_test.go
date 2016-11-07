@@ -54,6 +54,7 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "absent", string(asAPT.State))
 	})
+
 	t.Run("when-state-missing", func(t *testing.T) {
 		p := &apt.Preparer{Name: "test1"}
 		task, err := p.Prepare(context.Background(), fakerenderer.New())
