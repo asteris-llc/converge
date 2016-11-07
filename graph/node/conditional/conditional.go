@@ -86,8 +86,8 @@ func PeerBranches(g *graph.Graph, meta *node.Node) (out []*node.Node) {
 	case NodeCatSwitch:
 		return
 	case NodeCatResource:
-		parent, ok := g.GetParent(meta.ID)
-		if !ok {
+		parent, parOk := g.GetParent(meta.ID)
+		if !parOk {
 			return
 		}
 		return PeerBranches(g, parent)
