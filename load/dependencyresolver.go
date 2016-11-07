@@ -79,8 +79,8 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 
 	for group := range groupMap {
-		if g, err := groupDeps(ctx, g, group); err != nil {
-			return g, err
+		if depG, grpErr := groupDeps(ctx, g, group); grpErr != nil {
+			return depG, grpErr
 		}
 	}
 	return g, err
@@ -301,10 +301,10 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	for _, meta := range nodes {
 		l := logger.WithField("id", meta.ID)
 		// align all up edges in a single branch
-		g, err := alignEdgesInGroup(ctx, g, meta.ID, group)
+		alignG, err := alignEdgesInGroup(ctx, g, meta.ID, group)
 		if err != nil {
 			l.Error(err)
-			return g, errors.Wrap(err, "failed to align edges in branch")
+			return alignG, errors.Wrap(err, "failed to align edges in branch")
 		}
 	}
 
