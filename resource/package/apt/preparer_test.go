@@ -12,65 +12,67 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rpm_test
+package apt_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/package"
-	"github.com/asteris-llc/converge/resource/package/rpm"
+	"github.com/asteris-llc/converge/resource/package/apt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 // TestPreparerInterfaces ensures that the correct interfaces are implemented by
 // the preparer
 func TestPreparerInterfaces(t *testing.T) {
 	t.Parallel()
-	assert.Implements(t, (*resource.Resource)(nil), new(rpm.Preparer))
+	assert.Implements(t, (*resource.Resource)(nil), new(apt.Preparer))
 }
 
-// TestPreparerCreatesPackage tests pkg.Package creation from the preparerer
-// ensuring that the state field is respected.
+// TestPreparerCreatesPackage tests to make sure the preparer creates valid configurations
 func TestPreparerCreatesPackage(t *testing.T) {
 	t.Parallel()
+
 	t.Run("when-state-present", func(t *testing.T) {
-		p := &rpm.Preparer{Name: "test1", State: "present"}
+		p := &apt.Preparer{Name: "test1", State: "present"}
 		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*pkg.Package)
+		asAPT, ok := task.(*pkg.Package)
 		require.True(t, ok)
-		assert.Equal(t, "present", string(asRPM.State))
+		assert.Equal(t, "present", string(asAPT.State))
 	})
+
 	t.Run("when-state-absent", func(t *testing.T) {
-		p := &rpm.Preparer{Name: "test1", State: "absent"}
+		p := &apt.Preparer{Name: "test1", State: "absent"}
 		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*pkg.Package)
+		asAPT, ok := task.(*pkg.Package)
 		require.True(t, ok)
-		assert.Equal(t, "absent", string(asRPM.State))
+		assert.Equal(t, "absent", string(asAPT.State))
 	})
+
 	t.Run("when-state-missing", func(t *testing.T) {
-		p := &rpm.Preparer{Name: "test1"}
+		p := &apt.Preparer{Name: "test1"}
 		task, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
-		asRPM, ok := task.(*pkg.Package)
+		asAPT, ok := task.(*pkg.Package)
 		require.True(t, ok)
-		assert.Equal(t, "present", string(asRPM.State))
+		assert.Equal(t, "present", string(asAPT.State))
 	})
 
 	t.Run("when-name-null", func(t *testing.T) {
-		p := &rpm.Preparer{Name: "", State: "present"}
+		p := &apt.Preparer{Name: "", State: "present"}
 		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.Error(t, err)
 		assert.EqualError(t, err, "package name cannot be empty")
 	})
 
 	t.Run("when-name-space", func(t *testing.T) {
-		p := &rpm.Preparer{Name: " ", State: "present"}
+		p := &apt.Preparer{Name: " ", State: "present"}
 		_, err := p.Prepare(context.Background(), fakerenderer.New())
 		require.Error(t, err)
 		assert.EqualError(t, err, "package name cannot be empty")

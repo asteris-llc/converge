@@ -179,7 +179,7 @@ We can also do some basic validation tasks with tags:
 
 - `required`: one valid value: `true`. If set, this field must be set in the
   HCL, but may still have a zero value (for example, `int` can still be `0`.)
-  Example: [docker.container]{{< ref "resources/docker.container.md" >}} uses
+  Example: [docker.container]({{< ref "resources/docker.container.md" >}}) uses
   this to require an image for the container.
 
 - `mutually_exclusive`: a comma-separated list of fields that cannot be set
