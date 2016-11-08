@@ -72,8 +72,21 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 
 	n.AddDifference(n.Name, string(networkState(nw)), string(n.State), "")
 
-	if n.State == StatePresent && nw != nil && n.Force {
-		n.diffNetwork(nw)
+	if n.State == StatePresent {
+		if nw != nil && n.Force {
+			n.diffNetwork(nw)
+		}
+
+		ok, err := n.isCreatable(nw)
+		if err != nil {
+			n.RaiseLevel(resource.StatusFatal)
+			return n, err
+		}
+
+		if !ok {
+			n.RaiseLevel(resource.StatusCantChange)
+			return n, err
+		}
 	}
 
 	if resource.AnyChanges(n.Differences) {
@@ -168,6 +181,48 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 		sort.Sort(expectedIPAMConfigs)
 		n.AddDifference("ipam_config", actualIPAMConfigs.String(), expectedIPAMConfigs.String(), "")
 	}
+}
+
+// isCreatable can validate whether the network can be created on the docker
+// host. use sparingly as behavior can vary across different docker network
+// plugins. in most cases, we can rely on the docker api to return errors during
+// apply
+func (n *Network) isCreatable(nw *dc.Network) (bool, error) {
+	if len(n.IPAM.Config) > 0 {
+		inUse, err := n.gatewayInUse(nw)
+		return !inUse, err
+	}
+
+	return true, nil
+}
+
+func (n *Network) gatewayInUse(nw *dc.Network) (bool, error) {
+	var gateways []string
+	networks, err := n.client.ListNetworks()
+	if err != nil {
+		return false, err
+	}
+
+	for _, network := range networks {
+		if nw == nil || network.ID != nw.ID {
+			for _, ipamConfig := range network.IPAM.Config {
+				if ipamConfig.Gateway != "" {
+					gateways = append(gateways, ipamConfig.Gateway)
+				}
+			}
+		}
+	}
+
+	for _, ipamConfig := range n.IPAM.Config {
+		for _, gateway := range gateways {
+			if strings.EqualFold(ipamConfig.Gateway, gateway) {
+				n.Status.AddMessage(fmt.Sprintf("gateway %s already in use", gateway))
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func networkState(nw *dc.Network) State {
