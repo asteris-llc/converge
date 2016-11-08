@@ -17,6 +17,8 @@ package vg
 import (
 	"path/filepath"
 
+	"golang.org/x/net/context"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
@@ -43,7 +45,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(_ context.Context, render resource.Renderer) (resource.Task, error) {
 	// Device paths need to be real devices, not symlinks
 	// (otherwise it breaks on GCE)
 	devices := make([]string, len(p.Devices))
