@@ -92,7 +92,7 @@ func (g *pipelineGen) MaybeResolveConditional(_ context.Context, idi interface{}
 		return idi, nil
 	}
 	var predStr string
-	if predicateValue, ok := meta.LookupMetadata(conditional.MetaRenderedPredicate); ok {
+	if predicateValue, ok := meta.LookupMetadata(conditional.MetaUnrenderedPredicate); ok {
 		predStr = predicateValue.(string)
 	}
 	return taskWrapper{Task: &control.NopTask{Predicate: predStr}}, nil

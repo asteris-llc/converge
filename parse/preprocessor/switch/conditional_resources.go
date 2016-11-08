@@ -16,47 +16,8 @@ package control
 
 import (
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
-
-// ConditionalTask represents a task that may or may not be executed. It's
-// evaluation is determined by it's parent control-structure predicate.
-type ConditionalTask struct {
-	resource.Task
-	Name       string
-	controller EvaluationController
-}
-
-// EvaluationController represents an interface for a thing that can control
-// conditional execution (e.g. a CasePreparer or CaseTask)
-type EvaluationController interface {
-	ShouldEvaluate() bool
-}
-
-// SetExecutionController sets the private execution controller
-func (c *ConditionalTask) SetExecutionController(ctrl EvaluationController) {
-	c.controller = ctrl
-}
-
-// Apply will conditionally apply a task
-func (c *ConditionalTask) Apply(ctx context.Context) (resource.TaskStatus, error) {
-	if c.controller.ShouldEvaluate() {
-		return c.Task.Apply(ctx)
-	}
-	return &resource.Status{}, nil
-}
-
-// Check will conditionally check a task
-func (c *ConditionalTask) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
-	if c == nil {
-		return &resource.Status{}, errors.New("conditional task is nil")
-	}
-	if c.controller.ShouldEvaluate() {
-		return c.Task.Check(ctx, r)
-	}
-	return &resource.Status{}, nil
-}
 
 // NopTask does nothing, verbosely
 type NopTask struct {
