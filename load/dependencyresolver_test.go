@@ -100,6 +100,8 @@ func TestDependencyResolverResolvesParam(t *testing.T) {
 	)
 }
 
+// TestDependencyResolverHandlesConditionalMetadata ensures that we generate
+// dependencies for predicates
 func TestDependencyResolverHandlesConditionalMetadata(t *testing.T) {
 	t.Parallel()
 	type test struct {

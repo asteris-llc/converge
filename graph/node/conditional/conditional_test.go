@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestIsConditional does testing to ensure conditional nodes are identified
 func TestIsConditional(t *testing.T) {
 	g := sampleGraph()
 
@@ -45,6 +46,7 @@ func TestIsConditional(t *testing.T) {
 	})
 }
 
+// TestPeerNodes tests to ensure we identify peer nodes
 func TestPeerNodes(t *testing.T) {
 	g := sampleGraph()
 
@@ -78,6 +80,7 @@ func TestPeerNodes(t *testing.T) {
 	})
 }
 
+// TestPeerBranches ensures we identify peer branches
 func TestPeerBranches(t *testing.T) {
 	g := peerBranchSampleGraph(t)
 	t.Run("when-non-conditional-node", func(t *testing.T) {
@@ -127,6 +130,7 @@ func TestPeerBranches(t *testing.T) {
 	})
 }
 
+// TestRenderPredicate tests rendering the predicate metadata on a branch
 func TestRenderPredicate(t *testing.T) {
 	t.Run("when-not-rendered", func(t *testing.T) {
 		g := sampleGraph()
@@ -159,6 +163,7 @@ func TestRenderPredicate(t *testing.T) {
 	})
 }
 
+// TestIsTrue tests truth evaluation
 func TestIsTrue(t *testing.T) {
 	t.Run("errors-when-unrendered", func(t *testing.T) {
 		g := sampleGraph()
@@ -214,8 +219,8 @@ func TestIsTrue(t *testing.T) {
 	})
 }
 
+// TestShouldEvaluate ensures that we respect ordering and prediate truth
 func TestShouldEvaluate(t *testing.T) {
-
 	t.Run("when-many-branches", func(t *testing.T) {
 		g := peerBranchSampleGraph(t)
 		resources := []string{"resource1", "resource2", "resource3"}
@@ -360,20 +365,24 @@ func addPredicateMetadata(g *graph.Graph, id, switchName, caseName, nodeType, pr
 	}
 }
 
+// MockRenderer mocks the renderer
 type MockRenderer struct {
 	mock.Mock
 }
 
+// GetID ensures the mock is a renderer
 func (m *MockRenderer) GetID() string {
 	args := m.Called()
 	return args.String(0)
 }
 
+// Render returns whatever it should for the mock
 func (m *MockRenderer) Render(name, content string) (string, error) {
 	args := m.Called(name, content)
 	return args.String(0), args.Error(1)
 }
 
+// NewRenderer returns a new mock renderer
 func NewRenderer(id, renderVal string, err error) *MockRenderer {
 	m := &MockRenderer{}
 	m.On("GetID").Return(id)

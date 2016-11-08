@@ -31,6 +31,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// TestResolveConditional tests for handling conditional nodes during planning
 func TestResolveConditional(t *testing.T) {
 	t.Run("when-non-conditional-node", func(t *testing.T) {
 		g := sampleGraph()

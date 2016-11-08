@@ -144,6 +144,7 @@ func TestRenderValues(t *testing.T) {
 	assert.Equal(t, "2", content.Destination)
 }
 
+// TestRenderConditionals tests that rendering a node renders the predicate
 func TestRenderConditionals(t *testing.T) {
 	defer logging.HideLogs(t)()
 
