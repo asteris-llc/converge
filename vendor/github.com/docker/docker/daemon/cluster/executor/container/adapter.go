@@ -11,10 +11,10 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/server/httputils"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/events"
+	"github.com/docker/docker/api/types/versions"
 	executorpkg "github.com/docker/docker/daemon/cluster/executor"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/events"
-	"github.com/docker/engine-api/types/versions"
 	"github.com/docker/libnetwork"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/log"
@@ -133,15 +133,57 @@ func (c *containerAdapter) createNetworks(ctx context.Context) error {
 func (c *containerAdapter) removeNetworks(ctx context.Context) error {
 	for _, nid := range c.container.networks() {
 		if err := c.backend.DeleteManagedNetwork(nid); err != nil {
-			if _, ok := err.(*libnetwork.ActiveEndpointsError); ok {
+			switch err.(type) {
+			case *libnetwork.ActiveEndpointsError:
 				continue
+			case libnetwork.ErrNoSuchNetwork:
+				continue
+			default:
+				log.G(ctx).Errorf("network %s remove failed: %v", nid, err)
+				return err
 			}
-			log.G(ctx).Errorf("network %s remove failed: %v", nid, err)
-			return err
 		}
 	}
 
 	return nil
+}
+
+func (c *containerAdapter) networkAttach(ctx context.Context) error {
+	config := c.container.createNetworkingConfig()
+
+	var (
+		networkName string
+		networkID   string
+	)
+
+	if config != nil {
+		for n, epConfig := range config.EndpointsConfig {
+			networkName = n
+			networkID = epConfig.NetworkID
+			break
+		}
+	}
+
+	return c.backend.UpdateAttachment(networkName, networkID, c.container.id(), config)
+}
+
+func (c *containerAdapter) waitForDetach(ctx context.Context) error {
+	config := c.container.createNetworkingConfig()
+
+	var (
+		networkName string
+		networkID   string
+	)
+
+	if config != nil {
+		for n, epConfig := range config.EndpointsConfig {
+			networkName = n
+			networkID = epConfig.NetworkID
+			break
+		}
+	}
+
+	return c.backend.WaitForDetachment(ctx, networkName, networkID, c.container.taskID(), c.container.id())
 }
 
 func (c *containerAdapter) create(ctx context.Context) error {
@@ -182,7 +224,7 @@ func (c *containerAdapter) create(ctx context.Context) error {
 func (c *containerAdapter) start(ctx context.Context) error {
 	version := httputils.VersionFromContext(ctx)
 	validateHostname := versions.GreaterThanOrEqualTo(version, "1.24")
-	return c.backend.ContainerStart(c.container.name(), nil, validateHostname)
+	return c.backend.ContainerStart(c.container.name(), nil, validateHostname, "", "")
 }
 
 func (c *containerAdapter) inspect(ctx context.Context) (types.ContainerJSON, error) {
@@ -233,15 +275,16 @@ func (c *containerAdapter) events(ctx context.Context) <-chan events.Message {
 }
 
 func (c *containerAdapter) wait(ctx context.Context) error {
-	return c.backend.ContainerWaitWithContext(ctx, c.container.name())
+	return c.backend.ContainerWaitWithContext(ctx, c.container.nameOrID())
 }
 
 func (c *containerAdapter) shutdown(ctx context.Context) error {
-	// Default stop grace period to 10s.
-	stopgrace := 10
+	// Default stop grace period to nil (daemon will use the stopTimeout of the container)
+	var stopgrace *int
 	spec := c.container.spec()
 	if spec.StopGracePeriod != nil {
-		stopgrace = int(spec.StopGracePeriod.Seconds)
+		stopgraceValue := int(spec.StopGracePeriod.Seconds)
+		stopgrace = &stopgraceValue
 	}
 	return c.backend.ContainerStop(c.container.name(), stopgrace)
 }

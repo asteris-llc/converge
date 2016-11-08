@@ -54,6 +54,13 @@ type ContainerStatuser interface {
 	ContainerStatus(ctx context.Context) (*api.ContainerStatus, error)
 }
 
+// PortStatuser reports status of ports which are allocated by the executor
+type PortStatuser interface {
+	// PortStatus returns the status on a list of PortConfigs
+	// which are managed at the host level by the controller.
+	PortStatus(ctx context.Context) (*api.PortStatus, error)
+}
+
 // Resolve attempts to get a controller from the executor and reports the
 // correct status depending on the tasks current state according to the result.
 //
@@ -131,6 +138,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 	// this particular method. Eventually, we assemble this as part of a defer.
 	var (
 		containerStatus *api.ContainerStatus
+		portStatus      *api.PortStatus
 		exitCode        int
 	)
 
@@ -147,7 +155,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 		if cs, ok := err.(ContainerStatuser); ok {
 			var err error
 			containerStatus, err = cs.ContainerStatus(ctx)
-			if err != nil {
+			if err != nil && !contextDoneError(err) {
 				log.G(ctx).WithError(err).Error("error resolving container status on fatal")
 			}
 		}
@@ -207,7 +215,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 
 			var err error
 			containerStatus, err = cctlr.ContainerStatus(ctx)
-			if err != nil {
+			if err != nil && !contextDoneError(err) {
 				log.G(ctx).WithError(err).Error("container status unavailable")
 			}
 
@@ -230,6 +238,21 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 		status.RuntimeStatus = &api.TaskStatus_Container{
 			Container: containerStatus,
 		}
+
+		if portStatus == nil {
+			pctlr, ok := ctlr.(PortStatuser)
+			if !ok {
+				return
+			}
+
+			var err error
+			portStatus, err = pctlr.PortStatus(ctx)
+			if err != nil && !contextDoneError(err) {
+				log.G(ctx).WithError(err).Error("container port status unavailable")
+			}
+		}
+
+		status.PortStatus = portStatus
 	}()
 
 	if task.DesiredState == api.TaskStateShutdown {
@@ -277,7 +300,7 @@ func Do(ctx context.Context, task *api.Task, ctlr Controller) (*api.TaskStatus, 
 	}
 
 	switch status.State {
-	case api.TaskStateNew, api.TaskStateAllocated, api.TaskStateAssigned:
+	case api.TaskStateNew, api.TaskStatePending, api.TaskStateAssigned:
 		return transition(api.TaskStateAccepted, "accepted")
 	case api.TaskStateAccepted:
 		return transition(api.TaskStatePreparing, "preparing")
@@ -296,4 +319,9 @@ func logStateChange(ctx context.Context, desired, previous, next api.TaskState) 
 		}
 		log.G(ctx).WithFields(fields).Debug("state changed")
 	}
+}
+
+func contextDoneError(err error) bool {
+	cause := errors.Cause(err)
+	return cause == context.Canceled || cause == context.DeadlineExceeded
 }

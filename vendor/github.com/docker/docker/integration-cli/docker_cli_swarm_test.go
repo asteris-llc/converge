@@ -3,13 +3,23 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/pkg/integration/checker"
-	"github.com/docker/engine-api/types/swarm"
+	"github.com/docker/libnetwork/driverapi"
+	"github.com/docker/libnetwork/ipamapi"
+	remoteipam "github.com/docker/libnetwork/ipams/remote/api"
 	"github.com/go-check/check"
+	"github.com/vishvananda/netlink"
 )
 
 func (s *DockerSwarmSuite) TestSwarmUpdate(c *check.C) {
@@ -25,7 +35,7 @@ func (s *DockerSwarmSuite) TestSwarmUpdate(c *check.C) {
 
 	spec := getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(11*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 11*time.Second)
 
 	// setting anything under 30m for cert-expiry is not allowed
 	out, err = d.Cmd("swarm", "update", "--cert-expiry", "15m")
@@ -48,7 +58,7 @@ func (s *DockerSwarmSuite) TestSwarmInit(c *check.C) {
 
 	spec := getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(11*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 11*time.Second)
 
 	c.Assert(d.Leave(true), checker.IsNil)
 	time.Sleep(500 * time.Millisecond) // https://github.com/docker/swarmkit/issues/1421
@@ -57,7 +67,7 @@ func (s *DockerSwarmSuite) TestSwarmInit(c *check.C) {
 
 	spec = getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 90*24*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(5*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 5*time.Second)
 }
 
 func (s *DockerSwarmSuite) TestSwarmInitIPv6(c *check.C) {
@@ -219,4 +229,362 @@ func (s *DockerSwarmSuite) TestSwarmPublishAdd(c *check.C) {
 	out, err = d.Cmd("service", "inspect", "--format", "{{ .Spec.EndpointSpec.Ports }}", name)
 	c.Assert(err, checker.IsNil)
 	c.Assert(strings.TrimSpace(out), checker.Equals, "[{ tcp 20 80}]")
+}
+
+func (s *DockerSwarmSuite) TestSwarmServiceWithGroup(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	name := "top"
+	out, err := d.Cmd("service", "create", "--name", name, "--user", "root:root", "--group", "wheel", "--group", "audio", "--group", "staff", "--group", "777", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	// make sure task has been deployed.
+	waitAndAssert(c, defaultReconciliationTimeout, d.checkActiveContainerCount, checker.Equals, 1)
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	container := strings.TrimSpace(out)
+
+	out, err = d.Cmd("exec", container, "id")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Equals, "uid=0(root) gid=0(root) groups=10(wheel),29(audio),50(staff),777")
+}
+
+func (s *DockerSwarmSuite) TestSwarmContainerAutoStart(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	out, err := d.Cmd("network", "create", "--attachable", "-d", "overlay", "foo")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	out, err = d.Cmd("run", "-id", "--restart=always", "--net=foo", "--name=test", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	d.Restart()
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+}
+
+func (s *DockerSwarmSuite) TestSwarmRemoveInternalNetwork(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	name := "ingress"
+	out, err := d.Cmd("network", "rm", name)
+	c.Assert(err, checker.NotNil)
+	c.Assert(strings.TrimSpace(out), checker.Contains, name)
+	c.Assert(strings.TrimSpace(out), checker.Contains, "is a pre-defined network and cannot be removed")
+}
+
+// Test case for #24108, also the case from:
+// https://github.com/docker/docker/pull/24620#issuecomment-233715656
+func (s *DockerSwarmSuite) TestSwarmTaskListFilter(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	name := "redis-cluster-md5"
+	out, err := d.Cmd("service", "create", "--name", name, "--replicas=3", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	filter := "name=redis-cluster"
+
+	checkNumTasks := func(*check.C) (interface{}, check.CommentInterface) {
+		out, err := d.Cmd("service", "ps", "--filter", filter, name)
+		c.Assert(err, checker.IsNil)
+		return len(strings.Split(out, "\n")) - 2, nil // includes header and nl in last line
+	}
+
+	// wait until all tasks have been created
+	waitAndAssert(c, defaultReconciliationTimeout, checkNumTasks, checker.Equals, 3)
+
+	out, err = d.Cmd("service", "ps", "--filter", filter, name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, name+".1")
+	c.Assert(out, checker.Contains, name+".2")
+	c.Assert(out, checker.Contains, name+".3")
+
+	out, err = d.Cmd("service", "ps", "--filter", "name="+name+".1", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, name+".1")
+	c.Assert(out, checker.Not(checker.Contains), name+".2")
+	c.Assert(out, checker.Not(checker.Contains), name+".3")
+
+	out, err = d.Cmd("service", "ps", "--filter", "name=none", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Not(checker.Contains), name+".1")
+	c.Assert(out, checker.Not(checker.Contains), name+".2")
+	c.Assert(out, checker.Not(checker.Contains), name+".3")
+
+	name = "redis-cluster-sha1"
+	out, err = d.Cmd("service", "create", "--name", name, "--mode=global", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	waitAndAssert(c, defaultReconciliationTimeout, checkNumTasks, checker.Equals, 1)
+
+	filter = "name=redis-cluster"
+	out, err = d.Cmd("service", "ps", "--filter", filter, name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, name)
+
+	out, err = d.Cmd("service", "ps", "--filter", "name="+name, name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, name)
+
+	out, err = d.Cmd("service", "ps", "--filter", "name=none", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Not(checker.Contains), name)
+}
+
+func (s *DockerSwarmSuite) TestPsListContainersFilterIsTask(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	// Create a bare container
+	out, err := d.Cmd("run", "-d", "--name=bare-container", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	bareID := strings.TrimSpace(out)[:12]
+	// Create a service
+	name := "busybox-top"
+	out, err = d.Cmd("service", "create", "--name", name, "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	// make sure task has been deployed.
+	waitAndAssert(c, defaultReconciliationTimeout, d.checkServiceRunningTasks(name), checker.Equals, 1)
+
+	// Filter non-tasks
+	out, err = d.Cmd("ps", "-a", "-q", "--filter=is-task=false")
+	c.Assert(err, checker.IsNil)
+	psOut := strings.TrimSpace(out)
+	c.Assert(psOut, checker.Equals, bareID, check.Commentf("Expected id %s, got %s for is-task label, output %q", bareID, psOut, out))
+
+	// Filter tasks
+	out, err = d.Cmd("ps", "-a", "-q", "--filter=is-task=true")
+	c.Assert(err, checker.IsNil)
+	lines := strings.Split(strings.Trim(out, "\n "), "\n")
+	c.Assert(lines, checker.HasLen, 1)
+	c.Assert(lines[0], checker.Not(checker.Equals), bareID, check.Commentf("Expected not %s, but got it for is-task label, output %q", bareID, out))
+}
+
+const globalNetworkPlugin = "global-network-plugin"
+const globalIPAMPlugin = "global-ipam-plugin"
+
+func (s *DockerSwarmSuite) SetUpSuite(c *check.C) {
+	mux := http.NewServeMux()
+	s.server = httptest.NewServer(mux)
+	c.Assert(s.server, check.NotNil, check.Commentf("Failed to start an HTTP Server"))
+	setupRemoteGlobalNetworkPlugin(c, mux, s.server.URL, globalNetworkPlugin, globalIPAMPlugin)
+}
+
+func setupRemoteGlobalNetworkPlugin(c *check.C, mux *http.ServeMux, url, netDrv, ipamDrv string) {
+
+	mux.HandleFunc("/Plugin.Activate", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, `{"Implements": ["%s", "%s"]}`, driverapi.NetworkPluginEndpointType, ipamapi.PluginEndpointType)
+	})
+
+	// Network driver implementation
+	mux.HandleFunc(fmt.Sprintf("/%s.GetCapabilities", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, `{"Scope":"global"}`)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.AllocateNetwork", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&remoteDriverNetworkRequest)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, "null")
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.FreeNetwork", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, "null")
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.CreateNetwork", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&remoteDriverNetworkRequest)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, "null")
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.DeleteNetwork", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, "null")
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.CreateEndpoint", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, `{"Interface":{"MacAddress":"a0:b1:c2:d3:e4:f5"}}`)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.Join", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+
+		veth := &netlink.Veth{
+			LinkAttrs: netlink.LinkAttrs{Name: "randomIfName", TxQLen: 0}, PeerName: "cnt0"}
+		if err := netlink.LinkAdd(veth); err != nil {
+			fmt.Fprintf(w, `{"Error":"failed to add veth pair: `+err.Error()+`"}`)
+		} else {
+			fmt.Fprintf(w, `{"InterfaceName":{ "SrcName":"cnt0", "DstPrefix":"veth"}}`)
+		}
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.Leave", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, "null")
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.DeleteEndpoint", driverapi.NetworkPluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		if link, err := netlink.LinkByName("cnt0"); err == nil {
+			netlink.LinkDel(link)
+		}
+		fmt.Fprintf(w, "null")
+	})
+
+	// IPAM Driver implementation
+	var (
+		poolRequest       remoteipam.RequestPoolRequest
+		poolReleaseReq    remoteipam.ReleasePoolRequest
+		addressRequest    remoteipam.RequestAddressRequest
+		addressReleaseReq remoteipam.ReleaseAddressRequest
+		lAS               = "localAS"
+		gAS               = "globalAS"
+		pool              = "172.28.0.0/16"
+		poolID            = lAS + "/" + pool
+		gw                = "172.28.255.254/16"
+	)
+
+	mux.HandleFunc(fmt.Sprintf("/%s.GetDefaultAddressSpaces", ipamapi.PluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		fmt.Fprintf(w, `{"LocalDefaultAddressSpace":"`+lAS+`", "GlobalDefaultAddressSpace": "`+gAS+`"}`)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.RequestPool", ipamapi.PluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&poolRequest)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		if poolRequest.AddressSpace != lAS && poolRequest.AddressSpace != gAS {
+			fmt.Fprintf(w, `{"Error":"Unknown address space in pool request: `+poolRequest.AddressSpace+`"}`)
+		} else if poolRequest.Pool != "" && poolRequest.Pool != pool {
+			fmt.Fprintf(w, `{"Error":"Cannot handle explicit pool requests yet"}`)
+		} else {
+			fmt.Fprintf(w, `{"PoolID":"`+poolID+`", "Pool":"`+pool+`"}`)
+		}
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.RequestAddress", ipamapi.PluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&addressRequest)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		// make sure libnetwork is now querying on the expected pool id
+		if addressRequest.PoolID != poolID {
+			fmt.Fprintf(w, `{"Error":"unknown pool id"}`)
+		} else if addressRequest.Address != "" {
+			fmt.Fprintf(w, `{"Error":"Cannot handle explicit address requests yet"}`)
+		} else {
+			fmt.Fprintf(w, `{"Address":"`+gw+`"}`)
+		}
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.ReleaseAddress", ipamapi.PluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&addressReleaseReq)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		// make sure libnetwork is now asking to release the expected address from the expected poolid
+		if addressRequest.PoolID != poolID {
+			fmt.Fprintf(w, `{"Error":"unknown pool id"}`)
+		} else if addressReleaseReq.Address != gw {
+			fmt.Fprintf(w, `{"Error":"unknown address"}`)
+		} else {
+			fmt.Fprintf(w, "null")
+		}
+	})
+
+	mux.HandleFunc(fmt.Sprintf("/%s.ReleasePool", ipamapi.PluginEndpointType), func(w http.ResponseWriter, r *http.Request) {
+		err := json.NewDecoder(r.Body).Decode(&poolReleaseReq)
+		if err != nil {
+			http.Error(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/vnd.docker.plugins.v1+json")
+		// make sure libnetwork is now asking to release the expected poolid
+		if addressRequest.PoolID != poolID {
+			fmt.Fprintf(w, `{"Error":"unknown pool id"}`)
+		} else {
+			fmt.Fprintf(w, "null")
+		}
+	})
+
+	err := os.MkdirAll("/etc/docker/plugins", 0755)
+	c.Assert(err, checker.IsNil)
+
+	fileName := fmt.Sprintf("/etc/docker/plugins/%s.spec", netDrv)
+	err = ioutil.WriteFile(fileName, []byte(url), 0644)
+	c.Assert(err, checker.IsNil)
+
+	ipamFileName := fmt.Sprintf("/etc/docker/plugins/%s.spec", ipamDrv)
+	err = ioutil.WriteFile(ipamFileName, []byte(url), 0644)
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *DockerSwarmSuite) TestSwarmNetworkPlugin(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	out, err := d.Cmd("network", "create", "-d", globalNetworkPlugin, "foo")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	name := "top"
+	out, err = d.Cmd("service", "create", "--name", name, "--network", "foo", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	out, err = d.Cmd("service", "inspect", "--format", "{{range .Spec.Networks}}{{.Target}}{{end}}", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Equals, "foo")
+}
+
+// Test case for #24712
+func (s *DockerSwarmSuite) TestSwarmServiceEnvFile(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	path := filepath.Join(d.folder, "env.txt")
+	err := ioutil.WriteFile(path, []byte("VAR1=A\nVAR2=A\n"), 0644)
+	c.Assert(err, checker.IsNil)
+
+	name := "worker"
+	out, err := d.Cmd("service", "create", "--env-file", path, "--env", "VAR1=B", "--env", "VAR1=C", "--env", "VAR2=", "--env", "VAR2", "--name", name, "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	// The complete env is [VAR1=A VAR2=A VAR1=B VAR1=C VAR2= VAR2] and duplicates will be removed => [VAR1=C VAR2]
+	out, err = d.Cmd("inspect", "--format", "{{ .Spec.TaskTemplate.ContainerSpec.Env }}", name)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "[VAR1=C VAR2]")
 }

@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/builder/dockerfile/parser"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/reference"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
 	"golang.org/x/net/context"
 )
 
@@ -75,6 +75,8 @@ type Builder struct {
 
 	// TODO: remove once docker.Commit can receive a tag
 	id string
+
+	imageCache builder.ImageCache
 }
 
 // BuildManager implements builder.Backend and is shared across all Builder objects.
@@ -136,6 +138,10 @@ func NewBuilder(clientCtx context.Context, config *types.ImageBuildOptions, back
 			LookingForDirectives: true,
 		},
 	}
+	if icb, ok := backend.(builder.ImageCacheBuilder); ok {
+		b.imageCache = icb.MakeImageCache(config.CacheFrom)
+	}
+
 	parser.SetEscapeToken(parser.DefaultEscapeToken, &b.directive) // Assume the default token for escape
 
 	if dockerfile != nil {
@@ -223,7 +229,7 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 	if len(b.options.Labels) > 0 {
 		line := "LABEL "
 		for k, v := range b.options.Labels {
-			line += fmt.Sprintf("%q=%q ", k, v)
+			line += fmt.Sprintf("%q='%s' ", k, v)
 		}
 		_, node, err := parser.ParseLine(line, &b.directive)
 		if err != nil {
@@ -234,6 +240,12 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 
 	var shortImgID string
 	total := len(b.dockerfile.Children)
+	for _, n := range b.dockerfile.Children {
+		if err := b.checkDispatch(n, false); err != nil {
+			return "", err
+		}
+	}
+
 	for i, n := range b.dockerfile.Children {
 		select {
 		case <-b.clientCtx.Done():
@@ -243,6 +255,7 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 		default:
 			// Not cancelled yet, keep going...
 		}
+
 		if err := b.dispatch(i, total, n); err != nil {
 			if b.options.ForceRemove {
 				b.clearTmp()
@@ -322,6 +335,12 @@ func BuildFromConfig(config *container.Config, changes []string) (*container.Con
 	b.disableCommit = true
 
 	total := len(ast.Children)
+	for _, n := range ast.Children {
+		if err := b.checkDispatch(n, false); err != nil {
+			return nil, err
+		}
+	}
+
 	for i, n := range ast.Children {
 		if err := b.dispatch(i, total, n); err != nil {
 			return nil, err

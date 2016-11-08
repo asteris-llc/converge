@@ -13,6 +13,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	containerd "github.com/docker/containerd/api/grpc/types"
 	"github.com/docker/docker/pkg/idtools"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -30,22 +31,25 @@ type client struct {
 	liveRestore   bool
 }
 
-func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendlyName string, specp Process) error {
+// AddProcess is the handler for adding a process to an already running
+// container. It's called through docker exec. It returns the system pid of the
+// exec'd process.
+func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendlyName string, specp Process, attachStdio StdioCallback) (int, error) {
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
 	container, err := clnt.getContainer(containerID)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	spec, err := container.spec()
 	if err != nil {
-		return err
+		return -1, err
 	}
 	sp := spec.Process
 	sp.Args = specp.Args
 	sp.Terminal = specp.Terminal
-	if specp.Env != nil {
+	if len(specp.Env) > 0 {
 		sp.Env = specp.Env
 	}
 	if specp.Cwd != nil {
@@ -88,24 +92,36 @@ func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendly
 
 	iopipe, err := p.openFifos(sp.Terminal)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	if _, err := clnt.remote.apiClient.AddProcess(ctx, r); err != nil {
+	resp, err := clnt.remote.apiClient.AddProcess(ctx, r)
+	if err != nil {
 		p.closeFifos(iopipe)
-		return err
+		return -1, err
 	}
+
+	var stdinOnce sync.Once
+	stdin := iopipe.Stdin
+	iopipe.Stdin = ioutils.NewWriteCloserWrapper(stdin, func() error {
+		var err error
+		stdinOnce.Do(func() { // on error from attach we don't know if stdin was already closed
+			err = stdin.Close()
+			if err2 := p.sendCloseStdin(); err == nil {
+				err = err2
+			}
+		})
+		return err
+	})
 
 	container.processes[processFriendlyName] = p
 
-	clnt.unlock(containerID)
-
-	if err := clnt.backend.AttachStreams(processFriendlyName, *iopipe); err != nil {
-		return err
+	if err := attachStdio(*iopipe); err != nil {
+		p.closeFifos(iopipe)
+		return -1, err
 	}
-	clnt.lock(containerID)
 
-	return nil
+	return int(resp.SystemPid), nil
 }
 
 func (clnt *client) prepareBundleDir(uid, gid int) (string, error) {
@@ -133,17 +149,12 @@ func (clnt *client) prepareBundleDir(uid, gid int) (string, error) {
 	return p, nil
 }
 
-func (clnt *client) Create(containerID string, spec Spec, options ...CreateOption) (err error) {
+func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec specs.Spec, attachStdio StdioCallback, options ...CreateOption) (err error) {
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
 
-	if ctr, err := clnt.getContainer(containerID); err == nil {
-		if ctr.restarting {
-			ctr.restartManager.Cancel()
-			ctr.clean()
-		} else {
-			return fmt.Errorf("Container %s is already active", containerID)
-		}
+	if _, err := clnt.getContainer(containerID); err == nil {
+		return fmt.Errorf("Container %s is already active", containerID)
 	}
 
 	uid, gid, err := getRootIDs(specs.Spec(spec))
@@ -180,7 +191,7 @@ func (clnt *client) Create(containerID string, spec Spec, options ...CreateOptio
 		return err
 	}
 
-	return container.start()
+	return container.start(checkpoint, checkpointDir, attachStdio)
 }
 
 func (clnt *client) Signal(containerID string, sig int) error {
@@ -389,7 +400,7 @@ func (clnt *client) getOrCreateExitNotifier(containerID string) *exitNotifier {
 	return w
 }
 
-func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Event, options ...CreateOption) (err error) {
+func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Event, attachStdio StdioCallback, options ...CreateOption) (err error) {
 	clnt.lock(cont.Id)
 	defer clnt.unlock(cont.Id)
 
@@ -420,8 +431,18 @@ func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Ev
 	if err != nil {
 		return err
 	}
+	var stdinOnce sync.Once
+	stdin := iopipe.Stdin
+	iopipe.Stdin = ioutils.NewWriteCloserWrapper(stdin, func() error {
+		var err error
+		stdinOnce.Do(func() { // on error from attach we don't know if stdin was already closed
+			err = stdin.Close()
+		})
+		return err
+	})
 
-	if err := clnt.backend.AttachStreams(containerID, *iopipe); err != nil {
+	if err := attachStdio(*iopipe); err != nil {
+		container.closeFifos(iopipe)
 		return err
 	}
 
@@ -434,6 +455,7 @@ func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Ev
 		}})
 
 	if err != nil {
+		container.closeFifos(iopipe)
 		return err
 	}
 
@@ -511,7 +533,7 @@ func (clnt *client) getContainerLastEvent(id string) (*containerd.Event, error) 
 	return ev, err
 }
 
-func (clnt *client) Restore(containerID string, options ...CreateOption) error {
+func (clnt *client) Restore(containerID string, attachStdio StdioCallback, options ...CreateOption) error {
 	// Synchronize with live events
 	clnt.remote.Lock()
 	defer clnt.remote.Unlock()
@@ -559,7 +581,7 @@ func (clnt *client) Restore(containerID string, options ...CreateOption) error {
 
 	// container is still alive
 	if clnt.liveRestore {
-		if err := clnt.restore(cont, ev, options...); err != nil {
+		if err := clnt.restore(cont, ev, attachStdio, options...); err != nil {
 			logrus.Errorf("libcontainerd: error restoring %s: %v", containerID, err)
 		}
 		return nil
@@ -624,4 +646,58 @@ func (en *exitNotifier) close() {
 }
 func (en *exitNotifier) wait() <-chan struct{} {
 	return en.c
+}
+
+func (clnt *client) CreateCheckpoint(containerID string, checkpointID string, checkpointDir string, exit bool) error {
+	clnt.lock(containerID)
+	defer clnt.unlock(containerID)
+	if _, err := clnt.getContainer(containerID); err != nil {
+		return err
+	}
+
+	_, err := clnt.remote.apiClient.CreateCheckpoint(context.Background(), &containerd.CreateCheckpointRequest{
+		Id: containerID,
+		Checkpoint: &containerd.Checkpoint{
+			Name:        checkpointID,
+			Exit:        exit,
+			Tcp:         true,
+			UnixSockets: true,
+			Shell:       false,
+			EmptyNS:     []string{"network"},
+		},
+		CheckpointDir: checkpointDir,
+	})
+	return err
+}
+
+func (clnt *client) DeleteCheckpoint(containerID string, checkpointID string, checkpointDir string) error {
+	clnt.lock(containerID)
+	defer clnt.unlock(containerID)
+	if _, err := clnt.getContainer(containerID); err != nil {
+		return err
+	}
+
+	_, err := clnt.remote.apiClient.DeleteCheckpoint(context.Background(), &containerd.DeleteCheckpointRequest{
+		Id:            containerID,
+		Name:          checkpointID,
+		CheckpointDir: checkpointDir,
+	})
+	return err
+}
+
+func (clnt *client) ListCheckpoints(containerID string, checkpointDir string) (*Checkpoints, error) {
+	clnt.lock(containerID)
+	defer clnt.unlock(containerID)
+	if _, err := clnt.getContainer(containerID); err != nil {
+		return nil, err
+	}
+
+	resp, err := clnt.remote.apiClient.ListCheckpoint(context.Background(), &containerd.ListCheckpointRequest{
+		Id:            containerID,
+		CheckpointDir: checkpointDir,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return (*Checkpoints)(resp), nil
 }

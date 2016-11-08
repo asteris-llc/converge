@@ -50,6 +50,7 @@ type configuration struct {
 	EnableIPForwarding  bool
 	EnableIPTables      bool
 	EnableUserlandProxy bool
+	UserlandProxyPath   string
 }
 
 // networkConfiguration for network specific configuration
@@ -70,7 +71,18 @@ type networkConfiguration struct {
 	dbIndex            uint64
 	dbExists           bool
 	Internal           bool
+
+	BridgeIfaceCreator ifaceCreator
 }
+
+// ifaceCreator represents how the bridge interface was created
+type ifaceCreator int8
+
+const (
+	ifaceCreatorUnknown ifaceCreator = iota
+	ifaceCreatedByLibnetwork
+	ifaceCreatedByUser
+)
 
 // endpointConfiguration represents the user specified configuration for the sandbox endpoint
 type endpointConfiguration struct {
@@ -512,6 +524,17 @@ func parseNetworkOptions(id string, option options.Generic) (*networkConfigurati
 		config.BridgeName = "br-" + id[:12]
 	}
 
+	exists, err := bridgeInterfaceExists(config.BridgeName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		config.BridgeIfaceCreator = ifaceCreatedByLibnetwork
+	} else {
+		config.BridgeIfaceCreator = ifaceCreatedByUser
+	}
+
 	config.ID = id
 	return config, nil
 }
@@ -616,7 +639,7 @@ func (d *driver) createNetwork(config *networkConfiguration) error {
 		id:         config.ID,
 		endpoints:  make(map[string]*bridgeEndpoint),
 		config:     config,
-		portMapper: portmapper.New(),
+		portMapper: portmapper.New(d.config.UserlandProxyPath),
 		driver:     d,
 	}
 
@@ -641,7 +664,10 @@ func (d *driver) createNetwork(config *networkConfiguration) error {
 	d.Unlock()
 
 	// Create or retrieve the bridge L3 interface
-	bridgeIface := newInterface(d.nlh, config)
+	bridgeIface, err := newInterface(d.nlh, config)
+	if err != nil {
+		return err
+	}
 	network.bridge = bridgeIface
 
 	// Verify the network configuration does not conflict with previously installed
@@ -753,6 +779,20 @@ func (d *driver) DeleteNetwork(nid string) error {
 	config := n.config
 	n.Unlock()
 
+	// delele endpoints belong to this network
+	for _, ep := range n.endpoints {
+		if err := n.releasePorts(ep); err != nil {
+			logrus.Warn(err)
+		}
+		if link, err := d.nlh.LinkByName(ep.srcName); err == nil {
+			d.nlh.LinkDel(link)
+		}
+
+		if err := d.storeDelete(ep); err != nil {
+			logrus.Warnf("Failed to remove bridge endpoint %s from store: %v", ep.id[0:7], err)
+		}
+	}
+
 	d.Lock()
 	delete(d.networks, nid)
 	d.Unlock()
@@ -775,11 +815,17 @@ func (d *driver) DeleteNetwork(nid string) error {
 		return err
 	}
 
-	// We only delete the bridge when it's not the default bridge. This is keep the backward compatible behavior.
-	if !config.DefaultBridge {
-		if err := d.nlh.LinkDel(n.bridge.Link); err != nil {
-			logrus.Warnf("Failed to remove bridge interface %s on network %s delete: %v", config.BridgeName, nid, err)
+	switch config.BridgeIfaceCreator {
+	case ifaceCreatedByLibnetwork, ifaceCreatorUnknown:
+		// We only delete the bridge if it was created by the bridge driver and
+		// it is not the default one (to keep the backward compatible behavior.)
+		if !config.DefaultBridge {
+			if err := d.nlh.LinkDel(n.bridge.Link); err != nil {
+				logrus.Warnf("Failed to remove bridge interface %s on network %s delete: %v", config.BridgeName, nid, err)
+			}
 		}
+	case ifaceCreatedByUser:
+		// Don't delete the bridge interface if it was not created by libnetwork.
 	}
 
 	// clean all relevant iptables rules
@@ -1243,8 +1289,17 @@ func (d *driver) ProgramExternalConnectivity(nid, eid string, options map[string
 		return err
 	}
 
+	defer func() {
+		if err != nil {
+			if e := network.releasePorts(endpoint); e != nil {
+				logrus.Errorf("Failed to release ports allocated for the bridge endpoint %s on failure %v because of %v",
+					eid, err, e)
+			}
+			endpoint.portMapping = nil
+		}
+	}()
+
 	if err = d.storeUpdate(endpoint); err != nil {
-		endpoint.portMapping = nil
 		return fmt.Errorf("failed to update bridge endpoint %s to store: %v", endpoint.id[0:7], err)
 	}
 
@@ -1275,6 +1330,12 @@ func (d *driver) RevokeExternalConnectivity(nid, eid string) error {
 	err = network.releasePorts(endpoint)
 	if err != nil {
 		logrus.Warn(err)
+	}
+
+	endpoint.portMapping = nil
+
+	if err = d.storeUpdate(endpoint); err != nil {
+		return fmt.Errorf("failed to update bridge endpoint %s to store: %v", endpoint.id[0:7], err)
 	}
 
 	return nil

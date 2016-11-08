@@ -3,12 +3,13 @@ package controlapi
 import (
 	"errors"
 	"reflect"
+	"regexp"
 	"strconv"
 
-	"github.com/docker/engine-api/types/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/identity"
-	"github.com/docker/swarmkit/manager/scheduler"
+	"github.com/docker/swarmkit/manager/constraint"
 	"github.com/docker/swarmkit/manager/state/store"
 	"github.com/docker/swarmkit/protobuf/ptypes"
 	"golang.org/x/net/context"
@@ -18,8 +19,12 @@ import (
 
 var (
 	errNetworkUpdateNotSupported = errors.New("changing network in service is not supported")
+	errRenameNotSupported        = errors.New("renaming services is not supported")
 	errModeChangeNotAllowed      = errors.New("service mode change is not allowed")
 )
+
+// Regexp pattern for hostname to conform RFC 1123
+var hostnamePattern = regexp.MustCompile("^(([[:alnum:]]|[[:alnum:]][[:alnum:]\\-]*[[:alnum:]])\\.)*([[:alnum:]]|[[:alnum:]][[:alnum:]\\-]*[[:alnum:]])$")
 
 func validateResources(r *api.Resources) error {
 	if r == nil {
@@ -81,7 +86,7 @@ func validatePlacement(placement *api.Placement) error {
 	if placement == nil {
 		return nil
 	}
-	_, err := scheduler.ParseExprs(placement.Constraints)
+	_, err := constraint.Parse(placement.Constraints)
 	return err
 }
 
@@ -99,6 +104,43 @@ func validateUpdate(uc *api.UpdateConfig) error {
 		return grpc.Errorf(codes.InvalidArgument, "TaskSpec: update-delay cannot be negative")
 	}
 
+	return nil
+}
+
+func validateContainerSpec(container *api.ContainerSpec) error {
+	if container == nil {
+		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: missing in service spec")
+	}
+
+	if err := validateHostname(container.Hostname); err != nil {
+		return err
+	}
+
+	if container.Image == "" {
+		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: image reference must be provided")
+	}
+
+	if _, err := reference.ParseNamed(container.Image); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: %q is not a valid repository/tag", container.Image)
+	}
+
+	mountMap := make(map[string]bool)
+	for _, mount := range container.Mounts {
+		if _, exists := mountMap[mount.Target]; exists {
+			return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: duplicate mount point: %s", mount.Target)
+		}
+		mountMap[mount.Target] = true
+	}
+
+	return nil
+}
+
+func validateHostname(hostname string) error {
+	if hostname != "" {
+		if len(hostname) > 63 || !hostnamePattern.MatchString(hostname) {
+			return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: %s is not valid hostname", hostname)
+		}
+	}
 	return nil
 }
 
@@ -124,18 +166,10 @@ func validateTask(taskSpec api.TaskSpec) error {
 		return grpc.Errorf(codes.Unimplemented, "RuntimeSpec: unimplemented runtime in service spec")
 	}
 
-	container := taskSpec.GetContainer()
-	if container == nil {
-		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: missing in service spec")
+	if err := validateContainerSpec(taskSpec.GetContainer()); err != nil {
+		return err
 	}
 
-	if container.Image == "" {
-		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: image reference must be provided")
-	}
-
-	if _, _, err := reference.Parse(container.Image); err != nil {
-		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: %q is not a valid repository/tag", container.Image)
-	}
 	return nil
 }
 
@@ -149,15 +183,45 @@ func validateEndpointSpec(epSpec *api.EndpointSpec) error {
 		return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: ports can't be used with dnsrr mode")
 	}
 
-	portSet := make(map[api.PortConfig]struct{})
-	for _, port := range epSpec.Ports {
-		if _, ok := portSet[*port]; ok {
-			return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: duplicate ports provided")
-		}
-
-		portSet[*port] = struct{}{}
+	type portSpec struct {
+		publishedPort uint32
+		protocol      api.PortConfig_Protocol
 	}
 
+	portSet := make(map[portSpec]struct{})
+	for _, port := range epSpec.Ports {
+		// If published port is not specified, it does not conflict
+		// with any others.
+		if port.PublishedPort == 0 {
+			continue
+		}
+
+		portSpec := portSpec{publishedPort: port.PublishedPort, protocol: port.Protocol}
+		if _, ok := portSet[portSpec]; ok {
+			return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: duplicate published ports provided")
+		}
+
+		portSet[portSpec] = struct{}{}
+	}
+
+	return nil
+}
+
+func (s *Server) validateNetworks(networks []*api.NetworkAttachmentConfig) error {
+	for _, na := range networks {
+		var network *api.Network
+		s.store.View(func(tx store.ReadTx) {
+			network = store.GetNetwork(tx, na.Target)
+		})
+		if network == nil {
+			continue
+		}
+		if _, ok := network.Spec.Annotations.Labels["com.docker.swarm.internal"]; ok {
+			return grpc.Errorf(codes.InvalidArgument,
+				"Service cannot be explicitly attached to %q network which is a swarm internal network",
+				network.Spec.Annotations.Name)
+		}
+	}
 	return nil
 }
 
@@ -240,6 +304,25 @@ func (s *Server) checkPortConflicts(spec *api.ServiceSpec, serviceID string) err
 	return nil
 }
 
+// checkSecretConflicts finds if the passed in spec has secrets with conflicting targets.
+func (s *Server) checkSecretConflicts(spec *api.ServiceSpec) error {
+	container := spec.Task.GetContainer()
+	if container == nil {
+		return nil
+	}
+
+	existingTargets := make(map[string]string)
+	for _, secretRef := range container.Secrets {
+		if prevSecretName, ok := existingTargets[secretRef.Target]; ok {
+			return grpc.Errorf(codes.InvalidArgument, "secret references '%s' and '%s' have a conflicting target: '%s'", prevSecretName, secretRef.SecretName, secretRef.Target)
+		}
+
+		existingTargets[secretRef.Target] = secretRef.SecretName
+	}
+
+	return nil
+}
+
 // CreateService creates and return a Service based on the provided ServiceSpec.
 // - Returns `InvalidArgument` if the ServiceSpec is malformed.
 // - Returns `Unimplemented` if the ServiceSpec references unimplemented features.
@@ -250,7 +333,15 @@ func (s *Server) CreateService(ctx context.Context, request *api.CreateServiceRe
 		return nil, err
 	}
 
+	if err := s.validateNetworks(request.Spec.Networks); err != nil {
+		return nil, err
+	}
+
 	if err := s.checkPortConflicts(request.Spec, ""); err != nil {
+		return nil, err
+	}
+
+	if err := s.checkSecretConflicts(request.Spec); err != nil {
 		return nil, err
 	}
 
@@ -321,23 +412,43 @@ func (s *Server) UpdateService(ctx context.Context, request *api.UpdateServiceRe
 		}
 	}
 
+	if err := s.checkSecretConflicts(request.Spec); err != nil {
+		return nil, err
+	}
+
 	err := s.store.Update(func(tx store.Tx) error {
 		service = store.GetService(tx, request.ServiceID)
 		if service == nil {
 			return nil
 		}
 		// temporary disable network update
-		if request.Spec != nil && !reflect.DeepEqual(request.Spec.Networks, service.Spec.Networks) {
+		requestSpecNetworks := request.Spec.Task.Networks
+		if len(requestSpecNetworks) == 0 {
+			requestSpecNetworks = request.Spec.Networks
+		}
+
+		specNetworks := service.Spec.Task.Networks
+		if len(specNetworks) == 0 {
+			specNetworks = service.Spec.Networks
+		}
+
+		if !reflect.DeepEqual(requestSpecNetworks, specNetworks) {
 			return errNetworkUpdateNotSupported
 		}
 
 		// orchestrator is designed to be stateless, so it should not deal
 		// with service mode change (comparing current config with previous config).
 		// proper way to change service mode is to delete and re-add.
-		if request.Spec != nil && reflect.TypeOf(service.Spec.Mode) != reflect.TypeOf(request.Spec.Mode) {
+		if reflect.TypeOf(service.Spec.Mode) != reflect.TypeOf(request.Spec.Mode) {
 			return errModeChangeNotAllowed
 		}
+
+		if service.Spec.Annotations.Name != request.Spec.Annotations.Name {
+			return errRenameNotSupported
+		}
+
 		service.Meta.Version = *request.ServiceVersion
+		service.PreviousSpec = service.Spec.Copy()
 		service.Spec = *request.Spec.Copy()
 
 		// Reset update status

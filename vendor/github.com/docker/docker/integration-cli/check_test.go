@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync"
 	"syscall"
 	"testing"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/pkg/reexec"
-	"github.com/docker/engine-api/types/swarm"
 	"github.com/go-check/check"
 )
 
@@ -23,6 +24,9 @@ func Test(t *testing.T) {
 		fmt.Println("INFO: Testing against a local daemon")
 	}
 
+	if daemonPlatform == "linux" {
+		ensureFrozenImagesLinux(t)
+	}
 	check.TestingT(t)
 }
 
@@ -237,6 +241,7 @@ func init() {
 }
 
 type DockerSwarmSuite struct {
+	server      *httptest.Server
 	ds          *DockerSuite
 	daemons     []*SwarmDaemon
 	daemonsLock sync.Mutex // protect access to daemons
@@ -261,7 +266,11 @@ func (s *DockerSwarmSuite) AddDaemon(c *check.C, joinSwarm, manager bool) *Swarm
 		port:   defaultSwarmPort + s.portIndex,
 	}
 	d.listenAddr = fmt.Sprintf("0.0.0.0:%d", d.port)
-	err := d.StartWithBusybox("--iptables=false", "--swarm-default-advertise-addr=lo") // avoid networking conflicts
+	args := []string{"--iptables=false", "--swarm-default-advertise-addr=lo"} // avoid networking conflicts
+	if experimentalDaemon {
+		args = append(args, "--experimental")
+	}
+	err := d.StartWithBusybox(args...)
 	c.Assert(err, check.IsNil)
 
 	if joinSwarm == true {
@@ -298,6 +307,8 @@ func (s *DockerSwarmSuite) TearDownTest(c *check.C) {
 		if err := os.RemoveAll(walDir); err != nil {
 			c.Logf("error removing %v: %v", walDir, err)
 		}
+
+		cleanupExecRoot(c, d.execRoot)
 	}
 	s.daemons = nil
 	s.daemonsLock.Unlock()

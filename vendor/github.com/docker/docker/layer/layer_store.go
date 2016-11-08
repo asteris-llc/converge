@@ -11,8 +11,8 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/daemon/graphdriver"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
+	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/vbatts/tar-split/tar/asm"
 	"github.com/vbatts/tar-split/tar/storage"
@@ -44,6 +44,7 @@ type StoreOptions struct {
 	GraphDriverOptions        []string
 	UIDMaps                   []idtools.IDMap
 	GIDMaps                   []idtools.IDMap
+	PluginGetter              plugingetter.PluginGetter
 }
 
 // NewStoreFromOptions creates a new Store instance
@@ -53,7 +54,8 @@ func NewStoreFromOptions(options StoreOptions) (Store, error) {
 		options.GraphDriver,
 		options.GraphDriverOptions,
 		options.UIDMaps,
-		options.GIDMaps)
+		options.GIDMaps,
+		options.PluginGetter)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphdriver: %v", err)
 	}
@@ -218,7 +220,7 @@ func (ls *layerStore) applyTar(tx MetadataTransaction, ts io.Reader, parent stri
 		return err
 	}
 
-	applySize, err := ls.driver.ApplyDiff(layer.cacheID, parent, archive.Reader(rdr))
+	applySize, err := ls.driver.ApplyDiff(layer.cacheID, parent, rdr)
 	if err != nil {
 		return err
 	}
@@ -355,6 +357,19 @@ func (ls *layerStore) Get(l ChainID) (Layer, error) {
 	}
 
 	return layer.getReference(), nil
+}
+
+func (ls *layerStore) Map() map[ChainID]Layer {
+	ls.layerL.Lock()
+	defer ls.layerL.Unlock()
+
+	layers := map[ChainID]Layer{}
+
+	for k, v := range ls.layerMap {
+		layers[k] = v
+	}
+
+	return layers
 }
 
 func (ls *layerStore) deleteLayer(layer *roLayer, metadata *Metadata) error {
@@ -583,7 +598,7 @@ func (ls *layerStore) initMount(graphID, parent, mountLabel string, initFunc Mou
 	// then the initID should be randomly generated.
 	initID := fmt.Sprintf("%s-init", graphID)
 
-	if err := ls.driver.Create(initID, parent, mountLabel, storageOpt); err != nil {
+	if err := ls.driver.CreateReadWrite(initID, parent, mountLabel, storageOpt); err != nil {
 		return "", err
 	}
 	p, err := ls.driver.Get(initID, "")

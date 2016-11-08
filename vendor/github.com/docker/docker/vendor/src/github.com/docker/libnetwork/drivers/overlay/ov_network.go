@@ -182,6 +182,18 @@ func (d *driver) DeleteNetwork(nid string) error {
 		return fmt.Errorf("could not find network with id %s", nid)
 	}
 
+	for _, ep := range n.endpoints {
+		if ep.ifName != "" {
+			if link, err := ns.NlHandle().LinkByName(ep.ifName); err != nil {
+				ns.NlHandle().LinkDel(link)
+			}
+		}
+
+		if err := d.deleteEndpointFromStore(ep); err != nil {
+			logrus.Warnf("Failed to delete overlay endpoint %s from local store: %v", ep.id[0:7], err)
+		}
+
+	}
 	d.deleteNetwork(nid)
 
 	vnis, err := n.releaseVxlanID()
@@ -500,9 +512,13 @@ func (n *network) initSubnetSandbox(s *subnet, restore bool) error {
 	vxlanName := n.generateVxlanName(s)
 
 	if restore {
-		n.restoreSubnetSandbox(s, brName, vxlanName)
+		if err := n.restoreSubnetSandbox(s, brName, vxlanName); err != nil {
+			return err
+		}
 	} else {
-		n.setupSubnetSandbox(s, brName, vxlanName)
+		if err := n.setupSubnetSandbox(s, brName, vxlanName); err != nil {
+			return err
+		}
 	}
 
 	n.Lock()

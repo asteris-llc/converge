@@ -1,11 +1,11 @@
 package store
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/docker/swarmkit/api"
+	"github.com/docker/swarmkit/api/naming"
 	"github.com/docker/swarmkit/manager/state"
 	memdb "github.com/hashicorp/go-memdb"
 )
@@ -225,12 +225,7 @@ func (ti taskIndexerByName) FromObject(obj interface{}) (bool, []byte, error) {
 		panic("unexpected type passed to FromObject")
 	}
 
-	name := t.Annotations.Name
-	if name == "" {
-		// If Task name is not assigned then calculated name is used like before.
-		// This might be removed in the future.
-		name = fmt.Sprintf("%v.%v.%v", t.ServiceAnnotations.Name, t.Slot, t.Task.ID)
-	}
+	name := naming.Task(t.Task)
 
 	// Add the null character as a terminator
 	return true, []byte(strings.ToLower(name) + "\x00"), nil
