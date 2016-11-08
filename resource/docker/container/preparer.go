@@ -66,7 +66,7 @@ type Preparer struct {
 	// list of DNS servers for the container to use
 	DNS []string `hcl:"dns"`
 
-	// the mode of the  container network
+	// the mode of the container network. default: default
 	NetworkMode string `hcl:"network_mode"`
 
 	// the networks to connect the container to
