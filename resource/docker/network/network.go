@@ -44,7 +44,7 @@ const (
 	DefaultIPAMDriver = "default"
 )
 
-// Network is responsible for managing docker volumes
+// Network is responsible for managing docker networks
 type Network struct {
 	*resource.Status
 	client docker.NetworkClient

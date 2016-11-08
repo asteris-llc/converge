@@ -41,11 +41,12 @@ type Preparer struct {
 	// driver specific options
 	Options map[string]interface{} `hcl:"options"`
 
-	// ip address management driver
+	// ip address management driver. default: default
 	IPAMDriver string `hcl:"ipam_driver"`
 
-	// custom IPAM configuration. multiple IPAM configurations are permitted. Each
-	// IPAM configuration block should contain one or more of the following items:
+	// optional custom IPAM configuration. multiple IPAM configurations are
+	// permitted. Each IPAM configuration block should contain one or more of the
+	// following items:
 	//
 	//   * subnet:      subnet in CIDR format
 	//   * gateway:     ipv4 or ipv6 gateway for the corresponding subnet
@@ -61,12 +62,12 @@ type Preparer struct {
 	// enable ipv6 networking
 	IPv6 bool `hcl:"ipv6"`
 
-	// indicates whether the volume should exist.
+	// indicates whether the network should exist. default: present
 	State State `hcl:"state" valid_values:"present,absent"`
 
-	// indicates whether or not the volume will be recreated if the state is not
+	// indicates whether or not the network will be recreated if the state is not
 	// what is expected. By default, the module will only check to see if the
-	// volume exists. Specified as a boolean value
+	// network exists. Specified as a boolean value
 	Force bool `hcl:"force"`
 }
 
@@ -85,7 +86,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 	}
 
 	if p.State == "" {
-		p.State = "present"
+		p.State = StatePresent
 	}
 
 	dockerClient, err := docker.NewDockerClient()

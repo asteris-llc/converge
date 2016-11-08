@@ -66,12 +66,13 @@ docker.network "test-network" {
 
 - `ipam_driver` (string)
 
-  ip address management driver
+  ip address management driver. default: default
 
 - `ipam_config` (list of ipamConfigMaps)
 
-  custom IPAM configuration. multiple IPAM configurations are permitted. Each
-IPAM configuration block should contain one or more of the following items:
+  optional custom IPAM configuration. multiple IPAM configurations are
+permitted. Each IPAM configuration block should contain one or more of the
+following items:
 
   * subnet:      subnet in CIDR format
   * gateway:     ipv4 or ipv6 gateway for the corresponding subnet
@@ -93,12 +94,12 @@ IPAM configuration block should contain one or more of the following items:
 
   Valid values: `present` and `absent`
 
-  indicates whether the volume should exist.
+  indicates whether the network should exist. default: present
 
 - `force` (bool)
 
-  indicates whether or not the volume will be recreated if the state is not
+  indicates whether or not the network will be recreated if the state is not
 what is expected. By default, the module will only check to see if the
-volume exists. Specified as a boolean value
+network exists. Specified as a boolean value
 
 
