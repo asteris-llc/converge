@@ -43,7 +43,7 @@ type Preparer struct {
 	ExecFlags []string `hcl:"exec_flags"`
 
 	// the amount of time the command will wait before halting forcefully.
-	Timeout time.Duration `hcl:"timeout"`
+	Timeout *time.Duration `hcl:"timeout"`
 
 	// the working directory this command should be run in.
 	Dir string `hcl:"dir"`

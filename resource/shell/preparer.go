@@ -65,7 +65,7 @@ type Preparer struct {
 	Apply string `hcl:"apply"`
 
 	// the amount of time the command will wait before halting forcefully.
-	Timeout time.Duration `hcl:"timeout"`
+	Timeout *time.Duration `hcl:"timeout"`
 
 	// the working directory this command should be run in
 	Dir string `hcl:"dir"`
@@ -88,7 +88,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		Flags:       p.ExecFlags,
 		Dir:         p.Dir,
 		Env:         env,
-		Timeout:     &p.Timeout,
+		Timeout:     p.Timeout,
 	}
 
 	shell := &Shell{

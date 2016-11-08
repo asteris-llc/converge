@@ -30,7 +30,7 @@ type Preparer struct {
 	Query       string            `hcl:"query"`
 	CheckFlags  []string          `hcl:"check_flags"`
 	ExecFlags   []string          `hcl:"exec_flags"`
-	Timeout     time.Duration     `hcl:"timeout"`
+	Timeout     *time.Duration    `hcl:"timeout"`
 	Dir         string            `hcl:"dir"`
 	Env         map[string]string `hcl:"env"`
 }
