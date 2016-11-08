@@ -172,8 +172,6 @@ func ShouldEvaluate(g *graph.Graph, meta *node.Node) (bool, error) {
 		return false, errors.New("invalid branch identifier for " + meta.ID)
 	}
 
-	fmt.Printf("calling should evaluate branch %s in %v\n", myBranch, PeerBranches(g, meta))
-
 	for _, node := range PeerBranches(g, meta) {
 		nodeBranch, ok := node.LookupMetadata(MetaBranchName)
 		if !ok {
