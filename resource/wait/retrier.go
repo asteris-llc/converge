@@ -18,7 +18,7 @@ import "time"
 
 const (
 	// DefaultInterval is the default amount of time to wait in between checks
-	DefaultInterval = time.Duration(5 * time.Second)
+	DefaultInterval = 5 * time.Second
 
 	// DefaultGracePeriod is the amount of time to wait before running the first
 	// check and after a successful check
