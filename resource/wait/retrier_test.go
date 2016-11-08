@@ -28,8 +28,8 @@ import (
 var (
 	nilDur   *time.Duration
 	zeroDur  time.Duration
-	threeSec time.Duration
-	fiveSec  time.Duration
+	threeDur time.Duration
+	fiveDur  time.Duration
 	nilInt   *int
 	retry    int
 	err      error
@@ -38,12 +38,12 @@ var (
 func init() {
 	zeroDur = time.Duration(0)
 
-	threeSec, err = time.ParseDuration("3s")
+	threeDur, err = time.ParseDuration("3s")
 	if err != nil {
 		panic(err)
 	}
 
-	fiveSec, err = time.ParseDuration("5s")
+	fiveDur, err = time.ParseDuration("5s")
 	if err != nil {
 		panic(err)
 	}
@@ -128,32 +128,32 @@ func TestPrepareRetrier(t *testing.T) {
 	t.Parallel()
 
 	t.Run("sets max retries", func(t *testing.T) {
-		r := wait.PrepareRetrier(&threeSec, &fiveSec, &retry)
+		r := wait.PrepareRetrier(&threeDur, &fiveDur, &retry)
 		assert.Equal(t, 10, r.MaxRetry)
 	})
 
 	t.Run("default max retries", func(t *testing.T) {
-		r := wait.PrepareRetrier(&threeSec, &fiveSec, nilInt)
+		r := wait.PrepareRetrier(&threeDur, &fiveDur, nilInt)
 		assert.Equal(t, wait.DefaultRetries, r.MaxRetry)
 	})
 
 	t.Run("sets interval", func(t *testing.T) {
-		r := wait.PrepareRetrier(&threeSec, &zeroDur, &retry)
+		r := wait.PrepareRetrier(&threeDur, &zeroDur, &retry)
 		assert.Equal(t, 3*time.Second, r.Interval)
 	})
 
 	t.Run("default interval", func(t *testing.T) {
-		r := wait.PrepareRetrier(nilDur, &fiveSec, &retry)
+		r := wait.PrepareRetrier(nilDur, &fiveDur, &retry)
 		assert.Equal(t, wait.DefaultInterval, r.Interval)
 	})
 
 	t.Run("sets grace period", func(t *testing.T) {
-		r := wait.PrepareRetrier(&zeroDur, &threeSec, &retry)
+		r := wait.PrepareRetrier(&zeroDur, &threeDur, &retry)
 		assert.Equal(t, 3*time.Second, r.GracePeriod)
 	})
 
 	t.Run("default grace period", func(t *testing.T) {
-		r := wait.PrepareRetrier(&fiveSec, nilDur, &retry)
+		r := wait.PrepareRetrier(&fiveDur, nilDur, &retry)
 		assert.Equal(t, wait.DefaultGracePeriod, r.GracePeriod)
 	})
 }
