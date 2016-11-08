@@ -79,6 +79,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw := &network.Network{Name: nwName, State: "present"}
 			c := &mockClient{}
 			nw.SetClient(c)
+			c.On("ListNetworks").Return(nil, nil)
 			c.On("FindNetwork", nwName).Return(nil, nil)
 
 			status, err := nw.Check(context.Background(), fakerenderer.New())
@@ -92,6 +93,7 @@ func TestNetworkCheck(t *testing.T) {
 			nw := &network.Network{Name: nwName, State: "present"}
 			c := &mockClient{}
 			nw.SetClient(c)
+			c.On("ListNetworks").Return(nil, nil)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
 			status, err := nw.Check(context.Background(), fakerenderer.New())
@@ -99,6 +101,32 @@ func TestNetworkCheck(t *testing.T) {
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
 			comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+		})
+
+		t.Run("gateway conflicts", func(t *testing.T) {
+			nw := &network.Network{
+				Name:  nwName,
+				State: "present",
+				IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				},
+			}
+			c := &mockClient{}
+			nw.SetClient(c)
+			c.On("ListNetworks").Return([]dc.Network{
+				dc.Network{ID: "123", IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				}},
+			}, nil)
+			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
+
+			status, err := nw.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		})
 
 		t.Run("network exists, force: true", func(t *testing.T) {
@@ -112,6 +140,7 @@ func TestNetworkCheck(t *testing.T) {
 				c := &mockClient{}
 				nw.SetClient(c)
 				c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -134,6 +163,7 @@ func TestNetworkCheck(t *testing.T) {
 					Name:   nwName,
 					Driver: network.DefaultDriver,
 				}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -156,6 +186,7 @@ func TestNetworkCheck(t *testing.T) {
 					Name:    nwName,
 					Options: nil,
 				}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -182,6 +213,7 @@ func TestNetworkCheck(t *testing.T) {
 				c.On("FindNetwork", nwName).Return(&dc.Network{
 					Name: nwName,
 				}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -204,6 +236,7 @@ func TestNetworkCheck(t *testing.T) {
 					Name:     nwName,
 					Internal: false,
 				}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -226,6 +259,7 @@ func TestNetworkCheck(t *testing.T) {
 					Name:       nwName,
 					EnableIPv6: false,
 				}, nil)
+				c.On("ListNetworks").Return(nil, nil)
 
 				status, err := nw.Check(context.Background(), fakerenderer.New())
 				require.NoError(t, err)
@@ -380,6 +414,15 @@ func TestNetworkApply(t *testing.T) {
 
 type mockClient struct {
 	mock.Mock
+}
+
+func (m *mockClient) ListNetworks() ([]dc.Network, error) {
+	args := m.Called()
+	ret := args.Get(0)
+	if ret == nil {
+		return nil, args.Error(1)
+	}
+	return ret.([]dc.Network), args.Error(1)
 }
 
 func (m *mockClient) FindNetwork(name string) (*dc.Network, error) {

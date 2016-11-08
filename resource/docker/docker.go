@@ -48,6 +48,7 @@ type Client struct {
 
 // NetworkClient manage Docker networks
 type NetworkClient interface {
+	ListNetworks() ([]dc.Network, error)
 	FindNetwork(string) (*dc.Network, error)
 	CreateNetwork(dc.CreateNetworkOptions) (*dc.Network, error)
 	RemoveNetwork(string) error
@@ -298,6 +299,11 @@ func (c *Client) FindNetwork(name string) (*dc.Network, error) {
 	}
 
 	return nil, nil
+}
+
+// ListNetworks returns the docker networks
+func (c *Client) ListNetworks() ([]dc.Network, error) {
+	return c.Client.ListNetworks()
 }
 
 // CreateNetwork creates a docker network
