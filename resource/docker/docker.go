@@ -30,6 +30,7 @@ type APIClient interface {
 	FindContainer(string) (*dc.Container, error)
 	CreateContainer(dc.CreateContainerOptions) (*dc.Container, error)
 	StartContainer(string, string) error
+	ConnectNetwork(string, *dc.Container) error
 }
 
 // VolumeClient manages Docker volumes
@@ -43,6 +44,14 @@ type VolumeClient interface {
 type Client struct {
 	*dc.Client
 	PullInactivityTimeout time.Duration
+}
+
+// NetworkClient manage Docker networks
+type NetworkClient interface {
+	ListNetworks() ([]dc.Network, error)
+	FindNetwork(string) (*dc.Network, error)
+	CreateNetwork(dc.CreateNetworkOptions) (*dc.Network, error)
+	RemoveNetwork(string) error
 }
 
 // NewDockerClient returns a docker client with the default configuration
@@ -256,4 +265,76 @@ func (c *Client) FindVolume(name string) (*dc.Volume, error) {
 		return nil, errors.Wrap(err, "failed to inspect volume")
 	}
 	return volume, nil
+}
+
+// ConnectNetwork connects the container to a network
+func (c *Client) ConnectNetwork(name string, container *dc.Container) error {
+	log.WithField("module", "docker").WithFields(
+		log.Fields{"name": container.Name, "network": name, "id": container.ID},
+	).Debug("connecting to network")
+
+	err := c.Client.ConnectNetwork(name, dc.NetworkConnectionOptions{Container: container.ID})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to connect container %s (%s) to network %s", container.Name, container.ID, name)
+	}
+
+	return err
+}
+
+// FindNetwork finds the network with the specified name
+func (c *Client) FindNetwork(name string) (*dc.Network, error) {
+	networks, err := c.Client.FilteredListNetworks(dc.NetworkFilterOpts{
+		"type": map[string]bool{"custom": true},
+		"name": map[string]bool{name: true},
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list networks")
+	}
+
+	for _, nw := range networks {
+		if strings.EqualFold(nw.Name, name) {
+			return &nw, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// ListNetworks returns the docker networks
+func (c *Client) ListNetworks() ([]dc.Network, error) {
+	return c.Client.ListNetworks()
+}
+
+// CreateNetwork creates a docker network
+func (c *Client) CreateNetwork(opts dc.CreateNetworkOptions) (*dc.Network, error) {
+	log.WithFields(log.Fields{
+		"module":   "docker",
+		"function": "CreateNetwork",
+	}).Debugf("creating network %s: %+v", opts.Name, opts)
+
+	nw, err := c.Client.CreateNetwork(opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create network")
+	}
+	return nw, err
+}
+
+// RemoveNetwork removes a docker volume
+func (c *Client) RemoveNetwork(name string) error {
+	log.WithFields(log.Fields{
+		"module":   "docker",
+		"function": "RemoveNetwork",
+	}).Debugf("removing network %s", name)
+
+	nw, err := c.FindNetwork(name)
+	if err != nil {
+		return err
+	}
+
+	err = c.Client.RemoveNetwork(nw.ID)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove network")
+	}
+	return nil
 }

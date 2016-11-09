@@ -144,6 +144,7 @@ type fakeAPIClient struct {
 	FindContainerFunc   func(name string) (*dc.Container, error)
 	CreateContainerFunc func(opts dc.CreateContainerOptions) (*dc.Container, error)
 	StartContainerFunc  func(name, id string) error
+	ConnectNetworkFunc  func(name string, container *dc.Container) error
 }
 
 func (f *fakeAPIClient) FindImage(repoTag string) (*dc.Image, error) {
@@ -164,4 +165,8 @@ func (f *fakeAPIClient) CreateContainer(opts dc.CreateContainerOptions) (*dc.Con
 
 func (f *fakeAPIClient) StartContainer(name, id string) error {
 	return f.StartContainerFunc(name, id)
+}
+
+func (f *fakeAPIClient) ConnectNetwork(name string, container *dc.Container) error {
+	return f.ConnectNetworkFunc(name, container)
 }

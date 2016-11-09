@@ -20,10 +20,16 @@ docker.volume "nginx-content" {
   name = "nginx-html"
 }
 
+docker.network "nginx-network" {
+  name  = "nginx-network"
+  state = "present"
+  force = true
+}
+
 docker.container "nginx" {
   name  = "{{param `container`}}"
   image = "{{lookup `docker.image.nginx.Name`}}:{{lookup `docker.image.nginx.Tag`}}"
-  force = "true"
+  force = true
 
   expose = [
     "80",
@@ -31,7 +37,7 @@ docker.container "nginx" {
     "8080",
   ]
 
-  publish_all_ports = "false"
+  publish_all_ports = false
 
   ports = [
     "80",
@@ -44,6 +50,8 @@ docker.container "nginx" {
   env {
     "FOO" = "BAR"
   }
+
+  networks = ["{{lookup `docker.network.nginx-network.name`}}"]
 
   dns = ["8.8.8.8", "8.8.4.4"]
 }
