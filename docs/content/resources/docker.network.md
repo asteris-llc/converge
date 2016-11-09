@@ -1,7 +1,7 @@
 ---
 title: "docker.network"
 slug: "docker-network"
-date: "2016-11-04T08:35:32-04:00"
+date: "2016-11-09T14:19:17-06:00"
 menu:
   main:
     parent: resources

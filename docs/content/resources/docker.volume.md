@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-10-31T11:55:27-04:00"
+date: "2016-11-09T14:19:17-06:00"
 menu:
   main:
     parent: resources

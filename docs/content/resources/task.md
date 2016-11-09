@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-11-07T13:35:37-06:00"
+date: "2016-11-09T14:19:18-06:00"
 menu:
   main:
     parent: resources
@@ -59,12 +59,12 @@ exit with exit code 0 if the resource does not need to be changed, and
 expectations apply (that is, exit code 0 for success, 1 or above for
 failure.)
 
-- `timeout` (duration)
+- `timeout` (optional duration)
 
   the amount of time the command will wait before halting forcefully.
 
-Acceptable formats are a number in nanoseconds or a duration string. A Duration
-represents the elapsed time between two instants as an int64 nanosecond count.
+Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
 The representation limits the largest representable duration to approximately
 290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
