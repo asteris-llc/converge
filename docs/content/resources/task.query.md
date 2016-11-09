@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-10-04T13:01:49-05:00"
+date: "2016-11-09T14:19:18-06:00"
 menu:
   main:
     parent: resources
@@ -39,8 +39,15 @@ file.content "hostname data" {
 - `exec_flags` (list of strings)
 
 
-- `timeout` (duration string)
+- `timeout` (optional duration)
 
+  
+Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
+"2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 - `dir` (string)
 

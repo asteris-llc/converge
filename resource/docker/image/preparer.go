@@ -35,32 +35,18 @@ type Preparer struct {
 	Tag string `hcl:"tag"`
 
 	// the amount of time to wait after a period of inactivity. The timeout is
-	// reset each time new data arrives. The format is Go's duration string. A
-	// duration string is a possibly signed sequence of decimal numbers, each with
-	// optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
-	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	InactivityTimeout string `hcl:"inactivity_timeout" doc_type:"duration_string"`
+	// reset each time new data arrives.
+	InactivityTimeout time.Duration `hcl:"inactivity_timeout"`
 }
 
 // Prepare a new docker image
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
-	timeout, err := render.Render("inactivity_timeout", p.InactivityTimeout)
-	if err != nil {
-		return nil, err
-	}
-
 	dockerClient, err := docker.NewDockerClient()
 	if err != nil {
 		return nil, err
 	}
 
-	if timeout != "" {
-		duration, err := time.ParseDuration(timeout)
-		if err != nil {
-			return nil, err
-		}
-		dockerClient.PullInactivityTimeout = duration
-	}
+	dockerClient.PullInactivityTimeout = p.InactivityTimeout
 
 	image := &Image{
 		Name: p.Name,
