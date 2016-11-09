@@ -101,7 +101,7 @@ func TestPreparerPrepare(t *testing.T) {
 
 		t.Run("int64", func(t *testing.T) {
 			target := newWithField(t, "duration", 1)
-			assert.Equal(t, time.Duration(1*time.Second), target.Duration)
+			assert.Equal(t, 1*time.Second, target.Duration)
 		})
 
 		t.Run("string", func(t *testing.T) {
