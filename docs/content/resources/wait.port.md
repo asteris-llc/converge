@@ -1,7 +1,7 @@
 ---
 title: "wait.port"
 slug: "wait-port"
-date: "2016-11-07T13:35:43-06:00"
+date: "2016-11-09T14:19:18-06:00"
 menu:
   main:
     parent: resources
@@ -40,8 +40,8 @@ and the specified Port.
   the amount of time to wait in between checks. If the interval is not
 specified, it will default to 5 seconds.
 
-Acceptable formats are a number in nanoseconds or a duration string. A Duration
-represents the elapsed time between two instants as an int64 nanosecond count.
+Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
 The representation limits the largest representable duration to approximately
 290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
@@ -53,8 +53,8 @@ each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 successful check. If no grace period is specified, no grace period will be
 taken into account.
 
-Acceptable formats are a number in nanoseconds or a duration string. A Duration
-represents the elapsed time between two instants as an int64 nanosecond count.
+Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
 The representation limits the largest representable duration to approximately
 290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or

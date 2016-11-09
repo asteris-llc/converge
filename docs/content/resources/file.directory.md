@@ -1,7 +1,7 @@
 ---
 title: "file.directory"
 slug: "file-directory"
-date: "2016-11-07T13:35:31-06:00"
+date: "2016-11-09T14:19:17-06:00"
 menu:
   main:
     parent: resources
