@@ -48,7 +48,7 @@ func TestNetworkCheck(t *testing.T) {
 
 	t.Run("state: absent", func(t *testing.T) {
 		t.Run("network does not exist", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "absent"}
+			nw := &network.Network{Name: nwName, State: network.StateAbsent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
@@ -57,11 +57,11 @@ func TestNetworkCheck(t *testing.T) {
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
-			comparison.AssertDiff(t, status.Diffs(), nwName, "absent", "absent")
+			comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StateAbsent), string(network.StateAbsent))
 		})
 
 		t.Run("network exists", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "absent"}
+			nw := &network.Network{Name: nwName, State: network.StateAbsent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
@@ -70,13 +70,13 @@ func TestNetworkCheck(t *testing.T) {
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
-			comparison.AssertDiff(t, status.Diffs(), nwName, "present", "absent")
+			comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StateAbsent))
 		})
 	})
 
 	t.Run("state: present", func(t *testing.T) {
 		t.Run("network does not exist", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present"}
+			nw := &network.Network{Name: nwName, State: network.StatePresent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("ListNetworks").Return(nil, nil)
@@ -86,11 +86,11 @@ func TestNetworkCheck(t *testing.T) {
 			require.NoError(t, err)
 			assert.True(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
-			comparison.AssertDiff(t, status.Diffs(), nwName, "absent", "present")
+			comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StateAbsent), string(network.StatePresent))
 		})
 
 		t.Run("network exists", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present"}
+			nw := &network.Network{Name: nwName, State: network.StatePresent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("ListNetworks").Return(nil, nil)
@@ -100,13 +100,13 @@ func TestNetworkCheck(t *testing.T) {
 			require.NoError(t, err)
 			assert.False(t, status.HasChanges())
 			assert.Equal(t, 1, len(status.Diffs()))
-			comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+			comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 		})
 
 		t.Run("gateway conflicts", func(t *testing.T) {
 			nw := &network.Network{
 				Name:  nwName,
-				State: "present",
+				State: network.StatePresent,
 				IPAM: dc.IPAMOptions{
 					Config: []dc.IPAMConfig{
 						dc.IPAMConfig{Gateway: "192.168.1.1"},
@@ -133,7 +133,7 @@ func TestNetworkCheck(t *testing.T) {
 			t.Run("labels", func(t *testing.T) {
 				nw := &network.Network{
 					Name:   nwName,
-					State:  "present",
+					State:  network.StatePresent,
 					Labels: map[string]string{"key": "val", "test": "val2"},
 					Force:  true,
 				}
@@ -146,14 +146,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "labels", "", "key=val, test=val2")
 			})
 
 			t.Run("driver", func(t *testing.T) {
 				nw := &network.Network{
 					Name:   nwName,
-					State:  "present",
+					State:  network.StatePresent,
 					Driver: "weave",
 					Force:  true,
 				}
@@ -169,14 +169,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "driver", network.DefaultDriver, "weave")
 			})
 
 			t.Run("options", func(t *testing.T) {
 				nw := &network.Network{
 					Name:    nwName,
-					State:   "present",
+					State:   network.StatePresent,
 					Options: map[string]interface{}{"com.docker.network.bridge.enable_icc": "true"},
 					Force:   true,
 				}
@@ -192,14 +192,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "options", "", "com.docker.network.bridge.enable_icc=true")
 			})
 
 			t.Run("ipam options", func(t *testing.T) {
 				nw := &network.Network{
 					Name:  nwName,
-					State: "present",
+					State: network.StatePresent,
 					IPAM: dc.IPAMOptions{
 						Driver: network.DefaultIPAMDriver,
 						Config: []dc.IPAMConfig{
@@ -219,14 +219,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "ipam_config", "", "subnet: 192.168.129.0/24")
 			})
 
 			t.Run("internal", func(t *testing.T) {
 				nw := &network.Network{
 					Name:     nwName,
-					State:    "present",
+					State:    network.StatePresent,
 					Internal: true,
 					Force:    true,
 				}
@@ -242,14 +242,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "internal", "false", "true")
 			})
 
 			t.Run("ipv6", func(t *testing.T) {
 				nw := &network.Network{
 					Name:  nwName,
-					State: "present",
+					State: network.StatePresent,
 					IPv6:  true,
 					Force: true,
 				}
@@ -265,14 +265,14 @@ func TestNetworkCheck(t *testing.T) {
 				require.NoError(t, err)
 				assert.True(t, status.HasChanges())
 				assert.True(t, len(status.Diffs()) > 1)
-				comparison.AssertDiff(t, status.Diffs(), nwName, "present", "present")
+				comparison.AssertDiff(t, status.Diffs(), nwName, string(network.StatePresent), string(network.StatePresent))
 				comparison.AssertDiff(t, status.Diffs(), "ipv6", "false", "true")
 			})
 		})
 	})
 
 	t.Run("docker api error", func(t *testing.T) {
-		nw := &network.Network{Name: nwName, State: "present"}
+		nw := &network.Network{Name: nwName, State: network.StatePresent}
 		c := &mockClient{}
 		nw.SetClient(c)
 		c.On("FindNetwork", nwName).Return(nil, errors.New("error"))
@@ -303,7 +303,7 @@ func TestNetworkApply(t *testing.T) {
 
 	t.Run("state: present", func(t *testing.T) {
 		t.Run("network does not exist", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present"}
+			nw := &network.Network{Name: nwName, State: network.StatePresent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
@@ -318,7 +318,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("network exists, force: false", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present"}
+			nw := &network.Network{Name: nwName, State: network.StatePresent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
@@ -331,7 +331,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("network exists, force: true", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present", Force: true}
+			nw := &network.Network{Name: nwName, State: network.StatePresent, Force: true}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
@@ -347,7 +347,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("docker create network error", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present"}
+			nw := &network.Network{Name: nwName, State: network.StatePresent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
@@ -360,7 +360,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("docker remove network error", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "present", Force: true}
+			nw := &network.Network{Name: nwName, State: network.StatePresent, Force: true}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName, Driver: "test"}, nil)
@@ -374,7 +374,7 @@ func TestNetworkApply(t *testing.T) {
 
 	t.Run("state: absent", func(t *testing.T) {
 		t.Run("network exists", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "absent"}
+			nw := &network.Network{Name: nwName, State: network.StateAbsent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
@@ -387,7 +387,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("network does not exist", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "absent"}
+			nw := &network.Network{Name: nwName, State: network.StateAbsent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(nil, nil)
@@ -399,7 +399,7 @@ func TestNetworkApply(t *testing.T) {
 		})
 
 		t.Run("docker remove network error", func(t *testing.T) {
-			nw := &network.Network{Name: nwName, State: "absent"}
+			nw := &network.Network{Name: nwName, State: network.StateAbsent}
 			c := &mockClient{}
 			nw.SetClient(c)
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
