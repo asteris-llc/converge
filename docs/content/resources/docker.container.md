@@ -79,6 +79,14 @@ specified, "tcp" is assumed
 
   list of DNS servers for the container to use
 
+- `network_mode` (string)
+
+  the mode of the container network. default: default
+
+- `networks` (list of strings)
+
+  the networks to connect the container to
+
 - `volumes` (list of strings)
 
   bind mounts volumes
