@@ -355,7 +355,8 @@ func (p *Preparer) convertDuration(typ reflect.Type, r Renderer, name string, va
 		if err != nil {
 			return reflect.Zero(typ), errors.Wrapf(err, "could not convert %v to duration", val)
 		}
-		dur := time.Duration(num.Int())
+
+		dur := time.Duration(num.Int() * 1E9)
 		return reflect.ValueOf(dur), nil
 
 	case reflect.String:
