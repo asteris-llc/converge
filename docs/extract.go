@@ -299,7 +299,7 @@ func stringify(node ast.Expr) string {
 		case "resource.Value":
 			return "anything"
 		default:
-			return fmt.Sprintf("%T", n)
+			return selExp
 		}
 
 	default:
