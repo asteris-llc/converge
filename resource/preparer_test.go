@@ -16,7 +16,9 @@ package resource_test
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/helpers/logging"
@@ -87,6 +89,50 @@ func TestPreparerPrepare(t *testing.T) {
 			value := map[interface{}]bool{1: true}
 			target := newWithField(t, "boolmapvalue", value)
 			assert.Equal(t, value, target.BoolMapValue)
+		})
+	})
+
+	// test time.Duration with both int64 and string
+	t.Run("duration", func(t *testing.T) {
+		t.Run("nil", func(t *testing.T) {
+			target := newWithField(t, "duration", nil)
+			assert.Equal(t, time.Duration(0), target.Duration)
+		})
+
+		t.Run("int64", func(t *testing.T) {
+			target := newWithField(t, "duration", 1)
+			assert.Equal(t, 1*time.Second, target.Duration)
+		})
+
+		t.Run("string", func(t *testing.T) {
+			duration, err := time.ParseDuration("1h")
+			require.NoError(t, err)
+			target := newWithField(t, "duration", "1h")
+			assert.Equal(t, duration, target.Duration)
+		})
+
+		t.Run("invalid", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				val := "1"
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"duration": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.EqualError(t, err, fmt.Sprintf("could not convert %s to duration: time: missing unit in duration %s", val, val))
+			})
+
+			t.Run("unknown", func(t *testing.T) {
+				val := 3.2
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"duration": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.EqualError(t, err, fmt.Sprintf("cannot handle duration conversion of %v", reflect.ValueOf(val).Kind()))
+			})
 		})
 	})
 
@@ -267,6 +313,8 @@ type testPreparerTarget struct {
 	Strings        []string               `hcl:"strings"`
 	StringMapKey   map[string]interface{} `hcl:"stringmapkey"`
 	StringMapValue map[interface{}]string `hcl:"stringmapvalue"`
+
+	Duration time.Duration `hcl:"duration"`
 
 	Bool         bool                 `hcl:"bool"`
 	Bools        []bool               `hcl:"bools"`

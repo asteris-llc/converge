@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/arbovm/levenshtein"
@@ -26,6 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
+
+var durationType = reflect.TypeOf(time.Duration(0))
 
 // Preparer wraps and implements resource.Resource in order to deserialize into
 // regular Preparers
@@ -280,35 +283,41 @@ func (p *Preparer) validateValidValues(field reflect.StructField, r Renderer, ba
 
 // convertValue converts and returns the value of an individual element
 func (p *Preparer) convertValue(typ reflect.Type, r Renderer, name string, val interface{}, base int) (out reflect.Value, err error) {
-	switch typ.Kind() {
-	case reflect.Bool:
-		out, err = p.convertBool(r, name, val)
 
-	case reflect.String:
-		out, err = p.convertString(r, name, val)
-
-	case reflect.Interface:
-		out, err = p.convertInterface(typ, r, name, val, base)
-
-	case reflect.Map:
-		out, err = p.convertMap(typ, r, name, val, base)
-
-	case reflect.Slice:
-		out, err = p.convertSlice(typ, r, name, val, base)
-
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
-		out, err = p.convertNumber(typ, r, name, val, base)
-
-	case reflect.Ptr:
-		out, err = p.convertPointer(typ, r, name, val, base)
-
+	switch typ {
+	case durationType:
+		out, err = p.convertDuration(typ, r, name, val, base)
 	default:
-		logrus.WithFields(logrus.Fields{
-			"field": name,
-			"type":  typ.Kind(),
-		}).Warn("could not render field type, using zero value")
+		switch typ.Kind() {
+		case reflect.Bool:
+			out, err = p.convertBool(r, name, val)
 
-		out = reflect.Zero(typ)
+		case reflect.String:
+			out, err = p.convertString(r, name, val)
+
+		case reflect.Interface:
+			out, err = p.convertInterface(typ, r, name, val, base)
+
+		case reflect.Map:
+			out, err = p.convertMap(typ, r, name, val, base)
+
+		case reflect.Slice:
+			out, err = p.convertSlice(typ, r, name, val, base)
+
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
+			out, err = p.convertNumber(typ, r, name, val, base)
+
+		case reflect.Ptr:
+			out, err = p.convertPointer(typ, r, name, val, base)
+
+		default:
+			logrus.WithFields(logrus.Fields{
+				"field": name,
+				"type":  typ.Kind(),
+			}).Warn("could not render field type, using zero value")
+
+			out = reflect.Zero(typ)
+		}
 	}
 
 	if err != nil {
@@ -332,6 +341,34 @@ func (p *Preparer) realias(val reflect.Value, typ reflect.Type) (reflect.Value, 
 	}
 
 	return val, nil
+}
+
+// convertDuration converts a time.Duration
+func (p *Preparer) convertDuration(typ reflect.Type, r Renderer, name string, val interface{}, base int) (reflect.Value, error) {
+	if val == nil {
+		return reflect.Zero(typ), nil
+	}
+
+	switch reflect.ValueOf(val).Kind() {
+	case reflect.Int:
+		num, err := p.convertNumber(typ, r, name, val, base)
+		if err != nil {
+			return reflect.Zero(typ), errors.Wrapf(err, "could not convert %v to duration", val)
+		}
+
+		dur := time.Duration(num.Int() * 1E9)
+		return reflect.ValueOf(dur), nil
+
+	case reflect.String:
+		dur, err := time.ParseDuration(val.(string))
+		if err != nil {
+			return reflect.Zero(typ), errors.Wrapf(err, "could not convert %s to duration", val)
+		}
+		return reflect.ValueOf(dur), nil
+
+	default:
+		return reflect.Zero(typ), fmt.Errorf("cannot handle duration conversion of %v", reflect.ValueOf(val).Kind())
+	}
 }
 
 // convertBool converts a value to bool using the following rules:
