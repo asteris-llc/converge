@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker/container"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -31,29 +32,15 @@ func TestPreparerInterface(t *testing.T) {
 	assert.Implements(t, (*resource.Resource)(nil), new(container.Preparer))
 }
 
-// TestPreparerInvalidStatus tests preparer validation
-func TestPreparerInvalidStatus(t *testing.T) {
-	t.Run("status is invalid", func(t *testing.T) {
-		p := &container.Preparer{Name: "test", Image: "nginx", Status: "exited"}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		if assert.Error(t, err) {
-			assert.EqualError(t, err, "status must be 'running' or 'created'")
-		}
-	})
+// TestPrepare tests Prepare
+func TestPrepare(t *testing.T) {
+	t.Parallel()
 
-	t.Run("name is invalid", func(t *testing.T) {
-		p := &container.Preparer{Name: "", Image: "nginx"}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		if assert.Error(t, err) {
-			assert.EqualError(t, err, "name must be provided")
-		}
-	})
-
-	t.Run("image is invalid", func(t *testing.T) {
-		p := &container.Preparer{Name: "nginx", Image: ""}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		if assert.Error(t, err) {
-			assert.EqualError(t, err, "image must be provided")
-		}
+	t.Run("default network mode", func(t *testing.T) {
+		p := &container.Preparer{Name: "test", Image: "nginx"}
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		con := task.(*container.Container)
+		assert.Equal(t, container.DefaultNetworkMode, con.NetworkMode)
 	})
 }
