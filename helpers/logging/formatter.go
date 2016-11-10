@@ -158,7 +158,7 @@ func (f *Formatter) message(msg string) string {
 
 func (f *Formatter) kv(key string, value interface{}) string {
 	if !f.fancy {
-		return fmt.Sprintf("%s=%q", key, f.replacer.Replace(fmt.Sprint(value)))
+		return fmt.Sprintf("%s=\"%v\"", key, f.replacer.Replace(fmt.Sprint(value)))
 	}
 
 	var color func(string) string
@@ -168,5 +168,5 @@ func (f *Formatter) kv(key string, value interface{}) string {
 		color = f.colors["blue"]
 	}
 
-	return fmt.Sprintf("%s=%s", color(key), value)
+	return fmt.Sprintf("%s=%v", color(key), value)
 }
