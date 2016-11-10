@@ -20,7 +20,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/asteris-llc/converge/resource/lvm/lv"
-	"github.com/asteris-llc/converge/resource/lvm/testdata"
+	"github.com/asteris-llc/converge/resource/lvm/sampledata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -110,16 +110,16 @@ func TestLVApply(t *testing.T) {
 // it call highlevel functions, and check how it call underlying lvm' commands
 // only simple successful case tracked here, use mock LVM for all high level testing
 func TestCreateLogicalVolume(t *testing.T) {
-	volname := "data" // Match with existing name in testdata.Lvs, so fool engine to find proper paths, etc
+	volname := "data" // Match with existing name in sampledata.Lvs, so fool engine to find proper paths, etc
 	// after creation
 	lvm, me := testhelpers.MakeLvmWithMockExec()
 	me.LvsFirstCall = true
 	me.On("Getuid").Return(0)                  // assume, that we have root
 	me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-	me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
-	me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
-	me.On("Read", "lvs", mock.Anything).Return(testdata.Lvs, nil)
+	me.On("Read", "pvs", mock.Anything).Return(sampledata.Pvs, nil)
+	me.On("Read", "vgs", mock.Anything).Return(sampledata.Vgs, nil)
+	me.On("Read", "lvs", mock.Anything).Return(sampledata.Lvs, nil)
 	me.On("Run", "lvcreate", []string{"-n", volname, "-L", "100G", "vg0"}).Return(nil)
 	me.On("Exists", "/dev/mapper/vg0-data").Return(true, nil)
 
