@@ -155,11 +155,6 @@ func (p *Preparer) getValueForField(r Renderer, field reflect.StructField) (refl
 		return reflect.Zero(field.Type), err
 	}
 
-	// validate that the param is nonempty, if a value is required
-	if err := p.validateNonempty(field, raw); err != nil {
-		return reflect.Zero(field.Type), err
-	}
-
 	// return a default type if nothing is set. No need to do any conversions or
 	// anything in this case, we're simply returning the zero value of the field.
 	if !isSet {
@@ -183,6 +178,11 @@ func (p *Preparer) getValueForField(r Renderer, field reflect.StructField) (refl
 	value, err := p.convertValue(field.Type, r, name, raw, base)
 	if err != nil {
 		return value, err
+	}
+
+	// validate that the param is nonempty, if a value is required
+	if err := p.validateNonempty(field, value); err != nil {
+		return reflect.Zero(field.Type), err
 	}
 
 	// validate results
@@ -227,10 +227,10 @@ func (p *Preparer) validateRequired(field reflect.StructField, val interface{}) 
 	return nil
 }
 
-// validateNonempty detects if the value provided is an empty string, but
-// should be nonempty
-func (p *Preparer) validateNonempty(field reflect.StructField, val interface{}) error {
-	if nonempty, ok := field.Tag.Lookup("nonempty"); ok && nonempty == "true" && val == "" {
+// validateNonempty detects if the value provided is empty (or the zero value of
+// its type), but should be nonempty
+func (p *Preparer) validateNonempty(field reflect.StructField, value reflect.Value) error {
+	if nonempty, ok := field.Tag.Lookup("nonempty"); ok && nonempty == "true" && value.Interface() == reflect.Zero(field.Type).Interface() {
 		return fmt.Errorf("%q must be nonempty", p.getFieldName(field))
 	}
 
