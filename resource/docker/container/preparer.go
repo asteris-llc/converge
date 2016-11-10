@@ -15,9 +15,7 @@
 package container
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/asteris-llc/converge/helpers/transform"
 	"github.com/asteris-llc/converge/load/registry"
@@ -32,10 +30,10 @@ import (
 // there is already a Docker daemon running on the system.
 type Preparer struct {
 	// name of the container
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// the image name or ID to use for the container
-	Image string `hcl:"image" required:"true"`
+	Image string `hcl:"image" required:"true" nonempty:"true"`
 
 	// override the container entrypoint
 	Entrypoint []string `hcl:"entrypoint"`
@@ -44,7 +42,7 @@ type Preparer struct {
 	Command []string `hcl:"command"`
 
 	// override the working directory of the container
-	WorkingDir string `hcl:"working_dir"`
+	WorkingDir string `hcl:"working_dir" nonempty:"true"`
 
 	// set environment variables in the container
 	Env map[string]string `hcl:"env"`
@@ -105,6 +103,10 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		return nil, err
 	}
 
+	if p.NetworkMode == "" {
+		p.NetworkMode = DefaultNetworkMode
+	}
+
 	container := &Container{
 		Force:           p.Force,
 		Name:            p.Name,
@@ -125,26 +127,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		VolumesFrom:     p.VolumesFrom,
 	}
 	container.SetClient(dockerClient)
-	return container, validateContainer(container)
-}
-
-func validateContainer(container *Container) error {
-	if container.Name == "" {
-		return errors.New("name must be provided")
-	}
-	if container.Image == "" {
-		return errors.New("image must be provided")
-	}
-	if container.CStatus != "" {
-		if !strings.EqualFold(container.CStatus, containerStatusRunning) &&
-			!strings.EqualFold(container.CStatus, containerStatusCreated) {
-			return errors.New("status must be 'running' or 'created'")
-		}
-	}
-	if container.NetworkMode == "" {
-		container.NetworkMode = DefaultNetworkMode
-	}
-	return nil
+	return container, nil
 }
 
 func init() {
