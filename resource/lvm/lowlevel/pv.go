@@ -34,7 +34,7 @@ func (lvm *realLVM) QueryPhysicalVolumes() (map[string]*PhysicalVolume, error) {
 	}
 	for _, values := range pvs {
 		pv := &PhysicalVolume{}
-		if err := lvm.parse(values, pv); err != nil {
+		if err = lvm.parse(values, pv); err != nil {
 			return nil, err
 		}
 		if strings.HasPrefix(pv.Name, "/dev/dm-") {

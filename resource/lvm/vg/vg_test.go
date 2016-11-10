@@ -19,7 +19,7 @@ import (
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
-	"github.com/asteris-llc/converge/resource/lvm/testdata"
+	"github.com/asteris-llc/converge/resource/lvm/sampledata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/asteris-llc/converge/resource/lvm/vg"
 	"github.com/stretchr/testify/assert"
@@ -227,8 +227,8 @@ func TestCreateVolume(t *testing.T) {
 		me.On("Getuid").Return(0)                  // assume, that we have root
 		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-		me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
-		me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
+		me.On("Read", "pvs", mock.Anything).Return(sampledata.Pvs, nil)
+		me.On("Read", "vgs", mock.Anything).Return(sampledata.Vgs, nil)
 
 		fr := fakerenderer.New()
 
@@ -243,8 +243,8 @@ func TestCreateVolume(t *testing.T) {
 		me.On("Getuid").Return(0)                  // assume, that we have root
 		me.On("Lookup", mock.Anything).Return(nil) // assume, that all tools are here
 
-		me.On("Read", "pvs", mock.Anything).Return(testdata.Pvs, nil)
-		me.On("Read", "vgs", mock.Anything).Return(testdata.Vgs, nil)
+		me.On("Read", "pvs", mock.Anything).Return(sampledata.Pvs, nil)
+		me.On("Read", "vgs", mock.Anything).Return(sampledata.Vgs, nil)
 
 		fr := fakerenderer.New()
 

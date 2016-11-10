@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/asteris-llc/converge/resource/lvm/testdata"
+	"github.com/asteris-llc/converge/resource/lvm/sampledata"
 	"github.com/asteris-llc/converge/resource/lvm/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -69,7 +69,7 @@ func TestLVMBlkid(t *testing.T) {
 func TestLVMQuery(t *testing.T) {
 	t.Run("physical volumes", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
-		e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(testdata.Pvs, nil)
+		e.On("Read", "pvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "pv_all,vg_name", "--separator", ";"}).Return(sampledata.Pvs, nil)
 		pvs, err := lvm.QueryPhysicalVolumes()
 		require.NoError(t, err)
 		require.Contains(t, pvs, "/dev/md127")
@@ -81,7 +81,7 @@ func TestLVMQuery(t *testing.T) {
 
 	t.Run("volume groups", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
-		e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(testdata.Vgs, nil)
+		e.On("Read", "vgs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";"}).Return(sampledata.Vgs, nil)
 		vgs, err := lvm.QueryVolumeGroups()
 		require.NoError(t, err)
 		require.Contains(t, vgs, "vg0")
@@ -89,7 +89,7 @@ func TestLVMQuery(t *testing.T) {
 
 	t.Run("logical volume", func(t *testing.T) {
 		lvm, e := testhelpers.MakeLvmWithMockExec()
-		e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(testdata.Lvs, nil)
+		e.On("Read", "lvs", []string{"--nameprefix", "--noheadings", "--unquoted", "--units", "b", "-o", "all", "--separator", ";", "vg0"}).Return(sampledata.Lvs, nil)
 		lvs, err := lvm.QueryLogicalVolumes("vg0")
 		require.NoError(t, err)
 		require.Contains(t, lvs, "data")
