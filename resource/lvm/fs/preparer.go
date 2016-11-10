@@ -30,17 +30,17 @@ import (
 type Preparer struct {
 	// Device path to be mount
 	// Examples: `/dev/sda1`, `/dev/mapper/vg0-data`
-	Device string `hcl:"device" required:"true"`
+	Device string `hcl:"device" required:"true" nonempty:"true"`
 
 	// Mountpoint where device will be mounted
 	// (should be an existing directory)
 	// Example: /mnt/data
-	Mountpoint string `hcl:"mount" required:"true"`
+	Mountpoint string `hcl:"mount" required:"true" nonempty:"true"`
 
 	// Fstype is filesystem type
 	// (actually any linux filesystem, except `ZFS`)
 	// Example:  `ext4`, `xfs`
-	Fstype string `hcl:"fstype" required:"true"`
+	Fstype string `hcl:"fstype" required:"true" nonempty:"true"`
 
 	// RequiredBy is a list of dependencies, to pass to systemd .mount unit
 	RequiredBy []string `hcl:"requiredBy"`

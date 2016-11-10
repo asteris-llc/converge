@@ -28,7 +28,7 @@ import (
 // from given block devices.
 type Preparer struct {
 	// Name of created volume group
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// Devices is list of entities to include into volume group
 	Devices []string `hcl:"devices"`
