@@ -43,6 +43,9 @@ samples/%.png: samples/% converge
 	@echo === rendering $@ ===
 	./converge graph --local $< | dot -Tpng -o$@
 
+fmt:
+	for dir in $$(find . -name vendor -prune -a -type f -o -name \*.go  -printf "%h\\n" | uniq); do go fmt $$dir/*.go; done
+
 lint:
 	@echo '# golint'
 	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/lint/golint
