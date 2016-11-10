@@ -15,7 +15,6 @@
 package wait
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -33,7 +32,7 @@ type Preparer struct {
 
 	// the script to run to check if a resource is ready. exit with exit code 0 if
 	// the resource is healthy, and 1 (or above) otherwise.
-	Check string `hcl:"check" required:"true"`
+	Check string `hcl:"check" required:"true" nonempty:"true"`
 
 	// flags to pass to the `interpreter` binary to check validity. For
 	// `/bin/sh` this is `-n`.
@@ -67,10 +66,6 @@ type Preparer struct {
 
 // Prepare creates a new wait type
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
-	if p.Check == "" {
-		return nil, errors.New("Check is required and cannot be empty")
-	}
-
 	shPrep := &shell.Preparer{
 		Interpreter: p.Interpreter,
 		Check:       p.Check,

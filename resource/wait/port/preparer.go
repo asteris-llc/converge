@@ -27,7 +27,7 @@ import (
 // Preparer handles wait.query tasks
 type Preparer struct {
 	// a host name or ip address. A TCP connection will be attempted at this host
-	// and the specified Port.
+	// and the specified Port. default: localhost
 	Host string `hcl:"host"`
 
 	// the TCP port to attempt to connect to.
