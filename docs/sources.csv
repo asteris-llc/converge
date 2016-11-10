@@ -5,6 +5,9 @@ docker.network,../resource/docker/network/preparer.go,../samples/dockerNetwork.h
 file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Preparer
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer
+filesystem,../resource/lvm/fs/preparer.go,../samples/lvm.hcl,Preparer
+lvm.volumegroup,../resource/lvm/vg/preparer.go,../samples/lvm.hcl,Preparer
+lvm.logicalvolume,../resource/lvm/lv/preparer.go,../samples/lvm.hcl,Preparer
 module,../resource/module/preparer.go,../samples/sourceFile.hcl,Preparer
 package.rpm,../resource/package/rpm/preparer.go,../samples/rpm.hcl,Preparer
 param,../resource/param/preparer.go,../samples/basic.hcl,Preparer
