@@ -31,11 +31,11 @@ type Preparer struct {
 	GID *uint32 `hcl:"gid"`
 
 	// Name is the group name.
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// NewName is used when modifying a group.
 	// The group Name will be changed to NewName.
-	NewName string `hcl:"new_name"`
+	NewName string `hcl:"new_name" nonempty:"true"`
 
 	// State is whether the group should be present.
 	// The default value is present.
