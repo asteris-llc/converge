@@ -26,10 +26,10 @@ import (
 // Logical volume creation
 type Preparer struct {
 	// Group where volume will be created
-	Group string `hcl:"group" required:"true"`
+	Group string `hcl:"group" required:"true" nonempty:"true"`
 
 	// Name of volume, which will be created
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// Size of volume. Can be relative or absolute.
 	// Relative size set in forms like `100%FREE`
@@ -38,7 +38,7 @@ type Preparer struct {
 	// suffix mean S.I. sizes (power of 10), lower case mean powers of 1024.
 	// Also special suffixes `Ss`, which mean sectors.
 	// Refer to LVM manpages for details.
-	Size string `hcl:"size" required:"true"`
+	Size string `hcl:"size" required:"true" nonempty:"true"`
 }
 
 // Prepare a new task
