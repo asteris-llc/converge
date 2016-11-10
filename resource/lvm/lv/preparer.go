@@ -42,7 +42,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(_ context.Context, render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	size, err := lowlevel.ParseSize(p.Size)
 	if err != nil {
 		return nil, err
