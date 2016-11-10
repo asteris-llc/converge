@@ -28,20 +28,20 @@ import (
 // User renders user data
 type Preparer struct {
 	// Username is the user login name.
-	Username string `hcl:"username" required:"true"`
+	Username string `hcl:"username" required:"true" nonempty:"true"`
 
 	// NewUsername is used when modifying a user.
 	// Username will be changed to NewUsername. No changes to the home directory
 	// name or location of the contents will be made. This can be done using
 	// HomeDir and MoveDir options.
-	NewUsername string `hcl:"new_username"`
+	NewUsername string `hcl:"new_username" nonempty:"true"`
 
 	// UID is the user ID.
 	UID *uint32 `hcl:"uid"`
 
 	// GroupName is the primary group for user and must already exist.
 	// Only one of GID or Groupname may be indicated.
-	GroupName string `hcl:"groupname" mutually_exclusive:"gid,groupname"`
+	GroupName string `hcl:"groupname" mutually_exclusive:"gid,groupname" nonempty:"true"`
 
 	// Gid is the primary group ID for user and must refer to an existing group.
 	// Only one of GID or Groupname may be indicated.
@@ -49,7 +49,7 @@ type Preparer struct {
 
 	// Name is the user description.
 	// This field can be indicated when adding or modifying a user.
-	Name string `hcl:"name"`
+	Name string `hcl:"name" nonempty:"true"`
 
 	// CreateHome when set to true will create the home directory for the user.
 	// The files and directories contained in the skeleton directory (which can be
@@ -60,13 +60,13 @@ type Preparer struct {
 	// directory when adding a user. If not set, the skeleton directory is defined
 	// by the SKEL variable in /etc/default/useradd or, by default, /etc/skel.
 	// SkelDir is only valid is CreatHome is specified.
-	SkelDir string `hcl:"skel_dir"`
+	SkelDir string `hcl:"skel_dir" nonempty:"true"`
 
 	// HomeDir is the name of the user's login directory. If not set, the home
 	// directory is defined by appending the value of Username to the HOME
 	// variable in /etc/default/useradd, resulting in /HOME/Username.
 	// This field can be indicated when adding or modifying a user.
-	HomeDir string `hcl:"home_dir"`
+	HomeDir string `hcl:"home_dir" nonempty:"true"`
 
 	// MoveDir is used to move the contents of HomeDir when modifying a user.
 	// HomeDir must also be indicated if MoveDir is set to true.
