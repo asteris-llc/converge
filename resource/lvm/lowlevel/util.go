@@ -170,7 +170,7 @@ func (lvm *realLVM) CheckFilesystemTools(fstype string) error {
 }
 
 func (lvm *realLVM) WaitForDevice(path string) error {
-	retrier := wait.PrepareRetrier("", "", 0)
+	retrier := wait.PrepareRetrier(nil, nil, nil)
 	ok, err := retrier.RetryUntil(func() (bool, error) {
 		return lvm.backend.Exists(path)
 	})
