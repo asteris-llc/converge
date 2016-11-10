@@ -15,8 +15,6 @@
 package vg
 
 import (
-	"path/filepath"
-
 	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -46,18 +44,7 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(_ context.Context, render resource.Renderer) (resource.Task, error) {
-	// Device paths need to be real devices, not symlinks
-	// (otherwise it breaks on GCE)
-	devices := make([]string, len(p.Devices))
-	for i, dev := range p.Devices {
-		var err error
-		devices[i], err = filepath.EvalSymlinks(dev)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, devices, p.Remove, p.ForceRemove)
+	rvg := NewResourceVG(lowlevel.MakeLvmBackend(), p.Name, p.Devices, p.Remove, p.ForceRemove)
 	return rvg, nil
 }
 

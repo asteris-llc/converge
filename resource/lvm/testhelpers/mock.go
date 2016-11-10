@@ -15,9 +15,10 @@
 package testhelpers
 
 import (
+	"os"
+
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/stretchr/testify/mock"
-	"os"
 )
 
 // MockExecutor is a lowlevel.Exec impleentation for faking system interoperation
@@ -95,4 +96,9 @@ func (mex *MockExecutor) Exists(path string) (bool, error) {
 // Getuid is mock for Getuid()
 func (mex *MockExecutor) Getuid() int {
 	return mex.Called().Int(0)
+}
+
+// EvalSymlinks mocks symlink evaluation
+func (mex *MockExecutor) EvalSymlinks(s string) (string, error) {
+	return s, nil
 }
