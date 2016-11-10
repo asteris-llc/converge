@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -44,6 +45,9 @@ type Exec interface {
 	WriteFile(fn string, c []byte, p os.FileMode) error
 	MkdirAll(path string, perm os.FileMode) error
 	Exists(path string) (bool, error)
+
+	// Local Filesystem Functions
+	EvalSymlinks(string) (string, error)
 }
 
 type osExec struct {
@@ -52,6 +56,10 @@ type osExec struct {
 // MakeOsExec create Exec backend
 func MakeOsExec() Exec {
 	return &osExec{}
+}
+
+func (*osExec) EvalSymlinks(path string) (string, error) {
+	return filepath.EvalSymlinks(path)
 }
 
 func (*osExec) Run(prog string, args []string) error {

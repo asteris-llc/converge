@@ -15,6 +15,8 @@
 package testhelpers
 
 import (
+	"fmt"
+
 	"github.com/asteris-llc/converge/resource/lvm/lowlevel"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,6 +31,12 @@ type FakeLVM struct {
 func MakeFakeLvm() (lowlevel.LVM, *FakeLVM) {
 	lvm := &FakeLVM{}
 	return lvm, lvm
+}
+
+// EvalSymlinks mocks symlink evaluation
+func (*FakeLVM) EvalSymlinks(s string) (string, error) {
+	fmt.Println("calling fakelvm eval symlinks with ", s)
+	return s, nil
 }
 
 // Check is mock for LVM.Check()

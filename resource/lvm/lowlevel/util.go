@@ -16,6 +16,7 @@ package lowlevel
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
@@ -66,28 +67,52 @@ func MakeRealLVM(backend Exec) LVM {
 
 func (lvm *realLVM) CreateVolumeGroup(vg string, devs []string) error {
 	args := []string{vg}
-	args = append(args, devs...)
+	var canonicalDevs []string
+	for _, dev := range devs {
+		canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+		if err != nil {
+			return errors.Wrap(err, "resolving symlink for "+dev)
+		}
+		canonicalDevs = append(canonicalDevs, canonicalDev)
+	}
+	args = append(args, canonicalDevs...)
 	return lvm.backend.Run("vgcreate", args)
 }
 
 func (lvm *realLVM) ExtendVolumeGroup(vg string, dev string) error {
-	return lvm.backend.Run("vgextend", []string{vg, dev})
+	canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+	if err != nil {
+		return err
+	}
+	return lvm.backend.Run("vgextend", []string{vg, canonicalDev})
 }
 
 func (lvm *realLVM) ReduceVolumeGroup(vg string, dev string) error {
-	return lvm.backend.Run("vgreduce", []string{vg, dev})
+	canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+	if err != nil {
+		return err
+	}
+	return lvm.backend.Run("vgreduce", []string{vg, canonicalDev})
 }
 
 func (lvm *realLVM) CreatePhysicalVolume(dev string) error {
-	return lvm.backend.Run("pvcreate", []string{dev})
+	canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+	if err != nil {
+		return err
+	}
+	return lvm.backend.Run("pvcreate", []string{canonicalDev})
 }
 
 func (lvm *realLVM) RemovePhysicalVolume(dev string, force bool) error {
+	canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+	if err != nil {
+		return err
+	}
 	args := []string{}
 	if force {
 		args = append(args, "--force", "--force", "--yes")
 	}
-	args = append(args, dev)
+	args = append(args, canonicalDev)
 	return lvm.backend.Run("pvremove", args)
 }
 
@@ -98,7 +123,11 @@ func (lvm *realLVM) CreateLogicalVolume(group string, volume string, size *LvmSi
 }
 
 func (lvm *realLVM) Mkfs(dev string, fstype string) error {
-	return lvm.backend.Run("mkfs", []string{"-t", fstype, dev})
+	canonicalDev, err := lvm.backend.EvalSymlinks(dev)
+	if err != nil {
+		return err
+	}
+	return lvm.backend.Run("mkfs", []string{"-t", fstype, canonicalDev})
 }
 
 func (lvm *realLVM) Mountpoint(path string) (bool, error) {
@@ -152,4 +181,18 @@ func (lvm *realLVM) WaitForDevice(path string) error {
 		return fmt.Errorf("device path %s not appeared after %s seconds", path, retrier.Duration.String())
 	}
 	return nil
+}
+
+// evalDeviceSymlinks returns the real path of deach device (otherwise it breaks
+// on GCE)
+func evalDeviceSymlinks(devices []string) ([]string, error) {
+	realpaths := make([]string, len(devices))
+	for idx, dev := range devices {
+		realpath, err := filepath.EvalSymlinks(dev)
+		if err != nil {
+			return realpaths, errors.Wrap(err, "unable to resolve path: "+dev)
+		}
+		realpaths[idx] = realpath
+	}
+	return realpaths, nil
 }
