@@ -29,9 +29,9 @@ import (
 // already a Docker daemon running on the system.
 type Preparer struct {
 	// name of the image to pull
-	Name string `hcl:"name"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
-	// tag of the image to pull
+	// tag of the image to pull. default: latest
 	Tag string `hcl:"tag"`
 
 	// the amount of time to wait after a period of inactivity. The timeout is
