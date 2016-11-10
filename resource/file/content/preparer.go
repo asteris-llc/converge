@@ -28,7 +28,7 @@ type Preparer struct {
 	Content string `hcl:"content"`
 
 	// Destination is the location on disk where the content will be rendered.
-	Destination string `hcl:"destination"`
+	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 }
 
 // Prepare a new task
