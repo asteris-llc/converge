@@ -16,7 +16,6 @@ package lowlevel
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/asteris-llc/converge/resource/wait"
 	"github.com/pkg/errors"
@@ -181,18 +180,4 @@ func (lvm *realLVM) WaitForDevice(path string) error {
 		return fmt.Errorf("device path %s not appeared after %s seconds", path, retrier.Duration.String())
 	}
 	return nil
-}
-
-// evalDeviceSymlinks returns the real path of deach device (otherwise it breaks
-// on GCE)
-func evalDeviceSymlinks(devices []string) ([]string, error) {
-	realpaths := make([]string, len(devices))
-	for idx, dev := range devices {
-		realpath, err := filepath.EvalSymlinks(dev)
-		if err != nil {
-			return realpaths, errors.Wrap(err, "unable to resolve path: "+dev)
-		}
-		realpaths[idx] = realpath
-	}
-	return realpaths, nil
 }
