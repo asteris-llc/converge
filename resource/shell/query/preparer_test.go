@@ -22,7 +22,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Preparer_ImplementsResourceInterface(t *testing.T) {
+// TestPreparerImplementsResourceInterface tests that the Preparer interface
+// is properly implemented
+func TestPreparerImplementsResourceInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Resource)(nil), new(query.Preparer))
 }
