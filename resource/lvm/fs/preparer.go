@@ -53,7 +53,7 @@ type Preparer struct {
 }
 
 // Prepare a new task
-func (p *Preparer) Prepare(_ context.Context, render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 
 	m := &Mount{
 		What:       p.Device,
