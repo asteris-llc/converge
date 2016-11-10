@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+CONVERGE_CMD = "../../converge"
+NODE_COUNT = 1
+
+def create_ca
+  puts "Generating certificate authority..."
+  output = `#{CONVERGE_CMD} apply --local converge/local.hcl 2>&1`
+  success = $?.success?
+  if !success
+    puts "failed to generate certificate authority:"
+    puts output
+    exit 1
+  end
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+  # config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ".git/"
+
+  config.vm.define "controller-1" do |controller|
+    create_ca
+    controller.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+    controller.vm.provision :shell, inline: "curl get.converge.sh | bash -"
+    controller.vm.provision :shell, inline: "converge apply --local /vagrant/converge/controller.hcl", privileged: true
+  end
+
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "node-#{i}" do |node|
+      node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+      node.vm.provision :shell, inline: "curl get.converge.sh | bash -"
+      node.vm.provision :shell, inline: "converge apply --local /vagrant/converge/node.hcl", privileged: true
+    end
+  end
+end
