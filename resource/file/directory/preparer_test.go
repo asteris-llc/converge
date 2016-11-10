@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestPreparerInterface tests that the Preparer interface is properly
+// implemented
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
