@@ -286,6 +286,29 @@ func TestPreparerPrepare(t *testing.T) {
 		})
 	})
 
+	// parameters can be required to be nonempty
+	t.Run("nonempty", func(t *testing.T) {
+		t.Run("valid", func(t *testing.T) {
+			prep := &resource.Preparer{
+				Source:      map[string]interface{}{"nonempty": "a"},
+				Destination: new(testNonemptyTarget),
+			}
+
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+
+		t.Run("invalid", func(t *testing.T) {
+			prep := &resource.Preparer{
+				Source:      map[string]interface{}{"nonempty": ""},
+				Destination: new(testNonemptyTarget),
+			}
+
+			_, err := prep.Prepare(context.Background(), fakerenderer.New())
+			assert.EqualError(t, err, `"nonempty" must be nonempty`)
+		})
+	})
+
 	// two parameters can also be mutually exclusive
 	t.Run("mutually_exclusive", func(t *testing.T) {
 		t.Run("invalid", func(t *testing.T) {
@@ -368,6 +391,20 @@ func (tpt *testRequiredTarget) Check(context.Context, resource.Renderer) (resour
 	return nil, nil
 }
 func (tpt *testRequiredTarget) Apply(context.Context) (resource.TaskStatus, error) { return nil, nil }
+
+// testNonemptyTarget tests nonempty fields. Those are invalid when empty, so
+// we've got to include it separately
+type testNonemptyTarget struct {
+	Nonempty string `hcl:"nonempty" nonempty:"true"`
+}
+
+func (tpt *testNonemptyTarget) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
+	return tpt, nil
+}
+func (tpt *testNonemptyTarget) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	return nil, nil
+}
+func (tpt *testNonemptyTarget) Apply(context.Context) (resource.TaskStatus, error) { return nil, nil }
 
 // testMutuallyExclusiveTarget tests mutually_exclusive fields. Those are
 // invalid when empty, so we've got to include it separately
