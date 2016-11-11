@@ -1,5 +1,9 @@
 param "etcd-initial-cluster" {
-  # default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{lookup `task.query.internal-ip.status.stdout`}}:2380 "
+  default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{lookup `task.query.internal-ip.status.stdout`}}:2380"
+}
+
+param "etcd-data-dir" {
+  default = "/var/lib/etcd"
 }
 
 param "ssl-directory" {
@@ -14,13 +18,8 @@ task.query "internal-ip" {
   query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
 }
 
-file.directory "etcd-config-dir" {
-  destination = "{{param `ssl-directory`}}"
-  create_all  = true
-}
-
 file.directory "etcd-data-dir" {
-  destination = "/var/lib/etcd"
+  destination = "{{param `etcd-data-dir`}}"
   create_all  = true
 }
 
