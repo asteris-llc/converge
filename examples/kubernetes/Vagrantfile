@@ -2,7 +2,15 @@
 # vi: set ft=ruby :
 
 CONVERGE_CMD = "../../converge"
+CONTROLLER_COUNT = 3
 NODE_COUNT = 1
+
+def etcd_initial_cluster
+  etcd_hosts = (1..CONTROLLER_COUNT).map { |i|
+    "#{controllerHostName(i)}=https://#{controllerIP(i)}:2380"
+  }.join(",")
+  "{\"etcd-initial-cluster\": \"#{etcd_hosts}\"}"
+end
 
 def create_ca
   puts "Generating certificate authority..."
@@ -15,22 +23,59 @@ def create_ca
   end
 end
 
+def controllerHostName(num)
+  "controller-#{num}"
+end
+
+def controllerIP(num)
+  return "172.19.9.#{num+20}"
+end
+
+def nodeIP(num)
+  return "172.19.9.#{num+100}"
+end
+
+$controller_script = <<SCRIPT
+converge apply --local \
+         --paramsJSON='#{etcd_initial_cluster}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/cfssljson.hcl \
+         /vagrant/converge/certs.hcl \
+         /vagrant/converge/etcd-cli.hcl \
+         /vagrant/converge/etcdctl.hcl \
+         /vagrant/converge/etcd.hcl
+SCRIPT
+
+$node_script = <<SCRIPT
+converge apply --local /vagrant/converge/certs.hcl
+SCRIPT
+
+create_ca unless File.exist?("./ssl/ca.tar.gz")
+
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
-  # config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ".git/"
 
-  config.vm.define "controller-1" do |controller|
-    create_ca
-    controller.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
-    controller.vm.provision :shell, inline: "curl get.converge.sh | bash -"
-    controller.vm.provision :shell, inline: "converge apply --local /vagrant/converge/controller.hcl", privileged: true
-  end
+  (1..CONTROLLER_COUNT).each do |i|
+    config.vm.define "controller-#{i}" do |controller|
+      controller.vm.provider "virtualbox" do |v|
+        v.memory = 2048
+        v.cpus = 2
+      end
+      controller.vm.hostname = "controller-#{i}"
+      controller.vm.network :private_network, ip: controllerIP(i)
 
-  (1..NODE_COUNT).each do |i|
-    config.vm.define "node-#{i}" do |node|
-      node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
-      node.vm.provision :shell, inline: "curl get.converge.sh | bash -"
-      node.vm.provision :shell, inline: "converge apply --local /vagrant/converge/node.hcl", privileged: true
+      controller.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+      controller.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
+      controller.vm.provision :shell, inline: $controller_script, privileged: true
     end
   end
+
+  # (1..NODE_COUNT).each do |i|
+  #   config.vm.define "node-#{i}" do |node|
+  #     node.vm.network :private_network, ip: nodeIP(i)
+  #     node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+  #     node.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
+  #     node.vm.provision :shell, inline: $node_script, privileged: true
+  #   end
+  # end
 end
