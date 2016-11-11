@@ -6,10 +6,15 @@ CONTROLLER_COUNT = 3
 NODE_COUNT = 1
 
 def etcd_initial_cluster
-  etcd_hosts = (1..CONTROLLER_COUNT).map { |i|
+  (1..CONTROLLER_COUNT).map { |i|
     "#{controllerHostName(i)}=https://#{controllerIP(i)}:2380"
   }.join(",")
-  "{\"etcd-initial-cluster\": \"#{etcd_hosts}\"}"
+end
+
+def etcd_servers
+  (1..CONTROLLER_COUNT).map { |i|
+    "https://#{controllerIP(i)}:2379"
+  }.join(",")
 end
 
 def create_ca
@@ -37,13 +42,18 @@ end
 
 $controller_script = <<SCRIPT
 converge apply --local \
-         --paramsJSON='#{etcd_initial_cluster}' \
+         --paramsJSON='{"etcd-initial-cluster": "#{etcd_initial_cluster}", "etcd-servers": "#{etcd_servers}"}' \
          /vagrant/converge/cfssl.hcl \
          /vagrant/converge/cfssljson.hcl \
          /vagrant/converge/certs.hcl \
          /vagrant/converge/etcd-cli.hcl \
          /vagrant/converge/etcdctl.hcl \
-         /vagrant/converge/etcd.hcl
+         /vagrant/converge/etcd.hcl \
+         /vagrant/converge/kube-apiserver.hcl \
+         /vagrant/converge/kube-controller-manager.hcl \
+         /vagrant/converge/kube-scheduler.hcl \
+         /vagrant/converge/kubectl.hcl \
+         /vagrant/converge/kubernetes-controller.hcl
 SCRIPT
 
 $node_script = <<SCRIPT
