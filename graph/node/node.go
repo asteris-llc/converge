@@ -14,7 +14,11 @@
 
 package node
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+	"fmt"
+)
 
 // Groupable returns a group
 type Groupable interface {
@@ -88,4 +92,17 @@ func (n *Node) LookupMetadata(key string) (interface{}, bool) {
 	}
 	result, ok := n.metadata[key]
 	return result, ok
+}
+
+// ShowMetadata will print out the existing metadata.  Used for debugging
+func (n *Node) ShowMetadata() string {
+	if n == nil {
+		return "<nil>"
+	}
+	var buffer bytes.Buffer
+	buffer.Write([]byte(fmt.Sprintf("ID:\t%s\nGroup:\t%s\nValue Type:\t%T\nMetadata:\n", n.ID, n.Group, n.value)))
+	for k, v := range n.metadata {
+		buffer.Write([]byte(fmt.Sprintf("\t%s => %v\n", k, v)))
+	}
+	return buffer.String()
 }
