@@ -1,9 +1,18 @@
+param "ssl-directory" {
+  default = "/etc/kubernetes/ssl"
+}
+
 param "csr-file" {
   default = "csr.json"
 }
 
 param "hosts" {
-  default = ["127.0.0.1", "localhost", "{{lookup `task.query.hostname.status.stdout`}}"]
+  default = [
+    "127.0.0.1",
+    "localhost",
+    "{{lookup `task.query.hostname.status.stdout`}}",
+    "{{lookup `task.query.internal-ip.status.stdout`}}"
+  ]
 }
 
 /* assumes the ca files already exist on the host (populated by an out-of-band
@@ -17,8 +26,12 @@ task.query "hostname" {
   query = "hostname | xargs echo -n"
 }
 
+task.query "internal-ip" {
+  query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
+}
+
 file.directory "ssl" {
-  destination = "/etc/kubernetes/ssl"
+  destination = "{{param `ssl-directory`}}"
   create_all  = true
 }
 
@@ -54,11 +67,6 @@ cfssl gencert \
 EOF
 
   dir = "{{lookup `file.directory.ssl.destination`}}"
-}
-
-task.query "set-owner" {
-  query   = "chown root:root {{lookup `file.directory.ssl.destination`}}/*"
-  depends = ["task.generate-cert"]
 }
 
 task "delete-ca-archive" {
