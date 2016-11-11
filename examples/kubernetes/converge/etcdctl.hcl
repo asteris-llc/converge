@@ -15,6 +15,6 @@ module "install-binary.hcl" "etcdctl" {
     working_dir   = "/tmp/"
     extract       = "tar.gz"
     extracted_dir = "etcd-v3.0.14-linux-amd64/"
-    cleanup       = "true"
+    cleanup       = true
   }
 }

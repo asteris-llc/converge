@@ -15,7 +15,9 @@ param "download_name" {
 
 param "destination" {}
 
-param "working_dir" {}
+param "working_dir" {
+  default = "/tmp/"
+}
 
 param "extract" {
   default = ""
@@ -26,7 +28,7 @@ param "extracted_dir" {
 }
 
 param "cleanup" {
-  default = "true"
+  default = true
 }
 
 task "download" {
@@ -76,17 +78,17 @@ switch "cleanup" {
   }
 }
 
-# switch "cleanup-extracted" {
-#   case "and (({{param `cleanup`}}) (ne `./` `{{param `extracted_dir`}}`))" "cleanup-extracted" {
-#     task.query "debug" {
-#       query = "echo {{param `extracted_dir`}} > /tmp/debug.txt"
-#     }
+switch "cleanup-extracted" {
+  case "and ({{param `cleanup`}}) (ne `./` `{{param `extracted_dir`}}`)" "cleanup-extracted" {
+    task.query "debug" {
+      query = "echo {{param `extracted_dir`}} > /tmp/debug.txt"
+    }
 
-#     task "remove-extracted-dir" {
-#       check = "test ! -d {{param `extracted_dir`}}"
-#       apply = "rm -rf {{param `extracted_dir`}}"
-#       dir = "{{param `working_dir`}}"
-#       depends = ["task.copy-binary"]
-#     }
-#   }
-# }
+    task "remove-extracted-dir" {
+      check = "test ! -d {{param `extracted_dir`}}"
+      apply = "rm -rf {{param `extracted_dir`}}"
+      dir = "{{param `working_dir`}}"
+      depends = ["task.copy-binary"]
+    }
+  }
+}
