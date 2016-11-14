@@ -145,13 +145,6 @@ out!
 
 ## Grouping
 
-{{< note title="Conditionals" >}}
-There is a known bug in converge 0.3.0 that prevents groups from functioning
-inside of conditional statements.  If you try to add a `group` to a statement
-inside of a `case` or `default` you may experience random failures in during
-execution.  A fix for this limitation is planned for 0.4.0
-{{< /note >}}
-
 There can be some scenarios where a group of tasks are not explicitly dependent
 on each other but also cannot be run in parallel. A good example of this is
 package management tools like
