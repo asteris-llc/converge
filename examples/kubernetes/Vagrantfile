@@ -45,6 +45,7 @@ converge apply --local \
          --paramsJSON='{"etcd-initial-cluster": "#{etcd_initial_cluster}", "etcd-servers": "#{etcd_servers}"}' \
          /vagrant/converge/cfssl.hcl \
          /vagrant/converge/certs.hcl \
+         /vagrant/converge/docker.hcl \
          /vagrant/converge/etcd.hcl \
          /vagrant/converge/kube-apiserver.hcl \
          /vagrant/converge/kube-controller-manager.hcl \
