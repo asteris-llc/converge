@@ -83,7 +83,6 @@ func (g *pipelineGen) MaybeResolveConditional(_ context.Context, idi interface{}
 			return "", err
 		}
 		result, err := r.Render(id, toRender)
-		fmt.Println("predicate renderer returned: ", result, err)
 		return result, err
 	})
 	if ok, err := conditional.ShouldEvaluate(g.Graph, meta); err != nil {
