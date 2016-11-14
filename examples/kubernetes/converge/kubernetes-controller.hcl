@@ -37,17 +37,17 @@ file.directory "kubernetes-config-dir" {
 
 file.content "token-csv" {
   destination = "{{lookup `file.directory.kubernetes-config-dir.destination`}}token.csv"
-  content = "{{param `token-csv`}}"
+  content     = "{{param `token-csv`}}"
 }
 
 file.content "authorization-policy" {
   destination = "{{lookup `file.directory.kubernetes-config-dir.destination`}}authorization-policy.jsonl"
-  content = "{{param `authorization-policy`}}"
+  content     = "{{param `authorization-policy`}}"
 }
 
 file.content "kube-apiserver-service" {
   destination = "/etc/systemd/system/kube-apiserver.service"
-  content = "{{param `kube-apiserver-service`}}"
+  content     = "{{param `kube-apiserver-service`}}"
 }
 
 task "kube-apiserver-enable" {
@@ -64,7 +64,7 @@ task "kube-apiserver-start" {
 
 file.content "kube-controller-manager-service" {
   destination = "/etc/systemd/system/kube-controller-manager.service"
-  content = "{{param `kube-controller-manager-service`}}"
+  content     = "{{param `kube-controller-manager-service`}}"
 }
 
 task "kube-controller-manager-enable" {
@@ -81,7 +81,7 @@ task "kube-controller-manager-start" {
 
 file.content "kube-scheduler-service" {
   destination = "/etc/systemd/system/kube-scheduler.service"
-  content = "{{param `kube-scheduler-service`}}"
+  content     = "{{param `kube-scheduler-service`}}"
 }
 
 task "kube-scheduler-enable" {
