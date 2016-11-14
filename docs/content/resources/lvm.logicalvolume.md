@@ -1,7 +1,7 @@
 ---
 title: "lvm.logicalvolume"
 slug: "lvm-logicalvolume"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-11-14T11:47:10-06:00"
 menu:
   main:
     parent: resources
