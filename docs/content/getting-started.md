@@ -269,13 +269,13 @@ evaluating multiple branches in a single `switch` statement. The first
 (top-to-bottom) `case` with a true `predicate` is the one that is evalauted.
 {{< /note >}}
 
-*predicate*s are evaluated like other templates in converge, and may reference
-`param`s, and perform `lookup`s on other values in the system.  A *predicate*
-may not reference any of it's *child* resourceses.  The value of the predicate
-is it's truth value:  The strings `t` and `true` (case insensitive) are `true`
-values and will cause the *branch* to be evaluated.  The strings `f` and `false`
-(case insensitive) will cause the *branch* to remain unevaluated.  Any other
-value is an error.
+A predicate is a special kind of go text template.  It's evaluated in two
+passes. In the first pass `lookups` and `params` are rendered as they would be
+for any other converge string.  In the second pass the rendered string is
+wrapped in `{{` and `}}` and then re-evaluated as a function that should
+evaluate to `true` or `false`.  The two-pass rendering is the reason why you
+are able to use functions like `eq` and `and` without quoting them in
+predicates.
 
 ### Reference: Rules of Conditionals
 
@@ -287,7 +287,6 @@ value is an error.
 - branches may not contain `module` references
 - branches may not contain `param`s
 - predicates may reference `param`s switch statement
-- predicates may not call `lookup`
 - child nodes may refrence `param`s and `lookup` resources outside of the
   switch statement or within the same branch
 - no resource may reference anything that is part of a branch that it does not
