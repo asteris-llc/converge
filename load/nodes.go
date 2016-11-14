@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/fetch"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"github.com/asteris-llc/converge/graph/node/conditional"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/keystore"
 	"github.com/asteris-llc/converge/parse"
@@ -134,23 +135,55 @@ func expandSwitchMacro(data []byte, current *source, n *parse.Node, g *graph.Gra
 		return g, err
 	}
 	switchID := graph.ID(current.Parent, switchNode.ID())
-	g.Add(node.New(switchID, switchNode))
+	switchGrNode := node.New(switchID, switchNode)
+	g.Add(switchGrNode)
 	g.ConnectParent(current.Parent, switchID)
-	for _, branch := range switchObj.Branches {
+
+	switchGrNode.AddMetadata(conditional.MetaSwitchName, switchObj.Name)
+	switchGrNode.AddMetadata(conditional.MetaType, conditional.NodeCatSwitch)
+
+	var peerList []string
+	for _, branch := range switchObj.BranchNames() {
+		peerList = append(peerList, "macro.case."+branch)
+	}
+
+	for idx, branch := range switchObj.Branches {
 		branchNode, err := branch.GenerateNode()
 		if err != nil {
 			return g, err
 		}
+
 		branchID := graph.ID(switchID, branchNode.ID())
-		g.Add(node.New(branchID, branchNode))
+		branchGrNode := node.New(branchID, branchNode)
+		g.Add(branchGrNode)
 		g.ConnectParent(switchID, branchID)
+
+		branchGrNode.AddMetadata(conditional.MetaSwitchName, switchObj.Name)
+		branchGrNode.AddMetadata(conditional.MetaUnrenderedPredicate, branch.Predicate)
+		branchGrNode.AddMetadata(conditional.MetaBranchName, branch.Name)
+		branchGrNode.AddMetadata(conditional.MetaPeers, peerList)
+		branchGrNode.AddMetadata(conditional.MetaType, conditional.NodeCatBranch)
+
 		for _, innerNode := range branch.InnerNodes {
 			if err := validateInnerNode(innerNode); err != nil {
 				return g, err
 			}
 			innerID := graph.ID(branchID, innerNode.ID())
-			g.Add(node.New(innerID, innerNode))
+
+			condNode := node.New(innerID, innerNode)
+			condNode.AddMetadata(conditional.MetaSwitchName, switchObj.Name)
+			condNode.AddMetadata(conditional.MetaUnrenderedPredicate, branch.Predicate)
+			condNode.AddMetadata(conditional.MetaBranchName, branch.Name)
+			condNode.AddMetadata(conditional.MetaPeers, peerList)
+			condNode.AddMetadata(conditional.MetaType, conditional.NodeCatResource)
+
+			g.Add(condNode)
 			g.ConnectParent(branchID, innerID)
+		}
+		if idx > 0 {
+			parent, _ := switchObj.Branches[idx-1].GenerateNode()
+
+			g.Connect(branchID, graph.ID(switchID, parent.ID()))
 		}
 	}
 	return g, nil

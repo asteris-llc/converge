@@ -79,8 +79,8 @@ func ResolveDependencies(ctx context.Context, g *graph.Graph) (*graph.Graph, err
 	})
 
 	for group := range groupMap {
-		if g, err := groupDeps(ctx, g, group); err != nil {
-			return g, err
+		if depG, grpErr := groupDeps(ctx, g, group); grpErr != nil {
+			return depG, grpErr
 		}
 	}
 	return g, err
@@ -110,6 +110,17 @@ func getParams(g *graph.Graph, id string, node *parse.Node) (out []string, err e
 	nodeStrings, err = node.GetStrings()
 	if err != nil {
 		return nil, err
+	}
+
+	meta, found := g.Get(id)
+	if !found {
+		return nil, errors.New("error: node is not in the provided graph")
+	}
+
+	if metaIface, ok := meta.LookupMetadata("conditional-predicate-raw"); ok {
+		if str, ok := metaIface.(string); ok {
+			nodeStrings = append(nodeStrings, str)
+		}
 	}
 
 	type stub struct{}
@@ -144,6 +155,18 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 	if err != nil {
 		return nil, err
 	}
+
+	meta, found := g.Get(id)
+	if !found {
+		return nil, errors.New("error: node is not in the provided graph")
+	}
+
+	if metaIface, ok := meta.LookupMetadata("conditional-predicate-raw"); ok {
+		if str, ok := metaIface.(string); ok {
+			nodeStrings = append(nodeStrings, str)
+		}
+	}
+
 	language := extensions.MinimalLanguage()
 	language.On(extensions.RefFuncName, extensions.RememberCalls(&calls, 0))
 	for _, s := range nodeStrings {
@@ -278,10 +301,10 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	for _, meta := range nodes {
 		l := logger.WithField("id", meta.ID)
 		// align all up edges in a single branch
-		g, err := alignEdgesInGroup(ctx, g, meta.ID, group)
+		alignG, err := alignEdgesInGroup(ctx, g, meta.ID, group)
 		if err != nil {
 			l.Error(err)
-			return g, errors.Wrap(err, "failed to align edges in branch")
+			return alignG, errors.Wrap(err, "failed to align edges in branch")
 		}
 	}
 

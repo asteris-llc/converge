@@ -16,44 +16,25 @@ package control
 
 import (
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
-// ConditionalTask represents a task that may or may not be executed. It's
-// evaluation is determined by it's parent control-structure predicate.
-type ConditionalTask struct {
-	resource.Task
-	Name       string
-	controller EvaluationController
+// NopTask does nothing, verbosely
+type NopTask struct {
+	resource.Status
+	Predicate string
 }
 
-// EvaluationController represents an interface for a thing that can control
-// conditional execution (e.g. a CasePreparer or CaseTask)
-type EvaluationController interface {
-	ShouldEvaluate() bool
+// Check does nothing, verbosely
+func (n *NopTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	n.AddMessage("Skipping check; short-circuited in conditional")
+	n.AddMessage("predicate: " + n.Predicate)
+	return n, nil
 }
 
-// SetExecutionController sets the private execution controller
-func (c *ConditionalTask) SetExecutionController(ctrl EvaluationController) {
-	c.controller = ctrl
-}
-
-// Apply will conditionally apply a task
-func (c *ConditionalTask) Apply(ctx context.Context) (resource.TaskStatus, error) {
-	if c.controller.ShouldEvaluate() {
-		return c.Task.Apply(ctx)
-	}
-	return &resource.Status{}, nil
-}
-
-// Check will conditionally check a task
-func (c *ConditionalTask) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
-	if c == nil {
-		return &resource.Status{}, errors.New("conditional task is nil")
-	}
-	if c.controller.ShouldEvaluate() {
-		return c.Task.Check(ctx, r)
-	}
-	return &resource.Status{}, nil
+// Apply does nothing, verbosely
+func (n *NopTask) Apply(context.Context) (resource.TaskStatus, error) {
+	n.AddMessage("Skipping application; short-circuited in conditional")
+	n.AddMessage("predicate: " + n.Predicate)
+	return n, nil
 }
