@@ -52,7 +52,7 @@ func TestLogging(t *testing.T) {
 	log := logrus.New()
 
 	t.Run("standard error", func(t *testing.T) {
-		testErr := errors.New(fmt.Sprintf("test error=%v", 100))
+		testErr := fmt.Errorf("test error=%v", 100)
 		entry := log.WithError(testErr)
 		data, err := f.Format(entry)
 		assert.Equal(t, string(data[:]), "timestamp=\"0001-01-01T00:00:00Z\" level=\"UNKNOWN\" msg=\"\" error=\"test error=100\"\n")
@@ -60,7 +60,7 @@ func TestLogging(t *testing.T) {
 	})
 
 	t.Run("wrapped error", func(t *testing.T) {
-		testErr := errors.Wrapf(errors.New(fmt.Sprintf("test error=%v", 100)), "wrap")
+		testErr := errors.Wrapf(fmt.Errorf("test error=%v", 100), "wrap")
 		entry := log.WithError(testErr)
 		data, err := f.Format(entry)
 		assert.Equal(t, string(data[:]), "timestamp=\"0001-01-01T00:00:00Z\" level=\"UNKNOWN\" msg=\"\" error=\"wrap: test error=100\"\n")
