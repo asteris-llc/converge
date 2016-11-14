@@ -1,3 +1,11 @@
+param "etcd-url" {
+  default = "https://github.com/coreos/etcd/releases/download/v3.0.14/etcd-v3.0.14-linux-amd64.tar.gz"
+}
+
+param "etcd-destination" {
+  default = "/usr/local/bin/"
+}
+
 param "etcd-initial-cluster" {
   default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{lookup `task.query.internal-ip.status.stdout`}}:2380"
 }
@@ -16,6 +24,33 @@ task.query "hostname" {
 
 task.query "internal-ip" {
   query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
+}
+
+module "install-binary.hcl" "etcd" {
+  params {
+    url           = "{{param `etcd-url`}}"
+    name          = "etcd"
+    download_name = "etcd.tar.gz"
+    destination   = "{{param `etcd-destination`}}"
+    working_dir   = "/tmp/"
+    extract       = "tar.gz"
+    extracted_dir = "etcd-v3.0.14-linux-amd64/"
+    cleanup       = false
+  }
+}
+
+module "install-binary.hcl" "etcdctl" {
+  params {
+    url           = "{{param `etcd-url`}}"
+    name          = "etcdctl"
+    download_name = "etcd.tar.gz"
+    destination   = "{{param `etcd-destination`}}"
+    working_dir   = "/tmp/"
+    extract       = "tar.gz"
+    extracted_dir = "etcd-v3.0.14-linux-amd64/"
+    cleanup       = true
+  }
+  depends = ["module.etcd"]
 }
 
 file.directory "etcd-data-dir" {
