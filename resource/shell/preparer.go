@@ -57,12 +57,12 @@ type Preparer struct {
 	// the script to run to check if a resource needs to be changed. It should
 	// exit with exit code 0 if the resource does not need to be changed, and
 	// 1 (or above) otherwise.
-	Check string `hcl:"check"`
+	Check string `hcl:"check" nonempty:"true"`
 
 	// the script to run to apply the resource. Normal shell exit code
 	// expectations apply (that is, exit code 0 for success, 1 or above for
 	// failure.)
-	Apply string `hcl:"apply"`
+	Apply string `hcl:"apply" nonempty:"true"`
 
 	// the amount of time the command will wait before halting forcefully.
 	Timeout *time.Duration `hcl:"timeout"`

@@ -15,8 +15,6 @@
 package network
 
 import (
-	"errors"
-
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/docker"
@@ -30,7 +28,7 @@ import (
 // already a Docker daemon running on the system.
 type Preparer struct {
 	// name of the network
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// network driver. default: bridge
 	Driver string `hcl:"driver"`
@@ -73,10 +71,6 @@ type Preparer struct {
 
 // Prepare a docker network
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
-	if p.Name == "" {
-		return nil, errors.New("name must be provided")
-	}
-
 	if p.Driver == "" {
 		p.Driver = DefaultDriver
 	}

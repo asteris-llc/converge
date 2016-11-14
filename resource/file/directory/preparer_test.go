@@ -12,35 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package container_test
+package directory_test
 
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/docker/container"
+	"github.com/asteris-llc/converge/resource/file/directory"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface tests that the Preparer interface is properly
 // implemented
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
-	assert.Implements(t, (*resource.Resource)(nil), new(container.Preparer))
-}
 
-// TestPrepare tests Prepare
-func TestPrepare(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default network mode", func(t *testing.T) {
-		p := &container.Preparer{Name: "test", Image: "nginx"}
-		task, err := p.Prepare(context.Background(), fakerenderer.New())
-		require.NoError(t, err)
-		con := task.(*container.Container)
-		assert.Equal(t, container.DefaultNetworkMode, con.NetworkMode)
-	})
+	assert.Implements(t, (*resource.Resource)(nil), new(directory.Preparer))
 }

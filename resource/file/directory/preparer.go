@@ -25,7 +25,7 @@ import (
 // Directory makes sure a directory is present on disk
 type Preparer struct {
 	// the location on disk to make the directory
-	Destination string `hcl:"destination"`
+	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
 	// whether or not to create all parent directories on the way up
 	CreateAll bool `hcl:"create_all"`

@@ -64,13 +64,6 @@ func TestPreparerCreatesPackage(t *testing.T) {
 		assert.Equal(t, "present", string(asAPT.State))
 	})
 
-	t.Run("when-name-null", func(t *testing.T) {
-		p := &apt.Preparer{Name: "", State: "present"}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		require.Error(t, err)
-		assert.EqualError(t, err, "package name cannot be empty")
-	})
-
 	t.Run("when-name-space", func(t *testing.T) {
 		p := &apt.Preparer{Name: " ", State: "present"}
 		_, err := p.Prepare(context.Background(), fakerenderer.New())

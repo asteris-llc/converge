@@ -16,7 +16,6 @@ package apt
 
 import (
 	"errors"
-
 	"strings"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -32,7 +31,7 @@ import (
 // permissions to install, remove, and query packages.
 type Preparer struct {
 	// Name of the package or package group.
-	Name string `hcl:"name" required:"true" `
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// State of the package. Present means the package will be installed if
 	// missing; Absent means the package will be uninstalled if present.

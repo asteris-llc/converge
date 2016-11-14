@@ -34,14 +34,6 @@ func TestPreparerInterface(t *testing.T) {
 
 // TestPreparerPrepare tests the Prepare function
 func TestPreparerPrepare(t *testing.T) {
-	t.Run("name is required", func(t *testing.T) {
-		p := &network.Preparer{Name: ""}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		if assert.Error(t, err) {
-			assert.EqualError(t, err, "name must be provided")
-		}
-	})
-
 	t.Run("state defaults to present", func(t *testing.T) {
 		p := &network.Preparer{Name: "test-network"}
 		task, err := p.Prepare(context.Background(), fakerenderer.New())
@@ -58,5 +50,14 @@ func TestPreparerPrepare(t *testing.T) {
 		require.IsType(t, (*network.Network)(nil), task)
 		nw := task.(*network.Network)
 		assert.Equal(t, network.DefaultDriver, nw.Driver)
+	})
+
+	t.Run("ipamdriver defaults to default", func(t *testing.T) {
+		p := &network.Preparer{Name: "test-network"}
+		task, err := p.Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		require.IsType(t, (*network.Network)(nil), task)
+		nw := task.(*network.Network)
+		assert.Equal(t, network.DefaultIPAMDriver, nw.IPAM.Driver)
 	})
 }

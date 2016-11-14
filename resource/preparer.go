@@ -180,6 +180,11 @@ func (p *Preparer) getValueForField(r Renderer, field reflect.StructField) (refl
 		return value, err
 	}
 
+	// validate that the param is nonempty, if a value is required
+	if err := p.validateNonempty(field, value); err != nil {
+		return reflect.Zero(field.Type), err
+	}
+
 	// validate results
 	if err := p.validateValidValues(field, r, base, value); err != nil {
 		return reflect.Zero(field.Type), err
@@ -217,6 +222,16 @@ func (p *Preparer) getBase(field reflect.StructField) (int, error) {
 func (p *Preparer) validateRequired(field reflect.StructField, val interface{}) error {
 	if required, ok := field.Tag.Lookup("required"); ok && required == "true" && val == nil {
 		return fmt.Errorf("%q is required", p.getFieldName(field))
+	}
+
+	return nil
+}
+
+// validateNonempty detects if the value provided is empty (or the zero value of
+// its type), but should be nonempty
+func (p *Preparer) validateNonempty(field reflect.StructField, value reflect.Value) error {
+	if nonempty, ok := field.Tag.Lookup("nonempty"); ok && nonempty == "true" && value.Interface() == reflect.Zero(field.Type).Interface() {
+		return fmt.Errorf("%q must be nonempty", p.getFieldName(field))
 	}
 
 	return nil
