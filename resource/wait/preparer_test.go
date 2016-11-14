@@ -39,12 +39,6 @@ func TestPreparerPrepare(t *testing.T) {
 	t.Parallel()
 	defer logging.HideLogs(t)()
 
-	t.Run("invalid check", func(t *testing.T) {
-		p := &wait.Preparer{Check: ""}
-		_, err := p.Prepare(context.Background(), fakerenderer.New())
-		assert.Error(t, err)
-	})
-
 	t.Run("initializes task", func(t *testing.T) {
 		var waitTask *wait.Wait
 		p := &wait.Preparer{Check: "test"}

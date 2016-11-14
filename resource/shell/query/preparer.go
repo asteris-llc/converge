@@ -27,7 +27,7 @@ import (
 // Preparer handles querying
 type Preparer struct {
 	Interpreter string            `hcl:"interpreter"`
-	Query       string            `hcl:"query"`
+	Query       string            `hcl:"query" nonempty:"true"`
 	CheckFlags  []string          `hcl:"check_flags"`
 	ExecFlags   []string          `hcl:"exec_flags"`
 	Timeout     *time.Duration    `hcl:"timeout"`

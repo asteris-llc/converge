@@ -1,7 +1,7 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-11-09T14:19:17-06:00"
+date: "2016-11-14T11:12:02-06:00"
 menu:
   main:
     parent: resources
@@ -36,7 +36,7 @@ file.content "render" {
 
   Content is the file content. This will be rendered as a template.
 
-- `destination` (string)
+- `destination` (required string)
 
   Destination is the location on disk where the content will be rendered.
 

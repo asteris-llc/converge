@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-11-09T14:19:18-06:00"
+date: "2016-11-14T11:12:03-06:00"
 menu:
   main:
     parent: resources

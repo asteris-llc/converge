@@ -27,7 +27,7 @@ import (
 // already a Docker daemon running on the system.
 type Preparer struct {
 	// name of the volume
-	Name string `hcl:"name" required:"true"`
+	Name string `hcl:"name" required:"true" nonempty:"true"`
 
 	// volume driver. default: local
 	Driver string `hcl:"driver" default:"local"`
