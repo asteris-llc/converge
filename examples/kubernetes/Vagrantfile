@@ -44,10 +44,7 @@ $controller_script = <<SCRIPT
 converge apply --local \
          --paramsJSON='{"etcd-initial-cluster": "#{etcd_initial_cluster}", "etcd-servers": "#{etcd_servers}"}' \
          /vagrant/converge/cfssl.hcl \
-         /vagrant/converge/cfssljson.hcl \
          /vagrant/converge/certs.hcl \
-         /vagrant/converge/etcd-cli.hcl \
-         /vagrant/converge/etcdctl.hcl \
          /vagrant/converge/etcd.hcl \
          /vagrant/converge/kube-apiserver.hcl \
          /vagrant/converge/kube-controller-manager.hcl \
