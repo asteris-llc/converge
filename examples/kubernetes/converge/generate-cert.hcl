@@ -11,7 +11,7 @@ param "hosts" {
     "127.0.0.1",
     "localhost",
     "{{lookup `task.query.hostname.status.stdout`}}",
-    "{{lookup `task.query.internal-ip.status.stdout`}}"
+    "{{lookup `task.query.internal-ip.status.stdout`}}",
   ]
 }
 

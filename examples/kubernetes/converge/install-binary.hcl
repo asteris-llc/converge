@@ -85,9 +85,9 @@ switch "cleanup-extracted" {
     }
 
     task "remove-extracted-dir" {
-      check = "test ! -d {{param `extracted_dir`}}"
-      apply = "rm -rf {{param `extracted_dir`}}"
-      dir = "{{param `working_dir`}}"
+      check   = "test ! -d {{param `extracted_dir`}}"
+      apply   = "rm -rf {{param `extracted_dir`}}"
+      dir     = "{{param `working_dir`}}"
       depends = ["task.copy-binary"]
     }
   }

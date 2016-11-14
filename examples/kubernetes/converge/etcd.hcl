@@ -50,6 +50,7 @@ module "install-binary.hcl" "etcdctl" {
     extracted_dir = "etcd-v3.0.14-linux-amd64/"
     cleanup       = true
   }
+
   depends = ["module.etcd"]
 }
 
@@ -60,7 +61,7 @@ file.directory "etcd-data-dir" {
 
 file.content "etcd-service" {
   destination = "/etc/systemd/system/etcd.service"
-  content = "{{param `etcd-service`}}"
+  content     = "{{param `etcd-service`}}"
 }
 
 task "etcd-enable" {
