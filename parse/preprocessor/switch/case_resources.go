@@ -16,40 +16,28 @@ package control
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/asteris-llc/converge/render/extensions"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 // CasePreparer contains generated case macro information
 type CasePreparer struct {
-	Predicate string `hcl:"predicate"`
-	Name      string `hcl:"name"`
+	Name string `hcl:"name"`
 }
 
 // Prepare does stuff
 func (c *CasePreparer) Prepare(ctx context.Context, r resource.Renderer) (resource.Task, error) {
-	predicate, err := r.Render("predicate", c.Predicate)
-	if err != nil {
-		return nil, err
-	}
-
 	return &CaseTask{
-		Predicate: predicate,
-		Name:      c.Name,
+		Name: c.Name,
 	}, nil
 }
 
 // CaseTask represents a task and is used to determine whether a conditional
 // task should evaluate or not
 type CaseTask struct {
-	Predicate string
-	Name      string
-	Status    *bool
-	parent    *SwitchTask
+	Name   string
+	parent *SwitchTask
 }
 
 // IsDefault returns true if the case is a default statement
@@ -70,79 +58,6 @@ func (c *CaseTask) GetParent() *SwitchTask {
 	return c.parent
 }
 
-// ShouldEvaluate returns true if the case has a valid parent and it is the
-// selected branch for that parent
-func (c *CaseTask) ShouldEvaluate() bool {
-	if c.parent == nil {
-		return false
-	}
-	for _, br := range c.parent.Branches {
-		if c.Name == br {
-			t, _ := c.IsTrue()
-			return t
-		}
-	}
-	return false
-}
-
-// IsTrue returns true if the template precicate evaluates to "true", or "t",
-// false if it returns "false", or "f", or if the pointer is nil, and returns
-// false with an error otherwise.
-func (c *CaseTask) IsTrue() (bool, error) {
-	if c == nil {
-		return false, errors.New("case is nil")
-	}
-	if c.parent == nil {
-		return false, errors.New("parent is nil")
-	}
-	for _, otherCase := range c.parent.Cases() {
-		if otherCase == c {
-			break
-		}
-		if isTrue, _ := otherCase.IsTrue(); isTrue {
-			return false, nil
-		}
-	}
-	if c.Status == nil {
-		status, err := EvaluatePredicate(c.Predicate)
-		if err != nil {
-			return false, err
-		}
-		c.Status = new(bool)
-		*c.Status = status
-	}
-	return *c.Status, nil
-}
-
-// EvaluatePredicate looks at a templated string and returns true if template
-// execution results in the string "true" or t", and false if the string is
-// "false" or "f".  In any other case an error is returned.
-func EvaluatePredicate(predicate string) (bool, error) {
-	lang := extensions.DefaultLanguage()
-	if predicate == "" {
-		return false, BadPredicate(predicate)
-	}
-	template := "{{ " + predicate + " }}"
-	result, err := lang.Render(
-		struct{}{},
-		"predicate evaluation",
-		template,
-	)
-	if err != nil {
-		return false, errors.Wrap(err, "case evaluation failed")
-	}
-
-	truthiness := strings.TrimSpace(strings.ToLower(result.String()))
-
-	switch truthiness {
-	case "true", "t":
-		return true, nil
-	case "false", "f":
-		return false, nil
-	}
-	return false, fmt.Errorf("%s: not a valid truth value; should be one of [f false t true]", truthiness)
-}
-
 // Check does stuff
 func (c *CaseTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
@@ -157,15 +72,9 @@ func (c *CaseTask) String() string {
 	if c == nil {
 		return "<nil>"
 	}
-	statusStr := "unevaluated"
-	if c.Status != nil {
-		statusStr = "evaluated"
-	}
 	fmtStr := `Case:
 	Name: %s
-	Predicate: %s
-	Status: %s
 	Parent: %p
 `
-	return fmt.Sprintf(fmtStr, c.Name, c.Predicate, statusStr, c.GetParent())
+	return fmt.Sprintf(fmtStr, c.Name, c.GetParent())
 }

@@ -61,12 +61,9 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		if !ok {
 			logger.WithField("id", meta.ID).Debug("registering as original")
 			values[hash] = meta.ID
-
 			return nil
 		}
-
 		logger.WithField("id", target).WithField("duplicate", meta.ID).Debug("found duplicate")
-
 		// Point all inbound links to value to target instead
 		for _, src := range Sources(g.UpEdges(meta.ID)) {
 			logger.WithField("src", src).WithField("duplicate", meta.ID).WithField("target", target).Debug("re-pointing dependency")
@@ -82,7 +79,6 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 
 		// Remove value
 		out.Remove(meta.ID)
-
 		return nil
 	})
 }
@@ -93,5 +89,6 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 // SkipModuleAndParams skips trimming modules and params
 func SkipModuleAndParams(meta *node.Node) bool {
 	base := BaseID(meta.ID)
-	return strings.HasPrefix(base, "module") || strings.HasPrefix(base, "param")
+	_, isConditional := meta.LookupMetadata("conditional-switch-name")
+	return strings.HasPrefix(base, "module") || strings.HasPrefix(base, "param") || isConditional
 }

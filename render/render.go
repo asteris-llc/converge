@@ -22,9 +22,11 @@ import (
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"github.com/asteris-llc/converge/graph/node/conditional"
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -77,29 +79,38 @@ func (p pipelineGen) maybeTransformRoot(ctx context.Context, idi interface{}) (i
 	if res, ok := idi.(resource.Resource); ok {
 		return res, nil
 	}
-	return nil, typeError("resource.Resource", idi)
+	return nil, typeError("render.maybeTransformRoot", p.ID, "resource.Resource", idi)
 }
 
 // Run prepare on the node and return the resource.Resource to be wrapped
 func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interface{}, error) {
+	var metadataErr error
+
 	res, ok := idi.(resource.Resource)
 	if !ok {
-		return nil, typeError("resource.Resource", idi)
+		return nil, typeError("render.prepareNode", p.ID, "resource.Resource", idi)
 	}
+
 	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	prepared, err := res.Prepare(ctx, renderer)
-	if err != nil {
-		if _, ok := errors.Cause(err).(ErrUnresolvable); ok {
+	if p.shouldRenderMetadata() {
+		_, metadataErr = p.renderMetadata(renderer)
+	}
 
+	prepared, err := res.Prepare(ctx, renderer)
+
+	merged := mergeMaybeUnresolvables(err, metadataErr)
+
+	if merged != nil {
+		if errIsUnresolvable(merged) {
 			// Get a resource with a fake renderer so that we can have a stub value to
 			// track the expected return type of the thunk
 			fakePrep, fakePrepErr := getTypedResourcePointer(ctx, res)
 			if fakePrepErr != nil {
-				return fakePrepErr, nil
+				return nil, fakePrepErr
 			}
 
 			return createThunk(fakePrep, func(factory *Factory) (resource.Task, error) {
@@ -107,12 +118,66 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 				if rendErr != nil {
 					return nil, rendErr
 				}
+				if p.shouldRenderMetadata() {
+					_, rendErr := p.renderMetadata(dynamicRenderer)
+					if rendErr != nil {
+						return nil, rendErr
+					}
+				}
 				return res.Prepare(ctx, dynamicRenderer)
 			}), nil
 		}
-		return nil, err
+		return nil, merged
 	}
 	return prepared, nil
+}
+
+func mergeMaybeUnresolvables(err1, err2 error) error {
+	if err1 == nil {
+		return err2
+	}
+	if err2 == nil {
+		return err1
+	}
+	if errIsUnresolvable(err1) && errIsUnresolvable(err2) {
+		return err1
+	}
+	if !errIsUnresolvable(err1) {
+		return err1
+	}
+	if !errIsUnresolvable(err2) {
+		return err2
+	}
+	return multierror.Append(err1, err2)
+}
+
+func errIsUnresolvable(err error) bool {
+	_, ok := errors.Cause(err).(ErrUnresolvable)
+	return ok
+}
+
+func errIsBadTemplate(err error) bool {
+	_, ok := errors.Cause(err).(ErrBadTemplate)
+	return ok
+}
+
+func (p pipelineGen) shouldRenderMetadata() bool {
+	meta, ok := p.Graph.Get(p.ID)
+	if !ok {
+		return false
+	}
+	return conditional.IsConditional(meta)
+}
+
+func (p pipelineGen) renderMetadata(r *Renderer) (string, error) {
+	meta, ok := p.Graph.Get(p.ID)
+	if !ok {
+		return "", errors.New(p.ID + " does not exist in graph, cannot render metadata")
+	}
+	if !conditional.IsConditional(meta) {
+		return "", nil
+	}
+	return conditional.RenderPredicate(meta, r.Render)
 }
 
 // Takes a resource.Task and wraps it in resource.TaskWrapper
@@ -123,11 +188,11 @@ func (p pipelineGen) wrapTask(ctx context.Context, taski interface{}) (interface
 	if task, ok := taski.(resource.Task); ok {
 		return resource.WrapTask(task), nil
 	}
-	return nil, typeError("resource.Task", taski)
+	return nil, typeError("render.wrapTask", p.ID, "resource.Task", taski)
 }
 
-func typeError(expected string, actual interface{}) error {
-	return fmt.Errorf("type error: expected type %s but received type %T", expected, actual)
+func typeError(where, what, expected string, actual interface{}) error {
+	return fmt.Errorf("type error in %s: expected %s to be type %s but received type %T", where, what, expected, actual)
 }
 
 // PrepareThunk returns a possibly lazily evaluated preparer

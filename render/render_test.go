@@ -20,7 +20,10 @@ import (
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
+	"github.com/asteris-llc/converge/graph/node/conditional"
 	"github.com/asteris-llc/converge/helpers/logging"
+	"github.com/asteris-llc/converge/helpers/testing/graphutils"
+	"github.com/asteris-llc/converge/helpers/testing/hclutils"
 	"github.com/asteris-llc/converge/render"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/content"
@@ -139,4 +142,80 @@ func TestRenderValues(t *testing.T) {
 	require.True(t, ok, fmt.Sprintf("expected root to be a %T, but it was a %T", content, wrapper.Task))
 
 	assert.Equal(t, "2", content.Destination)
+}
+
+// TestRenderConditionals tests that rendering a node renders the predicate
+func TestRenderConditionals(t *testing.T) {
+	defer logging.HideLogs(t)()
+
+	src := `
+param "a" {
+	default = "a"
+}
+
+task.query "a" {
+	query = "echo a"
+}
+
+task.query "b" {
+	query = "echo b"
+}
+`
+
+	t.Run("when-resolvable", func(t *testing.T) {
+		gr, err := hclutils.LoadAndParseFromString("TestRenderConditionals", src)
+		require.NoError(t, err)
+		err = graphutils.AddMetadata(gr, "root/task.query.a", "conditional-predicate-raw", "eq `a` `{{param `a`}}`")
+		err = graphutils.AddMetadata(gr, "root/task.query.a", conditional.MetaBranchName, "branch1")
+		require.NoError(t, err)
+		gr.Connect("root/task.query.a", "root/param.a")
+		g, err := render.Render(context.Background(), gr, render.Values{})
+		require.NoError(t, err)
+		meta, err := graphutils.GetMetadata(g, "root/task.query.a", conditional.MetaRenderedPredicate)
+		require.NoError(t, err)
+		strValue, ok := meta.(string)
+		require.True(t, ok)
+		assert.Equal(t, "true", strValue)
+	})
+
+	t.Run("when-unresolvable", func(t *testing.T) {
+		gr, err := hclutils.LoadAndParseFromString("TestRenderConditionals", src)
+		require.NoError(t, err)
+		err = graphutils.AddMetadata(gr, "root/task.query.b", "conditional-predicate-raw", "{{lookup `task.query.a.status.stdout`}}")
+		err = graphutils.AddMetadata(gr, "root/task.query.b", conditional.MetaBranchName, "branch1")
+		require.NoError(t, err)
+		gr.Connect("root/task.query.b", "root/task.query.a")
+		g, err := render.Render(context.Background(), gr, render.Values{})
+		value, ok := g.Get("root/task.query.b")
+		require.True(t, ok)
+		_, ok = value.Value().(*render.PrepareThunk)
+		assert.True(t, ok)
+	})
+
+	t.Run("when-invalid-predicate", func(t *testing.T) {
+		gr, err := hclutils.LoadAndParseFromString("TestRenderConditionals", src)
+		require.NoError(t, err)
+		err = graphutils.AddMetadata(gr, "root/task.query.a", "conditional-predicate-raw", "a")
+		err = graphutils.AddMetadata(gr, "root/task.query.a", conditional.MetaBranchName, "branch1")
+		require.NoError(t, err)
+		gr.Connect("root/task.query.a", "root/param.a")
+		_, err = render.Render(context.Background(), gr, render.Values{})
+		assert.Error(t, err)
+	})
+
+	t.Run("when-valid-predicate", func(t *testing.T) {
+		gr, err := hclutils.LoadAndParseFromString("TestRenderConditionals", src)
+		require.NoError(t, err)
+		err = graphutils.AddMetadata(gr, "root/task.query.a", "conditional-predicate-raw", "true")
+		err = graphutils.AddMetadata(gr, "root/task.query.a", conditional.MetaBranchName, "branch1")
+		require.NoError(t, err)
+		gr.Connect("root/task.query.a", "root/param.a")
+		g, err := render.Render(context.Background(), gr, render.Values{})
+		require.NoError(t, err)
+		meta, err := graphutils.GetMetadata(g, "root/task.query.a", conditional.MetaRenderedPredicate)
+		require.NoError(t, err)
+		strValue, ok := meta.(string)
+		require.True(t, ok)
+		assert.Equal(t, "true", strValue)
+	})
 }
