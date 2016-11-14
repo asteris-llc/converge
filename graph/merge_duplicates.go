@@ -59,35 +59,26 @@ func MergeDuplicates(ctx context.Context, g *Graph, skip SkipMergeFunc) (*Graph,
 		// if we haven't seen this value before, register it and return
 		target, ok := values[hash]
 		if !ok {
-
 			logger.WithField("id", meta.ID).Debug("registering as original")
 			values[hash] = meta.ID
-
 			return nil
 		}
-
 		logger.WithField("id", target).WithField("duplicate", meta.ID).Debug("found duplicate")
-
 		// Point all inbound links to value to target instead
 		for _, src := range Sources(g.UpEdges(meta.ID)) {
-
 			logger.WithField("src", src).WithField("duplicate", meta.ID).WithField("target", target).Debug("re-pointing dependency")
-
 			out.Disconnect(src, meta.ID)
-
 			out.Connect(src, target)
 		}
 
 		// Remove children and their edges
 		for _, child := range g.Descendents(meta.ID) {
 			logger.WithField("child", child).Debug("removing child")
-
 			out.Remove(child)
 		}
 
 		// Remove value
 		out.Remove(meta.ID)
-
 		return nil
 	})
 }

@@ -77,7 +77,6 @@ func (r *Renderer) Render(name, src string) (string, error) {
 		if r.resolverErr {
 			return "", ErrUnresolvable{}
 		}
-		fmt.Println("template error: ", err)
 		return "", ErrBadTemplate{Err: err}
 	}
 	return out.String(), err
