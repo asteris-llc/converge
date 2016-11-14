@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-11-09T14:19:17-06:00"
+date: "2016-11-14T11:12:02-06:00"
 menu:
   main:
     parent: resources
@@ -26,13 +26,13 @@ docker.image "busybox" {
 
 ## Parameters
 
-- `name` (string)
+- `name` (required string)
 
   name of the image to pull
 
 - `tag` (string)
 
-  tag of the image to pull
+  tag of the image to pull. default: latest
 
 - `inactivity_timeout` (duration)
 
