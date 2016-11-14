@@ -1,7 +1,7 @@
 ---
 title: "wait.port"
 slug: "wait-port"
-date: "2016-11-09T14:19:18-06:00"
+date: "2016-11-14T11:12:03-06:00"
 menu:
   main:
     parent: resources
@@ -29,7 +29,7 @@ wait.port "8080" {
 - `host` (string)
 
   a host name or ip address. A TCP connection will be attempted at this host
-and the specified Port.
+and the specified Port. default: localhost
 
 - `port` (required int)
 

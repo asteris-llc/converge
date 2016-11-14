@@ -1,7 +1,7 @@
 ---
 title: "file.directory"
 slug: "file-directory"
-date: "2016-11-09T14:19:17-06:00"
+date: "2016-11-14T11:12:02-06:00"
 menu:
   main:
     parent: resources
@@ -30,7 +30,7 @@ file.directory "deeper" {
 
 ## Parameters
 
-- `destination` (string)
+- `destination` (required string)
 
   the location on disk to make the directory
 
