@@ -270,8 +270,8 @@ evaluating multiple branches in a single `switch` statement. The first
 {{< /note >}}
 
 A predicate is a special kind of go text template.  It's evaluated in two
-passes. In the first pass `lookups` and `params` are rendered as they would be
-for any other converge string.  In the second pass the rendered string is
+passes. In the first pass, `lookup`s and `param`s are rendered as they would be
+for any other converge string.  In the second pass, the rendered string is
 wrapped in `{{` and `}}` and then re-evaluated as a function that should
 evaluate to `true` or `false`.  The two-pass rendering is the reason why you
 are able to use functions like `eq` and `and` without quoting them in
