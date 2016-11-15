@@ -2,19 +2,33 @@
 # vi: set ft=ruby :
 
 CONVERGE_CMD = "../../converge"
-CONTROLLER_COUNT = 3
-NODE_COUNT = 1
+CONTROLLER_COUNT = 1
+NODE_COUNT = 2
 
 def etcd_initial_cluster
   (1..CONTROLLER_COUNT).map { |i|
-    "#{controllerHostName(i)}=https://#{controllerIP(i)}:2380"
+    "#{controller_host_name(i)}=https://#{controller_ip(i)}:2380"
   }.join(",")
 end
 
 def etcd_servers
   (1..CONTROLLER_COUNT).map { |i|
-    "https://#{controllerIP(i)}:2379"
+    "https://#{controller_ip(i)}:2379"
   }.join(",")
+end
+
+def api_servers
+  (1..CONTROLLER_COUNT).map { |i|
+    "https://#{controller_ip(i)}:6443"
+  }.join(",")
+end
+
+def node_peers(node_ip)
+  (1..NODE_COUNT).map { |i|
+    node_ip(i)
+  }.reject { |nip|
+    nip == node_ip
+  }
 end
 
 def create_ca
@@ -28,35 +42,57 @@ def create_ca
   end
 end
 
-def controllerHostName(num)
+def controller_host_name(num)
   "controller-#{num}"
 end
 
-def controllerIP(num)
+def controller_ip(num)
   return "172.19.9.#{num+20}"
 end
 
-def nodeIP(num)
+def node_ip(num)
   return "172.19.9.#{num+100}"
 end
 
-$controller_script = <<SCRIPT
+def controller_script
+  params = <<EOF
+{
+  "etcd-initial-cluster": "#{etcd_initial_cluster}",
+  "etcd-servers": "#{etcd_servers}"
+}
+EOF
+
+<<EOF
 converge apply --local \
-         --paramsJSON='{"etcd-initial-cluster": "#{etcd_initial_cluster}", "etcd-servers": "#{etcd_servers}"}' \
+         --paramsJSON='#{params}' \
          /vagrant/converge/cfssl.hcl \
          /vagrant/converge/certs.hcl \
          /vagrant/converge/docker.hcl \
          /vagrant/converge/etcd.hcl \
-         /vagrant/converge/kube-apiserver.hcl \
-         /vagrant/converge/kube-controller-manager.hcl \
-         /vagrant/converge/kube-scheduler.hcl \
-         /vagrant/converge/kubectl.hcl \
          /vagrant/converge/kubernetes-controller.hcl
-SCRIPT
+EOF
+end
 
-$node_script = <<SCRIPT
-converge apply --local /vagrant/converge/certs.hcl
-SCRIPT
+def node_script(peers)
+  params = <<EOF
+{
+  "controller-ip": "#{controller_ip(1)}",
+  "api-servers": "#{api_servers}",
+  "peers": "#{peers.join(' ')}"
+}
+EOF
+
+<<EOF
+converge apply --local \
+         --paramsJSON='#{params}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/certs.hcl \
+         /vagrant/converge/docker.hcl \
+         /vagrant/converge/cni.hcl \
+         /vagrant/converge/weave.hcl \
+         /vagrant/converge/kubernetes-worker.hcl
+EOF
+end
 
 create_ca unless File.exist?("./ssl/ca.tar.gz")
 
@@ -70,20 +106,27 @@ Vagrant.configure("2") do |config|
         v.cpus = 2
       end
       controller.vm.hostname = "controller-#{i}"
-      controller.vm.network :private_network, ip: controllerIP(i)
+      controller.vm.network :private_network, ip: controller_ip(i)
 
       controller.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
       controller.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
-      controller.vm.provision :shell, inline: $controller_script, privileged: true
+      controller.vm.provision :shell, inline: controller_script, privileged: true
     end
   end
 
-  # (1..NODE_COUNT).each do |i|
-  #   config.vm.define "node-#{i}" do |node|
-  #     node.vm.network :private_network, ip: nodeIP(i)
-  #     node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
-  #     node.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
-  #     node.vm.provision :shell, inline: $node_script, privileged: true
-  #   end
-  # end
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "node-#{i}" do |node|
+      node.vm.provider "virtualbox" do |v|
+        v.memory = 2048
+        v.cpus = 2
+      end
+      nip = node_ip(i)
+      node.vm.hostname = "node-#{i}"
+      node.vm.network :private_network, ip: nip
+      node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+      node.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
+
+      node.vm.provision :shell, inline: node_script(node_peers(nip)), privileged: true
+    end
+  end
 end

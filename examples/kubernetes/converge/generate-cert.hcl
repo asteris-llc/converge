@@ -67,6 +67,8 @@ cfssl gencert \
 EOF
 
   dir = "{{lookup `file.directory.ssl.destination`}}"
+
+  depends = ["task.unarchive-ca"]
 }
 
 task "delete-ca-archive" {

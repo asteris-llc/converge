@@ -33,7 +33,7 @@ param "cleanup" {
 
 task "download" {
   check = "test -f {{param `destination`}}{{param `name`}} || test -f {{param `download_name`}}"
-  apply = "curl -SLo {{param `download_name`}} {{param `url`}}"
+  apply = "curl --connect-timeout 600 --retry 5 --retry-delay 30 -sSLo {{param `download_name`}} {{param `url`}}"
   dir   = "{{param `working_dir`}}"
 }
 
@@ -80,10 +80,6 @@ switch "cleanup" {
 
 switch "cleanup-extracted" {
   case "and ({{param `cleanup`}}) (ne `./` `{{param `extracted_dir`}}`)" "cleanup-extracted" {
-    task.query "debug" {
-      query = "echo {{param `extracted_dir`}} > /tmp/debug.txt"
-    }
-
     task "remove-extracted-dir" {
       check   = "test ! -d {{param `extracted_dir`}}"
       apply   = "rm -rf {{param `extracted_dir`}}"

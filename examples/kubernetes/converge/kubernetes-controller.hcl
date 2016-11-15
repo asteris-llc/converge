@@ -1,3 +1,7 @@
+param "kubernetes-version" {
+  default = "1.4.5"
+}
+
 param "kubernetes-config-dir" {
   default = "/var/lib/kubernetes/"
 }
@@ -30,6 +34,38 @@ task.query "internal-ip" {
   query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
 }
 
+module "install-binary.hcl" "kube-apiserver" {
+  params {
+    url         = "https://storage.googleapis.com/kubernetes-release/release/v{{param `kubernetes-version`}}/bin/linux/amd64/kube-apiserver"
+    name        = "kube-apiserver"
+    destination = "/usr/local/bin/"
+  }
+}
+
+module "install-binary.hcl" "kube-controller-manager" {
+  params {
+    url         = "https://storage.googleapis.com/kubernetes-release/release/v{{param `kubernetes-version`}}/bin/linux/amd64/kube-controller-manager"
+    name        = "kube-controller-manager"
+    destination = "/usr/local/bin/"
+  }
+}
+
+module "install-binary.hcl" "kube-scheduler" {
+  params {
+    url         = "https://storage.googleapis.com/kubernetes-release/release/v{{param `kubernetes-version`}}/bin/linux/amd64/kube-scheduler"
+    name        = "kube-scheduler"
+    destination = "/usr/local/bin/"
+  }
+}
+
+module "install-binary.hcl" "kubectl" {
+  params {
+    url         = "https://storage.googleapis.com/kubernetes-release/release/v{{param `kubernetes-version`}}/bin/linux/amd64/kubectl"
+    name        = "kubectl"
+    destination = "/usr/local/bin/"
+  }
+}
+
 file.directory "kubernetes-config-dir" {
   destination = "{{param `kubernetes-config-dir`}}"
   create_all  = true
@@ -48,6 +84,7 @@ file.content "authorization-policy" {
 file.content "kube-apiserver-service" {
   destination = "/etc/systemd/system/kube-apiserver.service"
   content     = "{{param `kube-apiserver-service`}}"
+  depends     = ["module.kube-apiserver"]
 }
 
 task "kube-apiserver-enable" {
@@ -65,6 +102,7 @@ task "kube-apiserver-start" {
 file.content "kube-controller-manager-service" {
   destination = "/etc/systemd/system/kube-controller-manager.service"
   content     = "{{param `kube-controller-manager-service`}}"
+  depends     = ["module.kube-controller-manager"]
 }
 
 task "kube-controller-manager-enable" {
@@ -82,6 +120,7 @@ task "kube-controller-manager-start" {
 file.content "kube-scheduler-service" {
   destination = "/etc/systemd/system/kube-scheduler.service"
   content     = "{{param `kube-scheduler-service`}}"
+  depends     = ["module.kube-scheduler"]
 }
 
 task "kube-scheduler-enable" {

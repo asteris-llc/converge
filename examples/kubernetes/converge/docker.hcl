@@ -32,6 +32,11 @@ file.content "docker-repo" {
   content     = "{{param `docker-repo`}}"
 }
 
+file.mode "docker-repo" {
+  destination = "{{lookup `file.content.docker-repo.destination`}}"
+  mode        = "0755"
+}
+
 task.query "apt-get-update" {
   query   = "apt-get update"
   depends = ["task.docker-repo-key", "file.content.docker-repo"]
@@ -41,6 +46,7 @@ package.apt "docker-install" {
   name    = "{{param `docker-package`}}"
   state   = "present"
   depends = ["task.query.apt-get-update"]
+  group   = "apt"
 }
 
 task "docker-enable" {
