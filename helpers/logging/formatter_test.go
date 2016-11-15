@@ -15,11 +15,14 @@
 package logging_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/fgrid/uuid"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkFormatter(b *testing.B) {
@@ -39,4 +42,28 @@ func BenchmarkFormatter(b *testing.B) {
 	for i := 0; i <= b.N; i++ {
 		formatter.Format(entry)
 	}
+}
+
+// TestLogging tests logging formatting
+func TestLogging(t *testing.T) {
+	t.Parallel()
+
+	f := logging.Formatter{}
+	log := logrus.New()
+
+	t.Run("standard error", func(t *testing.T) {
+		testErr := fmt.Errorf("test error=%v", 100)
+		entry := log.WithError(testErr)
+		data, err := f.Format(entry)
+		assert.Equal(t, string(data[:]), "timestamp=\"0001-01-01T00:00:00Z\" level=\"UNKNOWN\" msg=\"\" error=\"test error=100\"\n")
+		assert.Nil(t, err)
+	})
+
+	t.Run("wrapped error", func(t *testing.T) {
+		testErr := errors.Wrapf(fmt.Errorf("test error=%v", 100), "wrap")
+		entry := log.WithError(testErr)
+		data, err := f.Format(entry)
+		assert.Equal(t, string(data[:]), "timestamp=\"0001-01-01T00:00:00Z\" level=\"UNKNOWN\" msg=\"\" error=\"wrap: test error=100\"\n")
+		assert.Nil(t, err)
+	})
 }
