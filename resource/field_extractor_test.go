@@ -42,10 +42,18 @@ func TestExportedFields(t *testing.T) {
 			assert.Error(t, err)
 		})
 		t.Run("when-embedded", func(t *testing.T) {
-			expected := []string{"A", "B", "X"}
-			actual, err := resource.ExportedFields(&TestEmbeddingStruct{})
-			require.NoError(t, err)
-			assert.Equal(t, expected, fieldNames(actual))
+			t.Run("non-overlapping", func(t *testing.T) {
+				expected := []string{"A", "B", "X"}
+				actual, err := resource.ExportedFields(&TestEmbeddingStruct{})
+				require.NoError(t, err)
+				assert.Equal(t, expected, fieldNames(actual))
+			})
+			t.Run("overlapping", func(t *testing.T) {
+				expected := []string{"A", "B", "TestEmbeddedStruct.B", "X"}
+				actual, err := resource.ExportedFields(&TestEmbeddingOverlap{})
+				require.NoError(t, err)
+				assert.Equal(t, expected, fieldNames(actual))
+			})
 		})
 	})
 	t.Run("reference-fields", func(t *testing.T) {
@@ -76,6 +84,13 @@ type TestOuterStruct struct {
 type TestEmbeddingStruct struct {
 	TestEmbeddedStruct
 	A int `export:"a"`
+}
+
+type TestEmbeddingOverlap struct {
+	TestEmbeddedStruct
+	A int `export:"a"`
+	B int `export:"c"`
+	X int `export:"x"`
 }
 
 type TestEmbeddedStruct struct {

@@ -51,27 +51,45 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 	typ := val.Type()
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
+		fval := val.Field(i)
 		refName, ok := field.Tag.Lookup("export")
+
 		if !ok {
 			continue
 		}
 		exportedField := &ExportedField{
 			FieldName:     field.Name,
 			ReferenceName: refName,
-			Value:         val.Field(i),
+			Value:         fval,
 		}
 		exported = append(exported, exportedField)
 	}
+
 	return exported, nil
 }
 
 func getStruct(val reflect.Value) (reflect.Value, error) {
 	for val.Kind() == reflect.Ptr {
 		val = val.Elem()
-
 	}
 	if val.Kind() != reflect.Struct {
 		return val, ErrNonStructIntrospection
 	}
 	return val, nil
+}
+
+func interfaceToConcreteType(i interface{}) reflect.Type {
+	var t reflect.Type
+	switch typed := i.(type) {
+	case reflect.Type:
+		t = typed
+	case reflect.Value:
+		t = typed.Type()
+	default:
+		t = reflect.TypeOf(i)
+	}
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t
 }
