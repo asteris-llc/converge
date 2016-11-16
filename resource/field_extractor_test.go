@@ -41,6 +41,12 @@ func TestExportedFields(t *testing.T) {
 			_, err := resource.ExportedFields(nil)
 			assert.Error(t, err)
 		})
+		t.Run("when-embedded", func(t *testing.T) {
+			expected := []string{"A", "B", "X"}
+			actual, err := resource.ExportedFields(&TestEmbeddingStruct{})
+			require.NoError(t, err)
+			assert.Equal(t, expected, fieldNames(actual))
+		})
 	})
 	t.Run("reference-fields", func(t *testing.T) {
 		expected := []string{"a", "c"}
@@ -65,6 +71,17 @@ type TestOuterStruct struct {
 	B int `export:"c"`
 	C int
 	d int
+}
+
+type TestEmbeddingStruct struct {
+	TestEmbeddedStruct
+	A int `export:"a"`
+}
+
+type TestEmbeddedStruct struct {
+	A int
+	B int `export:"b"`
+	X int `export:"x"`
 }
 
 func newOuterStruct(a, b, c, d int) *TestOuterStruct {
