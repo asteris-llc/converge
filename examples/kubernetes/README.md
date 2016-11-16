@@ -6,6 +6,8 @@ on
 
 ## Usage
 
+This example is supported on Linux and OSX hosts.
+
 ### Vagrant
 
 Just run `vagrant up`!
