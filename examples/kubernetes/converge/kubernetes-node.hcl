@@ -56,12 +56,6 @@ module "install-binary.hcl" "kubelet" {
   }
 }
 
-module "weave.hcl" "weave" {}
-
-module "cni.hcl" "cni" {
-  depends = ["module.weave"]
-}
-
 file.directory "kubelet-config-dir" {
   destination = "{{param `kubelet-config-dir`}}"
   create_all  = true
@@ -87,7 +81,7 @@ task "kubelet-enable" {
 task "kubelet-start" {
   check   = "systemctl is-active kubelet"
   apply   = "systemctl daemon-reload; systemctl start kubelet"
-  depends = ["task.kubelet-enable", "package.apt.bridge-utils", "module.cni"]
+  depends = ["task.kubelet-enable", "package.apt.bridge-utils"]
 }
 
 file.content "kube-proxy-service" {
@@ -105,7 +99,7 @@ task "kube-proxy-enable" {
 task "kube-proxy-start" {
   check   = "systemctl is-active kube-proxy"
   apply   = "systemctl daemon-reload; systemctl start kube-proxy"
-  depends = ["task.kube-proxy-enable", "module.cni"]
+  depends = ["task.kube-proxy-enable"]
 }
 
 param "kubeconfig" {

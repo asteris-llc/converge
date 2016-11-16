@@ -100,6 +100,8 @@ converge apply --local \
          /vagrant/converge/cfssl.hcl \
          /vagrant/converge/certs.hcl \
          /vagrant/converge/docker.hcl \
+         /vagrant/converge/cni.hcl \
+         /vagrant/converge/weave.hcl \
          /vagrant/converge/kubernetes-node.hcl
 EOF
 end
