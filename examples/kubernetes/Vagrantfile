@@ -40,8 +40,18 @@ def create_ca
   system("mkdir -p #{CONVERGE_LOCAL}")
   system("curl -s get.converge.sh | bash -s - -d #{CONVERGE_LOCAL} -v #{CONVERGE_VERSION}")
 
+  sudo_prefix = system("test -w /usr/local/bin") ? "" : "sudo "
+  puts "Installing cfssl..."
+  output = `#{sudo_prefix}#{File.join(CONVERGE_LOCAL, 'converge')} apply --local converge/cfssl.hcl 2>&1`
+  success = $?.success?
+  if !success
+    puts "failed to install cfssl:"
+    puts output
+    exit 1
+  end
+
   puts "Generating certificate authority..."
-  output = `#{File.join(CONVERGE_LOCAL, 'converge')} apply --local converge/local.hcl 2>&1`
+  output = `#{File.join(CONVERGE_LOCAL, 'converge')} apply --local converge/generate-ca.hcl 2>&1`
   success = $?.success?
   if !success
     puts "failed to generate certificate authority:"
