@@ -35,31 +35,6 @@ def node_peers(node_ip)
   }
 end
 
-def create_ca
-  puts "Installing converge locally..."
-  system("mkdir -p #{CONVERGE_LOCAL}")
-  system("curl -s get.converge.sh | bash -s - -d #{CONVERGE_LOCAL} -v #{CONVERGE_VERSION}")
-
-  sudo_prefix = system("test -w /usr/local/bin") ? "" : "sudo "
-  puts "Installing cfssl..."
-  output = `#{sudo_prefix}#{File.join(CONVERGE_LOCAL, 'converge')} apply --local converge/cfssl.hcl 2>&1`
-  success = $?.success?
-  if !success
-    puts "failed to install cfssl:"
-    puts output
-    exit 1
-  end
-
-  puts "Generating certificate authority..."
-  output = `#{File.join(CONVERGE_LOCAL, 'converge')} apply --local converge/generate-ca.hcl 2>&1`
-  success = $?.success?
-  if !success
-    puts "failed to generate certificate authority:"
-    puts output
-    exit 1
-  end
-end
-
 def controller_host_name(num)
   "controller-#{num}"
 end
@@ -72,9 +47,11 @@ def node_ip(num)
   return "172.19.9.#{num+100}"
 end
 
-def controller_script
+def controller_script(internal_ip, ca_bootstrap = false)
   params = <<EOF
 {
+  "internal-ip": "#{internal_ip}",
+  "ca-url": "http://#{controller_ip(1)}:9090/ca.tar.gz",
   "etcd-initial-cluster": "#{etcd_initial_cluster}",
   "etcd-servers": "#{etcd_servers}",
   "kubelet-token": "#{KUBELET_TOKEN}",
@@ -83,20 +60,35 @@ def controller_script
 }
 EOF
 
-<<EOF
+  if ca_bootstrap
+    <<EOF
 converge apply --local \
          --paramsJSON='#{params}' \
          /vagrant/converge/cfssl.hcl \
-         /vagrant/converge/certs.hcl \
          /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-ca.hcl \
+         /vagrant/converge/generate-cert.hcl \
          /vagrant/converge/etcd.hcl \
          /vagrant/converge/kubernetes-controller.hcl
 EOF
+  else
+    <<EOF
+converge apply --local \
+         --paramsJSON='#{params}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-cert.hcl \
+         /vagrant/converge/etcd.hcl \
+         /vagrant/converge/kubernetes-controller.hcl
+EOF
+  end
 end
 
-def node_script(peers)
+def node_script(internal_ip, peers)
   params = <<EOF
 {
+  "internal-ip": "#{internal_ip}",
+  "ca-url": "http://#{controller_ip(1)}:9090/ca.tar.gz",
   "controller-ip": "#{controller_ip(1)}",
   "api-servers": "#{api_servers}",
   "kubelet-token": "#{KUBELET_TOKEN}",
@@ -108,15 +100,13 @@ EOF
 converge apply --local \
          --paramsJSON='#{params}' \
          /vagrant/converge/cfssl.hcl \
-         /vagrant/converge/certs.hcl \
          /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-cert.hcl \
          /vagrant/converge/cni.hcl \
          /vagrant/converge/weave.hcl \
          /vagrant/converge/kubernetes-node.hcl
 EOF
 end
-
-create_ca unless File.exist?("./ssl/ca.tar.gz")
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
@@ -127,11 +117,11 @@ Vagrant.configure("2") do |config|
         v.memory = 2048
         v.cpus = 2
       end
+      cip = controller_ip(i)
       controller.vm.hostname = "controller-#{i}"
-      controller.vm.network :private_network, ip: controller_ip(i)
-      controller.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
+      controller.vm.network :private_network, ip: cip
       controller.vm.provision :shell, inline: "curl get.converge.sh | bash -s - -v #{CONVERGE_VERSION}", privileged: true
-      controller.vm.provision :shell, inline: controller_script, privileged: true
+      controller.vm.provision :shell, inline: controller_script(cip, i==1), privileged: true
     end
   end
 
@@ -144,9 +134,8 @@ Vagrant.configure("2") do |config|
       nip = node_ip(i)
       node.vm.hostname = "node-#{i}"
       node.vm.network :private_network, ip: nip
-      node.vm.provision :file, source: "./ssl/ca.tar.gz", destination: "/tmp/ca.tar.gz"
       node.vm.provision :shell, inline: "curl get.converge.sh | bash -s - -v #{CONVERGE_VERSION}", privileged: true
-      node.vm.provision :shell, inline: node_script(node_peers(nip)), privileged: true
+      node.vm.provision :shell, inline: node_script(nip, node_peers(nip)), privileged: true
     end
   end
 end

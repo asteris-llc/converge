@@ -1,3 +1,5 @@
+param "internal-ip" {}
+
 param "etcd-url" {
   default = "https://github.com/coreos/etcd/releases/download/v3.0.14/etcd-v3.0.14-linux-amd64.tar.gz"
 }
@@ -7,7 +9,7 @@ param "etcd-destination" {
 }
 
 param "etcd-initial-cluster" {
-  default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{lookup `task.query.internal-ip.status.stdout`}}:2380"
+  default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{param `internal-ip`}}:2380"
 }
 
 param "etcd-data-dir" {
@@ -20,10 +22,6 @@ param "ssl-directory" {
 
 task.query "hostname" {
   query = "hostname | xargs echo -n"
-}
-
-task.query "internal-ip" {
-  query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
 }
 
 module "install-binary.hcl" "etcd" {
@@ -90,10 +88,10 @@ ExecStart=/usr/local/bin/etcd --name {{lookup `task.query.hostname.status.stdout
   --peer-key-file={{param `ssl-directory`}}/kubernetes-key.pem \
   --trusted-ca-file={{param `ssl-directory`}}/ca.pem \
   --peer-trusted-ca-file={{param `ssl-directory`}}/ca.pem \
-  --initial-advertise-peer-urls https://{{lookup `task.query.internal-ip.status.stdout`}}:2380 \
-  --listen-peer-urls https://{{lookup `task.query.internal-ip.status.stdout`}}:2380 \
-  --listen-client-urls https://{{lookup `task.query.internal-ip.status.stdout`}}:2379,http://127.0.0.1:2379 \
-  --advertise-client-urls https://{{lookup `task.query.internal-ip.status.stdout`}}:2379 \
+  --initial-advertise-peer-urls https://{{param `internal-ip`}}:2380 \
+  --listen-peer-urls https://{{param `internal-ip`}}:2380 \
+  --listen-client-urls https://{{param `internal-ip`}}:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls https://{{param `internal-ip`}}:2379 \
   --initial-cluster-token etcd-cluster-0 \
   --initial-cluster {{param `etcd-initial-cluster`}} \
   --initial-cluster-state new \

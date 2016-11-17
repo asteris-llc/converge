@@ -1,3 +1,5 @@
+param "internal-ip" {}
+
 param "kubernetes-version" {
   default = "1.4.5"
 }
@@ -7,7 +9,7 @@ param "kubernetes-config-dir" {
 }
 
 param "etcd-servers" {
-  default = "https://{{lookup `task.query.internal-ip.status.stdout`}}:2379"
+  default = "https://{{param `internal-ip`}}:2379"
 }
 
 param "admin-token" {
@@ -28,10 +30,6 @@ param "ssl-directory" {
 
 task.query "hostname" {
   query = "hostname | xargs echo -n"
-}
-
-task.query "internal-ip" {
-  query = "ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/' | xargs echo -n"
 }
 
 module "install-binary.hcl" "kube-apiserver" {
@@ -144,7 +142,7 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 [Service]
 ExecStart=/usr/local/bin/kube-apiserver \
   --admission-control=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota \
-  --advertise-address={{lookup `task.query.internal-ip.status.stdout`}} \
+  --advertise-address={{param `internal-ip`}} \
   --allow-privileged=true \
   --apiserver-count=3 \
   --authorization-mode=ABAC \
@@ -182,7 +180,7 @@ ExecStart=/usr/local/bin/kube-controller-manager \
 --cluster-cidr=10.200.0.0/16 \
 --cluster-name=kubernetes \
 --leader-elect=true \
---master=http://{{lookup `task.query.internal-ip.status.stdout`}}:8080 \
+--master=http://{{param `internal-ip`}}:8080 \
 --root-ca-file={{param `ssl-directory`}}/ca.pem \
 --service-account-private-key-file={{param `ssl-directory`}}/kubernetes-key.pem \
 --service-cluster-ip-range=10.32.0.0/24 \
@@ -204,7 +202,7 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 [Service]
 ExecStart=/usr/local/bin/kube-scheduler \
   --leader-elect=true \
-  --master=http://{{lookup `task.query.internal-ip.status.stdout`}}:8080 \
+  --master=http://{{param `internal-ip`}}:8080 \
   --v=2
 Restart=on-failure
 RestartSec=5
