@@ -28,9 +28,16 @@ You can SSH into a controller instance (`vagrant ssh controller-1`, for example)
 and run kubectl from there. If you want to run kubectl from your host machine,
 you can run the following steps from the `examples/kubernetes` directory.
 
+First, you need to get a copy of the CA certificate from one of the vagrant
+instances:
+
+```shell
+vagrant ssh controller-1 -c "sudo cat /etc/kubernetes/ssl/ca.pem" > ca.pem
+```
+
 ```shell
 kubectl config set-cluster converge-kubernetes \
-  --certificate-authority=./ssl/ca.pem \
+  --certificate-authority=./ca.pem \
   --embed-certs=true \
   --server=https://172.19.9.21:6443
 
