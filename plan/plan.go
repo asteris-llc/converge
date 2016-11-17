@@ -36,13 +36,12 @@ func Plan(ctx context.Context, in *graph.Graph) (*graph.Graph, error) {
 func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*graph.Graph, error) {
 	var hasErrors error
 
-	renderingPlant, err := render.NewFactory(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-
 	out, err := in.Transform(ctx,
 		notify.Transform(func(meta *node.Node, out *graph.Graph) error {
+			renderingPlant, err := render.NewFactory(ctx, in)
+			if err != nil {
+				return err
+			}
 			renderingPlant.Graph = out
 
 			pipeline := Pipeline(ctx, out, meta.ID, renderingPlant)
