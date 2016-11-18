@@ -70,14 +70,15 @@ func (p *Printer) StartPP(g *graph.Graph) (pp.Renderable, error) {
 
 // FinishPP provides summary statistics about the printed graph
 func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
-	tmpl, err := p.template("{{if gt (len .Errors) 0}}{{red \"Summary\"}}{{else}}{{green \"Summary\"}}{{end}}: {{len .Errors}} errors, {{.ChangesCount}} changes{{if .Errors}}\n{{range .Errors}}\n * {{.}}{{end}}{{end}}\n")
+	tmpl, err := p.template("{{if .Errors}}Errors:\n{{range .Errors}} * {{.}}\n{{end}}\n{{end}}{{if .DependencyErrors}}Failed due to failing dependency:\n{{range .DependencyErrors}} * {{.}}\n{{end}}\n{{end}}{{if gt (len .Errors) 0}}{{red \"Summary\"}}{{else}}{{green \"Summary\"}}{{end}}: {{len .Errors}} errors, {{.ChangesCount}} changes{{if .DependencyErrors}}, {{len .DependencyErrors}} dependency errors{{end}}\n")
 	if err != nil {
 		return pp.HiddenString(), err
 	}
 
 	counts := struct {
-		ChangesCount int
-		Errors       []error
+		ChangesCount     int
+		Errors           []error
+		DependencyErrors []error
 	}{}
 
 	for _, id := range g.Vertices() {
@@ -91,15 +92,22 @@ func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
 			continue
 		}
 
-		if printable.HasChanges() {
-			counts.ChangesCount++
-		}
-
 		if err = printable.Error(); err != nil {
-			counts.Errors = append(
-				counts.Errors,
-				errors.Wrap(err, id),
-			)
+			if id != "root" {
+				if strings.Contains(err.Error(), "error in dependency") {
+					counts.DependencyErrors = append(
+						counts.DependencyErrors,
+						errors.Wrap(err, id),
+					)
+				} else {
+					counts.Errors = append(
+						counts.Errors,
+						errors.Wrap(err, id),
+					)
+				}
+			}
+		} else if printable.HasChanges() && id != "root" {
+			counts.ChangesCount++
 		}
 	}
 
