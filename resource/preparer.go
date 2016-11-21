@@ -496,6 +496,8 @@ func (p *Preparer) convertNumber(typ reflect.Type, r Renderer, name string, val 
 		// floating point. Therefore there's no guarantee that we've parsed
 		// using the correct semantics (signed vs unsigned vs float) or bitsize.
 		num = fmt.Sprintf("%v", val)
+		// if we already have a number type, we can assume it is already in base 10
+		base = 10
 	}
 
 	// parse the number back out, depending on the type
