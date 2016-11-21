@@ -29,7 +29,7 @@ type Preparer struct {
 	// Destination specifies which file will be modified by this resource. The
 	// file must exist on the system (for example, having been created with
 	// `file.content`.)
-	Destination string `hcl:"destination" required:"true" nonepmty:"true"`
+	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
 	// Mode is the mode of the file, specified in octal.
 	Mode *uint32 `hcl:"mode" base:"8" required:"true"`
