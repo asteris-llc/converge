@@ -11,6 +11,8 @@ runs tasks in parallel.
 - API-first communication using [grpc](http://grpc.io).
 - Module verification: only run trusted modules.
 
+![Converge Graph](examples/docker-swarm-mode/graphs/main.png)
+
 [![Slack Status](http://converge-slack.aster.is/badge.svg)](http://converge-slack.aster.is)
 [![Code Climate](https://codeclimate.com/github/asteris-llc/converge/badges/gpa.svg)](https://codeclimate.com/github/asteris-llc/converge)
 
@@ -37,6 +39,13 @@ to your `/usr/local/bin/` directory:
 sudo ./install-converge.sh -v 0.3.0
 ```
 
+The same installation script is available at `get.converge.sh`:
+
+```shell
+curl get.converge.sh | sudo bash -
+```
+
+You can also use `go get`:
 
 ```sh
 go get github.com/asteris-llc/converge
