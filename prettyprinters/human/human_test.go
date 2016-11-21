@@ -43,7 +43,21 @@ func TestSatisfiesInterface(t *testing.T) {
 
 func testFinishPP(t *testing.T, in Printable, out string) {
 	g := graph.New()
-	g.Add(node.New("root", in))
+	g.Add(node.New("root/task", in))
+
+	printer := human.New()
+	printer.InitColors()
+	str, err := printer.FinishPP(g)
+
+	require.Nil(t, err)
+	assert.Equal(t, out, str.String())
+}
+
+func testFinishPPMultiNode(t *testing.T, nodeList []string, in []Printable, out string) {
+	g := graph.New()
+	for i, val := range in {
+		g.Add(node.New(nodeList[i], val))
+	}
 
 	printer := human.New()
 	printer.InitColors()
@@ -66,11 +80,44 @@ func TestFinishPPSuccess(t *testing.T) {
 func TestFinishPPError(t *testing.T) {
 	t.Parallel()
 
-	testFinishPP(
-		t,
-		Printable{"error": "test"},
-		"Summary: 1 errors, 1 changes\n\n * root: test\n",
-	)
+	t.Run("errors", func(t *testing.T) {
+		testFinishPP(
+			t,
+			Printable{"error": "test"},
+			"Errors:\n * root/task: test\n\nSummary: 1 errors, 0 changes\n",
+		)
+	})
+
+	t.Run("dependency errors", func(t *testing.T) {
+		t.Run("dep errors only", func(t *testing.T) {
+			testFinishPP(
+				t,
+				Printable{"error": "error in dependency root/test"},
+				"Failed due to failing dependency:\n * root/task: error in dependency root/test\n\nSummary: 0 errors, 0 changes, 1 dependency errors\n",
+			)
+		})
+
+		t.Run("with errors", func(t *testing.T) {
+			testFinishPPMultiNode(
+				t,
+				[]string{"root/test", "root/subtest"},
+				[]Printable{{"error": "test"},
+					{"error": "error in dependency root/test"}},
+				"Errors:\n * root/test: test\n\nFailed due to failing dependency:\n * root/subtest: error in dependency root/test\n\nSummary: 1 errors, 0 changes, 1 dependency errors\n",
+			)
+		})
+
+		t.Run("with changes and errors", func(t *testing.T) {
+			testFinishPPMultiNode(
+				t,
+				[]string{"root/test", "root/subtest", "root/task"},
+				[]Printable{{"error": "test"},
+					{"error": "error in dependency root/test"},
+					{"a": "b"}},
+				"Errors:\n * root/test: test\n\nFailed due to failing dependency:\n * root/subtest: error in dependency root/test\n\nSummary: 1 errors, 1 changes, 1 dependency errors\n",
+			)
+		})
+	})
 }
 
 func testDrawNodes(t *testing.T, in Printable, out string) {
