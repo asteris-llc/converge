@@ -38,7 +38,7 @@ file.mode "docker-repo" {
 }
 
 task.query "apt-get-update" {
-  query   = "apt-get update"
+  query   = "apt-get update -y || true"
   depends = ["task.docker-repo-key", "file.content.docker-repo"]
 }
 

@@ -9,7 +9,7 @@ param "etcd-destination" {
 }
 
 param "etcd-initial-cluster" {
-  default = "{{lookup `task.query.hostname.status.stdout`}}=https://{{param `internal-ip`}}:2380"
+  default = "{{param `etcd-node-name`}}=https://{{param `internal-ip`}}:2380"
 }
 
 param "etcd-data-dir" {
@@ -18,6 +18,10 @@ param "etcd-data-dir" {
 
 param "ssl-directory" {
   default = "/etc/kubernetes/ssl"
+}
+
+param "etcd-node-name" {
+  default = "{{lookup `task.query.hostname.status.stdout`}}"
 }
 
 task.query "hostname" {
@@ -81,7 +85,7 @@ Description=etcd
 Documentation=https://github.com/coreos
 
 [Service]
-ExecStart=/usr/local/bin/etcd --name {{lookup `task.query.hostname.status.stdout`}} \
+ExecStart=/usr/local/bin/etcd --name {{param `etcd-node-name`}} \
   --cert-file={{param `ssl-directory`}}/kubernetes.pem \
   --key-file={{param `ssl-directory`}}/kubernetes-key.pem \
   --peer-cert-file={{param `ssl-directory`}}/kubernetes.pem \

@@ -9,12 +9,7 @@ param "csr-file" {
 }
 
 param "hosts" {
-  default = [
-    "127.0.0.1",
-    "localhost",
-    "{{lookup `task.query.hostname.status.stdout`}}",
-    "{{param `internal-ip`}}",
-  ]
+  default = "127.0.0.1,localhost,{{lookup `task.query.hostname.status.stdout`}},{{param `internal-ip`}}"
 }
 
 param "ca-url" {
@@ -29,7 +24,7 @@ param "csr" {
   default = <<EOF
 {
   "CN": "kubernetes",
-  "hosts": {{paramList "hosts" | jsonify}},
+  "hosts": {{param `hosts` | split "," | jsonify}},
   "key": {
     "algo": "rsa",
     "size": 2048
