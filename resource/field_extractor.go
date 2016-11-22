@@ -15,9 +15,10 @@
 package resource
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 /* Rules for field access in structures:
@@ -46,6 +47,10 @@ var (
 	// ErrFieldIndexOutOfBounds is returned when a field index is beyond the
 	// number of fields in the struct type
 	ErrFieldIndexOutOfBounds = errors.New("struct field index is out of bounds")
+
+	// ErrDuplicateFieldName is returned if there is a duplicate reference name in
+	// an exported field slice during map construction
+	ErrDuplicateFieldName = errors.New("detected duplicate field name")
 )
 
 // ExportedField represents an exported field, including the containing struct,
@@ -141,6 +146,20 @@ func disambiguateFields(
 		}
 	}
 	return fields
+}
+
+// GenerateLookupMap takes an exported field list and generates a map of lookup
+// names to values
+func GenerateLookupMap(fields []*ExportedField) (map[string]interface{}, error) {
+	output := make(map[string]interface{})
+	for _, field := range fields {
+		_, ok := output[field.ReferenceName]
+		if ok {
+			return output, errors.Wrap(ErrDuplicateFieldName, field.ReferenceName)
+		}
+		output[field.ReferenceName] = field.Value.Interface()
+	}
+	return output, nil
 }
 
 func getFieldKind(input interface{}, index int) (reflect.Kind, error) {
