@@ -179,7 +179,10 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, expectedErr := time.ParseInLocation(shortForm, val, zone)
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
 				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.Equal(t, expectedErr, err)
 			})
@@ -191,7 +194,10 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, expectedErr := time.ParseInLocation(shortForm, val, zone)
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
 				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.Equal(t, expectedErr, err)
 			})
@@ -203,7 +209,10 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, expectedErr := time.ParseInLocation(shortForm, val, zone)
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
 				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.Equal(t, expectedErr, err)
 			})
@@ -215,7 +224,10 @@ func TestPreparerPrepare(t *testing.T) {
 					Destination: new(testPreparerTarget),
 				}
 
-				_, expectedErr := time.Parse(shortForm, val)
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
 				_, err := prep.Prepare(context.Background(), fakerenderer.New())
 				assert.Equal(t, expectedErr, err)
 			})

@@ -423,7 +423,8 @@ func (p *Preparer) convertTime(typ reflect.Type, r Renderer, name string, val in
 				// parse the time as a date
 				shortTime, stErr := time.ParseInLocation(shortForm, val.(string), zone)
 				if stErr != nil {
-					return reflect.Zero(typ), stErr
+					errs := fmt.Errorf("could not convert %s to time.Time any of:\n1. %v\n2. %v\n3. %v\n", name, ztErr, ltErr, stErr)
+					return reflect.Zero(typ), errs
 				}
 
 				return reflect.ValueOf(shortTime), nil
