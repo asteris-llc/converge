@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>Module Verification - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.4.0/module-verification/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.4.0/module-verification/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.4.0/images/logo.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.4.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.4.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.4.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.4.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.4.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.4.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.4.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.4.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.4.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.4.0/stylesheets/palettes.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.4.0/stylesheets/highlight/highlight.css">
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.4.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body class="palette-primary-indigo palette-accent-teal">
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        Module Verification
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.4.0/images/logo.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.3.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.4.0/">
+  
+  Converge
+</a>
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.4.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.4.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.4.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.4.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.4.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.4.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.4.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.4.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.4.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.4.0/license/">
+  
+  License
+</a>
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.4.0/resources/">
+  
+  Resource Reference
+</a>
+    
+    <ul>
+        
+        
+        <a  title="docker.container" href="http://converge.aster.is/0.4.0/resources/docker-container/">
+  
+  docker.container
+</a>
+        
+        
+        <a  title="docker.image" href="http://converge.aster.is/0.4.0/resources/docker-image/">
+  
+  docker.image
+</a>
+        
+        
+        <a  title="docker.network" href="http://converge.aster.is/0.4.0/resources/docker-network/">
+  
+  docker.network
+</a>
+        
+        
+        <a  title="docker.volume" href="http://converge.aster.is/0.4.0/resources/docker-volume/">
+  
+  docker.volume
+</a>
+        
+        
+        <a  title="file.content" href="http://converge.aster.is/0.4.0/resources/file-content/">
+  
+  file.content
+</a>
+        
+        
+        <a  title="file.directory" href="http://converge.aster.is/0.4.0/resources/file-directory/">
+  
+  file.directory
+</a>
+        
+        
+        <a  title="file.mode" href="http://converge.aster.is/0.4.0/resources/file-mode/">
+  
+  file.mode
+</a>
+        
+        
+        <a  title="filesystem" href="http://converge.aster.is/0.4.0/resources/filesystem/">
+  
+  filesystem
+</a>
+        
+        
+        <a  title="lvm.logicalvolume" href="http://converge.aster.is/0.4.0/resources/lvm-logicalvolume/">
+  
+  lvm.logicalvolume
+</a>
+        
+        
+        <a  title="lvm.volumegroup" href="http://converge.aster.is/0.4.0/resources/lvm-volumegroup/">
+  
+  lvm.volumegroup
+</a>
+        
+        
+        <a  title="module" href="http://converge.aster.is/0.4.0/resources/module/">
+  
+  module
+</a>
+        
+        
+        <a  title="package.apt" href="http://converge.aster.is/0.4.0/resources/package-apt/">
+  
+  package.apt
+</a>
+        
+        
+        <a  title="package.rpm" href="http://converge.aster.is/0.4.0/resources/package-rpm/">
+  
+  package.rpm
+</a>
+        
+        
+        <a  title="param" href="http://converge.aster.is/0.4.0/resources/param/">
+  
+  param
+</a>
+        
+        
+        <a  title="task" href="http://converge.aster.is/0.4.0/resources/task/">
+  
+  task
+</a>
+        
+        
+        <a  title="task.query" href="http://converge.aster.is/0.4.0/resources/task-query/">
+  
+  task.query
+</a>
+        
+        
+        <a  title="user.group" href="http://converge.aster.is/0.4.0/resources/user-group/">
+  
+  user.group
+</a>
+        
+        
+        <a  title="user.user" href="http://converge.aster.is/0.4.0/resources/user-user/">
+  
+  user.user
+</a>
+        
+        
+        <a  title="wait.port" href="http://converge.aster.is/0.4.0/resources/wait-port/">
+  
+  wait.port
+</a>
+        
+        
+        <a  title="wait.query" href="http://converge.aster.is/0.4.0/resources/wait-query/">
+  
+  wait.query
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.4.0/release-notes/">
+  
+  Release Notes
+</a>
+    
+    <ul>
+        
+        
+        <a  title="0.2.0" href="http://converge.aster.is/0.4.0/release-notes/0-2-0/">
+  
+  0.2.0
+</a>
+        
+        
+        <a  title="0.3.0" href="http://converge.aster.is/0.4.0/release-notes/0-3-0/">
+  
+  0.3.0
+</a>
+        
+        
+        <a  title="0.4.0" href="http://converge.aster.is/0.4.0/release-notes/0-4-0/">
+  
+  0.4.0
+</a>
+        
+    </ul>
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>Module Verification </h1>
+
+			
+
+<p>In the future, converge will require modules to be signed using a gpg detached signature.
+The following steps will walk you through the creation of a gpg keypair suitable for signing a module.
+If you have an existing gpg signing key skip to the <a href="#signing-modules">Signing modules</a> step.</p>
+
+<h2 id="generate-a-gpg-signing-key">Generate a gpg signing key</h2>
+
+<p>Create a file named <code>gpg-batch</code> with the following content.</p>
+
+<pre><code>%echo Generating a default key
+Key-Type: RSA
+Key-Length: 2048
+Subkey-Type: RSA
+Subkey-Length: 2048
+Name-Real: Test Asteris
+Name-Comment: Test Key
+Name-Email: test@aster.is
+Expire-Date: 0
+Passphrase: asteris
+%pubring test.pub
+%secring test.sec
+%commit
+%echo done
+</code></pre>
+
+<p>We can use this to quickly generate a key pair using batch mode.</p>
+
+<pre><code>$ gpg --batch --gen-key gpg-batch
+</code></pre>
+
+<p>We can verify this worked by listing the keys.</p>
+
+<pre><code>$ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --list-keys
+./test.pub
+
+----------
+pub   2048R/475CC928 2016-08-07
+uid       [ unknown] Test Asteris (Test signing key) &lt;test@aster.is&gt;
+sub   2048R/1327D89C 2016-08-07
+</code></pre>
+
+<p>We can tell from the output above, that the level of trust for the signing key is unknown. This will cause the following warning if we attempt to validate a module signed with this key using the gpg cli:</p>
+
+<pre><code>gpg: WARNING: This key is not certified with a trusted signature!
+</code></pre>
+
+<p>Since we know exactly where this key came from let&rsquo;s trust it:</p>
+
+<pre><code>$ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --edit-key 475CC928
+
+gpg (GnuPG) 1.4.20; Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Secret key is available.
+
+pub  2048R/475CC928  created: 2016-08-07  expires: never       usage: SCEA
+                     trust: unknown      validity: unknown
+sub  2048R/1327D89C  created: 2016-08-07  expires: never       usage: SEA
+[ unknown] (1). Test Asteris (Test signing key) &lt;test@aster.is&gt;
+
+Please decide how far you trust this user to correctly verify other users' keys
+(by looking at passports, checking fingerprints from different sources, etc.)
+
+  1 = I don't know or won't say
+  2 = I do NOT trust
+  3 = I trust marginally
+  4 = I trust fully
+  5 = I trust ultimately
+  m = back to the main menu
+
+Your decision? 5
+Do you really want to set this key to ultimate trust? (y/N) y
+
+pub  2048R/475CC928  created: 2016-08-07  expires: never       usage: SCEA
+                     trust: ultimate      validity: ultimate
+sub  2048R/1327D89C  created: 2016-08-07  expires: never       usage: SEA
+[ultimate] (1). Test Asteris (Test signing key) &lt;test@aster.is&gt;
+Please note that the shown key validity is not necessarily correct
+unless you restart the program.
+
+gpg&gt; quit
+</code></pre>
+
+<h2 id="signing-modules">Signing modules</h2>
+
+<p>Now you can start signing modules with the key. The following command will produce a signature file called <code>basic.hcl.asc</code>.</p>
+
+<pre><code>$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --output basic.hcl.asc --detach-sig basic.hcl
+</code></pre>
+
+<p>This file should be shipped along side the module so that the converge tool can download it and use it to verify that the module has not been modified after the signature was created.</p>
+
+<h2 id="public-keystore">Public keystore</h2>
+
+<p>In order to verify a module&rsquo;s signature against its signature file, converge needs access to our public key. This can be exported with the following command.</p>
+
+<pre><code>$ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --export test@aster.is &gt; pubkeys.gpg
+</code></pre>
+
+<p>Now we must add the key to the converge&rsquo;s public key database. The following directories make up the default converge keystore layout:</p>
+
+<pre><code>sytem: /usr/lib/converge/trustedkeys/
+user: ~/.converge/trustedkeys/
+local: $(pwd)/trustedkeys/
+</code></pre>
+
+<p>The system path is designed to be used by system administrators. The user path is where converge stores keys that are added through the <code>converge key trust</code> command. Finally, the local path can be used for keys that you do not want stored globally or managed by converge.</p>
+
+<p>Trusted keys are saved in the desired directory named after the fingerprint of the public key. For global and local keys, we will need to manually create this file.</p>
+
+<p>We do this by downloading the key, capturing its fingerprint, and storing it in the database using the fingerprint as the filename.</p>
+
+<pre><code>$ curl -O https://example.com/pubkeys.gpg
+
+$ gpg --no-default-keyring --with-fingerprint pubkeys.gpg
+pub  2048R/475CC928 2016-08-07 Test Asteris (Test signing key) &lt;test@aster.is&gt;
+     Key fingerprint = 74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928
+	 sub  2048R/1327D89C 2016-08-07
+
+$ echo &quot;74FD F669 F18D 59F9 2B0A  ACCD 7203 51FF 475C C928&quot; | tr -d &quot;[:space:]&quot; | tr '[:upper:]' '[:lower:]'
+74fdf669f18d59f92b0aaccd720351ff475cc928
+
+mkdir -p trustedkeys
+mv pubkeys.gpg trustedkeys/74fdf669f18d59f92b0aaccd720351ff475cc928
+</code></pre>
+
+<p>You can disable a key stored in the global system path by creating an empty file in the user or local paths with the same name. Keys stored in the local path will also mask keys in the user path.</p>
+
+<h2 id="trusting-keys">Trusting keys</h2>
+
+<p>There is an easier way to add a key to the user keystore, using the <code>converge key trust</code> subcommand.</p>
+
+<pre><code>$ converge key trust pubkeys.gpg
+</code></pre>
+
+<p>The command will ask you to verify that the fingerprint matches the fingerprint you expected for the key.</p>
+
+<pre><code>The gpg key fingerprint is 74fdf669f18d59f92b0aaccd720351ff475cc928
+Are you sure you want to trust this key (yes/no)? yes
+Trusting key &quot;https://example.com/pubkeys.gpg&quot;.
+</code></pre>
+
+<h2 id="converge-integration">Converge integration</h2>
+
+<p>Now let&rsquo;s walk through the steps converge takes when fetching modules. For now, converge will not attempt to download the detached signature and verify the module. You can enable module verification with the <code>--verify-modules</code> flag.</p>
+
+<pre><code>$ converge plan --verify-modules https://example.com/modules/basic.hcl
+</code></pre>
+
+<p>This will result in converge retrieving the following URIs.</p>
+
+<pre><code>https://example.com/modules/basic.hcl
+https://example.com/modules/basic.hcl.asc
+</code></pre>
+
+<p>Then it verifies the signature of the module using the public keys in the key database.</p>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2016 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.4.0/resource-authors-guide/" title="Resource Authors Guide">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Resource Authors Guide
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.4.0/dependencies/" title="Using Dependencies">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              Using Dependencies
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.4.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.4.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+            
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+        
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="//gohugo.io/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
