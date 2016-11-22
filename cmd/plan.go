@@ -17,6 +17,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
@@ -110,6 +111,7 @@ can be done separately to see what needs to be changed before execution.`,
 			}
 
 			// get vertices
+			var planError bool
 			err = iterateOverStream(
 				stream,
 				func(resp *pb.StatusResponse) {
@@ -127,7 +129,11 @@ can be done separately to see what needs to be changed before execution.`,
 					if resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
 						if details != nil {
-							g.Add(node.New(resp.Id, details.ToPrintable()))
+							printable := details.ToPrintable()
+							if printable.Error() != nil {
+								planError = true
+							}
+							g.Add(node.New(resp.Id, printable))
 						}
 					}
 				},
@@ -149,6 +155,9 @@ can be done separately to see what needs to be changed before execution.`,
 
 			fmt.Print("\n")
 			fmt.Print(out)
+			if planError {
+				os.Exit(1)
+			}
 		}
 	},
 }
