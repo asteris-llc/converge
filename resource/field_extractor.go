@@ -21,11 +21,19 @@ import (
 )
 
 /* Rules for field access in structures:
+
 - Fields that are tagged with `export` will be exported.
+
 - Named structs that are tagged with `export` will be exported as a struct
-- Embedded structs will have their exported fields exported in the namespace of the containing struct
+
+- Embedded structs will have their exported fields exported in the namespace of
+	the containing struct
+
 - Embedded interfaces will not be exported, nor have their fields exported
-*/
+
+- If an embedded struct field name collides with a field from the struct that
+	it's embedded in, both will be exported with the embedded struct being
+	accessible with 'StructName.FieldName' */
 
 var (
 	// ErrNilStruct is returned if there is an attempt to introspect a nil value
@@ -56,19 +64,16 @@ func newExportedField(input interface{}, index int) (*ExportedField, bool) {
 	}
 	val, err := getStruct(reflect.ValueOf(input))
 	if err != nil {
-		fmt.Println("newExportedField: cannot resolve input to a struct type: ", err)
 		return nil, false
 	}
 
 	if index >= val.Type().NumField() {
-		fmt.Println("newExportedField: index out of bounds (", index, " > ", val.Type().NumField(), ")")
 		return nil, false
 	}
 	fieldType := val.Type().Field(index)
 	fieldVal := val.Field(index)
 	exportedName, ok := fieldType.Tag.Lookup("export")
 	if !ok {
-		fmt.Printf("newExportedField: %T.%s: field is not exported\n", input, fieldType.Name)
 		return nil, false
 	}
 	return &ExportedField{
@@ -79,9 +84,10 @@ func newExportedField(input interface{}, index int) (*ExportedField, bool) {
 }
 
 // ExportedFields returns a slice of fields that have been exported from a
-// struct, along with the name.
+// struct; including embedded fields
 func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
-	var embeddedExports []*ExportedField
+	nonEmbeddedFields := make(map[string]struct{})
+	embeddedFields := make(map[string][]*ExportedField)
 	if nil == input {
 		return exported, ErrNilStruct
 	}
@@ -102,20 +108,39 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 			if !isKind {
 				continue
 			}
-			fromEmbedded, err := ExportedFields(input)
+			thisField := asStruct.Field(i).Interface()
+			fromEmbedded, err := ExportedFields(thisField)
 			if err != nil {
 				return exported, err
 			}
-			embeddedExports = append(embeddedExports, fromEmbedded...)
+			embeddedFields[asStruct.Type().Field(i).Name] = fromEmbedded
 			continue
 		}
-		fmt.Println("non-anonymous field at idx: ", i)
 		if field, ok := newExportedField(input, i); ok {
-			fmt.Println("\t generated field, appending to exported list")
+			nonEmbeddedFields[field.ReferenceName] = struct{}{}
 			exported = append(exported, field)
 		}
 	}
+	for embeddedStruct, fieldSet := range embeddedFields {
+		exported = append(exported, disambiguateFields(nonEmbeddedFields, embeddedStruct, fieldSet)...)
+	}
 	return exported, nil
+}
+
+// disambiguateFields will prefix the struct name to the exported field name for
+// any exported field whos name would collide with the exported fields of the
+// parent struct
+func disambiguateFields(
+	structFields map[string]struct{},
+	structName string,
+	fields []*ExportedField,
+) []*ExportedField {
+	for _, field := range fields {
+		if _, ok := structFields[field.ReferenceName]; ok {
+			field.ReferenceName = structName + "." + field.ReferenceName
+		}
+	}
+	return fields
 }
 
 func getFieldKind(input interface{}, index int) (reflect.Kind, error) {
