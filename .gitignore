@@ -43,3 +43,5 @@ docs/public
 # examples
 terraform.tfstate*
 .vagrant
+examples/kubernetes/ssl/*
+examples/kubernetes/*.log
