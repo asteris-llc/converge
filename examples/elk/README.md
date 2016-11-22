@@ -24,7 +24,7 @@ Kibana web interface at [http://localhost:5601](http://localhost:5601).
 ### Terraform (AWS)
 
 You must have a version of the
-[Converge Terraform provisioner](https://github.com/ChrisAubuchon/terraform-provisioner-converge)
+[Converge Terraform provisioner](https://github.com/asteris-llc/terraform-provisioner-converge)
 built and configured as a plugin for Terraform:
 
 ```shell
