@@ -10,9 +10,11 @@ This example is supported on Linux and OSX hosts.
 
 Just run `vagrant up`!
 
-The first time you run `vagrant up`, converge will be downloaded and executed from your `/tmp` directory (by default). Converge will generate a certificate authority on your local machine and upload it to the vagrant instances. From that point forward, a vagrant provisioner will run converge to configure the instances and install all of the necessary kubernetes components. By default, a kubernetes cluster consisting of a single controller and 2 nodes will be created. You can configure the `CONTROLLER_COUNT` to 3+ nodes to run an HA cluster. That number of worker nodes can be configured using the `NODE_COUNT` variable.
+The first time you run `vagrant up`, converge will be downloaded and executed from your `/tmp` directory (by default). Converge will generate a certificate authority on your local machine and upload it to the vagrant instances. From that point forward, a vagrant provisioner will run converge to configure the instances and install all of the necessary Kubernetes components. By default, a Kubernetes cluster consisting of a single controller and 2 nodes will be created. You can configure the `CONTROLLER_COUNT` to 3+ nodes to run an HA cluster. That number of worker nodes can be configured using the `NODE_COUNT` variable.
 
-If vagrant provisinoning fails (the example pulls various resources from the internet and is sensitive to network issues), you can repeatedly run `vagrant provision` and `vagrant up` until all nodes are fully provisioned.
+If vagrant provisioning fails (the example pulls various resources from the internet and is sensitive to network issues), you can repeatedly run `vagrant provision` and `vagrant up` until all nodes are fully provisioned.
+
+*Note: Vagrant 1.8.6+ is required.*
 
 ### Configuring kubectl
 
@@ -80,6 +82,43 @@ kubectl config use-context converge-kubernetes
 If you have customized the admin token defined in [variables.tf](./terraform/aws/variables.tf), you should change `--token` option.
 
 ## Graphs
+
+cfssl:
+
+![cfssl graph](./graphs/cfssl.png)
+
+docker:
+
+![docker graph](./graphs/docker.png)
+
+generate-ca:
+
+![generate-ca graph](./graphs/generate-ca.png)
+
+generate-cert:
+
+![generate-cert graph](./graphs/generate-cert.png)
+
+etcd:
+
+![etcd graph](./graphs/etcd.png)
+
+kubernetes-controller:
+
+![kubernetes-controller graph](./graphs/kubernetes-controller.png)
+
+cni:
+
+![cni graph](./graphs/cni.png)
+
+weave:
+
+![weave graph](./graphs/weave.png)
+
+kubernetes-node:
+
+![kubernetes-node graph](./graphs/kubernetes-node.png)
+
 
 ## Warning
 
