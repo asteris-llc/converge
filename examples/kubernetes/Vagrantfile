@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 CONVERGE_LOCAL = "/tmp/converge-kubernetes/"
-CONVERGE_VERSION = "0.4.0-beta1"
+CONVERGE_VERSION = "0.4.0-rc1"
 CONTROLLER_COUNT = 1
 NODE_COUNT = 2
 KUBELET_TOKEN = "chAng3m3"
