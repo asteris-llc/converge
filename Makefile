@@ -110,7 +110,7 @@ package: xcompile
 	for f in $(shell find build -name converge | cut -d/ -f2); do \
 		(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
 	done
-	(cd build/tgz; shasum -a 512 * > tgz.sha256sum)
+	(cd build/tgz; shasum -a 512 * > tgz.sha512sum)
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
