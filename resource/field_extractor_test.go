@@ -26,13 +26,13 @@ import (
 func TestExportedFields(t *testing.T) {
 	t.Run("exported-fields", func(t *testing.T) {
 		t.Run("when-value", func(t *testing.T) {
-			expected := []string{"A", "B"}
+			expected := []string{"a", "c"}
 			actual, err := resource.ExportedFields(TestOuterStruct{})
 			require.NoError(t, err)
 			assert.Equal(t, expected, fieldNames(actual))
 		})
 		t.Run("when-pointer", func(t *testing.T) {
-			expected := []string{"A", "B"}
+			expected := []string{"a", "c"}
 			actual, err := resource.ExportedFields(&TestOuterStruct{})
 			require.NoError(t, err)
 			assert.Equal(t, expected, fieldNames(actual))
@@ -43,13 +43,13 @@ func TestExportedFields(t *testing.T) {
 		})
 		t.Run("when-embedded", func(t *testing.T) {
 			t.Run("non-overlapping", func(t *testing.T) {
-				expected := []string{"A", "B", "X"}
+				expected := []string{"a", "b", "x"}
 				actual, err := resource.ExportedFields(&TestEmbeddingStruct{})
 				require.NoError(t, err)
 				assert.Equal(t, expected, fieldNames(actual))
 			})
 			t.Run("overlapping", func(t *testing.T) {
-				expected := []string{"A", "B", "TestEmbeddedStruct.B", "X"}
+				expected := []string{"a", "c", "x", "b", "TestEmbeddedStruct.x"}
 				actual, err := resource.ExportedFields(&TestEmbeddingOverlap{})
 				require.NoError(t, err)
 				assert.Equal(t, expected, fieldNames(actual))
@@ -111,7 +111,7 @@ func (t *TestOuterStruct) Deconstruct() (int, int, int, int) {
 
 func fieldNames(in []*resource.ExportedField) (out []string) {
 	for _, f := range in {
-		out = append(out, f.FieldName)
+		out = append(out, f.ReferenceName)
 	}
 	return
 }
