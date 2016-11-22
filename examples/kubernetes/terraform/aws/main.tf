@@ -353,7 +353,6 @@ resource "null_resource" "nodes" {
       controller-ip = "${aws_instance.controller.0.private_ip}"
       api-servers   = "${join(",", formatlist("https://%s:6443", aws_instance.controller.*.private_ip))}"
 
-      # peers         = "${join(" ", aws_instance.node.*.private_ip)}"
       peers         = "${replace(join(" ", aws_instance.node.*.private_ip), "/${element(aws_instance.node.*.private_ip, count.index)}\\s+/", "")}"
       kubelet-token = "${var.kubelet_token}"
     }
