@@ -61,6 +61,7 @@ func TestExportedFields(t *testing.T) {
 		actual, err := resource.ExportedFields(TestOuterStruct{})
 		require.NoError(t, err)
 		assert.Equal(t, expected, lookupNames(actual))
+		require.True(t, len(actual) > 1)
 		val1 := actual[1]
 		assert.Equal(t, "B", val1.FieldName)
 		assert.Equal(t, "c", val1.ReferenceName)
@@ -69,6 +70,7 @@ func TestExportedFields(t *testing.T) {
 		input := newOuterStruct(3, 4, 5, 6)
 		actual, err := resource.ExportedFields(input)
 		require.NoError(t, err)
+		require.True(t, len(actual) > 1)
 		assert.Equal(t, 3, actual[0].Value.Interface().(int))
 		assert.Equal(t, 4, actual[1].Value.Interface().(int))
 	})
