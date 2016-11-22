@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
@@ -42,7 +41,7 @@ You can pipe the output directly to the 'dot' command, for example:
 
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
-			return errors.New("Need one module filename as argument, got 0")
+			return fmt.Errorf("Need one module filename as argument, got %d", len(args))
 		}
 		return nil
 	},
