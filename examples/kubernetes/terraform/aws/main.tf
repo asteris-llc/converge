@@ -216,7 +216,6 @@ resource "aws_instance" "controller" {
     ]
 
     download_binary = true
-    version         = "${var.converge_version}"
     prevent_sudo    = false
   }
 }
@@ -265,7 +264,6 @@ resource "aws_instance" "node" {
     ]
 
     download_binary = true
-    version         = "${var.converge_version}"
     prevent_sudo    = false
   }
 }
@@ -290,7 +288,6 @@ resource "null_resource" "controller_bootstrap" {
     ]
 
     download_binary = true
-    version         = "${var.converge_version}"
     prevent_sudo    = false
   }
 }
@@ -328,7 +325,6 @@ resource "null_resource" "controllers" {
     ]
 
     download_binary = true
-    version         = "${var.converge_version}"
     prevent_sudo    = false
   }
 }
@@ -365,7 +361,6 @@ resource "null_resource" "nodes" {
     ]
 
     download_binary = true
-    version         = "${var.converge_version}"
     prevent_sudo    = false
   }
 }
