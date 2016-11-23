@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !solaris
-
-package image_test
+package providers
 
 import (
-	"testing"
+	"errors"
 
-	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/docker/image"
-	"github.com/stretchr/testify/assert"
+	pp "github.com/asteris-llc/converge/prettyprinters"
+	"github.com/asteris-llc/converge/rpc/pb"
 )
 
-func TestPreparerInterface(t *testing.T) {
-	t.Parallel()
-	assert.Implements(t, (*resource.Resource)(nil), new(image.Preparer))
+func dockerContainerLabel(val *pb.GraphComponent_Vertex) (pp.VisibleRenderable, error) {
+	return nil, errors.New("docker.container is unsupported on solaris")
+}
+
+func dockerImageLabel(val *pb.GraphComponent_Vertex) (pp.VisibleRenderable, error) {
+	return nil, errors.New("docker.image is unsupported on solaris")
 }
