@@ -27,6 +27,7 @@ import (
 //
 // Volume is responsible for managing Docker volumes. It assumes that there is
 // already a Docker daemon running on the system.
+// *Note: docker resources are not currently supported on Solaris.*
 type Preparer struct {
 	// name of the volume
 	Name string `hcl:"name" required:"true" nonempty:"true"`

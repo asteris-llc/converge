@@ -10,6 +10,7 @@ menu:
 
 Container is responsible for creating docker containers. It assumes that
 there is already a Docker daemon running on the system.
+*Note: docker resources are not currently supported on Solaris.*
 
 
 ## Example
@@ -112,5 +113,3 @@ Specified as a boolean value
   indicates whether or not the container will be recreated if the state is
 not what is expected. By default, the module will only check to see if the
 container exists. Specified as a boolean value
-
-
