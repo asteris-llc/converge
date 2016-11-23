@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
@@ -24,31 +25,39 @@ import (
 
 // Test things related to exported fields
 func TestExportedFields(t *testing.T) {
+	t.Parallel()
 	t.Run("exported-fields", func(t *testing.T) {
+		t.Parallel()
 		t.Run("when-value", func(t *testing.T) {
+			t.Parallel()
 			expected := []string{"a", "c"}
 			actual, err := resource.ExportedFields(TestOuterStruct{})
 			require.NoError(t, err)
 			assert.Equal(t, expected, fieldNames(actual))
 		})
 		t.Run("when-pointer", func(t *testing.T) {
+			t.Parallel()
 			expected := []string{"a", "c"}
 			actual, err := resource.ExportedFields(&TestOuterStruct{})
 			require.NoError(t, err)
 			assert.Equal(t, expected, fieldNames(actual))
 		})
 		t.Run("when-nil", func(t *testing.T) {
+			t.Parallel()
 			_, err := resource.ExportedFields(nil)
 			assert.Error(t, err)
 		})
 		t.Run("when-embedded", func(t *testing.T) {
+			t.Parallel()
 			t.Run("non-overlapping", func(t *testing.T) {
+				t.Parallel()
 				expected := []string{"a", "b", "x"}
 				actual, err := resource.ExportedFields(&TestEmbeddingStruct{})
 				require.NoError(t, err)
 				assert.Equal(t, expected, fieldNames(actual))
 			})
 			t.Run("overlapping", func(t *testing.T) {
+				t.Parallel()
 				expected := []string{"a", "c", "x", "b", "TestEmbeddedStruct.x"}
 				actual, err := resource.ExportedFields(&TestEmbeddingOverlap{})
 				require.NoError(t, err)
@@ -57,6 +66,7 @@ func TestExportedFields(t *testing.T) {
 		})
 	})
 	t.Run("reference-fields", func(t *testing.T) {
+		t.Parallel()
 		expected := []string{"a", "c"}
 		actual, err := resource.ExportedFields(TestOuterStruct{})
 		require.NoError(t, err)
@@ -67,6 +77,7 @@ func TestExportedFields(t *testing.T) {
 		assert.Equal(t, "c", val1.ReferenceName)
 	})
 	t.Run("values", func(t *testing.T) {
+		t.Parallel()
 		input := newOuterStruct(3, 4, 5, 6)
 		actual, err := resource.ExportedFields(input)
 		require.NoError(t, err)
@@ -75,6 +86,82 @@ func TestExportedFields(t *testing.T) {
 		assert.Equal(t, 4, actual[1].Value.Interface().(int))
 	})
 }
+
+func TestGenerateLookupMap(t *testing.T) {
+	var nilInt *int
+	t.Parallel()
+	testVals := []*resource.ExportedField{
+		mkExportedField("a", "a", "a"),
+		mkExportedField("b", "b", "b"),
+		mkExportedField("c", "x", "c"),
+		mkExportedField("d", "Thing.x", "d"),
+		mkExportedField("e", "e", nilInt),
+	}
+	results, err := resource.GenerateLookupMap(testVals)
+	require.NoError(t, err)
+	assert.Equal(t, results["a"], "a")
+	assert.Equal(t, results["b"], "b")
+	assert.Equal(t, results["x"], "c")
+	assert.Equal(t, results["Thing.x"], "d")
+	assert.Nil(t, results["e"])
+	_, found := results["c"]
+	assert.False(t, found)
+}
+
+func TestLookupMapFromStruct(t *testing.T) {
+	t.Parallel()
+	testInput := &TestEmbeddingOverlap{
+		TestEmbeddedStruct: TestEmbeddedStruct{
+			A: 1,
+			B: 2,
+			X: 3,
+		},
+		A: 4,
+		B: 5,
+		X: 6,
+	}
+	refMap, err := resource.LookupMapFromStruct(testInput)
+	require.NoError(t, err)
+	assert.Equal(t, 4, refMap["a"].(int))
+	assert.Equal(t, 5, refMap["c"].(int))
+	assert.Equal(t, 6, refMap["x"].(int))
+	assert.Equal(t, 2, refMap["b"].(int))
+	assert.Equal(t, 3, refMap["TestEmbeddedStruct.x"].(int))
+}
+
+func TestLookupMapFromInterface(t *testing.T) {
+	t.Parallel()
+	t.Run("when-pointer", func(t *testing.T) {
+		t.Parallel()
+		var asInterface TestInterface = &TestEmbeddingOverlap{}
+		ifaceResult, err := resource.LookupMapFromInterface(asInterface)
+		require.NoError(t, err)
+		structResult, err := resource.LookupMapFromStruct(&TestEmbeddingOverlap{})
+		require.NoError(t, err)
+		assert.True(t, reflect.DeepEqual(ifaceResult, structResult))
+	})
+	t.Run("when-value", func(t *testing.T) {
+		t.Parallel()
+		var asInterface TestInterface = TestEmbeddingOverlap{}
+		ifaceResult, err := resource.LookupMapFromInterface(asInterface)
+		require.NoError(t, err)
+		structResult, err := resource.LookupMapFromStruct(TestEmbeddingOverlap{})
+		require.NoError(t, err)
+		assert.True(t, reflect.DeepEqual(ifaceResult, structResult))
+	})
+	t.Run("when-nil", func(t *testing.T) {
+		t.Parallel()
+		var asInterface TestInterface
+		_, err := resource.LookupMapFromInterface(asInterface)
+		require.Error(t, err)
+	})
+}
+
+func mkExportedField(name, refName string, val interface{}) *resource.ExportedField {
+	return &resource.ExportedField{FieldName: name, ReferenceName: refName, Value: reflect.ValueOf(val)}
+}
+
+type TestInterface interface{}
 
 type TestOuterStruct struct {
 	A int `export:"a"`

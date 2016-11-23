@@ -15,11 +15,13 @@
 package resource
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
 )
+
+// FieldMap represents a map of field names to interfaces
+type FieldMap map[string]interface{}
 
 /* Rules for field access in structures:
 
@@ -64,7 +66,6 @@ type ExportedField struct {
 
 func newExportedField(input interface{}, index int) (*ExportedField, bool) {
 	if nil == input {
-		fmt.Println("newExportedField: input is nil")
 		return nil, false
 	}
 	val, err := getStruct(reflect.ValueOf(input))
@@ -150,8 +151,8 @@ func disambiguateFields(
 
 // GenerateLookupMap takes an exported field list and generates a map of lookup
 // names to values
-func GenerateLookupMap(fields []*ExportedField) (map[string]interface{}, error) {
-	output := make(map[string]interface{})
+func GenerateLookupMap(fields []*ExportedField) (FieldMap, error) {
+	output := make(FieldMap)
 	for _, field := range fields {
 		_, ok := output[field.ReferenceName]
 		if ok {
@@ -160,6 +161,27 @@ func GenerateLookupMap(fields []*ExportedField) (map[string]interface{}, error) 
 		output[field.ReferenceName] = field.Value.Interface()
 	}
 	return output, nil
+}
+
+// LookupMapFromStruct generates a lookup map from a struct
+func LookupMapFromStruct(input interface{}) (FieldMap, error) {
+	exported, err := ExportedFields(input)
+	if err != nil {
+		return make(FieldMap), err
+	}
+	return GenerateLookupMap(exported)
+}
+
+// LookupMapFromInterface gets the concrete implementation of an interface and
+// then gets the struct fields from it
+func LookupMapFromInterface(input interface{}) (FieldMap, error) {
+	switch reflect.ValueOf(input).Kind() {
+	case reflect.Ptr, reflect.Interface:
+		return LookupMapFromInterface(reflect.ValueOf(input).Elem().Interface())
+	case reflect.Struct:
+		return LookupMapFromStruct(input)
+	}
+	return make(FieldMap), ErrNonStructIntrospection
 }
 
 func getFieldKind(input interface{}, index int) (reflect.Kind, error) {
