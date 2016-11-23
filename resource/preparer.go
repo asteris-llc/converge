@@ -28,7 +28,17 @@ import (
 	"golang.org/x/net/context"
 )
 
-var durationType = reflect.TypeOf(time.Duration(0))
+var (
+	durationType = reflect.TypeOf(time.Duration(0))
+	timeType     = reflect.TypeOf(time.Time{})
+)
+
+const (
+	// longForm layout for time parsing
+	longForm = "2006-01-02T15:04:05"
+	// shortForm layout for time parsing
+	shortForm = "2006-01-02"
+)
 
 // Preparer wraps and implements resource.Resource in order to deserialize into
 // regular Preparers
@@ -302,6 +312,8 @@ func (p *Preparer) convertValue(typ reflect.Type, r Renderer, name string, val i
 	switch typ {
 	case durationType:
 		out, err = p.convertDuration(typ, r, name, val, base)
+	case timeType:
+		out, err = p.convertTime(typ, r, name, val, base)
 	default:
 		switch typ.Kind() {
 		case reflect.Bool:
@@ -358,7 +370,7 @@ func (p *Preparer) realias(val reflect.Value, typ reflect.Type) (reflect.Value, 
 	return val, nil
 }
 
-// convertDuration converts a time.Duration
+// convertDuration converts a value to time.Duration
 func (p *Preparer) convertDuration(typ reflect.Type, r Renderer, name string, val interface{}, base int) (reflect.Value, error) {
 	if val == nil {
 		return reflect.Zero(typ), nil
@@ -383,6 +395,48 @@ func (p *Preparer) convertDuration(typ reflect.Type, r Renderer, name string, va
 
 	default:
 		return reflect.Zero(typ), fmt.Errorf("cannot handle duration conversion of %v", reflect.ValueOf(val).Kind())
+	}
+}
+
+// convertTime converts a value to time.Time
+//
+// Parsing is attempted with up to three layouts in the following order:
+// 1. RFC3999, the timezone provided is used
+// 2. YYYY-MM-DDThh:mm:ss, the system timezone is used
+// 3. YYYY-MM-DD, the system timezone is used
+func (p *Preparer) convertTime(typ reflect.Type, r Renderer, name string, val interface{}, base int) (reflect.Value, error) {
+	if val == nil {
+		return reflect.Zero(typ), nil
+	}
+
+	switch typ {
+	case timeType:
+		// parse the time with the zone provided
+		zoneTime, ztErr := time.Parse(time.RFC3339, val.(string))
+		if ztErr != nil {
+			// obtain the system timezone
+			zone := time.FixedZone(time.Now().In(time.Local).Zone())
+
+			// parse the time with the system zone
+			longTime, ltErr := time.ParseInLocation(longForm, val.(string), zone)
+			if ltErr != nil {
+				// parse the time as a date
+				shortTime, stErr := time.ParseInLocation(shortForm, val.(string), zone)
+				if stErr != nil {
+					errs := fmt.Errorf("could not convert %s to time.Time any of:\n1. %v\n2. %v\n3. %v\n", name, ztErr, ltErr, stErr)
+					return reflect.Zero(typ), errs
+				}
+
+				return reflect.ValueOf(shortTime), nil
+			}
+
+			return reflect.ValueOf(longTime), nil
+		}
+
+		return reflect.ValueOf(zoneTime), nil
+
+	default:
+		return reflect.Zero(typ), fmt.Errorf("cannot handle time conversion of %v", reflect.ValueOf(val).Kind())
 	}
 }
 
