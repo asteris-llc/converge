@@ -1,0 +1,140 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+CONVERGE_LOCAL = "/tmp/converge-kubernetes/"
+CONTROLLER_COUNT = 1
+NODE_COUNT = 2
+KUBELET_TOKEN = "chAng3m3"
+ADMIN_TOKEN = "chAng3m3"
+SCHEDULER_TOKEN = "chAng3m3"
+
+def etcd_initial_cluster
+  (1..CONTROLLER_COUNT).map { |i|
+    "#{controller_host_name(i)}=https://#{controller_ip(i)}:2380"
+  }.join(",")
+end
+
+def etcd_servers
+  (1..CONTROLLER_COUNT).map { |i|
+    "https://#{controller_ip(i)}:2379"
+  }.join(",")
+end
+
+def api_servers
+  (1..CONTROLLER_COUNT).map { |i|
+    "https://#{controller_ip(i)}:6443"
+  }.join(",")
+end
+
+def node_peers(node_ip)
+  (1..NODE_COUNT).map { |i|
+    node_ip(i)
+  }.reject { |nip|
+    nip == node_ip
+  }
+end
+
+def controller_host_name(num)
+  "controller-#{num}"
+end
+
+def controller_ip(num)
+  return "172.19.9.#{num+20}"
+end
+
+def node_ip(num)
+  return "172.19.9.#{num+100}"
+end
+
+def controller_script(internal_ip, ca_bootstrap = false)
+  params = <<EOF
+{
+  "internal-ip": "#{internal_ip}",
+  "ca-url": "http://#{controller_ip(1)}:9090/ca.tar.gz",
+  "etcd-initial-cluster": "#{etcd_initial_cluster}",
+  "etcd-servers": "#{etcd_servers}",
+  "kubelet-token": "#{KUBELET_TOKEN}",
+  "admin-token": "#{ADMIN_TOKEN}",
+  "scheduler-token": "#{SCHEDULER_TOKEN}"
+}
+EOF
+
+  if ca_bootstrap
+    <<EOF
+converge apply --local \
+         --paramsJSON='#{params}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-ca.hcl \
+         /vagrant/converge/generate-cert.hcl \
+         /vagrant/converge/etcd.hcl \
+         /vagrant/converge/kubernetes-controller.hcl
+EOF
+  else
+    <<EOF
+converge apply --local \
+         --paramsJSON='#{params}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-cert.hcl \
+         /vagrant/converge/etcd.hcl \
+         /vagrant/converge/kubernetes-controller.hcl
+EOF
+  end
+end
+
+def node_script(internal_ip, peers)
+  params = <<EOF
+{
+  "internal-ip": "#{internal_ip}",
+  "ca-url": "http://#{controller_ip(1)}:9090/ca.tar.gz",
+  "controller-ip": "#{controller_ip(1)}",
+  "api-servers": "#{api_servers}",
+  "kubelet-token": "#{KUBELET_TOKEN}",
+  "peers": "#{peers.join(' ')}"
+}
+EOF
+
+<<EOF
+converge apply --local \
+         --paramsJSON='#{params}' \
+         /vagrant/converge/cfssl.hcl \
+         /vagrant/converge/docker.hcl \
+         /vagrant/converge/generate-cert.hcl \
+         /vagrant/converge/cni.hcl \
+         /vagrant/converge/weave.hcl \
+         /vagrant/converge/kubernetes-node.hcl
+EOF
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+
+  (1..CONTROLLER_COUNT).each do |i|
+    config.vm.define "controller-#{i}" do |controller|
+      controller.vm.provider "virtualbox" do |v|
+        v.memory = 2048
+        v.cpus = 2
+      end
+      cip = controller_ip(i)
+      controller.vm.hostname = "controller-#{i}"
+      controller.vm.network :private_network, ip: cip
+      controller.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
+      controller.vm.provision :shell, inline: controller_script(cip, i==1), privileged: true
+    end
+  end
+
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "node-#{i}" do |node|
+      node.vm.provider "virtualbox" do |v|
+        v.memory = 2048
+        v.cpus = 2
+      end
+      nip = node_ip(i)
+      node.vm.hostname = "node-#{i}"
+      node.vm.network :private_network, ip: nip
+      node.vm.provision :shell, inline: "curl get.converge.sh | bash -", privileged: true
+      node.vm.provision :shell, inline: node_script(nip, node_peers(nip)), privileged: true
+    end
+  end
+end

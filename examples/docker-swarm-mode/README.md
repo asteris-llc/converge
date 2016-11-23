@@ -6,7 +6,7 @@ A converge sample that sets up a multi-node [Docker Swarm Mode](https://docs.doc
 
 ### Terraform (AWS)
 
-You must have a version of the [Converge Terraform provisioner](https://github.com/ChrisAubuchon/terraform-provisioner-converge) built and configured as a plugin for terraform:
+You must have a version of the [Converge Terraform provisioner](https://github.com/asteris-llc/terraform-provisioner-converge) built and configured as a plugin for terraform:
 
 ```shell
 $ cat ~/.terraformrc
