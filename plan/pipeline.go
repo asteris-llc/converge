@@ -167,9 +167,14 @@ func (g *pipelineGen) PlanNode(ctx context.Context, taski interface{}) (interfac
 		status = &resource.Status{}
 	}
 
+	if err := status.UpdateExportedFields(twrapper.Task); err != nil {
+		return nil, err
+	}
+
 	type settable interface {
 		SetError(error)
 	}
+
 	if inner, ok := status.(settable); ok && err != nil {
 		inner.SetError(err)
 	}

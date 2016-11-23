@@ -130,6 +130,10 @@ func (g *pipelineGen) applyNode(ctx context.Context, val interface{}) (interface
 		status = &resource.Status{}
 	}
 
+	if err := status.UpdateExportedFields(twrapper.Plan.Task); err != nil {
+		return nil, err
+	}
+
 	type settable interface {
 		SetError(error)
 	}
