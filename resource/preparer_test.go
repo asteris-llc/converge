@@ -321,6 +321,10 @@ func TestPreparerPrepare(t *testing.T) {
 
 		{"float64", float64(1), func(t *testing.T, tpt *testPreparerTarget) { assert.Equal(t, float64(1), tpt.Float64) }},
 		{"float64", "1", func(t *testing.T, tpt *testPreparerTarget) { assert.Equal(t, float64(1), tpt.Float64) }},
+
+		// octal conversion
+		{"octal", uint32(0777), func(t *testing.T, tpt *testPreparerTarget) { assert.Equal(t, uint32(0777), tpt.Octal) }},
+		{"octal", "0777", func(t *testing.T, tpt *testPreparerTarget) { assert.Equal(t, uint32(0777), tpt.Octal) }},
 	}
 	for _, test := range numberTests {
 		t.Run(fmt.Sprintf("%s-%T", test.key, test.value), func(t *testing.T) {
@@ -459,6 +463,7 @@ type testPreparerTarget struct {
 	Uint64  uint64  `hcl:"uint64"`
 	Float32 float32 `hcl:"float32"`
 	Float64 float64 `hcl:"float64"`
+	Octal   uint32  `hcl:"octal" base:"8"`
 
 	// simple validation
 	ValidValues string `hcl:"valid_values" valid_values:"a"`
