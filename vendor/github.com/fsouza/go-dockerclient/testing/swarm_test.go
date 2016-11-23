@@ -271,18 +271,11 @@ func TestServiceCreate(t *testing.T) {
 		Image:   "test/test",
 		Name:    "test-0",
 		Config: &docker.Config{
-			Entrypoint:   []string{"sh"},
-			Cmd:          []string{"--test"},
-			Env:          []string{"ENV=1"},
-			ExposedPorts: map[docker.Port]struct{}{"80/tcp": {}},
+			Entrypoint: []string{"sh"},
+			Cmd:        []string{"--test"},
+			Env:        []string{"ENV=1"},
 		},
-		HostConfig: &docker.HostConfig{
-			PortBindings: map[docker.Port][]docker.PortBinding{
-				"80/tcp": {
-					{HostIP: "0.0.0.0", HostPort: "80"},
-				},
-			},
-		},
+		HostConfig: &docker.HostConfig{},
 		State: docker.State{
 			Running:   true,
 			StartedAt: cont.State.StartedAt,
@@ -297,6 +290,10 @@ func TestServiceCreate(t *testing.T) {
 	expectedService := &swarm.Service{
 		ID:   srv.ID,
 		Spec: serviceCreateOpts.ServiceSpec,
+		Endpoint: swarm.Endpoint{
+			Spec:  *serviceCreateOpts.ServiceSpec.EndpointSpec,
+			Ports: []swarm.PortConfig{{Protocol: "tcp", TargetPort: 80, PublishedPort: 80}},
+		},
 	}
 	if !reflect.DeepEqual(srv, expectedService) {
 		t.Fatalf("ServiceCreate: wrong service. Want\n%#v\nGot\n%#v", expectedService, srv)
@@ -317,6 +314,64 @@ func TestServiceCreate(t *testing.T) {
 	}
 	if !reflect.DeepEqual(task, expectedTask) {
 		t.Fatalf("ServiceCreate: wrong task. Want\n%#v\nGot\n%#v", expectedTask, task)
+	}
+}
+
+func TestServiceCreateDynamicPort(t *testing.T) {
+	server, _, err := setUpSwarm()
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	serviceCreateOpts := docker.CreateServiceOptions{
+		ServiceSpec: swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Name: "test",
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Image:   "test/test",
+					Command: []string{"sh"},
+					Args:    []string{"--test"},
+					Env:     []string{"ENV=1"},
+					User:    "test",
+				},
+			},
+			EndpointSpec: &swarm.EndpointSpec{
+				Mode: swarm.ResolutionModeVIP,
+				Ports: []swarm.PortConfig{{
+					Protocol:      swarm.PortConfigProtocolTCP,
+					TargetPort:    uint32(80),
+					PublishedPort: uint32(0),
+				}},
+			},
+		},
+	}
+	buf, err := json.Marshal(serviceCreateOpts)
+	if err != nil {
+		t.Fatalf("ServiceCreate error: %s", err.Error())
+	}
+	var params io.Reader
+	params = bytes.NewBuffer(buf)
+	request, _ := http.NewRequest("POST", "/services/create", params)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("ServiceCreate: wrong status code. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	if len(server.services) != 1 || len(server.tasks) != 1 || len(server.containers) != 1 {
+		t.Fatalf("ServiceCreate: wrong item count. Want 1. Got services: %d, tasks: %d, containers: %d.", len(server.services), len(server.tasks), len(server.containers))
+	}
+	srv := server.services[0]
+	expectedService := &swarm.Service{
+		ID:   srv.ID,
+		Spec: serviceCreateOpts.ServiceSpec,
+		Endpoint: swarm.Endpoint{
+			Spec:  *serviceCreateOpts.ServiceSpec.EndpointSpec,
+			Ports: []swarm.PortConfig{{Protocol: "tcp", TargetPort: 80, PublishedPort: 30000}},
+		},
+	}
+	if !reflect.DeepEqual(srv, expectedService) {
+		t.Fatalf("ServiceCreate: wrong service. Want\n%#v\nGot\n%#v", expectedService, srv)
 	}
 }
 
@@ -641,6 +696,57 @@ func TestTaskListFilterServiceName(t *testing.T) {
 	}
 }
 
+func TestTaskListFilterMultipleFields(t *testing.T) {
+	server, _, err := setUpSwarm()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, err := addTestService(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := server.tasks[0]
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", fmt.Sprintf(`/tasks?filters={"service":[%q], "id":[%q]}`, srv.Spec.Name, task.ID), nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("TaskList: wrong status code. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	var taskInspect []swarm.Task
+	err = json.Unmarshal(recorder.Body.Bytes(), &taskInspect)
+	if err != nil {
+		t.Fatalf("TaskList: unable to unmarshal response body: %s", err)
+	}
+	if !compareTasks(task, &taskInspect[0]) {
+		t.Fatalf("TaskList: wrong task. Want\n%#v\nGot\n%#v", task, &taskInspect)
+	}
+}
+
+func TestTaskListFilterMultipleFieldsNotFound(t *testing.T) {
+	server, _, err := setUpSwarm()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, err := addTestService(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", fmt.Sprintf(`/tasks?filters={"service":[%q], "id":["abc"]}`, srv.Spec.Name), nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("TaskList: wrong status code. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	var taskInspect []swarm.Task
+	err = json.Unmarshal(recorder.Body.Bytes(), &taskInspect)
+	if err != nil {
+		t.Fatalf("TaskList: unable to unmarshal response body: %s", err)
+	}
+	if len(taskInspect) != 0 {
+		t.Fatalf("TaskList: Want\nempty task list\nGot\n%#v", &taskInspect)
+	}
+}
+
 func TestTaskListFilterNotFound(t *testing.T) {
 	server, _, err := setUpSwarm()
 	if err != nil {
@@ -807,17 +913,10 @@ func TestServiceUpdate(t *testing.T) {
 		Image:   "test/test2",
 		Name:    "test-0-updated",
 		Config: &docker.Config{
-			Cmd:          []string{"--test2"},
-			Env:          []string{"ENV=2"},
-			ExposedPorts: map[docker.Port]struct{}{"80/tcp": {}},
+			Cmd: []string{"--test2"},
+			Env: []string{"ENV=2"},
 		},
-		HostConfig: &docker.HostConfig{
-			PortBindings: map[docker.Port][]docker.PortBinding{
-				"80/tcp": {
-					{HostIP: "0.0.0.0", HostPort: "80"},
-				},
-			},
-		},
+		HostConfig: &docker.HostConfig{},
 		State: docker.State{
 			Running:   true,
 			StartedAt: cont.State.StartedAt,
@@ -832,6 +931,10 @@ func TestServiceUpdate(t *testing.T) {
 	expectedService := &swarm.Service{
 		ID:   srv.ID,
 		Spec: updateOpts,
+		Endpoint: swarm.Endpoint{
+			Spec:  *updateOpts.EndpointSpec,
+			Ports: []swarm.PortConfig{{Protocol: "tcp", TargetPort: 80, PublishedPort: 80}},
+		},
 	}
 	if !reflect.DeepEqual(srv, expectedService) {
 		t.Fatalf("ServiceUpdate: wrong service. Want\n%#v\nGot\n%#v", expectedService, srv)
