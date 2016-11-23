@@ -10,6 +10,7 @@ menu:
 
 Network is responsible for managing Docker networks. It assumes that there is
 already a Docker daemon running on the system.
+*Note: docker resources are not currently supported on Solaris.*
 
 
 ## Example
