@@ -202,6 +202,16 @@ func TestDrawNodeError(t *testing.T) {
 	)
 }
 
+func TestDrawNodeWarning(t *testing.T) {
+	t.Parallel()
+
+	testDrawNodes(
+		t,
+		Printable{"a": "b", "warning": "x"},
+		"root:\n Warning: x\n Messages:\n Has Changes: yes\n Changes:\n  a: \"\" => \"b\"\n\n",
+	)
+}
+
 func BenchmarkDrawNodeError(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		benchmarkDrawNodes(
@@ -222,6 +232,9 @@ func (p Printable) Changes() map[string]resource.Diff {
 	out := map[string]resource.Diff{}
 
 	for key, value := range p {
+		if key == "warning" { // ignore special warning key
+			continue
+		}
 		out[key] = resource.TextDiff{Values: [2]string{"", value}}
 	}
 
@@ -239,4 +252,8 @@ func (p Printable) Error() error {
 	}
 
 	return errors.New(err)
+}
+
+func (p Printable) Warning() string {
+	return p["warning"]
 }
