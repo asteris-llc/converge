@@ -129,6 +129,9 @@ func (p *Printer) DrawNode(g *graph.Graph, id string) (pp.Renderable, error) {
 	{{- if .Error}}
 	{{red "Error"}}: {{.Error}}
 	{{- end}}
+	{{- if .Warning}}
+	{{yellow "Warning"}}: {{.Warning}}
+	{{- end}}
 	Messages:
 	{{- range $msg := .Messages}}
 	{{indent $msg}}

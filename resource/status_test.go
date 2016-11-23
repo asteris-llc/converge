@@ -98,6 +98,14 @@ func TestSetError(t *testing.T) {
 	}
 }
 
+// TestSetWarning tests the SetWarning function on Status
+func TestSetWarning(t *testing.T) {
+	t.Parallel()
+	status := resource.NewStatus()
+	status.SetWarning("test")
+	assert.Equal(t, "test", status.Warning())
+}
+
 // TestStatusError makes sure we always return a good error, even if error is
 // not set.
 func TestStatusError(t *testing.T) {

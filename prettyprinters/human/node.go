@@ -28,4 +28,5 @@ type Printable interface {
 	Messages() []string
 	HasChanges() bool
 	Error() error
+	Warning() string
 }

@@ -31,6 +31,7 @@ func statusResponseFromPrintable(meta *node.Node, p human.Printable, stage pb.St
 			Messages:   p.Messages(),
 			Changes:    map[string]*pb.DiffResponse{},
 			HasChanges: p.HasChanges(),
+			Warning:    p.Warning(),
 		},
 	}
 
