@@ -172,25 +172,11 @@ func (s *DockerServer) swarmLeave(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *DockerServer) containerForService(srv *swarm.Service, name string) *docker.Container {
-	portBindings := map[docker.Port][]docker.PortBinding{}
-	exposedPort := map[docker.Port]struct{}{}
-	if srv.Spec.EndpointSpec != nil {
-		for _, p := range srv.Spec.EndpointSpec.Ports {
-			targetPort := fmt.Sprintf("%d/%s", p.TargetPort, p.Protocol)
-			portBindings[docker.Port(targetPort)] = []docker.PortBinding{
-				{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", p.PublishedPort)},
-			}
-			exposedPort[docker.Port(targetPort)] = struct{}{}
-		}
-	}
-	hostConfig := docker.HostConfig{
-		PortBindings: portBindings,
-	}
+	hostConfig := docker.HostConfig{}
 	dockerConfig := docker.Config{
-		Entrypoint:   srv.Spec.TaskTemplate.ContainerSpec.Command,
-		Cmd:          srv.Spec.TaskTemplate.ContainerSpec.Args,
-		Env:          srv.Spec.TaskTemplate.ContainerSpec.Env,
-		ExposedPorts: exposedPort,
+		Entrypoint: srv.Spec.TaskTemplate.ContainerSpec.Command,
+		Cmd:        srv.Spec.TaskTemplate.ContainerSpec.Args,
+		Env:        srv.Spec.TaskTemplate.ContainerSpec.Env,
 	}
 	return &docker.Container{
 		ID:         s.generateID(),
@@ -237,10 +223,27 @@ func (s *DockerServer) serviceCreate(w http.ResponseWriter, r *http.Request) {
 		ID:   s.generateID(),
 		Spec: config,
 	}
+	s.setServiceEndpoint(&service)
 	s.addTasks(&service, false)
 	s.services = append(s.services, &service)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(service)
+}
+
+func (s *DockerServer) setServiceEndpoint(service *swarm.Service) {
+	if service.Spec.EndpointSpec == nil {
+		return
+	}
+	service.Endpoint = swarm.Endpoint{
+		Spec: *service.Spec.EndpointSpec,
+	}
+	for _, port := range service.Spec.EndpointSpec.Ports {
+		if port.PublishedPort == 0 {
+			port.PublishedPort = uint32(30000 + s.servicePorts)
+			s.servicePorts++
+		}
+		service.Endpoint.Ports = append(service.Endpoint.Ports, port)
+	}
 }
 
 func (s *DockerServer) addTasks(service *swarm.Service, update bool) {
@@ -329,7 +332,7 @@ func (s *DockerServer) serviceList(w http.ResponseWriter, r *http.Request) {
 	}
 	var ret []*swarm.Service
 	for i, srv := range s.services {
-		if inFilter(filters["id"], srv.ID) ||
+		if inFilter(filters["id"], srv.ID) &&
 			inFilter(filters["name"], srv.Spec.Name) {
 			ret = append(ret, s.services[i])
 		}
@@ -363,11 +366,11 @@ func (s *DockerServer) taskList(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "service not found", http.StatusNotFound)
 			return
 		}
-		if inFilter(filters["id"], task.ID) ||
-			inFilter(filters["service"], task.ServiceID) ||
-			inFilter(filters["service"], srv.Spec.Name) ||
-			inFilter(filters["node"], task.NodeID) ||
-			inFilter(filters["desired-state"], string(task.DesiredState)) ||
+		if inFilter(filters["id"], task.ID) &&
+			(inFilter(filters["service"], task.ServiceID) ||
+				inFilter(filters["service"], srv.Spec.Annotations.Name)) &&
+			inFilter(filters["node"], task.NodeID) &&
+			inFilter(filters["desired-state"], string(task.DesiredState)) &&
 			inLabelFilter(filters["label"], srv.Spec.Annotations.Labels) {
 			ret = append(ret, s.tasks[i])
 		}
@@ -376,6 +379,9 @@ func (s *DockerServer) taskList(w http.ResponseWriter, r *http.Request) {
 }
 
 func inLabelFilter(list []string, labels map[string]string) bool {
+	if len(list) == 0 {
+		return true
+	}
 	for _, item := range list {
 		parts := strings.Split(item, "=")
 		key := parts[0]
@@ -390,6 +396,9 @@ func inLabelFilter(list []string, labels map[string]string) bool {
 }
 
 func inFilter(list []string, wanted string) bool {
+	if len(list) == 0 {
+		return true
+	}
 	for _, item := range list {
 		if item == wanted {
 			return true
@@ -456,8 +465,13 @@ func (s *DockerServer) serviceUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var newSpec swarm.ServiceSpec
-	json.NewDecoder(r.Body).Decode(&newSpec)
+	err := json.NewDecoder(r.Body).Decode(&newSpec)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	toUpdate.Spec = newSpec
+	s.setServiceEndpoint(toUpdate)
 	for i := 0; i < len(s.tasks); i++ {
 		if s.tasks[i].ServiceID != toUpdate.ID {
 			continue

@@ -136,6 +136,104 @@ func TestPreparerPrepare(t *testing.T) {
 		})
 	})
 
+	// test time.Time
+	t.Run("time", func(t *testing.T) {
+		zone := time.FixedZone(time.Now().In(time.Local).Zone())
+		longForm := "2006-01-02T15:04:05"
+		shortForm := "2006-01-02"
+
+		t.Run("nil", func(t *testing.T) {
+			target := newWithField(t, "time", nil)
+			assert.Equal(t, time.Time{}, target.Time)
+		})
+
+		t.Run("short form", func(t *testing.T) {
+			val := "2003-01-02"
+			expected, err := time.ParseInLocation(shortForm, val, zone)
+			require.NoError(t, err)
+			target := newWithField(t, "time", val)
+			assert.Equal(t, expected.String(), target.Time.String())
+		})
+
+		t.Run("long form", func(t *testing.T) {
+			val := "2003-01-02T01:02:03"
+			expected, err := time.ParseInLocation(longForm, val, zone)
+			require.NoError(t, err)
+			target := newWithField(t, "time", val)
+			assert.Equal(t, expected.String(), target.Time.String())
+		})
+
+		t.Run("zone provided", func(t *testing.T) {
+			val := "2003-01-02T01:02:03-07:00"
+			expected, err := time.Parse(time.RFC3339, val)
+			require.NoError(t, err)
+			target := newWithField(t, "time", val)
+			assert.Equal(t, expected.String(), target.Time.String())
+		})
+
+		t.Run("invalid", func(t *testing.T) {
+			t.Run("unknown", func(t *testing.T) {
+				val := "3.2"
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"time": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.Equal(t, expectedErr, err)
+			})
+
+			t.Run("short form", func(t *testing.T) {
+				val := "2003-01-"
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"time": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.Equal(t, expectedErr, err)
+			})
+
+			t.Run("long form-second out of range", func(t *testing.T) {
+				val := "2003-01-02T01:02:61"
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"time": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.Equal(t, expectedErr, err)
+			})
+
+			t.Run("zone provided-extra text", func(t *testing.T) {
+				val := "2003-01-02T01:02:03-25:00:00"
+				prep := &resource.Preparer{
+					Source:      map[string]interface{}{"time": val},
+					Destination: new(testPreparerTarget),
+				}
+
+				_, ztErr := time.Parse(time.RFC3339, val)
+				_, ltErr := time.ParseInLocation(longForm, val, zone)
+				_, stErr := time.ParseInLocation(shortForm, val, zone)
+				expectedErr := fmt.Errorf("could not convert time to time.Time any of:\n1. %v\n2. %v\n3. %v\n", ztErr, ltErr, stErr)
+				_, err := prep.Prepare(context.Background(), fakerenderer.New())
+				assert.Equal(t, expectedErr, err)
+			})
+		})
+	})
+
 	// boolean values are special. We want to support a bunch of different cases
 	// and forms of truth values, so we're going to test them all in a table
 	// here.
@@ -338,6 +436,8 @@ type testPreparerTarget struct {
 	StringMapValue map[interface{}]string `hcl:"stringmapvalue"`
 
 	Duration time.Duration `hcl:"duration"`
+
+	Time time.Time `hcl:"time"`
 
 	Bool         bool                 `hcl:"bool"`
 	Bools        []bool               `hcl:"bools"`
