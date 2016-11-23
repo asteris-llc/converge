@@ -48,10 +48,6 @@ variable "vpc_cidr_block" {
   default = "10.0.0.0/16"
 }
 
-variable "converge_version" {
-  default = "0.4.0-rc1"
-}
-
 variable "kubelet_token" {
   default = "chAng3m3"
 }
