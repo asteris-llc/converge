@@ -21,6 +21,7 @@ runs tasks in parallel.
 
 - [Converge](#converge)
     - [Installation](#installation)
+    - [Documentation](#documentation)
     - [Usage](#usage)
     - [Development](#development)
         - [Tools](#tools)
@@ -36,7 +37,7 @@ The `install-converge.sh` script will download and install the converge binary
 to your `/usr/local/bin/` directory:
 
 ```sh
-sudo ./install-converge.sh -v 0.3.0
+sudo ./install-converge.sh -v 0.4.0
 ```
 
 The same installation script is available at `get.converge.sh`:
@@ -54,10 +55,17 @@ go get github.com/asteris-llc/converge
 or download a release for your platform from the
 [releases page on Github](https://github.com/asteris-llc/converge/releases).
 
-## Usage
+## Documentation
 
-See [the docs](http://converge.aster.is)! It's pretty reasonable, though. Here's
-a summary:
+Comprehensive documentation can be found at [converge.aster.is](http://converge.aster.is). 
+
+You can learn more about Converge from the following blog posts and presentations:
+
+- [Introducing Converge](http://aster.is/blog/2016/11/23/introducing-converge/)
+- [Conditionals In Converge](http://aster.is/blog/2016/10/17/building-reusable-modules-with-conditionals/)
+- [Converge Presentation to STL DevOps](https://speakerdeck.com/stevendborrelli/converge-2)
+
+## Usage
 
 Converge uses [HCL](https://github.com/hashicorp/hcl) for syntax. HCL is a
 superset of JSON that looks (and acts) quite a bit nicer.
