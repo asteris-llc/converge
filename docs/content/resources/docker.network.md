@@ -16,6 +16,7 @@ already a Docker daemon running on the system.
 ## Example
 
 ```hcl
+/* docker resources are currently not supported on solaris */
 docker.network "test-network" {
   name  = "test-network"
   state = "present"
