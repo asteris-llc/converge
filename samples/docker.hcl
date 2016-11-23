@@ -1,3 +1,4 @@
+/* docker resources are currently not supported on solaris */
 param "image" {
   default = "nginx"
 }
