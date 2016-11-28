@@ -196,9 +196,9 @@ func (p *Printer) diff(before, after string) (string, error) {
 	}
 
 	tmpl, err := p.template(`before:
-{{indent .Before}}
+{{.Before}}
 after:
-{{indent .After}}`)
+{{.After}}`)
 	if err != nil {
 		return "", err
 	}
