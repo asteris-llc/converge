@@ -2,7 +2,7 @@
 set -e
 
 ROOT=$(pwd)
-TOKEN=$(uuid)
+TOKEN=$(head -c 32 /dev/urandom | base64)
 
 "$ROOT"/converge server --root "$ROOT"/samples --self-serve --rpc-token="$TOKEN" &
 PID=$!
