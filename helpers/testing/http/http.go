@@ -24,7 +24,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/rpc"
 	"golang.org/x/net/context"
 )
 
@@ -51,7 +50,7 @@ func ServeFile(filePath string) (address string, stop func(), err error) {
 		port := rand.Intn(65535-49151) + 49151
 
 		// start an HTTP server on that port
-		server := rpc.NewContextServer(ctx, mux)
+		server := NewContextServer(ctx, mux)
 		errors := make(chan error)
 
 		go func(errors chan error) {
