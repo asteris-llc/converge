@@ -26,8 +26,8 @@ import (
 type Mode struct {
 	resource.Status
 
-	Destination string
-	Mode        os.FileMode
+	Destination string      `export:"destination"`
+	Mode        os.FileMode `export:"mode"`
 }
 
 // Check whether the Destination has the right Mode

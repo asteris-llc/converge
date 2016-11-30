@@ -28,8 +28,8 @@ import (
 type Directory struct {
 	resource.TaskStatus
 
-	Destination string
-	CreateAll   bool
+	Destination string `export:"destination"`
+	CreateAll   bool   `export:"createall"`
 }
 
 // Check if the directory exists

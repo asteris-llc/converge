@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,6 +86,14 @@ func TestExportedFields(t *testing.T) {
 		assert.Equal(t, 3, actual[0].Value.Interface().(int))
 		assert.Equal(t, 4, actual[1].Value.Interface().(int))
 	})
+	t.Run("re-export-as-fields", func(t *testing.T) {
+		t.Parallel()
+		expected := []string{"embedded.b", "embedded.x"}
+		input := &TestReexport{}
+		actual, err := resource.ExportedFields(input)
+		require.NoError(t, err)
+		assert.Equal(t, expected, fieldNames(actual))
+	})
 }
 
 func TestGenerateLookupMap(t *testing.T) {
@@ -127,6 +136,17 @@ func TestLookupMapFromStruct(t *testing.T) {
 	assert.Equal(t, 6, refMap["x"].(int))
 	assert.Equal(t, 2, refMap["b"].(int))
 	assert.Equal(t, 3, refMap["TestEmbeddedStruct.x"].(int))
+}
+
+func TestWithFileContent(t *testing.T) {
+	content := &content.Content{
+		Content:     "foo",
+		Destination: "foo.txt",
+		Status:      &resource.Status{},
+	}
+	results, err := resource.LookupMapFromInterface(content)
+	require.NoError(t, err)
+	t.Log(results)
 }
 
 func TestLookupMapFromInterface(t *testing.T) {
@@ -188,12 +208,12 @@ type TestEmbeddedStruct struct {
 	X int `export:"x"`
 }
 
-func newOuterStruct(a, b, c, d int) *TestOuterStruct {
-	return &TestOuterStruct{A: a, B: b, C: c, d: d}
+type TestReexport struct {
+	Embedded TestEmbeddedStruct `re-export-as:"embedded"`
 }
 
-func (t *TestOuterStruct) Deconstruct() (int, int, int, int) {
-	return t.A, t.B, t.C, t.d
+func newOuterStruct(a, b, c, d int) *TestOuterStruct {
+	return &TestOuterStruct{A: a, B: b, C: c, d: d}
 }
 
 func fieldNames(in []*resource.ExportedField) (out []string) {

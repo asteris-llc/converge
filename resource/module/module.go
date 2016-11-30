@@ -26,7 +26,7 @@ import (
 type Module struct {
 	resource.Status
 
-	Params map[string]resource.Value
+	Params map[string]resource.Value `export:"params"`
 }
 
 // Check just returns the current value of the moduleeter. It should never have to change.

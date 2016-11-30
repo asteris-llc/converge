@@ -28,8 +28,8 @@ import (
 type Port struct {
 	*resource.Status
 	*wait.Retrier
-	Host string
-	Port int
+	Host string `export:"host"`
+	Port int    `export:"port"`
 	ConnectionCheck
 }
 

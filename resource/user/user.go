@@ -36,18 +36,18 @@ const (
 
 // User manages user users
 type User struct {
-	Username    string
-	NewUsername string
-	UID         string
-	GroupName   string
-	GID         string
-	Name        string
-	CreateHome  bool
-	SkelDir     string
-	HomeDir     string
-	MoveDir     bool
-	State       State
-	system      SystemUtils
+	Username    string      `export:"username"`
+	NewUsername string      `export:"newusername"`
+	UID         string      `export:"uid"`
+	GroupName   string      `export:"groupname"`
+	GID         string      `export:"gid"`
+	Name        string      `export:"name"`
+	CreateHome  bool        `export:"createhome"`
+	SkelDir     string      `export:"skeldir"`
+	HomeDir     string      `export:"homedir"`
+	MoveDir     bool        `export:"movedir"`
+	State       State       `export:"state"`
+	system      SystemUtils `export:"system"`
 
 	*resource.Status
 }

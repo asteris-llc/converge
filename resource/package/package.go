@@ -54,8 +54,8 @@ type PackageManager interface {
 
 // Package is an API for package state
 type Package struct {
-	Name   string
-	State  State
+	Name   string `export:"name"`
+	State  State  `export:"state"`
 	PkgMgr PackageManager
 	*resource.Status
 }

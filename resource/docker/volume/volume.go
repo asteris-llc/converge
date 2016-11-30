@@ -43,12 +43,12 @@ type Volume struct {
 	*resource.Status
 	client docker.VolumeClient
 
-	Name    string
-	Labels  map[string]string
-	Driver  string
-	Options map[string]string
-	State   State
-	Force   bool
+	Name    string            `export:"name"`
+	Labels  map[string]string `export:"labels"`
+	Driver  string            `export:"driver"`
+	Options map[string]string `export:"options"`
+	State   State             `export:"state"`
+	Force   bool              `export:"force"`
 }
 
 // Check system for docker volume

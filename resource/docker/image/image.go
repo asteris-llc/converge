@@ -28,8 +28,8 @@ import (
 type Image struct {
 	*resource.Status
 
-	Name   string
-	Tag    string
+	Name   string `export:"name"`
+	Tag    string `export:"tag"`
 	client docker.APIClient
 }
 

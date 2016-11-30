@@ -70,6 +70,7 @@ func execPipeline(ctx context.Context, in *graph.Graph, pipelineF MkPipelineF, r
 			renderingPlant.Graph = out
 			pipeline := pipelineF(out, meta.ID)
 
+			fmt.Println("Preparing to execute pipeline: ", meta.ID)
 			val, pipelineError := pipeline.Exec(ctx, meta.Value())
 
 			if pipelineError != nil {

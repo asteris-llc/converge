@@ -51,15 +51,15 @@ type Network struct {
 	*resource.Status
 	client docker.NetworkClient
 
-	Name     string
-	Driver   string
-	Labels   map[string]string
-	Options  map[string]interface{}
-	IPAM     dc.IPAMOptions
-	Internal bool
-	IPv6     bool
-	State    State
-	Force    bool
+	Name     string                 `export:"name"`
+	Driver   string                 `export:"driver"`
+	Labels   map[string]string      `export:"labels"`
+	Options  map[string]interface{} `export:"options"`
+	IPAM     dc.IPAMOptions         `export:"ipam"`
+	Internal bool                   `export:"internal"`
+	IPv6     bool                   `export:"ipv6"`
+	State    State                  `export:"state"`
+	Force    bool                   `export:"force"`
 }
 
 // Check system for docker network

@@ -43,8 +43,8 @@ type taskWrapper struct {
 func Pipeline(ctx context.Context, g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
 	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
-		AndThen(gen.GetTask).
 		AndThen(gen.MaybeResolveConditional).
+		AndThen(gen.GetTask).
 		AndThen(gen.DependencyCheck).
 		AndThen(gen.PlanNode)
 }
@@ -61,6 +61,10 @@ func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}
 
 	if task, ok := idi.(resource.Task); ok {
 		return taskWrapper{Task: task}, nil
+	}
+
+	if wrapped, ok := idi.(taskWrapper); ok {
+		return wrapped, nil
 	}
 
 	return nil, fmt.Errorf("expected resource.Task but got %T", idi)
@@ -103,11 +107,6 @@ func parseTruth(predicate string) bool {
 		return true
 	}
 	return false
-}
-
-// ShouldEvaluate returns true if the node is unconditional, or if it is
-func (g *pipelineGen) ShouldEvaluate() bool {
-	return true
 }
 
 // DependencyCheck looks for failing dependency nodes.  If an error is
@@ -167,7 +166,11 @@ func (g *pipelineGen) PlanNode(ctx context.Context, taski interface{}) (interfac
 		status = &resource.Status{}
 	}
 
-	if err := status.UpdateExportedFields(twrapper.Task); err != nil {
+	resolved, ok := resource.ResolveTask(twrapper.Task)
+	if !ok {
+		return nil, errors.New("resource was not a wrapped task")
+	}
+	if err := status.UpdateExportedFields(resolved); err != nil {
 		return nil, err
 	}
 

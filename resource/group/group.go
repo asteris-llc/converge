@@ -36,10 +36,10 @@ const (
 
 // Group manages user groups
 type Group struct {
-	GID     string
-	Name    string
-	NewName string
-	State   State
+	GID     string `export:"gid"`
+	Name    string `export:"name"`
+	NewName string `export:"newname"`
+	State   State  `export:"state"`
 	system  SystemUtils
 }
 
