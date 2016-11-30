@@ -84,3 +84,5 @@ import:
   subpackages:
   - errgroup
 - package: github.com/docker/docker
+- package: github.com/soheilhy/cmux
+  version: ^0.1.2
