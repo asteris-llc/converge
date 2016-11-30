@@ -106,6 +106,7 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 		if anonErr != nil {
 			return exported, anonErr
 		}
+
 		if isAnon {
 			isKind, kindErr := fieldIsKind(input, i, reflect.Struct)
 			if kindErr != nil {
@@ -120,6 +121,27 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 				return exported, err
 			}
 			embeddedFields[asStruct.Type().Field(i).Name] = fromEmbedded
+			continue
+		}
+
+		exportedAs, isReExported := asStruct.Type().Field(i).Tag.Lookup("re-export-as")
+		if isReExported {
+			isKind, kindErr := fieldIsKind(input, i, reflect.Struct)
+			if kindErr != nil {
+				return exported, kindErr
+			}
+			if !isKind {
+				continue
+			}
+			thisField := asStruct.Field(i).Interface()
+			fromEmbedded, err := ExportedFields(thisField)
+			if err != nil {
+				return exported, err
+			}
+			for _, f := range fromEmbedded {
+				f.ReferenceName = exportedAs + "." + f.ReferenceName
+				exported = append(exported, f)
+			}
 			continue
 		}
 		if field, ok := newExportedField(input, i); ok {

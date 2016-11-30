@@ -49,23 +49,23 @@ var (
 type Container struct {
 	*resource.Status
 
-	Name            string
-	Image           string
-	Entrypoint      []string
-	Command         []string
-	WorkingDir      string
-	Env             []string
-	Expose          []string
-	Links           []string
-	PortBindings    []string
-	DNS             []string
-	Volumes         []string
-	VolumesFrom     []string
-	PublishAllPorts bool
-	NetworkMode     string
-	Networks        []string
-	CStatus         string
-	Force           bool
+	Name            string   `export:"name"`
+	Image           string   `export:"image"`
+	Entrypoint      []string `export:"entrypoint"`
+	Command         []string `export:"command"`
+	WorkingDir      string   `export:"workingdir"`
+	Env             []string `export:"env"`
+	Expose          []string `export:"expose"`
+	Links           []string `export:"links"`
+	PortBindings    []string `export:"portbindings"`
+	DNS             []string `export:"dns"`
+	Volumes         []string `export:"volumes"`
+	VolumesFrom     []string `export:"volumesfrom"`
+	PublishAllPorts bool     `export:"publishallports"`
+	NetworkMode     string   `export:"networkmode"`
+	Networks        []string `export:"networks"`
+	CStatus         string   `export:"cstatus"`
+	Force           bool     `export:"force"`
 	client          docker.APIClient
 }
 

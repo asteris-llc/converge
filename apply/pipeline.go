@@ -38,6 +38,7 @@ type resultWrapper struct {
 
 // Pipeline generates a pipeline to evaluate a single graph node
 func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
+	fmt.Printf("%s: New Pipeline\n", id) // DEBUG-LOG
 	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.GetTask).
@@ -45,11 +46,18 @@ func Pipeline(g *graph.Graph, id string, factory *render.Factory) executor.Pipel
 		AndThen(gen.maybeSkipApplication).
 		AndThen(gen.applyNode).
 		AndThen(gen.maybeRunFinalCheck)
+	// LogAndThen("gen.GetTask", gen.GetTask).
+	// LogAndThen("gen.DependencyCheck", gen.DependencyCheck).
+	// LogAndThen("gen.maybeSkipApplication", gen.maybeSkipApplication).
+	// LogAndThen("gen.applyNode", gen.applyNode).
+	// LogAndThen("gen.maybeRunFinalCheck", gen.maybeRunFinalCheck)
+
 }
 
 // GetResult returns Right resultWrapper if the value is a *plan.Result, or Left
 // Error if not
 func (g *pipelineGen) GetTask(ctx context.Context, idi interface{}) (interface{}, error) {
+	fmt.Println("Calling get task for ", g.ID)
 	if plan, ok := idi.(*plan.Result); ok {
 		return resultWrapper{Plan: plan}, nil
 	}
@@ -130,9 +138,9 @@ func (g *pipelineGen) applyNode(ctx context.Context, val interface{}) (interface
 		status = &resource.Status{}
 	}
 
-	if err := status.UpdateExportedFields(twrapper.Plan.Task); err != nil {
-		return nil, err
-	}
+	// if err := status.UpdateExportedFields(twrapper.Plan.Task); err != nil {
+	//	return nil, err
+	// }
 
 	type settable interface {
 		SetError(error)

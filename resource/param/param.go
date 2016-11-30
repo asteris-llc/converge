@@ -25,7 +25,7 @@ import (
 type Param struct {
 	resource.Status
 
-	Val interface{}
+	Val interface{} `export:"val"`
 }
 
 // Check just returns the current value of the parameter. It should never have to change.

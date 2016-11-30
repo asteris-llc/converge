@@ -25,8 +25,8 @@ import (
 
 // Content renders content to disk
 type Content struct {
-	Content     string
-	Destination string
+	Content     string `export:"content"`
+	Destination string `export:"destination"`
 	*resource.Status
 }
 
