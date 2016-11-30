@@ -26,9 +26,8 @@ import (
 func New(token string, secure *tls.Config, resourceRoot string, enableBinaryDownload bool) (*grpc.Server, error) {
 	var opts []grpc.ServerOption
 
-	var jwt *JWTAuth
 	if token != "" {
-		jwt = NewJWTAuth(token)
+		jwt := NewJWTAuth(token)
 		opts = append(opts, grpc.StreamInterceptor(jwt.StreamInterceptor))
 		opts = append(opts, grpc.UnaryInterceptor(jwt.UnaryInterceptor))
 	}
