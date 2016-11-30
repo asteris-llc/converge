@@ -14,11 +14,7 @@
 
 package executor
 
-import (
-	"fmt"
-
-	"golang.org/x/net/context"
-)
+import "golang.org/x/net/context"
 
 // PipelineFunc represents a pipelined function that uses multi-return instead
 // of either.
@@ -46,11 +42,7 @@ func (p Pipeline) AndThen(f PipelineFunc) Pipeline {
 // AndThen with printf
 func (p Pipeline) LogAndThen(msg string, f PipelineFunc) Pipeline {
 	logger := func(c context.Context, i interface{}) (interface{}, error) {
-		fmt.Println("\t Calling: ", msg)
 		result, err := f(c, i)
-		fmt.Printf("\t\t Results:\n")
-		fmt.Printf("\t\t\t result :: %T; %v\n", result, result)
-		fmt.Printf("\t\t\t error: %v\n", err)
 		return result, err
 	}
 	p.CallStack = append(p.CallStack, logger)
