@@ -30,7 +30,7 @@ import (
 )
 
 func TestGrapherGraph(t *testing.T) {
-	g := grapher{auth: new(authorizer)}
+	g := grapher{}
 
 	defer logging.HideLogs(t)()
 
