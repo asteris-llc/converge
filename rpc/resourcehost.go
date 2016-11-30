@@ -27,19 +27,12 @@ import (
 )
 
 type resourceHost struct {
-	auth *authorizer
-
 	root                 string
 	enableBinaryDownload bool
 }
 
 func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.ContentResponse, error) {
 	logger := getLogger(ctx).WithField("function", "resourceHost.GetBinary")
-
-	if err := rh.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Warning("failed authorization")
-		return nil, err
-	}
 
 	if !rh.enableBinaryDownload {
 		logger.Debug("got request for binary, but binary download not enabled")
@@ -63,10 +56,6 @@ func (rh *resourceHost) GetBinary(ctx context.Context, _ *empty.Empty) (*pb.Cont
 
 func (rh *resourceHost) GetModule(ctx context.Context, loc *pb.LoadRequest) (*pb.ContentResponse, error) {
 	logger := getLogger(ctx).WithField("function", "resourceHost.GetModule").WithField("location", loc.Location)
-
-	if err := rh.auth.authorize(ctx); err != nil {
-		return nil, err
-	}
 
 	if rh.root == "" {
 		logger.Debug("got request for module, but module download not enabled")

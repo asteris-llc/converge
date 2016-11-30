@@ -30,13 +30,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-var (
-	errAuthNotProvided = errors.New("authorization not provided")
-)
-
-type executor struct {
-	auth *authorizer
-}
+type executor struct{}
 
 type statusResponseStream interface {
 	Send(*pb.StatusResponse) error
@@ -108,11 +102,6 @@ func (e *executor) Plan(in *pb.LoadRequest, stream pb.Executor_PlanServer) error
 	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Plan")
 
-	if err := e.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Warning("authorization failed")
-		return errors.Wrap(err, "authorization failed")
-	}
-
 	loaded, err := in.Load(ctx)
 	if err != nil {
 		return err
@@ -143,11 +132,6 @@ func (e *executor) sendHealthCheck(ctx context.Context, stream statusResponseStr
 func (e *executor) HealthCheck(in *pb.LoadRequest, stream pb.Executor_HealthCheckServer) error {
 	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Plan")
-
-	if err := e.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Warning("authorization failed")
-		return errors.Wrap(err, "authorization failed")
-	}
 
 	loaded, err := in.Load(ctx)
 	if err != nil {
@@ -185,11 +169,6 @@ func (e *executor) sendApply(ctx context.Context, stream statusResponseStream, i
 func (e *executor) Apply(in *pb.LoadRequest, stream pb.Executor_ApplyServer) error {
 	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "executor.Apply")
-
-	if err := e.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Warning("authorization failed")
-		return errors.Wrap(err, "authorization failed")
-	}
 
 	loaded, err := in.Load(ctx)
 	if err != nil {

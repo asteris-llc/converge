@@ -25,24 +25,25 @@ import (
 // New registers all servers and handlers for the RPC server
 func New(token string, secure *tls.Config, resourceRoot string, enableBinaryDownload bool) (*grpc.Server, error) {
 	var opts []grpc.ServerOption
+
+	var jwt *JWTAuth
+	if token != "" {
+		jwt = NewJWTAuth(token)
+		opts = append(opts, grpc.StreamInterceptor(jwt.StreamInterceptor))
+		opts = append(opts, grpc.UnaryInterceptor(jwt.UnaryInterceptor))
+	}
+
 	if secure != nil {
 		opts = append(opts, grpc.Creds(credentials.NewTLS(secure)))
 	}
 
 	server := grpc.NewServer(opts...)
 
-	var jwt *JWTAuth
-	if token != "" {
-		jwt = NewJWTAuth(token)
-	}
-	auth := &authorizer{JWTToken: jwt}
-
-	pb.RegisterExecutorServer(server, &executor{auth: auth})
-	pb.RegisterGrapherServer(server, &grapher{auth: auth})
+	pb.RegisterExecutorServer(server, &executor{})
+	pb.RegisterGrapherServer(server, &grapher{})
 	pb.RegisterResourceHostServer(
 		server,
 		&resourceHost{
-			auth:                 auth,
 			root:                 resourceRoot,
 			enableBinaryDownload: enableBinaryDownload,
 		},
