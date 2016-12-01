@@ -229,6 +229,10 @@
             "type": "string",
             "format": "string"
           }
+        },
+        "warning": {
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "the informational message, if present"
