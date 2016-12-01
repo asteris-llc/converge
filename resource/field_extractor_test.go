@@ -142,7 +142,6 @@ func TestWithFileContent(t *testing.T) {
 	content := &content.Content{
 		Content:     "foo",
 		Destination: "foo.txt",
-		Status:      &resource.Status{},
 	}
 	results, err := resource.LookupMapFromInterface(content)
 	require.NoError(t, err)
