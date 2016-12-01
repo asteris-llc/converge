@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test things related to exported fields
+// TestExportedFields tests things related to exported fields
 func TestExportedFields(t *testing.T) {
 	t.Parallel()
 	t.Run("exported-fields", func(t *testing.T) {
@@ -96,6 +96,7 @@ func TestExportedFields(t *testing.T) {
 	})
 }
 
+// TestGenerateLookupMap tests lookup map generation
 func TestGenerateLookupMap(t *testing.T) {
 	var nilInt *int
 	t.Parallel()
@@ -117,6 +118,7 @@ func TestGenerateLookupMap(t *testing.T) {
 	assert.False(t, found)
 }
 
+// TestLookupMapFromStruct tests lookup map generation from a struct
 func TestLookupMapFromStruct(t *testing.T) {
 	t.Parallel()
 	testInput := &TestEmbeddingOverlap{
@@ -138,6 +140,7 @@ func TestLookupMapFromStruct(t *testing.T) {
 	assert.Equal(t, 3, refMap["TestEmbeddedStruct.x"].(int))
 }
 
+// TestWithFileContent is a simple integration test
 func TestWithFileContent(t *testing.T) {
 	content := &content.Content{
 		Content:     "foo",
@@ -148,6 +151,7 @@ func TestWithFileContent(t *testing.T) {
 	t.Log(results)
 }
 
+// TestLookupMapFromInterface tests getting exported fields from an interface
 func TestLookupMapFromInterface(t *testing.T) {
 	t.Parallel()
 	t.Run("when-pointer", func(t *testing.T) {
@@ -180,8 +184,10 @@ func mkExportedField(name, refName string, val interface{}) *resource.ExportedFi
 	return &resource.ExportedField{FieldName: name, ReferenceName: refName, Value: reflect.ValueOf(val)}
 }
 
+// TestInterface is for testing
 type TestInterface interface{}
 
+// TestOuterStruct is for testing
 type TestOuterStruct struct {
 	A int `export:"a"`
 	B int `export:"c"`
@@ -189,11 +195,13 @@ type TestOuterStruct struct {
 	d int
 }
 
+// TestEmbeddingStruct is for testing
 type TestEmbeddingStruct struct {
 	TestEmbeddedStruct
 	A int `export:"a"`
 }
 
+// TestEmbeddingOverlap is for testing
 type TestEmbeddingOverlap struct {
 	TestEmbeddedStruct
 	A int `export:"a"`
@@ -201,12 +209,14 @@ type TestEmbeddingOverlap struct {
 	X int `export:"x"`
 }
 
+// TestEmbeddedStruct is for testing
 type TestEmbeddedStruct struct {
 	A int
 	B int `export:"b"`
 	X int `export:"x"`
 }
 
+// TestReexport is for testing
 type TestReexport struct {
 	Embedded TestEmbeddedStruct `re-export-as:"embedded"`
 }

@@ -77,6 +77,7 @@ func TestResolveConditional(t *testing.T) {
 	})
 }
 
+// TestExportedFields tests that we put exported fields in the struct
 func TestExportedFields(t *testing.T) {
 	g := sampleGraph()
 	factory, _ := render.NewFactory(context.Background(), g)
