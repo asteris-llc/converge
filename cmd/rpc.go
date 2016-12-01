@@ -15,10 +15,11 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
@@ -55,69 +56,55 @@ func registerLocalRPCFlags(flags *pflag.FlagSet) {
 	flags.Bool(rpcEnableLocalName, false, "self host RPC")
 }
 
-func maybeStartSelfHostedRPC(ctx context.Context, secure *tls.Config) error {
-	if viper.GetBool(rpcEnableLocalName) {
-		return startRPC(ctx, getLocalAddr(), secure, "", false)
+func maybeStartSelfHostedRPC(ctx context.Context) error {
+	if getLocal() {
+		go startRPC(ctx)
+		for i := 0; i < 5; i++ {
+			_, err := net.Dial("tcp", getServerURL().Host)
+			fmt.Println(err)
+		}
 	}
 
 	return nil
 }
 
-func startRPC(ctx context.Context, addr string, secure *tls.Config, resourceRoot string, enableBinaryDownload bool) error {
+func startRPC(ctx context.Context) error {
 	// set context for logging
 	logger := logging.GetLogger(ctx).WithField("component", "rpc")
 	ctx = logging.WithLogger(ctx, logger)
 
-	// listen and start server
-	lis, err := net.Listen("tcp", addr)
+	loc := getServerURL()
+
+	// set up security options
+	sslConfig, err := getSSLConfig(loc.Host)
 	if err != nil {
-		return errors.Wrap(err, "could not open RPC listener connection")
+		return errors.Wrap(err, "could not get SSL config")
+	}
+	if !usingSSL() {
+		logger.Warning("no SSL config in use, server will accept HTTP connections")
 	}
 
-	server, err := rpc.New(getToken(), secure, resourceRoot, enableBinaryDownload)
-	if err != nil {
-		return errors.Wrap(err, "could not create RPC server")
+	// create server
+	server := &rpc.Server{
+		Token:                getToken(),
+		Secure:               sslConfig,
+		ResourceRoot:         viper.GetString("root"),
+		EnableBinaryDownload: viper.GetBool("self-serve"),
+		ClientOpts: &rpc.ClientOpts{
+			Token: getToken(),
+			SSL:   sslConfig,
+		},
 	}
 
-	go func() {
-		<-ctx.Done()
-		server.GracefulStop()
-	}()
-
-	rpcLog := logger.WithField("addr", addr)
-
-	rpcLog.Info("serving")
-	go func() {
-		if err := server.Serve(lis); err != nil {
-			rpcLog.WithError(err).Fatal("failed to serve")
-		}
-
-		rpcLog.Info("halted")
-	}()
-
-	return nil
+	return server.Listen(ctx, loc)
 }
 
 func getRPCExecutorClient(ctx context.Context, opts *rpc.ClientOpts) (pb.ExecutorClient, error) {
-	var addr string
-	if viper.GetBool(rpcEnableLocalName) {
-		addr = viper.GetString(rpcLocalAddrName)
-	} else {
-		addr = viper.GetString(rpcAddrFlagName)
-	}
-
-	return rpc.NewExecutorClient(ctx, addr, opts)
+	return rpc.NewExecutorClient(ctx, getServerURL().Host, opts)
 }
 
 func getRPCGrapherClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.GrapherClient, error) {
-	var addr string
-	if viper.GetBool(rpcEnableLocalName) {
-		addr = viper.GetString(rpcLocalAddrName)
-	} else {
-		addr = viper.GetString(rpcAddrFlagName)
-	}
-
-	return rpc.NewGrapherClient(ctx, addr, opts)
+	return rpc.NewGrapherClient(ctx, getServerURL().Host, opts)
 }
 
 type recver interface {
@@ -184,22 +171,31 @@ func maybeSetToken() {
 
 // More getters
 
-func setLocal(local bool)  { viper.Set(rpcLocalAddrName, local) }
-func getLocal() bool       { return viper.GetBool(rpcLocalAddrName) }
-func getRPCAddr() string   { return viper.GetString(rpcAddrFlagName) }
+func setLocal(local bool)  { viper.Set(rpcEnableLocalName, local) }
+func getLocal() bool       { return viper.GetBool(rpcEnableLocalName) }
 func getLocalAddr() string { return viper.GetString(rpcLocalAddrName) }
+func getRPCAddr() string   { return viper.GetString(rpcAddrFlagName) }
 
-func getServerName() string {
-	var addr string
+func getServerURL() *url.URL {
+	out := new(url.URL)
+
 	if getLocal() {
-		addr = getLocalAddr()
+		out.Host = getLocalAddr()
 	} else {
-		addr = getRPCAddr()
+		out.Host = getRPCAddr()
 	}
 
-	parts := strings.SplitN(addr, ":", 1)
-	if len(parts) < 2 || parts[0] == "" {
-		return "127.0.0.1"
+	// set host to localhost, if not set
+	if strings.HasPrefix(out.Host, ":") {
+		out.Host = "127.0.0.1" + out.Host
 	}
-	return parts[0]
+
+	// set protocol
+	if usingSSL() {
+		out.Scheme = "https"
+	} else {
+		out.Scheme = "http"
+	}
+
+	return out
 }

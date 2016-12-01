@@ -58,12 +58,12 @@ You can pipe the output directly to the 'dot' command, for example:
 
 		maybeSetToken()
 
-		ssl, err := getSSLConfig(getServerName())
+		ssl, err := getSSLConfig(getServerURL().Host)
 		if err != nil {
 			flog.WithError(err).Fatal("could not get SSL config")
 		}
 
-		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+		if err := maybeStartSelfHostedRPC(ctx); err != nil {
 			flog.WithError(err).Fatal("could not start RPC")
 		}
 
