@@ -76,24 +76,24 @@ func (s *Server) newGRPC() (*grpc.Server, error) {
 }
 
 // NewREST constructs a new REST gateway
-func (s *Server) newREST(ctx context.Context, addr string) (*http.Server, error) {
+func (s *Server) newREST(ctx context.Context, addr *url.URL) (*http.Server, error) {
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption("text/plain", newContentMarshaler()),
 	)
 
-	if err := pb.RegisterExecutorHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterExecutorHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
 		return nil, errors.Wrap(err, "could not register executor")
 	}
 
-	if err := pb.RegisterResourceHostHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterResourceHostHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
 		return nil, errors.Wrap(err, "could not register resource host")
 	}
 
-	if err := pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
 		return nil, errors.Wrap(err, "could not register grapher")
 	}
 
-	if err := pb.RegisterInfoHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterInfoHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
 		return nil, errors.Wrap(err, "could not register info server")
 	}
 
@@ -140,7 +140,7 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	})
 
 	// start the REST listener
-	restSrv, err := s.newREST(ctx, addr.Host)
+	restSrv, err := s.newREST(ctx, addr)
 	if err != nil {
 		return errors.Wrap(err, "failed to create REST server")
 	}
