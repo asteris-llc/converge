@@ -240,7 +240,8 @@ func (r *Renderer) lookup(name string) (string, error) {
 			keys = append(keys, key)
 		}
 		innerTask, _ := asTasker.GetTask()
-		log.WithField("lookup-exported-field", vertexName).Warn(fmt.Sprintf("%s is not one of the exported fields for type %T: %v", terms, innerTask, keys))
+		innerTask, _ = resource.ResolveTask(innerTask)
+		log.WithField("current-node", r.ID).Warn(fmt.Sprintf("%s is not one of the exported fields for type %T: %v at %s", terms, innerTask, keys, vertexName))
 		return "", ErrUnresolvable{}
 	}
 
