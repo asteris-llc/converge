@@ -16,6 +16,5 @@ package cmd
 
 const (
 	addrServer      = ":4774"
-	addrServerHTTP  = ":2694"
 	addrServerLocal = ":47740"
 )

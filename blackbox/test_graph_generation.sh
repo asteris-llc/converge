@@ -4,7 +4,7 @@ set -eo pipefail
 ROOT=$(pwd)
 TMP=$(mktemp -d -t converge.graphviz.XXXXXXXXXX)
 
-"$ROOT"/converge server --no-token --root "$ROOT"/samples &
+"$ROOT"/converge server --no-token &
 PID=$!
 
 function finish {

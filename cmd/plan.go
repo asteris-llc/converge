@@ -54,12 +54,12 @@ can be done separately to see what needs to be changed before execution.`,
 
 		maybeSetToken()
 
-		ssl, err := getSSLConfig(getServerName())
+		ssl, err := getSSLConfig(getServerURL().Host)
 		if err != nil {
 			clog.WithError(err).Fatal("could not get SSL config")
 		}
 
-		if err = maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+		if err = maybeStartSelfHostedRPC(ctx); err != nil {
 			clog.WithError(err).Fatal("could not start RPC")
 		}
 

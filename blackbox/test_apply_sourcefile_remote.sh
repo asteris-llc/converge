@@ -2,7 +2,7 @@
 set -eo pipefail
 
 ROOT=$(pwd)
-SOURCE=${1:-http://localhost:2694/api/v1/resources/modules/sourceFile.hcl}
+SOURCE=${1:-http://localhost:4774/api/v1/resources/modules/sourceFile.hcl}
 
 "$ROOT"/converge server --no-token --root "$ROOT"/samples &
 PID=$!
