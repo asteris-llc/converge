@@ -36,6 +36,13 @@ const (
 	// This status signals that execution of dependent resources can continue.
 	StatusWillChange
 
+	// StatusMayChange indicates an unacceptable delta that may be corrected. This
+	// is considered a warning state that indicates that the resource needs to
+	// change but is likely dependent on the succesful execution of another
+	// resource. This status signals that execution of dependent resources can
+	// continue.
+	StatusMayChange
+
 	// StatusCantChange indicates an unacceptable delta that can't be corrected.
 	// This is just like StatusFatal except the user will see that the resource
 	// needs to change, but can't because of the condition specified in your
@@ -70,6 +77,9 @@ func (l StatusLevel) String() string {
 	case StatusWillChange:
 		return "will change"
 
+	case StatusMayChange:
+		return "may change"
+
 	case StatusCantChange:
 		return "can't change"
 
@@ -93,6 +103,7 @@ type TaskStatus interface {
 	Messages() []string
 	HasChanges() bool
 	Error() error
+	Warning() string
 }
 
 // Status is the default TaskStatus implementation
@@ -112,6 +123,7 @@ type Status struct {
 	Level StatusLevel
 
 	error       error
+	warning     string
 	failingDeps []badDep
 }
 
@@ -120,6 +132,14 @@ func NewStatus() *Status {
 	return &Status{
 		Differences: map[string]Diff{},
 	}
+}
+
+// SetWarning sets a warning on a status
+func (t *Status) SetWarning(warning string) {
+	if t == nil {
+		*t = *NewStatus()
+	}
+	t.warning = warning
 }
 
 // SetError sets an error on a status
@@ -137,6 +157,11 @@ func (t *Status) SetError(err error) {
 	}
 
 	t.error = err
+}
+
+// Warning returns the warning message, if set.
+func (t *Status) Warning() string {
+	return t.warning
 }
 
 // Error returns an error, if set. If the level is StatusCantChange or
@@ -173,7 +198,7 @@ func (t *Status) Messages() []string {
 
 // HasChanges returns the WillChange value
 func (t *Status) HasChanges() bool {
-	if t.Level == StatusWillChange || t.Level == StatusCantChange {
+	if t.Level == StatusWillChange || t.Level == StatusCantChange || t.Level == StatusMayChange {
 		return true
 	}
 
