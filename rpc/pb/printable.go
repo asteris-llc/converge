@@ -43,6 +43,11 @@ func (sr *StatusResponse_Details) ToPrintable() human.Printable {
 		psr.error = errors.New(sr.Error)
 	}
 
+	// set up warning
+	if sr.Warning != "" {
+		psr.warning = sr.Warning
+	}
+
 	return psr
 }
 
@@ -51,12 +56,14 @@ type printableStatusResponse struct {
 	messages   []string
 	hasChanges bool
 	error      error
+	warning    string
 }
 
 func (psr *printableStatusResponse) Changes() map[string]resource.Diff { return psr.changes }
 func (psr *printableStatusResponse) Messages() []string                { return psr.messages }
 func (psr *printableStatusResponse) HasChanges() bool                  { return psr.hasChanges }
 func (psr *printableStatusResponse) Error() error                      { return psr.error }
+func (psr *printableStatusResponse) Warning() string                   { return psr.warning }
 
 // ToPrintable returns a view that can be used in a human printer
 func (d *DiffResponse) ToPrintable() resource.Diff {

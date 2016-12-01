@@ -35,6 +35,9 @@ func (r *Result) HasChanges() bool { return r.Status.HasChanges() }
 // Error returns the error assigned to this Result, if any
 func (r *Result) Error() error { return r.Err }
 
+// Warning returns the warning assigned to this Result, if any
+func (r *Result) Warning() string { return r.Status.Warning() }
+
 // GetStatus returns the current task status
 func (r *Result) GetStatus() resource.TaskStatus { return r.Status }
 
