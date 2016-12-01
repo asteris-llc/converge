@@ -22,8 +22,9 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -32,6 +33,10 @@ const (
 
 	// JWTAlg is the signing algorithm used for signing and verification
 	JWTAlg = "HS512"
+)
+
+var (
+	errAuthNotProvided = errors.New("authorization not provided")
 )
 
 // JWTAuth does authentication between client and server
@@ -116,6 +121,21 @@ func (j *JWTAuth) Verify(material string) error {
 	return nil
 }
 
+// VerifyContext verifies a token in context metadata
+func (j *JWTAuth) VerifyContext(ctx context.Context) error {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return errAuthNotProvided
+	}
+
+	tokens, ok := md["authorization"]
+	if !ok {
+		return errAuthNotProvided
+	}
+
+	return j.Verify(strings.TrimLeft(tokens[0], "BEARER "))
+}
+
 // Protect checks requests for a valid token
 func (j *JWTAuth) Protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -145,4 +165,22 @@ func (j *JWTAuth) Protect(next http.Handler) http.Handler {
 		// looks like we're good, call the next handler
 		next.ServeHTTP(w, r)
 	})
+}
+
+// StreamInterceptor implements StreamServerInterceptor to use in a middleware capacity
+func (j *JWTAuth) StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	if err := j.VerifyContext(stream.Context()); err != nil {
+		return err
+	}
+
+	return handler(srv, stream)
+}
+
+// UnaryInterceptor implements UnaryServerInterceptor to use in a middleware capacity
+func (j *JWTAuth) UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	if err := j.VerifyContext(ctx); err != nil {
+		return nil, err
+	}
+
+	return handler(ctx, req)
 }
