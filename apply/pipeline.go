@@ -101,7 +101,6 @@ func (g *pipelineGen) maybeSkipApplication(ctx context.Context, resultI interfac
 		return nil, fmt.Errorf("expected *Result or *resultWrapper but got type %T", resultI)
 	}
 	if !asPlan.Plan.Status.HasChanges() {
-		fmt.Println(g.ID, ": no changes, re-using plan status with fields: ", asPlan.Plan.Status.ExportedFields())
 		return &Result{
 			Ran:    false,
 			Status: asPlan.Plan.Status,
