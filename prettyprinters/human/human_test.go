@@ -202,6 +202,7 @@ func TestDrawNodeError(t *testing.T) {
 	)
 }
 
+// TestDrawNodeWarning tests to ensure that warnings work correctly
 func TestDrawNodeWarning(t *testing.T) {
 	t.Parallel()
 
@@ -254,6 +255,7 @@ func (p Printable) Error() error {
 	return errors.New(err)
 }
 
+// Warning generates a warning
 func (p Printable) Warning() string {
 	return p["warning"]
 }
