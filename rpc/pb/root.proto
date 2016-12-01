@@ -139,3 +139,15 @@ service Grapher {
     };
   }
 }
+
+/********
+ * INFO *
+ ********/
+
+service Info {
+  rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      get: "/api/v1/ping"
+    };
+  }
+}

@@ -156,6 +156,15 @@ func request_Grapher_Graph_0(ctx context.Context, marshaler runtime.Marshaler, c
 
 }
 
+func request_Info_Ping_0(ctx context.Context, marshaler runtime.Marshaler, client InfoClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq empty.Empty
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.Ping(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
 // RegisterExecutorHandlerFromEndpoint is same as RegisterExecutorHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterExecutorHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
@@ -457,4 +466,73 @@ var (
 
 var (
 	forward_Grapher_Graph_0 = runtime.ForwardResponseStream
+)
+
+// RegisterInfoHandlerFromEndpoint is same as RegisterInfoHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterInfoHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.Dial(endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterInfoHandler(ctx, mux, conn)
+}
+
+// RegisterInfoHandler registers the http handlers for service Info to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterInfoHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	client := NewInfoClient(conn)
+
+	mux.Handle("GET", pattern_Info_Ping_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Info_Ping_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Info_Ping_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+var (
+	pattern_Info_Ping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "ping"}, ""))
+)
+
+var (
+	forward_Info_Ping_0 = runtime.ForwardResponseMessage
 )

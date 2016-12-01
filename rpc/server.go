@@ -70,6 +70,7 @@ func (s *Server) newGRPC() (*grpc.Server, error) {
 			enableBinaryDownload: s.EnableBinaryDownload,
 		},
 	)
+	pb.RegisterInfoServer(server, &infoServer{})
 
 	return server, nil
 }
@@ -90,6 +91,10 @@ func (s *Server) newREST(ctx context.Context, addr string) (*http.Server, error)
 
 	if err := pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
 		return nil, errors.Wrap(err, "could not register grapher")
+	}
+
+	if err := pb.RegisterInfoHandlerFromEndpoint(ctx, mux, addr, s.ClientOpts.Opts()); err != nil {
+		return nil, errors.Wrap(err, "could not register info server")
 	}
 
 	handler := http.Handler(mux)
