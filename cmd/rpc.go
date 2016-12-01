@@ -16,11 +16,11 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net"
 	"net/url"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/metadata"
 
@@ -59,10 +59,17 @@ func registerLocalRPCFlags(flags *pflag.FlagSet) {
 func maybeStartSelfHostedRPC(ctx context.Context) error {
 	if getLocal() {
 		go startRPC(ctx)
+
+		var err error
 		for i := 0; i < 5; i++ {
-			_, err := net.Dial("tcp", getServerURL().Host)
-			fmt.Println(err)
+			_, err = net.Dial("tcp", getServerURL().Host)
+			if err == nil {
+				return nil
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
+
+		return err
 	}
 
 	return nil
