@@ -1,4 +1,5 @@
-# Converge
+
+![Converge Logo](docs/static/images/logo/converge_logo.png)
 
 Converge is a configuration management tool that makes it easy to manage servers,
 laptops and other devices.
