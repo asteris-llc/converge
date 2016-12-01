@@ -114,6 +114,10 @@ func getRPCGrapherClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.Graphe
 	return rpc.NewGrapherClient(ctx, getServerURL().Host, opts)
 }
 
+func getInfoClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.InfoClient, error) {
+	return rpc.NewInfoClient(ctx, getServerURL().Host, opts)
+}
+
 type recver interface {
 	Recv() (*pb.StatusResponse, error)
 }
