@@ -55,18 +55,17 @@ func (s *Server) newGRPC() (*grpc.Server, error) {
 
 	server := grpc.NewServer(opts...)
 
-	var jwt *JWTAuth
 	if s.Token != "" {
-		jwt = NewJWTAuth(s.Token)
+		jwt := NewJWTAuth(s.Token)
+		opts = append(opts, grpc.UnaryInterceptor(jwt.UnaryInterceptor))
+		opts = append(opts, grpc.StreamInterceptor(jwt.StreamInterceptor))
 	}
-	auth := &authorizer{JWTToken: jwt}
 
-	pb.RegisterExecutorServer(server, &executor{auth: auth})
-	pb.RegisterGrapherServer(server, &grapher{auth: auth})
+	pb.RegisterExecutorServer(server, &executor{})
+	pb.RegisterGrapherServer(server, &grapher{})
 	pb.RegisterResourceHostServer(
 		server,
 		&resourceHost{
-			auth:                 auth,
 			root:                 s.ResourceRoot,
 			enableBinaryDownload: s.EnableBinaryDownload,
 		},
