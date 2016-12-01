@@ -25,19 +25,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-type grapher struct {
-	auth *authorizer
-}
+type grapher struct{}
 
 // Graph returns the information about a graph
 func (g *grapher) Graph(in *pb.LoadRequest, stream pb.Grapher_GraphServer) error {
 	logger, ctx := setIDLogger(stream.Context())
 	logger = logger.WithField("function", "grapher.Graph")
-
-	if err := g.auth.authorize(ctx); err != nil {
-		logger.WithError(err).Warning("authorization failed")
-		return errors.Wrap(err, "authorization failed")
-	}
 
 	loaded, err := in.Load(ctx)
 	if err != nil {
