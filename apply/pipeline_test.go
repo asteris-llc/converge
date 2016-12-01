@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestExportedFields tests that we put the exported fields in the struct
 func TestExportedFields(t *testing.T) {
 	g := sampleGraph()
 	factory, _ := render.NewFactory(context.Background(), g)
