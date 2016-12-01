@@ -128,7 +128,11 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	grpcLis := mux.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
 	wg.Go(func() error {
 		logger.Info("serving GRPC")
-		return grpcSrv.Serve(grpcLis)
+		err := grpcSrv.Serve(grpcLis)
+		if err == cmux.ErrListenerClosed {
+			return nil
+		}
+		return err
 	})
 
 	// start the REST listener
@@ -146,11 +150,22 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	wg.Go(func() error {
 		logger.Info("serving REST")
 		// TODO: https
-		return restSrv.Serve(restLis)
+		err := restSrv.Serve(restLis)
+		if err == cmux.ErrListenerClosed {
+			return nil
+		}
+		return err
 	})
 
 	// start our cmux listener
-	wg.Go(mux.Serve)
+	wg.Go(func() error {
+		logger.Info("multiplexing")
+		err := mux.Serve()
+		if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
+			return nil
+		}
+		return err
+	})
 
 	// wait for all listeners to return
 	return wg.Wait()
