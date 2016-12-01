@@ -42,6 +42,7 @@ message StatusResponse {
     map<string, DiffResponse> changes = 2;
     bool hasChanges = 3;
     string error = 4;
+    string warning = 5;
   }
   Details details = 4;
 

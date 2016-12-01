@@ -148,6 +148,11 @@ func (s *Shell) Error() error {
 	return nil
 }
 
+// Warning is required for TaskStatus
+func (s *Shell) Warning() string {
+	return ""
+}
+
 func (s *Shell) updateHealthStatus() error {
 	if s.Status == nil {
 		fmt.Println("[INFO] health status requested with no plan, running check")
