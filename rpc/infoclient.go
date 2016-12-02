@@ -21,11 +21,17 @@ import (
 
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 )
 
 // NewInfoClient returns a client for a server that implements Info
-func NewInfoClient(ctx context.Context, addr string, opts *ClientOpts) (*InfoClient, error) {
-	cc, err := grpc.DialContext(ctx, addr, opts.Opts()...)
+func NewInfoClient(ctx context.Context, addr string, security *Security) (*InfoClient, error) {
+	opts, err := security.Client()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get client options")
+	}
+
+	cc, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, err
 	}

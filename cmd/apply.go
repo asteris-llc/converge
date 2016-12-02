@@ -23,7 +23,6 @@ import (
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,22 +53,11 @@ real happens.`,
 
 		maybeSetToken()
 
-		ssl, err := getSSLConfig(getServerURL().Host)
-		if err != nil {
-			clog.WithError(err).Fatal("could not get SSL config")
-		}
-
-		if err = maybeStartSelfHostedRPC(ctx); err != nil {
+		if err := maybeStartSelfHostedRPC(ctx); err != nil {
 			clog.WithError(err).Fatal("could not start RPC")
 		}
 
-		client, err := getRPCExecutorClient(
-			ctx,
-			&rpc.ClientOpts{
-				Token: getToken(),
-				SSL:   ssl,
-			},
-		)
+		client, err := getRPCExecutorClient(ctx, getSecurityConfig())
 		if err != nil {
 			clog.WithError(err).Fatal("could not get client")
 		}

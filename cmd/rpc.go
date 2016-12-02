@@ -24,12 +24,10 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
-	"github.com/fgrid/uuid"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -37,8 +35,6 @@ import (
 )
 
 const (
-	rpcNoTokenFlagName = "no-token"
-	rpcTokenFlagName   = "rpc-token"
 	rpcAddrFlagName    = "rpc-addr"
 	rpcLocalAddrName   = "local-addr"
 	rpcEnableLocalName = "local"
@@ -83,39 +79,30 @@ func startRPC(ctx context.Context) error {
 	loc := getServerURL()
 
 	// set up security options
-	sslConfig, err := getSSLConfig(loc.Host)
-	if err != nil {
-		return errors.Wrap(err, "could not get SSL config")
-	}
 	if !usingSSL() {
-		logger.Warning("no SSL config in use, server will accept HTTP connections")
+		logger.Warning("no SSL config in use, server will accept unencrypted connections")
 	}
 
 	// create server
 	server := &rpc.Server{
-		Token:                getToken(),
-		Secure:               sslConfig,
+		Security:             getSecurityConfig(),
 		ResourceRoot:         viper.GetString("root"),
 		EnableBinaryDownload: viper.GetBool("self-serve"),
-		ClientOpts: &rpc.ClientOpts{
-			Token: getToken(),
-			SSL:   sslConfig,
-		},
 	}
 
 	return server.Listen(ctx, loc)
 }
 
-func getRPCExecutorClient(ctx context.Context, opts *rpc.ClientOpts) (pb.ExecutorClient, error) {
-	return rpc.NewExecutorClient(ctx, getServerURL().Host, opts)
+func getRPCExecutorClient(ctx context.Context, security *rpc.Security) (pb.ExecutorClient, error) {
+	return rpc.NewExecutorClient(ctx, getServerURL().Host, security)
 }
 
-func getRPCGrapherClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.GrapherClient, error) {
-	return rpc.NewGrapherClient(ctx, getServerURL().Host, opts)
+func getRPCGrapherClient(ctx context.Context, security *rpc.Security) (*rpc.GrapherClient, error) {
+	return rpc.NewGrapherClient(ctx, getServerURL().Host, security)
 }
 
-func getInfoClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.InfoClient, error) {
-	return rpc.NewInfoClient(ctx, getServerURL().Host, opts)
+func getInfoClient(ctx context.Context, security *rpc.Security) (*rpc.InfoClient, error) {
+	return rpc.NewInfoClient(ctx, getServerURL().Host, security)
 }
 
 type recver interface {
@@ -162,22 +149,6 @@ func getMeta(stream headerer) ([]*graph.Edge, error) {
 	}
 
 	return edges, nil
-}
-
-// Token
-
-func getToken() string { return viper.GetString(rpcTokenFlagName) }
-
-func maybeSetToken() {
-	if viper.GetBool(rpcNoTokenFlagName) {
-		log.Warning("no token set, server is unauthenticated. This should *only* be used for development.")
-		return
-	}
-
-	if getToken() == "" && getLocal() {
-		viper.Set(rpcTokenFlagName, uuid.NewV4().String())
-		log.WithField("token", getToken()).Warn("setting session-local token")
-	}
 }
 
 // More getters
