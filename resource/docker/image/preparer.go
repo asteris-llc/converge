@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build !solaris
+
 package image
 
 import (
@@ -27,6 +29,7 @@ import (
 //
 // Image is responsible for pulling Docker images. It assumes that there is
 // already a Docker daemon running on the system.
+// *Note: docker resources are not currently supported on Solaris.*
 type Preparer struct {
 	// name of the image to pull
 	Name string `hcl:"name" required:"true" nonempty:"true"`

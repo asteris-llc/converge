@@ -10,11 +10,13 @@ menu:
 
 Image is responsible for pulling Docker images. It assumes that there is
 already a Docker daemon running on the system.
+*Note: docker resources are not currently supported on Solaris.*
 
 
 ## Example
 
 ```hcl
+/* docker resources are currently not supported on solaris */
 docker.image "busybox" {
   name               = "busybox"
   tag                = "latest"

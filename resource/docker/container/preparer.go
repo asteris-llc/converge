@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build !solaris
+
 package container
 
 import (
@@ -28,6 +30,7 @@ import (
 //
 // Container is responsible for creating docker containers. It assumes that
 // there is already a Docker daemon running on the system.
+// *Note: docker resources are not currently supported on Solaris.*
 type Preparer struct {
 	// name of the container
 	Name string `hcl:"name" required:"true" nonempty:"true"`

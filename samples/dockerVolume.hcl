@@ -1,3 +1,4 @@
+/* docker resources are currently not supported on solaris */
 docker.volume "elasticsearch" {
   name = "elasticsearch"
 

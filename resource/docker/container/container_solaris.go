@@ -12,19 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !solaris
-
-package image_test
-
-import (
-	"testing"
-
-	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/docker/image"
-	"github.com/stretchr/testify/assert"
-)
-
-func TestPreparerInterface(t *testing.T) {
-	t.Parallel()
-	assert.Implements(t, (*resource.Resource)(nil), new(image.Preparer))
-}
+package container
