@@ -42,6 +42,7 @@ fuzzing/*:
 	@echo
 	@echo === fuzzing $(shell basename $@) ===
 	@cd $@ && ./run.sh
+	@[[ "$$(find $@/crashers -type f)" == "" ]] || (echo found crashers; tail -n 100000 $@/crashers/*; exit 1)
 
 samples/%.png: samples/% converge
 	@echo
