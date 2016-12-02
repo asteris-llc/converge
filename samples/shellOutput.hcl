@@ -6,7 +6,7 @@ file will result only in 'check found no test file' being printed-
 this illustrates how secondary runs of the check script are supressed
 during execution.  */
 
-task "shell output" {
+task "shell-output" {
   interpreter = "/bin/bash"
   check_flags = ["-n"]
 

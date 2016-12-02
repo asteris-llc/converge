@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"unicode"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/hcl"
@@ -81,8 +82,35 @@ func (n *Node) Validate() error {
 
 		return fmt.Errorf("%s: too many keys", n.Pos())
 	}
-
+	if err := validateName(n.Name()); err != nil {
+		return fmt.Errorf("%s: %s", n.Pos(), err)
+	}
 	return n.setValues()
+}
+
+func validateName(name string) error {
+	var invalidRunes []rune
+	for _, letter := range []rune(name) {
+		if unicode.IsSpace(letter) {
+			return errors.New("resource name may not contain spaces")
+		}
+		if !(unicode.IsLetter(letter) || unicode.IsNumber(letter) || letter == '-' || letter == '_' || letter == '.') {
+			invalidRunes = append(invalidRunes, letter)
+		}
+	}
+
+	if invalidRunes != nil {
+		var badChars []string
+		printed := make(map[rune]struct{})
+		for _, runeChar := range invalidRunes {
+			if _, ok := printed[runeChar]; !ok {
+				badChars = append(badChars, string(runeChar))
+				printed[runeChar] = struct{}{}
+			}
+		}
+		return fmt.Errorf("invalid character(s) in resource name: %v; valid characters are unicode letters and numbers, dashes '-', underscores '_', and dots '.'", badChars)
+	}
+	return nil
 }
 
 // Kind returns the kind of resource this is

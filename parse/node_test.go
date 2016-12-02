@@ -16,6 +16,7 @@ package parse_test
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"testing"
 
@@ -100,6 +101,104 @@ func TestNodeCase(t *testing.T) {
 
 	t.Run("when too many keys", func(t *testing.T) {
 		validateTable(t, `case x y z {}`, "1:1: too many keys")
+	})
+}
+
+// TestNodeValidateName tests to ensure that we only allow supported names for
+// resources.
+func TestNodeValidateName(t *testing.T) {
+	t.Parallel()
+	t.Run("when valid", func(t *testing.T) {
+		t.Parallel()
+		t.Run("alpha", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "abc" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "もしもし" { }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "ڛ" { }`)
+			assert.NoError(t, err)
+		})
+		t.Run("numbers", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "abc123" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "abc123xyz" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "8080" { value = 7 }`)
+			assert.NoError(t, err)
+		})
+		t.Run("dashes", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "a-" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "-a-" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a-a" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a--" { value = 7 }`)
+			assert.NoError(t, err)
+		})
+		t.Run("dots", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "a." { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a.a" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a.." { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "..a.." { value = 7 }`)
+			assert.NoError(t, err)
+		})
+		t.Run("underscores", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "a_" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a_a" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a__" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "__a" { value = 7 }`)
+			assert.NoError(t, err)
+		})
+		t.Run("heterogenous", func(t *testing.T) {
+			t.Parallel()
+			_, err := fromString(`test "a_" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a_-" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a1_2" { value = 7 }`)
+			assert.NoError(t, err)
+			_, err = fromString(`test "a1-2" { value = 7 }`)
+			assert.NoError(t, err)
+		})
+	})
+	t.Run("when invalid character", func(t *testing.T) {
+		t.Parallel()
+		t.Run("when space", func(t *testing.T) {
+			t.Parallel()
+			spaceChars := []string{" ", "\t", "\n", "\v", "\f", "\r"}
+			for _, space := range spaceChars {
+				hcl := fmt.Sprintf("test \"abc%sdef\" { }", space)
+				validateTable(t, hcl, "1:1: resource name may not contain spaces")
+			}
+		})
+		t.Run("When other invalid character", func(t *testing.T) {
+			t.Parallel()
+			testChars := []string{
+				"!",
+				"/",
+				"+",
+				"🂡",
+				"💩",
+				"}",
+			}
+			for _, char := range testChars {
+				hcl := fmt.Sprintf("test \"abc%sdef\" { }", char)
+				msg := fmt.Sprintf("1:1: invalid character(s) in resource name: [%v]; valid characters are unicode letters and numbers, dashes '-', underscores '_', and dots '.'", string((char)))
+				validateTable(t, hcl, msg)
+			}
+		})
 	})
 }
 
