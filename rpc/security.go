@@ -15,7 +15,6 @@
 package rpc
 
 import (
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -59,10 +58,18 @@ func (s *Security) WrapListener(lis net.Listener) (net.Listener, error) {
 		return nil, errors.Wrap(err, "failed to load certificates")
 	}
 
-	// TODO: add cipher suites, etc?
 	config := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		},
+
 		Certificates: []tls.Certificate{cert},
-		Rand:         rand.Reader,
 	}
 
 	return tls.NewListener(lis, config), nil
