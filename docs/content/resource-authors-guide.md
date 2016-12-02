@@ -66,11 +66,18 @@ func (t *MyShellTask) Apply(context.Context) (resource.TaskStatus, error) {
 Check and Apply both return
 [`TaskStatus`](https://godoc.org/github.com/asteris-llc/converge/resource#TaskStatus).
 You can implement that interface yourself, but the most common pattern is to
-embed
-[`Status`](https://godoc.org/github.com/asteris-llc/converge/resource#Status) in
-the task itself. This is good for two reasons: first, this makes the fields on
-your struct available for lookups. Second, and more importantly, `Status`
-provides a number of helper methods to make your integration go more smoothly.
+return
+[`Status`](https://godoc.org/github.com/asteris-llc/converge/resource#Status).
+
+`Status` provides a number of helper methods to make your integration go more
+smoothly.  Of particular note are:
+
+1. [`RaiseLevel`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.RaiseLevel)
+   which allows you to increase the level of the error.
+1. [`AddMessage`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddMessage)
+   which allows you to add a message that will be displayed to the user
+1.1. [`AddDifference`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddDifference)
+   which inserts a difference that will be displayed to the user
 
 `Status` has three fields: `Differences`, `Output`, and `Level`. They all have
 accurate documentation on their fields, which we will not repeat here. However,
@@ -99,6 +106,50 @@ automatically in this case. This gives you two options:
 
 You shoud choose *one* of these options and do it consistently across as much of
 your code as possible.
+
+## Task
+
+The
+[`resource.Task`](https://godoc.org/github.com/asteris-llc/converge/resource#Task)
+interface is what you will implement to have converge run your `Check` and
+`Apply` methods.  Your `resource.Task` implementation is also what's used to
+define lookup methods from within converge.  An example of a
+
+```go
+type Shell struct {
+    CmdGenerator   CommandExecutor
+    CheckStmt      string                 `export:"check"`
+    ApplyStmt      string                 `export:"apply"`
+    Dir            string                 `export:"dir"`
+    Env            []string               `export:"env"`
+    Status         *CommandResults        `re-export-as:"status"`
+    CheckStatus    *CommandResults        `export:"checkstatus"`
+    HealthStatus   *resource.HealthStatus `export:"healthstatus"`
+    renderer       resource.Renderer
+    ctx            context.Context
+    exportedFields resource.FieldMap
+}
+```
+
+### Exporting Values
+
+Converge will automatically extract values from a `resource.Task` that are
+annotated with the `export` or `re-export-as` struct tags.  Fields that are
+exported with `export` will be available with the name that they are exported
+with.  In the example above the fields of `Status` would be available as
+`status.fieldname`.
+
+1. Fields that are tagged with `export` will be exported.
+1. Named structs that are tagged with `export` will be exported as a struct
+1. Embedded structs will have their exported fields exported in the namespace of
+   the containing struct
+1. Embedded interfaces will not be exported, nor have their fields exported
+1. If an embedded struct field name collides with a field from the struct it's
+   embedded in, both will be exported with the embedded struct being accessible
+   with 'StructName.FieldName'
+1. Fields exported with `re-export-as` must be structs or pointers to structs
+1. Structs exported with `re-export-as` will have their exported elements
+   available under the name that the struct is re-exported as.
 
 ## Preparer
 
