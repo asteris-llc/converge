@@ -70,7 +70,20 @@ func (p *Printer) StartPP(g *graph.Graph) (pp.Renderable, error) {
 
 // FinishPP provides summary statistics about the printed graph
 func (p *Printer) FinishPP(g *graph.Graph) (pp.Renderable, error) {
-	tmpl, err := p.template("{{if .Errors}}Errors:\n{{range .Errors}} * {{.}}\n{{end}}\n{{end}}{{if .DependencyErrors}}Failed due to failing dependency:\n{{range .DependencyErrors}} * {{.}}\n{{end}}\n{{end}}{{if gt (len .Errors) 0}}{{red \"Summary\"}}{{else}}{{green \"Summary\"}}{{end}}: {{len .Errors}} errors, {{.ChangesCount}} changes{{if .DependencyErrors}}, {{len .DependencyErrors}} dependency errors{{end}}\n")
+	tmpl, err := p.template(`{{if .Errors}}Errors:
+{{range .Errors}} * {{.}}
+{{end}}
+{{end}}
+{{- if .DependencyErrors}}Failed due to failing dependency:
+{{range .DependencyErrors}} * {{.}}
+{{end}}
+{{end}}
+{{- if gt (len .Errors) 0}}{{red "Summary"}}
+{{- else}}{{green "Summary"}}
+{{- end}}: {{len .Errors}} errors, {{.ChangesCount}} changes
+{{- if .DependencyErrors}}, {{len .DependencyErrors}} dependency errors
+{{- end}}
+`)
 	if err != nil {
 		return pp.HiddenString(), err
 	}
