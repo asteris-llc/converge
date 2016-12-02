@@ -195,7 +195,8 @@ func TestNodeValidateName(t *testing.T) {
 			}
 			for _, char := range testChars {
 				hcl := fmt.Sprintf("test \"abc%sdef\" { }", char)
-				validateTable(t, hcl, fmt.Sprintf("1:1: invalid character(s) in resource name: [%s]", string(char)))
+				msg := fmt.Sprintf("1:1: invalid character(s) in resource name: [%v]; valid characters are unicode letters and numbers, dashes '-', underscores '_', and dots '.'", string((char)))
+				validateTable(t, hcl, msg)
 			}
 		})
 	})

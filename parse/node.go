@@ -89,22 +89,17 @@ func (n *Node) Validate() error {
 }
 
 func validateName(name string) error {
-	var hasSpaces bool
-	var hasNonAlphaNum bool
 	var invalidRunes []rune
 	for _, letter := range []rune(name) {
 		if unicode.IsSpace(letter) {
-			hasSpaces = true
+			return errors.New("resource name may not contain spaces")
 		}
 		if !(unicode.IsLetter(letter) || unicode.IsNumber(letter) || letter == '-' || letter == '_' || letter == '.') {
-			hasNonAlphaNum = true
 			invalidRunes = append(invalidRunes, letter)
 		}
 	}
-	if hasSpaces {
-		return errors.New("resource name may not contain spaces")
-	}
-	if hasNonAlphaNum {
+
+	if invalidRunes != nil {
 		var badChars []string
 		printed := make(map[rune]struct{})
 		for _, runeChar := range invalidRunes {
@@ -113,7 +108,7 @@ func validateName(name string) error {
 				printed[runeChar] = struct{}{}
 			}
 		}
-		return fmt.Errorf("invalid character(s) in resource name: %v", badChars)
+		return fmt.Errorf("invalid character(s) in resource name: %v; valid characters are unicode letters and numbers, dashes '-', underscores '_', and dots '.'", badChars)
 	}
 	return nil
 }
