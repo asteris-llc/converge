@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-LENGTH=${1:-60}
+LENGTH=${LENGTH:-60}
 
 # SEED CORPUS
 #
