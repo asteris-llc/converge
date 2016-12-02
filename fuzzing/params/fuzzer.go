@@ -1,5 +1,3 @@
-// +build gofuzz
-
 // Copyright © 2016 Asteris, LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package params
 
-// ParseKVPairFuzz fuzzes parseKVPair
-func ParseKVPairFuzz(data []byte) int {
-	_, v, _ := parseKVPair(string(data))
+import "github.com/asteris-llc/converge/cmd"
+
+// Fuzz fuzzes parseKVPair
+func Fuzz(data []byte) int {
+	_, v, _ := cmd.ParseKVPair(string(data))
 	if v != "" {
 		return 1
 	}
