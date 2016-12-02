@@ -82,13 +82,14 @@ func (n *Node) Validate() error {
 
 		return fmt.Errorf("%s: too many keys", n.Pos())
 	}
-	if err := validateName(n.Name()); err != nil {
+	if err := ValidateName(n.Name()); err != nil {
 		return fmt.Errorf("%s: %s", n.Pos(), err)
 	}
 	return n.setValues()
 }
 
-func validateName(name string) error {
+// ValidateName validates a given name string
+func ValidateName(name string) error {
 	var invalidRunes []rune
 	for _, letter := range []rune(name) {
 		if unicode.IsSpace(letter) {
