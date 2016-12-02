@@ -11,6 +11,11 @@ build:
         code: |
           make test
 
+fuzz:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
     - script:
         name: fuzz
         code: |
