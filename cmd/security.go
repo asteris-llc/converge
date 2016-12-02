@@ -29,7 +29,7 @@ const (
 	rpcTokenFlagName    = "rpc-token"
 	sslCertFileFlagName = "cert-file"
 	sslKeyFileFlagName  = "key-file"
-	sslRootCAFlagName   = "ca-file" // TODO: remove "root" here
+	sslCAFlagName       = "ca-file"
 	sslUseSSLFlagName   = "use-ssl"
 )
 
@@ -37,12 +37,12 @@ func registerSSLFlags(flags *pflag.FlagSet) {
 	flags.Bool(sslUseSSLFlagName, false, "use SSL for connections")
 	flags.String(sslCertFileFlagName, "", "certificate file for SSL")
 	flags.String(sslKeyFileFlagName, "", "key file for SSL")
-	flags.String(sslRootCAFlagName, "", "CA certificate to trust")
+	flags.String(sslCAFlagName, "", "CA certificate to trust")
 }
 
 func registerClientSSLFlags(flags *pflag.FlagSet) {
 	flags.Bool(sslUseSSLFlagName, false, "use SSL for connections")
-	flags.String(sslRootCAFlagName, "", "CA certificate to trust")
+	flags.String(sslCAFlagName, "", "CA certificate to trust")
 }
 
 func getSecurityConfig() *rpc.Security {
@@ -79,7 +79,7 @@ func validateSSL() error {
 func usingSSL() bool         { return viper.GetBool(sslUseSSLFlagName) }
 func getCertFileLoc() string { return viper.GetString(sslCertFileFlagName) }
 func getKeyFileLoc() string  { return viper.GetString(sslKeyFileFlagName) }
-func getCAFileLoc() string   { return viper.GetString(sslRootCAFlagName) }
+func getCAFileLoc() string   { return viper.GetString(sslCAFlagName) }
 
 // Token
 
