@@ -16,6 +16,7 @@ package prettyprinters
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/asteris-llc/converge/graph"
 	"golang.org/x/net/context"
@@ -52,7 +53,9 @@ func (p Printer) Show(ctx context.Context, g *graph.Graph) (string, error) {
 	if npOK {
 		for _, node := range rootNodes {
 			if str, err := nodePrinter.DrawNode(g, node); err == nil {
-				write(str)
+				if !strings.Contains(str.String(), "error in dependency") {
+					write(str)
+				}
 			} else {
 				return "", err
 			}
