@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestInfoServer tests the operation of InfoServer
 func TestInfoServer(t *testing.T) {
 	server := new(infoServer)
 
