@@ -43,7 +43,7 @@ func TestPortCheck(t *testing.T) {
 	t.Parallel()
 	defer logging.HideLogs(t)()
 
-	runCheck := func(retries int, err error) (*port.Port, error) {
+	runCheck := func(retries int, err error) (*resource.Status, error) {
 		portNum := 80
 		mock := new(mockConnector)
 		mock.On("CheckConnection", "", portNum).Return(err)
@@ -53,41 +53,40 @@ func TestPortCheck(t *testing.T) {
 			Retrier:         &wait.Retrier{RetryCount: retries},
 		}
 		r, checkErr := p.Check(context.Background(), fakerenderer.New())
-		require.IsType(t, (*port.Port)(nil), r)
-		return r.(*port.Port), checkErr
+		return r.(*resource.Status), checkErr
 	}
 
 	t.Run("connection down", func(t *testing.T) {
-		port, err := runCheck(0, errFakeConnectionFailure)
+		status, err := runCheck(0, errFakeConnectionFailure)
 		require.NoError(t, err)
-		assert.Equal(t, resource.StatusWillChange, port.Status.Level)
-		require.Equal(t, 1, len(port.Messages()))
-		assert.Regexp(t, regexp.MustCompile("^Failed to connect to"), port.Messages()[0])
-		assert.Regexp(t, regexp.MustCompile(fakeConnectionFailureMsg), port.Messages()[0])
+		assert.Equal(t, resource.StatusWillChange, status.Level)
+		require.Equal(t, 1, len(status.Messages()))
+		assert.Regexp(t, regexp.MustCompile("^Failed to connect to"), status.Messages()[0])
+		assert.Regexp(t, regexp.MustCompile(fakeConnectionFailureMsg), status.Messages()[0])
 	})
 
 	t.Run("connection down after retries", func(t *testing.T) {
-		port, err := runCheck(3, errFakeConnectionFailure)
+		status, err := runCheck(3, errFakeConnectionFailure)
 		require.NoError(t, err)
-		assert.Equal(t, resource.StatusWillChange, port.Status.Level)
-		assert.Equal(t, 2, len(port.Messages()))
-		assert.Regexp(t, regexp.MustCompile("^Failed to connect to"), port.Messages()[0])
-		assert.Regexp(t, regexp.MustCompile(fakeConnectionFailureMsg), port.Messages()[0])
-		assert.Regexp(t, regexp.MustCompile("^Failed after"), port.Messages()[1])
+		assert.Equal(t, resource.StatusWillChange, status.Level)
+		assert.Equal(t, 2, len(status.Messages()))
+		assert.Regexp(t, regexp.MustCompile("^Failed to connect to"), status.Messages()[0])
+		assert.Regexp(t, regexp.MustCompile(fakeConnectionFailureMsg), status.Messages()[0])
+		assert.Regexp(t, regexp.MustCompile("^Failed after"), status.Messages()[1])
 	})
 
 	t.Run("connection alive", func(t *testing.T) {
-		port, err := runCheck(0, nil)
+		status, err := runCheck(0, nil)
 		require.NoError(t, err)
-		assert.Equal(t, resource.StatusNoChange, port.Status.Level)
+		assert.Equal(t, resource.StatusNoChange, status.Level)
 	})
 
 	t.Run("connection alive after retries", func(t *testing.T) {
-		port, err := runCheck(2, nil)
+		status, err := runCheck(2, nil)
 		require.NoError(t, err)
-		assert.Equal(t, resource.StatusNoChange, port.Status.Level)
-		assert.Equal(t, 1, len(port.Messages()))
-		assert.Regexp(t, regexp.MustCompile("^Passed after"), port.Messages()[0])
+		assert.Equal(t, resource.StatusNoChange, status.Level)
+		assert.Equal(t, 1, len(status.Messages()))
+		assert.Regexp(t, regexp.MustCompile("^Passed after"), status.Messages()[0])
 	})
 }
 
@@ -96,7 +95,7 @@ func TestPortApply(t *testing.T) {
 	t.Parallel()
 	defer logging.HideLogs(t)()
 
-	runApply := func(err error) (*port.Port, error) {
+	runApply := func(err error) (*resource.Status, error) {
 		portNum := 80
 		mock := new(mockConnector)
 		mock.On("CheckConnection", "", portNum).Return(err)
@@ -109,26 +108,17 @@ func TestPortApply(t *testing.T) {
 			},
 		}
 		r, err := p.Apply(context.Background())
-		require.IsType(t, (*port.Port)(nil), r)
-		return r.(*port.Port), err
+		return r.(*resource.Status), err
 	}
 
 	t.Run("passed", func(t *testing.T) {
-		port, err := runApply(nil)
+		_, err := runApply(nil)
 		require.NoError(t, err)
-
-		t.Run("retry count", func(t *testing.T) {
-			assert.Equal(t, 1, port.RetryCount)
-		})
 	})
 
 	t.Run("retried", func(t *testing.T) {
-		port, err := runApply(errFakeConnectionFailure)
+		_, err := runApply(errFakeConnectionFailure)
 		require.NoError(t, err)
-
-		t.Run("retry count", func(t *testing.T) {
-			assert.Equal(t, 3, port.RetryCount)
-		})
 	})
 }
 

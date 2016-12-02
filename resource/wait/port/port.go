@@ -26,7 +26,6 @@ import (
 
 // Port represents a port check
 type Port struct {
-	*resource.Status
 	*wait.Retrier
 	Host string `export:"host"`
 	Port int    `export:"port"`
@@ -35,30 +34,30 @@ type Port struct {
 
 // Check if the port is open
 func (p *Port) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	p.Status = resource.NewStatus()
+	status := resource.NewStatus()
 
 	err := p.CheckConnection()
 	if err == nil {
 		if p.RetryCount > 0 {
-			p.Status.AddMessage(fmt.Sprintf("Passed after %d retries (%v)", p.RetryCount, p.Duration))
+			status.AddMessage(fmt.Sprintf("Passed after %d retries (%v)", p.RetryCount, p.Duration))
 		}
 	} else {
 		// The desired state is that the port will be available after the apply. We
 		// also want to indicate that the port is not available in the plan output.
 		// Therefore, we set the status to StatusWillChange.
-		p.RaiseLevel(resource.StatusWillChange)
-		p.Status.AddMessage(fmt.Sprintf("Failed to connect to %s:%d: %s", p.Host, p.Port, err.Error()))
+		status.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage(fmt.Sprintf("Failed to connect to %s:%d: %s", p.Host, p.Port, err.Error()))
 		if p.RetryCount > 0 { // only add retry messages after an apply attempt
-			p.Status.AddMessage(fmt.Sprintf("Failed after %d retries (%v)", p.RetryCount, p.Duration))
+			status.AddMessage(fmt.Sprintf("Failed after %d retries (%v)", p.RetryCount, p.Duration))
 		}
 	}
 
-	return p, nil
+	return status, nil
 }
 
 // Apply retries the check until it passes or returns max failure threshold
 func (p *Port) Apply(context.Context) (resource.TaskStatus, error) {
-	p.Status = resource.NewStatus()
+	status := resource.NewStatus()
 
 	_, err := p.RetryUntil(func() (bool, error) {
 		checkErr := p.CheckConnection()
@@ -68,7 +67,7 @@ func (p *Port) Apply(context.Context) (resource.TaskStatus, error) {
 		return checkErr == nil, nil
 	})
 
-	return p, err
+	return status, err
 }
 
 // CheckConnection attempts to see if a tcp port is open
