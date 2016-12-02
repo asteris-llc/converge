@@ -40,7 +40,7 @@ type Server struct {
 	EnableBinaryDownload bool
 }
 
-// newGRPC constructs all servers and handlers
+// newGRPC constructs all GRPC servers and handlers
 func (s *Server) newGRPC() (*grpc.Server, error) {
 	server := grpc.NewServer(s.Security.Server()...)
 
@@ -100,6 +100,20 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	logger := logging.GetLogger(ctx).WithField("addr", addr)
 
 	// set up listeners
+	//
+	// We'll start with a regular net.Listener. This is going to be our entry
+	// point into the whole system. If we're using TLS/SSL, we'll wrap the
+	// original listener in a tls listener implementing the same interface.
+	// s.Security takes care of this.
+	//
+	// We need to care about it here because wrapping the listener here means
+	// that we can terminate SSL at a single point.
+	//
+	// One caveat: the REST interface is actually an automatically-generated
+	// client of the GRPC interface. This means that we have to require both
+	// server and client configuration to use the server. On the other hand, it
+	// means that *all* communication is secured when any of it is. Anything
+	// that talks to either server component will be encrypted over the wire.
 	lis, err := net.Listen("tcp", addr.Host)
 	if err != nil {
 		return errors.Wrap(err, "failed to listen")
@@ -112,14 +126,22 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 		}
 	}
 
+	mux := cmux.New(lis)
+
 	// set up a context for cancelling out of all of this
+	//
+	// we set up a sub-context here so we can cancel it on exit. It lets us tear
+	// down listeners in the errgroup more easily.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	wg, ctx := errgroup.WithContext(ctx)
 
-	mux := cmux.New(lis)
-
-	// start the GRPC listener
+	// start the GRPC listener and server
+	//
+	// Each of the tasks in the workers must handle if the errors they received
+	// are any form of use-after-close error. This happens on shutdown for
+	// cleanup purposes. In most of these cases, receiving an error means we're
+	// already cleaned up so we just need to check which error it is.
 	grpcSrv, err := s.newGRPC()
 	if err != nil {
 		return errors.Wrap(err, "failed to create grpc server")
@@ -149,7 +171,9 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 		return nil
 	})
 
-	// start the REST listener
+	// start the REST gateway listener and server
+	//
+	// Same cancellation semantics as GRPC listeners.
 	restSrv, err := s.newREST(ctx, addr)
 	if err != nil {
 		return errors.Wrap(err, "failed to create REST server")
@@ -180,6 +204,9 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	})
 
 	// start our cmux listener
+	//
+	// This is the "master start" switch. If our mux isn't serving, no traffic
+	// will flow to either GRPC or the REST gateway.
 	wg.Go(func() error {
 		logger.Debug("multiplexing")
 		err := mux.Serve()
@@ -189,12 +216,18 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 		return nil
 	})
 
-	// wait for all listeners to return
+	// wait for all listeners to return. Reminder: the semantics of errgroup
+	// mean that the *first* error that returns will be returned here. As of
+	// the time of this comment, the server will immediately log a fatal line
+	// and exit if it receives an error here, so all the error handling possible
+	// should be done in this method.
 	return wg.Wait()
 }
 
 // IsClosedNetworkConnErr detects if an error is the use of a close network connection
 func IsClosedNetworkConnErr(err error) bool {
 	opErr, ok := err.(*net.OpError)
+	// TODO: this feels brittle, but it seems to be the only way since net
+	// doesn't export a similar method.
 	return ok && opErr.Err.Error() == "use of closed network connection"
 }
