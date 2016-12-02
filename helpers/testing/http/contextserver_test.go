@@ -39,6 +39,7 @@ func init() {
 	mux.HandleFunc("/ping", testServeFunc)
 }
 
+// TestContextServerListenAndServe tests context server listening and serving
 func TestContextServerListenAndServe(t *testing.T) {
 	defer (logging.HideLogs(t))()
 
