@@ -34,11 +34,11 @@ func registerParamsFlags(flags *pflag.FlagSet) {
 	flags.StringSliceVarP(&params, "params", "p", []string{}, "parameters for the top-level module in key=value format")
 }
 
-// parseKVPair parses an input of the form "key=value" into its
+// ParseKVPair parses an input of the form "key=value" into its
 // corresponding pair of strings. It returns an error on malformed input.
 // Everything before the first "=" is considered the key, while everything after
 // it is the value.
-func parseKVPair(raw string) (string, string, error) {
+func ParseKVPair(raw string) (string, string, error) {
 	pair := strings.SplitN(raw, "=", 2)
 	if len(pair) < 2 {
 		return "", "", fmt.Errorf("malformed parameter: %v", raw)
@@ -60,7 +60,7 @@ func insert(values render.Values, key string, value interface{}) error {
 func parseKVPairs(pairs []string) (values render.Values, errors []error) {
 	values = make(render.Values)
 	for _, raw := range pairs {
-		if key, value, err := parseKVPair(raw); err != nil {
+		if key, value, err := ParseKVPair(raw); err != nil {
 			errors = append(errors, err)
 		} else {
 			if err = insert(values, key, value); err != nil {
