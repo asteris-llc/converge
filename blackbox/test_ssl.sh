@@ -12,7 +12,7 @@ finish() {
 trap finish EXIT
 
 # RPC Ping without SSL
-"$ROOT"/converge server --no-token --log-level=DEBUG &
+"$ROOT"/converge server --no-token --log-level=ERROR &
 PID=$!
 sleep 0.5
 
@@ -33,10 +33,9 @@ fi
 
 # restart with SSL
 kill -2 $PID
-sleep 1
-echo "------"
+sleep 0.5
 
-"$ROOT"/converge server --log-level=DEBUG \
+"$ROOT"/converge server --log-level=ERROR \
                         --no-token \
                         --ca-file "$ROOT"/blackbox/ssl/Converge_Test.crt \
                         --cert-file "$ROOT"/blackbox/ssl/Converge_Test_Cert.crt \
