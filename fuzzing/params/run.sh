@@ -24,4 +24,4 @@ echo "-- killing fuzz process --"
 kill -2 $PID
 sleep 0.25
 
-echo 'fuzzing complete. Examine the output at your leisure.'
+echo 'fuzzing complete.'
