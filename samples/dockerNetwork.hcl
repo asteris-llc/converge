@@ -1,3 +1,4 @@
+/* docker resources are currently not supported on solaris */
 docker.network "test-network" {
   name  = "test-network"
   state = "present"

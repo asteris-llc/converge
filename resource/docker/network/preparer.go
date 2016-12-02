@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build !solaris
+
 package network
 
 import (
@@ -26,6 +28,7 @@ import (
 //
 // Network is responsible for managing Docker networks. It assumes that there is
 // already a Docker daemon running on the system.
+// *Note: docker resources are not currently supported on Solaris.*
 type Preparer struct {
 	// name of the network
 	Name string `hcl:"name" required:"true" nonempty:"true"`

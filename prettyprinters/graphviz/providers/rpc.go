@@ -21,8 +21,6 @@ import (
 
 	pp "github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
-	"github.com/asteris-llc/converge/resource/docker/container"
-	"github.com/asteris-llc/converge/resource/docker/image"
 	"github.com/asteris-llc/converge/resource/file/content"
 	"github.com/asteris-llc/converge/resource/file/directory"
 	"github.com/asteris-llc/converge/resource/param"
@@ -107,20 +105,10 @@ func (p RPCProvider) VertexGetLabel(e graphviz.GraphEntity) (pp.VisibleRenderabl
 		), nil
 
 	case "docker.image":
-		var dest = new(image.Image)
-		if err := json.Unmarshal(val.Details, dest); err != nil {
-			return nil, errors.Wrap(err, "could not unmarshal docker image")
-		}
-
-		return pp.VisibleString(fmt.Sprintf("Docker Image: %s:%s", dest.Name, dest.Tag)), nil
+		return dockerImageLabel(val)
 
 	case "docker.container":
-		var dest = new(container.Container)
-		if err := json.Unmarshal(val.Details, dest); err != nil {
-			return nil, errors.Wrap(err, "could not unmarshal docker container")
-		}
-
-		return pp.VisibleString(fmt.Sprintf("Docker Container: %s", dest.Name)), nil
+		return dockerContainerLabel(val)
 
 	case "wait.port":
 		var dest = new(port.Port)
