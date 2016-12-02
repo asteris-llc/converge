@@ -52,7 +52,7 @@ func TestParseKVPairFailure(t *testing.T) {
 	t.Parallel()
 
 	for _, in := range []string{"", "noequals"} {
-		_, _, err := ParseKVPair(in)
+		_, _, err := parseKVPair(in)
 		assert.Error(t, err)
 	}
 }
@@ -68,7 +68,7 @@ func TestParseKVPairSuccess(t *testing.T) {
 		"key5": "☺",
 	} {
 		pair := expectedKey + "=" + expectedValue
-		actualKey, actualValue, err := ParseKVPair(pair)
+		actualKey, actualValue, err := parseKVPair(pair)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedKey, actualKey)
