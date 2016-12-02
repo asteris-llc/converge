@@ -38,6 +38,12 @@ blackbox/*.sh: converge
 	@echo === testing $@ ===
 	@$@
 
+fuzzing/*:
+	@echo
+	@echo === fuzzing $(shell basename $@) ===
+	@cd $@ && ./run.sh
+	@test -d $@/crashers && test "$$(find $@/crashers -type f)" = "" || (echo found crashers; tail -n 100000 $@/crashers/*; exit 1)
+
 samples/%.png: samples/% converge
 	@echo
 	@echo === rendering $@ ===
@@ -130,4 +136,4 @@ rpc/pb/root.swagger.json: rpc/pb/root.proto
 	 --swagger_out=logtostderr=true:rpc/pb \
 	 rpc/pb/root.proto
 
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh lint bench license-check
+.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh fuzzing/* lint bench license-check

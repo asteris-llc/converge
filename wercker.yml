@@ -8,8 +8,25 @@ build:
     # Test the project
     - script:
         name: go test
-        code: |
-          make test
+        code: make test
+
+bench:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: benchmark
+        code: make bench
+
+fuzz:
+  box: asteris/converge-ci
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: fuzz
+        code: make fuzzing/*
 
 publish:
   box: asteris/converge-ci

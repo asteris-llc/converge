@@ -45,3 +45,6 @@ terraform.tfstate*
 .vagrant
 examples/kubernetes/ssl/*
 examples/kubernetes/*.log
+
+# fuzzing
+fuzzing/**/*.zip
