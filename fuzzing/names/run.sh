@@ -22,10 +22,10 @@ printf もしもし > corpus/kanji
 
 # BUILD FUZZER
 echo "-- building fuzzer --"
-make names-fuzz.zip
+make parse-fuzz.zip
 
 echo "-- running fuzzer for $LENGTH seconds --"
-go-fuzz -bin=./names-fuzz.zip -workdir=. &
+go-fuzz -bin=./parse-fuzz.zip -workdir=. &
 PID=$!
 sleep "$LENGTH"
 

@@ -1,3 +1,5 @@
+// +build gofuzz
+
 // Copyright © 2016 Asteris, LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package names
+package parse
 
-import "github.com/asteris-llc/converge/parse"
-
-// Fuzz name validation
-func Fuzz(data []byte) int {
-	err := parse.ValidateName(string(data))
+// FuzzValidateName fuzzes validateName
+func FuzzValidateName(data []byte) int {
+	err := validateName(string(data))
 
 	if err != nil {
 		return 1
