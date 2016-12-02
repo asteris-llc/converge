@@ -88,6 +88,7 @@ func (n *Node) Validate() error {
 	return n.setValues()
 }
 
+// ValidateName validates a given name string
 func validateName(name string) error {
 	var invalidRunes []rune
 	for _, letter := range []rune(name) {

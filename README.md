@@ -136,6 +136,9 @@ docker run -i \
            /bin/bash -c 'cd /go/src/github.com/asteris-llc/converge; make test'
 ```
 
+Benchmarks are run with `make bench`, and fuzzing is run with `make
+fuzzing/{target}`.
+
 ## License
 
 Converge is licensed under the Apache 2.0 license. See [LICENSE](LICENSE) for

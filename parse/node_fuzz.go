@@ -14,12 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package parse
 
-// FuzzParseKVPair fuzzes parseKVPair
-func FuzzParseKVPair(data []byte) int {
-	_, v, _ := parseKVPair(string(data))
-	if v != "" {
+// FuzzValidateName fuzzes validateName
+func FuzzValidateName(data []byte) int {
+	err := validateName(string(data))
+
+	if err != nil {
 		return 1
 	}
 	return 0
