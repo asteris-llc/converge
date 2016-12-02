@@ -47,8 +47,6 @@ var (
 
 // Container is responsible for creating docker containers
 type Container struct {
-	*resource.Status
-
 	Name            string   `export:"name"`
 	Image           string   `export:"image"`
 	Entrypoint      []string `export:"entrypoint"`
@@ -71,32 +69,32 @@ type Container struct {
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	c.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
-		c.Status.Level = resource.StatusFatal
-		return c, err
+		status.Level = resource.StatusFatal
+		return status, err
 	}
 
 	if container != nil {
-		c.Status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
+		status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 		if c.Force {
-			c.diffContainer(container, c.Status)
+			c.diffContainer(container, status)
 		}
 	} else {
-		c.Status.AddDifference("name", "", c.Name, "<container-missing>")
+		status.AddDifference("name", "", c.Name, "<container-missing>")
 	}
 
-	if resource.AnyChanges(c.Status.Differences) {
-		c.Status.Level = resource.StatusWillChange
+	if resource.AnyChanges(status.Differences) {
+		status.Level = resource.StatusWillChange
 	}
 
-	return c, nil
+	return status, nil
 }
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
-	c.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
@@ -126,24 +124,24 @@ func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
 
 	container, err := c.client.CreateContainer(opts)
 	if err != nil {
-		return c, err
+		return status, err
 	}
 
 	for _, name := range c.Networks {
 		err = c.client.ConnectNetwork(name, container)
 		if err != nil {
-			return c, err
+			return status, err
 		}
 	}
 
 	if c.CStatus == "" || c.CStatus == containerStatusRunning {
 		err = c.client.StartContainer(c.Name, container.ID)
 		if err != nil {
-			return c, err
+			return status, err
 		}
 	}
 
-	return c, nil
+	return status, nil
 }
 
 // SetClient injects a docker api client

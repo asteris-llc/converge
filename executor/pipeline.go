@@ -38,17 +38,6 @@ func (p Pipeline) AndThen(f PipelineFunc) Pipeline {
 	return p
 }
 
-// LogAndThen is a utility function for logging purposes, it logs calls to
-// AndThen with printf
-func (p Pipeline) LogAndThen(msg string, f PipelineFunc) Pipeline {
-	logger := func(c context.Context, i interface{}) (interface{}, error) {
-		result, err := f(c, i)
-		return result, err
-	}
-	p.CallStack = append(p.CallStack, logger)
-	return p
-}
-
 // Connect adds a pipeline to the end of the current pipeline.
 // E.g. {a,b,c}.Connect({d,e,f}) = {a,b,c,d,e.f}
 func (p Pipeline) Connect(end Pipeline) Pipeline {
