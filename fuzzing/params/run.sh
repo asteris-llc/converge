@@ -8,6 +8,8 @@ test -d corpus || mkdir corpus
 printf "a=b"  > corpus/kv
 printf "="    > corpus/singleequals
 printf "a==b" > corpus/doubleequals
+printf "k=v=" > corpus/splitequals
+printf "key5=😱" > corpus/unicode
 
 # BUILD FUZZER
 echo "-- building fuzzer --"
