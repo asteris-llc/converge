@@ -16,7 +16,6 @@ package rpc
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"net/http"
 	"net/url"
@@ -29,37 +28,21 @@ import (
 	"github.com/pkg/errors"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // Server represents the configuration for a Converge RPC server
 type Server struct {
 	// Security
-	Token  string
-	Secure *tls.Config
+	Security *Security
 
 	// Serving
 	ResourceRoot         string
 	EnableBinaryDownload bool
-
-	// Client
-	ClientOpts *ClientOpts
 }
 
 // newGRPC constructs all servers and handlers
 func (s *Server) newGRPC() (*grpc.Server, error) {
-	var opts []grpc.ServerOption
-	if s.Secure != nil {
-		opts = append(opts, grpc.Creds(credentials.NewTLS(s.Secure)))
-	}
-
-	server := grpc.NewServer(opts...)
-
-	if s.Token != "" {
-		jwt := NewJWTAuth(s.Token)
-		opts = append(opts, grpc.UnaryInterceptor(jwt.UnaryInterceptor))
-		opts = append(opts, grpc.StreamInterceptor(jwt.StreamInterceptor))
-	}
+	server := grpc.NewServer(s.Security.Server()...)
 
 	pb.RegisterExecutorServer(server, &executor{})
 	pb.RegisterGrapherServer(server, &grapher{})
@@ -77,30 +60,34 @@ func (s *Server) newGRPC() (*grpc.Server, error) {
 
 // NewREST constructs a new REST gateway
 func (s *Server) newREST(ctx context.Context, addr *url.URL) (*http.Server, error) {
+	opts, err := s.Security.Client()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not generate REST gateway security options")
+	}
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption("text/plain", newContentMarshaler()),
 	)
 
-	if err := pb.RegisterExecutorHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterExecutorHandlerFromEndpoint(ctx, mux, addr.Host, opts); err != nil {
 		return nil, errors.Wrap(err, "could not register executor")
 	}
 
-	if err := pb.RegisterResourceHostHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterResourceHostHandlerFromEndpoint(ctx, mux, addr.Host, opts); err != nil {
 		return nil, errors.Wrap(err, "could not register resource host")
 	}
 
-	if err := pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterGrapherHandlerFromEndpoint(ctx, mux, addr.Host, opts); err != nil {
 		return nil, errors.Wrap(err, "could not register grapher")
 	}
 
-	if err := pb.RegisterInfoHandlerFromEndpoint(ctx, mux, addr.Host, s.ClientOpts.Opts()); err != nil {
+	if err := pb.RegisterInfoHandlerFromEndpoint(ctx, mux, addr.Host, opts); err != nil {
 		return nil, errors.Wrap(err, "could not register info server")
 	}
 
 	handler := http.Handler(mux)
 
-	if s.Token != "" {
-		handler = NewJWTAuth(s.Token).Protect(handler)
+	if s.Security.Token != "" {
+		handler = NewJWTAuth(s.Security.Token).Protect(handler)
 	}
 
 	return &http.Server{
@@ -112,9 +99,17 @@ func (s *Server) newREST(ctx context.Context, addr *url.URL) (*http.Server, erro
 func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 	logger := logging.GetLogger(ctx).WithField("addr", addr)
 
+	// set up listeners
 	lis, err := net.Listen("tcp", addr.Host)
 	if err != nil {
 		return errors.Wrap(err, "failed to listen")
+	}
+	if s.Security.UseSSL {
+		logger.Debug("wrapping insecure listener in secure listener")
+		lis, err = s.Security.WrapListener(lis)
+		if err != nil {
+			return errors.Wrap(err, "could not initialize secure listener")
+		}
 	}
 
 	// set up a context for cancelling out of all of this
@@ -130,13 +125,28 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 		return errors.Wrap(err, "failed to create grpc server")
 	}
 	grpcLis := mux.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+
+	wg.Go(func() error {
+		logger.Debug("waiting to close GRPC listener")
+		<-ctx.Done()
+		logger.Info("closing GRPC listener")
+
+		err := grpcLis.Close()
+		if err != nil && !IsClosedNetworkConnErr(err) {
+			return errors.Wrap(err, "failed to close GRPC listener")
+		}
+		return nil
+	})
+
 	wg.Go(func() error {
 		logger.Info("serving GRPC")
 		err := grpcSrv.Serve(grpcLis)
-		if err == cmux.ErrListenerClosed {
-			return nil
+		logger.Debug("finished serving GRPC")
+
+		if err != nil && err != cmux.ErrListenerClosed {
+			return errors.Wrap(err, "failed to serve GRPC")
 		}
-		return err
+		return nil
 	})
 
 	// start the REST listener
@@ -145,32 +155,46 @@ func (s *Server) Listen(ctx context.Context, addr *url.URL) error {
 		return errors.Wrap(err, "failed to create REST server")
 	}
 	restLis := mux.Match(cmux.HTTP1())
+
 	wg.Go(func() error {
 		logger.Debug("waiting to close REST listener")
 		<-ctx.Done()
 		logger.Info("closing REST listener")
-		return restLis.Close()
+
+		err := restLis.Close()
+		if err != nil && !IsClosedNetworkConnErr(err) {
+			return errors.Wrap(err, "failed to close REST listener")
+		}
+		return nil
 	})
+
 	wg.Go(func() error {
 		logger.Info("serving REST")
-		// TODO: https
 		err := restSrv.Serve(restLis)
-		if err == cmux.ErrListenerClosed {
-			return nil
+		logger.Debug("finished serving REST")
+
+		if err != nil && err != cmux.ErrListenerClosed {
+			return errors.Wrap(err, "failed to serve REST")
 		}
-		return err
+		return nil
 	})
 
 	// start our cmux listener
 	wg.Go(func() error {
-		logger.Info("multiplexing")
+		logger.Debug("multiplexing")
 		err := mux.Serve()
-		if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
-			return nil
+		if err != nil && !IsClosedNetworkConnErr(err) {
+			return errors.Wrap(err, "failed to multiplex")
 		}
-		return err
+		return nil
 	})
 
 	// wait for all listeners to return
 	return wg.Wait()
+}
+
+// IsClosedNetworkConnErr detects if an error is the use of a close network connection
+func IsClosedNetworkConnErr(err error) bool {
+	opErr, ok := err.(*net.OpError)
+	return ok && opErr.Err.Error() == "use of closed network connection"
 }

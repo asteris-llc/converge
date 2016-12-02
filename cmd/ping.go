@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/rpc"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -36,19 +35,7 @@ var pingCmd = &cobra.Command{
 		// logging
 		plog := log.WithField("component", "client")
 
-		// ssl config
-		ssl, err := getSSLConfig(getServerURL().Host)
-		if err != nil {
-			plog.WithError(err).Fatal("could not get SSL config")
-		}
-
-		client, err := getInfoClient(
-			ctx,
-			&rpc.ClientOpts{
-				Token: getToken(),
-				SSL:   ssl,
-			},
-		)
+		client, err := getInfoClient(ctx, getSecurityConfig())
 		if err != nil {
 			plog.WithError(err).Fatal("could not get client")
 		}
@@ -62,7 +49,7 @@ var pingCmd = &cobra.Command{
 }
 
 func init() {
-	registerSSLFlags(pingCmd.Flags())
+	registerClientSSLFlags(pingCmd.Flags())
 	registerRPCFlags(pingCmd.Flags())
 
 	RootCmd.AddCommand(pingCmd)
