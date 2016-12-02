@@ -44,7 +44,7 @@ var (
 
 	// ErrNonStructIntrospection is returned when attempting to introspect fields
 	// on a non-struct type.
-	ErrNonStructIntrospection = errors.New("cannot inspect non-struct fields")
+	ErrNonStructIntrospection = errors.New("cannot extract fields for types other than struct")
 
 	// ErrFieldIndexOutOfBounds is returned when a field index is beyond the
 	// number of fields in the struct type
