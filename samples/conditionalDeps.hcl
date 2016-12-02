@@ -24,7 +24,7 @@ switch "sample" {
     }
   }
 
-  case "true" "unexecuted true" {
+  case "true" "unexecuted-true" {
     task.query "bar" {
       query = "echo bar"
     }
@@ -35,7 +35,7 @@ switch "sample" {
     }
   }
 
-  case "false" "never exected" {
+  case "false" "never-exected" {
     task.query "baz" {
       query = "echo baz"
     }

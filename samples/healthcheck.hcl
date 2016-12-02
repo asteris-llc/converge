@@ -17,10 +17,10 @@ file.content "render" {
   content     = "{{param `message`}}"
 }
 
-healthcheck.task "healthcheck task" {
+healthcheck.task "healthcheck-task" {
   check = "echo 'looking for file foo'; [[ -f foo.txt ]]"
 }
 
-task "check task" {
+task "check-task" {
   check = "[[ -f foo.txt ]]"
 }
