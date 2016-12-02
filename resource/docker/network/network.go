@@ -48,7 +48,6 @@ const (
 
 // Network is responsible for managing docker networks
 type Network struct {
-	*resource.Status
 	client docker.NetworkClient
 
 	Name     string                 `export:"name"`
@@ -64,43 +63,44 @@ type Network struct {
 
 // Check system for docker network
 func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	n.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	nw, err := n.client.FindNetwork(n.Name)
 
 	if err != nil {
-		n.RaiseLevel(resource.StatusFatal)
-		return n, err
+		status.RaiseLevel(resource.StatusFatal)
+		return status, err
 	}
 
-	n.AddDifference(n.Name, string(networkState(nw)), string(n.State), "")
+	status.AddDifference(n.Name, string(networkState(nw)), string(n.State), "")
 
 	if n.State == StatePresent {
 		if nw != nil && n.Force {
-			n.diffNetwork(nw)
+			n.diffNetwork(nw, status)
 		}
 
-		invalidGWs, err := n.findConflicting(nw)
+		invalidGWs, err := n.findConflicting(nw, status)
 		if err != nil {
-			n.RaiseLevel(resource.StatusFatal)
-			return n, err
+			status.RaiseLevel(resource.StatusFatal)
+			return status, err
 		}
 
 		if invalidGWs != nil && len(invalidGWs) > 0 {
-			n.RaiseLevel(resource.StatusCantChange)
+			status.RaiseLevel(resource.StatusCantChange)
 			return n, fmt.Errorf("%s: gateway(s) are already in use", strings.Join(invalidGWs, ", "))
+
 		}
 	}
 
-	if resource.AnyChanges(n.Differences) {
-		n.RaiseLevel(resource.StatusWillChange)
+	if resource.AnyChanges(status.Differences) {
+		status.RaiseLevel(resource.StatusWillChange)
 	}
 
-	return n, nil
+	return status, nil
 }
 
 // Apply ensures the network matches the desired state
 func (n *Network) Apply(context.Context) (resource.TaskStatus, error) {
-	n.Status = resource.NewStatus()
+	status := resource.NewStatus()
 
 	var (
 		nw  *dc.Network
@@ -109,22 +109,22 @@ func (n *Network) Apply(context.Context) (resource.TaskStatus, error) {
 
 	nw, err = n.client.FindNetwork(n.Name)
 	if err != nil {
-		n.RaiseLevel(resource.StatusFatal)
-		return n, err
+		status.RaiseLevel(resource.StatusFatal)
+		return status, err
 	}
 
 	if n.State == StatePresent {
 		if nw != nil {
 			if !n.Force {
-				return n, nil
+				return status, nil
 			}
 
 			err = n.client.RemoveNetwork(n.Name)
 			if err != nil {
-				n.RaiseLevel(resource.StatusFatal)
-				return n, err
+				status.RaiseLevel(resource.StatusFatal)
+				return status, err
 			}
-			n.AddMessage(fmt.Sprintf("removed network %s", n.Name))
+			status.AddMessage(fmt.Sprintf("removed network %s", n.Name))
 		}
 
 		opts := dc.CreateNetworkOptions{
@@ -139,25 +139,25 @@ func (n *Network) Apply(context.Context) (resource.TaskStatus, error) {
 
 		nw, err = n.client.CreateNetwork(opts)
 		if err != nil {
-			n.RaiseLevel(resource.StatusFatal)
-			return n, err
+			status.RaiseLevel(resource.StatusFatal)
+			return status, err
 		}
-		n.AddMessage(fmt.Sprintf("created network %s", n.Name))
-		n.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage(fmt.Sprintf("created network %s", n.Name))
+		status.RaiseLevel(resource.StatusWillChange)
 	} else {
 		if nw != nil {
 			err = n.client.RemoveNetwork(n.Name)
 			if err != nil {
-				n.RaiseLevel(resource.StatusFatal)
-				return n, err
+				status.RaiseLevel(resource.StatusFatal)
+				return status, err
 			}
-			n.AddMessage(fmt.Sprintf("removed network %s", n.Name))
-			n.RaiseLevel(resource.StatusWillChange)
+			status.AddMessage(fmt.Sprintf("removed network %s", n.Name))
+			status.RaiseLevel(resource.StatusWillChange)
 		}
 	}
 
-	n.AddDifference(n.Name, string(networkState(nw)), string(n.State), "")
-	return n, nil
+	status.AddDifference(n.Name, string(networkState(nw)), string(n.State), "")
+	return status, nil
 }
 
 // SetClient injects a docker api client
@@ -165,13 +165,13 @@ func (n *Network) SetClient(client docker.NetworkClient) {
 	n.client = client
 }
 
-func (n *Network) diffNetwork(nw *dc.Network) {
-	n.AddDifference("labels", mapCompareStr(nw.Labels), mapCompareStr(n.Labels), "")
-	n.AddDifference("driver", nw.Driver, n.Driver, DefaultDriver)
-	n.AddDifference("options", mapCompareStr(nw.Options), mapCompareStr(toStrMap(n.Options)), "")
-	n.AddDifference("internal", strconv.FormatBool(nw.Internal), strconv.FormatBool(n.Internal), "false")
-	n.AddDifference("ipv6", strconv.FormatBool(nw.EnableIPv6), strconv.FormatBool(n.IPv6), "false")
-	n.AddDifference("ipam_driver", nw.IPAM.Driver, n.IPAM.Driver, DefaultIPAMDriver)
+func (n *Network) diffNetwork(nw *dc.Network, status *resource.Status) {
+	status.AddDifference("labels", mapCompareStr(nw.Labels), mapCompareStr(n.Labels), "")
+	status.AddDifference("driver", nw.Driver, n.Driver, DefaultDriver)
+	status.AddDifference("options", mapCompareStr(nw.Options), mapCompareStr(toStrMap(n.Options)), "")
+	status.AddDifference("internal", strconv.FormatBool(nw.Internal), strconv.FormatBool(n.Internal), "false")
+	status.AddDifference("ipv6", strconv.FormatBool(nw.EnableIPv6), strconv.FormatBool(n.IPv6), "false")
+	status.AddDifference("ipam_driver", nw.IPAM.Driver, n.IPAM.Driver, DefaultIPAMDriver)
 
 	// we cannot reliably detect a diff of the ipam config if the desired ipam
 	// config is the default ([]) but the actual ipam config has a single
@@ -181,7 +181,7 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 		sort.Sort(actualIPAMConfigs)
 		expectedIPAMConfigs := IPAMConfigs(n.IPAM.Config)
 		sort.Sort(expectedIPAMConfigs)
-		n.AddDifference("ipam_config", actualIPAMConfigs.String(), expectedIPAMConfigs.String(), "")
+		status.AddDifference("ipam_config", actualIPAMConfigs.String(), expectedIPAMConfigs.String(), "")
 	}
 }
 
@@ -190,15 +190,15 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 // plugins. in most cases, we can rely on the docker api to return errors during
 // apply.  It returns a list of networks that would conflict with the network
 // and prevent it from being created.
-func (n *Network) findConflicting(nw *dc.Network) ([]string, error) {
+func (n *Network) findConflicting(nw *dc.Network, status *resource.Status) ([]string, error) {
 	if len(n.IPAM.Config) > 0 {
-		inUse, err := n.gatewaysInUse(nw)
+		inUse, err := n.gatewaysInUse(nw, status)
 		return inUse, err
 	}
 	return nil, nil
 }
 
-func (n *Network) gatewaysInUse(nw *dc.Network) ([]string, error) {
+func (n *Network) gatewaysInUse(nw *dc.Network, status *resource.Status) ([]string, error) {
 	var gateways []string
 	var usedGWs []string
 	networks, err := n.client.ListNetworks()
@@ -220,7 +220,7 @@ func (n *Network) gatewaysInUse(nw *dc.Network) ([]string, error) {
 		for _, gateway := range gateways {
 			if strings.EqualFold(ipamConfig.Gateway, gateway) {
 				usedGWs = append(usedGWs, gateway)
-				n.Status.AddMessage(fmt.Sprintf("gateway %s already in use", gateway))
+				status.AddMessage(fmt.Sprintf("gateway %s already in use", gateway))
 			}
 		}
 	}

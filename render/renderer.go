@@ -201,18 +201,21 @@ func (r *Renderer) lookup(name string) (string, error) {
 	}
 
 	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
-		log.WithField("proxy-reference",
+		log.WithField(
+			"proxy-reference",
 			vertexName,
-		).Warn(fmt.Sprintf("%s: cannot resolve %s in node %s in prepare thunk",
-			r.ID,
-			vertexName, terms,
-		))
+		).Warn(
+			fmt.Sprintf(
+				"%s: cannot resolve %s in node %s in prepare thunk",
+				r.ID,
+				vertexName, terms,
+			),
+		)
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
 	if _, isPreparer := meta.Value().(*resource.Preparer); isPreparer {
-		log.WithField("preparer-reference", vertexName).Warn("node is unresolvable")
 		log.WithField("proxy-reference", vertexName).Warn(fmt.Sprintf("%s: cannot resolve %s in node %s from preparer", r.ID, vertexName, terms))
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
