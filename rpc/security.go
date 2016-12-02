@@ -84,7 +84,7 @@ func (s *Security) Client() (out []grpc.DialOption, err error) {
 
 		out = append(out, grpc.WithTransportCredentials(credentials.NewTLS(config)))
 	} else {
-		logrus.Warn("not using SSL for client")
+		logrus.Debug("not using SSL for client")
 
 		out = append(out, grpc.WithInsecure())
 	}
