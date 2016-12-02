@@ -13,10 +13,10 @@ printf "key5=😱" > corpus/unicode
 
 # BUILD FUZZER
 echo "-- building fuzzer --"
-make params-fuzz.zip
+make cmd-fuzz.zip
 
 echo "-- running fuzzer for $LENGTH seconds --"
-go-fuzz -bin=./params-fuzz.zip -workdir=. &
+go-fuzz -bin=./cmd-fuzz.zip -workdir=. &
 PID=$!
 sleep "$LENGTH"
 
