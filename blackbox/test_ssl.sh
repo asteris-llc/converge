@@ -17,7 +17,7 @@ PID=$!
 sleep 0.5
 
 if "$ROOT"/converge ping --log-level=ERROR > /dev/null; then
-    echo "SUCCESS: RPC ping without SSL"
+    echo "success: RPC ping without SSL"
 else
     echo "FAIL: RPC ping without SSL"
     exit 1
@@ -25,7 +25,7 @@ fi
 
 # HTTP Ping without SSL
 if curl -fs http://localhost:4774/api/v1/ping > /dev/null; then
-    echo "SUCCESS: HTTP ping without SSL"
+    echo "success: HTTP ping without SSL"
 else
     echo "FAIL: HTTP ping without SSL"
     exit 1
@@ -46,7 +46,7 @@ sleep 0.5
 
 # RPC Ping with SSL
 if "$ROOT"/converge ping --ca-file "$ROOT"/blackbox/ssl/Converge_Test.crt --use-ssl --log-level=ERROR > /dev/null; then
-    echo "SUCCESS: RPC ping with SSL"
+    echo "success: RPC ping with SSL"
 else
     echo "FAIL: RPC ping with SSL"
     exit 1
@@ -54,7 +54,7 @@ fi
 
 # HTTP Ping with SSL
 if curl -fs --cacert "$ROOT"/blackbox/ssl/Converge_Test.crt https://localhost:4774/api/v1/ping > /dev/null; then
-    echo "SUCCESS: HTTP ping with SSL"
+    echo "success: HTTP ping with SSL"
 else
     echo "FAIL: HTTP ping with SSL"
     exit 1
