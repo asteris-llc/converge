@@ -11,6 +11,11 @@ build:
         code: |
           make test
 
+    - script:
+        name: fuzz
+        code: |
+          make fuzzing/*
+
 publish:
   box: asteris/converge-ci
   steps:
