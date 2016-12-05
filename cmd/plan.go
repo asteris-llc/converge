@@ -98,6 +98,11 @@ can be done separately to see what needs to be changed before execution.`,
 				g.Connect(edge.Source, edge.Dest)
 			}
 
+			timer := new(TimerDisplay)
+			timer.Start()
+			oldOut := flog.Logger.Out
+			flog.Logger.Out = timer.Bypass()
+
 			// get vertices
 			var planError bool
 			err = iterateOverStream(
@@ -109,6 +114,7 @@ can be done separately to see what needs to be changed before execution.`,
 						"id":    resp.Meta.Id,
 					})
 					if resp.Run == pb.StatusResponse_STARTED {
+						timer.AddTimer(resp.Meta.Id + ": " + resp.Stage.String())
 						slog.Info("got status")
 					} else {
 						slog.Debug("got status")
@@ -123,9 +129,15 @@ can be done separately to see what needs to be changed before execution.`,
 							}
 							g.Add(node.New(resp.Id, printable))
 						}
+
+						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
 					}
 				},
 			)
+
+			timer.Stop()
+			flog.Logger.Out = oldOut
+
 			if err != nil {
 				flog.WithError(err).Fatal("could not get responses")
 			}

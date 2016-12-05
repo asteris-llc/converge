@@ -98,6 +98,11 @@ real happens.`,
 				g.Connect(edge.Source, edge.Dest)
 			}
 
+			timer := new(TimerDisplay)
+			timer.Start()
+			oldOut := flog.Logger.Out
+			flog.Logger.Out = timer.Bypass()
+
 			var applyError bool
 			// get vertices
 			err = iterateOverStream(
@@ -109,9 +114,14 @@ real happens.`,
 						"id":    resp.Meta.Id,
 					})
 					if resp.Run == pb.StatusResponse_STARTED {
+						timer.AddTimer(resp.Meta.Id + ": " + resp.Stage.String())
 						slog.Info("got status")
 					} else {
-						slog.Debug("got status")
+						slog.Info("got status")
+					}
+
+					if resp.Run == pb.StatusResponse_FINISHED {
+						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
 					}
 
 					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
@@ -126,6 +136,10 @@ real happens.`,
 					}
 				},
 			)
+
+			timer.Stop()
+			flog.Logger.Out = oldOut
+
 			if err != nil {
 				flog.WithError(err).Fatal("could not get responses")
 			}

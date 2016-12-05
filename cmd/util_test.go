@@ -22,5 +22,5 @@ import (
 )
 
 func TestUseColor(t *testing.T) {
-	assert.NotPanics(t, func() { cmd.UseColor() })
+	assert.NotPanics(t, func() { cmd.CanUseEscapeSequences() })
 }
