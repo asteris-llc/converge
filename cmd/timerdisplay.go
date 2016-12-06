@@ -139,6 +139,5 @@ func (t *timerDisplayTimer) String() string {
 	elapsed := time.Since(t.Start)
 	elapsedRounded := elapsed - (elapsed % time.Second)
 
-	// TODO: tab and tabwriter?
 	return fmt.Sprintf("%s (running %s)", t.Name, elapsedRounded)
 }
