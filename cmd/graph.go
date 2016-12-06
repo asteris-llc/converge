@@ -21,7 +21,6 @@ import (
 	"github.com/asteris-llc/converge/prettyprinters"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz"
 	"github.com/asteris-llc/converge/prettyprinters/graphviz/providers"
-	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -58,22 +57,11 @@ You can pipe the output directly to the 'dot' command, for example:
 
 		maybeSetToken()
 
-		ssl, err := getSSLConfig(getServerName())
-		if err != nil {
-			flog.WithError(err).Fatal("could not get SSL config")
-		}
-
-		if err := maybeStartSelfHostedRPC(ctx, ssl); err != nil {
+		if err := maybeStartSelfHostedRPC(ctx); err != nil {
 			flog.WithError(err).Fatal("could not start RPC")
 		}
 
-		client, err := getRPCGrapherClient(
-			ctx,
-			&rpc.ClientOpts{
-				Token: getToken(),
-				SSL:   ssl,
-			},
-		)
+		client, err := getRPCGrapherClient(ctx, getSecurityConfig())
 		if err != nil {
 			flog.WithError(err).Fatal("could not get client")
 		}

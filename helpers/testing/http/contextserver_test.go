@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rpc_test
+package http_test
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/asteris-llc/converge/helpers/logging"
-	"github.com/asteris-llc/converge/rpc"
+	testHttp "github.com/asteris-llc/converge/helpers/testing/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
@@ -39,12 +39,13 @@ func init() {
 	mux.HandleFunc("/ping", testServeFunc)
 }
 
+// TestContextServerListenAndServe tests context server listening and serving
 func TestContextServerListenAndServe(t *testing.T) {
 	defer (logging.HideLogs(t))()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	s := rpc.NewContextServer(ctx, mux)
+	s := testHttp.NewContextServer(ctx, mux)
 	go func() {
 		err := s.ListenAndServe("localhost:18080")
 		assert.NoError(t, err)

@@ -26,8 +26,13 @@ import (
 )
 
 // NewGrapherClient returns a client for a server that implements Executor
-func NewGrapherClient(ctx context.Context, addr string, opts *ClientOpts) (*GrapherClient, error) {
-	cc, err := grpc.DialContext(ctx, addr, opts.Opts()...)
+func NewGrapherClient(ctx context.Context, addr string, security *Security) (*GrapherClient, error) {
+	opts, err := security.Client()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get client options")
+	}
+
+	cc, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, err
 	}

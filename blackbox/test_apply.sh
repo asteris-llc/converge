@@ -10,9 +10,9 @@ function finish {
 }
 trap finish EXIT
 
-pushd "$TMP"
+pushd "$TMP" 2>/dev/null
 
-"$ROOT"/converge apply --local -p filename=test.txt -p "message=x" "$SOURCE"
+"$ROOT"/converge apply --local -p "filename=test.txt" -p "message=x" "$SOURCE"
 
 if [ ! -f test.txt ]; then
     echo "test.txt doesn't exist"
@@ -21,7 +21,7 @@ fi
 
 if [[ "$(cat test.txt)" != "x" ]]; then
     echo "test.txt doesn't have the right content"
-    echo "has '$(at test.txt)', want 'x'"
+    echo "has '$(cat test.txt)', want 'x'"
     exit 1
 fi
 

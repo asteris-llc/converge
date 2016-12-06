@@ -15,72 +15,49 @@
 package cmd
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 
-	"github.com/pkg/errors"
+	log "github.com/Sirupsen/logrus"
+	"github.com/asteris-llc/converge/rpc"
+	"github.com/fgrid/uuid"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 const (
-	sslUseSSLFlagName   = "use-ssl"
+	rpcNoTokenFlagName  = "no-token"
+	rpcTokenFlagName    = "rpc-token"
 	sslCertFileFlagName = "cert-file"
 	sslKeyFileFlagName  = "key-file"
-	sslRootCAFlagName   = "ca-file"
+	sslCAFlagName       = "ca-file"
+	sslUseSSLFlagName   = "use-ssl"
 )
 
 func registerSSLFlags(flags *pflag.FlagSet) {
 	flags.Bool(sslUseSSLFlagName, false, "use SSL for connections")
 	flags.String(sslCertFileFlagName, "", "certificate file for SSL")
 	flags.String(sslKeyFileFlagName, "", "key file for SSL")
-	flags.String(sslRootCAFlagName, "", "CA certificate to trust")
+	flags.String(sslCAFlagName, "", "CA certificate to trust")
 }
 
-func getSSLConfig(serverName string) (*tls.Config, error) {
-	if !viper.GetBool(sslUseSSLFlagName) {
-		return nil, nil
+func registerClientSSLFlags(flags *pflag.FlagSet) {
+	flags.Bool(sslUseSSLFlagName, false, "use SSL for connections")
+	flags.String(sslCAFlagName, "", "CA certificate to trust")
+}
+
+func getSecurityConfig() *rpc.Security {
+	out := &rpc.Security{
+		Token:  getToken(),
+		UseSSL: usingSSL(),
 	}
 
-	config := &tls.Config{
-		ServerName: serverName,
+	if usingSSL() {
+		out.CertFile = getCertFileLoc()
+		out.KeyFile = getKeyFileLoc()
+		out.CAFile = getCAFileLoc()
 	}
 
-	// add root certificates
-	if viper.GetString(sslRootCAFlagName) != "" {
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, errors.Wrap(err, "could not get system cert pool")
-		}
-
-		pemBytes, err := ioutil.ReadFile(viper.GetString(sslRootCAFlagName))
-		if err != nil {
-			return nil, errors.Wrap(err, "could not read specified root CA")
-		}
-
-		if added := pool.AppendCertsFromPEM(pemBytes); !added {
-			return nil, errors.New("could not append root CA to system roots")
-		}
-
-		config.RootCAs = pool
-	}
-
-	// add server certificates
-	if viper.GetString(sslCertFileFlagName) != "" && viper.GetString(sslKeyFileFlagName) != "" {
-		cert, err := tls.LoadX509KeyPair(
-			viper.GetString(sslCertFileFlagName),
-			viper.GetString(sslKeyFileFlagName),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		config.Certificates = append(config.Certificates, cert)
-	}
-
-	return config, nil
+	return out
 }
 
 func validateSSL() error {
@@ -102,3 +79,20 @@ func validateSSL() error {
 func usingSSL() bool         { return viper.GetBool(sslUseSSLFlagName) }
 func getCertFileLoc() string { return viper.GetString(sslCertFileFlagName) }
 func getKeyFileLoc() string  { return viper.GetString(sslKeyFileFlagName) }
+func getCAFileLoc() string   { return viper.GetString(sslCAFlagName) }
+
+// Token
+
+func getToken() string { return viper.GetString(rpcTokenFlagName) }
+
+func maybeSetToken() {
+	if viper.GetBool(rpcNoTokenFlagName) {
+		log.Warning("no token set, server is unauthenticated. This should *only* be used for development.")
+		return
+	}
+
+	if getToken() == "" && getLocal() {
+		viper.Set(rpcTokenFlagName, uuid.NewV4().String())
+		log.WithField("token", getToken()).Warn("setting session-local token")
+	}
+}

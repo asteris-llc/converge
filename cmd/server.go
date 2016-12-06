@@ -16,15 +16,12 @@ package cmd
 
 import (
 	"os"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/asteris-llc/converge/rpc"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -52,82 +49,15 @@ var serverCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		GracefulExit(cancel)
 
-		group, ctx := errgroup.WithContext(ctx)
-
-		setLocal(true) // so we generate a token
-
-		// set up our client and server security options
-		maybeSetToken()
-
-		if !usingSSL() {
-			log.Warning("no SSL config in use, server will accept HTTP connections")
-		}
-
-		sslConfig, err := getSSLConfig(getServerName())
-		if err != nil {
-			log.WithError(err).Fatal("could not get SSL config")
-		}
-
-		clientOpts := &rpc.ClientOpts{
-			Token: viper.GetString("auth-token"),
-			SSL:   sslConfig,
-		}
+		setLocal(true)  // so we generate a token
+		maybeSetToken() // set the token, if it's not set
+		setLocal(false) // unset local so we get the right flag addresses
 
 		// start RPC server
-		group.Go(func() (err error) {
-			if err = startRPC(
-				ctx,
-				getRPCAddr(),
-				sslConfig,
-				viper.GetString("root"),
-				viper.GetBool("self-serve"),
-			); err != nil {
-				return errors.Wrap(err, "could not run RPC")
-			}
-			<-ctx.Done()
-			return
-		})
-
-		// sleep here to avoid a race condition. The REST gateway can't connect
-		// to the RPC server if the gateway starts first.
-		time.Sleep(100 * time.Millisecond)
-
-		// start HTTP server
-		group.Go(func() (err error) {
-			httpLog := log.WithFields(log.Fields{
-				"addr":    viper.GetString("api-addr"),
-				"service": "API",
-			})
-
-			server, err := rpc.NewRESTGateway(ctx, getRPCAddr(), clientOpts)
-			if err != nil {
-				return errors.Wrap(err, "failed to create server")
-			}
-
-			if viper.GetBool("https") {
-				httpLog.WithField("protocol", "HTTPS").Info("serving")
-				err = server.ListenAndServeTLS(
-					viper.GetString("api-addr"),
-					getCertFileLoc(),
-					getKeyFileLoc(),
-				)
-			} else {
-				httpLog.WithField("protocol", "HTTP").Info("serving")
-				err = server.ListenAndServe(
-					viper.GetString("api-addr"),
-				)
-			}
-
-			if err != nil {
-				return errors.Wrap(err, "failed to serve")
-			}
-			httpLog.Info("halted")
-			return
-		})
-
-		if err = group.Wait(); err != nil {
+		if err := startRPC(ctx); err != nil {
 			log.WithError(err).Fatal("serving failed")
 		}
 	},
@@ -141,7 +71,6 @@ func init() {
 	registerRPCFlags(serverCmd.Flags())
 
 	// API
-	serverCmd.Flags().String("api-addr", addrServerHTTP, "address to serve API")
 	serverCmd.Flags().String("root", ".", "location of modules to serve")
 	serverCmd.Flags().Bool("self-serve", false, "serve own binary for bootstrapping")
 
