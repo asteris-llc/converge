@@ -15,38 +15,20 @@
 package rpc
 
 import (
-	"crypto/tls"
-
 	"github.com/asteris-llc/converge/rpc/pb"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
-// ClientOpts contains options for the Converge RPC client
-type ClientOpts struct {
-	Token string
-	SSL   *tls.Config
-}
-
-// Opts transforms the current config into options for grpc.DialContext
-func (c *ClientOpts) Opts() (out []grpc.DialOption) {
-	if c.SSL == nil {
-		out = append(out, grpc.WithInsecure())
-	} else {
-		out = append(out, grpc.WithTransportCredentials(credentials.NewTLS(c.SSL)))
-	}
-
-	if c.Token != "" {
-		out = append(out, grpc.WithPerRPCCredentials(NewJWTAuth(c.Token)))
-	}
-
-	return out
-}
-
 // NewExecutorClient returns a client for a server that implements Executor
-func NewExecutorClient(ctx context.Context, addr string, opts *ClientOpts) (pb.ExecutorClient, error) {
-	cc, err := grpc.DialContext(ctx, addr, opts.Opts()...)
+func NewExecutorClient(ctx context.Context, addr string, security *Security) (pb.ExecutorClient, error) {
+	opts, err := security.Client()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get client options")
+	}
+
+	cc, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -12,9 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package rpc
 
-const (
-	addrServer      = ":4774"
-	addrServerLocal = ":47740"
+import (
+	"github.com/golang/protobuf/ptypes/empty"
+	"golang.org/x/net/context"
 )
+
+type infoServer struct{}
+
+func (i *infoServer) Ping(context.Context, *empty.Empty) (*empty.Empty, error) {
+	return new(empty.Empty), nil
+}

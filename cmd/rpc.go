@@ -15,20 +15,19 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net"
+	"net/url"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/metadata"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/helpers/logging"
 	"github.com/asteris-llc/converge/rpc"
 	"github.com/asteris-llc/converge/rpc/pb"
-	"github.com/fgrid/uuid"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -36,8 +35,6 @@ import (
 )
 
 const (
-	rpcNoTokenFlagName = "no-token"
-	rpcTokenFlagName   = "rpc-token"
 	rpcAddrFlagName    = "rpc-addr"
 	rpcLocalAddrName   = "local-addr"
 	rpcEnableLocalName = "local"
@@ -55,69 +52,57 @@ func registerLocalRPCFlags(flags *pflag.FlagSet) {
 	flags.Bool(rpcEnableLocalName, false, "self host RPC")
 }
 
-func maybeStartSelfHostedRPC(ctx context.Context, secure *tls.Config) error {
-	if viper.GetBool(rpcEnableLocalName) {
-		return startRPC(ctx, getLocalAddr(), secure, "", false)
+func maybeStartSelfHostedRPC(ctx context.Context) error {
+	if getLocal() {
+		go startRPC(ctx)
+
+		var err error
+		for i := 0; i < 5; i++ {
+			_, err = net.Dial("tcp", getServerURL().Host)
+			if err == nil {
+				return nil
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		return err
 	}
 
 	return nil
 }
 
-func startRPC(ctx context.Context, addr string, secure *tls.Config, resourceRoot string, enableBinaryDownload bool) error {
+func startRPC(ctx context.Context) error {
 	// set context for logging
 	logger := logging.GetLogger(ctx).WithField("component", "rpc")
 	ctx = logging.WithLogger(ctx, logger)
 
-	// listen and start server
-	lis, err := net.Listen("tcp", addr)
-	if err != nil {
-		return errors.Wrap(err, "could not open RPC listener connection")
+	loc := getServerURL()
+
+	// set up security options
+	if !usingSSL() {
+		logger.Warning("no SSL config in use, server will accept unencrypted connections")
 	}
 
-	server, err := rpc.New(getToken(), secure, resourceRoot, enableBinaryDownload)
-	if err != nil {
-		return errors.Wrap(err, "could not create RPC server")
+	// create server
+	server := &rpc.Server{
+		Security:             getSecurityConfig(),
+		ResourceRoot:         viper.GetString("root"),
+		EnableBinaryDownload: viper.GetBool("self-serve"),
 	}
 
-	go func() {
-		<-ctx.Done()
-		server.GracefulStop()
-	}()
-
-	rpcLog := logger.WithField("addr", addr)
-
-	rpcLog.Info("serving")
-	go func() {
-		if err := server.Serve(lis); err != nil {
-			rpcLog.WithError(err).Fatal("failed to serve")
-		}
-
-		rpcLog.Info("halted")
-	}()
-
-	return nil
+	return server.Listen(ctx, loc)
 }
 
-func getRPCExecutorClient(ctx context.Context, opts *rpc.ClientOpts) (pb.ExecutorClient, error) {
-	var addr string
-	if viper.GetBool(rpcEnableLocalName) {
-		addr = viper.GetString(rpcLocalAddrName)
-	} else {
-		addr = viper.GetString(rpcAddrFlagName)
-	}
-
-	return rpc.NewExecutorClient(ctx, addr, opts)
+func getRPCExecutorClient(ctx context.Context, security *rpc.Security) (pb.ExecutorClient, error) {
+	return rpc.NewExecutorClient(ctx, getServerURL().Host, security)
 }
 
-func getRPCGrapherClient(ctx context.Context, opts *rpc.ClientOpts) (*rpc.GrapherClient, error) {
-	var addr string
-	if viper.GetBool(rpcEnableLocalName) {
-		addr = viper.GetString(rpcLocalAddrName)
-	} else {
-		addr = viper.GetString(rpcAddrFlagName)
-	}
+func getRPCGrapherClient(ctx context.Context, security *rpc.Security) (*rpc.GrapherClient, error) {
+	return rpc.NewGrapherClient(ctx, getServerURL().Host, security)
+}
 
-	return rpc.NewGrapherClient(ctx, addr, opts)
+func getInfoClient(ctx context.Context, security *rpc.Security) (*rpc.InfoClient, error) {
+	return rpc.NewInfoClient(ctx, getServerURL().Host, security)
 }
 
 type recver interface {
@@ -166,40 +151,33 @@ func getMeta(stream headerer) ([]*graph.Edge, error) {
 	return edges, nil
 }
 
-// Token
-
-func getToken() string { return viper.GetString(rpcTokenFlagName) }
-
-func maybeSetToken() {
-	if viper.GetBool(rpcNoTokenFlagName) {
-		log.Warning("no token set, server is unauthenticated. This should *only* be used for development.")
-		return
-	}
-
-	if getToken() == "" && getLocal() {
-		viper.Set(rpcTokenFlagName, uuid.NewV4().String())
-		log.WithField("token", getToken()).Warn("setting session-local token")
-	}
-}
-
 // More getters
 
-func setLocal(local bool)  { viper.Set(rpcLocalAddrName, local) }
-func getLocal() bool       { return viper.GetBool(rpcLocalAddrName) }
-func getRPCAddr() string   { return viper.GetString(rpcAddrFlagName) }
+func setLocal(local bool)  { viper.Set(rpcEnableLocalName, local) }
+func getLocal() bool       { return viper.GetBool(rpcEnableLocalName) }
 func getLocalAddr() string { return viper.GetString(rpcLocalAddrName) }
+func getRPCAddr() string   { return viper.GetString(rpcAddrFlagName) }
 
-func getServerName() string {
-	var addr string
+func getServerURL() *url.URL {
+	out := new(url.URL)
+
 	if getLocal() {
-		addr = getLocalAddr()
+		out.Host = getLocalAddr()
 	} else {
-		addr = getRPCAddr()
+		out.Host = getRPCAddr()
 	}
 
-	parts := strings.SplitN(addr, ":", 1)
-	if len(parts) < 2 || parts[0] == "" {
-		return "127.0.0.1"
+	// set host to localhost, if not set
+	if strings.HasPrefix(out.Host, ":") {
+		out.Host = "127.0.0.1" + out.Host
 	}
-	return parts[0]
+
+	// set protocol
+	if usingSSL() {
+		out.Scheme = "https"
+	} else {
+		out.Scheme = "http"
+	}
+
+	return out
 }

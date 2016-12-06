@@ -3,8 +3,13 @@ set -eo pipefail
 
 ROOT=$(pwd)
 TMP=$(mktemp -d -t converge.graphviz.XXXXXXXXXX)
+
+"$ROOT"/converge server --no-token &
+PID=$!
+
 function finish {
     rm -fr "$TMP"
+    kill -2 "$PID"
 }
 trap finish EXIT
 
@@ -14,7 +19,7 @@ for i in "$ROOT"/samples/*.hcl; do
     b=$(basename "$i")
     dotSource="${b}.dot"
     pngOutput="${dotSource}.png"
-    "$ROOT"/converge graph --local "$i" > "$dotSource"
+    "$ROOT"/converge graph "$i" > "$dotSource"
     if [[ ! $? ]]; then
         echo "failed to generate graph for ${b}"
         exit 1

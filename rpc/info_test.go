@@ -12,9 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package rpc
 
-const (
-	addrServer      = ":4774"
-	addrServerLocal = ":47740"
+import (
+	"context"
+	"testing"
+
+	"github.com/asteris-llc/converge/rpc/pb"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/stretchr/testify/assert"
 )
+
+// TestInfoServer tests the operation of InfoServer
+func TestInfoServer(t *testing.T) {
+	server := new(infoServer)
+
+	t.Run("interfaces", func(t *testing.T) {
+		assert.Implements(t, (*pb.InfoServer)(nil), server)
+	})
+
+	t.Run("empty ping", func(t *testing.T) {
+		res, err := server.Ping(context.Background(), new(empty.Empty))
+
+		assert.NoError(t, err)
+		assert.Equal(t, res, new(empty.Empty))
+	})
+}
