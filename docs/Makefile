@@ -34,12 +34,14 @@ resources.mk: sources.csv resourceContent.mk.tmpl
 	@echo >> $@
 	@for line in $$(cat sources.csv); do \
     sed -e "s|@@NAME|$$(echo $$line | cut -d, -f1 | tr -d '\n')|g" \
-        -e "s|@@SLUG|$$(echo $$line | cut -d, -f1 | tr -d '\n' | sed 's/\./-/g')|g" \
-        -e "s|@@SOURCE|$$(echo $$line | cut -d, -f2 | tr -d '\n')|g" \
-        -e "s|@@EXAMPLE|$$(echo $$line | cut -d, -f3 | tr -d '\n')|g" \
-        -e "s|@@TYPE|$$(echo $$line | cut -d, -f4 | tr -d '\n')|g" \
-        -e "s|@@TARGET|content/resources/$$(echo $$line | cut -d, -f1 | tr -d '\n').md|g" \
-        resourceContent.mk.tmpl >> $@; \
+	-e "s|@@SLUG|$$(echo $$line | cut -d, -f1 | tr -d '\n' | sed 's/\./-/g')|g" \
+	-e "s|@@SOURCE|$$(echo $$line | cut -d, -f2 | tr -d '\n')|g" \
+	-e "s|@@EXAMPLE|$$(echo $$line | cut -d, -f3 | tr -d '\n')|g" \
+	-e "s|@@TYPE|$$(echo $$line | cut -d, -f4 | tr -d '\n')|g" \
+	-e "s|@@TARGET|content/resources/$$(echo $$line | cut -d, -f1 | tr -d '\n').md|g" \
+	-e "s|@@TASKSOURCE|$$(echo $$line | cut -d, -f5 | tr -d '\n')|" \
+	-e "s|@@TASK|$$(echo $$line | cut -d, -f6 | tr -d '\n')|" \
+	resourceContent.mk.tmpl >> $@; \
     echo >> $@; \
 	done
 
