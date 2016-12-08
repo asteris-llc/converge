@@ -98,8 +98,13 @@ real happens.`,
 				g.Connect(edge.Source, edge.Dest)
 			}
 
-			var applyError bool
+			timer := new(TimerDisplay)
+			timer.Start()
+			oldOut := flog.Logger.Out
+			flog.Logger.Out = timer.Bypass()
+
 			// get vertices
+			var applyError bool
 			err = iterateOverStream(
 				stream,
 				func(resp *pb.StatusResponse) {
@@ -108,13 +113,15 @@ real happens.`,
 						"run":   resp.Run,
 						"id":    resp.Meta.Id,
 					})
-					if resp.Run == pb.StatusResponse_STARTED {
+					switch resp.Run {
+					case pb.StatusResponse_STARTED:
+						timer.AddTimer(resp.Meta.Id + ": " + resp.Stage.String())
 						slog.Info("got status")
-					} else {
-						slog.Debug("got status")
-					}
 
-					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
+					case pb.StatusResponse_FINISHED:
+						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
+						slog.Debug("got status")
+
 						details := resp.GetDetails()
 						if details != nil {
 							printable := details.ToPrintable()
@@ -123,9 +130,16 @@ real happens.`,
 							}
 							g.Add(node.New(resp.Id, printable))
 						}
+
+					default:
+						slog.Warn("got unexpected status")
 					}
 				},
 			)
+
+			timer.Stop()
+			flog.Logger.Out = oldOut
+
 			if err != nil {
 				flog.WithError(err).Fatal("could not get responses")
 			}
