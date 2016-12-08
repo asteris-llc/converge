@@ -87,6 +87,13 @@ var (
 
 {{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}
 {{end}}
+{{ if .HasExportedFields }}
+## Exported Fields
+{{ range .GetExported}}
+- {{.ExportedAs}} ({{.Type}})
+{{if ne .Doc ""}}  {{.Doc}}{{end}}
+{{end}}
+{{end}}
 `))
 )
 
@@ -178,6 +185,7 @@ type Field struct {
 // ExportExtractor handles exported data docs
 type ExportExtractor struct {
 	Target           string
+	Doc              string
 	ExportedFields   []*Field
 	ReExportedFields []*Field
 }
@@ -203,20 +211,23 @@ func (e *ExportExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		}
 		return e
 	case *ast.Field:
-		typ := stringify(n.Type)
+		typ := stringify(n.Type, "")
+		doc := (&TypeExtractor{}).Docs(n.Doc, n.Comment)
 		field := &Field{
 			Name: n.Names[0].String(),
 			Type: typ,
+			Doc:  doc,
 		}
 		if n.Tag != nil {
 			tag := reflect.StructTag(strings.Trim(n.Tag.Value, "`"))
 			if export, ok := tag.Lookup("export"); ok {
 				e.ExportedFields = append(e.ExportedFields, field)
 				field.ExportedAs = export
+				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
 			}
 			if export, ok := tag.Lookup("re-export-as"); ok {
 				e.ExportedFields = append(e.ReExportedFields, field)
-				field.ExportedAs = export
+				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
 			}
 		}
 		return e
@@ -243,12 +254,17 @@ type TypeExtractor struct {
 
 // HasExportedFields returns true if any fields are exported
 func (te *TypeExtractor) HasExportedFields() bool {
-	for _, f := range te.Fields {
-		if f.ExportedAs != "" {
-			return true
-		}
-	}
-	return false
+	return te.ExportedFields != nil
+}
+
+// GetExported gets the exported fields
+func (te *TypeExtractor) GetExported() []*Field {
+	return te.ExportedFields.ExportedFields
+}
+
+// GetReExported gets the re-exported fields
+func (te *TypeExtractor) GetReExported() []*Field {
+	return te.ExportedFields.ReExportedFields
 }
 
 // Visit inspects each node in the Ast and returns a Visitor
@@ -293,7 +309,7 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		return te
 
 	case *ast.Field:
-		typ := stringify(n.Type)
+		typ := stringify(n.Type, "optional")
 		doc := te.Docs(n.Doc, n.Comment)
 		if strings.Contains(typ, "duration") {
 			doc += durationComment
@@ -372,25 +388,27 @@ func fencedCode(in string) string {
 	return fmt.Sprintf("```hcl\n%s\n```\n", in)
 }
 
-func stringify(node ast.Expr) string {
+// stringify a type expression to a human-readable format.  The pointersAs
+// string will be used to prefix a pointer type.
+func stringify(node ast.Expr, pointersAs string) string {
 	switch n := node.(type) {
 	case *ast.Ident:
 		return n.Name
 
 	case *ast.ArrayType:
-		return fmt.Sprintf("list of %ss", stringify(n.Elt))
+		return fmt.Sprintf("list of %ss", stringify(n.Elt, pointersAs))
 
 	case *ast.MapType:
-		return fmt.Sprintf("map of %s to %s", stringify(n.Key), stringify(n.Value))
+		return fmt.Sprintf("map of %s to %s", stringify(n.Key, pointersAs), stringify(n.Value, pointersAs))
 
 	case *ast.InterfaceType:
 		return "anything"
 
 	case *ast.StarExpr:
-		return fmt.Sprintf("optional %s", stringify(n.X))
+		return fmt.Sprintf("%s %s", pointersAs, stringify(n.X, pointersAs))
 
 	case *ast.SelectorExpr:
-		selExp := fmt.Sprintf("%s.%s", stringify(n.X), stringify(n.Sel))
+		selExp := fmt.Sprintf("%s.%s", stringify(n.X, pointersAs), stringify(n.Sel, pointersAs))
 		switch selExp {
 		case "time.Duration":
 			return "duration"
