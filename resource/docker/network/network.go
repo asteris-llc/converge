@@ -50,15 +50,32 @@ const (
 type Network struct {
 	client docker.NetworkClient
 
-	Name     string                 `export:"name"`
-	Driver   string                 `export:"driver"`
-	Labels   map[string]string      `export:"labels"`
-	Options  map[string]interface{} `export:"options"`
-	IPAM     dc.IPAMOptions         `export:"ipam"`
-	Internal bool                   `export:"internal"`
-	IPv6     bool                   `export:"ipv6"`
-	State    State                  `export:"state"`
-	Force    bool                   `export:"force"`
+	// name of the network
+	Name string `export:"name"`
+
+	// network drive configured in the hcl
+	Driver string `export:"driver"`
+
+	// labels set on the network
+	Labels map[string]string `export:"labels"`
+
+	// driver-specific options that have been configured
+	Options map[string]interface{} `export:"options"`
+
+	// docker client IPAM options
+	IPAM dc.IPAMOptions `export:"ipam"`
+
+	// restricted to internal networking
+	Internal bool `export:"internal"`
+
+	// uses ipv6
+	IPv6 bool `export:"ipv6"`
+
+	// the configured state
+	State State `export:"state"`
+
+	// true if 'force' was specified in the hcl
+	Force bool `export:"force"`
 }
 
 // Check system for docker network

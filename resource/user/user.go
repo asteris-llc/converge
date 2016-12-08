@@ -36,18 +36,41 @@ const (
 
 // User manages user users
 type User struct {
-	Username    string      `export:"username"`
-	NewUsername string      `export:"newusername"`
-	UID         string      `export:"uid"`
-	GroupName   string      `export:"groupname"`
-	GID         string      `export:"gid"`
-	Name        string      `export:"name"`
-	CreateHome  bool        `export:"createhome"`
-	SkelDir     string      `export:"skeldir"`
-	HomeDir     string      `export:"homedir"`
-	MoveDir     bool        `export:"movedir"`
-	State       State       `export:"state"`
-	system      SystemUtils `export:"system"`
+
+	// the configured username
+	Username string `export:"username"`
+
+	// the desired username
+	NewUsername string `export:"newusername"`
+
+	// the user id
+	UID string `export:"uid"`
+
+	// the group name
+	GroupName string `export:"groupname"`
+
+	// the group id
+	GID string `export:"gid"`
+
+	// the real name of the user
+	Name string `export:"name"`
+
+	// if the home directory should be created
+	CreateHome bool `export:"createhome"`
+
+	// the path to the skeleton directory
+	SkelDir string `export:"skeldir"`
+
+	// the path to the home directory
+	HomeDir string `export:"homedir"`
+
+	// if the contents of the home directory should be moved
+	MoveDir bool `export:"movedir"`
+
+	// configured the user state
+	State State `export:"state"`
+
+	system SystemUtils
 }
 
 // AddUserOptions are the options specified in the configuration to be used

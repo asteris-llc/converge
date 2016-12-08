@@ -25,7 +25,10 @@ import (
 
 // Content renders content to disk
 type Content struct {
-	Content     string `export:"content"`
+	// configured content of the file
+	Content string `export:"content"`
+
+	// configured destination of the file
 	Destination string `export:"destination"`
 }
 

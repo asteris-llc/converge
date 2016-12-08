@@ -47,24 +47,57 @@ var (
 
 // Container is responsible for creating docker containers
 type Container struct {
-	Name            string   `export:"name"`
-	Image           string   `export:"image"`
-	Entrypoint      []string `export:"entrypoint"`
-	Command         []string `export:"command"`
-	WorkingDir      string   `export:"workingdir"`
-	Env             []string `export:"env"`
-	Expose          []string `export:"expose"`
-	Links           []string `export:"links"`
-	PortBindings    []string `export:"portbindings"`
-	DNS             []string `export:"dns"`
-	Volumes         []string `export:"volumes"`
-	VolumesFrom     []string `export:"volumesfrom"`
-	PublishAllPorts bool     `export:"publishallports"`
-	NetworkMode     string   `export:"networkmode"`
-	Networks        []string `export:"networks"`
-	CStatus         string   `export:"cstatus"`
-	Force           bool     `export:"force"`
-	client          docker.APIClient
+	// the name of the container
+	Name string `export:"name"`
+
+	// the name of the image
+	Image string `export:"image"`
+
+	// the entrypoint into the container
+	Entrypoint []string `export:"entrypoint"`
+
+	// the command to run
+	Command []string `export:"command"`
+
+	// the working directory
+	WorkingDir string `export:"workingdir"`
+
+	// configured environment variables for the container
+	Env []string `export:"env"`
+
+	// additional ports to exposed in the container
+	Expose []string `export:"expose"`
+
+	// A list of links for the container in the form of container_name:alias
+	Links []string `export:"links"`
+
+	// ports to bind
+	PortBindings []string `export:"portbindings"`
+
+	// list of DNS servers the container is using
+	DNS []string `export:"dns"`
+
+	// volumes that have been bind-mounted
+	Volumes []string `export:"volumes"`
+
+	// containers from which volumes have been mounted
+	VolumesFrom []string `export:"volumesfrom"`
+
+	// if true, all ports have been published
+	PublishAllPorts bool `export:"publishallports"`
+
+	// the mode of the container network
+	NetworkMode string `export:"networkmode"`
+
+	// networks the container is connected to
+	Networks []string `export:"networks"`
+
+	// the status of the container.
+	CStatus string `export:"status"`
+
+	// Indicate whether the 'force' flag was set
+	Force  bool `export:"force"`
+	client docker.APIClient
 }
 
 // Check that a docker container with the specified configuration exists

@@ -24,14 +24,29 @@ import (
 
 // Shell is a structure representing a task.
 type Shell struct {
-	CmdGenerator   CommandExecutor
-	CheckStmt      string                 `export:"check"`
-	ApplyStmt      string                 `export:"apply"`
-	Dir            string                 `export:"dir"`
-	Env            []string               `export:"env"`
-	Status         *CommandResults        `re-export-as:"status"`
-	CheckStatus    *CommandResults        `export:"checkstatus"`
-	HealthStatus   *resource.HealthStatus `export:"healthstatus"`
+	CmdGenerator CommandExecutor
+
+	// the check statement
+	CheckStmt string `export:"check"`
+
+	// the apply statement
+	ApplyStmt string `export:"apply"`
+
+	// the working directory of the task
+	Dir string `export:"dir"`
+
+	// environment variables configured for the task
+	Env []string `export:"env"`
+
+	// the status of the task
+	Status *CommandResults `re-export-as:"status"`
+
+	// the status of the check phase
+	CheckStatus *CommandResults `export:"checkstatus"`
+
+	// the status of the health check
+	HealthStatus *resource.HealthStatus `export:"healthstatus"`
+
 	renderer       resource.Renderer
 	ctx            context.Context
 	exportedFields resource.FieldMap

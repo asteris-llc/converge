@@ -25,6 +25,7 @@ import (
 type Param struct {
 	resource.Status
 
+	// the value of the parameter
 	Val interface{} `export:"val"`
 }
 

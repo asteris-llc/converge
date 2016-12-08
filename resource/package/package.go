@@ -54,8 +54,11 @@ type PackageManager interface {
 
 // Package is an API for package state
 type Package struct {
-	Name   string `export:"name"`
-	State  State  `export:"state"`
+	// name of the package
+	Name string `export:"name"`
+
+	// package state; one of "present" or "absent"
+	State  State `export:"state"`
 	PkgMgr PackageManager
 }
 

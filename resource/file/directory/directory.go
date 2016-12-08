@@ -28,8 +28,11 @@ import (
 type Directory struct {
 	resource.TaskStatus
 
+	// directory path
 	Destination string `export:"destination"`
-	CreateAll   bool   `export:"createall"`
+
+	// if true, directories will be created recursively
+	CreateAll bool `export:"createall"`
 }
 
 // Check if the directory exists
