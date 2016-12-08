@@ -89,11 +89,13 @@ var (
 {{end}}
 {{ if .HasExportedFields }}
 ## Exported Fields
-{{ range .GetExported}}
+
+{{- range .GetExported}}
 - {{.ExportedAs}} ({{.Type}})
-{{if ne .Doc ""}}  {{.Doc}}{{end}}
-{{end}}
-{{end}}
+{{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}}
+{{- range .GetReExported}}
+- {{.ExportedAs}} re-exports fields from {{.Type}}
+{{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}} {{end}}
 `))
 )
 
