@@ -1,7 +1,7 @@
 ---
 title: "lvm.volumegroup"
 slug: "lvm-volumegroup"
-date: "2016-11-14T11:47:10-06:00"
+date: "2016-12-08T15:04:22-06:00"
 menu:
   main:
     parent: resources
@@ -47,18 +47,23 @@ filesystem "mnt-me" {
 
   Name of created volume group
 
+
 - `devices` (list of strings)
 
   Devices is list of entities to include into volume group
+
 
 - `remove` (bool)
 
   Remove is enable removal devices omitted from `Devices` list from
 from volume group
 
+
 - `forceRemove` (bool)
 
   ForceRemove control destruction of volumes after removing
 from volume group
+
+
 
 

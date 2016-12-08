@@ -1,7 +1,7 @@
 ---
 title: "file.mode"
 slug: "file-mode"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:22-06:00"
 menu:
   main:
     parent: resources
@@ -34,8 +34,18 @@ file.mode "render" {
 file must exist on the system (for example, having been created with
 `file.content`.)
 
+
 - `mode` (required base 8 optional uint32)
 
   Mode is the mode of the file, specified in octal.
 
+
+
+## Exported Fields
+- `destination` (string)
+  path to the file that will be modified
+ 
+- `mode` (os.FileMode)
+  the mode that the file or directory should be configured with
+  
 

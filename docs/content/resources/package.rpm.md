@@ -1,7 +1,7 @@
 ---
 title: "package.rpm"
 slug: "package-rpm"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:23-06:00"
 menu:
   main:
     parent: resources
@@ -30,12 +30,22 @@ package.rpm "mc" {
 
   Name of the package or package group.
 
+
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   State of the package. Present means the package will be installed if
 missing; Absent means the package will be uninstalled if present.
 
+
+
+## Exported Fields
+- `name` (string)
+  name of the package
+ 
+- `state` (State)
+  package state; one of "present" or "absent"
+  
 
