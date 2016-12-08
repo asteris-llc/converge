@@ -12,9 +12,9 @@ module,../resource/module/preparer.go,../samples/sourceFile.hcl,Preparer,"",""
 package.rpm,../resource/package/rpm/preparer.go,../samples/rpm.hcl,Preparer,../resource/package/package.go,Package
 package.apt,../resource/package/apt/preparer.go,../samples/apt.hcl,Preparer,../resource/package/package.go,Package
 param,../resource/param/preparer.go,../samples/basic.hcl,Preparer,"",""
-task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer,"",""
+task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer,../resource/shell/shell.go,Shell
 task.query,../resource/shell/query/preparer.go,../samples/query.hcl,Preparer,"",""
-user.group,../resource/group/preparer.go,../samples/group.hcl,Preparer,"",""
-user.user,../resource/user/preparer.go,../samples/user.hcl,Preparer,"",""
+user.group,../resource/group/preparer.go,../samples/group.hcl,Preparer,../resource/user/group.go,Group
+user.user,../resource/user/preparer.go,../samples/user.hcl,Preparer,../resource/user/user.go,User
 wait.query,../resource/wait/preparer.go,../samples/wait.hcl,Preparer,"",""
-wait.port,../resource/wait/port/preparer.go,../samples/waitPort.hcl,Preparer,"",""
+wait.port,../resource/wait/port/preparer.go,../samples/waitPort.hcl,Preparer,../resource/wait/port/port.go,Port

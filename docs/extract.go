@@ -220,23 +220,15 @@ func (e *ExportExtractor) Visit(node ast.Node) (w ast.Visitor) {
 			Type: typ,
 			Doc:  doc,
 		}
-		fmt.Println("Got a field: ", n.Names[0].String())
 		if n.Tag != nil {
 			tag := reflect.StructTag(strings.Trim(n.Tag.Value, "`"))
-			fmt.Println("\t tag: ", tag)
 			if export, ok := tag.Lookup("export"); ok {
-				fmt.Println("\t\t Got an 'export' tag")
 				field.ExportedAs = export
 				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
 				e.ExportedFields = append(e.ExportedFields, field)
-				fmt.Println("\t\t exported fields now: ", e.ExportedFields)
 			} else if export, ok := tag.Lookup("re-export-as"); ok {
-				fmt.Println("\t\t Got a 're-export-as' tag")
 				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
-				fmt.Println("\t\t exported fields now: ", e.ExportedFields)
 				e.ReExportedFields = append(e.ReExportedFields, field)
-			} else {
-				fmt.Println("\t\t No export tag")
 			}
 		}
 		return e

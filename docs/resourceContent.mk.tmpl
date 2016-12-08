@@ -1,11 +1,11 @@
 @@TARGET: extract @@SOURCE @@EXAMPLE
-        echo '---' > $@
-        echo 'title: "@@NAME"' >> $@
-        echo 'slug: "@@SLUG"' >> $@
-        echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
-        echo "menu:" >> $@
-        echo "  main:" >> $@
-        echo "    parent: resources" >> $@
-        echo '---' >> $@
-        echo >> $@
-        ./extract --example @@EXAMPLE --resource-name @@NAME --path @@SOURCE --type @@TYPE --task @@TASK --task-path @@TASKSOURCE --strip-doc-lines=2 >> $@
+	echo '---' > $@
+	echo 'title: "@@NAME"' >> $@
+	echo 'slug: "@@SLUG"' >> $@
+	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
+	echo "menu:" >> $@
+	echo "  main:" >> $@
+	echo "    parent: resources" >> $@
+	echo '---' >> $@
+	echo >> $@
+	./extract --example @@EXAMPLE --resource-name @@NAME --path @@SOURCE --type @@TYPE --task @@TASK --task-path @@TASKSOURCE --strip-doc-lines=2 >> $@
