@@ -2,7 +2,7 @@
 	echo '---' > $@
 	echo 'title: "@@NAME"' >> $@
 	echo 'slug: "@@SLUG"' >> $@
-	echo "date: \"$$(date -j '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
+	echo "date: \"$$(date '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/(..)$$/:\1/')\"" >> $@
 	echo "menu:" >> $@
 	echo "  main:" >> $@
 	echo "    parent: resources" >> $@
