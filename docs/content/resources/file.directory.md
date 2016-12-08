@@ -1,7 +1,7 @@
 ---
 title: "file.directory"
 slug: "file-directory"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:22-06:00"
 menu:
   main:
     parent: resources
@@ -34,8 +34,18 @@ file.directory "deeper" {
 
   the location on disk to make the directory
 
+
 - `create_all` (bool)
 
   whether or not to create all parent directories on the way up
 
+
+
+## Exported Fields
+- `destination` (string)
+  directory path
+ 
+- `createall` (bool)
+  if true, directories will be created recursively
+  
 

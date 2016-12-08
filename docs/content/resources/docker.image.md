@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:22-06:00"
 menu:
   main:
     parent: resources
@@ -32,9 +32,11 @@ docker.image "busybox" {
 
   name of the image to pull
 
+
 - `tag` (string)
 
   tag of the image to pull. default: latest
+
 
 - `inactivity_timeout` (duration)
 
@@ -48,4 +50,13 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
+
+
+## Exported Fields
+- `name` (string)
+  name of the image
+ 
+- `tag` (string)
+  tag of the image
+  
 

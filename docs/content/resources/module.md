@@ -1,7 +1,7 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:23-06:00"
 menu:
   main:
     parent: resources
@@ -33,5 +33,7 @@ module "basic.hcl" "basic" {
 
   Params is a map of strings to anything you'd like. It will be passed to
 the called module as the default values for the `param`s there.
+
+
 
 

@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-08T15:04:22-06:00"
 menu:
   main:
     parent: resources
@@ -37,24 +37,29 @@ docker.volume "elasticsearch" {
 
   name of the volume
 
+
 - `driver` (string)
 
   volume driver. default: local
+
 
 - `labels` (map of string to string)
 
   labels to set on the volume
 
+
 - `options` (map of string to string)
 
   driver specific options
 
+
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   indicates whether the volume should exist.
+
 
 - `force` (bool)
 
@@ -62,4 +67,25 @@ docker.volume "elasticsearch" {
 what is expected. By default, the module will only check to see if the
 volume exists. Specified as a boolean value
 
+
+
+## Exported Fields
+- `name` (string)
+  volume name
+ 
+- `labels` (map of string to string)
+  volume labels
+ 
+- `driver` (string)
+  driver the volume is configured to use
+ 
+- `options` (map of string to string)
+  driver-specific options
+ 
+- `state` (State)
+  volume state
+ 
+- `force` (bool)
+  reflects whether or not the force option was configured
+  
 
