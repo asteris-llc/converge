@@ -103,8 +103,8 @@ real happens.`,
 			oldOut := flog.Logger.Out
 			flog.Logger.Out = timer.Bypass()
 
-			var applyError bool
 			// get vertices
+			var applyError bool
 			err = iterateOverStream(
 				stream,
 				func(resp *pb.StatusResponse) {
@@ -113,18 +113,15 @@ real happens.`,
 						"run":   resp.Run,
 						"id":    resp.Meta.Id,
 					})
-					if resp.Run == pb.StatusResponse_STARTED {
+					switch resp.Run {
+					case pb.StatusResponse_STARTED:
 						timer.AddTimer(resp.Meta.Id + ": " + resp.Stage.String())
 						slog.Info("got status")
-					} else {
-						slog.Info("got status")
-					}
 
-					if resp.Run == pb.StatusResponse_FINISHED {
+					case pb.StatusResponse_FINISHED:
 						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
-					}
+						slog.Debug("got status")
 
-					if resp.Stage == pb.StatusResponse_APPLY && resp.Run == pb.StatusResponse_FINISHED {
 						details := resp.GetDetails()
 						if details != nil {
 							printable := details.ToPrintable()
@@ -133,6 +130,9 @@ real happens.`,
 							}
 							g.Add(node.New(resp.Id, printable))
 						}
+
+					default:
+						slog.Warn("got unexpected status")
 					}
 				},
 			)

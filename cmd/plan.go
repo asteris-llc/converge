@@ -113,14 +113,15 @@ can be done separately to see what needs to be changed before execution.`,
 						"run":   resp.Run,
 						"id":    resp.Meta.Id,
 					})
-					if resp.Run == pb.StatusResponse_STARTED {
+					switch resp.Run {
+					case pb.StatusResponse_STARTED:
 						timer.AddTimer(resp.Meta.Id + ": " + resp.Stage.String())
 						slog.Info("got status")
-					} else {
-						slog.Debug("got status")
-					}
 
-					if resp.Run == pb.StatusResponse_FINISHED {
+					case pb.StatusResponse_FINISHED:
+						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
+						slog.Debug("got status")
+
 						details := resp.GetDetails()
 						if details != nil {
 							printable := details.ToPrintable()
@@ -130,7 +131,8 @@ can be done separately to see what needs to be changed before execution.`,
 							g.Add(node.New(resp.Id, printable))
 						}
 
-						timer.RemoveTimer(resp.Meta.Id + ": " + resp.Stage.String())
+					default:
+						slog.Warn("got unexpected status")
 					}
 				},
 			)
