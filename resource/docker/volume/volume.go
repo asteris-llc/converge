@@ -42,12 +42,23 @@ const (
 type Volume struct {
 	client docker.VolumeClient
 
-	Name    string            `export:"name"`
-	Labels  map[string]string `export:"labels"`
-	Driver  string            `export:"driver"`
+	// volume name
+	Name string `export:"name"`
+
+	// volume labels
+	Labels map[string]string `export:"labels"`
+
+	// driver the volume is configured to use
+	Driver string `export:"driver"`
+
+	// driver-specific options
 	Options map[string]string `export:"options"`
-	State   State             `export:"state"`
-	Force   bool              `export:"force"`
+
+	// volume state
+	State State `export:"state"`
+
+	// reflects whether or not the force option was configured
+	Force bool `export:"force"`
 }
 
 // Check system for docker volume

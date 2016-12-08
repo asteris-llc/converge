@@ -26,6 +26,7 @@ import (
 type Module struct {
 	resource.Status
 
+	// the params configured for the module
 	Params map[string]resource.Value `export:"params"`
 }
 

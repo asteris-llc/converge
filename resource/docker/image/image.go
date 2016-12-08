@@ -26,8 +26,12 @@ import (
 
 // Image is responsible for pulling docker images
 type Image struct {
-	Name   string `export:"name"`
-	Tag    string `export:"tag"`
+	// name of the image
+	Name string `export:"name"`
+
+	// tag of the image
+	Tag string `export:"tag"`
+
 	client docker.APIClient
 }
 

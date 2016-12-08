@@ -26,8 +26,11 @@ import (
 type Mode struct {
 	resource.Status
 
-	Destination string      `export:"destination"`
-	Mode        os.FileMode `export:"mode"`
+	// path to the file that will be modified
+	Destination string `export:"destination"`
+
+	// the mode that the file or directory should be configured with
+	Mode os.FileMode `export:"mode"`
 }
 
 // Check whether the Destination has the right Mode

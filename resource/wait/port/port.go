@@ -27,8 +27,13 @@ import (
 // Port represents a port check
 type Port struct {
 	*wait.Retrier
+
+	// the hostname
 	Host string `export:"host"`
-	Port int    `export:"port"`
+
+	// the TCP port
+	Port int `export:"port"`
+
 	ConnectionCheck
 }
 
