@@ -215,6 +215,11 @@ func (e *ExportExtractor) Visit(node ast.Node) (w ast.Visitor) {
 	case *ast.Field:
 		typ := stringify(n.Type, "")
 		doc := (&TypeExtractor{}).Docs(n.Doc, n.Comment)
+
+		if n.Names == nil {
+			return e
+		}
+
 		field := &Field{
 			Name: n.Names[0].String(),
 			Type: typ,
