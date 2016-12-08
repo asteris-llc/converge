@@ -35,7 +35,7 @@ func humanProvider(filter human.FilterFunc) *human.Printer {
 	}
 
 	printer := human.NewFiltered(filter)
-	printer.Color = UseColor()
+	printer.Color = CanUseEscapeSequences()
 	printer.InitColors()
 	return printer
 }
@@ -55,10 +55,11 @@ func healthPrinter() prettyprinters.Printer {
 	return prettyprinters.New(health)
 }
 
-// UseColor tells us whether or not to print colors using ANSI escape sequences
-// based on the following: 1. If we're in a color terminal 2. If the user has
-// specified the `nocolor` option (deduced via Viper) 3. If we're on Windows.
-func UseColor() bool {
+// CanUseEscapeSequences tells us whether or not to print colors using ANSI
+// escape sequences based on the following: 1. If we're in a color terminal 2.
+// If the user has specified the `nocolor` option (deduced via Viper) 3. If
+// we're on Windows.
+func CanUseEscapeSequences() bool {
 	isColorTerminal := isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows")
 	return !viper.GetBool("nocolor") && isColorTerminal
 }

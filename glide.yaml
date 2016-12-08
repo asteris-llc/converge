@@ -86,3 +86,4 @@ import:
 - package: github.com/docker/docker
 - package: github.com/soheilhy/cmux
   version: ^0.1.2
+- package: github.com/gosuri/uilive
