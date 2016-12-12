@@ -112,7 +112,10 @@ func (c *Container) Check(context.Context, resource.Renderer) (resource.TaskStat
 	if container != nil {
 		status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 		if c.Force {
-			c.diffContainer(container, status)
+			if diffErr := c.diffContainer(container, status); diffErr != nil {
+				return nil, diffErr
+			}
+			return nil, err
 		}
 	} else {
 		status.AddDifference("name", "", c.Name, "<container-missing>")
@@ -217,6 +220,9 @@ func (c *Container) diffContainer(container *dc.Container, status *resource.Stat
 	if err != nil {
 		status.Level = resource.StatusFatal
 		return errors.Wrapf(err, "failed to find image %s for container %s", container.Image, container.Name)
+	}
+	if image == nil {
+		return errors.New("backing image is unavailable")
 	}
 
 	var actual, expected string
