@@ -115,7 +115,6 @@ func (c *Container) Check(context.Context, resource.Renderer) (resource.TaskStat
 			if diffErr := c.diffContainer(container, status); diffErr != nil {
 				return nil, diffErr
 			}
-			return nil, err
 		}
 	} else {
 		status.AddDifference("name", "", c.Name, "<container-missing>")
