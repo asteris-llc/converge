@@ -127,7 +127,7 @@ func TestNetworkCheck(t *testing.T) {
 			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
 
 			status, err := nw.Check(context.Background(), fakerenderer.New())
-			require.NoError(t, err)
+			assert.Error(t, err)
 			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		})
 
