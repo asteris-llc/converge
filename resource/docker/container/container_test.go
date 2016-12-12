@@ -28,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/container"
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -94,7 +95,7 @@ func TestContainerCheck(t *testing.T) {
 
 		status, err := container.Check(context.Background(), fakerenderer.New())
 
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
 	})
 
