@@ -79,15 +79,15 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 			n.diffNetwork(nw)
 		}
 
-		ok, err := n.isCreatable(nw)
+		invalidGWs, err := n.isCreatable(nw)
 		if err != nil {
 			n.RaiseLevel(resource.StatusFatal)
 			return n, err
 		}
 
-		if !ok {
+		if invalidGWs != nil && len(invalidGWs) > 0 {
 			n.RaiseLevel(resource.StatusCantChange)
-			return n, err
+			return n, fmt.Errorf("%v: gateway(s) are already in use", invalidGWs)
 		}
 	}
 
@@ -189,20 +189,20 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 // host. use sparingly as behavior can vary across different docker network
 // plugins. in most cases, we can rely on the docker api to return errors during
 // apply
-func (n *Network) isCreatable(nw *dc.Network) (bool, error) {
+func (n *Network) isCreatable(nw *dc.Network) ([]string, error) {
 	if len(n.IPAM.Config) > 0 {
-		inUse, err := n.gatewayInUse(nw)
-		return !inUse, err
+		inUse, err := n.gatewayInUses(nw)
+		return inUse, err
 	}
-
-	return true, nil
+	return nil, nil
 }
 
-func (n *Network) gatewayInUse(nw *dc.Network) (bool, error) {
+func (n *Network) gatewayInUses(nw *dc.Network) ([]string, error) {
 	var gateways []string
+	var usedGWs []string
 	networks, err := n.client.ListNetworks()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	for _, network := range networks {
@@ -218,13 +218,13 @@ func (n *Network) gatewayInUse(nw *dc.Network) (bool, error) {
 	for _, ipamConfig := range n.IPAM.Config {
 		for _, gateway := range gateways {
 			if strings.EqualFold(ipamConfig.Gateway, gateway) {
+				usedGWs = append(usedGWs, gateway)
 				n.Status.AddMessage(fmt.Sprintf("gateway %s already in use", gateway))
-				return true, nil
 			}
 		}
 	}
 
-	return false, nil
+	return usedGWs, nil
 }
 
 func networkState(nw *dc.Network) State {
