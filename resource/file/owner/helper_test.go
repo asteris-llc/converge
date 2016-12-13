@@ -17,8 +17,8 @@ package owner_test
 import (
 	"os/user"
 	"path/filepath"
+	"strconv"
 
-	"github.com/asteris-llc/converge/resource/group"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -94,7 +94,7 @@ func fakeGroup(gid, name string) *user.Group {
 type ownershipRecord struct {
 	Path  string
 	User  *user.User
-	Group *group.Group
+	Group *user.Group
 }
 
 var (
@@ -110,6 +110,23 @@ var (
 		Name: "root",
 	}
 )
+
+func makeOwned(path, username, uid, groupname, gid string) ownershipRecord {
+	return ownershipRecord{
+		Path: path,
+		User: &user.User{
+			Uid:      uid,
+			Gid:      gid,
+			Username: username,
+			Name:     username,
+			HomeDir:  "~" + username,
+		},
+		Group: &user.Group{
+			Gid:  gid,
+			Name: groupname,
+		},
+	}
+}
 
 func newMockOS(ownedFiles []ownershipRecord,
 	users []*user.User,
@@ -127,11 +144,11 @@ func newMockOS(ownedFiles []ownershipRecord,
 	m.On("Walk", any, any).Return(nil)
 	m.On("Chown", any, any, any).Return(nil)
 	for _, rec := range ownedFiles {
-		m.On("GetUID", rec.Path).Return(rec.User.Uid, nil)
-		m.On("GetGID", rec.Path).Return(rec.User.Gid, nil)
+		m.On("GetUID", rec.Path).Return(toInt(rec.User.Uid), nil)
+		m.On("GetGID", rec.Path).Return(toInt(rec.User.Gid), nil)
 	}
-	m.On("GetUID", any).Return("0", nil)
-	m.On("GetGID", any).Return("0", nil)
+	m.On("GetUID", any).Return(0, nil)
+	m.On("GetGID", any).Return(0, nil)
 	for _, user := range users {
 		m.On("LookupId", user.Uid).Return(user, nil)
 		m.On("Lookup", user.Username).Return(user, nil)
@@ -145,4 +162,9 @@ func newMockOS(ownedFiles []ownershipRecord,
 	m.On("LookupGroup", any).Return(defaultGroup, nil)
 	m.On("LookupGroupId", any).Return(defaultGroup, nil)
 	return m
+}
+
+func toInt(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
 }
