@@ -20,11 +20,11 @@ import (
 
 	"github.com/asteris-llc/converge/resource/file/owner"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestOwnershipDiff tests things related to the owernship diff
 func TestOwernshipDiff(t *testing.T) {
-
 	users := []*user.User{
 		fakeUser("1", "1", "user-1"),
 		fakeUser("2", "2", "user-2"),
@@ -36,22 +36,99 @@ func TestOwernshipDiff(t *testing.T) {
 		fakeGroup("3", "group-3"),
 	}
 	m := newMockOS(nil, users, groups, nil, nil)
-
 	t.Run("Original", func(t *testing.T) {
-
 		t.Run("uid", func(t *testing.T) {
 			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}}).SetProxy(m)
 			assert.Equal(t, "user: user-1 (1)", o.Original())
 		})
 		t.Run("gid", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.Equal(t, "group: group-1 (1)", o.Original())
 		})
 		t.Run("both", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.Equal(t, "user: user-1 (1); group: group-1 (1)", o.Original())
+		})
+		t.Run("heterogenous", func(t *testing.T) {
+			t.Run("mismatched-uid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 1}}).SetProxy(m)
+				assert.Equal(t, "user: user-1 (1)", o.Original())
+			})
+			t.Run("mismatched-gid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 1}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+				assert.Equal(t, "group: group-1 (1)", o.Original())
+			})
 		})
 	})
 
 	t.Run("Current", func(t *testing.T) {
+		t.Run("uid", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.Equal(t, "user: user-2 (2)", o.Current())
+		})
+		t.Run("gid", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.Equal(t, "group: group-2 (2)", o.Current())
+		})
+		t.Run("both", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.Equal(t, "user: user-2 (2); group: group-2 (2)", o.Current())
+		})
+		t.Run("heterogenous", func(t *testing.T) {
+			t.Run("mismatched-uid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 1}}).SetProxy(m)
+				assert.Equal(t, "user: user-2 (2)", o.Current())
+			})
+			t.Run("mismatched-gid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 1}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+				assert.Equal(t, "group: group-2 (2)", o.Current())
+			})
+		})
 	})
 
 	t.Run("Changes", func(t *testing.T) {
+		t.Run("uid", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.True(t, o.Changes())
+		})
+		t.Run("gid", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.True(t, o.Changes())
+		})
+		t.Run("both", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+			assert.True(t, o.Changes())
+		})
+		t.Run("heterogenous", func(t *testing.T) {
+			t.Run("mismatched-uid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}, GIDs: &[2]int{1, 1}}).SetProxy(m)
+				assert.True(t, o.Changes())
+			})
+			t.Run("mismatched-gid", func(t *testing.T) {
+				o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 1}, GIDs: &[2]int{1, 2}}).SetProxy(m)
+				assert.True(t, o.Changes())
+			})
+		})
+		t.Run("neither", func(t *testing.T) {
+			o := (&owner.OwnershipDiff{}).SetProxy(m)
+			assert.False(t, o.Changes())
+		})
+	})
+
+	t.Run("NewOwnershipDiff", func(t *testing.T) {
+		ownershipRecords := []ownershipRecord{
+			makeOwned("foo", "user-1", "1", "group-1", "1"),
+			makeOwned("bar", "user-2", "2", "group-2", "2"),
+		}
+		m := newMockOS(ownershipRecords, users, groups, nil, nil)
+		t.Run("when-matching", func(t *testing.T) {
+			o := &owner.Ownership{UID: 1, GID: 1}
+			d, err := owner.NewOwnershipDiff(m, "foo", o)
+			require.NoError(t, err)
+			assert.False(t, d.Changes())
+		})
+		t.Run("when-mismatched", func(t *testing.T) {})
+		t.Run("when-uid-match", func(t *testing.T) {})
+		t.Run("when-gid-match", func(t *testing.T) {})
 	})
 }

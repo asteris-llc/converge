@@ -39,7 +39,7 @@ func (d *OwnershipDiff) showDiffAt(idx uint) string {
 	if idx > 1 {
 		return "Error executing diff generation on " + d.path
 	}
-	if nil != d.UIDs {
+	if nil != d.UIDs && d.UIDs[0] != d.UIDs[1] {
 		uid := d.UIDs[idx]
 		userName, err := usernameFromUID(d.p, show(uid))
 		if err != nil {
@@ -47,7 +47,7 @@ func (d *OwnershipDiff) showDiffAt(idx uint) string {
 		}
 		diffStrs = append(diffStrs, fmt.Sprintf("user: %s (%d)", userName, uid))
 	}
-	if nil != d.GIDs {
+	if nil != d.GIDs && d.GIDs[0] != d.GIDs[1] {
 		gid := d.GIDs[idx]
 		groupName, err := groupnameFromGID(d.p, show(gid))
 		if err != nil {
@@ -55,7 +55,7 @@ func (d *OwnershipDiff) showDiffAt(idx uint) string {
 		}
 		diffStrs = append(diffStrs, fmt.Sprintf("group: %s (%d)", groupName, gid))
 	}
-	return strings.Join(diffStrs, ";")
+	return strings.Join(diffStrs, "; ")
 }
 
 // Original returns the original UID and GID
@@ -99,7 +99,7 @@ func fileOwnership(p OSProxy, path string) (*Ownership, error) {
 }
 
 // NewOwnershipDiff creates a new diff
-func NewOwnershipDiff(path string, p OSProxy, ownership *Ownership) (*OwnershipDiff, error) {
+func NewOwnershipDiff(p OSProxy, path string, ownership *Ownership) (*OwnershipDiff, error) {
 	currentOwner, err := fileOwnership(p, path)
 	if err != nil {
 		return nil, err
