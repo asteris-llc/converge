@@ -1,7 +1,7 @@
 ---
 title: "file.directory"
 slug: "file-directory"
-date: "2016-12-08T15:04:22-06:00"
+date: "2016-12-14T11:24:44-06:00"
 menu:
   main:
     parent: resources
@@ -30,6 +30,10 @@ file.directory "deeper" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `destination` (required string)
 
   the location on disk to make the directory
@@ -41,7 +45,11 @@ file.directory "deeper" {
 
 
 
+
 ## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 - `destination` (string)
   directory path
  

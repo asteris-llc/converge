@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-12-08T15:04:22-06:00"
+date: "2016-12-14T11:24:44-06:00"
 menu:
   main:
     parent: resources
@@ -32,6 +32,10 @@ docker.volume "elasticsearch" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `name` (required string)
 
@@ -69,7 +73,11 @@ volume exists. Specified as a boolean value
 
 
 
+
 ## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 - `name` (string)
   volume name
  

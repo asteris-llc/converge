@@ -76,6 +76,10 @@ var (
 {{fencedCode .ExampleSource}}
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 {{ range .Fields}}
 - {{.Name}} ({{if .Required}}required {{end}}{{if ne .Base ""}}base {{.Base}} {{end}}{{.Type}})
 
@@ -88,7 +92,11 @@ var (
 {{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}
 {{end}}
 {{ if .HasExportedFields }}
+
 ## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 
 {{- range .GetExported}}
 - {{.ExportedAs}} ({{.Type}})
@@ -138,17 +146,6 @@ func main() {
 	ast.Walk(extractor, file)
 
 	if taskPath != "" && taskName != "" {
-		fset = token.NewFileSet()
-		file, err = parser.ParseFile(
-			fset,
-			taskPath,
-			nil,
-			parser.ParseComments,
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		fset = token.NewFileSet()
 		file, err = parser.ParseFile(
 			fset,
@@ -411,6 +408,9 @@ func stringify(node ast.Expr, pointersAs string) string {
 		return "anything"
 
 	case *ast.StarExpr:
+		if pointersAs == "" {
+			return fmt.Sprintf("%s", stringify(n.X, pointersAs))
+		}
 		return fmt.Sprintf("%s %s", pointersAs, stringify(n.X, pointersAs))
 
 	case *ast.SelectorExpr:

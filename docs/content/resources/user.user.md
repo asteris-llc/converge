@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-12-08T15:04:23-06:00"
+date: "2016-12-14T11:24:45-06:00"
 menu:
   main:
     parent: resources
@@ -23,6 +23,10 @@ user.user "user" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `username` (required string)
 
@@ -105,7 +109,11 @@ The default value is present.
 
 
 
+
 ## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 - `username` (string)
   the configured username
  

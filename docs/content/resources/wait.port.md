@@ -1,7 +1,7 @@
 ---
 title: "wait.port"
 slug: "wait-port"
-date: "2016-12-08T15:04:23-06:00"
+date: "2016-12-14T11:24:45-06:00"
 menu:
   main:
     parent: resources
@@ -25,6 +25,10 @@ wait.port "8080" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `host` (string)
 
@@ -71,7 +75,11 @@ of retries is not set, it will default to 5.
 
 
 
+
 ## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 - `host` (string)
   the hostname
  
