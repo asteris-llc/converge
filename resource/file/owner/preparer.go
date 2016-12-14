@@ -45,19 +45,27 @@ type Preparer struct {
 
 	// GID specifies group ownership by gid
 	GID string `hcl:"gid" mutually_exclusive:"groupname"`
+
+	osProxy OSProxy
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
-	osProxy := &OSExecutor{}
-	user, uid, err := normalizeUser(osProxy, p.Username, p.UID)
+
+	if p.osProxy == nil {
+		p.osProxy = &OSExecutor{}
+	}
+
+	user, uid, err := normalizeUser(p.osProxy, p.Username, p.UID)
 	if err != nil {
 		return nil, err
 	}
-	group, gid, err := normalizeGroup(osProxy, p.Groupname, p.GID)
+
+	group, gid, err := normalizeGroup(p.osProxy, p.Groupname, p.GID)
 	if err != nil {
 		return nil, err
 	}
+
 	return (&Owner{
 		Destination: p.Destination,
 		Recursive:   p.Recursive,
@@ -65,7 +73,13 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		UID:         uid,
 		Group:       group,
 		GID:         gid,
-	}).SetOSProxy(osProxy), nil
+	}).SetOSProxy(p.osProxy), nil
+}
+
+// SetOSProxy sets the private os proxy for mocking in tests
+func (p *Preparer) SetOSProxy(o OSProxy) *Preparer {
+	p.osProxy = o
+	return p
 }
 
 func init() {

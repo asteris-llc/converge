@@ -60,7 +60,6 @@ func TestOwernshipDiff(t *testing.T) {
 			})
 		})
 	})
-
 	t.Run("Current", func(t *testing.T) {
 		t.Run("uid", func(t *testing.T) {
 			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}}).SetProxy(m)
@@ -85,7 +84,6 @@ func TestOwernshipDiff(t *testing.T) {
 			})
 		})
 	})
-
 	t.Run("Changes", func(t *testing.T) {
 		t.Run("uid", func(t *testing.T) {
 			o := (&owner.OwnershipDiff{UIDs: &[2]int{1, 2}}).SetProxy(m)
@@ -114,11 +112,9 @@ func TestOwernshipDiff(t *testing.T) {
 			assert.False(t, o.Changes())
 		})
 	})
-
 	t.Run("NewOwnershipDiff", func(t *testing.T) {
 		ownershipRecords := []ownershipRecord{
 			makeOwned("foo", "user-1", "1", "group-1", "1"),
-			makeOwned("bar", "user-2", "2", "group-2", "2"),
 		}
 		m := newMockOS(ownershipRecords, users, groups, nil, nil)
 		t.Run("when-matching", func(t *testing.T) {
@@ -127,8 +123,23 @@ func TestOwernshipDiff(t *testing.T) {
 			require.NoError(t, err)
 			assert.False(t, d.Changes())
 		})
-		t.Run("when-mismatched", func(t *testing.T) {})
-		t.Run("when-uid-match", func(t *testing.T) {})
-		t.Run("when-gid-match", func(t *testing.T) {})
+		t.Run("when-mismatched", func(t *testing.T) {
+			o := &owner.Ownership{UID: 2, GID: 2}
+			d, err := owner.NewOwnershipDiff(m, "foo", o)
+			require.NoError(t, err)
+			assert.True(t, d.Changes())
+		})
+		t.Run("when-uid-match", func(t *testing.T) {
+			o := &owner.Ownership{UID: 1, GID: 2}
+			d, err := owner.NewOwnershipDiff(m, "foo", o)
+			require.NoError(t, err)
+			assert.True(t, d.Changes())
+		})
+		t.Run("when-gid-match", func(t *testing.T) {
+			o := &owner.Ownership{UID: 2, GID: 1}
+			d, err := owner.NewOwnershipDiff(m, "foo", o)
+			require.NoError(t, err)
+			assert.True(t, d.Changes())
+		})
 	})
 }
