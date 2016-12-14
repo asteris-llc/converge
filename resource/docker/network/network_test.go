@@ -18,6 +18,7 @@ package network_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/comparison"
@@ -128,6 +129,92 @@ func TestNetworkCheck(t *testing.T) {
 
 			status, err := nw.Check(context.Background(), fakerenderer.New())
 			assert.Error(t, err)
+			assert.Equal(t, fmt.Errorf("192.168.1.1: gateway(s) are already in use"), err)
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+		})
+
+		t.Run("multiple different gateway conflicts", func(t *testing.T) {
+			nw := &network.Network{
+				Name:  nwName,
+				State: network.StatePresent,
+				IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+						dc.IPAMConfig{Gateway: "192.168.2.1"},
+					},
+				},
+			}
+			c := &mockClient{}
+			nw.SetClient(c)
+			c.On("ListNetworks").Return([]dc.Network{
+				dc.Network{ID: "123", IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+						dc.IPAMConfig{Gateway: "192.168.2.1"},
+					},
+				}},
+			}, nil)
+			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
+
+			status, err := nw.Check(context.Background(), fakerenderer.New())
+			assert.Error(t, err)
+			assert.Equal(t, fmt.Errorf("192.168.1.1, 192.168.2.1: gateway(s) are already in use"), err)
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+		})
+
+		t.Run("multiple same gateway conflicts", func(t *testing.T) {
+			nw := &network.Network{
+				Name:  nwName,
+				State: network.StatePresent,
+				IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				},
+			}
+			c := &mockClient{}
+			nw.SetClient(c)
+			c.On("ListNetworks").Return([]dc.Network{
+				dc.Network{ID: "123", IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				}},
+			}, nil)
+			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
+
+			status, err := nw.Check(context.Background(), fakerenderer.New())
+			assert.Error(t, err)
+			assert.Equal(t, fmt.Errorf("192.168.1.1, 192.168.1.1: gateway(s) are already in use"), err)
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+		})
+
+		t.Run("gateway multiple conflicts", func(t *testing.T) {
+			nw := &network.Network{
+				Name:  nwName,
+				State: network.StatePresent,
+				IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				},
+			}
+			c := &mockClient{}
+			nw.SetClient(c)
+			c.On("ListNetworks").Return([]dc.Network{
+				dc.Network{ID: "123", IPAM: dc.IPAMOptions{
+					Config: []dc.IPAMConfig{
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+						dc.IPAMConfig{Gateway: "192.168.1.1"},
+					},
+				}},
+			}, nil)
+			c.On("FindNetwork", nwName).Return(&dc.Network{Name: nwName}, nil)
+
+			status, err := nw.Check(context.Background(), fakerenderer.New())
+			assert.Error(t, err)
+			assert.Equal(t, fmt.Errorf("192.168.1.1, 192.168.1.1: gateway(s) are already in use"), err)
 			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		})
 
