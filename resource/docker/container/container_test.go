@@ -99,6 +99,27 @@ func TestContainerCheck(t *testing.T) {
 		assert.False(t, status.HasChanges())
 	})
 
+	t.Run("missing image for container", func(t *testing.T) {
+		c := &fakeAPIClient{
+			FindContainerFunc: func(string) (*dc.Container, error) {
+				return &dc.Container{
+					Name:   "nginx",
+					State:  dc.State{Status: "running"},
+					Config: &dc.Config{}}, nil
+			},
+			FindImageFunc: func(string) (*dc.Image, error) {
+				return nil, nil
+			},
+		}
+
+		container := &container.Container{Force: true, Name: "nginx"}
+		container.SetClient(c)
+
+		_, err := container.Check(context.Background(), fakerenderer.New())
+
+		require.Error(t, err)
+	})
+
 	t.Run("status change", func(t *testing.T) {
 		c := &fakeAPIClient{
 			// the existing container is running the "nginx" command
