@@ -89,9 +89,9 @@ these rules:
    [`resource.StatusWillChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel)
    or
    [`resource.StatusCantChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel),
-   the Status will always show up as having changes.
+   the Status will always show up as having changes
 1. Otherwise, if there are any diffs which say that they contain a difference,
-   the Status will always show as having changes.
+   the Status will always show as having changes
 
 ### Dealing with Errors
 
@@ -101,8 +101,8 @@ presented to the user. You can also use the common Go patterm of returning `nil,
 err` in your `Check` and `Apply` statements. Converge will call `SetError(err)`
 automatically in this case. This gives you two options:
 
-1. call `SetError` yourself.
-1. return an error, which will be handled for you.
+1. call `SetError` yourself
+1. return an error, which will be handled for you
 
 You shoud choose *one* of these options and do it consistently across as much of
 your code as possible.
@@ -169,7 +169,7 @@ these values, for example: `"{{lookup 'task.foo.status.stdout'}}"` or
 
 #### Semantics of Exported Fields
 
-1. Fields that are tagged with `export` will be exported.
+1. Fields that are tagged with `export` will be exported
 1. Named structs that are tagged with `export` will be exported as a struct
 1. Embedded structs will have their exported fields exported in the namespace of
    the containing struct
@@ -179,7 +179,7 @@ these values, for example: `"{{lookup 'task.foo.status.stdout'}}"` or
    with 'StructName.FieldName'
 1. Fields exported with `re-export-as` must be structs or pointers to structs
 1. Structs exported with `re-export-as` will have their exported elements
-   available under the name that the struct is re-exported as.
+   available under the name that the struct is re-exported as
 
 ## Preparer
 
