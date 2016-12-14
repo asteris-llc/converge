@@ -113,8 +113,10 @@ The
 [`resource.Task`](https://godoc.org/github.com/asteris-llc/converge/resource#Task) interface
 is what you will implement to have converge run your `Check` and `Apply`
 methods.  The `export` and `re-export-as` tags in your `resource.Task`
-implementation are used to define lookup methods from within converge.  An
-example of a resource is:
+implementation are used to define lookup methods from within converge.
+
+Using the `Shell` module as an example we can see how tasks should be
+implemented:
 
 ```go
 type Shell struct {
@@ -137,7 +139,7 @@ type Shell struct {
 Converge will automatically extract values from a `resource.Task` that are
 annotated with the `export` or `re-export-as` struct tags.  For fields that are
 exported with `export`, they can be referenced directly.  For example if we have
-the following task:
+the following task which is implemented with `Shell`:
 
 ```hcl
 task "foo" {
@@ -146,11 +148,11 @@ task "foo" {
 }
 ```
 
-we may reference any of the exported fields in a lookup by typing `"{{lookup
-'task.foo.field'}}"`; for example `"{{lookup 'task.foo.dir'}}"` or `"{{lookup
-'task.foo.env'}}"`.  Re-exported fields will provide a namespace for structs
-that also export values.  In our `Shell` example we are re-exporting a
-`CommandResults` struct, show below:
+We may reference any of the fields exported by `Shell` in a lookup by typing
+`"{{lookup 'task.foo.field'}}"`; for example `"{{lookup 'task.foo.dir'}}"` or
+`"{{lookup 'task.foo.env'}}"`.  Re-exported fields will provide a namespace for
+structs that also export values.  In our `Shell` example we are re-exporting a
+`CommandResults` struct:
 
 ```go
 type CommandResults struct {
@@ -163,9 +165,28 @@ type CommandResults struct {
 }
 ```
 
-since `CommandResults` exports `stdout`, `stderr`, and `stdin` we can reference
-these values, for example: `"{{lookup 'task.foo.status.stdout'}}"` or
+Because `CommandResults` exports `stdout`, `stderr`, and `stdin`, and has been
+re-exported by the `Shell` module as `status`, we can reference these values
+under `status`, for example: `"{{lookup 'task.foo.status.stdout'}}"` or
 `"{{lookup 'task.foo.status.stderr'}}"`.
+
+Below is a complete example of using a lookup to reference the exported and
+re-exported fields from the `Shell` module:
+
+```hcl
+task "echo" {
+  check = "test -f example.txt"
+  apply = "echo 'executing script' | tee example.txt"
+}
+
+file.content "task-results" {
+  destination = "results.txt"
+  content = "{{lookup `task.echo.check`}}; {{lookup `task.echo.apply`}} -> {{lookup `task.echo.status.stdout`}}"
+}
+```
+
+This example shows how we can reference specific exported fields such as `check`
+and `apply`, and also the re-exported fields from our `status`.
 
 #### Semantics of Exported Fields
 
