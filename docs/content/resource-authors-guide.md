@@ -150,7 +150,7 @@ task "foo" {
 
 We may reference any of the fields exported by `Shell` in a lookup by typing
 `"{{lookup 'task.foo.<field name>'}}"` where `<field name>` is any exported
-fields; for example `"{{lookup 'task.foo.dir'}}"` or `"{{lookup
+field; for example `"{{lookup 'task.foo.dir'}}"` or `"{{lookup
 'task.foo.env'}}"`.  Re-exported fields will provide a namespace for structs
 that also export values.  In our `Shell` example we are re-exporting a
 `CommandResults` struct:
