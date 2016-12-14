@@ -1,7 +1,7 @@
 ---
 title: "filesystem"
 slug: "filesystem"
-date: "2016-12-08T15:04:22-06:00"
+date: "2016-12-14T11:24:45-06:00"
 menu:
   main:
     parent: resources
@@ -42,6 +42,10 @@ filesystem "mnt-me" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `device` (required string)
 

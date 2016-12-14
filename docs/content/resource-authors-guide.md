@@ -73,10 +73,10 @@ return
 smoothly.  Of particular note are:
 
 1. [`RaiseLevel`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.RaiseLevel)
-   which allows you to increase the level of the error.
+   which allows you to increase the level of the error
 1. [`AddMessage`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddMessage)
    which allows you to add a message that will be displayed to the user
-1.1. [`AddDifference`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddDifference)
+1. [`AddDifference`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddDifference)
    which inserts a difference that will be displayed to the user
 
 `Status` has three fields: `Differences`, `Output`, and `Level`. They all have
@@ -110,10 +110,11 @@ your code as possible.
 ## Task
 
 The
-[`resource.Task`](https://godoc.org/github.com/asteris-llc/converge/resource#Task)
-interface is what you will implement to have converge run your `Check` and
-`Apply` methods.  Your `resource.Task` implementation is also what's used to
-define lookup methods from within converge.  An example of a
+[`resource.Task`](https://godoc.org/github.com/asteris-llc/converge/resource#Task) interface
+is what you will implement to have converge run your `Check` and `Apply`
+methods.  The `export` and `re-export-as` tags in your `resource.Task`
+implementation are used to define lookup methods from within converge.  An
+example of a resource is:
 
 ```go
 type Shell struct {
@@ -134,10 +135,39 @@ type Shell struct {
 ### Exporting Values
 
 Converge will automatically extract values from a `resource.Task` that are
-annotated with the `export` or `re-export-as` struct tags.  Fields that are
-exported with `export` will be available with the name that they are exported
-with.  In the example above the fields of `Status` would be available as
-`status.fieldname`.
+annotated with the `export` or `re-export-as` struct tags.  For fields that are
+exported with `export`, they can be referenced directly.  For example if we have
+the following task:
+
+```hcl
+task "foo" {
+  check = "test -f foo.txt"
+  apply = "touch foo.txt"
+}
+```
+
+we may reference any of the exported fields in a lookup by typing `"{{lookup
+'task.foo.field'}}"`; for example `"{{lookup 'task.foo.dir'}}"` or `"{{lookup
+'task.foo.env'}}"`.  Re-exported fields will provide a namespace for structs
+that also export values.  In our `Shell` example we are re-exporting a
+`CommandResults` struct, show below:
+
+```go
+type CommandResults struct {
+    ResultsContext
+    ExitStatus uint32 `export:"exitstatus"`
+    Stdout     string `export:"stdout"`
+    Stderr     string `export:"stderr"`
+    Stdin      string `export:"stdin"`
+    State      *os.ProcessState
+}
+```
+
+since `CommandResults` exports `stdout`, `stderr`, and `stdin` we can reference
+these values, for example: `"{{lookup 'task.foo.status.stdout'}}"` or
+`"{{lookup 'task.foo.status.stderr'}}"`.
+
+#### Semantics of Exported Fields
 
 1. Fields that are tagged with `export` will be exported.
 1. Named structs that are tagged with `export` will be exported as a struct

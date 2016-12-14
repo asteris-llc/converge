@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-12-08T15:04:23-06:00"
+date: "2016-12-14T11:24:45-06:00"
 menu:
   main:
     parent: resources
@@ -26,6 +26,10 @@ file.content "hostname-data" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `interpreter` (string)
 
