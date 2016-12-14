@@ -79,7 +79,7 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 			n.diffNetwork(nw)
 		}
 
-		invalidGWs, err := n.isCreatable(nw)
+		invalidGWs, err := n.findConflicting(nw)
 		if err != nil {
 			n.RaiseLevel(resource.StatusFatal)
 			return n, err
@@ -87,7 +87,7 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 
 		if invalidGWs != nil && len(invalidGWs) > 0 {
 			n.RaiseLevel(resource.StatusCantChange)
-			return n, fmt.Errorf("%v: gateway(s) are already in use", invalidGWs)
+			return n, fmt.Errorf("%s: gateway(s) are already in use", strings.Join(invalidGWs, ", "))
 		}
 	}
 
@@ -185,19 +185,20 @@ func (n *Network) diffNetwork(nw *dc.Network) {
 	}
 }
 
-// isCreatable can validate whether the network can be created on the docker
+// findConflicting can validate whether the network can be created on the docker
 // host. use sparingly as behavior can vary across different docker network
 // plugins. in most cases, we can rely on the docker api to return errors during
-// apply
-func (n *Network) isCreatable(nw *dc.Network) ([]string, error) {
+// apply.  It returns a list of networks that would conflict with the network
+// and prevent it from being created.
+func (n *Network) findConflicting(nw *dc.Network) ([]string, error) {
 	if len(n.IPAM.Config) > 0 {
-		inUse, err := n.gatewayInUses(nw)
+		inUse, err := n.gatewaysInUse(nw)
 		return inUse, err
 	}
 	return nil, nil
 }
 
-func (n *Network) gatewayInUses(nw *dc.Network) ([]string, error) {
+func (n *Network) gatewaysInUse(nw *dc.Network) ([]string, error) {
 	var gateways []string
 	var usedGWs []string
 	networks, err := n.client.ListNetworks()
