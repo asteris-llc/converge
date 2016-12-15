@@ -27,10 +27,13 @@ import (
 )
 
 func TestInterface(t *testing.T) {
+	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(owner.Owner))
 }
 
 func TestCheck(t *testing.T) {
+	t.Parallel()
+
 	users := []*user.User{
 		fakeUser("1", "1", "user-1"),
 		fakeUser("2", "2", "user-2"),
@@ -44,6 +47,8 @@ func TestCheck(t *testing.T) {
 	}
 	m := newMockOS(ownershipRecords, users, groups, nil, nil)
 	t.Run("when-user-and-group-no-change", func(t *testing.T) {
+		t.Parallel()
+
 		o := (&owner.Owner{
 			Destination: "foo",
 			Username:    "user-1",
@@ -57,7 +62,10 @@ func TestCheck(t *testing.T) {
 		m.AssertCalled(t, "GetUID", any)
 		assert.False(t, status.HasChanges())
 	})
+
 	t.Run("when-user-no-change", func(t *testing.T) {
+		t.Parallel()
+
 		o := (&owner.Owner{
 			Destination: "foo",
 			Username:    "user-1",
@@ -69,7 +77,10 @@ func TestCheck(t *testing.T) {
 		m.AssertCalled(t, "GetUID", any)
 		assert.False(t, status.HasChanges())
 	})
+
 	t.Run("when-group-no-change", func(t *testing.T) {
+		t.Parallel()
+
 		o := (&owner.Owner{
 			Destination: "foo",
 			Group:       "group-1",
@@ -80,5 +91,136 @@ func TestCheck(t *testing.T) {
 		m.AssertCalled(t, "GetGID", any)
 		m.AssertCalled(t, "GetUID", any)
 		assert.False(t, status.HasChanges())
+	})
+
+	t.Run("when-user-and-group-change", func(t *testing.T) {
+		t.Parallel()
+
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-2",
+			UID:         "2",
+			Group:       "group-2",
+			GID:         "2",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
+		assert.True(t, status.HasChanges())
+		resStat, ok := status.(*resource.Status)
+		require.True(t, ok)
+		fooDiffs, ok := resStat.Differences["foo"]
+		require.True(t, ok)
+		diff, ok := fooDiffs.(*owner.OwnershipDiff)
+		require.True(t, ok)
+		require.NotNil(t, diff.UIDs)
+		require.NotNil(t, diff.GIDs)
+		assert.Equal(t, [2]int{1, 2}, *(diff.UIDs))
+		assert.Equal(t, [2]int{1, 2}, *(diff.GIDs))
+	})
+
+	t.Run("when-user-change-and-group-no-change", func(t *testing.T) {
+		t.Parallel()
+
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-2",
+			UID:         "2",
+			Group:       "group-1",
+			GID:         "1",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
+		assert.True(t, status.HasChanges())
+		resStat, ok := status.(*resource.Status)
+		require.True(t, ok)
+		fooDiffs, ok := resStat.Differences["foo"]
+		require.True(t, ok)
+		diff, ok := fooDiffs.(*owner.OwnershipDiff)
+		require.True(t, ok)
+		require.NotNil(t, diff.UIDs)
+		require.Nil(t, diff.GIDs)
+		assert.Equal(t, [2]int{1, 2}, *(diff.UIDs))
+	})
+
+	t.Run("when-user-change-and-group-unspecified", func(t *testing.T) {
+		t.Parallel()
+
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-2",
+			UID:         "2",
+			Group:       "",
+			GID:         "",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
+		assert.True(t, status.HasChanges())
+		resStat, ok := status.(*resource.Status)
+		require.True(t, ok)
+		fooDiffs, ok := resStat.Differences["foo"]
+		require.True(t, ok)
+		diff, ok := fooDiffs.(*owner.OwnershipDiff)
+		require.True(t, ok)
+		require.NotNil(t, diff.UIDs)
+		require.Nil(t, diff.GIDs)
+		assert.Equal(t, [2]int{1, 2}, *(diff.UIDs))
+	})
+
+	t.Run("when-group-change-and-user-no-change", func(t *testing.T) {
+		t.Parallel()
+
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-1",
+			UID:         "1",
+			Group:       "group-2",
+			GID:         "2",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
+		assert.True(t, status.HasChanges())
+		resStat, ok := status.(*resource.Status)
+		require.True(t, ok)
+		fooDiffs, ok := resStat.Differences["foo"]
+		require.True(t, ok)
+		diff, ok := fooDiffs.(*owner.OwnershipDiff)
+		require.True(t, ok)
+		require.NotNil(t, diff.GIDs)
+		require.Nil(t, diff.UIDs)
+		assert.Equal(t, [2]int{1, 2}, *(diff.GIDs))
+	})
+
+	t.Run("when-group-change-and-user-unspecified", func(t *testing.T) {
+		t.Parallel()
+
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "",
+			UID:         "",
+			Group:       "group-2",
+			GID:         "2",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
+		assert.True(t, status.HasChanges())
+		resStat, ok := status.(*resource.Status)
+		require.True(t, ok)
+		fooDiffs, ok := resStat.Differences["foo"]
+		require.True(t, ok)
+		diff, ok := fooDiffs.(*owner.OwnershipDiff)
+		require.True(t, ok)
+		require.NotNil(t, diff.GIDs)
+		require.Nil(t, diff.UIDs)
+		assert.Equal(t, [2]int{1, 2}, *(diff.GIDs))
 	})
 }

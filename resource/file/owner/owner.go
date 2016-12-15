@@ -62,7 +62,7 @@ func (o *Owner) SetOSProxy(p OSProxy) *Owner {
 
 // Check checks the ownership status of the file
 func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	status := &resource.Status{}
+	status := &resource.Status{Differences: make(map[string]resource.Diff)}
 	newOwner, err := o.getNewOwner()
 	if err != nil {
 		return nil, err
