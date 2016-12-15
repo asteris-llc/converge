@@ -15,6 +15,7 @@
 package owner_test
 
 import (
+	"errors"
 	"os/user"
 	"testing"
 
@@ -118,28 +119,74 @@ func TestOwernshipDiff(t *testing.T) {
 		}
 		m := newMockOS(ownershipRecords, users, groups, nil, nil)
 		t.Run("when-matching", func(t *testing.T) {
-			o := &owner.Ownership{UID: 1, GID: 1}
+			o := &owner.Ownership{UID: intRef(1), GID: intRef(1)}
 			d, err := owner.NewOwnershipDiff(m, "foo", o)
 			require.NoError(t, err)
 			assert.False(t, d.Changes())
 		})
 		t.Run("when-mismatched", func(t *testing.T) {
-			o := &owner.Ownership{UID: 2, GID: 2}
+			o := &owner.Ownership{UID: intRef(2), GID: intRef(2)}
 			d, err := owner.NewOwnershipDiff(m, "foo", o)
 			require.NoError(t, err)
 			assert.True(t, d.Changes())
 		})
 		t.Run("when-uid-match", func(t *testing.T) {
-			o := &owner.Ownership{UID: 1, GID: 2}
+			o := &owner.Ownership{UID: intRef(1), GID: intRef(2)}
 			d, err := owner.NewOwnershipDiff(m, "foo", o)
 			require.NoError(t, err)
 			assert.True(t, d.Changes())
 		})
 		t.Run("when-gid-match", func(t *testing.T) {
-			o := &owner.Ownership{UID: 2, GID: 1}
+			o := &owner.Ownership{UID: intRef(2), GID: intRef(1)}
 			d, err := owner.NewOwnershipDiff(m, "foo", o)
 			require.NoError(t, err)
 			assert.True(t, d.Changes())
 		})
+		t.Run("when-only-uid", func(t *testing.T) {
+			t.Run("when-matches", func(t *testing.T) {
+				o := &owner.Ownership{UID: intRef(1)}
+				d, err := owner.NewOwnershipDiff(m, "foo", o)
+				require.NoError(t, err)
+				assert.False(t, d.Changes())
+			})
+			t.Run("when-not-matches", func(t *testing.T) {
+				o := &owner.Ownership{UID: intRef(2)}
+				d, err := owner.NewOwnershipDiff(m, "foo", o)
+				require.NoError(t, err)
+				assert.True(t, d.Changes())
+			})
+		})
+		t.Run("when-only-gid", func(t *testing.T) {
+			t.Run("when-matches", func(t *testing.T) {
+				o := &owner.Ownership{GID: intRef(1)}
+				d, err := owner.NewOwnershipDiff(m, "foo", o)
+				require.NoError(t, err)
+				assert.False(t, d.Changes())
+			})
+			t.Run("when-not-matches", func(t *testing.T) {
+				o := &owner.Ownership{GID: intRef(2)}
+				d, err := owner.NewOwnershipDiff(m, "foo", o)
+				require.NoError(t, err)
+				assert.True(t, d.Changes())
+			})
+		})
 	})
+	t.Run("when-syscall-errors", func(t *testing.T) {
+		expectedError := errors.New("error")
+		o := &owner.Ownership{UID: intRef(1), GID: intRef(1)}
+		t.Run("GetUID", func(t *testing.T) {
+			m := failingMockOS(map[string]error{"GetUID": expectedError})
+			_, err := owner.NewOwnershipDiff(m, "foo", o)
+			assert.Equal(t, expectedError, err)
+		})
+		t.Run("GetGID", func(t *testing.T) {
+			m := failingMockOS(map[string]error{"GetGID": expectedError})
+			_, err := owner.NewOwnershipDiff(m, "foo", o)
+			assert.Equal(t, expectedError, err)
+		})
+	})
+}
+
+func intRef(i int) *int {
+	return &i
 }

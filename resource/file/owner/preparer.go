@@ -15,6 +15,8 @@
 package owner
 
 import (
+	"strconv"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -38,30 +40,40 @@ type Preparer struct {
 	Username string `hcl:"username" mutally_exclusive:"uid"`
 
 	// UID specifies user-ownership by UID
-	UID string `hcl:"uid" mutually_exclusive:"username"`
+	UID *int `hcl:"uid" mutually_exclusive:"username"`
 
 	// Groupname specifies group-ownership by groupname
 	Groupname string `hcl:"groupname" mutually_exclusive:"gid"`
 
 	// GID specifies group ownership by gid
-	GID string `hcl:"gid" mutually_exclusive:"groupname"`
+	GID *int `hcl:"gid" mutually_exclusive:"groupname"`
 
 	osProxy OSProxy
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
+	var uidStr string
+	var gidStr string
 
 	if p.osProxy == nil {
 		p.osProxy = &OSExecutor{}
 	}
 
-	user, uid, err := normalizeUser(p.osProxy, p.Username, p.UID)
+	if nil != p.UID {
+		uidStr = strconv.Itoa(*p.UID)
+	}
+
+	if nil != p.GID {
+		gidStr = strconv.Itoa(*p.GID)
+	}
+
+	user, uid, err := normalizeUser(p.osProxy, p.Username, uidStr)
 	if err != nil {
 		return nil, err
 	}
 
-	group, gid, err := normalizeGroup(p.osProxy, p.Groupname, p.GID)
+	group, gid, err := normalizeGroup(p.osProxy, p.Groupname, gidStr)
 	if err != nil {
 		return nil, err
 	}
