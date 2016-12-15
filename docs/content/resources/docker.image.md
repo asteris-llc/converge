@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -36,11 +36,9 @@ and restrictions:
 
   name of the image to pull
 
-
 - `tag` (string)
 
   tag of the image to pull. default: latest
-
 
 - `inactivity_timeout` (duration)
 
@@ -55,12 +53,12 @@ each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   name of the image
  

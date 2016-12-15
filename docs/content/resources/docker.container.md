@@ -1,7 +1,7 @@
 ---
 title: "docker.container"
 slug: "docker-container"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:18-06:00"
 menu:
   main:
     parent: resources
@@ -44,42 +44,34 @@ and restrictions:
 
   name of the container
 
-
 - `image` (required string)
 
   the image name or ID to use for the container
-
 
 - `entrypoint` (list of strings)
 
   override the container entrypoint
 
-
 - `command` (list of strings)
 
   override the container command
-
 
 - `working_dir` (string)
 
   override the working directory of the container
 
-
 - `env` (map of string to string)
 
   set environment variables in the container
-
 
 - `expose` (list of strings)
 
   additional ports to expose in the container
 
-
 - `links` (list of strings)
 
   A list of links for the container. Each link entry should be in the form of
 container_name:alias
-
 
 - `ports` (list of strings)
 
@@ -89,37 +81,30 @@ ip:hostPort:containerPort|ip::containerPort|hostPort:containerPort|containerPort
 Ports can be specified in the format: portnum/proto. If proto is not
 specified, "tcp" is assumed
 
-
 - `dns` (list of strings)
 
   list of DNS servers for the container to use
-
 
 - `network_mode` (string)
 
   the mode of the container network. default: default
 
-
 - `networks` (list of strings)
 
   the networks to connect the container to
-
 
 - `volumes` (list of strings)
 
   bind mounts volumes
 
-
 - `volumes_from` (list of strings)
 
   mounts all volumes from the specified container
-
 
 - `publish_all_ports` (bool)
 
   allocates a random host port for all of a container’s exposed ports.
 Specified as a boolean value
-
 
 - `status` (string)
 
@@ -128,7 +113,6 @@ Specified as a boolean value
 
   the desired status of the container.
 
-
 - `force` (bool)
 
   indicates whether or not the container will be recreated if the state is
@@ -136,12 +120,12 @@ not what is expected. By default, the module will only check to see if the
 container exists. Specified as a boolean value
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   the name of the container
  

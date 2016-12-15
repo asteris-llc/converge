@@ -1,7 +1,7 @@
 ---
 title: "param"
 slug: "param"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -43,7 +43,5 @@ and restrictions:
   Default is an optional field that provides a default value if none is
 provided to this parameter. If this field is not set, this param will be
 treated as required.
-
-
 
 

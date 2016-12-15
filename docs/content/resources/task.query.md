@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -34,17 +34,13 @@ and restrictions:
 - `interpreter` (string)
 
 
-
 - `query` (string)
-
 
 
 - `check_flags` (list of strings)
 
 
-
 - `exec_flags` (list of strings)
-
 
 
 - `timeout` (optional duration)
@@ -57,14 +53,10 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-
 - `dir` (string)
 
 
-
 - `env` (map of string to string)
-
-
 
 
 

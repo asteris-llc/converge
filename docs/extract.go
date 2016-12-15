@@ -90,15 +90,15 @@ and restrictions:
 	Valid values: {{codeCommaJoin .ValidValues "and"}}
 
 {{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}
-{{end}}
-{{ if .HasExportedFields }}
+{{- end -}}
+{{- if .HasExportedFields }}
 
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
 
-{{- range .GetExported}}
+{{range .GetExported}}
 - {{.ExportedAs}} ({{.Type}})
 {{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}}
 {{- range .GetReExported}}

@@ -1,7 +1,7 @@
 ---
 title: "package.rpm"
 slug: "package-rpm"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -34,7 +34,6 @@ and restrictions:
 
   Name of the package or package group.
 
-
 - `state` (State)
 
 
@@ -44,12 +43,12 @@ and restrictions:
 missing; Absent means the package will be uninstalled if present.
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   name of the package
  

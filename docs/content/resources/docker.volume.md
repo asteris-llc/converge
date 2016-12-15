@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -41,21 +41,17 @@ and restrictions:
 
   name of the volume
 
-
 - `driver` (string)
 
   volume driver. default: local
-
 
 - `labels` (map of string to string)
 
   labels to set on the volume
 
-
 - `options` (map of string to string)
 
   driver specific options
-
 
 - `state` (State)
 
@@ -64,7 +60,6 @@ and restrictions:
 
   indicates whether the volume should exist.
 
-
 - `force` (bool)
 
   indicates whether or not the volume will be recreated if the state is not
@@ -72,12 +67,12 @@ what is expected. By default, the module will only check to see if the
 volume exists. Specified as a boolean value
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   volume name
  

@@ -1,7 +1,7 @@
 ---
 title: "lvm.logicalvolume"
 slug: "lvm-logicalvolume"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -50,11 +50,9 @@ and restrictions:
 
   Group where volume will be created
 
-
 - `name` (required string)
 
   Name of volume, which will be created
-
 
 - `size` (required string)
 
@@ -65,7 +63,5 @@ Absolute size specified with suffix `BbKkMmGgTtPp`, upper case
 suffix mean S.I. sizes (power of 10), lower case mean powers of 1024.
 Also special suffixes `Ss`, which mean sectors.
 Refer to LVM manpages for details.
-
-
 
 

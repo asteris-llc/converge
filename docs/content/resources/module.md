@@ -1,7 +1,7 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -37,7 +37,5 @@ and restrictions:
 
   Params is a map of strings to anything you'd like. It will be passed to
 the called module as the default values for the `param`s there.
-
-
 
 

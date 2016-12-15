@@ -1,7 +1,7 @@
 ---
 title: "wait.query"
 slug: "wait-query"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -34,23 +34,19 @@ and restrictions:
   the shell interpreter that will be used for your scripts. `/bin/sh` is
 used by default.
 
-
 - `check` (required string)
 
   the script to run to check if a resource is ready. exit with exit code 0 if
 the resource is healthy, and 1 (or above) otherwise.
-
 
 - `check_flags` (list of strings)
 
   flags to pass to the `interpreter` binary to check validity. For
 `/bin/sh` this is `-n`.
 
-
 - `exec_flags` (list of strings)
 
   flags to pass to the interpreter at execution time.
-
 
 - `timeout` (optional duration)
 
@@ -63,16 +59,13 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-
 - `dir` (string)
 
   the working directory this command should be run in.
 
-
 - `env` (map of string to string)
 
   any environment variables that should be passed to the command.
-
 
 - `interval` (optional duration)
 
@@ -85,7 +78,6 @@ The representation limits the largest representable duration to approximately
 290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-
 
 - `grace_period` (optional duration)
 
@@ -100,12 +92,9 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-
 - `max_retry` (optional int)
 
   the maximum number of attempts before the wait fails. If the maximum number
 of retries is not set, it will default to 5.
-
-
 
 
