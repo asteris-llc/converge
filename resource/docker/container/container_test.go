@@ -28,6 +28,7 @@ import (
 	"github.com/asteris-llc/converge/resource/docker/container"
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -94,8 +95,29 @@ func TestContainerCheck(t *testing.T) {
 
 		status, err := container.Check(context.Background(), fakerenderer.New())
 
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.False(t, status.HasChanges())
+	})
+
+	t.Run("missing image for container", func(t *testing.T) {
+		c := &fakeAPIClient{
+			FindContainerFunc: func(string) (*dc.Container, error) {
+				return &dc.Container{
+					Name:   "nginx",
+					State:  dc.State{Status: "running"},
+					Config: &dc.Config{}}, nil
+			},
+			FindImageFunc: func(string) (*dc.Image, error) {
+				return nil, nil
+			},
+		}
+
+		container := &container.Container{Force: true, Name: "nginx"}
+		container.SetClient(c)
+
+		_, err := container.Check(context.Background(), fakerenderer.New())
+
+		require.Error(t, err)
 	})
 
 	t.Run("status change", func(t *testing.T) {
