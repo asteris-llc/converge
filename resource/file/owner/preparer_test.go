@@ -47,7 +47,9 @@ func TestPreparer(t *testing.T) {
 			assert.Equal(t, "", o.GID)
 		})
 		t.Run("when-uid", func(t *testing.T) {
-			p := (&owner.Preparer{UID: "1"}).SetOSProxy(m)
+			u := new(int)
+			*u = 1
+			p := (&owner.Preparer{UID: u}).SetOSProxy(m)
 			oRes, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			o, ok := oRes.(*owner.Owner)
@@ -69,7 +71,9 @@ func TestPreparer(t *testing.T) {
 			assert.Equal(t, "1", o.GID)
 		})
 		t.Run("when-gid", func(t *testing.T) {
-			p := (&owner.Preparer{GID: "1"}).SetOSProxy(m)
+			g := new(int)
+			*g = 1
+			p := (&owner.Preparer{GID: g}).SetOSProxy(m)
 			oRes, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			o, ok := oRes.(*owner.Owner)

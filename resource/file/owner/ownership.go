@@ -15,14 +15,15 @@
 package owner
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
 // Ownership represents a file ownership
 type Ownership struct {
-	UID int
-	GID int
+	UID *int
+	GID *int
 }
 
 // OwnershipDiff diffs user and group IDs
@@ -95,21 +96,53 @@ func fileOwnership(p OSProxy, path string) (*Ownership, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Ownership{UID: uid, GID: gid}, nil
+	return &Ownership{UID: &uid, GID: &gid}, nil
 }
 
 // NewOwnershipDiff creates a new diff
 func NewOwnershipDiff(p OSProxy, path string, ownership *Ownership) (*OwnershipDiff, error) {
+	var (
+		newUID int
+		newGID int
+		curUID int
+		curGID int
+	)
+
 	currentOwner, err := fileOwnership(p, path)
 	if err != nil {
 		return nil, err
 	}
-	diff := &OwnershipDiff{path: path, p: p}
-	if currentOwner.UID != ownership.UID {
-		diff.UIDs = &[2]int{currentOwner.UID, ownership.UID}
+
+	if currentOwner.UID == nil {
+		return nil, errors.New("unable to fetch UID for " + path)
 	}
-	if currentOwner.GID != ownership.GID {
-		diff.GIDs = &[2]int{currentOwner.GID, ownership.GID}
+
+	if currentOwner.GID == nil {
+		return nil, errors.New("unable to fetch GID for " + path)
+	}
+
+	curUID = *(currentOwner.UID)
+	curGID = *(currentOwner.GID)
+
+	if ownership.UID == nil {
+		newUID = curUID
+	} else {
+		newUID = *(ownership.UID)
+	}
+
+	if ownership.GID == nil {
+		newGID = curGID
+	} else {
+		newGID = *(ownership.GID)
+	}
+
+	diff := &OwnershipDiff{path: path, p: p}
+
+	if curUID != newUID {
+		diff.UIDs = &[2]int{curUID, newUID}
+	}
+	if curGID != newGID {
+		diff.GIDs = &[2]int{curGID, newGID}
 	}
 	return diff, nil
 }

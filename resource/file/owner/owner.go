@@ -15,8 +15,10 @@
 package owner
 
 import (
+	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -46,6 +48,12 @@ type Owner struct {
 	executor    OSProxy
 }
 
+type fileWalker struct {
+	Status   *resource.Status
+	NewOwner *Ownership
+	Executor OSProxy
+}
+
 // SetOSProxy sets the internal OS Proxy
 func (o *Owner) SetOSProxy(p OSProxy) *Owner {
 	o.executor = p
@@ -54,10 +62,58 @@ func (o *Owner) SetOSProxy(p OSProxy) *Owner {
 
 // Check checks the ownership status of the file
 func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	return &resource.Status{}, nil
+	status := &resource.Status{}
+	newOwner, err := o.getNewOwner()
+	if err != nil {
+		return nil, err
+	}
+	w := &fileWalker{Status: status, NewOwner: newOwner, Executor: o.executor}
+
+	if o.Recursive {
+	}
+
+	if err := w.CheckFile(o.Destination, nil, nil); err != nil {
+		return nil, err
+	}
+	return status, nil
 }
 
 // Apply applies the ownership to the file
 func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
+}
+
+func (o *Owner) getNewOwner() (*Ownership, error) {
+	owner := &Ownership{}
+
+	if o.UID != "" {
+		uid, err := strconv.Atoi(o.UID)
+		if err != nil {
+			return nil, err
+		}
+		owner.UID = &uid
+	}
+
+	if o.GID != "" {
+		gid, err := strconv.Atoi(o.GID)
+		if err != nil {
+			return nil, err
+		}
+		owner.GID = &gid
+	}
+	return owner, nil
+}
+
+func (w *fileWalker) CheckFile(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
+	diff, err := NewOwnershipDiff(w.Executor, path, w.NewOwner)
+	if err != nil {
+		return err
+	}
+	if diff.Changes() {
+		w.Status.Differences[path] = diff
+	}
+	return nil
 }

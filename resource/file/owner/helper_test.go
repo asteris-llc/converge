@@ -164,6 +164,35 @@ func newMockOS(ownedFiles []ownershipRecord,
 	return m
 }
 
+func failingMockOS(failOn map[string]error) *MockOS {
+	m := &MockOS{}
+	m.On("Walk", any, any).Return(failOn["Walk"])
+	m.On("Chown", any, any, any).Return(failOn["Chown"])
+	m.On("GetUID", any).Return(0, failOn["GetUID"])
+	m.On("GetGID", any).Return(0, failOn["GetGID"])
+	if err, ok := failOn["Lookup"]; ok {
+		m.On("Lookup", any).Return(nil, err)
+	} else {
+		m.On("Lookup", any).Return(rootUser, nil)
+	}
+	if err, ok := failOn["LookupGroup"]; ok {
+		m.On("LookupGroup", any).Return(nil, err)
+	} else {
+		m.On("LookupGroup", any).Return(rootGroup, nil)
+	}
+	if err, ok := failOn["LookupId"]; ok {
+		m.On("LookupId", any).Return(nil, err)
+	} else {
+		m.On("LookupId", any).Return(rootUser, nil)
+	}
+	if err, ok := failOn["LookupGroupId"]; ok {
+		m.On("LookupGroupId", any).Return(nil, err)
+	} else {
+		m.On("LookupGroupId", any).Return(rootGroup, nil)
+	}
+	return m
+}
+
 func toInt(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
