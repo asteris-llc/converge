@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-11-14T11:12:03-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -32,6 +32,10 @@ task "render" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `interpreter` (string)
 
@@ -78,4 +82,32 @@ each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 
   any environment variables that should be passed to the command
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `check` (string)
+  the check statement
+ 
+- `apply` (string)
+  the apply statement
+ 
+- `dir` (string)
+  the working directory of the task
+ 
+- `env` (list of strings)
+  environment variables configured for the task
+ 
+- `checkstatus` (CommandResults)
+  the status of the check phase
+ 
+- `healthstatus` (resource.HealthStatus)
+  the status of the health check
+ 
+- `status` re-exports fields from CommandResults
+  the status of the task
+  
 

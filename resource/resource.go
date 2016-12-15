@@ -16,9 +16,11 @@ package resource
 
 import "golang.org/x/net/context"
 
-// Tasker is a struct that is or contains an embedded resource.Task
+// Tasker is a struct that is or contains an embedded resource.Task and a
+// resource.Status.  It's implemented by plan.Result and apply.Result
 type Tasker interface {
 	GetTask() (Task, bool)
+	GetStatus() TaskStatus
 }
 
 // Task controls checks and application inside the system. Check will be called
@@ -53,6 +55,11 @@ type TaskWrapper struct {
 // GetTask provides Tasker.GetTask ontop of a task
 func (t *TaskWrapper) GetTask() (Task, bool) {
 	return t.Task, true
+}
+
+// GetStatus returns a nil status for a wrapped task
+func (t *TaskWrapper) GetStatus() TaskStatus {
+	return nil
 }
 
 // WrapTask creates a new TaskWrapper

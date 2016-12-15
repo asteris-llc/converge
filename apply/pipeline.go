@@ -102,10 +102,11 @@ func (g *pipelineGen) maybeSkipApplication(ctx context.Context, resultI interfac
 	}
 	if !asPlan.Plan.Status.HasChanges() {
 		return &Result{
-			Ran:  false,
-			Task: asPlan.Plan.Task,
-			Plan: asPlan.Plan,
-			Err:  asPlan.Plan.Err,
+			Ran:    false,
+			Status: asPlan.Plan.Status,
+			Task:   asPlan.Plan.Task,
+			Plan:   asPlan.Plan,
+			Err:    asPlan.Plan.Err,
 		}, nil
 	}
 	return asPlan, nil
@@ -128,6 +129,10 @@ func (g *pipelineGen) applyNode(ctx context.Context, val interface{}) (interface
 
 	if status == nil {
 		status = &resource.Status{}
+	}
+	resolved, _ := resource.ResolveTask(twrapper.Plan.Task)
+	if err := status.UpdateExportedFields(resolved); err != nil {
+		return nil, err
 	}
 
 	type settable interface {

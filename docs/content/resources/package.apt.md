@@ -1,16 +1,17 @@
 ---
 title: "package.apt"
 slug: "package-apt"
-date: "2016-11-01"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
 ---
 
 
-apt Package manages system packages with `apt` and `dpkg`. It assumes that
+Apt Package manages system packages with `apt` and `dpkg`. It assumes that
 both `apt` and `dpkg` are installed on the system, and that the user has
 permissions to install, remove, and query packages.
+
 
 ## Example
 
@@ -22,46 +23,36 @@ package.apt "mc" {
 
 ```
 
+
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `name` (required string)
 
-  Name of the package or package group. Cannot be an empty string.
+  Name of the package or package group.
 
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   State of the package. Present means the package will be installed if
 missing; Absent means the package will be uninstalled if present.
 
 
-## Notes
+## Exported Fields
 
-Please note that only one `apt` command can run at a time. This may cause
-errors as converge will run as many tasks in parallel as possible.
-
-In order to get around the single-process limitation of the `apt` tool, you can:
-
-* use a [`group`]({{< ref "dependencies.md#grouping" >}}) parameter for `package.apt` tasks.
-
-* Pass multiple packages into the `name` field.
-
-Below are examples of both techniques:
-
-```hcl
-package.apt "mc-vim" {
-  name  = "mc vim"
-  state = "present"
-  group = "apt"
-}
-
-package.apt "git" {
-  name  = "git"
-  state = "present"
-  group = "apt"
-}
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
 
 
-```
+- `name` (string)
+  name of the package
+ 
+- `state` (State)
+  package state; one of "present" or "absent"
+  
+

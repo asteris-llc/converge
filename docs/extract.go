@@ -42,8 +42,10 @@ each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 var (
 	typeName      string
 	fPath         string
+	taskPath      string
 	examplePath   string
 	resourceName  string
+	taskName      string
 	stripDocLines int
 
 	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
@@ -74,22 +76,42 @@ var (
 {{fencedCode .ExampleSource}}
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 {{ range .Fields}}
 - {{.Name}} ({{if .Required}}required {{end}}{{if ne .Base ""}}base {{.Base}} {{end}}{{.Type}})
 
 {{ if .MutuallyExclusive}}
-  Only one of {{codeCommaJoin .MutuallyExclusive "or"}} may be set.
+	Only one of {{codeCommaJoin .MutuallyExclusive "or"}} may be set.
 
 {{end}}{{ if .ValidValues}}
-  Valid values: {{codeCommaJoin .ValidValues "and"}}
+	Valid values: {{codeCommaJoin .ValidValues "and"}}
 
-{{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}{{end}}
+{{end}}{{if ne .Doc ""}}  {{.Doc}}{{end}}
+{{- end -}}
+{{- if .HasExportedFields }}
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+{{range .GetExported}}
+- {{.ExportedAs}} ({{.Type}})
+{{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}}
+{{- range .GetReExported}}
+- {{.ExportedAs}} re-exports fields from {{.Type}}
+{{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}} {{end}}
 `))
 )
 
 func init() {
 	pflag.StringVar(&typeName, "type", "", "type to extract and document")
+	pflag.StringVar(&taskName, "task", "", "type of the resource to extract and document")
 	pflag.StringVar(&fPath, "path", "", "source of Go file for extraction")
+	pflag.StringVar(&taskPath, "task-path", "", "source file for the task for extraction")
 	pflag.StringVar(&resourceName, "resource-name", "", "name to import resource in HCL source")
 	pflag.StringVar(&examplePath, "example", "", "name of example file to include")
 	pflag.IntVar(&stripDocLines, "strip-doc-lines", 0, "strip this many lines of docs from the type - so it doesn't all have to start with \"ModuleName blah blah...\"")
@@ -123,7 +145,27 @@ func main() {
 	}
 	ast.Walk(extractor, file)
 
-	// print example + info from parsed source
+	if taskPath != "" && taskName != "" {
+		fset = token.NewFileSet()
+		file, err = parser.ParseFile(
+			fset,
+			taskPath,
+			nil,
+			parser.ParseComments,
+		)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		exportedExtractor := &ExportExtractor{
+			Target: taskName,
+		}
+
+		ast.Walk(exportedExtractor, file)
+		extractor.ExportedFields = exportedExtractor
+	}
+
 	fmt.Println(extractor)
 }
 
@@ -136,6 +178,65 @@ type Field struct {
 	Base              string
 	MutuallyExclusive []string
 	ValidValues       []string
+	ExportedAs        string
+}
+
+// ExportExtractor handles exported data docs
+type ExportExtractor struct {
+	Target           string
+	Doc              string
+	ExportedFields   []*Field
+	ReExportedFields []*Field
+}
+
+// Visit visits a node and logs exported fields
+func (e *ExportExtractor) Visit(node ast.Node) (w ast.Visitor) {
+	switch n := node.(type) {
+	case *ast.File, *ast.TypeSpec, *ast.FieldList:
+		return e
+	case *ast.StructType:
+		if n.Fields == nil && n.Incomplete {
+			return nil
+		}
+		return e
+	case *ast.GenDecl:
+		spec, ok := n.Specs[0].(*ast.TypeSpec)
+		if !ok {
+			return nil
+		}
+
+		if spec.Name.Name != e.Target {
+			return nil
+		}
+		return e
+	case *ast.Field:
+		typ := stringify(n.Type, "")
+		doc := (&TypeExtractor{}).Docs(n.Doc, n.Comment)
+
+		if n.Names == nil {
+			return e
+		}
+
+		field := &Field{
+			Name: n.Names[0].String(),
+			Type: typ,
+			Doc:  doc,
+		}
+		if n.Tag != nil {
+			tag := reflect.StructTag(strings.Trim(n.Tag.Value, "`"))
+			if export, ok := tag.Lookup("export"); ok {
+				field.ExportedAs = export
+				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
+				e.ExportedFields = append(e.ExportedFields, field)
+			} else if export, ok := tag.Lookup("re-export-as"); ok {
+				field.ExportedAs = fmt.Sprintf("`%s`", strings.SplitN(export, ",", 1)[0])
+				e.ReExportedFields = append(e.ReExportedFields, field)
+			}
+		}
+		return e
+	default:
+		return nil
+	}
 }
 
 // TypeExtractor extracts documentation information
@@ -149,6 +250,24 @@ type TypeExtractor struct {
 	// information we get externally (from flags)
 	ExampleSource string
 	ResourceName  string
+
+	// information about exported fields
+	ExportedFields *ExportExtractor
+}
+
+// HasExportedFields returns true if any fields are exported
+func (te *TypeExtractor) HasExportedFields() bool {
+	return te.ExportedFields != nil
+}
+
+// GetExported gets the exported fields
+func (te *TypeExtractor) GetExported() []*Field {
+	return te.ExportedFields.ExportedFields
+}
+
+// GetReExported gets the re-exported fields
+func (te *TypeExtractor) GetReExported() []*Field {
+	return te.ExportedFields.ReExportedFields
 }
 
 // Visit inspects each node in the Ast and returns a Visitor
@@ -193,7 +312,7 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		return te
 
 	case *ast.Field:
-		typ := stringify(n.Type)
+		typ := stringify(n.Type, "optional")
 		doc := te.Docs(n.Doc, n.Comment)
 		if strings.Contains(typ, "duration") {
 			doc += durationComment
@@ -272,25 +391,30 @@ func fencedCode(in string) string {
 	return fmt.Sprintf("```hcl\n%s\n```\n", in)
 }
 
-func stringify(node ast.Expr) string {
+// stringify a type expression to a human-readable format.  The pointersAs
+// string will be used to prefix a pointer type.
+func stringify(node ast.Expr, pointersAs string) string {
 	switch n := node.(type) {
 	case *ast.Ident:
 		return n.Name
 
 	case *ast.ArrayType:
-		return fmt.Sprintf("list of %ss", stringify(n.Elt))
+		return fmt.Sprintf("list of %ss", stringify(n.Elt, pointersAs))
 
 	case *ast.MapType:
-		return fmt.Sprintf("map of %s to %s", stringify(n.Key), stringify(n.Value))
+		return fmt.Sprintf("map of %s to %s", stringify(n.Key, pointersAs), stringify(n.Value, pointersAs))
 
 	case *ast.InterfaceType:
 		return "anything"
 
 	case *ast.StarExpr:
-		return fmt.Sprintf("optional %s", stringify(n.X))
+		if pointersAs == "" {
+			return fmt.Sprintf("%s", stringify(n.X, pointersAs))
+		}
+		return fmt.Sprintf("%s %s", pointersAs, stringify(n.X, pointersAs))
 
 	case *ast.SelectorExpr:
-		selExp := fmt.Sprintf("%s.%s", stringify(n.X), stringify(n.Sel))
+		selExp := fmt.Sprintf("%s.%s", stringify(n.X, pointersAs), stringify(n.Sel, pointersAs))
 		switch selExp {
 		case "time.Duration":
 			return "duration"

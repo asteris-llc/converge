@@ -1,7 +1,7 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -32,6 +32,10 @@ file.content "render" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `content` (string)
 
   Content is the file content. This will be rendered as a template.
@@ -40,4 +44,17 @@ file.content "render" {
 
   Destination is the location on disk where the content will be rendered.
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `content` (string)
+  configured content of the file
+ 
+- `destination` (string)
+  configured destination of the file
+  
 

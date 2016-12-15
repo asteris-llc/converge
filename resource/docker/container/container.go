@@ -47,56 +47,87 @@ var (
 
 // Container is responsible for creating docker containers
 type Container struct {
-	*resource.Status
+	// the name of the container
+	Name string `export:"name"`
 
-	Name            string
-	Image           string
-	Entrypoint      []string
-	Command         []string
-	WorkingDir      string
-	Env             []string
-	Expose          []string
-	Links           []string
-	PortBindings    []string
-	DNS             []string
-	Volumes         []string
-	VolumesFrom     []string
-	PublishAllPorts bool
-	NetworkMode     string
-	Networks        []string
-	CStatus         string
-	Force           bool
-	client          docker.APIClient
+	// the name of the image
+	Image string `export:"image"`
+
+	// the entrypoint into the container
+	Entrypoint []string `export:"entrypoint"`
+
+	// the command to run
+	Command []string `export:"command"`
+
+	// the working directory
+	WorkingDir string `export:"workingdir"`
+
+	// configured environment variables for the container
+	Env []string `export:"env"`
+
+	// additional ports to exposed in the container
+	Expose []string `export:"expose"`
+
+	// A list of links for the container in the form of container_name:alias
+	Links []string `export:"links"`
+
+	// ports to bind
+	PortBindings []string `export:"portbindings"`
+
+	// list of DNS servers the container is using
+	DNS []string `export:"dns"`
+
+	// volumes that have been bind-mounted
+	Volumes []string `export:"volumes"`
+
+	// containers from which volumes have been mounted
+	VolumesFrom []string `export:"volumesfrom"`
+
+	// if true, all ports have been published
+	PublishAllPorts bool `export:"publishallports"`
+
+	// the mode of the container network
+	NetworkMode string `export:"networkmode"`
+
+	// networks the container is connected to
+	Networks []string `export:"networks"`
+
+	// the status of the container.
+	CStatus string `export:"status"`
+
+	// Indicate whether the 'force' flag was set
+	Force  bool `export:"force"`
+	client docker.APIClient
 }
 
 // Check that a docker container with the specified configuration exists
 func (c *Container) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	c.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	container, err := c.client.FindContainer(c.Name)
 	if err != nil {
-		c.Status.Level = resource.StatusFatal
-		return c, err
+		status.Level = resource.StatusFatal
+		return status, err
 	}
 
 	if container != nil {
-		c.Status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
+		status.AddDifference("name", strings.TrimPrefix(container.Name, "/"), c.Name, "")
 		if c.Force {
-			c.diffContainer(container, c.Status)
+			c.diffContainer(container, status)
 		}
 	} else {
-		c.Status.AddDifference("name", "", c.Name, "<container-missing>")
+		status.AddDifference("name", "", c.Name, "<container-missing>")
 	}
 
-	if resource.AnyChanges(c.Status.Differences) {
-		c.Status.Level = resource.StatusWillChange
+	if resource.AnyChanges(status.Differences) {
+		status.Level = resource.StatusWillChange
 	}
 
-	return c, nil
+	return status, nil
 }
 
 // Apply starts a docker container with the specified configuration
 func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
-	c.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	volumes, binds := volumeConfigs(c.Volumes)
 	config := &dc.Config{
 		Image:        c.Image,
@@ -126,24 +157,24 @@ func (c *Container) Apply(context.Context) (resource.TaskStatus, error) {
 
 	container, err := c.client.CreateContainer(opts)
 	if err != nil {
-		return c, err
+		return status, err
 	}
 
 	for _, name := range c.Networks {
 		err = c.client.ConnectNetwork(name, container)
 		if err != nil {
-			return c, err
+			return status, err
 		}
 	}
 
 	if c.CStatus == "" || c.CStatus == containerStatusRunning {
 		err = c.client.StartContainer(c.Name, container.ID)
 		if err != nil {
-			return c, err
+			return status, err
 		}
 	}
 
-	return c, nil
+	return status, nil
 }
 
 // SetClient injects a docker api client

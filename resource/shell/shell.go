@@ -25,15 +25,31 @@ import (
 // Shell is a structure representing a task.
 type Shell struct {
 	CmdGenerator CommandExecutor
-	CheckStmt    string
-	ApplyStmt    string
-	Dir          string
-	Env          []string
-	Status       *CommandResults
-	CheckStatus  *CommandResults
-	HealthStatus *resource.HealthStatus
-	renderer     resource.Renderer
-	ctx          context.Context
+
+	// the check statement
+	CheckStmt string `export:"check"`
+
+	// the apply statement
+	ApplyStmt string `export:"apply"`
+
+	// the working directory of the task
+	Dir string `export:"dir"`
+
+	// environment variables configured for the task
+	Env []string `export:"env"`
+
+	// the status of the task
+	Status *CommandResults `re-export-as:"status"`
+
+	// the status of the check phase
+	CheckStatus *CommandResults `export:"checkstatus"`
+
+	// the status of the health check
+	HealthStatus *resource.HealthStatus `export:"healthstatus"`
+
+	renderer       resource.Renderer
+	ctx            context.Context
+	exportedFields resource.FieldMap
 }
 
 // Check passes through to shell.Shell.Check() and then sets the health status
@@ -50,6 +66,24 @@ func (s *Shell) Check(ctx context.Context, r resource.Renderer) (resource.TaskSt
 		s.CheckStatus = results
 	}
 	return s, nil
+}
+
+// ExportedFields returns the exported field map
+func (s *Shell) ExportedFields() resource.FieldMap {
+	if s.exportedFields == nil {
+		s.exportedFields = make(resource.FieldMap)
+	}
+	return s.exportedFields
+}
+
+// UpdateExportedFields is a nop
+func (s *Shell) UpdateExportedFields(resource.Task) error {
+	fields, err := resource.LookupMapFromStruct(s)
+	if err != nil {
+		return err
+	}
+	s.exportedFields = fields
+	return nil
 }
 
 // Apply is a NOP for health checks

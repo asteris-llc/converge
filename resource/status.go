@@ -104,6 +104,8 @@ type TaskStatus interface {
 	HasChanges() bool
 	Error() error
 	Warning() string
+	UpdateExportedFields(Task) error
+	ExportedFields() FieldMap
 }
 
 // Status is the default TaskStatus implementation
@@ -122,9 +124,30 @@ type Status struct {
 	// the Status* contsts above.)
 	Level StatusLevel
 
+	// Exported fields contains the fields that should be exported through lookup
+	exportedFields FieldMap
+
 	error       error
 	warning     string
 	failingDeps []badDep
+}
+
+// UpdateExportedFields sets the exported fields in the status
+func (t *Status) UpdateExportedFields(input Task) error {
+	fields, err := LookupMapFromInterface(input)
+	if err != nil {
+		return err
+	}
+	t.exportedFields = fields
+	return nil
+}
+
+// ExportedFields returns the exported fields from the status
+func (t *Status) ExportedFields() FieldMap {
+	if t.exportedFields == nil {
+		t.exportedFields = make(FieldMap)
+	}
+	return t.exportedFields
 }
 
 // NewStatus returns a Status with all fields initialized

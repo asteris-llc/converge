@@ -1,7 +1,7 @@
 ---
 title: "task.query"
 slug: "task-query"
-date: "2016-11-14T11:12:03-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -17,7 +17,7 @@ task.query "hostname" {
   query = "hostname"
 }
 
-file.content "hostname data" {
+file.content "hostname-data" {
   destination = "hostname.txt"
   content     = "{{lookup `task.query.hostname.status.stdout`}}"
 }
@@ -26,6 +26,10 @@ file.content "hostname data" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `interpreter` (string)
 

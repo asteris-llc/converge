@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -33,6 +33,10 @@ docker.volume "elasticsearch" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `name` (required string)
 
   name of the volume
@@ -52,7 +56,7 @@ docker.volume "elasticsearch" {
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   indicates whether the volume should exist.
 
@@ -62,4 +66,29 @@ docker.volume "elasticsearch" {
 what is expected. By default, the module will only check to see if the
 volume exists. Specified as a boolean value
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `name` (string)
+  volume name
+ 
+- `labels` (map of string to string)
+  volume labels
+ 
+- `driver` (string)
+  driver the volume is configured to use
+ 
+- `options` (map of string to string)
+  driver-specific options
+ 
+- `state` (State)
+  volume state
+ 
+- `force` (bool)
+  reflects whether or not the force option was configured
+  
 

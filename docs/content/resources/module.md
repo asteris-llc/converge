@@ -1,7 +1,7 @@
 ---
 title: "module"
 slug: "module"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -28,6 +28,10 @@ module "basic.hcl" "basic" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `params` (map of string to anything)
 

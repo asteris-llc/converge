@@ -1,7 +1,7 @@
 ---
 title: "wait.query"
 slug: "wait-query"
-date: "2016-11-14T11:12:03-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -24,6 +24,10 @@ wait.query "service-health" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `interpreter` (string)
 

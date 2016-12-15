@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -28,6 +28,10 @@ docker.image "busybox" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `name` (required string)
 
   name of the image to pull
@@ -48,4 +52,17 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `name` (string)
+  name of the image
+ 
+- `tag` (string)
+  tag of the image
+  
 

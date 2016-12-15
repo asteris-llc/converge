@@ -1,7 +1,7 @@
 ---
 title: "lvm.logicalvolume"
 slug: "lvm-logicalvolume"
-date: "2016-11-14T11:47:10-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -41,6 +41,10 @@ filesystem "mnt-me" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `group` (required string)
 

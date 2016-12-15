@@ -1,7 +1,7 @@
 ---
 title: "docker.container"
 slug: "docker-container"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:18-06:00"
 menu:
   main:
     parent: resources
@@ -35,6 +35,10 @@ docker.container "nginx" {
 
 
 ## Parameters
+
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
 
 - `name` (required string)
 
@@ -105,7 +109,7 @@ Specified as a boolean value
 - `status` (string)
 
 
-  Valid values: `running` and `created`
+	Valid values: `running` and `created`
 
   the desired status of the container.
 
@@ -114,3 +118,63 @@ Specified as a boolean value
   indicates whether or not the container will be recreated if the state is
 not what is expected. By default, the module will only check to see if the
 container exists. Specified as a boolean value
+
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `name` (string)
+  the name of the container
+ 
+- `image` (string)
+  the name of the image
+ 
+- `entrypoint` (list of strings)
+  the entrypoint into the container
+ 
+- `command` (list of strings)
+  the command to run
+ 
+- `workingdir` (string)
+  the working directory
+ 
+- `env` (list of strings)
+  configured environment variables for the container
+ 
+- `expose` (list of strings)
+  additional ports to exposed in the container
+ 
+- `links` (list of strings)
+  A list of links for the container in the form of container_name:alias
+ 
+- `portbindings` (list of strings)
+  ports to bind
+ 
+- `dns` (list of strings)
+  list of DNS servers the container is using
+ 
+- `volumes` (list of strings)
+  volumes that have been bind-mounted
+ 
+- `volumesfrom` (list of strings)
+  containers from which volumes have been mounted
+ 
+- `publishallports` (bool)
+  if true, all ports have been published
+ 
+- `networkmode` (string)
+  the mode of the container network
+ 
+- `networks` (list of strings)
+  networks the container is connected to
+ 
+- `status` (string)
+  the status of the container.
+ 
+- `force` (bool)
+  Indicate whether the 'force' flag was set
+  
+
