@@ -1,7 +1,7 @@
 ---
 title: "docker.network"
 slug: "docker-network"
-date: "2016-11-14T11:12:02-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -50,6 +50,10 @@ docker.network "test-network" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `name` (required string)
 
   name of the network
@@ -94,7 +98,7 @@ following items:
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   indicates whether the network should exist. default: present
 
@@ -104,4 +108,38 @@ following items:
 what is expected. By default, the module will only check to see if the
 network exists. Specified as a boolean value
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `name` (string)
+  name of the network
+ 
+- `driver` (string)
+  network drive configured in the hcl
+ 
+- `labels` (map of string to string)
+  labels set on the network
+ 
+- `options` (map of string to anything)
+  driver-specific options that have been configured
+ 
+- `ipam` (dc.IPAMOptions)
+  docker client IPAM options
+ 
+- `internal` (bool)
+  restricted to internal networking
+ 
+- `ipv6` (bool)
+  uses ipv6
+ 
+- `state` (State)
+  the configured state
+ 
+- `force` (bool)
+  true if 'force' was specified in the hcl
+  
 

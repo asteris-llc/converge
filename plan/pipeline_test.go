@@ -25,6 +25,7 @@ import (
 	"github.com/asteris-llc/converge/parse/preprocessor/switch"
 	"github.com/asteris-llc/converge/plan"
 	"github.com/asteris-llc/converge/render"
+	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -76,9 +77,27 @@ func TestResolveConditional(t *testing.T) {
 	})
 }
 
+// TestExportedFields tests that we put exported fields in the struct
+func TestExportedFields(t *testing.T) {
+	g := sampleGraph()
+	factory, _ := render.NewFactory(context.Background(), g)
+	p := plan.Pipeline(context.Background(), g, "root/a", factory)
+	meta, _ := g.Get("root/a")
+	result, err := p.Exec(context.Background(), meta.Value())
+	require.NoError(t, err)
+	asPlanResult, ok := result.(*plan.Result)
+	require.True(t, ok)
+	_, ok = asPlanResult.Task.(*faketask.FakeTask)
+	assert.True(t, ok)
+	planStatus, ok := asPlanResult.Status.(*resource.Status)
+	require.True(t, ok)
+	statusMap := planStatus.ExportedFields()
+	assert.Equal(t, "status1", statusMap["status"])
+}
+
 func sampleGraph() *graph.Graph {
 	g := graph.New()
 	g.Add(node.New(graph.ID("root"), nil))
-	g.Add(node.New(graph.ID("root", "a"), &faketask.FakeTask{}))
+	g.Add(node.New(graph.ID("root", "a"), &faketask.FakeTask{Status: "status1"}))
 	return g
 }

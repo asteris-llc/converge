@@ -26,21 +26,23 @@ import (
 
 // Image is responsible for pulling docker images
 type Image struct {
-	*resource.Status
+	// name of the image
+	Name string `export:"name"`
 
-	Name   string
-	Tag    string
+	// tag of the image
+	Tag string `export:"tag"`
+
 	client docker.APIClient
 }
 
 // Check system for presence of docker image
 func (i *Image) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	i.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	repoTag := i.RepoTag()
 	image, err := i.client.FindImage(repoTag)
 	if err != nil {
-		i.Status.Level = resource.StatusFatal
-		return i, err
+		status.Level = resource.StatusFatal
+		return status, err
 	}
 
 	var original string
@@ -48,11 +50,11 @@ func (i *Image) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 		original = repoTag
 	}
 
-	i.Status.AddDifference("image", original, repoTag, "<image-missing>")
-	if resource.AnyChanges(i.Status.Differences) {
-		i.Status.Level = resource.StatusWillChange
+	status.AddDifference("image", original, repoTag, "<image-missing>")
+	if resource.AnyChanges(status.Differences) {
+		status.Level = resource.StatusWillChange
 	}
-	return i, nil
+	return status, nil
 }
 
 // Apply pulls a docker image
@@ -63,7 +65,7 @@ func (i *Image) Apply(context.Context) (resource.TaskStatus, error) {
 			Output: []string{err.Error()},
 		}, err
 	}
-	return i, nil
+	return &resource.Status{}, nil
 }
 
 // SetClient injects a docker api client

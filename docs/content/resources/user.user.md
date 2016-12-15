@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-11-14T11:12:03-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -24,6 +24,10 @@ user.user "user" {
 
 ## Parameters
 
+Here are the HCL fields that you can specify, along with their expected types
+and restrictions:
+
+
 - `username` (required string)
 
   Username is the user login name.
@@ -42,7 +46,7 @@ HomeDir and MoveDir options.
 - `groupname` (string)
 
 
-  Only one of `gid` or `groupname` may be set.
+	Only one of `gid` or `groupname` may be set.
 
   GroupName is the primary group for user and must already exist.
 Only one of GID or Groupname may be indicated.
@@ -50,7 +54,7 @@ Only one of GID or Groupname may be indicated.
 - `gid` (optional uint32)
 
 
-  Only one of `gid` or `groupname` may be set.
+	Only one of `gid` or `groupname` may be set.
 
   Gid is the primary group ID for user and must refer to an existing group.
 Only one of GID or Groupname may be indicated.
@@ -88,9 +92,49 @@ HomeDir must also be indicated if MoveDir is set to true.
 - `state` (State)
 
 
-  Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   State is whether the user should be present.
 The default value is present.
 
+
+## Exported Fields
+
+Here are the fields that are exported for use with 'lookup'.  Re-exported fields
+will have their own fields exported under the re-exported namespace.
+
+
+- `username` (string)
+  the configured username
+ 
+- `newusername` (string)
+  the desired username
+ 
+- `uid` (string)
+  the user id
+ 
+- `groupname` (string)
+  the group name
+ 
+- `gid` (string)
+  the group id
+ 
+- `name` (string)
+  the real name of the user
+ 
+- `createhome` (bool)
+  if the home directory should be created
+ 
+- `skeldir` (string)
+  the path to the skeleton directory
+ 
+- `homedir` (string)
+  the path to the home directory
+ 
+- `movedir` (bool)
+  if the contents of the home directory should be moved
+ 
+- `state` (State)
+  configured the user state
+  
 

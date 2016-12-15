@@ -36,11 +36,19 @@ const (
 
 // Group manages user groups
 type Group struct {
-	GID     string
-	Name    string
-	NewName string
-	State   State
-	system  SystemUtils
+	// the configured group ID
+	GID string `export:"gid"`
+
+	// the configured group name
+	Name string `export:"name"`
+
+	// the desired group name
+	NewName string `export:"newname"`
+
+	// the group state
+	State State `export:"state"`
+
+	system SystemUtils
 }
 
 // ModGroupOptions are the options specified in the configuration to be used

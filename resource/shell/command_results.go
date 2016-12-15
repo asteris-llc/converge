@@ -23,11 +23,20 @@ import (
 // CommandResults hold the resulting state of command execution
 type CommandResults struct {
 	ResultsContext
-	ExitStatus uint32
-	Stdout     string
-	Stderr     string
-	Stdin      string
-	State      *os.ProcessState
+
+	// the exit status of the process
+	ExitStatus uint32 `export:"exitstatus"`
+
+	// the stdout data from the process
+	Stdout string `export:"stdout"`
+
+	// the stderr data from the process
+	Stderr string `export:"stderr"`
+
+	// the stdin data sent to the process
+	Stdin string `export:"stdin"`
+
+	State *os.ProcessState
 }
 
 // ResultsContext provides a linked list of CommandResults with a operation

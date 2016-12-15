@@ -23,7 +23,7 @@ import (
 
 // FakeTask for testing things that require real tasks
 type FakeTask struct {
-	Status string
+	Status string `export:"status"`
 	Level  resource.StatusLevel
 	Error  error
 }

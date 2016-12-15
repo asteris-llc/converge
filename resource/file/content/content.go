@@ -25,9 +25,11 @@ import (
 
 // Content renders content to disk
 type Content struct {
-	Content     string
-	Destination string
-	*resource.Status
+	// configured content of the file
+	Content string `export:"content"`
+
+	// configured destination of the file
+	Destination string `export:"destination"`
 }
 
 // Check if the content needs to be rendered
@@ -38,30 +40,26 @@ func (t *Content) Check(context.Context, resource.Renderer) (resource.TaskStatus
 	if os.IsNotExist(err) {
 		contentDiff.Values[0] = "<file-missing>"
 		diffs[t.Destination] = contentDiff
-		t.Status = &resource.Status{
+		return &resource.Status{
 			Level:       resource.StatusWillChange,
 			Differences: diffs,
 			Output:      []string{t.Destination + ": File is missing"},
-		}
-		return t, nil
+		}, nil
 	} else if err != nil {
-		t.Status = &resource.Status{
+		return &resource.Status{
 			Level:  resource.StatusFatal,
 			Output: []string{"Cannot read `" + t.Destination + "`"},
-		}
-		return t, err
+		}, nil
 	} else if stat.IsDir() {
-		t.Status = &resource.Status{
+		return &resource.Status{
 			Level:  resource.StatusCantChange,
 			Output: []string{t.Destination + " is a directory"},
-		}
-		return t, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
+		}, fmt.Errorf("cannot update contents of %q, it is a directory", t.Destination)
 	}
 
 	actual, err := ioutil.ReadFile(t.Destination)
 	if err != nil {
-		t.Status = &resource.Status{}
-		return t, err
+		return &resource.Status{}, err
 	}
 
 	statusMessage := "OK"
@@ -71,11 +69,10 @@ func (t *Content) Check(context.Context, resource.Renderer) (resource.TaskStatus
 		diffs[t.Destination] = resource.TextDiff{Values: [2]string{string(actual), t.Content}}
 	}
 
-	t.Status = &resource.Status{
+	return &resource.Status{
 		Output:      []string{statusMessage},
 		Differences: diffs,
-	}
-	return t, nil
+	}, nil
 }
 
 // Apply writes the content to disk
@@ -106,14 +103,12 @@ func (t *Content) Apply(context.Context) (resource.TaskStatus, error) {
 	diffs[t.Destination] = resource.TextDiff{Values: [2]string{preChange, t.Content}}
 
 	if err = ioutil.WriteFile(t.Destination, []byte(t.Content), perm); err != nil {
-		t.Status = &resource.Status{
+		return &resource.Status{
 			Output:      []string{err.Error()},
 			Level:       resource.StatusFatal,
 			Differences: diffs,
-		}
-		return t, err
+		}, err
 	}
 
-	t.Status = &resource.Status{Differences: diffs}
-	return t, nil
+	return &resource.Status{Differences: diffs}, nil
 }

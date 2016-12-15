@@ -54,10 +54,12 @@ type PackageManager interface {
 
 // Package is an API for package state
 type Package struct {
-	Name   string
-	State  State
+	// name of the package
+	Name string `export:"name"`
+
+	// package state; one of "present" or "absent"
+	State  State `export:"state"`
 	PkgMgr PackageManager
-	*resource.Status
 }
 
 // SysCaller allows us to mock exec.Command
@@ -92,39 +94,39 @@ func GetExitCode(err error) (uint32, error) {
 
 // Check if the package has to be 'present', or 'absent'
 func (p *Package) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	p.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	if p.State == p.PackageState() {
-		return p, nil
+		return status, nil
 	}
-	p.Status.AddDifference(p.Name, string(p.PackageState()), string(p.State), "")
-	p.RaiseLevel(resource.StatusWillChange)
-	return p, nil
+	status.AddDifference(p.Name, string(p.PackageState()), string(p.State), "")
+	status.RaiseLevel(resource.StatusWillChange)
+	return status, nil
 }
 
 // Apply desired package state
 func (p *Package) Apply(context.Context) (resource.TaskStatus, error) {
 	var err error
-	p.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	if p.State == p.PackageState() {
-		return p, nil
+		return status, nil
 	}
 
 	var results string
 	if p.State == StatePresent {
 		results, err = p.PkgMgr.InstallPackage(p.Name)
-		p.Status.AddMessage("installed " + p.Name)
+		status.AddMessage("installed " + p.Name)
 	} else {
 		results, err = p.PkgMgr.RemovePackage(p.Name)
-		p.Status.AddMessage("removed  " + p.Name)
+		status.AddMessage("removed  " + p.Name)
 	}
 
-	p.Status.AddMessage(results)
+	status.AddMessage(results)
 	if err != nil {
-		return p, err
+		return status, err
 	}
-	p.Status.AddDifference(p.Name, string(p.PackageState()), string(p.State), "")
-	p.RaiseLevel(resource.StatusWillChange)
-	return p, nil
+	status.AddDifference(p.Name, string(p.PackageState()), string(p.State), "")
+	status.RaiseLevel(resource.StatusWillChange)
+	return status, nil
 }
 
 // PackageState returns a State ("present","absent") based on whether a package

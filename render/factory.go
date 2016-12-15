@@ -99,7 +99,6 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 			if !ok {
 				return "", false, fmt.Errorf("%q was missing from the graph", id)
 			}
-
 			parentTask, ok := resource.ResolveTask(parentMeta.Value())
 			if !ok {
 				return "", false, fmt.Errorf("parent of node %s (%s) was not a valid task type", id, graph.ParentID(id))

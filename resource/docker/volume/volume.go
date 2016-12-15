@@ -40,49 +40,59 @@ const (
 
 // Volume is responsible for managing docker volumes
 type Volume struct {
-	*resource.Status
 	client docker.VolumeClient
 
-	Name    string
-	Labels  map[string]string
-	Driver  string
-	Options map[string]string
-	State   State
-	Force   bool
+	// volume name
+	Name string `export:"name"`
+
+	// volume labels
+	Labels map[string]string `export:"labels"`
+
+	// driver the volume is configured to use
+	Driver string `export:"driver"`
+
+	// driver-specific options
+	Options map[string]string `export:"options"`
+
+	// volume state
+	State State `export:"state"`
+
+	// reflects whether or not the force option was configured
+	Force bool `export:"force"`
 }
 
 // Check system for docker volume
 func (v *Volume) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	v.Status = resource.NewStatus()
+	status := resource.NewStatus()
 	vol, err := v.client.FindVolume(v.Name)
 
 	if err != nil {
-		v.Status.Level = resource.StatusFatal
-		return v, err
+		status.Level = resource.StatusFatal
+		return status, err
 	}
 
-	v.Status.AddDifference(v.Name, string(volumeState(vol)), string(v.State), "")
+	status.AddDifference(v.Name, string(volumeState(vol)), string(v.State), "")
 
 	if v.State == StatePresent && vol != nil && v.Force {
 		expectedLabels := mapToString(v.Labels)
 		actualLabels := mapToString(vol.Labels)
-		v.Status.AddDifference("labels", actualLabels, expectedLabels, "")
-		v.Status.AddDifference("driver", vol.Driver, v.Driver, "local")
+		status.AddDifference("labels", actualLabels, expectedLabels, "")
+		status.AddDifference("driver", vol.Driver, v.Driver, "local")
 		// we cannot detect difference in Options because the Docker API does not
 		// return that information:
 		// https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
 	}
 
-	if resource.AnyChanges(v.Status.Differences) {
-		v.RaiseLevel(resource.StatusWillChange)
+	if resource.AnyChanges(status.Differences) {
+		status.RaiseLevel(resource.StatusWillChange)
 	}
 
-	return v, nil
+	return status, nil
 }
 
 // Apply ensures the volume matches the desired state
 func (v *Volume) Apply(context.Context) (resource.TaskStatus, error) {
-	v.Status = resource.NewStatus()
+	status := resource.NewStatus()
 
 	var (
 		vol *dc.Volume
@@ -92,22 +102,22 @@ func (v *Volume) Apply(context.Context) (resource.TaskStatus, error) {
 	vol, err = v.client.FindVolume(v.Name)
 
 	if err != nil {
-		v.Status.Level = resource.StatusFatal
-		return v, err
+		status.Level = resource.StatusFatal
+		return status, err
 	}
 
 	if v.State == StatePresent {
 		if vol != nil {
 			if !v.Force {
-				return v, nil
+				return status, nil
 			}
 
 			err = v.client.RemoveVolume(v.Name)
 			if err != nil {
-				v.Status.Level = resource.StatusFatal
-				return v, err
+				status.Level = resource.StatusFatal
+				return status, err
 			}
-			v.Status.AddMessage(fmt.Sprintf("removed volume %s", v.Name))
+			status.AddMessage(fmt.Sprintf("removed volume %s", v.Name))
 		}
 
 		opts := dc.CreateVolumeOptions{
@@ -119,25 +129,25 @@ func (v *Volume) Apply(context.Context) (resource.TaskStatus, error) {
 
 		vol, err = v.client.CreateVolume(opts)
 		if err != nil {
-			v.Status.Level = resource.StatusFatal
-			return v, err
+			status.Level = resource.StatusFatal
+			return status, err
 		}
-		v.Status.AddMessage(fmt.Sprintf("created volume %s", v.Name))
-		v.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage(fmt.Sprintf("created volume %s", v.Name))
+		status.RaiseLevel(resource.StatusWillChange)
 	} else {
 		if vol != nil {
 			err = v.client.RemoveVolume(v.Name)
 			if err != nil {
-				v.Status.Level = resource.StatusFatal
-				return v, err
+				status.Level = resource.StatusFatal
+				return status, err
 			}
-			v.Status.AddMessage(fmt.Sprintf("removed volume %s", v.Name))
-			v.RaiseLevel(resource.StatusWillChange)
+			status.AddMessage(fmt.Sprintf("removed volume %s", v.Name))
+			status.RaiseLevel(resource.StatusWillChange)
 		}
 	}
 
-	v.Status.AddDifference(v.Name, string(volumeState(vol)), string(v.State), "")
-	return v, nil
+	status.AddDifference(v.Name, string(volumeState(vol)), string(v.State), "")
+	return status, nil
 }
 
 // SetClient injects a docker api client

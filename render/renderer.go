@@ -180,7 +180,12 @@ func (r *Renderer) lookup(name string) (string, error) {
 	// fully-qualified graph name
 	fqgn := graph.SiblingID(r.ID, name)
 
-	vertexName, terms, found := preprocessor.VertexSplitTraverse(g, name, r.ID, preprocessor.TraverseUntilModule, make(map[string]struct{}))
+	vertexName, terms, found := preprocessor.VertexSplitTraverse(g,
+		name,
+		r.ID,
+		preprocessor.TraverseUntilModule,
+		make(map[string]struct{}),
+	)
 
 	if !validateLookup(g, r.ID, vertexName) {
 		return "", fmt.Errorf("%s cannot resolve inner-branch node at %s", r.ID, vertexName)
@@ -196,30 +201,51 @@ func (r *Renderer) lookup(name string) (string, error) {
 	}
 
 	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
-		log.WithField("proxy-reference", vertexName).Warn("node is unresolvable")
+		log.WithField(
+			"proxy-reference",
+			vertexName,
+		).Warn(
+			fmt.Sprintf(
+				"%s: cannot resolve %s in node %s in prepare thunk",
+				r.ID,
+				vertexName, terms,
+			),
+		)
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
 	if _, isPreparer := meta.Value().(*resource.Preparer); isPreparer {
-		log.WithField("preparer-reference", vertexName).Warn("node is unresolvable")
+		log.WithField("proxy-reference", vertexName).Warn(fmt.Sprintf("%s: cannot resolve %s in node %s from preparer", r.ID, vertexName, terms))
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
 	}
 
-	val, ok := resource.ResolveTask(meta.Value())
+	asTasker, ok := meta.Value().(resource.Tasker)
 	if !ok {
-		return "", fmt.Errorf("%s is not a valid task node (type: %T)", vertexName, meta.Value())
+		log.WithField("get-value", vertexName).Error(fmt.Sprintf("%s: lookup would address unevaluated field %s", r.ID, vertexName))
+		return "", errors.New("cannot lookup unevaluated field")
 	}
 
-	result, err := preprocessor.EvalTerms(val, preprocessor.SplitTerms(terms)...)
+	status := asTasker.GetStatus()
 
-	if err != nil {
-		if err == preprocessor.ErrUnresolvable {
-			r.resolverErr = true
-			return "", ErrUnresolvable{}
+	if status == nil {
+		log.WithField("status-reference", vertexName).Warn(r.ID + " no status for node " + vertexName)
+		r.resolverErr = true
+		return "", ErrUnresolvable{}
+	}
+
+	result, ok := status.ExportedFields()[terms]
+
+	if !ok {
+		var keys []string
+		for key := range status.ExportedFields() {
+			keys = append(keys, key)
 		}
-		return "", errors.Wrap(err, fmt.Sprintf("cannot perform a lookup of %s at %s", fqgn, r.ID))
+		innerTask, _ := asTasker.GetTask()
+		innerTask, _ = resource.ResolveTask(innerTask)
+		log.WithField("current-node", r.ID).Warn(fmt.Sprintf("%s is not one of the exported fields for type %T: %v at %s", terms, innerTask, keys, vertexName))
+		return "", ErrUnresolvable{}
 	}
 
 	return fmt.Sprintf("%v", result), nil
