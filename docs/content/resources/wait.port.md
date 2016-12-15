@@ -1,7 +1,7 @@
 ---
 title: "wait.port"
 slug: "wait-port"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -35,11 +35,9 @@ and restrictions:
   a host name or ip address. A TCP connection will be attempted at this host
 and the specified Port. default: localhost
 
-
 - `port` (required int)
 
   the TCP port to attempt to connect to.
-
 
 - `interval` (optional duration)
 
@@ -52,7 +50,6 @@ The representation limits the largest representable duration to approximately
 290 years. A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-
 
 - `grace_period` (optional duration)
 
@@ -67,19 +64,18 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-
 - `max_retry` (optional int)
 
   the maximum number of attempts before the wait fails. If the maximum number
 of retries is not set, it will default to 5.
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `host` (string)
   the hostname
  

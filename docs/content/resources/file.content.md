@@ -1,7 +1,7 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -40,18 +40,17 @@ and restrictions:
 
   Content is the file content. This will be rendered as a template.
 
-
 - `destination` (required string)
 
   Destination is the location on disk where the content will be rendered.
-
-
 
 
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `content` (string)
   configured content of the file
  

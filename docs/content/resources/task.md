@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -42,17 +42,14 @@ and restrictions:
   the shell interpreter that will be used for your scripts. `/bin/sh` is
 used by default.
 
-
 - `check_flags` (list of strings)
 
   flags to pass to the `interpreter` binary to check validity. For
 `/bin/sh` this is `-n`
 
-
 - `exec_flags` (list of strings)
 
   flags to pass to the interpreter at execution time
-
 
 - `check` (string)
 
@@ -60,13 +57,11 @@ used by default.
 exit with exit code 0 if the resource does not need to be changed, and
 1 (or above) otherwise.
 
-
 - `apply` (string)
 
   the script to run to apply the resource. Normal shell exit code
 expectations apply (that is, exit code 0 for success, 1 or above for
 failure.)
-
 
 - `timeout` (optional duration)
 
@@ -79,23 +74,21 @@ The representation limits the largest representable duration to approximately
 each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or
 "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-
 - `dir` (string)
 
   the working directory this command should be run in
-
 
 - `env` (map of string to string)
 
   any environment variables that should be passed to the command
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `check` (string)
   the check statement
  

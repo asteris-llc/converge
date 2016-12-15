@@ -1,7 +1,7 @@
 ---
 title: "docker.network"
 slug: "docker-network"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -58,26 +58,21 @@ and restrictions:
 
   name of the network
 
-
 - `driver` (string)
 
   network driver. default: bridge
-
 
 - `labels` (map of string to string)
 
   labels to set on the network
 
-
 - `options` (map of string to anything)
 
   driver specific options
 
-
 - `ipam_driver` (string)
 
   ip address management driver. default: default
-
 
 - `ipam_config` (list of ipamConfigMaps)
 
@@ -92,16 +87,13 @@ following items:
                  Aux addresses are specified as a map with a name key and an IP
                  address value
 
-
 - `internal` (bool)
 
   restricts external access to the network
 
-
 - `ipv6` (bool)
 
   enable ipv6 networking
-
 
 - `state` (State)
 
@@ -110,7 +102,6 @@ following items:
 
   indicates whether the network should exist. default: present
 
-
 - `force` (bool)
 
   indicates whether or not the network will be recreated if the state is not
@@ -118,12 +109,12 @@ what is expected. By default, the module will only check to see if the
 network exists. Specified as a boolean value
 
 
-
-
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   name of the network
  

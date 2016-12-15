@@ -1,7 +1,7 @@
 ---
 title: "lvm.volumegroup"
 slug: "lvm-volumegroup"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -51,23 +51,18 @@ and restrictions:
 
   Name of created volume group
 
-
 - `devices` (list of strings)
 
   Devices is list of entities to include into volume group
-
 
 - `remove` (bool)
 
   Remove is enable removal devices omitted from `Devices` list from
 from volume group
 
-
 - `forceRemove` (bool)
 
   ForceRemove control destruction of volumes after removing
 from volume group
-
-
 
 

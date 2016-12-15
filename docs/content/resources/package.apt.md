@@ -1,7 +1,7 @@
 ---
 title: "package.apt"
 slug: "package-apt"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -34,52 +34,25 @@ and restrictions:
 
   Name of the package or package group.
 
-
 - `state` (State)
 
 
-    Valid values: `present` and `absent`
+	Valid values: `present` and `absent`
 
   State of the package. Present means the package will be installed if
 missing; Absent means the package will be uninstalled if present.
-
-
 
 
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `name` (string)
   name of the package
-
+ 
 - `state` (State)
   package state; one of "present" or "absent"
+  
 
-
-## Notes
-
-Please note that only one `apt` command can run at a time. This may cause
-errors as converge will run as many tasks in parallel as possible.
-
-In order to get around the single-process limitation of the `apt` tool, you can:
-
-* use a [`group`]({{< ref "dependencies.md#grouping" >}}) parameter for `package.apt` tasks.
-
-* Pass multiple packages into the `name` field.
-
-Below are examples of both techniques:
-
-```hcl
-package.apt "mc-vim" {
-  name  = "mc vim"
-  state = "present"
-  group = "apt"
-}
-
-package.apt "git" {
-  name  = "git"
-  state = "present"
-  group = "apt"
-}
-```

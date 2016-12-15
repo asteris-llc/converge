@@ -1,7 +1,7 @@
 ---
 title: "filesystem"
 slug: "filesystem"
-date: "2016-12-14T11:24:45-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -52,13 +52,11 @@ and restrictions:
   Device path to be mount
 Examples: `/dev/sda1`, `/dev/mapper/vg0-data`
 
-
 - `mount` (required string)
 
   Mountpoint where device will be mounted
 (should be an existing directory)
 Example: /mnt/data
-
 
 - `fstype` (required string)
 
@@ -66,21 +64,16 @@ Example: /mnt/data
 (actually any linux filesystem, except `ZFS`)
 Example:  `ext4`, `xfs`
 
-
 - `requiredBy` (list of strings)
 
   RequiredBy is a list of dependencies, to pass to systemd .mount unit
-
 
 - `wantedBy` (list of strings)
 
   WantedBy is a list of dependencies, to pass to systemd .mount unit
 
-
 - `before` (list of strings)
 
   Before is a list of dependencies, to pass to systemd .mount unit
-
-
 
 

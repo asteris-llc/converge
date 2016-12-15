@@ -1,7 +1,7 @@
 ---
 title: "file.directory"
 slug: "file-directory"
-date: "2016-12-14T11:24:44-06:00"
+date: "2016-12-15T15:18:19-06:00"
 menu:
   main:
     parent: resources
@@ -38,18 +38,17 @@ and restrictions:
 
   the location on disk to make the directory
 
-
 - `create_all` (bool)
 
   whether or not to create all parent directories on the way up
-
-
 
 
 ## Exported Fields
 
 Here are the fields that are exported for use with 'lookup'.  Re-exported fields
 will have their own fields exported under the re-exported namespace.
+
+
 - `destination` (string)
   directory path
  
