@@ -46,6 +46,7 @@ type Owner struct {
 	GID         string `export:"gid"`
 	Recursive   bool   `export:"recursive"`
 	executor    OSProxy
+	differences []*OwnershipDiff
 }
 
 type fileWalker struct {
@@ -70,17 +71,27 @@ func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 	w := &fileWalker{Status: status, NewOwner: newOwner, Executor: o.executor}
 
 	if o.Recursive {
+		err = o.executor.Walk(o.Destination, w.CheckFile)
+	} else {
+		err = w.CheckFile(o.Destination, nil, nil)
 	}
 
-	if err := w.CheckFile(o.Destination, nil, nil); err != nil {
+	if err != nil {
 		return nil, err
 	}
+	o.copyDiffs(status)
 	return status, nil
 }
 
 // Apply applies the ownership to the file
 func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 	return &resource.Status{}, nil
+}
+
+func (o *Owner) copyDiffs(status *resource.Status) {
+	for _, diff := range status.Differences {
+		o.differences = append(o.differences, diff.(*OwnershipDiff))
+	}
 }
 
 func (o *Owner) getNewOwner() (*Ownership, error) {

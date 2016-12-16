@@ -15,9 +15,12 @@
 package owner_test
 
 import (
+	"os"
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"syscall"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -27,11 +30,15 @@ var any = mock.Anything
 // MockOS mocks OSProxy
 type MockOS struct {
 	mock.Mock
+	walkArgs []*walkArgs
 }
 
 // Walk mocks Walk
 func (m *MockOS) Walk(root string, walkFunc filepath.WalkFunc) error {
 	args := m.Called(root, walkFunc)
+	for _, args := range m.walkArgs {
+		walkFunc(args.Path, args.Info, args.Err)
+	}
 	return args.Error(0)
 }
 
@@ -92,9 +99,56 @@ func fakeGroup(gid, name string) *user.Group {
 }
 
 type ownershipRecord struct {
-	Path  string
-	User  *user.User
-	Group *user.Group
+	Path      string
+	User      *user.User
+	Group     *user.Group
+	FileSize  int64
+	FileMode  os.FileMode
+	FileIsDir bool
+}
+
+func (o ownershipRecord) Name() string {
+	return o.Path
+}
+
+func (o ownershipRecord) Size() int64 {
+	return o.FileSize
+}
+
+func (o ownershipRecord) Mode() os.FileMode {
+	return o.FileMode
+}
+
+func (o ownershipRecord) ModTime() time.Time {
+	return time.Now()
+}
+
+func (o ownershipRecord) IsDir() bool {
+	return o.FileIsDir
+}
+
+func (o ownershipRecord) Sys() interface{} {
+	uid, _ := strconv.Atoi(o.User.Uid)
+	gid, _ := strconv.Atoi(o.User.Gid)
+	return &syscall.Stat_t{
+		Uid:  uint32(uid),
+		Gid:  uint32(gid),
+		Size: o.FileSize,
+	}
+}
+
+func (o *ownershipRecord) ToWalkArgs() *walkArgs {
+	return &walkArgs{
+		Path: o.Path,
+		Err:  nil,
+		Info: o,
+	}
+}
+
+type walkArgs struct {
+	Path string
+	Info os.FileInfo
+	Err  error
 }
 
 var (
@@ -128,6 +182,14 @@ func makeOwned(path, username, uid, groupname, gid string) ownershipRecord {
 	}
 }
 
+func makeOwnedFull(path, username, uid, groupname, gid string, isDir bool, size int64, mode os.FileMode) ownershipRecord {
+	o := makeOwned(path, username, uid, groupname, gid)
+	o.FileSize = size
+	o.FileMode = mode
+	o.FileIsDir = isDir
+	return o
+}
+
 func newMockOS(ownedFiles []ownershipRecord,
 	users []*user.User,
 	groups []*user.Group,
@@ -135,6 +197,9 @@ func newMockOS(ownedFiles []ownershipRecord,
 	defaultGroup *user.Group,
 ) *MockOS {
 	m := &MockOS{}
+	for _, o := range ownedFiles {
+		m.walkArgs = append(m.walkArgs, o.ToWalkArgs())
+	}
 	if defaultUser == nil {
 		defaultUser = rootUser
 	}
