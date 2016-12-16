@@ -34,19 +34,19 @@ type Preparer struct {
 
 	// Recursive indicates whether ownership changes should be applied
 	// recursively.  Symlinks are not followed.
-	Recursive bool `hcl:"recursive" default:"false"`
+	Recursive bool `hcl:"recursive" default:"false" export:"recursive"`
 
 	// Username specifies user-owernship by user name
-	Username string `hcl:"username" mutally_exclusive:"uid"`
+	Username string `hcl:"user" mutally_exclusive:"uid" export:"user"`
 
 	// UID specifies user-ownership by UID
-	UID *int `hcl:"uid" mutually_exclusive:"username"`
+	UID *int `hcl:"uid" mutually_exclusive:"user" export:"uid"`
 
 	// Groupname specifies group-ownership by groupname
-	Groupname string `hcl:"groupname" mutually_exclusive:"gid"`
+	Groupname string `hcl:"group" mutually_exclusive:"gid" export:"gid"`
 
 	// GID specifies group ownership by gid
-	GID *int `hcl:"gid" mutually_exclusive:"groupname"`
+	GID *int `hcl:"gid" mutually_exclusive:"group" export:"group"`
 
 	osProxy OSProxy
 }
