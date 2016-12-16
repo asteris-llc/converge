@@ -34,6 +34,30 @@ type OwnershipDiff struct {
 	GIDs *[2]int
 }
 
+// Apply applies the changes in ownership to a file based on a diff
+func (d *OwnershipDiff) Apply() error {
+	if !d.Changes() {
+		return nil
+	}
+	var newUID *int
+	var newGID *int
+	oldOwner, err := fileOwnership(d.p, d.path)
+	if err != nil {
+		return err
+	}
+	if d.UIDs != nil {
+		newUID = &(*d.UIDs)[1]
+	} else {
+		newUID = oldOwner.UID
+	}
+	if d.GIDs != nil {
+		newGID = &(*d.GIDs)[1]
+	} else {
+		newGID = oldOwner.GID
+	}
+	return d.p.Chown(d.path, *newUID, *newGID)
+}
+
 // showDiffAt shows the UID/GID at a given index
 func (d *OwnershipDiff) showDiffAt(idx uint) string {
 	var diffStrs []string

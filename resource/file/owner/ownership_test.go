@@ -187,6 +187,63 @@ func TestOwernshipDiff(t *testing.T) {
 	})
 }
 
+func TestApplyOwnershipDiff(t *testing.T) {
+	users := []*user.User{
+		fakeUser("1", "1", "user-1"),
+		fakeUser("2", "2", "user-2"),
+	}
+	groups := []*user.Group{
+		fakeGroup("1", "group-1"),
+		fakeGroup("2", "group-2"),
+	}
+	ownershipRecords := []ownershipRecord{
+		makeOwned("foo", "user-1", "1", "group-1", "1"),
+	}
+	m := newMockOS(ownershipRecords, users, groups, nil, nil)
+	t.Run("no-changes", func(t *testing.T) {
+		o := &owner.Ownership{UID: intRef(1), GID: intRef(1)}
+		diff, err := owner.NewOwnershipDiff(m, "foo", o)
+		require.NoError(t, err)
+		err = diff.Apply()
+		require.NoError(t, err)
+		m.AssertNotCalled(t, "Chown", any, any, any)
+	})
+	t.Run("uid-changes", func(t *testing.T) {
+		o := &owner.Ownership{UID: intRef(2), GID: intRef(1)}
+		diff, err := owner.NewOwnershipDiff(m, "foo", o)
+		require.NoError(t, err)
+		err = diff.Apply()
+		require.NoError(t, err)
+		m.AssertCalled(t, "Chown", "foo", 2, 1)
+	})
+	t.Run("gid-changes", func(t *testing.T) {
+		o := &owner.Ownership{UID: intRef(1), GID: intRef(2)}
+		diff, err := owner.NewOwnershipDiff(m, "foo", o)
+		require.NoError(t, err)
+		err = diff.Apply()
+		require.NoError(t, err)
+		m.AssertCalled(t, "Chown", "foo", 1, 2)
+	})
+	t.Run("uid-and-gid-changes", func(t *testing.T) {
+		o := &owner.Ownership{UID: intRef(2), GID: intRef(2)}
+		diff, err := owner.NewOwnershipDiff(m, "foo", o)
+		require.NoError(t, err)
+		err = diff.Apply()
+		require.NoError(t, err)
+		m.AssertCalled(t, "Chown", "foo", 2, 2)
+	})
+	t.Run("chown-error-needs-changes", func(t *testing.T) {
+		expected := errors.New("error1")
+		m := failingMockOS(map[string]error{"Chown": expected})
+		o := &owner.Ownership{UID: intRef(2), GID: intRef(2)}
+		diff, err := owner.NewOwnershipDiff(m, "foo", o)
+		require.NoError(t, err)
+		err = diff.Apply()
+		m.AssertCalled(t, "Chown", any, any, any)
+		assert.Equal(t, expected, err)
+	})
+}
+
 func intRef(i int) *int {
 	return &i
 }
