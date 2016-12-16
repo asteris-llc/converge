@@ -38,14 +38,18 @@ func TestCheck(t *testing.T) {
 		fakeUser("1", "1", "user-1"),
 		fakeUser("2", "2", "user-2"),
 	}
+
 	groups := []*user.Group{
 		fakeGroup("1", "group-1"),
 		fakeGroup("2", "group-2"),
 	}
+
 	ownershipRecords := []ownershipRecord{
 		makeOwned("foo", "user-1", "1", "group-1", "1"),
 	}
+
 	m := newMockOS(ownershipRecords, users, groups, nil, nil)
+
 	t.Run("when-user-and-group-no-change", func(t *testing.T) {
 		t.Parallel()
 
@@ -226,35 +230,122 @@ func TestCheck(t *testing.T) {
 
 	t.Run("when-recursive", func(t *testing.T) {
 		t.Parallel()
+		t.Run("when-all-change", func(t *testing.T) {
+			t.Parallel()
+			ownershipRecords := []ownershipRecord{
+				makeOwnedFull("root", "user-1", "1", "group-1", "1", true, 0, 0755),
+				makeOwnedFull("root/dir1", "user-1", "1", "group-1", "1", true, 0, 0755),
+				makeOwnedFull("root/dir1/a", "user-1", "1", "group-1", "1", false, 0, 0755),
+				makeOwnedFull("root/dir2", "user-1", "1", "group-1", "1", true, 0, 0755),
+				makeOwnedFull("root/dir2/a", "user-1", "1", "group-1", "1", false, 0, 0755),
+				makeOwnedFull("root/dir2/b", "user-1", "1", "group-1", "1", false, 0, 0755),
+				makeOwnedFull("root/file3", "user-1", "1", "group-1", "1", false, 0, 0755),
+			}
+			m := newMockOS(ownershipRecords, users, groups, nil, nil)
+			o := (&owner.Owner{
+				Destination: "root",
+				Username:    "user-2",
+				UID:         "2",
+				Group:       "group-2",
+				GID:         "2",
+				Recursive:   true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			m.AssertCalled(t, "Walk", "root", any)
+			m.AssertNumberOfCalls(t, "Walk", 1)
+			for _, rec := range ownershipRecords {
+				m.AssertCalled(t, "GetGID", rec.Path)
+				m.AssertCalled(t, "GetUID", rec.Path)
+			}
+			resStatus, ok := status.(*resource.Status)
+			require.True(t, ok)
+			diffs := resStatus.Differences
+			assert.Equal(t, len(diffs), len(ownershipRecords))
+		})
+		t.Run("when-some-change", func(t *testing.T) {
+			t.Parallel()
+			ownershipRecords := []ownershipRecord{
+				makeOwnedFull("root", "user-1", "1", "group-1", "1", true, 0, 0755),
+				makeOwnedFull("root/dir1", "user-1", "1", "group-1", "1", true, 0, 0755),
+				makeOwnedFull("root/dir1/a", "user-1", "1", "group-1", "1", false, 0, 0755),
 
-		ownershipRecords := []ownershipRecord{
-			makeOwnedFull("root", "user-1", "1", "group-1", "1", true, 0, 0755),
-			makeOwnedFull("root/dir1", "user-1", "1", "group-1", "1", true, 0, 0755),
-			makeOwnedFull("root/dir1/a", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/dir1/b", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/dir1/c", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/dir2", "user-1", "1", "group-1", "1", true, 0, 0755),
-			makeOwnedFull("root/dir2/a", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/dir2/b", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/dir2/c", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/file1", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/file2", "user-1", "1", "group-1", "1", false, 0, 0755),
-			makeOwnedFull("root/file3", "user-1", "1", "group-1", "1", false, 0, 0755),
-		}
+				makeOwnedFull("root/file3", "user-1", "1", "group-1", "1", false, 0, 0755),
+			}
+			changingRecords := []ownershipRecord{
+				makeOwnedFull("root/dir2", "user-1", "1", "group-2", "2", true, 0, 0755),
+				makeOwnedFull("root/dir2/a", "user-1", "1", "group-2", "2", false, 0, 0755),
+				makeOwnedFull("root/dir2/b", "user-1", "1", "group-2", "2", false, 0, 0755),
+			}
+			allRecords := append(ownershipRecords, changingRecords...)
+			m := newMockOS(allRecords, users, groups, nil, nil)
+			o := (&owner.Owner{
+				Destination: "root",
+				Username:    "user-1",
+				UID:         "1",
+				Group:       "group-1",
+				GID:         "1",
+				Recursive:   true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			m.AssertCalled(t, "Walk", "root", any)
+			m.AssertNumberOfCalls(t, "Walk", 1)
+			for _, rec := range allRecords {
+				m.AssertCalled(t, "GetGID", rec.Path)
+				m.AssertCalled(t, "GetUID", rec.Path)
+			}
+			resStatus, ok := status.(*resource.Status)
+			require.True(t, ok)
+			diffs := resStatus.Differences
+			for _, shouldChange := range changingRecords {
+				_, ok := diffs[shouldChange.Path]
+				assert.True(t, ok)
+			}
+			assert.Equal(t, len(diffs), len(changingRecords))
+		})
+	})
+}
+
+func TestApply(t *testing.T) {
+	t.Parallel()
+	t.Run("single-diff", func(t *testing.T) {
+		users := []*user.User{fakeUser("1", "1", "user-1"), fakeUser("2", "2", "user-2")}
+		groups := []*user.Group{fakeGroup("1", "group-1"), fakeGroup("2", "group-2")}
+		ownershipRecords := []ownershipRecord{makeOwned("foo", "user-1", "1", "group-1", "1")}
 		m := newMockOS(ownershipRecords, users, groups, nil, nil)
 		o := (&owner.Owner{
-			Destination: "root",
+			Destination: "foo",
 			Username:    "user-2",
 			UID:         "2",
 			Group:       "group-2",
 			GID:         "2",
-			Recursive:   true,
 		}).SetOSProxy(m)
 		_, err := o.Check(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
-		m.AssertCalled(t, "Walk", "root", any)
-		m.AssertNumberOfCalls(t, "Walk", 1)
-		m.AssertNumberOfCalls(t, "GetGID", len(ownershipRecords))
-		m.AssertNumberOfCalls(t, "GetUID", len(ownershipRecords))
+		_, err = o.Apply(context.Background())
+		require.NoError(t, err)
+		m.AssertCalled(t, "Chown", "foo", 2, 2)
+	})
+	t.Run("multiple-diff", func(t *testing.T) {
+		users := []*user.User{fakeUser("1", "1", "user-1"), fakeUser("2", "2", "user-2")}
+		groups := []*user.Group{fakeGroup("1", "group-1"), fakeGroup("2", "group-2")}
+		ownershipRecords := []ownershipRecord{makeOwned("foo", "user-1", "1", "group-1", "1"), makeOwned("bar", "user-1", "1", "group-1", "1")}
+		m := newMockOS(ownershipRecords, users, groups, nil, nil)
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-2",
+			Recursive:   true,
+			UID:         "2",
+			Group:       "group-2",
+			GID:         "2",
+		}).SetOSProxy(m)
+		_, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		_, err = o.Apply(context.Background())
+		require.NoError(t, err)
+		m.AssertCalled(t, "Chown", "foo", 2, 2)
+		m.AssertCalled(t, "Chown", "bar", 2, 2)
+		m.AssertNumberOfCalls(t, "Chown", 2)
 	})
 }

@@ -85,6 +85,11 @@ func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 
 // Apply applies the ownership to the file
 func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
+	for _, diff := range o.differences {
+		if err := diff.Apply(); err != nil {
+			return nil, err
+		}
+	}
 	return &resource.Status{}, nil
 }
 
