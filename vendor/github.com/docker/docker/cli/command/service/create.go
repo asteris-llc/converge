@@ -35,11 +35,18 @@ func newCreateCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.Var(&opts.containerLabels, flagContainerLabel, "Container labels")
 	flags.VarP(&opts.env, flagEnv, "e", "Set environment variables")
 	flags.Var(&opts.envFile, flagEnvFile, "Read in a file of environment variables")
-	flags.Var(&opts.mounts, flagMount, "Attach a mount to the service")
-	flags.StringSliceVar(&opts.constraints, flagConstraint, []string{}, "Placement constraints")
-	flags.StringSliceVar(&opts.networks, flagNetwork, []string{}, "Network attachments")
-	flags.VarP(&opts.endpoint.ports, flagPublish, "p", "Publish a port as a node port")
-	flags.StringSliceVar(&opts.groups, flagGroup, []string{}, "Set one or more supplementary user groups for the container")
+	flags.Var(&opts.mounts, flagMount, "Attach a filesystem mount to the service")
+	flags.Var(&opts.constraints, flagConstraint, "Placement constraints")
+	flags.Var(&opts.networks, flagNetwork, "Network attachments")
+	flags.Var(&opts.secrets, flagSecret, "Specify secrets to expose to the service")
+	flags.VarP(&opts.endpoint.publishPorts, flagPublish, "p", "Publish a port as a node port")
+	flags.MarkHidden(flagPublish)
+	flags.Var(&opts.groups, flagGroup, "Set one or more supplementary user groups for the container")
+	flags.Var(&opts.dns, flagDNS, "Set custom DNS servers")
+	flags.Var(&opts.dnsOption, flagDNSOption, "Set DNS options")
+	flags.Var(&opts.dnsSearch, flagDNSSearch, "Set custom DNS search domains")
+	flags.Var(&opts.hosts, flagHost, "Set one or more custom host-to-IP mappings (host:ip)")
+	flags.Var(&opts.endpoint.expandedPorts, flagPort, "Publish a port")
 
 	flags.SetInterspersed(false)
 	return cmd
@@ -52,6 +59,17 @@ func runCreate(dockerCli *command.DockerCli, opts *serviceOptions) error {
 	service, err := opts.ToService()
 	if err != nil {
 		return err
+	}
+
+	specifiedSecrets := opts.secrets.Value()
+	if len(specifiedSecrets) > 0 {
+		// parse and validate secrets
+		secrets, err := parseSecrets(apiClient, specifiedSecrets)
+		if err != nil {
+			return err
+		}
+		service.TaskTemplate.ContainerSpec.Secrets = secrets
+
 	}
 
 	ctx := context.Background()
@@ -69,6 +87,10 @@ func runCreate(dockerCli *command.DockerCli, opts *serviceOptions) error {
 	response, err := apiClient.ServiceCreate(ctx, service, createOpts)
 	if err != nil {
 		return err
+	}
+
+	for _, warning := range response.Warnings {
+		fmt.Fprintln(dockerCli.Err(), warning)
 	}
 
 	fmt.Fprintf(dockerCli.Out(), "%s\n", response.ID)

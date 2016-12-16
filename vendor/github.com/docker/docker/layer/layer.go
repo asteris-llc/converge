@@ -84,6 +84,10 @@ type TarStreamer interface {
 type Layer interface {
 	TarStreamer
 
+	// TarStreamFrom returns a tar archive stream for all the layer chain with
+	// arbitrary depth.
+	TarStreamFrom(ChainID) (io.ReadCloser, error)
+
 	// ChainID returns the content hash of the entire layer chain. The hash
 	// chain is made up of DiffID of top layer and all of its parents.
 	ChainID() ChainID

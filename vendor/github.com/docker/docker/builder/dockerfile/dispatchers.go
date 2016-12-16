@@ -18,6 +18,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/builder"
@@ -70,14 +71,20 @@ func env(b *Builder, args []string, attributes map[string]bool, original string)
 		if len(args[j]) == 0 {
 			return errBlankCommandNames("ENV")
 		}
-
 		newVar := args[j] + "=" + args[j+1] + ""
 		commitStr += " " + newVar
 
 		gotOne := false
 		for i, envVar := range b.runConfig.Env {
 			envParts := strings.SplitN(envVar, "=", 2)
-			if envParts[0] == args[j] {
+			compareFrom := envParts[0]
+			compareTo := args[j]
+			if runtime.GOOS == "windows" {
+				// Case insensitive environment variables on Windows
+				compareFrom = strings.ToUpper(compareFrom)
+				compareTo = strings.ToUpper(compareTo)
+			}
+			if compareFrom == compareTo {
 				b.runConfig.Env[i] = newVar
 				gotOne = true
 				break
@@ -221,6 +228,7 @@ func from(b *Builder, args []string, attributes map[string]bool, original string
 			}
 		}
 	}
+	b.from = image
 
 	return b.processImageFrom(image)
 }
@@ -278,12 +286,37 @@ func workdir(b *Builder, args []string, attributes map[string]bool, original str
 		return err
 	}
 
-	// NOTE: You won't find the "mkdir" for the directory in here. Rather we
-	// just set the value in the image's runConfig.WorkingDir property
-	// and container.SetupWorkingDirectory() will create it automatically
-	// for us the next time the image is used to create a container.
+	// For performance reasons, we explicitly do a create/mkdir now
+	// This avoids having an unnecessary expensive mount/unmount calls
+	// (on Windows in particular) during each container create.
+	// Prior to 1.13, the mkdir was deferred and not executed at this step.
+	if b.disableCommit {
+		// Don't call back into the daemon if we're going through docker commit --change "WORKDIR /foo".
+		// We've already updated the runConfig and that's enough.
+		return nil
+	}
+	b.runConfig.Image = b.image
 
-	return b.commit("", b.runConfig.Cmd, fmt.Sprintf("WORKDIR %v", b.runConfig.WorkingDir))
+	cmd := b.runConfig.Cmd
+	b.runConfig.Cmd = strslice.StrSlice(append(getShell(b.runConfig), fmt.Sprintf("#(nop) WORKDIR %s", b.runConfig.WorkingDir)))
+	defer func(cmd strslice.StrSlice) { b.runConfig.Cmd = cmd }(cmd)
+
+	if hit, err := b.probeCache(); err != nil {
+		return err
+	} else if hit {
+		return nil
+	}
+
+	container, err := b.docker.ContainerCreate(types.ContainerCreateConfig{Config: b.runConfig})
+	if err != nil {
+		return err
+	}
+	b.tmpContainers[container.ID] = struct{}{}
+	if err := b.docker.ContainerCreateWorkdir(container.ID); err != nil {
+		return err
+	}
+
+	return b.commit(container.ID, b.runConfig.Cmd, "WORKDIR "+b.runConfig.WorkingDir)
 }
 
 // RUN some command yo

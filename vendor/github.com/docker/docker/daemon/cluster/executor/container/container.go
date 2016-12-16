@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,12 +14,16 @@ import (
 	enginecontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	enginemount "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
+	volumetypes "github.com/docker/docker/api/types/volume"
 	clustertypes "github.com/docker/docker/daemon/cluster/provider"
 	"github.com/docker/docker/reference"
+	"github.com/docker/go-connections/nat"
 	"github.com/docker/swarmkit/agent/exec"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/protobuf/ptypes"
+	"github.com/docker/swarmkit/template"
 )
 
 const (
@@ -67,6 +72,17 @@ func (c *containerConfig) setTask(t *api.Task) error {
 	}
 
 	c.task = t
+
+	if t.Spec.GetContainer() != nil {
+		preparedSpec, err := template.ExpandContainerSpec(t)
+		if err != nil {
+			return err
+		}
+		c.task.Spec.Runtime = &api.TaskSpec_Container{
+			Container: preparedSpec,
+		}
+	}
+
 	return nil
 }
 
@@ -123,15 +139,61 @@ func (c *containerConfig) image() string {
 	return reference.WithDefaultTag(ref).String()
 }
 
+func (c *containerConfig) portBindings() nat.PortMap {
+	portBindings := nat.PortMap{}
+	if c.task.Endpoint == nil {
+		return portBindings
+	}
+
+	for _, portConfig := range c.task.Endpoint.Ports {
+		if portConfig.PublishMode != api.PublishModeHost {
+			continue
+		}
+
+		port := nat.Port(fmt.Sprintf("%d/%s", portConfig.TargetPort, strings.ToLower(portConfig.Protocol.String())))
+		binding := []nat.PortBinding{
+			{},
+		}
+
+		if portConfig.PublishedPort != 0 {
+			binding[0].HostPort = strconv.Itoa(int(portConfig.PublishedPort))
+		}
+		portBindings[port] = binding
+	}
+
+	return portBindings
+}
+
+func (c *containerConfig) exposedPorts() map[nat.Port]struct{} {
+	exposedPorts := make(map[nat.Port]struct{})
+	if c.task.Endpoint == nil {
+		return exposedPorts
+	}
+
+	for _, portConfig := range c.task.Endpoint.Ports {
+		if portConfig.PublishMode != api.PublishModeHost {
+			continue
+		}
+
+		port := nat.Port(fmt.Sprintf("%d/%s", portConfig.TargetPort, strings.ToLower(portConfig.Protocol.String())))
+		exposedPorts[port] = struct{}{}
+	}
+
+	return exposedPorts
+}
+
 func (c *containerConfig) config() *enginecontainer.Config {
 	config := &enginecontainer.Config{
-		Labels:      c.labels(),
-		User:        c.spec().User,
-		Env:         c.spec().Env,
-		WorkingDir:  c.spec().Dir,
-		Image:       c.image(),
-		Volumes:     c.volumes(),
-		Healthcheck: c.healthcheck(),
+		Labels:       c.labels(),
+		Tty:          c.spec().TTY,
+		OpenStdin:    c.spec().OpenStdin,
+		User:         c.spec().User,
+		Env:          c.spec().Env,
+		Hostname:     c.spec().Hostname,
+		WorkingDir:   c.spec().Dir,
+		Image:        c.image(),
+		ExposedPorts: c.exposedPorts(),
+		Healthcheck:  c.healthcheck(),
 	}
 
 	if len(c.spec().Command) > 0 {
@@ -181,49 +243,79 @@ func (c *containerConfig) labels() map[string]string {
 	return labels
 }
 
-// volumes gets placed into the Volumes field on the containerConfig.
-func (c *containerConfig) volumes() map[string]struct{} {
-	r := make(map[string]struct{})
-	// Volumes *only* creates anonymous volumes. The rest is mixed in with
-	// binds, which aren't actually binds. Basically, any volume that
-	// results in a single component must be added here.
-	//
-	// This is reversed engineered from the behavior of the engine API.
+func (c *containerConfig) mounts() []enginemount.Mount {
+	var r []enginemount.Mount
 	for _, mount := range c.spec().Mounts {
-		if mount.Type == api.MountTypeVolume && mount.Source == "" {
-			r[mount.Target] = struct{}{}
-		}
+		r = append(r, convertMount(mount))
 	}
 	return r
 }
 
-func (c *containerConfig) tmpfs() map[string]string {
-	r := make(map[string]string)
-
-	for _, spec := range c.spec().Mounts {
-		if spec.Type != api.MountTypeTmpfs {
-			continue
-		}
-
-		r[spec.Target] = getMountMask(&spec)
+func convertMount(m api.Mount) enginemount.Mount {
+	mount := enginemount.Mount{
+		Source:   m.Source,
+		Target:   m.Target,
+		ReadOnly: m.ReadOnly,
 	}
 
-	return r
-}
+	switch m.Type {
+	case api.MountTypeBind:
+		mount.Type = enginemount.TypeBind
+	case api.MountTypeVolume:
+		mount.Type = enginemount.TypeVolume
+	case api.MountTypeTmpfs:
+		mount.Type = enginemount.TypeTmpfs
+	}
 
-func (c *containerConfig) binds() []string {
-	var r []string
-	for _, mount := range c.spec().Mounts {
-		if mount.Type == api.MountTypeBind || (mount.Type == api.MountTypeVolume && mount.Source != "") {
-			spec := fmt.Sprintf("%s:%s", mount.Source, mount.Target)
-			mask := getMountMask(&mount)
-			if mask != "" {
-				spec = fmt.Sprintf("%s:%s", spec, mask)
+	if m.BindOptions != nil {
+		mount.BindOptions = &enginemount.BindOptions{}
+		switch m.BindOptions.Propagation {
+		case api.MountPropagationRPrivate:
+			mount.BindOptions.Propagation = enginemount.PropagationRPrivate
+		case api.MountPropagationPrivate:
+			mount.BindOptions.Propagation = enginemount.PropagationPrivate
+		case api.MountPropagationRSlave:
+			mount.BindOptions.Propagation = enginemount.PropagationRSlave
+		case api.MountPropagationSlave:
+			mount.BindOptions.Propagation = enginemount.PropagationSlave
+		case api.MountPropagationRShared:
+			mount.BindOptions.Propagation = enginemount.PropagationRShared
+		case api.MountPropagationShared:
+			mount.BindOptions.Propagation = enginemount.PropagationShared
+		}
+	}
+
+	if m.VolumeOptions != nil {
+		mount.VolumeOptions = &enginemount.VolumeOptions{
+			NoCopy: m.VolumeOptions.NoCopy,
+		}
+		if m.VolumeOptions.Labels != nil {
+			mount.VolumeOptions.Labels = make(map[string]string, len(m.VolumeOptions.Labels))
+			for k, v := range m.VolumeOptions.Labels {
+				mount.VolumeOptions.Labels[k] = v
 			}
-			r = append(r, spec)
+		}
+		if m.VolumeOptions.DriverConfig != nil {
+			mount.VolumeOptions.DriverConfig = &enginemount.Driver{
+				Name: m.VolumeOptions.DriverConfig.Name,
+			}
+			if m.VolumeOptions.DriverConfig.Options != nil {
+				mount.VolumeOptions.DriverConfig.Options = make(map[string]string, len(m.VolumeOptions.DriverConfig.Options))
+				for k, v := range m.VolumeOptions.DriverConfig.Options {
+					mount.VolumeOptions.DriverConfig.Options[k] = v
+				}
+			}
 		}
 	}
-	return r
+
+	if m.TmpfsOptions != nil {
+		mount.TmpfsOptions = &enginemount.TmpfsOptions{
+			SizeBytes: m.TmpfsOptions.SizeBytes,
+			Mode:      m.TmpfsOptions.Mode,
+		}
+	}
+
+	return mount
 }
 
 func (c *containerConfig) healthcheck() *enginecontainer.HealthConfig {
@@ -241,87 +333,32 @@ func (c *containerConfig) healthcheck() *enginecontainer.HealthConfig {
 	}
 }
 
-func getMountMask(m *api.Mount) string {
-	var maskOpts []string
-	if m.ReadOnly {
-		maskOpts = append(maskOpts, "ro")
-	}
-
-	switch m.Type {
-	case api.MountTypeVolume:
-		if m.VolumeOptions != nil && m.VolumeOptions.NoCopy {
-			maskOpts = append(maskOpts, "nocopy")
-		}
-	case api.MountTypeBind:
-		if m.BindOptions == nil {
-			break
-		}
-
-		switch m.BindOptions.Propagation {
-		case api.MountPropagationPrivate:
-			maskOpts = append(maskOpts, "private")
-		case api.MountPropagationRPrivate:
-			maskOpts = append(maskOpts, "rprivate")
-		case api.MountPropagationShared:
-			maskOpts = append(maskOpts, "shared")
-		case api.MountPropagationRShared:
-			maskOpts = append(maskOpts, "rshared")
-		case api.MountPropagationSlave:
-			maskOpts = append(maskOpts, "slave")
-		case api.MountPropagationRSlave:
-			maskOpts = append(maskOpts, "rslave")
-		}
-	case api.MountTypeTmpfs:
-		if m.TmpfsOptions == nil {
-			break
-		}
-
-		if m.TmpfsOptions.Mode != 0 {
-			maskOpts = append(maskOpts, fmt.Sprintf("mode=%o", m.TmpfsOptions.Mode))
-		}
-
-		if m.TmpfsOptions.SizeBytes != 0 {
-			// calculate suffix here, making this linux specific, but that is
-			// okay, since API is that way anyways.
-
-			// we do this by finding the suffix that divides evenly into the
-			// value, returing the value itself, with no suffix, if it fails.
-			//
-			// For the most part, we don't enforce any semantic to this values.
-			// The operating system will usually align this and enforce minimum
-			// and maximums.
-			var (
-				size   = m.TmpfsOptions.SizeBytes
-				suffix string
-			)
-			for _, r := range []struct {
-				suffix  string
-				divisor int64
-			}{
-				{"g", 1 << 30},
-				{"m", 1 << 20},
-				{"k", 1 << 10},
-			} {
-				if size%r.divisor == 0 {
-					size = size / r.divisor
-					suffix = r.suffix
-					break
-				}
-			}
-
-			maskOpts = append(maskOpts, fmt.Sprintf("size=%d%s", size, suffix))
-		}
-	}
-
-	return strings.Join(maskOpts, ",")
-}
-
 func (c *containerConfig) hostConfig() *enginecontainer.HostConfig {
 	hc := &enginecontainer.HostConfig{
-		Resources: c.resources(),
-		Binds:     c.binds(),
-		Tmpfs:     c.tmpfs(),
-		GroupAdd:  c.spec().Groups,
+		Resources:    c.resources(),
+		GroupAdd:     c.spec().Groups,
+		PortBindings: c.portBindings(),
+		Mounts:       c.mounts(),
+	}
+
+	if c.spec().DNSConfig != nil {
+		hc.DNS = c.spec().DNSConfig.Nameservers
+		hc.DNSSearch = c.spec().DNSConfig.Search
+		hc.DNSOptions = c.spec().DNSConfig.Options
+	}
+
+	// The format of extra hosts on swarmkit is specified in:
+	// http://man7.org/linux/man-pages/man5/hosts.5.html
+	//    IP_address canonical_hostname [aliases...]
+	// However, the format of ExtraHosts in HostConfig is
+	//    <host>:<ip>
+	// We need to do the conversion here
+	// (Alias is ignored for now)
+	for _, entry := range c.spec().Hosts {
+		parts := strings.Fields(entry)
+		if len(parts) > 1 {
+			hc.ExtraHosts = append(hc.ExtraHosts, fmt.Sprintf("%s:%s", parts[1], parts[0]))
+		}
 	}
 
 	if c.task.LogDriver != nil {
@@ -335,7 +372,7 @@ func (c *containerConfig) hostConfig() *enginecontainer.HostConfig {
 }
 
 // This handles the case of volumes that are defined inside a service Mount
-func (c *containerConfig) volumeCreateRequest(mount *api.Mount) *types.VolumeCreateRequest {
+func (c *containerConfig) volumeCreateRequest(mount *api.Mount) *volumetypes.VolumesCreateBody {
 	var (
 		driverName string
 		driverOpts map[string]string
@@ -349,7 +386,7 @@ func (c *containerConfig) volumeCreateRequest(mount *api.Mount) *types.VolumeCre
 	}
 
 	if mount.VolumeOptions != nil {
-		return &types.VolumeCreateRequest{
+		return &volumetypes.VolumesCreateBody{
 			Name:       mount.Source,
 			Driver:     driverName,
 			DriverOpts: driverOpts,
@@ -490,6 +527,10 @@ func (c *containerConfig) serviceConfig() *clustertypes.ServiceConfig {
 
 	if c.task.Endpoint != nil {
 		for _, ePort := range c.task.Endpoint.Ports {
+			if ePort.PublishMode != api.PublishModeIngress {
+				continue
+			}
+
 			svcCfg.ExposedPorts = append(svcCfg.ExposedPorts, &clustertypes.PortConfig{
 				Name:          ePort.Name,
 				Protocol:      int32(ePort.Protocol),
@@ -530,6 +571,7 @@ func (c *containerConfig) networkCreateRequest(name string) (clustertypes.Networ
 		Options:        na.Network.DriverState.Options,
 		Labels:         na.Network.Spec.Annotations.Labels,
 		Internal:       na.Network.Spec.Internal,
+		Attachable:     na.Network.Spec.Attachable,
 		EnableIPv6:     na.Network.Spec.Ipv6Enabled,
 		CheckDuplicate: true,
 	}

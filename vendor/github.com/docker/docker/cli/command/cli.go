@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"github.com/docker/docker/api"
+	"github.com/docker/docker/api/types/versions"
 	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/cliconfig/configfile"
@@ -19,6 +20,7 @@ import (
 	dopts "github.com/docker/docker/opts"
 	"github.com/docker/go-connections/sockets"
 	"github.com/docker/go-connections/tlsconfig"
+	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
 
@@ -38,21 +40,18 @@ type DockerCli struct {
 	err             io.Writer
 	keyFile         string
 	client          client.APIClient
-	hasExperimental *bool
+	hasExperimental bool
+	defaultVersion  string
 }
 
-// HasExperimental returns true if experimental features are accessible
+// HasExperimental returns true if experimental features are accessible.
 func (cli *DockerCli) HasExperimental() bool {
-	if cli.hasExperimental == nil {
-		if cli.client == nil {
-			cli.Initialize(cliflags.NewClientOptions())
-		}
-		enabled := false
-		cli.hasExperimental = &enabled
-		enabled, _ = cli.client.Ping(context.Background())
-	}
+	return cli.hasExperimental
+}
 
-	return *cli.hasExperimental
+// DefaultVersion returns api.defaultVersion of DOCKER_API_VERSION if specified.
+func (cli *DockerCli) DefaultVersion() string {
+	return cli.defaultVersion
 }
 
 // Client returns the APIClient
@@ -73,6 +72,13 @@ func (cli *DockerCli) Err() io.Writer {
 // In returns the reader used for stdin
 func (cli *DockerCli) In() *InStream {
 	return cli.in
+}
+
+// ShowHelp shows the command help.
+func (cli *DockerCli) ShowHelp(cmd *cobra.Command, args []string) error {
+	cmd.SetOutput(cli.err)
+	cmd.HelpFunc()(cmd, args)
+	return nil
 }
 
 // ConfigFile returns the ConfigFile
@@ -99,12 +105,28 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	if err != nil {
 		return err
 	}
+
+	cli.defaultVersion = cli.client.ClientVersion()
+
 	if opts.Common.TrustKey == "" {
 		cli.keyFile = filepath.Join(cliconfig.ConfigDir(), cliflags.DefaultTrustKeyFile)
 	} else {
 		cli.keyFile = opts.Common.TrustKey
 	}
 
+	if ping, err := cli.client.Ping(context.Background()); err == nil {
+		cli.hasExperimental = ping.Experimental
+
+		// since the new header was added in 1.25, assume server is 1.24 if header is not present.
+		if ping.APIVersion == "" {
+			ping.APIVersion = "1.24"
+		}
+
+		// if server version is lower than the current cli, downgrade
+		if versions.LessThan(ping.APIVersion, cli.client.ClientVersion()) {
+			cli.client.UpdateClientVersion(ping.APIVersion)
+		}
+	}
 	return nil
 }
 

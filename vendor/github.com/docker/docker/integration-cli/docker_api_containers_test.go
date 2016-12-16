@@ -574,7 +574,7 @@ func (s *DockerSuite) TestContainerAPICreateWithHostName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -597,7 +597,7 @@ func (s *DockerSuite) TestContainerAPICreateWithDomainName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -632,7 +632,7 @@ func UtilCreateNetworkMode(c *check.C, networkMode string) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -657,7 +657,7 @@ func (s *DockerSuite) TestContainerAPICreateWithCpuSharesCpuset(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -728,7 +728,7 @@ func (s *DockerSuite) TestContainerAPIInvalidPortSyntax(c *check.C) {
 	c.Assert(string(b[:]), checker.Contains, "invalid port")
 }
 
-func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyName(c *check.C) {
+func (s *DockerSuite) TestContainerAPIRestartPolicyInvalidPolicyName(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -748,7 +748,7 @@ func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyName(c *check.C) {
 	c.Assert(string(b[:]), checker.Contains, "invalid restart policy")
 }
 
-func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyRetryMismatch(c *check.C) {
+func (s *DockerSuite) TestContainerAPIRestartPolicyRetryMismatch(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -765,10 +765,10 @@ func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyRetryMismatch(c *check
 
 	b, err := readBody(body)
 	c.Assert(err, checker.IsNil)
-	c.Assert(string(b[:]), checker.Contains, "maximum restart count not valid with restart policy")
+	c.Assert(string(b[:]), checker.Contains, "maximum retry count cannot be used with restart policy")
 }
 
-func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyPositiveRetryCount(c *check.C) {
+func (s *DockerSuite) TestContainerAPIRestartPolicyNegativeRetryCount(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -785,7 +785,23 @@ func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyPositiveRetryCount(c *
 
 	b, err := readBody(body)
 	c.Assert(err, checker.IsNil)
-	c.Assert(string(b[:]), checker.Contains, "maximum restart count must be a positive integer")
+	c.Assert(string(b[:]), checker.Contains, "maximum retry count cannot be negative")
+}
+
+func (s *DockerSuite) TestContainerAPIRestartPolicyDefaultRetryCount(c *check.C) {
+	config := `{
+		"Image": "busybox",
+		"HostConfig": {
+			"RestartPolicy": {
+				"Name": "on-failure",
+				"MaximumRetryCount": 0
+			}
+		}
+	}`
+
+	res, _, err := sockRequestRaw("POST", "/containers/create", strings.NewReader(config), "application/json")
+	c.Assert(err, checker.IsNil)
+	c.Assert(res.StatusCode, checker.Equals, http.StatusCreated)
 }
 
 // Issue 7941 - test to make sure a "null" in JSON is just ignored.
@@ -957,9 +973,9 @@ func (s *DockerSuite) TestContainerAPIWait(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusOK)
 	c.Assert(waitInspect(name, "{{ .State.Running  }}", "false", 60*time.Second), checker.IsNil)
 
-	var waitres types.ContainerWaitResponse
+	var waitres containertypes.ContainerWaitOKBody
 	c.Assert(json.Unmarshal(body, &waitres), checker.IsNil)
-	c.Assert(waitres.StatusCode, checker.Equals, 0)
+	c.Assert(waitres.StatusCode, checker.Equals, int64(0))
 }
 
 func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
@@ -976,7 +992,7 @@ func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
-
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -1006,6 +1022,7 @@ func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy-resource-empty"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -1020,6 +1037,7 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy-resource-not-found"
 	dockerCmd(c, "run", "--name", name, "busybox")
 
@@ -1034,6 +1052,7 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C)
 }
 
 func (s *DockerSuite) TestContainerAPICopyContainerNotFoundPr124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	postData := types.CopyConfig{
 		Resource: "/something",
 	}
@@ -1245,6 +1264,7 @@ func (s *DockerSuite) TestPostContainersCreateWithStringOrSliceCapAddDrop(c *che
 
 // #14915
 func (s *DockerSuite) TestContainerAPICreateNoHostConfig118(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only support 1.25 or later
 	config := struct {
 		Image string
 	}{"busybox"}
@@ -1349,7 +1369,7 @@ func (s *DockerSuite) TestPostContainersCreateShmSizeHostConfigOmitted(c *check.
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1381,7 +1401,7 @@ func (s *DockerSuite) TestPostContainersCreateShmSizeOmitted(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1413,7 +1433,7 @@ func (s *DockerSuite) TestPostContainersCreateWithShmSize(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1443,7 +1463,7 @@ func (s *DockerSuite) TestPostContainersCreateMemorySwappinessHostConfigOmitted(
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)

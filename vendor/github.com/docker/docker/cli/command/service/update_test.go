@@ -120,20 +120,84 @@ func TestUpdateGroups(t *testing.T) {
 	assert.Equal(t, groups[2], "wheel")
 }
 
+func TestUpdateDNSConfig(t *testing.T) {
+	flags := newUpdateCommand(nil).Flags()
+
+	// IPv4, with duplicates
+	flags.Set("dns-add", "1.1.1.1")
+	flags.Set("dns-add", "1.1.1.1")
+	flags.Set("dns-add", "2.2.2.2")
+	flags.Set("dns-rm", "3.3.3.3")
+	flags.Set("dns-rm", "2.2.2.2")
+	// IPv6
+	flags.Set("dns-add", "2001:db8:abc8::1")
+	// Invalid dns record
+	assert.Error(t, flags.Set("dns-add", "x.y.z.w"), "x.y.z.w is not an ip address")
+
+	// domains with duplicates
+	flags.Set("dns-search-add", "example.com")
+	flags.Set("dns-search-add", "example.com")
+	flags.Set("dns-search-add", "example.org")
+	flags.Set("dns-search-rm", "example.org")
+	// Invalid dns search domain
+	assert.Error(t, flags.Set("dns-search-add", "example$com"), "example$com is not a valid domain")
+
+	flags.Set("dns-option-add", "ndots:9")
+	flags.Set("dns-option-rm", "timeout:3")
+
+	config := &swarm.DNSConfig{
+		Nameservers: []string{"3.3.3.3", "5.5.5.5"},
+		Search:      []string{"localdomain"},
+		Options:     []string{"timeout:3"},
+	}
+
+	updateDNSConfig(flags, &config)
+
+	assert.Equal(t, len(config.Nameservers), 3)
+	assert.Equal(t, config.Nameservers[0], "1.1.1.1")
+	assert.Equal(t, config.Nameservers[1], "2001:db8:abc8::1")
+	assert.Equal(t, config.Nameservers[2], "5.5.5.5")
+
+	assert.Equal(t, len(config.Search), 2)
+	assert.Equal(t, config.Search[0], "example.com")
+	assert.Equal(t, config.Search[1], "localdomain")
+
+	assert.Equal(t, len(config.Options), 1)
+	assert.Equal(t, config.Options[0], "ndots:9")
+}
+
 func TestUpdateMounts(t *testing.T) {
 	flags := newUpdateCommand(nil).Flags()
-	flags.Set("mount-add", "type=volume,target=/toadd")
+	flags.Set("mount-add", "type=volume,source=vol2,target=/toadd")
 	flags.Set("mount-rm", "/toremove")
 
 	mounts := []mounttypes.Mount{
-		{Target: "/toremove", Type: mounttypes.TypeBind},
-		{Target: "/tokeep", Type: mounttypes.TypeBind},
+		{Target: "/toremove", Source: "vol1", Type: mounttypes.TypeBind},
+		{Target: "/tokeep", Source: "vol3", Type: mounttypes.TypeBind},
 	}
 
 	updateMounts(flags, &mounts)
 	assert.Equal(t, len(mounts), 2)
-	assert.Equal(t, mounts[0].Target, "/tokeep")
-	assert.Equal(t, mounts[1].Target, "/toadd")
+	assert.Equal(t, mounts[0].Target, "/toadd")
+	assert.Equal(t, mounts[1].Target, "/tokeep")
+
+}
+
+func TestUpdateMountsWithDuplicateMounts(t *testing.T) {
+	flags := newUpdateCommand(nil).Flags()
+	flags.Set("mount-add", "type=volume,source=vol4,target=/toadd")
+
+	mounts := []mounttypes.Mount{
+		{Target: "/tokeep1", Source: "vol1", Type: mounttypes.TypeBind},
+		{Target: "/toadd", Source: "vol2", Type: mounttypes.TypeBind},
+		{Target: "/tokeep2", Source: "vol3", Type: mounttypes.TypeBind},
+	}
+
+	updateMounts(flags, &mounts)
+	assert.Equal(t, len(mounts), 3)
+	assert.Equal(t, mounts[0].Target, "/tokeep1")
+	assert.Equal(t, mounts[1].Target, "/tokeep2")
+	assert.Equal(t, mounts[2].Target, "/toadd")
 }
 
 func TestUpdatePorts(t *testing.T) {
@@ -174,7 +238,7 @@ func TestUpdatePortsDuplicateEntries(t *testing.T) {
 func TestUpdatePortsDuplicateKeys(t *testing.T) {
 	// Test case for #25375
 	flags := newUpdateCommand(nil).Flags()
-	flags.Set("publish-add", "80:20")
+	flags.Set("publish-add", "80:80")
 
 	portConfigs := []swarm.PortConfig{
 		{TargetPort: 80, PublishedPort: 80},
@@ -183,21 +247,7 @@ func TestUpdatePortsDuplicateKeys(t *testing.T) {
 	err := updatePorts(flags, &portConfigs)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(portConfigs), 1)
-	assert.Equal(t, portConfigs[0].TargetPort, uint32(20))
-}
-
-func TestUpdatePortsConflictingFlags(t *testing.T) {
-	// Test case for #25375
-	flags := newUpdateCommand(nil).Flags()
-	flags.Set("publish-add", "80:80")
-	flags.Set("publish-add", "80:20")
-
-	portConfigs := []swarm.PortConfig{
-		{TargetPort: 80, PublishedPort: 80},
-	}
-
-	err := updatePorts(flags, &portConfigs)
-	assert.Error(t, err, "conflicting port mapping")
+	assert.Equal(t, portConfigs[0].TargetPort, uint32(80))
 }
 
 func TestUpdateHealthcheckTable(t *testing.T) {
@@ -274,4 +324,24 @@ func TestUpdateHealthcheckTable(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestUpdateHosts(t *testing.T) {
+	flags := newUpdateCommand(nil).Flags()
+	flags.Set("host-add", "example.net:2.2.2.2")
+	flags.Set("host-add", "ipv6.net:2001:db8:abc8::1")
+	// remove with ipv6 should work
+	flags.Set("host-rm", "example.net:2001:db8:abc8::1")
+	// just hostname should work as well
+	flags.Set("host-rm", "example.net")
+	// bad format error
+	assert.Error(t, flags.Set("host-add", "$example.com$"), "bad format for add-host:")
+
+	hosts := []string{"1.2.3.4 example.com", "4.3.2.1 example.org", "2001:db8:abc8::1 example.net"}
+
+	updateHosts(flags, &hosts)
+	assert.Equal(t, len(hosts), 3)
+	assert.Equal(t, hosts[0], "1.2.3.4 example.com")
+	assert.Equal(t, hosts[1], "2001:db8:abc8::1 ipv6.net")
+	assert.Equal(t, hosts[2], "4.3.2.1 example.org")
 }

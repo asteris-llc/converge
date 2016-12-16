@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -16,9 +17,11 @@ import (
 	"github.com/docker/docker/api/server/middleware"
 	"github.com/docker/docker/api/server/router"
 	"github.com/docker/docker/api/server/router/build"
+	checkpointrouter "github.com/docker/docker/api/server/router/checkpoint"
 	"github.com/docker/docker/api/server/router/container"
 	"github.com/docker/docker/api/server/router/image"
 	"github.com/docker/docker/api/server/router/network"
+	pluginrouter "github.com/docker/docker/api/server/router/plugin"
 	swarmrouter "github.com/docker/docker/api/server/router/swarm"
 	systemrouter "github.com/docker/docker/api/server/router/system"
 	"github.com/docker/docker/api/server/router/volume"
@@ -35,8 +38,10 @@ import (
 	"github.com/docker/docker/pkg/jsonlog"
 	"github.com/docker/docker/pkg/listeners"
 	"github.com/docker/docker/pkg/pidfile"
+	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/signal"
 	"github.com/docker/docker/pkg/system"
+	"github.com/docker/docker/plugin"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/docker/utils"
@@ -64,10 +69,15 @@ func NewDaemonCli() *DaemonCli {
 	return &DaemonCli{}
 }
 
-func migrateKey() (err error) {
+func migrateKey(config *daemon.Config) (err error) {
+	// No migration necessary on Windows
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+
 	// Migrate trust key if exists at ~/.docker/key.json and owned by current user
 	oldPath := filepath.Join(cliconfig.ConfigDir(), cliflags.DefaultTrustKeyFile)
-	newPath := filepath.Join(getDaemonConfDir(), cliflags.DefaultTrustKeyFile)
+	newPath := filepath.Join(getDaemonConfDir(config.Root), cliflags.DefaultTrustKeyFile)
 	if _, statErr := os.Stat(newPath); os.IsNotExist(statErr) && currentUserIsOwner(oldPath) {
 		defer func() {
 			// Ensure old path is removed if no error occurred
@@ -79,7 +89,7 @@ func migrateKey() (err error) {
 			}
 		}()
 
-		if err := system.MkdirAll(getDaemonConfDir(), os.FileMode(0644)); err != nil {
+		if err := system.MkdirAll(getDaemonConfDir(config.Root), os.FileMode(0644)); err != nil {
 			return fmt.Errorf("Unable to create daemon configuration directory: %s", err)
 		}
 
@@ -114,16 +124,17 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 
 	opts.common.SetDefaultOptions(opts.flags)
 
-	if opts.common.TrustKey == "" {
-		opts.common.TrustKey = filepath.Join(
-			getDaemonConfDir(),
-			cliflags.DefaultTrustKeyFile)
-	}
 	if cli.Config, err = loadDaemonCliConfig(opts); err != nil {
 		return err
 	}
 	cli.configFile = &opts.configFile
 	cli.flags = opts.flags
+
+	if opts.common.TrustKey == "" {
+		opts.common.TrustKey = filepath.Join(
+			getDaemonConfDir(cli.Config.Root),
+			cliflags.DefaultTrustKeyFile)
+	}
 
 	if cli.Config.Debug {
 		utils.EnableDebug()
@@ -146,6 +157,12 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		if err := logger.ValidateLogOpts(cli.LogConfig.Type, cli.LogConfig.Config); err != nil {
 			return fmt.Errorf("Failed to set log opts: %v", err)
 		}
+	}
+
+	// Create the daemon root before we create ANY other files (PID, or migrate keys)
+	// to ensure the appropriate ACL is set (particularly relevant on Windows)
+	if err := daemon.CreateDaemonRoot(cli.Config); err != nil {
+		return err
 	}
 
 	if cli.Pidfile != "" {
@@ -227,9 +244,10 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 		api.Accept(addr, ls...)
 	}
 
-	if err := migrateKey(); err != nil {
+	if err := migrateKey(cli.Config); err != nil {
 		return err
 	}
+
 	// FIXME: why is this down here instead of with the other TrustKey logic above?
 	cli.TrustKeyPath = opts.common.TrustKey
 
@@ -287,7 +305,9 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 	cli.d = d
 
 	// initMiddlewares needs cli.d to be populated. Dont change this init order.
-	cli.initMiddlewares(api, serverConfig)
+	if err := cli.initMiddlewares(api, serverConfig); err != nil {
+		logrus.Fatalf("Error creating middlewares: %v", err)
+	}
 	d.SetCluster(c)
 	initRouter(api, d, c)
 
@@ -318,7 +338,11 @@ func (cli *DaemonCli) start(opts daemonOptions) (err error) {
 func (cli *DaemonCli) reloadConfig() {
 	reload := func(config *daemon.Config) {
 
-		// Reload the authorization plugin
+		// Revalidate and reload the authorization plugins
+		if err := validateAuthzPlugins(config.AuthorizationPlugins, cli.d.PluginStore); err != nil {
+			logrus.Fatalf("Error validating authorization plugin: %v", err)
+			return
+		}
 		cli.authzMiddleware.SetPlugins(config.AuthorizationPlugins)
 
 		if err := cli.d.Reload(config); err != nil {
@@ -438,28 +462,36 @@ func loadDaemonCliConfig(opts daemonOptions) (*daemon.Config, error) {
 func initRouter(s *apiserver.Server, d *daemon.Daemon, c *cluster.Cluster) {
 	decoder := runconfig.ContainerDecoder{}
 
-	routers := []router.Router{}
-
-	// we need to add the checkpoint router before the container router or the DELETE gets masked
-	routers = addExperimentalRouters(routers, d, decoder)
-
-	routers = append(routers, []router.Router{
+	routers := []router.Router{
+		// we need to add the checkpoint router before the container router or the DELETE gets masked
+		checkpointrouter.NewRouter(d, decoder),
 		container.NewRouter(d, decoder),
 		image.NewRouter(d, decoder),
 		systemrouter.NewRouter(d, c),
 		volume.NewRouter(d),
 		build.NewRouter(dockerfile.NewBuildManager(d)),
 		swarmrouter.NewRouter(c),
-	}...)
+		pluginrouter.NewRouter(plugin.GetManager()),
+	}
 
 	if d.NetworkControllerEnabled() {
 		routers = append(routers, network.NewRouter(d, c))
 	}
 
+	if d.HasExperimental() {
+		for _, r := range routers {
+			for _, route := range r.Routes() {
+				if experimental, ok := route.(router.ExperimentalRoute); ok {
+					experimental.Enable()
+				}
+			}
+		}
+	}
+
 	s.InitRouter(utils.IsDebugEnabled(), routers...)
 }
 
-func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config) {
+func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config) error {
 	v := cfg.Version
 
 	exp := middleware.NewExperimentalMiddleware(cli.d.HasExperimental())
@@ -473,9 +505,21 @@ func (cli *DaemonCli) initMiddlewares(s *apiserver.Server, cfg *apiserver.Config
 		s.UseMiddleware(c)
 	}
 
-	u := middleware.NewUserAgentMiddleware(v)
-	s.UseMiddleware(u)
-
+	if err := validateAuthzPlugins(cli.Config.AuthorizationPlugins, cli.d.PluginStore); err != nil {
+		return fmt.Errorf("Error validating authorization plugin: %v", err)
+	}
 	cli.authzMiddleware = authorization.NewMiddleware(cli.Config.AuthorizationPlugins, cli.d.PluginStore)
 	s.UseMiddleware(cli.authzMiddleware)
+	return nil
+}
+
+// validates that the plugins requested with the --authorization-plugin flag are valid AuthzDriver
+// plugins present on the host and available to the daemon
+func validateAuthzPlugins(requestedPlugins []string, pg plugingetter.PluginGetter) error {
+	for _, reqPlugin := range requestedPlugins {
+		if _, err := pg.Get(reqPlugin, authorization.AuthZApiImplements, plugingetter.LOOKUP); err != nil {
+			return err
+		}
+	}
+	return nil
 }

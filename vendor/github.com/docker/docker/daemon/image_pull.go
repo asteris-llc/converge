@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	dist "github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/builder"
@@ -32,7 +33,7 @@ func (daemon *Daemon) PullImage(ctx context.Context, image, tag string, metaHead
 		var dgst digest.Digest
 		dgst, err = digest.ParseDigest(tag)
 		if err == nil {
-			ref, err = reference.WithDigest(ref, dgst)
+			ref, err = reference.WithDigest(reference.TrimNamed(ref), dgst)
 		} else {
 			ref, err = reference.WithTag(ref, tag)
 		}
@@ -103,4 +104,42 @@ func (daemon *Daemon) pullImageWithReference(ctx context.Context, ref reference.
 	close(progressChan)
 	<-writesDone
 	return err
+}
+
+// GetRepository returns a repository from the registry.
+func (daemon *Daemon) GetRepository(ctx context.Context, ref reference.NamedTagged, authConfig *types.AuthConfig) (dist.Repository, bool, error) {
+	// get repository info
+	repoInfo, err := daemon.RegistryService.ResolveRepository(ref)
+	if err != nil {
+		return nil, false, err
+	}
+	// makes sure name is not empty or `scratch`
+	if err := distribution.ValidateRepoName(repoInfo.Name()); err != nil {
+		return nil, false, err
+	}
+
+	// get endpoints
+	endpoints, err := daemon.RegistryService.LookupPullEndpoints(repoInfo.Hostname())
+	if err != nil {
+		return nil, false, err
+	}
+
+	// retrieve repository
+	var (
+		confirmedV2 bool
+		repository  dist.Repository
+		lastError   error
+	)
+
+	for _, endpoint := range endpoints {
+		if endpoint.Version == registry.APIVersion1 {
+			continue
+		}
+
+		repository, confirmedV2, lastError = distribution.NewV2Repository(ctx, repoInfo, endpoint, nil, authConfig, "pull")
+		if lastError == nil && confirmedV2 {
+			break
+		}
+	}
+	return repository, confirmedV2, lastError
 }

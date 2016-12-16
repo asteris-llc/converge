@@ -59,6 +59,7 @@ type buildOptions struct {
 	compress       bool
 	securityOpt    []string
 	networkMode    string
+	squash         bool
 }
 
 // NewBuildCommand creates a new `docker build` command
@@ -110,6 +111,10 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 
 	command.AddTrustedFlags(flags, true)
 
+	flags.BoolVar(&options.squash, "squash", false, "Squash newly built layers into a single new layer")
+	flags.SetAnnotation("squash", "experimental", nil)
+	flags.SetAnnotation("squash", "version", []string{"1.25"})
+
 	return cmd
 }
 
@@ -132,13 +137,8 @@ func (out *lastProgressOutput) WriteProgress(prog progress.Progress) error {
 func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 
 	var (
-		buildCtx io.ReadCloser
-		err      error
-	)
-
-	specifiedContext := options.context
-
-	var (
+		buildCtx      io.ReadCloser
+		err           error
 		contextDir    string
 		tempDir       string
 		relDockerfile string
@@ -146,6 +146,7 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		buildBuff     io.Writer
 	)
 
+	specifiedContext := options.context
 	progBuff = dockerCli.Out()
 	buildBuff = dockerCli.Out()
 	if options.quiet {
@@ -305,6 +306,7 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		CacheFrom:      options.cacheFrom,
 		SecurityOpt:    options.securityOpt,
 		NetworkMode:    options.networkMode,
+		Squash:         options.squash,
 	}
 
 	response, err := dockerCli.Client().ImageBuild(ctx, body, buildOptions)

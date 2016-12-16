@@ -3,13 +3,13 @@ package service
 import (
 	"encoding/csv"
 	"fmt"
-	"math/big"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
@@ -35,38 +35,11 @@ func (m *memBytes) Set(value string) error {
 }
 
 func (m *memBytes) Type() string {
-	return "MemoryBytes"
+	return "bytes"
 }
 
 func (m *memBytes) Value() int64 {
 	return int64(*m)
-}
-
-type nanoCPUs int64
-
-func (c *nanoCPUs) String() string {
-	return big.NewRat(c.Value(), 1e9).FloatString(3)
-}
-
-func (c *nanoCPUs) Set(value string) error {
-	cpu, ok := new(big.Rat).SetString(value)
-	if !ok {
-		return fmt.Errorf("Failed to parse %v as a rational number", value)
-	}
-	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
-	if !nano.IsInt() {
-		return fmt.Errorf("value is too precise")
-	}
-	*c = nanoCPUs(nano.Num().Int64())
-	return nil
-}
-
-func (c *nanoCPUs) Type() string {
-	return "NanoCPUs"
-}
-
-func (c *nanoCPUs) Value() int64 {
-	return int64(*c)
 }
 
 // PositiveDurationOpt is an option type for time.Duration that uses a pointer.
@@ -101,9 +74,9 @@ func (d *DurationOpt) Set(s string) error {
 	return err
 }
 
-// Type returns the type of this option
+// Type returns the type of this option, which will be displayed in `--help` output
 func (d *DurationOpt) Type() string {
-	return "duration-ptr"
+	return "duration"
 }
 
 // String returns a string repr of this option
@@ -131,9 +104,9 @@ func (i *Uint64Opt) Set(s string) error {
 	return err
 }
 
-// Type returns the type of this option
+// Type returns the type of this option, which will be displayed in `--help` output
 func (i *Uint64Opt) Type() string {
-	return "uint64-ptr"
+	return "uint"
 }
 
 // String returns a string repr of this option
@@ -149,65 +122,59 @@ func (i *Uint64Opt) Value() *uint64 {
 	return i.value
 }
 
-// MountOpt is a Value type for parsing mounts
-type MountOpt struct {
-	values []mounttypes.Mount
+type floatValue float32
+
+func (f *floatValue) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 32)
+	*f = floatValue(v)
+	return err
 }
 
-// Set a new mount value
-func (m *MountOpt) Set(value string) error {
+func (f *floatValue) Type() string {
+	return "float"
+}
+
+func (f *floatValue) String() string {
+	return strconv.FormatFloat(float64(*f), 'g', -1, 32)
+}
+
+func (f *floatValue) Value() float32 {
+	return float32(*f)
+}
+
+// SecretRequestSpec is a type for requesting secrets
+type SecretRequestSpec struct {
+	source string
+	target string
+	uid    string
+	gid    string
+	mode   os.FileMode
+}
+
+// SecretOpt is a Value type for parsing secrets
+type SecretOpt struct {
+	values []*SecretRequestSpec
+}
+
+// Set a new secret value
+func (o *SecretOpt) Set(value string) error {
 	csvReader := csv.NewReader(strings.NewReader(value))
 	fields, err := csvReader.Read()
 	if err != nil {
 		return err
 	}
 
-	mount := mounttypes.Mount{}
-
-	volumeOptions := func() *mounttypes.VolumeOptions {
-		if mount.VolumeOptions == nil {
-			mount.VolumeOptions = &mounttypes.VolumeOptions{
-				Labels: make(map[string]string),
-			}
-		}
-		if mount.VolumeOptions.DriverConfig == nil {
-			mount.VolumeOptions.DriverConfig = &mounttypes.Driver{}
-		}
-		return mount.VolumeOptions
+	spec := &SecretRequestSpec{
+		source: "",
+		target: "",
+		uid:    "0",
+		gid:    "0",
+		mode:   0444,
 	}
 
-	bindOptions := func() *mounttypes.BindOptions {
-		if mount.BindOptions == nil {
-			mount.BindOptions = new(mounttypes.BindOptions)
-		}
-		return mount.BindOptions
-	}
-
-	setValueOnMap := func(target map[string]string, value string) {
-		parts := strings.SplitN(value, "=", 2)
-		if len(parts) == 1 {
-			target[value] = ""
-		} else {
-			target[parts[0]] = parts[1]
-		}
-	}
-
-	mount.Type = mounttypes.TypeVolume // default to volume mounts
-	// Set writable as the default
 	for _, field := range fields {
 		parts := strings.SplitN(field, "=", 2)
 		key := strings.ToLower(parts[0])
-
-		if len(parts) == 1 {
-			switch key {
-			case "readonly", "ro":
-				mount.ReadOnly = true
-				continue
-			case "volume-nocopy":
-				volumeOptions().NoCopy = true
-				continue
-			}
-		}
 
 		if len(parts) != 2 {
 			return fmt.Errorf("invalid field '%s' must be a key=value pair", field)
@@ -215,75 +182,56 @@ func (m *MountOpt) Set(value string) error {
 
 		value := parts[1]
 		switch key {
-		case "type":
-			mount.Type = mounttypes.Type(strings.ToLower(value))
 		case "source", "src":
-			mount.Source = value
-		case "target", "dst", "destination":
-			mount.Target = value
-		case "readonly", "ro":
-			mount.ReadOnly, err = strconv.ParseBool(value)
+			spec.source = value
+		case "target":
+			tDir, _ := filepath.Split(value)
+			if tDir != "" {
+				return fmt.Errorf("target must not have a path")
+			}
+			spec.target = value
+		case "uid":
+			spec.uid = value
+		case "gid":
+			spec.gid = value
+		case "mode":
+			m, err := strconv.ParseUint(value, 0, 32)
 			if err != nil {
-				return fmt.Errorf("invalid value for %s: %s", key, value)
+				return fmt.Errorf("invalid mode specified: %v", err)
 			}
-		case "bind-propagation":
-			bindOptions().Propagation = mounttypes.Propagation(strings.ToLower(value))
-		case "volume-nocopy":
-			volumeOptions().NoCopy, err = strconv.ParseBool(value)
-			if err != nil {
-				return fmt.Errorf("invalid value for populate: %s", value)
-			}
-		case "volume-label":
-			setValueOnMap(volumeOptions().Labels, value)
-		case "volume-driver":
-			volumeOptions().DriverConfig.Name = value
-		case "volume-opt":
-			if volumeOptions().DriverConfig.Options == nil {
-				volumeOptions().DriverConfig.Options = make(map[string]string)
-			}
-			setValueOnMap(volumeOptions().DriverConfig.Options, value)
+
+			spec.mode = os.FileMode(m)
 		default:
-			return fmt.Errorf("unexpected key '%s' in '%s'", key, field)
+			return fmt.Errorf("invalid field in secret request: %s", key)
 		}
 	}
 
-	if mount.Type == "" {
-		return fmt.Errorf("type is required")
+	if spec.source == "" {
+		return fmt.Errorf("source is required")
 	}
 
-	if mount.Target == "" {
-		return fmt.Errorf("target is required")
-	}
-
-	if mount.Type == mounttypes.TypeBind && mount.VolumeOptions != nil {
-		return fmt.Errorf("cannot mix 'volume-*' options with mount type '%s'", mounttypes.TypeBind)
-	}
-	if mount.Type == mounttypes.TypeVolume && mount.BindOptions != nil {
-		return fmt.Errorf("cannot mix 'bind-*' options with mount type '%s'", mounttypes.TypeVolume)
-	}
-
-	m.values = append(m.values, mount)
+	o.values = append(o.values, spec)
 	return nil
 }
 
 // Type returns the type of this option
-func (m *MountOpt) Type() string {
-	return "mount"
+func (o *SecretOpt) Type() string {
+	return "secret"
 }
 
 // String returns a string repr of this option
-func (m *MountOpt) String() string {
-	mounts := []string{}
-	for _, mount := range m.values {
-		repr := fmt.Sprintf("%s %s %s", mount.Type, mount.Source, mount.Target)
-		mounts = append(mounts, repr)
+func (o *SecretOpt) String() string {
+	secrets := []string{}
+	for _, secret := range o.values {
+		repr := fmt.Sprintf("%s -> %s", secret.source, secret.target)
+		secrets = append(secrets, repr)
 	}
-	return strings.Join(mounts, ", ")
+	return strings.Join(secrets, ", ")
 }
 
-// Value returns the mounts
-func (m *MountOpt) Value() []mounttypes.Mount {
-	return m.values
+// Value returns the secret requests
+func (o *SecretOpt) Value() []*SecretRequestSpec {
+	return o.values
 }
 
 type updateOptions struct {
@@ -291,13 +239,13 @@ type updateOptions struct {
 	delay           time.Duration
 	monitor         time.Duration
 	onFailure       string
-	maxFailureRatio float32
+	maxFailureRatio floatValue
 }
 
 type resourceOptions struct {
-	limitCPU      nanoCPUs
+	limitCPU      opts.NanoCPUs
 	limitMemBytes memBytes
-	resCPU        nanoCPUs
+	resCPU        opts.NanoCPUs
 	resMemBytes   memBytes
 }
 
@@ -339,26 +287,28 @@ func convertNetworks(networks []string) []swarm.NetworkAttachmentConfig {
 }
 
 type endpointOptions struct {
-	mode  string
-	ports opts.ListOpts
+	mode          string
+	publishPorts  opts.ListOpts
+	expandedPorts opts.PortOpt
 }
 
 func (e *endpointOptions) ToEndpointSpec() *swarm.EndpointSpec {
 	portConfigs := []swarm.PortConfig{}
 	// We can ignore errors because the format was already validated by ValidatePort
-	ports, portBindings, _ := nat.ParsePortSpecs(e.ports.GetAll())
+	ports, portBindings, _ := nat.ParsePortSpecs(e.publishPorts.GetAll())
 
 	for port := range ports {
-		portConfigs = append(portConfigs, convertPortToPortConfig(port, portBindings)...)
+		portConfigs = append(portConfigs, ConvertPortToPortConfig(port, portBindings)...)
 	}
 
 	return &swarm.EndpointSpec{
 		Mode:  swarm.ResolutionMode(strings.ToLower(e.mode)),
-		Ports: portConfigs,
+		Ports: append(portConfigs, e.expandedPorts.Value()...),
 	}
 }
 
-func convertPortToPortConfig(
+// ConvertPortToPortConfig converts ports to the swarm type
+func ConvertPortToPortConfig(
 	port nat.Port,
 	portBindings map[nat.Port][]nat.PortBinding,
 ) []swarm.PortConfig {
@@ -449,18 +399,38 @@ func ValidatePort(value string) (string, error) {
 	return value, err
 }
 
+// convertExtraHostsToSwarmHosts converts an array of extra hosts in cli
+//     <host>:<ip>
+// into a swarmkit host format:
+//     IP_address canonical_hostname [aliases...]
+// This assumes input value (<host>:<ip>) has already been validated
+func convertExtraHostsToSwarmHosts(extraHosts []string) []string {
+	hosts := []string{}
+	for _, extraHost := range extraHosts {
+		parts := strings.SplitN(extraHost, ":", 2)
+		hosts = append(hosts, fmt.Sprintf("%s %s", parts[1], parts[0]))
+	}
+	return hosts
+}
+
 type serviceOptions struct {
 	name            string
 	labels          opts.ListOpts
 	containerLabels opts.ListOpts
 	image           string
 	args            []string
+	hostname        string
 	env             opts.ListOpts
 	envFile         opts.ListOpts
 	workdir         string
 	user            string
-	groups          []string
-	mounts          MountOpt
+	groups          opts.ListOpts
+	tty             bool
+	mounts          opts.MountOpt
+	dns             opts.ListOpts
+	dnsSearch       opts.ListOpts
+	dnsOption       opts.ListOpts
+	hosts           opts.ListOpts
 
 	resources resourceOptions
 	stopGrace DurationOpt
@@ -469,9 +439,9 @@ type serviceOptions struct {
 	mode     string
 
 	restartPolicy restartPolicyOptions
-	constraints   []string
+	constraints   opts.ListOpts
 	update        updateOptions
-	networks      []string
+	networks      opts.ListOpts
 	endpoint      endpointOptions
 
 	registryAuth bool
@@ -479,18 +449,26 @@ type serviceOptions struct {
 	logDriver logDriverOptions
 
 	healthcheck healthCheckOptions
+	secrets     opts.SecretOpt
 }
 
 func newServiceOptions() *serviceOptions {
 	return &serviceOptions{
 		labels:          opts.NewListOpts(runconfigopts.ValidateEnv),
+		constraints:     opts.NewListOpts(nil),
 		containerLabels: opts.NewListOpts(runconfigopts.ValidateEnv),
 		env:             opts.NewListOpts(runconfigopts.ValidateEnv),
 		envFile:         opts.NewListOpts(nil),
 		endpoint: endpointOptions{
-			ports: opts.NewListOpts(ValidatePort),
+			publishPorts: opts.NewListOpts(ValidatePort),
 		},
+		groups:    opts.NewListOpts(nil),
 		logDriver: newLogDriverOptions(),
+		dns:       opts.NewListOpts(opts.ValidateIPAddress),
+		dnsOption: opts.NewListOpts(nil),
+		dnsSearch: opts.NewListOpts(opts.ValidateDNSSearch),
+		hosts:     opts.NewListOpts(runconfigopts.ValidateExtraHost),
+		networks:  opts.NewListOpts(nil),
 	}
 }
 
@@ -523,32 +501,41 @@ func (opts *serviceOptions) ToService() (swarm.ServiceSpec, error) {
 		},
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: swarm.ContainerSpec{
-				Image:           opts.image,
-				Args:            opts.args,
-				Env:             currentEnv,
-				Labels:          runconfigopts.ConvertKVStringsToMap(opts.containerLabels.GetAll()),
-				Dir:             opts.workdir,
-				User:            opts.user,
-				Groups:          opts.groups,
-				Mounts:          opts.mounts.Value(),
+				Image:    opts.image,
+				Args:     opts.args,
+				Env:      currentEnv,
+				Hostname: opts.hostname,
+				Labels:   runconfigopts.ConvertKVStringsToMap(opts.containerLabels.GetAll()),
+				Dir:      opts.workdir,
+				User:     opts.user,
+				Groups:   opts.groups.GetAll(),
+				TTY:      opts.tty,
+				Mounts:   opts.mounts.Value(),
+				DNSConfig: &swarm.DNSConfig{
+					Nameservers: opts.dns.GetAll(),
+					Search:      opts.dnsSearch.GetAll(),
+					Options:     opts.dnsOption.GetAll(),
+				},
+				Hosts:           convertExtraHostsToSwarmHosts(opts.hosts.GetAll()),
 				StopGracePeriod: opts.stopGrace.Value(),
+				Secrets:         nil,
 			},
-			Networks:      convertNetworks(opts.networks),
+			Networks:      convertNetworks(opts.networks.GetAll()),
 			Resources:     opts.resources.ToResourceRequirements(),
 			RestartPolicy: opts.restartPolicy.ToRestartPolicy(),
 			Placement: &swarm.Placement{
-				Constraints: opts.constraints,
+				Constraints: opts.constraints.GetAll(),
 			},
 			LogDriver: opts.logDriver.toLogDriver(),
 		},
-		Networks: convertNetworks(opts.networks),
+		Networks: convertNetworks(opts.networks.GetAll()),
 		Mode:     swarm.ServiceMode{},
 		UpdateConfig: &swarm.UpdateConfig{
 			Parallelism:     opts.update.parallelism,
 			Delay:           opts.update.delay,
 			Monitor:         opts.update.monitor,
 			FailureAction:   opts.update.onFailure,
-			MaxFailureRatio: opts.update.maxFailureRatio,
+			MaxFailureRatio: opts.update.maxFailureRatio.Value(),
 		},
 		EndpointSpec: opts.endpoint.ToEndpointSpec(),
 	}
@@ -583,25 +570,26 @@ func addServiceFlags(cmd *cobra.Command, opts *serviceOptions) {
 
 	flags.StringVarP(&opts.workdir, flagWorkdir, "w", "", "Working directory inside the container")
 	flags.StringVarP(&opts.user, flagUser, "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
+	flags.StringVar(&opts.hostname, flagHostname, "", "Container hostname")
 
 	flags.Var(&opts.resources.limitCPU, flagLimitCPU, "Limit CPUs")
 	flags.Var(&opts.resources.limitMemBytes, flagLimitMemory, "Limit Memory")
 	flags.Var(&opts.resources.resCPU, flagReserveCPU, "Reserve CPUs")
 	flags.Var(&opts.resources.resMemBytes, flagReserveMemory, "Reserve Memory")
-	flags.Var(&opts.stopGrace, flagStopGracePeriod, "Time to wait before force killing a container")
+	flags.Var(&opts.stopGrace, flagStopGracePeriod, "Time to wait before force killing a container (ns|us|ms|s|m|h)")
 
 	flags.Var(&opts.replicas, flagReplicas, "Number of tasks")
 
 	flags.StringVar(&opts.restartPolicy.condition, flagRestartCondition, "", "Restart when condition is met (none, on-failure, or any)")
-	flags.Var(&opts.restartPolicy.delay, flagRestartDelay, "Delay between restart attempts")
+	flags.Var(&opts.restartPolicy.delay, flagRestartDelay, "Delay between restart attempts (ns|us|ms|s|m|h)")
 	flags.Var(&opts.restartPolicy.maxAttempts, flagRestartMaxAttempts, "Maximum number of restarts before giving up")
-	flags.Var(&opts.restartPolicy.window, flagRestartWindow, "Window used to evaluate the restart policy")
+	flags.Var(&opts.restartPolicy.window, flagRestartWindow, "Window used to evaluate the restart policy (ns|us|ms|s|m|h)")
 
 	flags.Uint64Var(&opts.update.parallelism, flagUpdateParallelism, 1, "Maximum number of tasks updated simultaneously (0 to update all at once)")
-	flags.DurationVar(&opts.update.delay, flagUpdateDelay, time.Duration(0), "Delay between updates")
-	flags.DurationVar(&opts.update.monitor, flagUpdateMonitor, time.Duration(0), "Duration after each task update to monitor for failure")
+	flags.DurationVar(&opts.update.delay, flagUpdateDelay, time.Duration(0), "Delay between updates (ns|us|ms|s|m|h) (default 0s)")
+	flags.DurationVar(&opts.update.monitor, flagUpdateMonitor, time.Duration(0), "Duration after each task update to monitor for failure (ns|us|ms|s|m|h) (default 0s)")
 	flags.StringVar(&opts.update.onFailure, flagUpdateFailureAction, "pause", "Action on update failure (pause|continue)")
-	flags.Float32Var(&opts.update.maxFailureRatio, flagUpdateMaxFailureRatio, 0, "Failure rate to tolerate during an update")
+	flags.Var(&opts.update.maxFailureRatio, flagUpdateMaxFailureRatio, "Failure rate to tolerate during an update")
 
 	flags.StringVar(&opts.endpoint.mode, flagEndpointMode, "", "Endpoint mode (vip or dnsrr)")
 
@@ -611,10 +599,12 @@ func addServiceFlags(cmd *cobra.Command, opts *serviceOptions) {
 	flags.Var(&opts.logDriver.opts, flagLogOpt, "Logging driver options")
 
 	flags.StringVar(&opts.healthcheck.cmd, flagHealthCmd, "", "Command to run to check health")
-	flags.Var(&opts.healthcheck.interval, flagHealthInterval, "Time between running the check")
-	flags.Var(&opts.healthcheck.timeout, flagHealthTimeout, "Maximum time to allow one check to run")
+	flags.Var(&opts.healthcheck.interval, flagHealthInterval, "Time between running the check (ns|us|ms|s|m|h)")
+	flags.Var(&opts.healthcheck.timeout, flagHealthTimeout, "Maximum time to allow one check to run (ns|us|ms|s|m|h)")
 	flags.IntVar(&opts.healthcheck.retries, flagHealthRetries, 0, "Consecutive failures needed to report unhealthy")
 	flags.BoolVar(&opts.healthcheck.noHealthcheck, flagNoHealthcheck, false, "Disable any container-specified HEALTHCHECK")
+
+	flags.BoolVarP(&opts.tty, flagTTY, "t", false, "Allocate a pseudo-TTY")
 }
 
 const (
@@ -624,7 +614,20 @@ const (
 	flagContainerLabel        = "container-label"
 	flagContainerLabelRemove  = "container-label-rm"
 	flagContainerLabelAdd     = "container-label-add"
+	flagDNS                   = "dns"
+	flagDNSRemove             = "dns-rm"
+	flagDNSAdd                = "dns-add"
+	flagDNSOption             = "dns-option"
+	flagDNSOptionRemove       = "dns-option-rm"
+	flagDNSOptionAdd          = "dns-option-add"
+	flagDNSSearch             = "dns-search"
+	flagDNSSearchRemove       = "dns-search-rm"
+	flagDNSSearchAdd          = "dns-search-add"
 	flagEndpointMode          = "endpoint-mode"
+	flagHost                  = "host"
+	flagHostAdd               = "host-add"
+	flagHostRemove            = "host-rm"
+	flagHostname              = "hostname"
 	flagEnv                   = "env"
 	flagEnvFile               = "env-file"
 	flagEnvRemove             = "env-rm"
@@ -646,6 +649,9 @@ const (
 	flagPublish               = "publish"
 	flagPublishRemove         = "publish-rm"
 	flagPublishAdd            = "publish-add"
+	flagPort                  = "port"
+	flagPortAdd               = "port-add"
+	flagPortRemove            = "port-rm"
 	flagReplicas              = "replicas"
 	flagReserveCPU            = "reserve-cpu"
 	flagReserveMemory         = "reserve-memory"
@@ -654,6 +660,7 @@ const (
 	flagRestartMaxAttempts    = "restart-max-attempts"
 	flagRestartWindow         = "restart-window"
 	flagStopGracePeriod       = "stop-grace-period"
+	flagTTY                   = "tty"
 	flagUpdateDelay           = "update-delay"
 	flagUpdateFailureAction   = "update-failure-action"
 	flagUpdateMaxFailureRatio = "update-max-failure-ratio"
@@ -669,4 +676,7 @@ const (
 	flagHealthRetries         = "health-retries"
 	flagHealthTimeout         = "health-timeout"
 	flagNoHealthcheck         = "no-healthcheck"
+	flagSecret                = "secret"
+	flagSecretAdd             = "secret-add"
+	flagSecretRemove          = "secret-rm"
 )

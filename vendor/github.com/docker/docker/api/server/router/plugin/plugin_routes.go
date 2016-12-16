@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/api/server/httputils"
@@ -40,8 +41,34 @@ func (pr *pluginRouter) pullPlugin(ctx context.Context, w http.ResponseWriter, r
 	return httputils.WriteJSON(w, http.StatusOK, privileges)
 }
 
+func (pr *pluginRouter) createPlugin(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+	if err := httputils.ParseForm(r); err != nil {
+		return err
+	}
+
+	options := &types.PluginCreateOptions{
+		RepoName: r.FormValue("name")}
+
+	if err := pr.backend.CreateFromContext(ctx, r.Body, options); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
 func (pr *pluginRouter) enablePlugin(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-	return pr.backend.Enable(vars["name"])
+	if err := httputils.ParseForm(r); err != nil {
+		return err
+	}
+
+	name := vars["name"]
+	timeout, err := strconv.Atoi(r.Form.Get("timeout"))
+	if err != nil {
+		return err
+	}
+	config := &types.PluginEnableConfig{Timeout: timeout}
+
+	return pr.backend.Enable(name, config)
 }
 
 func (pr *pluginRouter) disablePlugin(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -89,7 +116,11 @@ func (pr *pluginRouter) setPlugin(ctx context.Context, w http.ResponseWriter, r 
 	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
 		return err
 	}
-	return pr.backend.Set(vars["name"], args)
+	if err := pr.backend.Set(vars["name"], args); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 
 func (pr *pluginRouter) listPlugins(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {

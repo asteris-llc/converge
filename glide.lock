@@ -1,8 +1,44 @@
-hash: 838ed68681c4c99312725585cfd11851b60b0494958de3a75e4e957f71e39ae7
-updated: 2016-11-30T14:08:08.555255449-06:00
+hash: 405232882c82ad3cd7b9701f0eb0093e6198809c1a7523f3af5489645b05d07a
+updated: 2016-12-06T13:33:56.037159467-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
+- name: github.com/aws/aws-sdk-go
+  version: 173fcf0a78d6bc6c1668a416cdef0032c2a0efab
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/protocol
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restxml
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/s3
+  - service/sts
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
+- name: github.com/bgentry/go-netrc
+  version: 9fd32a8b3d3d3f9d43c341bfe098430e07609480
+  subpackages:
+  - netrc
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
   subpackages:
@@ -18,12 +54,15 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: a0629eab7302bef57c9ce9930b24f59f751303d7
+  version: 4d92237de1b34c8bf99e549db27b83fd087cd765
   subpackages:
+  - api/types
   - api/types/blkiodev
   - api/types/container
   - api/types/filters
   - api/types/mount
+  - api/types/network
+  - api/types/registry
   - api/types/strslice
   - api/types/swarm
   - api/types/versions
@@ -33,11 +72,15 @@ imports:
   - pkg/homedir
   - pkg/idtools
   - pkg/ioutils
+  - pkg/jsonlog
+  - pkg/jsonmessage
   - pkg/longpath
   - pkg/pools
   - pkg/promise
   - pkg/stdcopy
   - pkg/system
+  - pkg/term
+  - pkg/term/windows
 - name: github.com/docker/go-connections
   version: 1494b6df4050e60923d68cd8cc6a19e7af9f1c01
   subpackages:
@@ -50,6 +93,8 @@ imports:
   version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: github.com/fsouza/go-dockerclient
   version: 991e78ed454ce7de73ef3c559008095802e51fd2
+- name: github.com/go-ini/ini
+  version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
@@ -68,6 +113,10 @@ imports:
   version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/hashicorp/go-getter
+  version: 2fbd997432e72fe36060c8f07ec1eaf98d098177
+  subpackages:
+  - helper/url
 - name: github.com/hashicorp/go-multierror
   version: d30f09973e19c1dfcd120b2d9c4f168e68d6b5d5
 - name: github.com/hashicorp/hcl
@@ -92,6 +141,8 @@ imports:
   - vendor/github.com/hashicorp/go-multierror
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/kardianos/osext
   version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
 - name: github.com/magiconair/properties
@@ -100,6 +151,8 @@ imports:
   version: 56b76bdf51f7708750eac80fa38b952bb9f32639
 - name: github.com/Microsoft/go-winio
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
+- name: github.com/mitchellh/go-homedir
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/hashstructure
   version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
@@ -116,7 +169,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/soheilhy/cmux
   version: bf4a8ede9e87c006fe1d4278c6c7f2b8be1fa84c
 - name: github.com/spf13/cast
@@ -170,7 +223,7 @@ imports:
   - unix
   - windows
 - name: google.golang.org/grpc
-  version: 777daa17ff9b5daef1cfdf915088a2ada3332bf0
+  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
   subpackages:
   - codes
   - credentials
@@ -179,6 +232,8 @@ imports:
   - metadata
   - naming
   - peer
+  - stats
+  - tap
   - transport
 - name: gopkg.in/yaml.v2
   version: a83829b6f1293c91addabc89d0571c246397bbf4

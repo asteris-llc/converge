@@ -35,6 +35,7 @@ func NewPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 			fmt.Fprintln(dockerCli.Out(), "Total reclaimed space:", units.HumanSize(float64(spaceReclaimed)))
 			return nil
 		},
+		Tags: map[string]string{"version": "1.25"},
 	}
 
 	flags := cmd.Flags()
@@ -44,7 +45,7 @@ func NewPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 }
 
 const warning = `WARNING! This will remove all stopped containers.
-Are you sure you want to continue? [y/N] `
+Are you sure you want to continue?`
 
 func runPrune(dockerCli *command.DockerCli, opts pruneOptions) (spaceReclaimed uint64, output string, err error) {
 	if !opts.force && !command.PromptForConfirmation(dockerCli.In(), dockerCli.Out(), warning) {

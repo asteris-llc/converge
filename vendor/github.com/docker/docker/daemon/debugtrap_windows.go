@@ -12,7 +12,7 @@ import (
 	"github.com/docker/docker/pkg/system"
 )
 
-func setupDumpStackTrap(root string) {
+func (d *Daemon) setupDumpStackTrap(root string) {
 	// Windows does not support signals like *nix systems. So instead of
 	// trapping on SIGUSR1 to dump stacks, we wait on a Win32 event to be
 	// signaled. ACL'd to builtin administrators and local system
@@ -35,7 +35,18 @@ func setupDumpStackTrap(root string) {
 		logrus.Debugf("Stackdump - waiting signal at %s", ev)
 		for {
 			syscall.WaitForSingleObject(h, syscall.INFINITE)
-			signal.DumpStacks(root)
+			path, err := signal.DumpStacks(root)
+			if err != nil {
+				logrus.WithError(err).Error("failed to write goroutines dump")
+			} else {
+				logrus.Infof("goroutine stacks written to %s", path)
+			}
+			path, err = d.dumpDaemon(root)
+			if err != nil {
+				logrus.WithError(err).Error("failed to write daemon datastructure dump")
+			} else {
+				logrus.Infof("daemon datastructure dump written to %s", path)
+			}
 		}
 	}()
 }

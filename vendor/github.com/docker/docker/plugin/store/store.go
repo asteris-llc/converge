@@ -30,6 +30,13 @@ type ErrNotFound string
 
 func (name ErrNotFound) Error() string { return fmt.Sprintf("plugin %q not found", string(name)) }
 
+// ErrAmbiguous indicates that a plugin was not found locally.
+type ErrAmbiguous string
+
+func (name ErrAmbiguous) Error() string {
+	return fmt.Sprintf("multiple plugins found for %q", string(name))
+}
+
 // GetByName retreives a plugin by name.
 func (ps *Store) GetByName(name string) (*v2.Plugin, error) {
 	ps.RLock()
@@ -79,8 +86,10 @@ func (ps *Store) getAllByCap(capability string) []plugingetter.CompatPlugin {
 
 	result := make([]plugingetter.CompatPlugin, 0, 1)
 	for _, p := range ps.plugins {
-		if _, err := p.FilterByCap(capability); err == nil {
-			result = append(result, p)
+		if p.IsEnabled() {
+			if _, err := p.FilterByCap(capability); err == nil {
+				result = append(result, p)
+			}
 		}
 	}
 	return result
@@ -96,12 +105,31 @@ func (ps *Store) SetState(p *v2.Plugin, state bool) {
 }
 
 // Add adds a plugin to memory and plugindb.
-func (ps *Store) Add(p *v2.Plugin) {
+// An error will be returned if there is a collision.
+func (ps *Store) Add(p *v2.Plugin) error {
 	ps.Lock()
+	defer ps.Unlock()
+
+	if v, exist := ps.plugins[p.GetID()]; exist {
+		return fmt.Errorf("plugin %q has the same ID %s as %q", p.Name(), p.GetID(), v.Name())
+	}
+	if _, exist := ps.nameToID[p.Name()]; exist {
+		return fmt.Errorf("plugin %q already exists", p.Name())
+	}
 	ps.plugins[p.GetID()] = p
 	ps.nameToID[p.Name()] = p.GetID()
 	ps.updatePluginDB()
-	ps.Unlock()
+	return nil
+}
+
+// Update updates a plugin to memory and plugindb.
+func (ps *Store) Update(p *v2.Plugin) {
+	ps.Lock()
+	defer ps.Unlock()
+
+	ps.plugins[p.GetID()] = p
+	ps.nameToID[p.Name()] = p.GetID()
+	ps.updatePluginDB()
 }
 
 // Remove removes a plugin from memory and plugindb.
@@ -124,7 +152,7 @@ func (ps *Store) updatePluginDB() error {
 	return nil
 }
 
-// Get returns a plugin matching the given name and capability.
+// Get returns an enabled plugin matching the given name and capability.
 func (ps *Store) Get(name, capability string, mode int) (plugingetter.CompatPlugin, error) {
 	var (
 		p   *v2.Plugin
@@ -149,7 +177,12 @@ func (ps *Store) Get(name, capability string, mode int) (plugingetter.CompatPlug
 			p.Lock()
 			p.RefCount += mode
 			p.Unlock()
-			return p.FilterByCap(capability)
+			if p.IsEnabled() {
+				return p.FilterByCap(capability)
+			}
+			// Plugin was found but it is disabled, so we should not fall back to legacy plugins
+			// but we should error out right away
+			return nil, ErrNotFound(fullName)
 		}
 		if _, ok := err.(ErrNotFound); !ok {
 			return nil, err
@@ -168,7 +201,7 @@ func (ps *Store) Get(name, capability string, mode int) (plugingetter.CompatPlug
 	return nil, err
 }
 
-// GetAllByCap returns a list of plugins matching the given capability.
+// GetAllByCap returns a list of enabled plugins matching the given capability.
 func (ps *Store) GetAllByCap(capability string) ([]plugingetter.CompatPlugin, error) {
 	result := make([]plugingetter.CompatPlugin, 0, 1)
 
@@ -226,4 +259,26 @@ func (ps *Store) CallHandler(p *v2.Plugin) {
 			handler(p.Name(), p.Client())
 		}
 	}
+}
+
+// Search retreives a plugin by ID Prefix
+// If no plugin is found, then ErrNotFound is returned
+// If multiple plugins are found, then ErrAmbiguous is returned
+func (ps *Store) Search(partialID string) (*v2.Plugin, error) {
+	ps.RLock()
+	defer ps.RUnlock()
+
+	var found *v2.Plugin
+	for id, p := range ps.plugins {
+		if strings.HasPrefix(id, partialID) {
+			if found != nil {
+				return nil, ErrAmbiguous(partialID)
+			}
+			found = p
+		}
+	}
+	if found == nil {
+		return nil, ErrNotFound(partialID)
+	}
+	return found, nil
 }

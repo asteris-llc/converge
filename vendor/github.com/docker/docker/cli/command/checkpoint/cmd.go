@@ -1,8 +1,6 @@
 package checkpoint
 
 import (
-	"fmt"
-
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
 	"github.com/spf13/cobra"
@@ -14,9 +12,8 @@ func NewCheckpointCommand(dockerCli *command.DockerCli) *cobra.Command {
 		Use:   "checkpoint",
 		Short: "Manage checkpoints",
 		Args:  cli.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(dockerCli.Err(), "\n"+cmd.UsageString())
-		},
+		RunE:  dockerCli.ShowHelp,
+		Tags:  map[string]string{"experimental": "", "version": "1.25"},
 	}
 	cmd.AddCommand(
 		newCreateCommand(dockerCli),
