@@ -101,7 +101,7 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 			return status, err
 		}
 
-		if invalidGWs != nil && len(invalidGWs) > 0 {
+		if len(invalidGWs) > 0 {
 			status.RaiseLevel(resource.StatusCantChange)
 			return status, fmt.Errorf("%s: gateway(s) are already in use", strings.Join(invalidGWs, ", "))
 
