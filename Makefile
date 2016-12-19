@@ -108,6 +108,9 @@ samples/%.png: samples/% converge
 	@echo === rendering $@ ===
 	./converge graph --local $< | dot -Tpng -o$@
 
+docs/public:
+	cd docs; make public
+
 # packaging
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@echo "set version to ${PACKAGE_VERSION}"
