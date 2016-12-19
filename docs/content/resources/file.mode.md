@@ -1,7 +1,7 @@
 ---
 title: "file.mode"
 slug: "file-mode"
-date: "2016-12-19T10:12:41-06:00"
+date: "2016-12-19T14:58:57-06:00"
 menu:
   main:
     parent: resources
