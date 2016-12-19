@@ -21,6 +21,9 @@ RUN apt-get install -y unzip && \
 # install gox
 RUN go get -v github.com/mitchellh/gox
 
+# install glide
+RUN curl https://glide.sh/get | sh
+
 # install fuzzers
 RUN go get -v github.com/dvyukov/go-fuzz/go-fuzz
 RUN go get -v github.com/dvyukov/go-fuzz/go-fuzz-build
