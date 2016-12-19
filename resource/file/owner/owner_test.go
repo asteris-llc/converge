@@ -69,6 +69,23 @@ func TestCheck(t *testing.T) {
 		assert.False(t, status.HasChanges())
 	})
 
+	t.Run("when-missing", func(t *testing.T) {
+		t.Parallel()
+		m := missingMockOS()
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-1",
+			UID:         "1",
+			Group:       "group-1",
+			GID:         "1",
+		}).SetOSProxy(m)
+		status, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		assert.True(t, status.HasChanges())
+		m.AssertNotCalled(t, "GetGID", any)
+		m.AssertNotCalled(t, "GetUID", any)
+	})
+
 	t.Run("when-user-no-change", func(t *testing.T) {
 		t.Parallel()
 
@@ -350,5 +367,26 @@ func TestApply(t *testing.T) {
 		m.AssertCalled(t, "Chown", "foo", 2, 2)
 		m.AssertCalled(t, "Chown", "bar", 2, 2)
 		m.AssertNumberOfCalls(t, "Chown", 2)
+	})
+	t.Run("when-missing", func(t *testing.T) {
+		t.Parallel()
+		users := []*user.User{fakeUser("1", "1", "user-1"), fakeUser("2", "2", "user-2")}
+		groups := []*user.Group{fakeGroup("1", "group-1"), fakeGroup("2", "group-2")}
+		ownershipRecords := []ownershipRecord{makeOwned("foo", "user-1", "1", "group-1", "1")}
+		m := newMockOS(ownershipRecords, users, groups, nil, nil)
+		missing := missingMockOS()
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-1",
+			UID:         "1",
+			Group:       "group-1",
+			GID:         "1",
+		}).SetOSProxy(missing)
+		_, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		o.SetOSProxy(m)
+		_, err = o.Apply(context.Background())
+		m.AssertCalled(t, "GetGID", any)
+		m.AssertCalled(t, "GetUID", any)
 	})
 }
