@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// any aliases mock.Anything for terseness
 var any = mock.Anything
 
 // MockOS mocks OSProxy

@@ -26,13 +26,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestPreparer tests Prepare
 func TestPreparer(t *testing.T) {
 	users := []*user.User{fakeUser("1", "1", "user-1")}
 	groups := []*user.Group{fakeGroup("1", "group-1")}
 	t.Run("implements-resource", func(t *testing.T) {
 		assert.Implements(t, (*resource.Resource)(nil), new(owner.Preparer))
 	})
-
 	t.Run("normalizes-data", func(t *testing.T) {
 		m := newMockOS(nil, users, groups, nil, nil)
 		t.Run("when-username", func(t *testing.T) {

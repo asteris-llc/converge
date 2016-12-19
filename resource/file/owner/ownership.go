@@ -28,8 +28,8 @@ type Ownership struct {
 
 // OwnershipDiff diffs user and group IDs
 type OwnershipDiff struct {
-	path string
 	p    OSProxy
+	Path string
 	UIDs *[2]int
 	GIDs *[2]int
 }
@@ -41,7 +41,7 @@ func (d *OwnershipDiff) Apply() error {
 	}
 	var newUID *int
 	var newGID *int
-	oldOwner, err := fileOwnership(d.p, d.path)
+	oldOwner, err := fileOwnership(d.p, d.Path)
 	if err != nil {
 		return err
 	}
@@ -55,14 +55,14 @@ func (d *OwnershipDiff) Apply() error {
 	} else {
 		newGID = oldOwner.GID
 	}
-	return d.p.Chown(d.path, *newUID, *newGID)
+	return d.p.Chown(d.Path, *newUID, *newGID)
 }
 
 // showDiffAt shows the UID/GID at a given index
 func (d *OwnershipDiff) showDiffAt(idx uint) string {
 	var diffStrs []string
 	if idx > 1 {
-		return "Error executing diff generation on " + d.path
+		return "Error executing diff generation on " + d.Path
 	}
 	if nil != d.UIDs && d.UIDs[0] != d.UIDs[1] {
 		uid := d.UIDs[idx]
@@ -160,7 +160,7 @@ func NewOwnershipDiff(p OSProxy, path string, ownership *Ownership) (*OwnershipD
 		newGID = *(ownership.GID)
 	}
 
-	diff := &OwnershipDiff{path: path, p: p}
+	diff := &OwnershipDiff{Path: path, p: p}
 
 	if curUID != newUID {
 		diff.UIDs = &[2]int{curUID, newUID}

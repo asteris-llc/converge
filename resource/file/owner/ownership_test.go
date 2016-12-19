@@ -187,6 +187,7 @@ func TestOwernshipDiff(t *testing.T) {
 	})
 }
 
+// TestApplyOwnershipDiff tests the Apply function on OwnershipDiff
 func TestApplyOwnershipDiff(t *testing.T) {
 	users := []*user.User{
 		fakeUser("1", "1", "user-1"),
