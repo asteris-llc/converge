@@ -43,6 +43,11 @@ func (m *MockOS) Walk(root string, walkFunc filepath.WalkFunc) error {
 	return args.Error(0)
 }
 
+func (m *MockOS) Stat(path string) (os.FileInfo, error) {
+	args := m.Called(path)
+	return args.Get(0).(os.FileInfo), args.Error(1)
+}
+
 // Chown mocks Chown
 func (m *MockOS) Chown(path string, uid, gid int) error {
 	args := m.Called(path, uid, gid)
@@ -198,6 +203,7 @@ func newMockOS(ownedFiles []ownershipRecord,
 	defaultGroup *user.Group,
 ) *MockOS {
 	m := &MockOS{}
+
 	for _, o := range ownedFiles {
 		m.walkArgs = append(m.walkArgs, o.ToWalkArgs())
 	}
@@ -207,11 +213,22 @@ func newMockOS(ownedFiles []ownershipRecord,
 	if defaultGroup == nil {
 		defaultGroup = rootGroup
 	}
+
+	fakeStat := &ownershipRecord{
+		Path:      "fake-path",
+		User:      defaultUser,
+		Group:     defaultGroup,
+		FileSize:  0,
+		FileMode:  0777,
+		FileIsDir: false,
+	}
+
 	m.On("Walk", any, any).Return(nil)
 	m.On("Chown", any, any, any).Return(nil)
 	for _, rec := range ownedFiles {
 		m.On("GetUID", rec.Path).Return(toInt(rec.User.Uid), nil)
 		m.On("GetGID", rec.Path).Return(toInt(rec.User.Gid), nil)
+		m.On("Stat", rec.Path).Return(rec, nil)
 	}
 	m.On("GetUID", any).Return(0, nil)
 	m.On("GetGID", any).Return(0, nil)
@@ -227,6 +244,7 @@ func newMockOS(ownedFiles []ownershipRecord,
 	m.On("LookupID", any).Return(defaultUser, nil)
 	m.On("LookupGroup", any).Return(defaultGroup, nil)
 	m.On("LookupGroupID", any).Return(defaultGroup, nil)
+	m.On("Stat", any).Return(fakeStat, nil)
 	return m
 }
 

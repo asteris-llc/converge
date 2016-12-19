@@ -36,6 +36,7 @@ type OSProxy interface {
 	LookupGroup(string) (*user.Group, error)
 	LookupID(string) (*user.User, error)
 	Lookup(string) (*user.User, error)
+	Stat(string) (os.FileInfo, error)
 }
 
 // Owner represents the ownership mode of a file or directory
@@ -80,7 +81,7 @@ func (o *Owner) SetOSProxy(p OSProxy) *Owner {
 func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	var err error
 	status := &resource.Status{Differences: make(map[string]resource.Diff)}
-	if _, err := os.Stat(o.Destination); os.IsNotExist(err) {
+	if _, err := o.executor.Stat(o.Destination); os.IsNotExist(err) {
 		status.AddMessage(fmt.Sprintf("%s: does not exist; will re-attempt during apply", o.Destination))
 		status.RaiseLevel(resource.StatusMayChange)
 		return status, nil
@@ -126,7 +127,7 @@ func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	showDetails := !(o.Recursive && o.HideDetails)
 
-	if _, err := os.Stat(o.Destination); os.IsNotExist(err) {
+	if _, err := o.executor.Stat(o.Destination); os.IsNotExist(err) {
 		return nil, fmt.Errorf("cannot change ownership of non-existant file: %s", o.Destination)
 	}
 

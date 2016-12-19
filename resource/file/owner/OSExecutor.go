@@ -38,6 +38,11 @@ func (o *OSExecutor) Chown(path string, uid, gid int) error {
 	return os.Chown(path, uid, gid)
 }
 
+// Stat returns the result of os.Stat
+func (o *OSExecutor) Stat(path string) (os.FileInfo, error) {
+	return os.Stat(path)
+}
+
 func osStat(path string) (*syscall.Stat_t, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
