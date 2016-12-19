@@ -25,7 +25,7 @@ import (
 )
 
 // TestOwnershipDiff tests things related to the owernship diff
-func TestOwernshipDiff(t *testing.T) {
+func TestOwnershipDiff(t *testing.T) {
 	users := []*user.User{
 		fakeUser("1", "1", "user-1"),
 		fakeUser("2", "2", "user-2"),
