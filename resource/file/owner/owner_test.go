@@ -26,11 +26,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestInterface ensures that owner.Owner implements the resource.Task interface
 func TestInterface(t *testing.T) {
 	t.Parallel()
 	assert.Implements(t, (*resource.Task)(nil), new(owner.Owner))
 }
 
+// TestCheck tests the behavior of Check
 func TestCheck(t *testing.T) {
 	t.Parallel()
 
@@ -307,6 +309,7 @@ func TestCheck(t *testing.T) {
 	})
 }
 
+// TestApply tests the behavior of Apply
 func TestApply(t *testing.T) {
 	t.Parallel()
 	t.Run("single-diff", func(t *testing.T) {
