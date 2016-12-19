@@ -107,9 +107,6 @@ lint:
 	@echo '=== varcheck ==='
 	@varcheck ${LINTDIRS} # github.com/opennota/check/cmd/varcheck
 
-	@echo '=== aligncheck ==='
-	@aligncheck ${LINTDIRS} # github.com/opennota/check/cmd/aligncheck
-
 	@echo '=== gas ==='
 	@gas ${LINTDIRS} # github.com/HewlettPackard/gas
 
