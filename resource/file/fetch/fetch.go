@@ -91,11 +91,8 @@ func (f *Fetch) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 	}
 
 	status, err = f.DiffFile(status, hsh)
-	if err != nil {
-		return status, err
-	}
 
-	return status, nil
+	return status, err
 }
 
 // Apply fetches the file
