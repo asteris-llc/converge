@@ -38,7 +38,7 @@ func normalizeTuple(p OSProxy, fst, snd string, deriveFirst, deriveSnd func(OSPr
 }
 
 func usernameFromUID(p OSProxy, uid string) (string, error) {
-	u, err := p.LookupId(uid)
+	u, err := p.LookupID(uid)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +54,7 @@ func uidFromUsername(p OSProxy, name string) (string, error) {
 }
 
 func groupnameFromGID(p OSProxy, gid string) (string, error) {
-	u, err := p.LookupGroupId(gid)
+	u, err := p.LookupGroupID(gid)
 	if err != nil {
 		return "", err
 	}
