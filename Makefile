@@ -34,15 +34,19 @@ vendor: glide.yaml glide.lock
 	glide install
 	make vendor-clean
 
+.PHONY: vendor-clean
 vendor-clean:
 	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 # testing
+.PHONY: test
 test: gotest validate-samples validate-error-samples blackbox
 
+.PHONY: gotest
 gotest:
 	go test $(shell glide novendor)
 
+.PHONY: validate-samples
 validate-samples: converge samples/*.hcl
 	@echo
 	@echo === checking validity of all samples ===
@@ -51,21 +55,26 @@ validate-samples: converge samples/*.hcl
 	@echo === checking formatting of all samples ===
 	./converge fmt --check samples/*.hcl
 
+.PHONY: validate-error-samples
 validate-error-samples: samples/errors/*.hcl
 
+.PHONY: samples/errors/*.hcl
 samples/errors/*.hcl: converge
 	@echo
 	@echo === validating $@ should fail ===
 	./converge validate $@ || exit 0 && exit 1
 
+.PHONY: blackbox
 blackbox: blackbox/*.sh
 
+.PHONY: blackbox/*.sh
 blackbox/*.sh: converge
 	@echo
 	@echo === testing $@ ===
 	@$@
 
 # fuzzing
+.PHONY: fuzzing/*
 fuzzing/*:
 	@echo
 	@echo === fuzzing $(shell basename $@) ===
@@ -75,11 +84,13 @@ fuzzing/*:
 # benchmarks
 BENCH := .
 BENCHDIRS = $(shell find ${SRCDIRS} -name '*_test.go' | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
+.PHONY: bench
 bench:
 	go test -run '^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 
 # linting
 LINTDIRS = $(eval LINTDIRS := $(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
+.PHONY: lint
 lint:
 	@echo '=== golint ==='
 	@for dir in ${LINTDIRS}; do golint $${dir}; done # github.com/golang/lint/golint
@@ -112,6 +123,7 @@ docs/public:
 	cd docs; make public
 
 # packaging
+.PHONY: xcompile
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@echo "set version to ${PACKAGE_VERSION}"
 
@@ -127,11 +139,10 @@ xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 			-output="build/${NAME}_${PACKAGE_VERSION}_{{.OS}}_{{.Arch}}/${NAME}"
 	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
+.PHONY: package
 package: xcompile
 	@mkdir -p build/tgz
 	for f in $(shell find build -name converge | cut -d/ -f2); do \
 			(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
 		done
 	(cd build/tgz; shasum -a 512 * > tgz.sha512sum)
-
-.PHONY: test gotest validate-samples validate-error-samples samples/errors/*.hcl blackbox/*.sh fuzzing/* bench lint xcompile package
