@@ -1,7 +1,7 @@
 ---
 title: "docker.container"
 slug: "docker-container"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:40-06:00"
 menu:
   main:
     parent: resources
@@ -127,54 +127,71 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `name` (string)
+
   the name of the container
  
 - `image` (string)
+
   the name of the image
  
 - `entrypoint` (list of strings)
+
   the entrypoint into the container
  
 - `command` (list of strings)
+
   the command to run
  
 - `workingdir` (string)
+
   the working directory
  
 - `env` (list of strings)
+
   configured environment variables for the container
  
 - `expose` (list of strings)
+
   additional ports to exposed in the container
  
 - `links` (list of strings)
+
   A list of links for the container in the form of container_name:alias
  
 - `portbindings` (list of strings)
+
   ports to bind
  
 - `dns` (list of strings)
+
   list of DNS servers the container is using
  
 - `volumes` (list of strings)
+
   volumes that have been bind-mounted
  
 - `volumesfrom` (list of strings)
+
   containers from which volumes have been mounted
  
 - `publishallports` (bool)
+
   if true, all ports have been published
  
 - `networkmode` (string)
+
   the mode of the container network
  
 - `networks` (list of strings)
+
   networks the container is connected to
  
 - `status` (string)
+
   the status of the container.
  
 - `force` (bool)
+
   Indicate whether the 'force' flag was set
   
 

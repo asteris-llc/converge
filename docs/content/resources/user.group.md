@@ -1,7 +1,7 @@
 ---
 title: "user.group"
 slug: "user-group"
-date: "2016-12-16T11:20:35-06:00"
+date: "2016-12-19T10:12:41-06:00"
 menu:
   main:
     parent: resources
@@ -57,15 +57,19 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `gid` (string)
+
   the configured group ID
  
 - `name` (string)
+
   the configured group name
  
 - `newname` (string)
+
   the desired group name
  
 - `state` (State)
+
   the group state
   
 

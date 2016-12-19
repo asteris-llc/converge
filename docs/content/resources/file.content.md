@@ -1,7 +1,7 @@
 ---
 title: "file.content"
 slug: "file-content"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:40-06:00"
 menu:
   main:
     parent: resources
@@ -52,9 +52,11 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `content` (string)
+
   configured content of the file
  
 - `destination` (string)
+
   configured destination of the file
   
 

@@ -1,7 +1,7 @@
 ---
 title: "task"
 slug: "task"
-date: "2016-12-16T11:20:35-06:00"
+date: "2016-12-19T10:12:41-06:00"
 menu:
   main:
     parent: resources
@@ -90,24 +90,31 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `check` (string)
+
   the check statement
  
 - `apply` (string)
+
   the apply statement
  
 - `dir` (string)
+
   the working directory of the task
  
 - `env` (list of strings)
+
   environment variables configured for the task
  
 - `checkstatus` (CommandResults)
+
   the status of the check phase
  
 - `healthstatus` (resource.HealthStatus)
+
   the status of the health check
  
 - `status` re-exports fields from CommandResults
+
   the status of the task
   
 
