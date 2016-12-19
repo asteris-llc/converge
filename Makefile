@@ -15,7 +15,7 @@ SRCFILES = $(eval SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go'))$(va
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
-	go build -ldflags="-X ${REPO}/cmd.Version=${PACKAGE_VERSION}"
+	go build -ldflags="-X ${REPO}/cmd.Version=${PACKAGE}"
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
@@ -38,7 +38,7 @@ vendor-clean:
 	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 # testing
-test: gotest license-check validate-samples validate-error-samples blackbox
+test: gotest validate-samples validate-error-samples blackbox
 
 gotest:
 	go test $(shell glide novendor)
@@ -110,18 +110,18 @@ samples/%.png: samples/% converge
 
 # packaging
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
-	@echo "set version to $(shell git describe)"
+	@echo "set version to ${PACKAGE_VERSION}"
 
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
-			-ldflags="-X ${REPO}/cmd.Version=$(shell git describe) -s -w" \
+			-ldflags="-X ${REPO}/cmd.Version=${PACKAGE_VERSION} -s -w" \
 			-osarch="darwin/386" \
 			-osarch="darwin/amd64" \
 			-os="linux" \
 			-os="freebsd" \
 			-os="solaris" \
-			-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
+			-output="build/${NAME}_${PACKAGE_VERSION}_{{.OS}}_{{.Arch}}/${NAME}"
 	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
 package: xcompile
