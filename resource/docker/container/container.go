@@ -33,7 +33,6 @@ import (
 
 const (
 	containerStatusRunning = "running"
-	containerStatusCreated = "created"
 
 	// DefaultNetworkMode is the mode of the container network
 	DefaultNetworkMode = "default"
