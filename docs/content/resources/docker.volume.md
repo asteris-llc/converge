@@ -1,7 +1,7 @@
 ---
 title: "docker.volume"
 slug: "docker-volume"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:40-06:00"
 menu:
   main:
     parent: resources
@@ -74,21 +74,27 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `name` (string)
+
   volume name
  
 - `labels` (map of string to string)
+
   volume labels
  
 - `driver` (string)
+
   driver the volume is configured to use
  
 - `options` (map of string to string)
+
   driver-specific options
  
 - `state` (State)
+
   volume state
  
 - `force` (bool)
+
   reflects whether or not the force option was configured
   
 
