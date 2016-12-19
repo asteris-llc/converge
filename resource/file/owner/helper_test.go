@@ -43,6 +43,7 @@ func (m *MockOS) Walk(root string, walkFunc filepath.WalkFunc) error {
 	return args.Error(0)
 }
 
+// Stat mocks Stat
 func (m *MockOS) Stat(path string) (os.FileInfo, error) {
 	args := m.Called(path)
 	return args.Get(0).(os.FileInfo), args.Error(1)
