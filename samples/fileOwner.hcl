@@ -2,7 +2,7 @@
  new file, then changing the ownership of that file to a different group. */
 
 file.content "to-change" {
-  destination = "to-change"
+  destination = "tochange"
 }
 
 task.query "existing-group" {
