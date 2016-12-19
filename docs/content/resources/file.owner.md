@@ -1,7 +1,7 @@
 ---
 title: "file.owner"
 slug: "file-owner"
-date: "2016-12-19T10:04:12-06:00"
+date: "2016-12-19T10:45:07-06:00"
 menu:
   main:
     parent: resources
@@ -81,6 +81,11 @@ recursively.  Symlinks are not followed.
 	Only one of `group` may be set.
 
   GID specifies group ownership by gid
+
+- `verbose` (bool)
+
+  Verbose specifies that when performing recursive updates, a diff should be
+shown for each file to be changed
 
 - osProxy (OSProxy)
 
