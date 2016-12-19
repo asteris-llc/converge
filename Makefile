@@ -1,139 +1,148 @@
-NAME = $(shell awk -F\" '/^const Name/ { print $$2 }' cmd/root.go)
-RPCLINT=$(shell find ./rpc -type f \( -not -iname 'root.*.go' -iname '*.go' \) )
-TOLINT = $(shell find . -type f \( -not -ipath './vendor*'  -not -ipath './docs*' -not -ipath './rpc*' -not -iname 'main.go' -iname '*.go' \) -exec dirname {} \; | sort -u)
-TESTDIRS = $(shell find . -name '*_test.go' -exec dirname \{\} \; | grep -v vendor | uniq)
-NONVENDOR = ${shell find . -name '*.go' | grep -v vendor}
-BENCHDIRS= $(shell find . -name '*_test.go' | grep -v vendor | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
-BENCH = .
-REPO = github.com/asteris-llc/converge
+# the funky $(eval ...) here and below is a sneaky Make trick. The = allows for
+# recursive (lazy) expansion, but the first time it's expanded we eval to
+# replace the value with a expand-once (strict) variable. Variables defined in
+# this way will be evaluated exactly once, and only if used.
+#
+# meta information about the project
+REPO = $(eval REPO := $(shell go list -f '{{.ImportPath}}' .))$(value REPO)
+NAME = $(eval NAME := $(shell basename ${REPO}))$(value NAME)
+VERSION = $(eval VERSION := $(shell git describe --dirty))$(value VERSION)
+PACKAGE_VERSION = $(eval PACKAGE_VERSION := $(shell echo ${VERSION} | sed 's/-dirty//g'))$(value PACKAGE_VERSION)
 
-converge: $(shell find . -name '*.go') rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
-	go build -ldflags="-X ${REPO}/cmd.Version=$(shell git describe --dirty) -s -w" .
+# sources to evaluate
+SRCDIRS = $(eval SRCDIRS := $(shell glide novendor --no-subdir | grep -v '^.$$' | sed 's|/$$||g'))$(value SRCDIRS)
+SRCFILES = $(eval SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go'))$(value SRCFILES)
 
-test: converge gotest samples/*.hcl samples/errors/*.hcl blackbox/*.sh
+# binaries
+converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+	go build -ldflags="-X ${REPO}/cmd.Version=${PACKAGE}"
+
+rpc/pb/root.pb.go: rpc/pb/root.proto
+	protoc -I rpc/pb \
+		 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+		 --go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:rpc/pb \
+		 rpc/pb/root.proto
+
+rpc/pb/root.pb.gw.go: rpc/pb/root.proto
+	protoc -I rpc/pb \
+		 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+		 --grpc-gateway_out=logtostderr=true:rpc/pb \
+		 rpc/pb/root.proto
+
+# vendoring
+vendor: glide.yaml glide.lock
+	glide install
+	make vendor-clean
+
+.PHONY: vendor-clean
+vendor-clean:
+	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
+
+# testing
+.PHONY: test
+test: gotest validate-samples validate-error-samples blackbox
+
+.PHONY: gotest
+gotest:
+	go test $(shell glide novendor)
+
+.PHONY: validate-samples
+validate-samples: converge samples/*.hcl
 	@echo
-	@echo === check validity of all samples ===
+	@echo === checking validity of all samples ===
 	./converge validate samples/*.hcl
 	@echo
-	@echo === check formatting of all samples ===
+	@echo === checking formatting of all samples ===
 	./converge fmt --check samples/*.hcl
 
-gotest:
-	go test ${TESTDIRS}
+.PHONY: validate-error-samples
+validate-error-samples: samples/errors/*.hcl
 
-license-check:
-	@echo "=== Missing License Files ==="
-	@./check_license.sh
-
-bench:
-	go test -run='^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
-
+.PHONY: samples/errors/*.hcl
 samples/errors/*.hcl: converge
 	@echo
-	@echo === validating $@ should fail ==
+	@echo === validating $@ should fail ===
 	./converge validate $@ || exit 0 && exit 1
 
+.PHONY: blackbox
+blackbox: blackbox/*.sh
+
+.PHONY: blackbox/*.sh
 blackbox/*.sh: converge
 	@echo
 	@echo === testing $@ ===
 	@$@
 
+# fuzzing
+.PHONY: fuzzing/*
 fuzzing/*:
 	@echo
 	@echo === fuzzing $(shell basename $@) ===
 	@cd $@ && ./run.sh
 	@test -d $@/crashers && test "$$(find $@/crashers -type f)" = "" || (echo found crashers; tail -n 100000 $@/crashers/*; exit 1)
 
+# benchmarks
+BENCH := .
+BENCHDIRS = $(shell find ${SRCDIRS} -name '*_test.go' | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
+.PHONY: bench
+bench:
+	go test -run '^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
+
+# linting
+LINTDIRS = $(eval LINTDIRS := $(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
+.PHONY: lint
+lint:
+	@echo '=== golint ==='
+	@for dir in ${LINTDIRS}; do golint $${dir}; done # github.com/golang/lint/golint
+
+	@echo '=== gosimple ==='
+	@gosimple ${LINTDIRS} # honnef.co/go/simple/cmd/gosimple
+
+	@echo '=== unconvert ==='
+	@unconvert ${LINTDIRS} # github.com/mdempsky/unconvert
+
+	@echo '=== structcheck ==='
+	@structcheck ${LINTDIRS} # github.com/opennota/check/cmd/structcheck
+
+	@echo '=== varcheck ==='
+	@varcheck ${LINTDIRS} # github.com/opennota/check/cmd/varcheck
+
+	@echo '=== aligncheck ==='
+	@aligncheck ${LINTDIRS} # github.com/opennota/check/cmd/aligncheck
+
+	@echo '=== gas ==='
+	@gas ${LINTDIRS} # github.com/HewlettPackard/gas
+
+# documentation
 samples/%.png: samples/% converge
 	@echo
 	@echo === rendering $@ ===
 	./converge graph --local $< | dot -Tpng -o$@
 
-fmt:
-	for dir in $$(find . -name vendor -prune -a -type f -o -name \*.go  -printf "%h\\n" | uniq); do go fmt $$dir/*.go; done
+docs/public:
+	cd docs; make public
 
-lint:
-	@echo '# golint'
-	@for dir in ${TOLINT}; do golint $${dir}/...; done # github.com/golang/lint/golint
-	@for file in ${RPCLINT}; do golint $${file}; done # github.com/golang/lint/golint
-
-	@echo '# go tool vet'
-	@go tool vet -all -shadow ${TOLINT}
-	@go tool vet -all -shadow ${RPCLINT} # built in
-
-	@echo '# gosimple'
-	@gosimple ${TOLINT} # honnef.co/go/simple/cmd/gosimple
-	@gosimple ${RPCLINT} # honnef.co/go/simple/cmd/gosimple
-
-	@echo '# unconvert'
-	@unconvert ${TOLINT} # github.com/mdempsky/unconvert
-	@unconvert ${RPCLINT} # github.com/mdempsky/unconvert
-
-	@echo '# structcheck'
-	@structcheck ${TOLINT} # github.com/opennota/check/cmd/structcheck
-	@structcheck ${RPCLINT} # github.com/opennota/check/cmd/structcheck
-
-	@echo '# varcheck'
-	@varcheck ${TOLINT} # github.com/opennota/check/cmd/varcheck
-	@varcheck ${RPCLINT} # github.com/opennota/check/cmd/varcheck
-
-	@echo '# aligncheck'
-	@aligncheck ${TOLINT} # github.com/opennota/check/cmd/aligncheck
-	@aligncheck ${RPCLINT} # github.com/opennota/check/cmd/aligncheck
-
-	@echo '# gas'
-	@gas ${TOLINT} # github.com/HewlettPackard/gas
-	@gas ${RPCLINT} # github.com/HewlettPackard/gas
-
-vendor: ${NONVENDOR}
-	glide install --strip-vcs --strip-vendor --update-vendored
-	make vendor-clean
-
-vendor-update: ${NOVENDOR}
-	glide update --strip-vcs --strip-vendor --update-vendored
-	make vendor-clean
-
-vendor-clean: ${NOVENDOR}
-	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
-
+# packaging
+.PHONY: xcompile
 xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
-	@echo "set version to $(shell git describe)"
+	@echo "set version to ${PACKAGE_VERSION}"
 
 	@rm -rf build/
 	@mkdir -p build/
 	gox \
-    -ldflags="-X ${REPO}/cmd.Version=$(shell git describe) -s -w" \
-		-osarch="darwin/386" \
-		-osarch="darwin/amd64" \
-		-os="linux" \
-		-os="freebsd" \
-		-os="solaris" \
-		-output="build/$(NAME)_$(shell git describe)_{{.OS}}_{{.Arch}}/$(NAME)"
+			-ldflags="-X ${REPO}/cmd.Version=${PACKAGE_VERSION} -s -w" \
+			-osarch="darwin/386" \
+			-osarch="darwin/amd64" \
+			-os="linux" \
+			-os="freebsd" \
+			-os="solaris" \
+			-output="build/${NAME}_${PACKAGE_VERSION}_{{.OS}}_{{.Arch}}/${NAME}"
 	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
+.PHONY: package
 package: xcompile
 	@mkdir -p build/tgz
 	for f in $(shell find build -name converge | cut -d/ -f2); do \
-		(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
-	done
+			(cd $(shell pwd)/build/$$f && tar -zcvf ../tgz/$$f.tar.gz *); \
+		done
 	(cd build/tgz; shasum -a 512 * > tgz.sha512sum)
-
-rpc/pb/root.pb.go: rpc/pb/root.proto
-	protoc -I rpc/pb \
-	 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	 --go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:rpc/pb \
-	 rpc/pb/root.proto
-
-rpc/pb/root.pb.gw.go: rpc/pb/root.proto
-	protoc -I rpc/pb \
-	 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	 --grpc-gateway_out=logtostderr=true:rpc/pb \
-	 rpc/pb/root.proto
-
-rpc/pb/root.swagger.json: rpc/pb/root.proto
-	protoc -I rpc/pb \
-	 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	 --swagger_out=logtostderr=true:rpc/pb \
-	 rpc/pb/root.proto
-
-.PHONY: test gotest vendor-update vendor-clean xcompile package samples/errors/*.hcl blackbox/*.sh fuzzing/* lint bench license-check

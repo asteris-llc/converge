@@ -1,15 +1,21 @@
-TASKFILE=../resource/resource.go
-TASKLOC=${TASKFILE}:\#$(shell grep -b 'type Task interface' ${TASKFILE} | cut -d: -f1)
+all: public
 
-public: content/*.md static/**/* content/resources content/license.md static/images/**/*.png
+-include resources.mk
+
+public: content/*.md static/**/* ${RESOURCES} content/license.md static/images/**/*.png
 	hugo
 
-publish:
+publish: public
 	./publish.sh $$VERSION
 
+# automatic documentation extraction
 extract: extract.go
 	go build -o $@ extract.go
 
+resources.mk: resources.awk sources.csv
+	awk -f resources.awk sources.csv > $@
+
+# content to copy
 content/license.md: ../LICENSE
 	@mkdir content/license || true
 	echo '---' > $@
@@ -22,31 +28,7 @@ content/license.md: ../LICENSE
 	echo >> $@
 	cat ../LICENSE >> $@
 
-content/resources: extract resources.mk $(shell cut -d, -f2,3 sources.csv | sed -E 's|,| |g')
-	mkdir -p $@ || true
-	@for line in $$(cat sources.csv); do \
-		make -f resources.mk $@/$$(echo $$line | cut -d, -f1).md; \
-	done
-
-resources.mk: sources.csv resourceContent.mk.tmpl
-	@echo "# automatically generated $$(date)" > $@
-	@echo "include Makefile" >> $@
-	@echo >> $@
-	@for line in $$(cat sources.csv); do \
-    sed -e "s|@@NAME|$$(echo $$line | cut -d, -f1 | tr -d '\n')|g" \
-	-e "s|@@SLUG|$$(echo $$line | cut -d, -f1 | tr -d '\n' | sed 's/\./-/g')|g" \
-	-e "s|@@SOURCE|$$(echo $$line | cut -d, -f2 | tr -d '\n')|g" \
-	-e "s|@@EXAMPLE|$$(echo $$line | cut -d, -f3 | tr -d '\n')|g" \
-	-e "s|@@TYPE|$$(echo $$line | cut -d, -f4 | tr -d '\n')|g" \
-	-e "s|@@TARGET|content/resources/$$(echo $$line | cut -d, -f1 | tr -d '\n').md|g" \
-	-e "s|@@TASKSOURCE|$$(echo $$line | cut -d, -f5 | tr -d '\n')|" \
-	-e "s|@@TASK|$$(echo $$line | cut -d, -f6 | tr -d '\n')|" \
-	resourceContent.mk.tmpl >> $@; \
-    echo >> $@; \
-	done
-
-# Images
-
+# images
 converge:
 	go build ..
 
@@ -64,5 +46,3 @@ static/images/getting-started/hello-world-params.png: static/images/getting-star
 
 static/images/getting-started/hello-you.png: static/images/getting-started/hello-you.hcl converge
 	./converge graph --local --show-params $< | dot -Tpng -o$@
-
-.PHONY=publish

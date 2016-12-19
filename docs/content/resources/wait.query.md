@@ -1,7 +1,7 @@
 ---
 title: "wait.query"
 slug: "wait-query"
-date: "2016-12-19T10:12:42-06:00"
+date: "2016-12-19T14:58:58-06:00"
 menu:
   main:
     parent: resources
