@@ -32,9 +32,9 @@ type OSProxy interface {
 	Chown(string, int, int) error
 	GetUID(string) (int, error)
 	GetGID(string) (int, error)
-	LookupGroupId(string) (*user.Group, error)
+	LookupGroupID(string) (*user.Group, error)
 	LookupGroup(string) (*user.Group, error)
-	LookupId(string) (*user.User, error)
+	LookupID(string) (*user.User, error)
 	Lookup(string) (*user.User, error)
 }
 

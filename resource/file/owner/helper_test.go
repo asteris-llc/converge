@@ -61,8 +61,8 @@ func (m *MockOS) GetGID(path string) (int, error) {
 	return args.Int(0), args.Error(1)
 }
 
-// LookupGroupId mocks LookupGroupId
-func (m *MockOS) LookupGroupId(path string) (*user.Group, error) {
+// LookupGroupID mocks LookupGroupID
+func (m *MockOS) LookupGroupID(path string) (*user.Group, error) {
 	args := m.Called(path)
 	return args.Get(0).(*user.Group), args.Error(1)
 }
@@ -73,8 +73,8 @@ func (m *MockOS) LookupGroup(path string) (*user.Group, error) {
 	return args.Get(0).(*user.Group), args.Error(1)
 }
 
-// LookupId mocks LookupId
-func (m *MockOS) LookupId(path string) (*user.User, error) {
+// LookupID mocks LookupID
+func (m *MockOS) LookupID(path string) (*user.User, error) {
 	args := m.Called(path)
 	return args.Get(0).(*user.User), args.Error(1)
 }
@@ -216,17 +216,17 @@ func newMockOS(ownedFiles []ownershipRecord,
 	m.On("GetUID", any).Return(0, nil)
 	m.On("GetGID", any).Return(0, nil)
 	for _, user := range users {
-		m.On("LookupId", user.Uid).Return(user, nil)
+		m.On("LookupID", user.Uid).Return(user, nil)
 		m.On("Lookup", user.Username).Return(user, nil)
 	}
 	for _, group := range groups {
-		m.On("LookupGroupId", group.Gid).Return(group, nil)
+		m.On("LookupGroupID", group.Gid).Return(group, nil)
 		m.On("LookupGroup", group.Name).Return(group, nil)
 	}
 	m.On("Lookup", any).Return(defaultUser, nil)
-	m.On("LookupId", any).Return(defaultUser, nil)
+	m.On("LookupID", any).Return(defaultUser, nil)
 	m.On("LookupGroup", any).Return(defaultGroup, nil)
-	m.On("LookupGroupId", any).Return(defaultGroup, nil)
+	m.On("LookupGroupID", any).Return(defaultGroup, nil)
 	return m
 }
 
@@ -246,15 +246,15 @@ func failingMockOS(failOn map[string]error) *MockOS {
 	} else {
 		m.On("LookupGroup", any).Return(rootGroup, nil)
 	}
-	if err, ok := failOn["LookupId"]; ok {
-		m.On("LookupId", any).Return(nil, err)
+	if err, ok := failOn["LookupID"]; ok {
+		m.On("LookupID", any).Return(nil, err)
 	} else {
-		m.On("LookupId", any).Return(rootUser, nil)
+		m.On("LookupID", any).Return(rootUser, nil)
 	}
-	if err, ok := failOn["LookupGroupId"]; ok {
-		m.On("LookupGroupId", any).Return(nil, err)
+	if err, ok := failOn["LookupGroupID"]; ok {
+		m.On("LookupGroupID", any).Return(nil, err)
 	} else {
-		m.On("LookupGroupId", any).Return(rootGroup, nil)
+		m.On("LookupGroupID", any).Return(rootGroup, nil)
 	}
 	return m
 }

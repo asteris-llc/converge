@@ -71,8 +71,8 @@ func (o *OSExecutor) GetGID(path string) (int, error) {
 	return int(statT.Gid), nil
 }
 
-// LookupGroupId proxies user.LookupGroupId
-func (o *OSExecutor) LookupGroupId(s string) (*user.Group, error) {
+// LookupGroupID proxies user.LookupGroupID
+func (o *OSExecutor) LookupGroupID(s string) (*user.Group, error) {
 	return user.LookupGroupId(s)
 }
 
@@ -81,8 +81,8 @@ func (o *OSExecutor) LookupGroup(s string) (*user.Group, error) {
 	return user.LookupGroup(s)
 }
 
-// LookupId proxies user.LookupId
-func (o *OSExecutor) LookupId(s string) (*user.User, error) {
+// LookupID proxies user.LookupID
+func (o *OSExecutor) LookupID(s string) (*user.User, error) {
 	return user.LookupId(s)
 }
 
