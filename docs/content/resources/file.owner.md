@@ -1,7 +1,7 @@
 ---
 title: "file.owner"
 slug: "file-owner"
-date: "2016-12-19T10:45:07-06:00"
+date: "2016-12-19T11:36:04-06:00"
 menu:
   main:
     parent: resources
@@ -98,22 +98,28 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `destination` (string)
+
   the path to the file that should change; or if `recursive` is set, the path
 to the root of the filesystem to recursively change.
  
 - `username` (string)
+
   the username of the user that should be given ownership of the file
  
 - `uid` (string)
+
   the uid of the user that should be given ownership of the file
  
 - `group` (string)
+
   the group name of the group that should be given ownership of the file
  
 - `gid` (string)
+
   the gid of the group that should be given ownership of the file
  
 - `recursive` (bool)
+
   if true, and `destination` is a directory, apply changes recursively
   
 
