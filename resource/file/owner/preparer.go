@@ -27,7 +27,10 @@ import (
 // Owner sets the file and group ownership of a file or directory.  If
 // `recursive` is set to true and `destination` is a directory, then it will
 // also recursively change ownership of all files and subdirectories.  Symlinks
-// are ignored.
+// are ignored.  If the file or directory does not exist during the plan phase
+// of application the differences will be calculated during application.
+// Otherwise changes will be limited to the files identified during the plan
+// phase of application.
 type Preparer struct {
 	// Destination is the location on disk where the content will be rendered.
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`

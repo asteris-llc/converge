@@ -78,11 +78,35 @@ func (o *Owner) SetOSProxy(p OSProxy) *Owner {
 
 // Check checks the ownership status of the file
 func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	var err error
 	status := &resource.Status{Differences: make(map[string]resource.Diff)}
+	if _, err := os.Stat(o.Destination); os.IsNotExist(err) {
+		status.AddMessage(fmt.Sprintf("%s: does not exist; will re-attempt during apply", o.Destination))
+		status.RaiseLevel(resource.StatusMayChange)
+		return status, nil
+	}
+
+	status, err = o.getDiffs(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if o.HideDetails && o.Recursive && status.HasChanges() {
+		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
+		status.Differences = make(map[string]resource.Diff)
+		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
+	}
+
+	return status, nil
+}
+
+// GetDiffs gets the differences
+func (o *Owner) getDiffs(status *resource.Status) (*resource.Status, error) {
 	newOwner, err := o.getNewOwner()
 	if err != nil {
 		return nil, err
 	}
+
 	w := &fileWalker{Status: status, NewOwner: newOwner, Executor: o.executor}
 	if o.Recursive {
 		status.AddMessage("Recursively updating permissions in " + o.Destination)
@@ -94,20 +118,30 @@ func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 		return nil, err
 	}
 	o.copyDiffs(status)
-
-	if o.HideDetails && o.Recursive && status.HasChanges() {
-		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
-		status.Differences = make(map[string]resource.Diff)
-		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
-	}
-
 	return status, nil
 }
 
 // Apply applies the ownership to the file
 func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
-	showDetails := !(o.Recursive && o.HideDetails)
 	status := resource.NewStatus()
+	showDetails := !(o.Recursive && o.HideDetails)
+
+	if _, err := os.Stat(o.Destination); os.IsNotExist(err) {
+		return nil, fmt.Errorf("cannot change ownership of non-existant file: %s", o.Destination)
+	}
+
+	if o.differences == nil {
+		status.AddMessage("no previously planned diffs; checking for necessary changes")
+		tmpStatus := resource.NewStatus()
+		tmpStatus, err := o.getDiffs(tmpStatus)
+		if err != nil {
+			return nil, err
+		}
+		for _, msg := range tmpStatus.Messages() {
+			status.AddMessage("plan: " + msg)
+		}
+	}
+
 	if o.Recursive {
 		status.AddMessage("Recursively updating permissions in " + o.Destination)
 	}

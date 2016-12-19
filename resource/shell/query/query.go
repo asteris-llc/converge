@@ -24,7 +24,7 @@ import (
 
 // Query represents an environmental query
 type Query struct {
-	*shell.Shell
+	*shell.Shell `re-export-as:"task"`
 }
 
 // Apply is a nop for queries.  Because HasChanges always returns false this
