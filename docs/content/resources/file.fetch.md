@@ -1,7 +1,7 @@
 ---
 title: "file.fetch"
 slug: "file-fetch"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:41-06:00"
 menu:
   main:
     parent: resources
@@ -62,19 +62,24 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `source` (string)
+
   location of the file to fetch
  
 - `destination` (string)
+
   destination for the fetched file
  
 - `hash_type` (string)
+
   hash function used to generate the checksum hash; value is available for
 lookup if set in the hcl
  
 - `hash` (string)
+
   the checksum hash; value is available for lookup if set in the hcl
  
 - `force` (bool)
+
   whether the file will be fetched if it already exists
   
 

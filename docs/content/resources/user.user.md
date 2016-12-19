@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-12-16T11:20:35-06:00"
+date: "2016-12-19T10:12:42-06:00"
 menu:
   main:
     parent: resources
@@ -105,36 +105,47 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `username` (string)
+
   the configured username
  
 - `newusername` (string)
+
   the desired username
  
 - `uid` (string)
+
   the user id
  
 - `groupname` (string)
+
   the group name
  
 - `gid` (string)
+
   the group id
  
 - `name` (string)
+
   the real name of the user
  
 - `createhome` (bool)
+
   if the home directory should be created
  
 - `skeldir` (string)
+
   the path to the skeleton directory
  
 - `homedir` (string)
+
   the path to the home directory
  
 - `movedir` (bool)
+
   if the contents of the home directory should be moved
  
 - `state` (State)
+
   configured the user state
   
 

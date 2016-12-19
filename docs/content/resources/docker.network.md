@@ -1,7 +1,7 @@
 ---
 title: "docker.network"
 slug: "docker-network"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:40-06:00"
 menu:
   main:
     parent: resources
@@ -116,30 +116,39 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `name` (string)
+
   name of the network
  
 - `driver` (string)
+
   network drive configured in the hcl
  
 - `labels` (map of string to string)
+
   labels set on the network
  
 - `options` (map of string to anything)
+
   driver-specific options that have been configured
  
 - `ipam` (dc.IPAMOptions)
+
   docker client IPAM options
  
 - `internal` (bool)
+
   restricted to internal networking
  
 - `ipv6` (bool)
+
   uses ipv6
  
 - `state` (State)
+
   the configured state
  
 - `force` (bool)
+
   true if 'force' was specified in the hcl
   
 
