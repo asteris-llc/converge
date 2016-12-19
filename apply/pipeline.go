@@ -173,6 +173,7 @@ func (g *pipelineGen) maybeRunFinalCheck(ctx context.Context, resultI interface{
 	}
 	result.PostCheck = planned.Status
 	if planned.HasChanges() {
+		result.Status = planned.Status
 		if result.Err != nil {
 			result.Err = errors.Wrap(result.Err, fmt.Sprintf("%s still has changes after apply", g.ID))
 		} else {
