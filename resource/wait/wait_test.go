@@ -59,7 +59,7 @@ func TestApply(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("retry count", func(t *testing.T) {
-			assert.Equal(t, 1, wait.RetryCount)
+			assert.Equal(t, 0, wait.RetryCount)
 		})
 
 		t.Run("status is set", func(t *testing.T) {
