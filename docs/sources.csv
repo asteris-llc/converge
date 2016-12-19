@@ -6,6 +6,7 @@ file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Pre
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer,../resource/file/directory/directory.go,Directory
 file.fetch,../resource/file/fetch/preparer.go,../samples/fileFetch.hcl,Preparer,../resource/file/fetch/fetch.go,Fetch
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer,../resource/file/mode/mode.go,Mode
+file.owner,../resource/file/owner/preparer.go,../samples/fileOwner.hcl,Preparer,../resource/file/owner/owner.go,Owner
 filesystem,../resource/lvm/fs/preparer.go,../samples/lvm.hcl,Preparer,,
 lvm.volumegroup,../resource/lvm/vg/preparer.go,../samples/lvm.hcl,Preparer,,
 lvm.logicalvolume,../resource/lvm/lv/preparer.go,../samples/lvm.hcl,Preparer,,
