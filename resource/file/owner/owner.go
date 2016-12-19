@@ -39,12 +39,24 @@ type OSProxy interface {
 
 // Owner represents the ownership mode of a file or directory
 type Owner struct {
+	// the path to the file that should change; or if `recursive` is set, the path
+	// to the root of the filesystem to recursively change.
 	Destination string `export:"destination"`
-	Username    string `export:"username"`
-	UID         string `export:"uid"`
-	Group       string `export:"group"`
-	GID         string `export:"gid"`
-	Recursive   bool   `export:"recursive"`
+
+	// the username of the user that should be given ownership of the file
+	Username string `export:"username"`
+
+	// the uid of the user that should be given ownership of the file
+	UID string `export:"uid"`
+
+	// the group name of the group that should be given ownership of the file
+	Group string `export:"group"`
+
+	// the gid of the group that should be given ownership of the file
+	GID string `export:"gid"`
+
+	// if true, and `destination` is a directory, apply changes recursively
+	Recursive   bool `export:"recursive"`
 	executor    OSProxy
 	differences []*OwnershipDiff
 }
