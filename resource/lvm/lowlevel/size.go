@@ -30,12 +30,12 @@ import (
 
 // Cover values for `66%FREE` and likewise (refer LVM manpages for details).
 // See also size_test.go for more usage examples
-var pctRE = regexp.MustCompile("^(?i)(\\d+)%(PVS|VG|FREE)$")
+var pctRE = regexp.MustCompile(`^(?i)(\d+)%(PVS|VG|FREE)$`)
 
 // Cover values for `50G` and likewise (refer LVM manpages for details).
 // See also size_test.go for more usage examples.
 // Difference between lower/upper cases letters not supported now, see NB above
-var sizeRE = regexp.MustCompile("^(?i)(\\d+)([bskmgtpe])b?$")
+var sizeRE = regexp.MustCompile(`^(?i)(\d+)([bskmgtpe])b?$`)
 
 // LvmSize represent parsed and validated LVM compatible size
 type LvmSize struct {
