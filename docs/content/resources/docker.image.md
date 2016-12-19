@@ -1,7 +1,7 @@
 ---
 title: "docker.image"
 slug: "docker-image"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:40-06:00"
 menu:
   main:
     parent: resources
@@ -60,9 +60,11 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `name` (string)
+
   name of the image
  
 - `tag` (string)
+
   tag of the image
   
 

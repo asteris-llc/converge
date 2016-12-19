@@ -100,9 +100,11 @@ will have their own fields exported under the re-exported namespace.
 
 {{range .GetExported}}
 - {{.ExportedAs}} ({{.Type}})
+
 {{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}}
 {{- range .GetReExported}}
 - {{.ExportedAs}} re-exports fields from {{.Type}}
+
 {{if ne .Doc ""}}  {{.Doc}}{{end}} {{end}} {{end}}
 `))
 )

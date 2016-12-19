@@ -1,7 +1,7 @@
 ---
 title: "file.mode"
 slug: "file-mode"
-date: "2016-12-16T11:20:34-06:00"
+date: "2016-12-19T10:12:41-06:00"
 menu:
   main:
     parent: resources
@@ -50,9 +50,11 @@ will have their own fields exported under the re-exported namespace.
 
 
 - `destination` (string)
+
   path to the file that will be modified
  
 - `mode` (os.FileMode)
+
   the mode that the file or directory should be configured with
   
 
