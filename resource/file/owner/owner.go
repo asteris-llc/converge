@@ -15,6 +15,7 @@
 package owner
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -56,7 +57,9 @@ type Owner struct {
 	GID string `export:"gid"`
 
 	// if true, and `destination` is a directory, apply changes recursively
-	Recursive   bool `export:"recursive"`
+	Recursive bool `export:"recursive"`
+
+	HideDetails bool
 	executor    OSProxy
 	differences []*OwnershipDiff
 }
@@ -81,32 +84,45 @@ func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 		return nil, err
 	}
 	w := &fileWalker{Status: status, NewOwner: newOwner, Executor: o.executor}
-
 	if o.Recursive {
 		status.AddMessage("Recursively updating permissions in " + o.Destination)
 		err = o.executor.Walk(o.Destination, w.CheckFile)
 	} else {
 		err = w.CheckFile(o.Destination, nil, nil)
 	}
-
 	if err != nil {
 		return nil, err
 	}
 	o.copyDiffs(status)
+
+	if o.HideDetails && o.Recursive && status.HasChanges() {
+		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
+		status.Differences = make(map[string]resource.Diff)
+		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
+	}
+
 	return status, nil
 }
 
 // Apply applies the ownership to the file
 func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
+	showDetails := !(o.Recursive && o.HideDetails)
 	status := resource.NewStatus()
 	if o.Recursive {
 		status.AddMessage("Recursively updating permissions in " + o.Destination)
 	}
 	for _, diff := range o.differences {
-		status.Differences[diff.Path] = diff
+		if showDetails {
+			status.Differences[diff.Path] = diff
+		}
 		if err := diff.Apply(); err != nil {
 			return nil, err
 		}
+	}
+	if !showDetails {
+		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
+		status.Differences = make(map[string]resource.Diff)
+		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
 	}
 	return status, nil
 }

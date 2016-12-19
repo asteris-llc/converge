@@ -48,6 +48,10 @@ type Preparer struct {
 	// GID specifies group ownership by gid
 	GID *int `hcl:"gid" mutually_exclusive:"group" export:"group"`
 
+	// Verbose specifies that when performing recursive updates, a diff should be
+	// shown for each file to be changed
+	Verbose bool `hcl:"verbose"`
+
 	osProxy OSProxy
 }
 
@@ -85,6 +89,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		UID:         uid,
 		Group:       group,
 		GID:         gid,
+		HideDetails: !p.Verbose,
 	}).SetOSProxy(p.osProxy), nil
 }
 
