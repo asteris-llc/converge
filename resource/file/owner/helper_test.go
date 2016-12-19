@@ -169,6 +169,14 @@ var (
 		Gid:  "0",
 		Name: "root",
 	}
+	fakeStat = &ownershipRecord{
+		Path:      "fake-path",
+		User:      rootUser,
+		Group:     rootGroup,
+		FileSize:  0,
+		FileMode:  0777,
+		FileIsDir: false,
+	}
 )
 
 func makeOwned(path, username, uid, groupname, gid string) ownershipRecord {
@@ -212,15 +220,6 @@ func newMockOS(ownedFiles []ownershipRecord,
 	}
 	if defaultGroup == nil {
 		defaultGroup = rootGroup
-	}
-
-	fakeStat := &ownershipRecord{
-		Path:      "fake-path",
-		User:      defaultUser,
-		Group:     defaultGroup,
-		FileSize:  0,
-		FileMode:  0777,
-		FileIsDir: false,
 	}
 
 	m.On("Walk", any, any).Return(nil)
@@ -274,7 +273,16 @@ func failingMockOS(failOn map[string]error) *MockOS {
 	} else {
 		m.On("LookupGroupID", any).Return(rootGroup, nil)
 	}
+	if err, ok := failOn["Stat"]; ok {
+		m.On("Stat", any).Return(fakeStat, err)
+	} else {
+		m.On("Stat", any).Return(fakeStat, nil)
+	}
 	return m
+}
+
+func missingMockOS() *MockOS {
+	return failingMockOS(map[string]error{"Stat": os.ErrNotExist})
 }
 
 func toInt(s string) int {
