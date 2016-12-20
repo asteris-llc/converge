@@ -324,6 +324,101 @@ func TestCheck(t *testing.T) {
 			assert.Equal(t, len(diffs), len(changingRecords))
 		})
 	})
+	t.Run("verbose-flag", func(t *testing.T) {
+		t.Parallel()
+		t.Run("when-verbose-true-single-file", func(t *testing.T) {
+			t.Parallel()
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-2",
+				UID:         "2",
+				Recursive:   true,
+				HideDetails: false,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(status.Diffs()))
+		})
+		t.Run("when-verbose-false-single-file", func(t *testing.T) {
+			t.Parallel()
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-2",
+				UID:         "2",
+				Recursive:   true,
+				HideDetails: true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(status.Diffs()))
+		})
+		t.Run("when-verbose-true-many-files", func(t *testing.T) {
+			t.Parallel()
+			ownershipRecords := []ownershipRecord{
+				makeOwned("foo1", "user-1", "1", "group-1", "1"),
+				makeOwned("foo2", "user-1", "1", "group-1", "1"),
+				makeOwned("foo3", "user-1", "1", "group-1", "1"),
+				makeOwned("foo4", "user-1", "1", "group-1", "1"),
+			}
+			m := newMockOS(ownershipRecords, users, groups, nil, nil)
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-2",
+				UID:         "2",
+				Recursive:   true,
+				HideDetails: false,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, len(ownershipRecords), len(status.Diffs()))
+		})
+		t.Run("when-verbose-false-many-files", func(t *testing.T) {
+			t.Parallel()
+			ownershipRecords := []ownershipRecord{
+				makeOwned("foo1", "user-1", "1", "group-1", "1"),
+				makeOwned("foo2", "user-1", "1", "group-1", "1"),
+				makeOwned("foo3", "user-1", "1", "group-1", "1"),
+				makeOwned("foo4", "user-1", "1", "group-1", "1"),
+			}
+
+			m := newMockOS(ownershipRecords, users, groups, nil, nil)
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-2",
+				UID:         "2",
+				Recursive:   true,
+				HideDetails: true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(status.Diffs()))
+		})
+		t.Run("when-verbose-false-not-recursive", func(t *testing.T) {
+			t.Parallel()
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-2",
+				UID:         "2",
+				HideDetails: true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(status.Diffs()))
+		})
+		t.Run("when-verbose-false-no-changes", func(t *testing.T) {
+			t.Parallel()
+			o := (&owner.Owner{
+				Destination: "foo",
+				Username:    "user-1",
+				UID:         "1",
+				HideDetails: true,
+			}).SetOSProxy(m)
+			status, err := o.Check(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			t.Log(status.Diffs())
+			assert.False(t, status.HasChanges())
+		})
+	})
 }
 
 // TestApply tests the behavior of Apply

@@ -22,7 +22,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Preparer for Owern
+// Preparer for Owner
 //
 // Owner sets the file and group ownership of a file or directory.  If
 // `recursive` is set to true and `destination` is a directory, then it will
@@ -37,19 +37,19 @@ type Preparer struct {
 
 	// Recursive indicates whether ownership changes should be applied
 	// recursively.  Symlinks are not followed.
-	Recursive bool `hcl:"recursive" default:"false" export:"recursive"`
+	Recursive bool `hcl:"recursive"`
 
 	// Username specifies user-owernship by user name
-	Username string `hcl:"user" mutally_exclusive:"uid" export:"user"`
+	Username string `hcl:"user" mutally_exclusive:"user,uid"`
 
 	// UID specifies user-ownership by UID
-	UID *int `hcl:"uid" mutually_exclusive:"user" export:"uid"`
+	UID *int `hcl:"uid" mutually_exclusive:"user,uid"`
 
 	// Groupname specifies group-ownership by groupname
-	Groupname string `hcl:"group" mutually_exclusive:"gid" export:"gid"`
+	Groupname string `hcl:"group" mutually_exclusive:"group,gid"`
 
 	// GID specifies group ownership by gid
-	GID *int `hcl:"gid" mutually_exclusive:"group" export:"group"`
+	GID *int `hcl:"gid" mutually_exclusive:"group,gid"`
 
 	// Verbose specifies that when performing recursive updates, a diff should be
 	// shown for each file to be changed
@@ -67,11 +67,11 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		p.osProxy = &OSExecutor{}
 	}
 
-	if nil != p.UID {
+	if p.UID != nil {
 		uidStr = strconv.Itoa(*p.UID)
 	}
 
-	if nil != p.GID {
+	if p.GID != nil {
 		gidStr = strconv.Itoa(*p.GID)
 	}
 
