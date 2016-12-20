@@ -20,6 +20,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -92,10 +93,23 @@ func (o *Owner) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 		return nil, err
 	}
 
+	if o.Recursive {
+		status.AddMessage("Recursive: True")
+	}
+
+	status.AddMessage("Checking file ownership at: " + o.Destination)
+
 	if o.HideDetails && o.Recursive && status.HasChanges() {
+		var diffMsg []string
 		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
 		status.Differences = make(map[string]resource.Diff)
-		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
+		if o.Username != "" {
+			diffMsg = append(diffMsg, fmt.Sprintf("user: %s (%s)", o.Username, o.UID))
+		}
+		if o.Group != "" {
+			diffMsg = append(diffMsg, fmt.Sprintf("group: %s (%s)", o.Group, o.GID))
+		}
+		status.AddDifference(o.Destination, "*", strings.Join(diffMsg, "; "), "")
 	}
 
 	return status, nil
@@ -110,7 +124,6 @@ func (o *Owner) getDiffs(status *resource.Status) (*resource.Status, error) {
 
 	w := &fileWalker{Status: status, NewOwner: newOwner, Executor: o.executor}
 	if o.Recursive {
-		status.AddMessage("Recursively updating permissions in " + o.Destination)
 		err = o.executor.Walk(o.Destination, w.CheckFile)
 	} else {
 		err = w.CheckFile(o.Destination, nil, nil)
@@ -144,8 +157,9 @@ func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 	}
 
 	if o.Recursive {
-		status.AddMessage("Recursively updating permissions in " + o.Destination)
+		status.AddMessage("Recursive: True")
 	}
+	status.AddMessage("Updating permissions on file(s) at: " + o.Destination)
 	for _, diff := range o.differences {
 		if showDetails {
 			status.Differences[diff.Path] = diff
@@ -155,9 +169,16 @@ func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 		}
 	}
 	if !showDetails {
+		var diffMsg []string
+		if o.Username != "" {
+			diffMsg = append(diffMsg, fmt.Sprintf("user: %s (%s)", o.Username, o.UID))
+		}
+		if o.Group != "" {
+			diffMsg = append(diffMsg, fmt.Sprintf("group: %s (%s)", o.Group, o.GID))
+		}
 		status.AddMessage("reporting abridged changes; add \"verbose = true\" to see all changes")
 		status.Differences = make(map[string]resource.Diff)
-		status.AddDifference(o.Destination, "*", fmt.Sprintf("user: %s (%s); group: %s (%s)", o.Username, o.UID, o.Group, o.GID), "")
+		status.AddDifference(o.Destination, "*", strings.Join(diffMsg, "; "), "")
 	}
 	return status, nil
 }
