@@ -16,6 +16,7 @@ package owner_test
 
 import (
 	"context"
+	"errors"
 	"os/user"
 	"testing"
 
@@ -509,5 +510,20 @@ func TestApply(t *testing.T) {
 		_, err = o.Apply(context.Background())
 		m.AssertCalled(t, "GetGID", any)
 		m.AssertCalled(t, "GetUID", any)
+	})
+	t.Run("when-missing-still-missing", func(t *testing.T) {
+		t.Parallel()
+		missing := missingMockOS()
+		o := (&owner.Owner{
+			Destination: "foo",
+			Username:    "user-1",
+			UID:         "1",
+			Group:       "group-1",
+			GID:         "1",
+		}).SetOSProxy(missing)
+		_, err := o.Check(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		_, err = o.Apply(context.Background())
+		assert.Equal(t, errors.New("cannot change ownership of non-existent file: foo"), err)
 	})
 }
