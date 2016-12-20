@@ -28,15 +28,15 @@ import (
 // OSProxy is an intermediary used for interfacing with the underlying OS or
 // test mocks.
 type OSProxy interface {
-	Walk(string, filepath.WalkFunc) error
-	Chown(string, int, int) error
-	GetUID(string) (int, error)
-	GetGID(string) (int, error)
-	LookupGroupID(string) (*user.Group, error)
-	LookupGroup(string) (*user.Group, error)
-	LookupID(string) (*user.User, error)
-	Lookup(string) (*user.User, error)
-	Stat(string) (os.FileInfo, error)
+	Walk(root string, walkFunc filepath.WalkFunc) error
+	Chown(name string, uid, gid int) error
+	GetUID(name string) (int, error)
+	GetGID(name string) (int, error)
+	LookupGroupID(name string) (*user.Group, error)
+	LookupGroup(gid string) (*user.Group, error)
+	LookupID(name string) (*user.User, error)
+	Lookup(uid string) (*user.User, error)
+	Stat(path string) (os.FileInfo, error)
 }
 
 // Owner represents the ownership mode of a file or directory
@@ -128,7 +128,7 @@ func (o *Owner) Apply(context.Context) (resource.TaskStatus, error) {
 	showDetails := !(o.Recursive && o.HideDetails)
 
 	if _, err := o.executor.Stat(o.Destination); os.IsNotExist(err) {
-		return nil, fmt.Errorf("cannot change ownership of non-existant file: %s", o.Destination)
+		return nil, fmt.Errorf("cannot change ownership of non-existent file: %s", o.Destination)
 	}
 
 	if o.differences == nil {
