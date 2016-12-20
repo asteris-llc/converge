@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
@@ -289,4 +290,22 @@ func missingMockOS() *MockOS {
 func toInt(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
+}
+
+func assertIn(t *testing.T, strs []string, s string) {
+	for _, str := range strs {
+		if s == str {
+			return
+		}
+	}
+	t.Errorf("%s is not included in %v", s, strs)
+}
+
+func assertNotIn(t *testing.T, strs []string, s string) {
+	for _, str := range strs {
+		if s == str {
+			t.Errorf("%s should not be included in %v", s, strs)
+		}
+	}
+	return
 }

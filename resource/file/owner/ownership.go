@@ -64,7 +64,7 @@ func (d *OwnershipDiff) showDiffAt(idx uint) string {
 	if idx > 1 {
 		return "Error executing diff generation on " + d.Path
 	}
-	if nil != d.UIDs && d.UIDs[0] != d.UIDs[1] {
+	if (d.UIDs != nil) && d.UIDs[0] != d.UIDs[1] {
 		uid := d.UIDs[idx]
 		userName, err := usernameFromUID(d.p, show(uid))
 		if err != nil {
@@ -72,7 +72,7 @@ func (d *OwnershipDiff) showDiffAt(idx uint) string {
 		}
 		diffStrs = append(diffStrs, fmt.Sprintf("user: %s (%d)", userName, uid))
 	}
-	if nil != d.GIDs && d.GIDs[0] != d.GIDs[1] {
+	if (d.GIDs != nil) && d.GIDs[0] != d.GIDs[1] {
 		gid := d.GIDs[idx]
 		groupName, err := groupnameFromGID(d.p, show(gid))
 		if err != nil {
@@ -96,10 +96,10 @@ func (d *OwnershipDiff) Current() string {
 // Changes returns true if Original() != Current()
 func (d *OwnershipDiff) Changes() bool {
 	var changes bool
-	if nil != d.UIDs {
+	if d.UIDs != nil {
 		changes = changes || (d.UIDs[0] != d.UIDs[1])
 	}
-	if nil != d.GIDs {
+	if d.GIDs != nil {
 		changes = changes || (d.GIDs[0] != d.GIDs[1])
 	}
 	return changes
