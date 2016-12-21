@@ -4,18 +4,18 @@
 # this way will be evaluated exactly once, and only if used.
 #
 # meta information about the project
-REPO = $(eval REPO := $(shell go list -f '{{.ImportPath}}' .))$(value REPO)
-NAME = $(eval NAME := $(shell basename ${REPO}))$(value NAME)
-VERSION = $(eval VERSION := $(shell git describe --dirty))$(value VERSION)
-PACKAGE_VERSION = $(eval PACKAGE_VERSION := $(shell git describe))$(value PACKAGE_VERSION)
+REPO = $(eval REPO := $$(shell go list -f '{{.ImportPath}}' .))$(value REPO)
+NAME = $(eval NAME := $$(shell basename ${REPO}))$(value NAME)
+VERSION = $(eval VERSION := $$(shell git describe --dirty))$(value VERSION)
+PACKAGE_VERSION = $(eval PACKAGE_VERSION := $$(subst -dirty,,$${VERSION}))$(value PACKAGE_VERSION)
 
 # sources to evaluate
-SRCDIRS = $(eval SRCDIRS := $(shell glide novendor --no-subdir | grep -v '^.$$' | sed 's|/$$||g'))$(value SRCDIRS)
-SRCFILES = $(eval SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go'))$(value SRCFILES)
+SRCDIRS := $(shell find . -maxdepth 1 -mindepth 1 -type d -not -path './vendor')
+SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go')
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
-	go build -ldflags="-X ${REPO}/cmd.Version=${PACKAGE}"
+	go build -ldflags="-X ${REPO}/cmd.Version=${VERSION}"
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
@@ -89,7 +89,7 @@ bench:
 	go test -run '^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 
 # linting
-LINTDIRS = $(eval LINTDIRS := $(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
+LINTDIRS = $(eval LINTDIRS := $$(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
 .PHONY: lint
 lint:
 	@echo '=== golint ==='
