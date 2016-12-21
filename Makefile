@@ -10,8 +10,8 @@ VERSION = $(eval VERSION := $(shell git describe --dirty))$(value VERSION)
 PACKAGE_VERSION = $(eval PACKAGE_VERSION := $(subst -dirty,,${VERSION}))$(value PACKAGE_VERSION)
 
 # sources to evaluate
-SRCDIRS = $(eval SRCDIRS := $(shell glide novendor --no-subdir | grep -v '^.$$' | sed 's|/$$||g'))$(value SRCDIRS)
-SRCFILES = $(eval SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go'))$(value SRCFILES)
+SRCDIRS := $(shell find . -maxdepth 1 -mindepth 1 -type d -not -path './vendor')
+SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go')
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
