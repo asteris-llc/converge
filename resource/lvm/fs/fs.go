@@ -93,6 +93,7 @@ func (r *resourceFS) Apply(context.Context) (resource.TaskStatus, error) {
 			return nil, errors.Wrapf(err, "mkfs")
 		}
 	}
+
 	if r.unitNeedUpdate {
 		if err := r.lvm.UpdateUnit(r.unitFileName, r.unitFileContent); err != nil {
 			return nil, errors.Wrapf(err, "updating unit file %s", r.unitFileName)
@@ -106,6 +107,8 @@ func (r *resourceFS) Apply(context.Context) (resource.TaskStatus, error) {
 		}
 	}
 
+	r.unitNeedUpdate = false
+	r.mountNeedUpdate = false
 	return &resource.Status{}, nil
 }
 
