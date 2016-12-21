@@ -15,7 +15,7 @@ SRCFILES = $(eval SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go'))$(va
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
-	go build -ldflags="-X ${REPO}/cmd.Version=${PACKAGE}"
+	go build -ldflags="-X ${REPO}/cmd.Version=${VERSION}"
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \

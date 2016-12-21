@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -34,4 +35,8 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(versionCmd)
+
+	if Version == "" {
+		logrus.Fatal("version is set to blank")
+	}
 }
