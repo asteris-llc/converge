@@ -17,13 +17,11 @@ package render
 import (
 	"crypto/rand"
 	"fmt"
-	"reflect"
 
 	"github.com/asteris-llc/converge/executor"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/graph/node/conditional"
-	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/module"
 	multierror "github.com/hashicorp/go-multierror"
@@ -106,14 +104,7 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 
 	if merged != nil {
 		if errIsUnresolvable(merged) {
-			// Get a resource with a fake renderer so that we can have a stub value to
-			// track the expected return type of the thunk
-			fakePrep, fakePrepErr := getTypedResourcePointer(ctx, res)
-			if fakePrepErr != nil {
-				return nil, fakePrepErr
-			}
-
-			return createThunk(fakePrep, func(factory *Factory) (resource.Task, error) {
+			return createThunk(func(factory *Factory) (resource.Task, error) {
 				dynamicRenderer, rendErr := factory.GetRenderer(p.ID)
 				if rendErr != nil {
 					return nil, rendErr
@@ -197,44 +188,26 @@ func typeError(where, what, expected string, actual interface{}) error {
 
 // PrepareThunk returns a possibly lazily evaluated preparer
 type PrepareThunk struct {
-	resource.Task
 	// prevent hashing thunks into a single value
 	Data  []byte
 	Thunk func(*Factory) (resource.Task, error) `hash:"ignore"`
 }
 
-func createThunk(task resource.Task, f func(*Factory) (resource.Task, error)) *PrepareThunk {
+// Check allows thunk to implement resource.Task
+func (p *PrepareThunk) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+	return nil, errors.New("Unresolved thunk: cannot be evaluated")
+}
+
+// Apply allows thunk to implement resource.Task
+func (p *PrepareThunk) Apply(context.Context) (resource.TaskStatus, error) {
+	return nil, errors.New("Unresolved thunk: cannot be evaluated")
+}
+
+func createThunk(f func(*Factory) (resource.Task, error)) *PrepareThunk {
 	junk := make([]byte, 32)
 	rand.Read(junk)
 	return &PrepareThunk{
-		Task:  task,
 		Thunk: f,
 		Data:  junk,
 	}
-}
-
-func getTypedResourcePointer(ctx context.Context, r resource.Resource) (resource.Task, error) {
-	fakeTask, err := r.Prepare(ctx, fakerenderer.New())
-	if err != nil {
-		return nil, err
-	}
-	val := reflect.ValueOf(fakeTask)
-	if val.Kind() != reflect.Ptr {
-		return fakeTask, nil
-	}
-
-	zero := reflect.Zero(val.Type())
-	asTask, ok := zero.Interface().(resource.Task)
-	if !ok {
-		return nil, fmt.Errorf("%s does not implement resource.Task", val.Type())
-	}
-	return asTask, nil
-}
-
-// FakeTaskFromPreparer provides a wrapper around the internal
-// getTypedResourcePointer function.  It should be removed in a future refactor
-// but is in place until the code for dealing with thunked branch nodes has
-// stabilized.
-func FakeTaskFromPreparer(ctx context.Context, r resource.Resource) (resource.Task, error) {
-	return getTypedResourcePointer(ctx, r)
 }
