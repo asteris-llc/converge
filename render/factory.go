@@ -54,7 +54,7 @@ func (v *LazyValue) Value() (resource.Value, bool, error) {
 	case ValueThunk:
 		val, found, err := result()
 		v.val = [3]interface{}{val, found, err}
-		return resource.Value(val), found, err
+		return val, found, err
 	default:
 		return "", false, errors.New("value is not a thunk")
 	}
@@ -108,7 +108,7 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 				return "", false, fmt.Errorf("Parent of param %s was not a module, was %T", id, parentTask)
 			}
 			if val, ok := parent.Params[name[len("param."):]]; ok {
-				return resource.Value(val), true, nil
+				return val, true, nil
 			}
 			return "", false, nil
 		}

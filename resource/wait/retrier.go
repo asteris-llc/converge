@@ -43,38 +43,27 @@ type RetryFunc func() (bool, error)
 // RetryUntil implements a retry loop
 func (r *Retrier) RetryUntil(retryFunc RetryFunc) (bool, error) {
 	startTime := time.Now()
-	after := r.GracePeriod
-	ok := false
-	var err error
-waitLoop:
+
 	for {
-		select {
-		case <-time.After(after):
-			if ok {
-				break waitLoop
-			}
+		ok, err := retryFunc()
+		if err != nil {
+			return false, err
+		}
 
+		if !ok {
 			r.RetryCount++
-			after = r.Interval
-
-			ok, err = retryFunc()
-			if err != nil {
-				break waitLoop
-			}
-
-			if ok {
-				after = r.GracePeriod
-				continue
-			}
 
 			if r.RetryCount >= r.MaxRetry {
-				break waitLoop
+				return false, nil
 			}
+			time.Sleep(r.GracePeriod)
+		} else {
+			break
 		}
 	}
 
 	r.Duration = time.Since(startTime)
-	return ok, err
+	return true, nil
 }
 
 // PrepareRetrier generates a Retrier from preparer input
