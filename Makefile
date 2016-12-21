@@ -89,7 +89,7 @@ bench:
 	go test -run '^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 
 # linting
-LINTDIRS = $(eval LINTDIRS := $$(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
+LINTDIRS = $(eval LINTDIRS := $(shell find ${SRCDIRS} -type d -not -path './rpc/pb' -not -path './docs*'))$(value LINTDIRS)
 .PHONY: lint
 lint:
 	@echo '=== golint ==='
@@ -106,9 +106,6 @@ lint:
 
 	@echo '=== varcheck ==='
 	@varcheck ${LINTDIRS} # github.com/opennota/check/cmd/varcheck
-
-	@echo '=== aligncheck ==='
-	@aligncheck ${LINTDIRS} # github.com/opennota/check/cmd/aligncheck
 
 	@echo '=== gas ==='
 	@gas ${LINTDIRS} # github.com/HewlettPackard/gas

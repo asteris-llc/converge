@@ -163,7 +163,7 @@ func volumeState(vol *dc.Volume) State {
 }
 
 func mapToString(m map[string]string) string {
-	if m == nil || len(m) == 0 {
+	if len(m) == 0 {
 		return ""
 	}
 	strs := make([]string, len(m))
