@@ -7,7 +7,7 @@
 REPO = $(eval REPO := $(shell go list -f '{{.ImportPath}}' .))$(value REPO)
 NAME = $(eval NAME := $(shell basename ${REPO}))$(value NAME)
 VERSION = $(eval VERSION := $(shell git describe --dirty))$(value VERSION)
-PACKAGE_VERSION = $(eval PACKAGE_VERSION := $(shell git describe))$(value PACKAGE_VERSION)
+PACKAGE_VERSION = $(eval PACKAGE_VERSION := $(subst -dirty,,${VERSION}))$(value PACKAGE_VERSION)
 
 # sources to evaluate
 SRCDIRS = $(eval SRCDIRS := $(shell glide novendor --no-subdir | grep -v '^.$$' | sed 's|/$$||g'))$(value SRCDIRS)
