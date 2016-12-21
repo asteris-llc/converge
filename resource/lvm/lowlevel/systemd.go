@@ -14,9 +14,7 @@
 
 package lowlevel
 
-import (
-	"os"
-)
+import "os"
 
 func (lvm *realLVM) CheckUnit(filename string, content string) (bool, error) {
 	realContent, err := lvm.backend.ReadFile(filename)
@@ -26,7 +24,10 @@ func (lvm *realLVM) CheckUnit(filename string, content string) (bool, error) {
 		}
 		return false, err
 	}
-	return string(realContent) != content, nil
+
+	shouldUpdate := string(realContent) != content
+
+	return shouldUpdate, nil
 }
 
 func (lvm *realLVM) UpdateUnit(filename string, content string) error {
