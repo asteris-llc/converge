@@ -70,7 +70,7 @@ blackbox/*.sh: converge
 
 # fuzzing
 .PHONY: fuzzing/*
-fuzzing/*:
+fuzzing/*: vendor
 	@echo
 	@echo === fuzzing $(shell basename $@) ===
 	@cd $@ && ./run.sh
