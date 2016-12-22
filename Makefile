@@ -80,7 +80,7 @@ fuzzing/*:
 BENCH := .
 BENCHDIRS = $(shell find ${SRCDIRS} -name '*_test.go' | xargs grep '*testing.B' | cut -d: -f1 | xargs -n1 dirname | uniq)
 .PHONY: bench
-bench:
+bench: vendor
 	go test -run '^$$' -bench=${BENCH} -benchmem ${BENCHDIRS}
 
 # linting
@@ -116,7 +116,7 @@ docs/public:
 
 # packaging
 .PHONY: xcompile
-xcompile: rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
+xcompile: vendor rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 	@echo "set version to ${PACKAGE_VERSION}"
 
 	@rm -rf build/
