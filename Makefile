@@ -35,7 +35,7 @@ vendor: glide.yaml glide.lock
 
 # testing
 .PHONY: test
-test: gotest validate-samples validate-error-samples blackbox
+test: vendor gotest validate-samples validate-error-samples blackbox
 
 .PHONY: gotest
 gotest:
