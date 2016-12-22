@@ -1,7 +1,7 @@
 ---
 title: "package.apt"
 slug: "package-apt"
-date: "2016-12-19T14:58:58-06:00"
+date: "2016-12-22T11:43:15-06:00"
 menu:
   main:
     parent: resources
