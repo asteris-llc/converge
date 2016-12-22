@@ -32,11 +32,6 @@ rpc/pb/root.pb.gw.go: rpc/pb/root.proto
 # vendoring
 vendor: glide.yaml glide.lock
 	glide install
-	make vendor-clean
-
-.PHONY: vendor-clean
-vendor-clean:
-	find vendor -not -name '*.go' -not -name '*.s' -not -name '*.pl' -not -name '*.c' -not -name LICENSE -not -name '*.proto' -type f -delete
 
 # testing
 .PHONY: test
