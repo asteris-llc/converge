@@ -212,12 +212,12 @@ func (e *ExportExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		}
 		return e
 	case *ast.Field:
-		typ := stringify(n.Type, "")
-		doc := (&TypeExtractor{}).Docs(n.Doc, n.Comment)
-
-		if n.Names == nil {
+		if n.Names == nil || !ast.IsExported(n.Names[0].String()) {
 			return e
 		}
+
+		typ := stringify(n.Type, "")
+		doc := (&TypeExtractor{}).Docs(n.Doc, n.Comment)
 
 		field := &Field{
 			Name: n.Names[0].String(),
@@ -314,6 +314,10 @@ func (te *TypeExtractor) Visit(node ast.Node) (w ast.Visitor) {
 		return te
 
 	case *ast.Field:
+		if !ast.IsExported(n.Names[0].String()) {
+			return te
+		}
+
 		typ := stringify(n.Type, "optional")
 		doc := te.Docs(n.Doc, n.Comment)
 		if strings.Contains(typ, "duration") {

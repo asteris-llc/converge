@@ -1,7 +1,7 @@
 ---
 title: "file.fetch"
 slug: "file-fetch"
-date: "2016-12-19T14:58:57-06:00"
+date: "2016-12-22T11:43:14-06:00"
 menu:
   main:
     parent: resources

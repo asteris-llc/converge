@@ -1,7 +1,7 @@
 ---
 title: "file.owner"
 slug: "file-owner"
-date: "2016-12-19T11:36:04-06:00"
+date: "2016-12-22T11:43:15-06:00"
 menu:
   main:
     parent: resources
@@ -11,7 +11,10 @@ menu:
 Owner sets the file and group ownership of a file or directory.  If
 `recursive` is set to true and `destination` is a directory, then it will
 also recursively change ownership of all files and subdirectories.  Symlinks
-are ignored.
+are ignored.  If the file or directory does not exist during the plan phase
+of application the differences will be calculated during application.
+Otherwise changes will be limited to the files identified during the plan
+phase of application.
 
 
 ## Example
@@ -21,7 +24,7 @@ are ignored.
  new file, then changing the ownership of that file to a different group. */
 
 file.content "to-change" {
-  destination = "to-change"
+  destination = "tochange"
 }
 
 task.query "existing-group" {
@@ -64,21 +67,21 @@ recursively.  Symlinks are not followed.
 - `uid` (optional int)
 
 
-	Only one of `user` may be set.
+	Only one of `user` or `uid` may be set.
 
   UID specifies user-ownership by UID
 
 - `group` (string)
 
 
-	Only one of `gid` may be set.
+	Only one of `group` or `gid` may be set.
 
   Groupname specifies group-ownership by groupname
 
 - `gid` (optional int)
 
 
-	Only one of `group` may be set.
+	Only one of `group` or `gid` may be set.
 
   GID specifies group ownership by gid
 
@@ -86,9 +89,6 @@ recursively.  Symlinks are not followed.
 
   Verbose specifies that when performing recursive updates, a diff should be
 shown for each file to be changed
-
-- osProxy (OSProxy)
-
 
 
 ## Exported Fields
