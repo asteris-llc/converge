@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,14 +24,18 @@ import (
 var autocompleteCmd = &cobra.Command{
 	Use:   "autocomplete",
 	Short: "generate bash autocompletion script for Converge",
-	Long: `By default, completion file is written to ./converge.bash. Use
+	Long: `Generate bash autocompletion script for Converge
+
+By default, completion file is written to ./converge.bash. Use
 "--out=/path/to/file" to override the file location.
 
 Note that for the generated file to work on OS X/macOS, you'll need to install
 bash-completion (or equivalent) from Homebrew (or your package manager of
 choice.)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		RootCmd.GenBashCompletionFile(viper.GetString("out"))
+		if err := RootCmd.GenBashCompletionFile(viper.GetString("out")); err != nil {
+			logrus.WithError(err).Fatal("could not generate completion file")
+		}
 	},
 }
 
