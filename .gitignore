@@ -35,12 +35,6 @@ samples/**/*.png
 # release
 build
 
-# docs
-docs/extract
-docs/converge
-docs/resources.mk
-docs/public
-
 # examples
 terraform.tfstate*
 .vagrant
