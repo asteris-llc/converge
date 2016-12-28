@@ -40,11 +40,8 @@
 }
 
 /* CODE */
-pre {
+pre, pre code, .article pre > code {
     background: #213035;
-}
-pre code, .article pre > code {
-    background: #213035;
-    color: #FFF;
+    color: #d8d8d8;
     font-weight: 700;
 }

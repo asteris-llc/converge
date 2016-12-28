@@ -29,7 +29,7 @@ params:
   custom_js: []
 
   # Syntax highlighting themed
-  highlight_css: "stylesheets/highlight/hybrid.min.css"
+  highlight_css: "stylesheets/highlight/converge.css"
 
   font:
     code: Ubuntu Mono
