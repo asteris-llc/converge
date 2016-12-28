@@ -1,5 +1,5 @@
 {{ $currentMenuEntry := .Scratch.Get "currentMenuEntry" -}}
-{{ $isCurrent := eq .URL $currentMenuEntry.URL -}}
+{{ $isCurrent := eq .URL (replace $currentMenuEntry.URL "./" "") -}}
 
 <a {{ if $isCurrent }}class="current"{{ end }} title="{{ $currentMenuEntry.Name }}" href="{{ replaceRE "^/" "" $currentMenuEntry.URL | absURL }}">
   {{ $currentMenuEntry.Pre }}

@@ -7,7 +7,7 @@
 
 .footer, .header { background:#213035; }
 
-.drawer .toc a.current, .drawer .toc a:focus, .drawer .toc a:hover { color:#213035; }
+.drawer .toc a.current, .drawer .toc a:focus, .drawer .toc a:hover { color:#20ACDF; }
 
 .drawer .anchor a { border-left:2px solid #20ACDF; }
 
