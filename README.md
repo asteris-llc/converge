@@ -37,19 +37,19 @@ runs tasks in parallel.
 The `install-converge.sh` script will download and install the converge binary
 to your `/usr/local/bin/` directory:
 
-```sh
+```bash
 sudo ./install-converge.sh -v 0.4.0
 ```
 
 The same installation script is available at `get.converge.sh`:
 
-```shell
+```bash
 curl get.converge.sh | sudo bash -
 ```
 
 You can also use `go get`:
 
-```sh
+```bash
 go get github.com/asteris-llc/converge
 ```
 
@@ -127,7 +127,7 @@ can be found at `/ci/Dockerfile` in the root of the project, and is pushed as
 `asteris/converge-ci`. You can test Converge in the container with the
 following invocation:
 
-```sh
+```bash
 docker run -i \
            -t \
            --rm \
