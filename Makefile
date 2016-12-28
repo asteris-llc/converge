@@ -111,6 +111,7 @@ samples/%.png: samples/% converge
 	@echo === rendering $@ ===
 	./converge graph --local $< | dot -Tpng -o$@
 
+.PHONY: docs/public
 docs/public:
 	cd docs; make public
 
