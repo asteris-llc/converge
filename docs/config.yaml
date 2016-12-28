@@ -19,7 +19,7 @@ params:
   repo_url: https://github.com/asteris-llc/converge
 
   version: 0.4.0
-  logo: images/logo.png
+  logo: images/logo/Converge_Logo_Blue.png
   favicon: ""
 
   permalink: '#'
@@ -29,11 +29,7 @@ params:
   custom_js: []
 
   # Syntax highlighting themed
-  highlight_css: ""
-
-  palette:
-    accent: teal
-    primary: indigo
+  highlight_css: "stylesheets/highlight/hybrid.min.css"
 
   font:
     code: Ubuntu Mono
