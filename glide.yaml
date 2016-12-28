@@ -89,3 +89,5 @@ import:
 - package: github.com/soheilhy/cmux
   version: ^0.1.2
 - package: github.com/gosuri/uilive
+- package: github.com/cpuguy83/go-md2man
+  version: ^1.0.6
