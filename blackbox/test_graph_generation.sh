@@ -6,6 +6,7 @@ TMP=$(mktemp -d -t converge.graphviz.XXXXXXXXXX)
 
 "$ROOT"/converge server --no-token &
 PID=$!
+sleep 1
 
 function finish {
     rm -fr "$TMP"
