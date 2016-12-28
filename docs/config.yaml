@@ -31,10 +31,6 @@ params:
   # Syntax highlighting themed
   highlight_css: ""
 
-  palette:
-    accent: teal
-    primary: indigo
-
   font:
     code: Ubuntu Mono
     text: Ubuntu
