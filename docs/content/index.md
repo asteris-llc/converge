@@ -91,7 +91,7 @@ can be found at `/ci/Dockerfile` in the root of the project, and is pushed as
 `asteris/converge-ci`. You can test Converge in the container with the
 following invocation:
 
-```sh
+```bash
 docker run -i \
            -t \
            --rm \

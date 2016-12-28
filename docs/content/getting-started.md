@@ -31,7 +31,7 @@ file.content "render" {
 This is our first module! Let's plan out our execution first by running
 `converge plan --local helloWorld.hcl`:
 
-```sh
+```bash
 $ converge plan --local helloWorld.hcl
 2016-09-20T08:05:31-05:00 |WARN| setting session-local token	token=309b7660-a0b1-4a88-9fa4-d5f2a139b8de
 2016-09-20T08:05:31-05:00 |INFO| serving	addr=:47740 component=rpc
@@ -57,7 +57,7 @@ output.
 
 Next, let's actually make the changes, using `converge apply --local helloWorld.hcl`:
 
-```sh
+```bash
 $ converge apply --local helloWorld.hcl
 2016-09-20T08:06:21-05:00 |WARN| setting session-local token	token=4d9f2774-8ed1-4dc4-8db5-a359b275b3b5
 2016-09-20T08:06:21-05:00 |INFO| serving	addr=:47740 component=rpc
@@ -97,7 +97,7 @@ to date. While you're in your editor, go ahead and change the message to
 something else. I changed mine to "LOL World!" Once you've done that, run the
 plan again.
 
-```sh
+```bash
 $ converge plan --local helloWorld.hcl
 2016-09-20T08:07:02-05:00 |WARN| setting session-local token	token=c61a0f03-2f4d-43cd-9722-1482e6396b70
 2016-09-20T08:07:02-05:00 |INFO| serving	addr=:47740 component=rpc
@@ -149,7 +149,7 @@ templates.
 Let's change the name in the template to your name (I'm going to assume it's
 "Spartacus".) We'll use the `-p` flag to `converge plan` to see what'll happen:
 
-```sh
+```bash
 $ converge plan --local -p name=Spartacus helloWorld.hcl
 2016-09-20T08:07:51-05:00 |WARN| setting session-local token	token=376ae4d9-8c7a-4581-be05-4c3cb8401798
 2016-09-20T08:07:51-05:00 |INFO| serving	addr=:47740 component=rpc

@@ -35,13 +35,13 @@ Passphrase: asteris
 
 We can use this to quickly generate a key pair using batch mode.
 
-```
+```bash
 $ gpg --batch --gen-key gpg-batch
 ```
 
 We can verify this worked by listing the keys.
 
-```
+```bash
 $ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --list-keys
 ./test.pub
 
@@ -59,7 +59,7 @@ gpg: WARNING: This key is not certified with a trusted signature!
 
 Since we know exactly where this key came from let's trust it:
 
-```
+```bash
 $ gpg --no-default-keyring --secret-keyring ./test.sec --keyring ./test.pub --edit-key 475CC928
 
 gpg (GnuPG) 1.4.20; Copyright (C) 2015 Free Software Foundation, Inc.
@@ -100,7 +100,7 @@ gpg> quit
 
 Now you can start signing modules with the key. The following command will produce a signature file called `basic.hcl.asc`.
 
-```
+```bash
 $ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --output basic.hcl.asc --detach-sig basic.hcl
 ```
 
@@ -110,7 +110,7 @@ This file should be shipped along side the module so that the converge tool can 
 
 In order to verify a module's signature against its signature file, converge needs access to our public key. This can be exported with the following command.
 
-```
+```bash
 $ gpg --no-default-keyring --armor --secret-keyring ./test.sec --keyring ./test.pub --export test@aster.is > pubkeys.gpg
 ```
 
@@ -128,7 +128,7 @@ Trusted keys are saved in the desired directory named after the fingerprint of t
 
 We do this by downloading the key, capturing its fingerprint, and storing it in the database using the fingerprint as the filename.
 
-```
+```bash
 $ curl -O https://example.com/pubkeys.gpg
 
 $ gpg --no-default-keyring --with-fingerprint pubkeys.gpg
@@ -149,7 +149,7 @@ You can disable a key stored in the global system path by creating an empty file
 
 There is an easier way to add a key to the user keystore, using the `converge key trust` subcommand.
 
-```
+```bash
 $ converge key trust pubkeys.gpg
 ```
 
@@ -165,7 +165,7 @@ Trusting key "https://example.com/pubkeys.gpg".
 
 Now let's walk through the steps converge takes when fetching modules. For now, converge will not attempt to download the detached signature and verify the module. You can enable module verification with the `--verify-modules` flag.
 
-```
+```bash
 $ converge plan --verify-modules https://example.com/modules/basic.hcl
 ```
 

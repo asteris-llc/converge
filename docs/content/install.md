@@ -8,7 +8,7 @@ menu:
     weight: 0
 ---
 
-```sh
+```bash
 go get github.com/asteris-llc/converge
 ```
 

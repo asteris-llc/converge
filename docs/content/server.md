@@ -22,7 +22,7 @@ To run converge in server mode with easy configuration, you just need
 the binary installed on your device, and a token to use for authenticating over
 RPC. In this example, we'll use the `uuid` utility to generate this token.
 
-```shell
+```bash
 TOKEN=`uuid`
 converge server --rpc-token $TOKEN
 ```
@@ -40,7 +40,7 @@ the same machine, or a different machine in your network. This example assumes
 that you have a HCL file called `your.hcl` that you wish to configure the
 server or device with.
 
-```shell
+```bash
 TOKEN="the pasted contents of that token from earlier"
 converge plan --rpc-token $TOKEN --rpc-addr 1.2.3.4:4774 your.hcl
 ```
@@ -51,7 +51,7 @@ You can run the server over HTTPS. If you don't have your own certificates, you
 can use [certstrap](https://github.com/square/certstrap) to get some with the
 following commands:
 
-```shell
+```bash
 $ certstrap init --common-name your-company
 $ certstrap request-cert --ip 127.0.0.1
 $ certstrap sign 127.0.0.1 --CA your-company
@@ -64,7 +64,7 @@ directory you run the command from.
 
 Afterwards, reference these files like so:
 
-```shell
+```bash
 converge server --cert-file out/127.0.0.1.crt \
                 --key-file out/127.0.0.1.crt \
                 --ca-file out/your-company.crt \
