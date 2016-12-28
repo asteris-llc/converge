@@ -38,3 +38,13 @@
     background: none;
     border-radius: 10px;
 }
+
+/* CODE */
+pre {
+    background: #213035;
+}
+pre code, .article pre > code {
+    background: #213035;
+    color: #FFF;
+    font-weight: 700;
+}
