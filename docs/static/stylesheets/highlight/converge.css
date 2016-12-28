@@ -1,0 +1,26 @@
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+
+  background: #213035;
+  font-weight: 700;
+}
+
+.hljs-comment {
+  font-weight: 400;
+  color: #d8d8d8;
+}
+
+.hljs-subst {
+  color: #d8d8d8;
+}
+
+.hljs-keyword {
+  font-weight: 700;
+}
+
+.hljs-string, .hljs-variable, .hljs-title, .hljs-number {
+  color: #20ACDF;
+  font-weight: 700;
+}

@@ -37,7 +37,7 @@ All the graphs we've been seeing so far have just been the output of Converge's
 then render them as [Graphviz](http://graphviz.org/) dot output. You can render
 that like so:
 
-```sh
+```bash
 $ converge graph --local yourModule.hcl | dot -Tpng > yourModule.png
 ```
 
@@ -176,7 +176,7 @@ Here is what the corresponding graph looks like:
 If you were to execute apply against this graph, you would end up with errors
 that look something like this:
 
-```shell
+```bash
 E: Could not get lock /var/lib/apt/lists/lock - open (11: Resource temporarily unavailable)
 E: Unable to lock directory /var/lib/apt/lists/
 ```
