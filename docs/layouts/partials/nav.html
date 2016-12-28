@@ -6,7 +6,7 @@
 <li>
     {{ partial "nav_link" $currentNode }}
 
-    {{ if and .HasChildren (hasPrefix $currentNode.URL .URL) }}
+    {{ if and .HasChildren (hasPrefix $currentNode.URL (replace .URL "./" "")) }}
     <ul>
         {{ range .Children }}
         {{ $.Scratch.Set "currentMenuEntry" . }}
