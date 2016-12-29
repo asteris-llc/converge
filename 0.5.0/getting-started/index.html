@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>Getting Started - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.5.0/getting-started/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.5.0/getting-started/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.5.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        Getting Started
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.4.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.5.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.5.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.5.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a class="current" title="Getting Started" href="http://converge.aster.is/0.5.0/getting-started/">
+  
+  Getting Started
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.5.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.5.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.5.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.5.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.5.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.5.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.5.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.5.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.5.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>Getting Started </h1>
+
+			
+
+<p>In this tutorial we&rsquo;re going to step through basic Converge usage by creating a
+small &ldquo;hello world&rdquo; module. Before beginning, please make sure to
+<a href="http://converge.aster.is/0.5.0/install/">install Converge</a>. You can test your installation by
+issuing <code>converge version</code>.</p>
+
+<h2 id="hello-world">Hello World!</h2>
+
+<p>We&rsquo;ll begin by writing a small module using the <a href="http://converge.aster.is/0.5.0/resources/file-content/">file.content</a> resource. Put the following into
+<code>helloWorld.hcl</code>:</p>
+
+<pre><code class="language-hcl">file.content &quot;render&quot; {
+  destination = &quot;hello.txt&quot;
+  content     = &quot;Hello, World!&quot;
+}
+</code></pre>
+
+<h2 id="planning">Planning</h2>
+
+<p>This is our first module! Let&rsquo;s plan out our execution first by running
+<code>converge plan --local helloWorld.hcl</code>:</p>
+
+<pre><code class="language-bash">$ converge plan --local helloWorld.hcl
+2016-09-20T08:05:31-05:00 |WARN| setting session-local token	token=309b7660-a0b1-4a88-9fa4-d5f2a139b8de
+2016-09-20T08:05:31-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:05:31-05:00 |WARN| skipping module verification	component=client
+2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:05:31-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
+
+root/file.content.render:
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: &quot;&lt;file-missing&gt;&quot; =&gt; &quot;Hello, World!&quot;
+
+Summary: 0 errors, 1 changes
+</code></pre>
+
+<p>You can see our single file is going to be rendered at &ldquo;hello.txt&rdquo;, and the file
+will be created. When created, it will say &ldquo;Hello, World!&rdquo; Planning out your
+changes is usually a good idea; all of Converge&rsquo;s resource types support planned
+output.</p>
+
+<h2 id="applying">Applying</h2>
+
+<p>Next, let&rsquo;s actually make the changes, using <code>converge apply --local helloWorld.hcl</code>:</p>
+
+<pre><code class="language-bash">$ converge apply --local helloWorld.hcl
+2016-09-20T08:06:21-05:00 |WARN| setting session-local token	token=4d9f2774-8ed1-4dc4-8db5-a359b275b3b5
+2016-09-20T08:06:21-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:06:21-05:00 |WARN| skipping module verification	component=client
+2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=APPLY
+2016-09-20T08:06:21-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=APPLY
+
+root/file.content.render:
+    Messages:
+    Has Changes: yes
+    Changes: No changes
+
+Summary: 0 errors, 1 changes
+</code></pre>
+
+<p>This looks <em>suspiciously</em> similar to the output from before. That&rsquo;s good,
+because it means Converge made exactly (and only) the changes that it planned
+out. If we check by opening &ldquo;hello.txt&rdquo; in an editor, we&rsquo;ll see that it says
+&ldquo;Hello, World!&rdquo;</p>
+
+<h2 id="the-graph">The Graph</h2>
+
+<p>So what&rsquo;s actually going on here? Converge is taking your module file and
+turning it into a graph, then walking over the graph in order to make changes.
+Right now we only have one resource, so the graph is pretty simple:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/getting-started/hello-world.png" alt="The graph of our hello world module. Root (represented as /) depends on the file we defined." />
+    
+    
+    <figcaption>
+        <p>
+        The graph of our hello world module. Root (represented as /) depends on the file we defined.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<p>(By the way, you can find more information about this in <a href="http://converge.aster.is/0.5.0/dependencies/">Dependencies</a>)</p>
+
+<h2 id="divergence">Divergence!</h2>
+
+<p>Converge doesn&rsquo;t just create resources, though: it also makes sure they stay up
+to date. While you&rsquo;re in your editor, go ahead and change the message to
+something else. I changed mine to &ldquo;LOL World!&rdquo; Once you&rsquo;ve done that, run the
+plan again.</p>
+
+<pre><code class="language-bash">$ converge plan --local helloWorld.hcl
+2016-09-20T08:07:02-05:00 |WARN| setting session-local token	token=c61a0f03-2f4d-43cd-9722-1482e6396b70
+2016-09-20T08:07:02-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:07:02-05:00 |WARN| skipping module verification	component=client
+2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:07:02-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
+
+root/file.content.render:
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: &quot;LOL World!&quot; =&gt; &quot;Hello, World!&quot;
+
+Summary: 0 errors, 1 changes
+</code></pre>
+
+<p>We see that we&rsquo;re going to change our message back to what&rsquo;s specified in the
+module. Handy! A quick <code>converge apply helloWorld.hcl</code> and we&rsquo;re back to normal.</p>
+
+<h2 id="params">Params</h2>
+
+<p>Now let&rsquo;s add the ability to greet someone in particular, instead of the whole
+world. We&rsquo;re going to use <a href="http://converge.aster.is/0.5.0/resources/param/">params</a> for this.
+Change your <code>helloWorld.hcl</code> to look like this:</p>
+
+<pre><code class="language-hcl">param &quot;name&quot; {
+  default = &quot;World&quot;
+}
+
+file.content &quot;render&quot; {
+  destination = &quot;hello.txt&quot;
+  content     = &quot;Hello, {{param `name`}}!&quot;
+}
+</code></pre>
+
+<p>This <a href="http://converge.aster.is/0.5.0/resources/param/">param</a> allows us to add a parameter to
+our module when we call it. (Notice that we&rsquo;re using the result of our parameter
+in a template block in the <code>content</code> stanza of <code>file.content.render</code>.)</p>
+
+<div class="admonition note">
+<p class="admonition-title">Templates</p>
+<p>Converge uses Go&rsquo;s <code>text/template</code> library. You can template most stanzas in
+your resources. The
+<a href="https://golang.org/pkg/text/template/">Go Documentation on <code>text/template</code></a> is
+a handy reference to keep around as you&rsquo;re finding your feet with these
+templates.</p>
+</div>
+
+<p>Let&rsquo;s change the name in the template to your name (I&rsquo;m going to assume it&rsquo;s
+&ldquo;Spartacus&rdquo;.) We&rsquo;ll use the <code>-p</code> flag to <code>converge plan</code> to see what&rsquo;ll happen:</p>
+
+<pre><code class="language-bash">$ converge plan --local -p name=Spartacus helloWorld.hcl
+2016-09-20T08:07:51-05:00 |WARN| setting session-local token	token=376ae4d9-8c7a-4581-be05-4c3cb8401798
+2016-09-20T08:07:51-05:00 |INFO| serving	addr=:47740 component=rpc
+2016-09-20T08:07:51-05:00 |WARN| skipping module verification	component=client
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/param.name run=STARTED stage=PLAN
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root/file.content.render run=STARTED stage=PLAN
+2016-09-20T08:07:51-05:00 |INFO| got status	component=client file=helloWorld.hcl id=root run=STARTED stage=PLAN
+
+root/file.content.render:
+    Messages:
+    Has Changes: yes
+    Changes:
+        hello.txt: &quot;Hello, World!&quot; =&gt; &quot;Hello, Spartacus!&quot;
+
+Summary: 0 errors, 1 changes
+</code></pre>
+
+<p>Makes sense, right? When we provide the param, it&rsquo;s value is used instead of the
+default of &ldquo;World&rdquo;.</p>
+
+<p>By the way, how does this effect our graph? Well, we&rsquo;ve added a new resource.
+Normally, you&rsquo;d have to <a href="http://converge.aster.is/0.5.0/dependencies/">explicitly specify dependencies</a>, but Converge will look inside our template strings for
+references to Params. That means our graph is all hooked up, and looks like
+this:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/getting-started/hello-world-params.png" alt="Our graph with parameter. The file now depends on the name parameter." />
+    
+    
+    <figcaption>
+        <p>
+        Our graph with parameter. The file now depends on the name parameter.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<h2 id="modules-calling-modules">Modules Calling Modules</h2>
+
+<p>This is all well and good, but we don&rsquo;t want to have to write things the same
+<em>every time</em> right? Well, good news: that&rsquo;s what modules are for! Now that
+you&rsquo;ve written a module, you can require it from any other module to add it to
+your tree. Create a new module, let&rsquo;s call it <code>helloYou.hcl</code>:</p>
+
+<pre><code class="language-hcl">module &quot;helloWorld.hcl&quot; &quot;hello&quot; {
+  params {
+    name = &quot;Spartacus&quot;
+  }
+}
+</code></pre>
+
+<p>Now try running <code>converge plan --local helloYou.hcl</code>. The same thing happens as
+if you had called the module yourself!</p>
+
+<p>But once again, how does this effect our graph? You remember before that we had
+a root, a file resource, and a param resource. We still have all those things,
+but with a wrinkle: we&rsquo;ve seen <code>/</code> as our root module in all the previous
+diagrams, but <code>/</code> is really just an alias for the root. Since we&rsquo;re not
+requiring <code>helloWorld.hcl</code> from <code>helloYou.hcl</code>, Converge will reason about it as
+a separate module. But really, these are all part of the same tree, and Converge
+will walk over them as nodes.</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/getting-started/hello-you.png" alt="Our graph, but with our original module as a dependent module." />
+    
+    
+    <figcaption>
+        <p>
+        Our graph, but with our original module as a dependent module.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<h2 id="conditional-evaluation">Conditional Evaluation</h2>
+
+<p>Converge supports the ability to conditionally execute a set of actions
+depending on the value of expressions that are evaluated at runtime.  These
+<code>switch</code> expressions will allow you to write a single converge file that will
+execute differently depending on information such as:</p>
+
+<ul>
+<li><code>param</code>s passed in by the user</li>
+<li>information gathered calls to <code>platform</code></li>
+</ul>
+
+<p>To understand how this works, let&rsquo;s consider the following example: You wish to
+create a file, <code>greeting.txt</code>. You want that file to contain a greeting in the
+users preferred language.  Here we have an example of a converge script that
+will allow the user to specify that they would prefer their greeting in spanish
+by passing in a param.</p>
+
+<p><code>helloLanguages.hcl</code>:</p>
+
+<pre><code class="language-hcl">param &quot;lang&quot; {
+  default = &quot;&quot;
+}
+
+switch &quot;test-switch&quot; {
+  case &quot;eq `spanish` `{{param `lang`}}`&quot; &quot;spanish&quot; {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;hola\n&quot;
+    }
+  }
+
+  default {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;hello\n&quot;
+    }
+  }
+}
+</code></pre>
+
+<p>Here we define a <em>conditional</em> clause using the keyword <code>switch</code>, which contains
+several <em>branches</em>, defined with they keyword <code>case</code>.  Each <em>branch</em> contains
+one or more <em>child</em> resources that define what should happen when the <em>branch</em>
+is executed.  A branch may contain any type of child resource except: modules,
+params, and other conditionals.</p>
+
+<p><em>Branch evaluation</em> refers to the process of evaluating a <em>predicate</em> to
+determine whether a branch may be run, and if so looking at the other branches
+to determine whether the current branch has priority.  Branches are evaluated
+top-to-bottom and the first branch that is true will be the one that is
+executed.  The special branch <code>default</code> is one whose predicate will always
+evaluate to <code>true</code>.</p>
+
+<div class="admonition note">
+<p class="admonition-title">Fall-Through</p>
+<p>If you&rsquo;re familiar with <code>switch</code> statments in other languages you should keep in
+mind that converge branches do not support fall-through.  You do not need to
+specify <code>break</code> to end a <code>case</code> statement, and there is no supported way of
+evaluating multiple branches in a single <code>switch</code> statement. The first
+(top-to-bottom) <code>case</code> with a true <code>predicate</code> is the one that is evalauted.</p>
+</div>
+
+<p>A predicate is a special kind of go text template.  It&rsquo;s evaluated in two
+passes. In the first pass, <code>lookup</code>s and <code>param</code>s are rendered as they would be
+for any other converge string.  In the second pass, the rendered string is
+wrapped in <code>{{</code> and <code>}}</code> and then re-evaluated as a function that should
+evaluate to <code>true</code> or <code>false</code>.  The two-pass rendering is the reason why you
+are able to use functions like <code>eq</code> and <code>and</code> without quoting them in
+predicates.</p>
+
+<h3 id="reference-rules-of-conditionals">Reference: Rules of Conditionals</h3>
+
+<ul>
+<li><code>switch</code> statements must have a name</li>
+<li><code>case</code> statements must have a name and a predicate</li>
+<li><code>case</code> statements may not be named <em>case</em>, <em>switch</em>, or <em>default</em></li>
+<li><code>default</code> statements must not have a name or a predicate</li>
+<li>predicates must evaluate to one of: <em>t</em>, <em>true</em>, <em>f</em>, <em>false</em></li>
+<li>branches may not contain <code>module</code> references</li>
+<li>branches may not contain <code>param</code>s</li>
+<li>predicates may reference <code>param</code>s switch statement</li>
+<li>child nodes may refrence <code>param</code>s and <code>lookup</code> resources outside of the
+switch statement or within the same branch</li>
+<li>no resource may reference anything that is part of a branch that it does not
+belong to</li>
+<li>root and module level resources may not reference fields inside of a switch
+statement</li>
+<li>only the first (top-to-bottom) true branch of a switch will be evaluated</li>
+<li><code>group</code> statements are not allowed in conditional resources in version 0.3.0</li>
+</ul>
+
+<h2 id="what-s-next">What&rsquo;s Next?</h2>
+
+<p>A great next step is to try and make something simple with Converge! Try
+installing something from Brew, if you&rsquo;re running on OSX, or symlinking a
+dotfile into place.</p>
+
+<p>If you&rsquo;re ready, you can
+<a href="http://converge.aster.is/0.5.0/dependencies/">read about how all those dependencies <em>actually work</em></a>!</p>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2016 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.5.0/server/" title="Server">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Server
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.5.0/install/" title="Install">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              Install
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.5.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+

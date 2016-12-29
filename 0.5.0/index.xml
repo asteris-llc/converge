@@ -1,0 +1,1371 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Converge</title>
+    <link>http://converge.aster.is/0.5.0/index.xml</link>
+    <description>Recent content on Converge</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>Released under the Apache 2.0 license</copyright>
+    <lastBuildDate>Thu, 29 Dec 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://converge.aster.is/0.5.0/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>0.5.0</title>
+      <link>http://converge.aster.is/0.5.0/release-notes/0-5-0/</link>
+      <pubDate>Thu, 29 Dec 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/release-notes/0-5-0/</guid>
+      <description>
+
+&lt;h2 id=&#34;release-date&#34;&gt;Release Date&lt;/h2&gt;
+
+&lt;p&gt;2016-12-29 0.5.0&lt;/p&gt;
+
+&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
+
+&lt;p&gt;This release includes new modules and general usability enhancements for users
+and module authors.&lt;/p&gt;
+
+&lt;h3 id=&#34;remove-vendoring&#34;&gt;Remove Vendoring&lt;/h3&gt;
+
+&lt;p&gt;For converge 0.5.0 we have removed the &lt;code&gt;vendor&lt;/code&gt; directory from the converge
+repository.  &lt;code&gt;glide install&lt;/code&gt; will now run as part of the build process to ensure
+all dependencies are installed.&lt;/p&gt;
+
+&lt;h3 id=&#34;demo-applications&#34;&gt;Demo Applications&lt;/h3&gt;
+
+&lt;p&gt;A demo of using converge for a kubernetes deployment was added in &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/524&#34;&gt;524&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;module-improvements&#34;&gt;Module Improvements&lt;/h3&gt;
+
+&lt;h4 id=&#34;file-fetch&#34;&gt;File Fetch&lt;/h4&gt;
+
+&lt;p&gt;File download and verification support has been added via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/543&#34;&gt;#543&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;file.fetch &amp;quot;consul.zip&amp;quot; {
+  source      = &amp;quot;https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip&amp;quot;
+  destination = &amp;quot;/tmp/consul.zip&amp;quot;
+  hash_type   = &amp;quot;sha256&amp;quot;
+  hash        = &amp;quot;abdf0e1856292468e2c9971420d73b805e93888e006c76324ae39416edcf0627&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;file-owner&#34;&gt;File Owner&lt;/h4&gt;
+
+&lt;p&gt;File ownership can now be changed with the &lt;code&gt;file.owner&lt;/code&gt; module added via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/549&#34;&gt;#549&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;file.owner &amp;quot;owner-test&amp;quot; {
+  destination = &amp;quot;dir&amp;quot;
+  group       = &amp;quot;root&amp;quot;
+  user        = &amp;quot;root&amp;quot;
+  verbose     = true
+  recursive   = true
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;usability-enhancements&#34;&gt;Usability Enhancements&lt;/h3&gt;
+
+&lt;h4 id=&#34;better-cascading-error-output&#34;&gt;Better Cascading Error Output&lt;/h4&gt;
+
+&lt;p&gt;Modules with failing dependencies are now summarized at the end of a run via &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/516&#34;&gt;516&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;root/task.directory:
+ Error: exec: &amp;quot;blah&amp;quot;: executable file not found in $PATH
+ Messages:
+ Has Changes: no
+ Changes: No changes
+
+Errors:
+ * root/task.directory: exec: &amp;quot;blah&amp;quot;: executable file not found in $PATH
+
+Failed due to failing dependency:
+ * root/task.key: error in dependency &amp;quot;root/task.directory&amp;quot;
+ * root/task.csr: error in dependency &amp;quot;root/task.key&amp;quot;
+ * root/task.crt: error in dependency &amp;quot;root/task.csr&amp;quot;
+
+Summary: 1 errors, 0 changes, 3 dependency errors
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;resource-name-restrictions&#34;&gt;Resource Name Restrictions&lt;/h4&gt;
+
+&lt;p&gt;As of &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/535&#34;&gt;535&lt;/a&gt; resource names are
+now restricted to strings consisting of letters, numbers, dots &lt;code&gt;.&lt;/code&gt; and dashes
+&lt;code&gt;-&lt;/code&gt;.  Unicode letter characters are supported.&lt;/p&gt;
+
+&lt;h4 id=&#34;diff-output-during-application&#34;&gt;Diff Output During Application&lt;/h4&gt;
+
+&lt;p&gt;As of &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/533&#34;&gt;533&lt;/a&gt; diff outputs
+should be displayed when running &lt;code&gt;apply&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;engine-improvements&#34;&gt;Engine Improvements&lt;/h3&gt;
+
+&lt;h3 id=&#34;module-api-enhancements&#34;&gt;Module API Enhancements&lt;/h3&gt;
+
+&lt;p&gt;The module authoring API has been updated to make it easier to develop modules.&lt;/p&gt;
+
+&lt;h4 id=&#34;explicit-value-exports&#34;&gt;Explicit Value Exports&lt;/h4&gt;
+
+&lt;p&gt;As of &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/533&#34;&gt;533&lt;/a&gt; the &lt;code&gt;export&lt;/code&gt; and
+&lt;code&gt;re-export-as&lt;/code&gt; tags are supported for &lt;code&gt;resource.Resource&lt;/code&gt; types in modules.
+These tags are now required to make fields available for &lt;code&gt;lookup&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&#34;new-module-author-idioms&#34;&gt;New Module Author Idioms&lt;/h4&gt;
+
+&lt;p&gt;As of &lt;a href=&#34;https://github.com/asteris-llc/converge/pull/533&#34;&gt;533&lt;/a&gt; resource types in
+modules should not embed &lt;code&gt;resource.Status&lt;/code&gt;.  The &lt;code&gt;Check&lt;/code&gt; and &lt;code&gt;Apply&lt;/code&gt; functions
+should no longer return the resource itself but instead a generated task status.&lt;/p&gt;
+
+&lt;h2 id=&#34;bug-fixes&#34;&gt;Bug Fixes&lt;/h2&gt;
+
+&lt;p&gt;Converge 0.5.0 introduces a multitiude of bugfixes and stability improvements.
+Please refer to the &lt;a href=&#34;https://github.com/asteris-llc/converge/blob/master/CHANGELOG.md&#34;&gt;changelog&lt;/a&gt; for
+a detailed report.&lt;/p&gt;
+
+&lt;h2 id=&#34;support&#34;&gt;Support&lt;/h2&gt;
+
+&lt;p&gt;We provide support via &lt;a href=&#34;http://converge-slack.aster.is/&#34;&gt;the Converge Slack team&lt;/a&gt; and through &lt;a href=&#34;https://github.com/asteris-llc/converge/issues&#34;&gt;GitHub issues&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>file.owner</title>
+      <link>http://converge.aster.is/0.5.0/resources/file-owner/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/file-owner/</guid>
+      <description>
+
+&lt;p&gt;Owner sets the file and group ownership of a file or directory.  If
+&lt;code&gt;recursive&lt;/code&gt; is set to true and &lt;code&gt;destination&lt;/code&gt; is a directory, then it will
+also recursively change ownership of all files and subdirectories.  Symlinks
+are ignored.  If the file or directory does not exist during the plan phase
+of application the differences will be calculated during application.
+Otherwise changes will be limited to the files identified during the plan
+phase of application.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;/* This file demonstrates proper usage of the file.owner module by creating a
+ new file, then changing the ownership of that file to a different group. */
+
+file.content &amp;quot;to-change&amp;quot; {
+  destination = &amp;quot;tochange&amp;quot;
+}
+
+task.query &amp;quot;existing-group&amp;quot; {
+  interpreter = &amp;quot;/bin/bash&amp;quot;
+  query       = &amp;quot;echo -n $(ls -la {{lookup `file.content.to-change.destination`}} | awk &#39;{print $4}&#39;)&amp;quot;
+}
+
+task.query &amp;quot;new-group&amp;quot; {
+  interpreter = &amp;quot;/bin/bash&amp;quot;
+  query       = &amp;quot;echo -n $(groups | xargs -n 1 echo | grep -v $(whoami) | grep -v {{lookup `task.query.existing-group.status.stdout`}} | head -n1)&amp;quot;
+}
+
+file.owner &amp;quot;owner-test&amp;quot; {
+  destination = &amp;quot;{{lookup `file.content.to-change.destination`}}&amp;quot;
+  group       = &amp;quot;{{lookup `task.query.new-group.status.stdout`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;destination&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Destination is the location on disk where the content will be rendered.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;recursive&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Recursive indicates whether ownership changes should be applied
+recursively.  Symlinks are not followed.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;user&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username specifies user-owernship by user name&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;uid&lt;/code&gt; (optional int)&lt;/p&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;user&lt;/code&gt; or &lt;code&gt;uid&lt;/code&gt; may be set.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID specifies user-ownership by UID&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;group&lt;/code&gt; (string)&lt;/p&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;group&lt;/code&gt; or &lt;code&gt;gid&lt;/code&gt; may be set.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Groupname specifies group-ownership by groupname&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;gid&lt;/code&gt; (optional int)&lt;/p&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;group&lt;/code&gt; or &lt;code&gt;gid&lt;/code&gt; may be set.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;GID specifies group ownership by gid&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;verbose&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Verbose specifies that when performing recursive updates, a diff should be
+shown for each file to be changed&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;destination&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the path to the file that should change; or if &lt;code&gt;recursive&lt;/code&gt; is set, the path
+to the root of the filesystem to recursively change.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the username of the user that should be given ownership of the file&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the uid of the user that should be given ownership of the file&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;group&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the group name of the group that should be given ownership of the file&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the gid of the group that should be given ownership of the file&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;recursive&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;if true, and &lt;code&gt;destination&lt;/code&gt; is a directory, apply changes recursively&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>filesystem</title>
+      <link>http://converge.aster.is/0.5.0/resources/filesystem/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/filesystem/</guid>
+      <description>
+
+&lt;p&gt;Filesystem do formatting and mounting for LVM volumes
+(also capable to format usual block devices as well)&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;device&amp;quot; {
+  default = &amp;quot;/dev/loop0&amp;quot;
+}
+
+lvm.volumegroup &amp;quot;vg-test&amp;quot; {
+  name    = &amp;quot;test&amp;quot;
+  devices = [&amp;quot;{{ param `device` }}&amp;quot;]
+}
+
+lvm.logicalvolume &amp;quot;lv-test&amp;quot; {
+  group   = &amp;quot;test&amp;quot;
+  name    = &amp;quot;test&amp;quot;
+  size    = &amp;quot;1G&amp;quot;
+  depends = [&amp;quot;lvm.volumegroup.vg-test&amp;quot;]
+}
+
+filesystem &amp;quot;mnt-me&amp;quot; {
+  device  = &amp;quot;/dev/mapper/test-test&amp;quot;
+  mount   = &amp;quot;/mnt&amp;quot;
+  fstype  = &amp;quot;ext3&amp;quot;
+  depends = [&amp;quot;lvm.logicalvolume.lv-test&amp;quot;]
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;device&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Device path to be mount
+Examples: &lt;code&gt;/dev/sda1&lt;/code&gt;, &lt;code&gt;/dev/mapper/vg0-data&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;mount&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Mountpoint where device will be mounted
+(should be an existing directory)
+Example: /mnt/data&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;fstype&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Fstype is filesystem type
+(actually any linux filesystem, except &lt;code&gt;ZFS&lt;/code&gt;)
+Example:  &lt;code&gt;ext4&lt;/code&gt;, &lt;code&gt;xfs&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;requiredBy&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;RequiredBy is a list of dependencies, to pass to systemd .mount unit&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;wantedBy&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;WantedBy is a list of dependencies, to pass to systemd .mount unit&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;before&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Before is a list of dependencies, to pass to systemd .mount unit&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>lvm.logicalvolume</title>
+      <link>http://converge.aster.is/0.5.0/resources/lvm-logicalvolume/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/lvm-logicalvolume/</guid>
+      <description>
+
+&lt;p&gt;Logical volume creation&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;device&amp;quot; {
+  default = &amp;quot;/dev/loop0&amp;quot;
+}
+
+lvm.volumegroup &amp;quot;vg-test&amp;quot; {
+  name    = &amp;quot;test&amp;quot;
+  devices = [&amp;quot;{{ param `device` }}&amp;quot;]
+}
+
+lvm.logicalvolume &amp;quot;lv-test&amp;quot; {
+  group   = &amp;quot;test&amp;quot;
+  name    = &amp;quot;test&amp;quot;
+  size    = &amp;quot;1G&amp;quot;
+  depends = [&amp;quot;lvm.volumegroup.vg-test&amp;quot;]
+}
+
+filesystem &amp;quot;mnt-me&amp;quot; {
+  device  = &amp;quot;/dev/mapper/test-test&amp;quot;
+  mount   = &amp;quot;/mnt&amp;quot;
+  fstype  = &amp;quot;ext3&amp;quot;
+  depends = [&amp;quot;lvm.logicalvolume.lv-test&amp;quot;]
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;group&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Group where volume will be created&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of volume, which will be created&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;size&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Size of volume. Can be relative or absolute.
+Relative size set in forms like &lt;code&gt;100%FREE&lt;/code&gt;
+(words after percent sign can be &lt;code&gt;FREE&lt;/code&gt;, &lt;code&gt;VG&lt;/code&gt;, &lt;code&gt;PV&lt;/code&gt;)
+Absolute size specified with suffix &lt;code&gt;BbKkMmGgTtPp&lt;/code&gt;, upper case
+suffix mean S.I. sizes (power of 10), lower case mean powers of 1024.
+Also special suffixes &lt;code&gt;Ss&lt;/code&gt;, which mean sectors.
+Refer to LVM manpages for details.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>lvm.volumegroup</title>
+      <link>http://converge.aster.is/0.5.0/resources/lvm-volumegroup/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/lvm-volumegroup/</guid>
+      <description>
+
+&lt;p&gt;Volume group is responsible for creation LVM Volume Groups
+from given block devices.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;device&amp;quot; {
+  default = &amp;quot;/dev/loop0&amp;quot;
+}
+
+lvm.volumegroup &amp;quot;vg-test&amp;quot; {
+  name    = &amp;quot;test&amp;quot;
+  devices = [&amp;quot;{{ param `device` }}&amp;quot;]
+}
+
+lvm.logicalvolume &amp;quot;lv-test&amp;quot; {
+  group   = &amp;quot;test&amp;quot;
+  name    = &amp;quot;test&amp;quot;
+  size    = &amp;quot;1G&amp;quot;
+  depends = [&amp;quot;lvm.volumegroup.vg-test&amp;quot;]
+}
+
+filesystem &amp;quot;mnt-me&amp;quot; {
+  device  = &amp;quot;/dev/mapper/test-test&amp;quot;
+  mount   = &amp;quot;/mnt&amp;quot;
+  fstype  = &amp;quot;ext3&amp;quot;
+  depends = [&amp;quot;lvm.logicalvolume.lv-test&amp;quot;]
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of created volume group&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;devices&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Devices is list of entities to include into volume group&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;remove&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Remove is enable removal devices omitted from &lt;code&gt;Devices&lt;/code&gt; list from
+from volume group&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;forceRemove&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;ForceRemove control destruction of volumes after removing
+from volume group&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>module</title>
+      <link>http://converge.aster.is/0.5.0/resources/module/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/module/</guid>
+      <description>
+
+&lt;p&gt;Module remotely sources other modules and adds them to the tree&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello from another module!&amp;quot;
+}
+
+module &amp;quot;basic.hcl&amp;quot; &amp;quot;basic&amp;quot; {
+  params = {
+    message = &amp;quot;{{param `message`}}&amp;quot;
+  }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;params&lt;/code&gt; (map of string to anything)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Params is a map of strings to anything you&amp;rsquo;d like. It will be passed to
+the called module as the default values for the &lt;code&gt;param&lt;/code&gt;s there.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>package.apt</title>
+      <link>http://converge.aster.is/0.5.0/resources/package-apt/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/package-apt/</guid>
+      <description>
+
+&lt;p&gt;Apt Package manages system packages with &lt;code&gt;apt&lt;/code&gt; and &lt;code&gt;dpkg&lt;/code&gt;. It assumes that
+both &lt;code&gt;apt&lt;/code&gt; and &lt;code&gt;dpkg&lt;/code&gt; are installed on the system, and that the user has
+permissions to install, remove, and query packages.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;package.apt &amp;quot;mc&amp;quot; {
+  name  = &amp;quot;mc&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of the package or package group.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/p&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State of the package. Present means the package will be installed if
+missing; Absent means the package will be uninstalled if present.&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;name of the package&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;package state; one of &amp;ldquo;present&amp;rdquo; or &amp;ldquo;absent&amp;rdquo;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>package.rpm</title>
+      <link>http://converge.aster.is/0.5.0/resources/package-rpm/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/package-rpm/</guid>
+      <description>
+
+&lt;p&gt;RPM Package manages system packages with &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt;. It assumes that
+both &lt;code&gt;rpm&lt;/code&gt; and &lt;code&gt;yum&lt;/code&gt; are installed on the system, and that the user has
+permissions to install, remove, and query packages.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;package.rpm &amp;quot;mc&amp;quot; {
+  name  = &amp;quot;mc&amp;quot;
+  state = &amp;quot;present&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name of the package or package group.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/p&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State of the package. Present means the package will be installed if
+missing; Absent means the package will be uninstalled if present.&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;name of the package&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;package state; one of &amp;ldquo;present&amp;rdquo; or &amp;ldquo;absent&amp;rdquo;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>param</title>
+      <link>http://converge.aster.is/0.5.0/resources/param/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/param/</guid>
+      <description>
+
+&lt;p&gt;Param controls the flow of values through &lt;code&gt;module&lt;/code&gt; calls. You can use the
+&lt;code&gt;{{param &amp;quot;name&amp;quot;}}&lt;/code&gt; template call anywhere you need the value of a param
+inside the current module.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;default&lt;/code&gt; (anything)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Default is an optional field that provides a default value if none is
+provided to this parameter. If this field is not set, this param will be
+treated as required.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>task</title>
+      <link>http://converge.aster.is/0.5.0/resources/task/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/task/</guid>
+      <description>
+
+&lt;p&gt;Task allows you to run arbitrary shell commands on your system, first
+checking if the command should be run.&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;param &amp;quot;message&amp;quot; {
+  default = &amp;quot;Hello, World!&amp;quot;
+}
+
+param &amp;quot;filename&amp;quot; {
+  default = &amp;quot;test.txt&amp;quot;
+}
+
+task &amp;quot;render&amp;quot; {
+  check = &amp;quot;cat {{param `filename`}} | tee /dev/stderr | grep -q &#39;{{param `message`}}&#39;&amp;quot;
+  apply = &amp;quot;echo &#39;{{param `message`}}&#39; &amp;gt; {{param `filename`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to check if a resource needs to be changed. It should
+exit with exit code 0 if the resource does not need to be changed, and
+1 (or above) otherwise.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to apply the resource. Normal shell exit code
+expectations apply (that is, exit code 0 for success, 1 or above for
+failure.)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory this command should be run in&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;any environment variables that should be passed to the command&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the check statement&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;apply&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the apply statement&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory of the task&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;environment variables configured for the task&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;checkstatus&lt;/code&gt; (CommandResults)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the status of the check phase&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;healthstatus&lt;/code&gt; (resource.HealthStatus)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the status of the health check&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;status&lt;/code&gt; re-exports fields from CommandResults&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the status of the task&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>task.query</title>
+      <link>http://converge.aster.is/0.5.0/resources/task-query/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/task-query/</guid>
+      <description>
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;task.query &amp;quot;hostname&amp;quot; {
+  query = &amp;quot;hostname&amp;quot;
+}
+
+file.content &amp;quot;hostname-data&amp;quot; {
+  destination = &amp;quot;hostname.txt&amp;quot;
+  content     = &amp;quot;{{lookup `task.query.hostname.status.stdout`}}&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;query&lt;/code&gt; (string)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;timeout&lt;/code&gt; (optional duration)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>user.group</title>
+      <link>http://converge.aster.is/0.5.0/resources/user-group/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/user-group/</guid>
+      <description>
+
+&lt;p&gt;Group renders group data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a group, only works on linux
+user.group &amp;quot;group&amp;quot; {
+  name = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the group gid.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the group name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;new_name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;NewName is used when modifying a group.
+The group Name will be changed to NewName.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/p&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the group should be present.
+The default value is present.&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the configured group ID&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the configured group name&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;newname&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the desired group name&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the group state&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>user.user</title>
+      <link>http://converge.aster.is/0.5.0/resources/user-user/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/user-user/</guid>
+      <description>
+
+&lt;p&gt;User renders user data&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;# create a user, only works on linux
+user.user &amp;quot;user&amp;quot; {
+  username = &amp;quot;test&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Username is the user login name.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;new_username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;NewUsername is used when modifying a user.
+Username will be changed to NewUsername. No changes to the home directory
+name or location of the contents will be made. This can be done using
+HomeDir and MoveDir options.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (optional uint32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;UID is the user ID.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;groupname&lt;/code&gt; (string)&lt;/p&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;GroupName is the primary group for user and must already exist.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;gid&lt;/code&gt; (optional uint32)&lt;/p&gt;
+
+&lt;p&gt;Only one of &lt;code&gt;gid&lt;/code&gt; or &lt;code&gt;groupname&lt;/code&gt; may be set.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Gid is the primary group ID for user and must refer to an existing group.
+Only one of GID or Groupname may be indicated.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Name is the user description.
+This field can be indicated when adding or modifying a user.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;create_home&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;CreateHome when set to true will create the home directory for the user.
+The files and directories contained in the skeleton directory (which can be
+defined with the SkelDir option) will be copied to the home directory.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;skel_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;SkelDir contains files and directories to be copied in the user&amp;rsquo;s home
+directory when adding a user. If not set, the skeleton directory is defined
+by the SKEL variable in /etc/default/useradd or, by default, /etc/skel.
+SkelDir is only valid is CreatHome is specified.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;home_dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;HomeDir is the name of the user&amp;rsquo;s login directory. If not set, the home
+directory is defined by appending the value of Username to the HOME
+variable in /etc/default/useradd, resulting in /HOME/Username.
+This field can be indicated when adding or modifying a user.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;move_dir&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;MoveDir is used to move the contents of HomeDir when modifying a user.
+HomeDir must also be indicated if MoveDir is set to true.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/p&gt;
+
+&lt;p&gt;Valid values: &lt;code&gt;present&lt;/code&gt; and &lt;code&gt;absent&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;State is whether the user should be present.
+The default value is present.&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the configured username&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;newusername&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the desired username&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;uid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the user id&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;groupname&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the group name&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;gid&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the group id&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;name&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the real name of the user&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;createhome&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;if the home directory should be created&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;skeldir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the path to the skeleton directory&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;homedir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the path to the home directory&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;movedir&lt;/code&gt; (bool)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;if the contents of the home directory should be moved&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;state&lt;/code&gt; (State)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;configured the user state&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>wait.port</title>
+      <link>http://converge.aster.is/0.5.0/resources/wait-port/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/wait-port/</guid>
+      <description>
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;wait.port &amp;quot;8080&amp;quot; {
+  host         = &amp;quot;localhost&amp;quot;
+  port         = 8080
+  interval     = &amp;quot;1s&amp;quot;
+  max_retry    = 10
+  grace_period = &amp;quot;2s&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;host&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;a host name or ip address. A TCP connection will be attempted at this host
+and the specified Port. default: localhost&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;port&lt;/code&gt; (required int)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the TCP port to attempt to connect to.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interval&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time to wait in between checks. If the interval is not
+specified, it will default to 5 seconds.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;grace_period&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time to wait before running the first check and after a
+successful check. If no grace period is specified, no grace period will be
+taken into account.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;max_retry&lt;/code&gt; (optional int)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the maximum number of attempts before the wait fails. If the maximum number
+of retries is not set, it will default to 5.&lt;/p&gt;
+
+&lt;h2 id=&#34;exported-fields&#34;&gt;Exported Fields&lt;/h2&gt;
+
+&lt;p&gt;Here are the fields that are exported for use with &amp;lsquo;lookup&amp;rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;host&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the hostname&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;port&lt;/code&gt; (int)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the TCP port&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>wait.query</title>
+      <link>http://converge.aster.is/0.5.0/resources/wait-query/</link>
+      <pubDate>Thu, 22 Dec 2016 11:43:15 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.5.0/resources/wait-query/</guid>
+      <description>
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-hcl&#34;&gt;wait.query &amp;quot;service-health&amp;quot; {
+  check        = &amp;quot;nc -z localhost 8080&amp;quot;
+  interval     = &amp;quot;1s&amp;quot;
+  max_retry    = 10
+  grace_period = &amp;quot;1s&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;parameters&#34;&gt;Parameters&lt;/h2&gt;
+
+&lt;p&gt;Here are the HCL fields that you can specify, along with their expected types
+and restrictions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interpreter&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the shell interpreter that will be used for your scripts. &lt;code&gt;/bin/sh&lt;/code&gt; is
+used by default.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check&lt;/code&gt; (required string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the script to run to check if a resource is ready. exit with exit code 0 if
+the resource is healthy, and 1 (or above) otherwise.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;check_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the &lt;code&gt;interpreter&lt;/code&gt; binary to check validity. For
+&lt;code&gt;/bin/sh&lt;/code&gt; this is &lt;code&gt;-n&lt;/code&gt;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exec_flags&lt;/code&gt; (list of strings)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;flags to pass to the interpreter at execution time.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time the command will wait before halting forcefully.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dir&lt;/code&gt; (string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the working directory this command should be run in.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;env&lt;/code&gt; (map of string to string)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;any environment variables that should be passed to the command.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;interval&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time to wait in between checks. If the interval is not
+specified, it will default to 5 seconds.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;grace_period&lt;/code&gt; (optional duration)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the amount of time to wait before running the first check and after a
+successful check. If no grace period is specified, no grace period will be
+taken into account.&lt;/p&gt;
+
+&lt;p&gt;Acceptable formats are a number in seconds or a duration string. A Duration
+represents the elapsed time between two instants as an int64 second count.
+The representation limits the largest representable duration to approximately
+290 years. A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as &amp;ldquo;300ms&amp;rdquo;, &amp;ldquo;-1.5h&amp;rdquo; or
+&amp;ldquo;2h45m&amp;rdquo;. Valid time units are &amp;ldquo;ns&amp;rdquo;, &amp;ldquo;us&amp;rdquo; (or &amp;ldquo;µs&amp;rdquo;), &amp;ldquo;ms&amp;rdquo;, &amp;ldquo;s&amp;rdquo;, &amp;ldquo;m&amp;rdquo;, &amp;ldquo;h&amp;rdquo;.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;max_retry&lt;/code&gt; (optional int)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;the maximum number of attempts before the wait fails. If the maximum number
+of retries is not set, it will default to 5.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

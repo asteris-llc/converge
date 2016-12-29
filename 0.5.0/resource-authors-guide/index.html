@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>Resource Authors Guide - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.5.0/resource-authors-guide/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.5.0/resource-authors-guide/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.5.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        Resource Authors Guide
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.4.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.5.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.5.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.5.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.5.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.5.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.5.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.5.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.5.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.5.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a class="current" title="Resource Authors Guide" href="http://converge.aster.is/0.5.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.5.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.5.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.5.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>Resource Authors Guide </h1>
+
+			
+
+<div class="admonition warning">
+<p class="admonition-title">Advanced Topic</p>
+<p>This is something most people will never have to do. That said, if you know why
+you&rsquo;re here, read on&hellip;</p>
+</div>
+
+<h2 id="contributing-resources">Contributing Resources</h2>
+
+<p>We welcome external resource contributions, and can help you plan out how your
+resource will work. If you have an idea for a new module, please open an issue
+on Converge and we&rsquo;ll help you figure out exactly how to develop it. We&rsquo;ll also
+gladly help you with documentation and getting everything imported in the right
+places. Converge modules must currently be included in the main source of
+Converge, we hope to be able to make them external at some point in the future
+(at which point external contributions become even easier!)</p>
+
+<h2 id="check-and-apply">Check and Apply</h2>
+
+<p>Converge resources have a basic pattern: two operations, check and apply. This
+pattern is most obvious in the shell task resource:</p>
+
+<pre><code class="language-hcl">task &quot;example&quot; {
+  check = &quot;test -f hello.txt&quot;
+  apply = &quot;touch hello.txt&quot;
+}
+</code></pre>
+
+<p>When Converge applies this resource, the check statement is run first. If the
+exit code is non-zero, Converge then runs the apply statement. Afterwards, it
+runs the check statement again to see if the application was successful.</p>
+
+<p>To implement something like the shell task, you would start by implementing a
+struct and it&rsquo;s corresponding methods.
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Task"><code>resource.Task</code></a>
+is the interface you&rsquo;ll need to implement.</p>
+
+<pre><code class="language-go">struct MyShellTask struct {
+    resource.Status
+
+    CheckStmt string
+    ApplyStmt string
+}
+
+func (t *MyShellTask) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+    // your check implementation, returning t (which embeds a TaskStatus)
+}
+
+func (t *MyShellTask) Apply(context.Context) (resource.TaskStatus, error) {
+    // your apply implementation, returning t (which embeds a TaskStatus)
+}
+</code></pre>
+
+<h3 id="task-status">Task Status</h3>
+
+<p>Check and Apply both return
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#TaskStatus"><code>TaskStatus</code></a>.
+You can implement that interface yourself, but the most common pattern is to
+return
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Status"><code>Status</code></a>.</p>
+
+<p><code>Status</code> provides a number of helper methods to make your integration go more
+smoothly.  Of particular note are:</p>
+
+<ol>
+<li><a href="https://godoc.org/github.com/asteris-llc/converge/resource#Status.RaiseLevel"><code>RaiseLevel</code></a>
+which allows you to increase the level of the error</li>
+<li><a href="https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddMessage"><code>AddMessage</code></a>
+which allows you to add a message that will be displayed to the user</li>
+<li><a href="https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddDifference"><code>AddDifference</code></a>
+which inserts a difference that will be displayed to the user</li>
+</ol>
+
+<p><code>Status</code> has three fields: <code>Differences</code>, <code>Output</code>, and <code>Level</code>. They all have
+accurate documentation on their fields, which we will not repeat here. However,
+the interaction between <code>Differences</code> and <code>Level</code> deserves special mention.
+These two fields are how you control execution of your Apply method. They follow
+these rules:</p>
+
+<ol>
+<li>If the level is equal to
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel"><code>resource.StatusWillChange</code></a>
+or
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel"><code>resource.StatusCantChange</code></a>,
+the Status will always show up as having changes</li>
+<li>Otherwise, if there are any diffs which say that they contain a difference,
+the Status will always show as having changes</li>
+</ol>
+
+<h3 id="dealing-with-errors">Dealing with Errors</h3>
+
+<p>The default <code>Status</code> implementation has a <code>SetError(error)</code> method. When called,
+it sets an appropriate error level and an internal error state that will be
+presented to the user. You can also use the common Go patterm of returning <code>nil,
+err</code> in your <code>Check</code> and <code>Apply</code> statements. Converge will call <code>SetError(err)</code>
+automatically in this case. This gives you two options:</p>
+
+<ol>
+<li>call <code>SetError</code> yourself</li>
+<li>return an error, which will be handled for you</li>
+</ol>
+
+<p>You shoud choose <em>one</em> of these options and do it consistently across as much of
+your code as possible.</p>
+
+<h2 id="task">Task</h2>
+
+<p>The
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Task"><code>resource.Task</code></a> interface
+is what you will implement to have converge run your <code>Check</code> and <code>Apply</code>
+methods.  The <code>export</code> and <code>re-export-as</code> tags in your <code>resource.Task</code>
+implementation are used to define lookup methods from within converge.</p>
+
+<p>Using the <code>Shell</code> module as an example we can see how tasks should be
+implemented:</p>
+
+<pre><code class="language-go">type Shell struct {
+    CmdGenerator   CommandExecutor
+    CheckStmt      string                 `export:&quot;check&quot;`
+    ApplyStmt      string                 `export:&quot;apply&quot;`
+    Dir            string                 `export:&quot;dir&quot;`
+    Env            []string               `export:&quot;env&quot;`
+    Status         *CommandResults        `re-export-as:&quot;status&quot;`
+    CheckStatus    *CommandResults        `export:&quot;checkstatus&quot;`
+    HealthStatus   *resource.HealthStatus `export:&quot;healthstatus&quot;`
+    renderer       resource.Renderer
+    ctx            context.Context
+    exportedFields resource.FieldMap
+}
+</code></pre>
+
+<h3 id="exporting-values">Exporting Values</h3>
+
+<p>Converge will automatically extract values from a <code>resource.Task</code> that are
+annotated with the <code>export</code> or <code>re-export-as</code> struct tags.  For fields that are
+exported with <code>export</code>, they can be referenced directly.  For example if we have
+the following task which is implemented with <code>Shell</code>:</p>
+
+<pre><code class="language-hcl">task &quot;foo&quot; {
+  check = &quot;test -f foo.txt&quot;
+  apply = &quot;touch foo.txt&quot;
+}
+</code></pre>
+
+<p>We may reference any of the fields exported by <code>Shell</code> in a lookup by typing
+<code>&quot;{{lookup 'task.foo.&lt;field name&gt;'}}&quot;</code>, where <code>&lt;field name&gt;</code> is any exported
+field; for example, <code>&quot;{{lookup 'task.foo.dir'}}&quot;</code> or <code>&quot;{{lookup
+'task.foo.env'}}&quot;</code>.  Re-exported fields will provide a namespace for structs
+that also export values.  In our <code>Shell</code> example we are re-exporting a
+<code>CommandResults</code> struct:</p>
+
+<pre><code class="language-go">type CommandResults struct {
+    ResultsContext
+    ExitStatus uint32 `export:&quot;exitstatus&quot;`
+    Stdout     string `export:&quot;stdout&quot;`
+    Stderr     string `export:&quot;stderr&quot;`
+    Stdin      string `export:&quot;stdin&quot;`
+    State      *os.ProcessState
+}
+</code></pre>
+
+<p>Because <code>CommandResults</code> exports <code>stdout</code>, <code>stderr</code>, and <code>stdin</code>, and has been
+re-exported by the <code>Shell</code> module as <code>status</code>, we can reference these values
+under <code>status</code>, for example: <code>&quot;{{lookup 'task.foo.status.stdout'}}&quot;</code> or
+<code>&quot;{{lookup 'task.foo.status.stderr'}}&quot;</code>.</p>
+
+<p>Below is a complete example of using a lookup to reference the exported and
+re-exported fields from the <code>Shell</code> module:</p>
+
+<pre><code class="language-hcl">task &quot;echo&quot; {
+  check = &quot;test -f example.txt&quot;
+  apply = &quot;echo 'executing script' | tee example.txt&quot;
+}
+
+file.content &quot;task-results&quot; {
+  destination = &quot;results.txt&quot;
+  content = &quot;{{lookup `task.echo.check`}}; {{lookup `task.echo.apply`}} -&gt; {{lookup `task.echo.status.stdout`}}&quot;
+}
+</code></pre>
+
+<p>This example shows how we can reference specific exported fields such as <code>check</code>
+and <code>apply</code>, and also the re-exported fields from our <code>status</code>.</p>
+
+<h4 id="semantics-of-exported-fields">Semantics of Exported Fields</h4>
+
+<ol>
+<li>Fields that are tagged with <code>export</code> will be exported</li>
+<li>Named structs that are tagged with <code>export</code> will be exported as a struct</li>
+<li>Embedded structs will have their exported fields exported in the namespace of
+the containing struct</li>
+<li>Embedded interfaces will not be exported, nor have their fields exported</li>
+<li>If an embedded struct field name collides with a field from the struct it&rsquo;s
+embedded in, both will be exported with the embedded struct being accessible
+with &lsquo;StructName.FieldName&rsquo;</li>
+<li>Fields exported with <code>re-export-as</code> must be structs or pointers to structs</li>
+<li>Structs exported with <code>re-export-as</code> will have their exported elements
+available under the name that the struct is re-exported as</li>
+</ol>
+
+<h2 id="preparer">Preparer</h2>
+
+<p>Before you can use your resource, it has to be deserialized from HCL. For this,
+we will write a
+<a href="https://godoc.org/github.com/asteris-llc/converge/resource#Resource"><code>resource.Resource</code></a>.
+Resource exists to render a Task&rsquo;s fields and return it in it&rsquo;s executable
+state. In our case, our Resource would look like this (they&rsquo;re typically called
+<code>Preparer</code>).</p>
+
+<pre><code class="language-go">type Preparer struct {
+    Check string `hcl:&quot;check&quot;`
+    Apply string `hcl:&quot;apply&quot;`
+}
+
+func (p *Preparer) Prepare(context.Context, resource.Renderer) (resource.Task, error) {
+    return &amp;MyShellTask{CheckStmt: check, ApplyStmt: apply}, nil
+}
+</code></pre>
+
+<p>To get values other than strings (bools, ints, et cetera), you just need to
+specify them. Converge will render the values and parse them from strings, if
+necessary.</p>
+
+<h3 id="zero-values">Zero Values</h3>
+
+<p>Sometimes you need to disambiguate between a zero value the user provided and
+one that Go did. In this case, use a pointer to that type. For example, your
+preparer may look like this:</p>
+
+<pre><code class="language-go">type Preparer struct {
+    Field int `hcl:&quot;field&quot;`
+}
+</code></pre>
+
+<p>But in this case, the value of <code>Field</code> would be zero in each of the two calls
+below!</p>
+
+<pre><code class="language-hcl">mymodule &quot;test&quot; {
+    field = 0
+}
+
+mymodule &quot;test&quot; {
+    # field is unspecified!
+}
+</code></pre>
+
+<p>If you need to tell which case happened, use a pointer. In other words, your
+preparer will now look like this:</p>
+
+<pre><code class="language-go">type Preparer struct {
+    Field *int `hcl:&quot;field&quot;`
+}
+</code></pre>
+
+<p>If the user provides a zero, the value will be <code>*0</code>. Otherwise, it wil be <code>nil</code>.</p>
+
+<h3 id="struct-tags">Struct Tags</h3>
+
+<p>Other than <code>hcl</code> (which is used to specify the field name you&rsquo;ll accept) the
+following struct tags control the values you get:</p>
+
+<ul>
+<li><code>base</code>: used with numeric types to indicate a base for parsing. Does not work
+with floats. Example: <a href="http://converge.aster.is/0.5.0/resources/file-mode/">file.mode</a>
+needs an octal number, and specifies that in this tag.</li>
+</ul>
+
+<p>We can also do some basic validation tasks with tags:</p>
+
+<ul>
+<li><p><code>required</code>: one valid value: <code>true</code>. If set, this field must be set in the
+HCL, but may still have a zero value (for example, <code>int</code> can still be <code>0</code>.)
+Example: <a href="http://converge.aster.is/0.5.0/resources/docker-container/">docker.container</a> uses
+this to require an image for the container.</p></li>
+
+<li><p><code>mutually_exclusive</code>: a comma-separated list of fields that cannot be set
+together. Example: <a href="http://converge.aster.is/0.5.0/resources/user-user/">user</a> uses this
+to disallow setting both <code>groupname</code> and <code>gid</code>.</p></li>
+
+<li><p><code>valid_values</code>: a comma-separated list of values that will be accepted for
+this field.
+Example: <a href="http://converge.aster.is/0.5.0/resources/docker-container/">docker.container</a> uses
+this to enforce status is only <code>running</code> or <code>created</code>.</p></li>
+</ul>
+
+<h3 id="the-renderer">The Renderer</h3>
+
+<p>The renderer is what allows your values to take input from the environment (like
+calls to <code>param</code> or <code>lookup</code>.) Normally you won&rsquo;t need to use this, but if
+you&rsquo;re doing something extremely custom it will be handy. If you get an error
+while using the <code>Renderer</code>, return it exactly as received or wrap it with
+<a href="https://github.com/pkg/errors"><code>errors.Wrap</code> or <code>errors.Wrapf</code></a>. Converge uses
+these signals to calculate execution order, so it needs to be able to inspect
+the returned error value.</p>
+
+<h2 id="registering">Registering</h2>
+
+<p>The last thing you&rsquo;ll need to do is register your new resource with the loader
+under it&rsquo;s HCL-usable name. To do so, call
+<a href="https://godoc.org/github.com/asteris-llc/converge/load/registry#Register"><code>registry.Register</code></a>
+with both the preparer and task, then empty-import your new module in
+<code>load/resource.go</code>.</p>
+
+<pre><code class="language-go">func init() {
+    registry.Register(&quot;mytask&quot;, (*Preparer)(nil), (*MyShellTask)(nil))
+}
+</code></pre>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2016 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.5.0/params-and-templates/" title="Params and Templates">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Params and Templates
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.5.0/module-verification/" title="Module Verification">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              Module Verification
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.5.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+

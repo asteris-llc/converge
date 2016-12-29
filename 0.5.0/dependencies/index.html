@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>Using Dependencies - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.5.0/dependencies/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.5.0/dependencies/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.5.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.5.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.5.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.5.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.5.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        Using Dependency
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.5.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.4.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.5.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.5.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.5.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.5.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.5.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a class="current" title="Using Dependencies" href="http://converge.aster.is/0.5.0/dependencies/">
+  
+  Using Dependencies
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.5.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.5.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.5.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.5.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.5.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.5.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.5.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>Using Dependencies </h1>
+
+			
+
+<p>In the <a href="http://converge.aster.is/0.5.0/getting-started/">getting started guide</a> we talked about
+dependencies, and briefly mentioned that they&rsquo;re <em>super important</em> for Converge
+to work properly. But we didn&rsquo;t really go into them there&hellip; so here we
+are!</p>
+
+<h2 id="graph-walking">Graph Walking</h2>
+
+<p>Briefly, Converge operates by thinking about your deployment as a graph of tasks
+that need to be done. It walks around the graph from the leaves (AKA tasks with
+no dependencies) all the way to to the root (AKA Rome, where all roads lead.)
+Let&rsquo;s explore what that means with one of our graphs from before:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/getting-started/hello-world-params.png" alt="A graph with a parameter. The file hello.txt depends on the name parameter." />
+    
+    
+    <figcaption>
+        <p>
+        A graph with a parameter. The file hello.txt depends on the name parameter.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<p>What does Converge do when you ask it to apply this graph? When Converge loads
+this file, it will load then file and then start walking at the node that
+doesn&rsquo;t have any dependencies. In this case, that&rsquo;s <code>param.name = &quot;World&quot;</code>. When
+<code>param.name</code> has been successfully walked, it will move on to <code>File: hello.txt</code>.
+If we&rsquo;re successful, the root (<code>/</code>) will be marked as successful, and our graph
+will be successful. Neat!</p>
+
+<h2 id="the-graph-command">The Graph Command</h2>
+
+<p>All the graphs we&rsquo;ve been seeing so far have just been the output of Converge&rsquo;s
+<code>graph</code> command. When asked, Converge will load up any modules you specify and
+then render them as <a href="http://graphviz.org/">Graphviz</a> dot output. You can render
+that like so:</p>
+
+<pre><code class="language-bash">$ converge graph --local yourModule.hcl | dot -Tpng &gt; yourModule.png
+</code></pre>
+
+<p>When you&rsquo;re developing modules, make a habit of rendering them as graphs. It
+makes it easier to think about how the graph will be executed.</p>
+
+<h2 id="cross-node-references">Cross-Node References</h2>
+
+<p>Resources may references one-another as long as the references do not introduce
+circular dependencies.  When creating a reference from one node to another we
+can use the <code>lookup</code> command to reference fields of an entry that are provided
+by that entries module.  The available fields will vary depending on the module
+and should be documented along with each module.  The example below illustrates
+using <code>lookup</code> to access fields from a <code>docker.image</code> node from within
+<code>docker.container</code></p>
+
+<pre><code class="language-hcl">docker.image &quot;nginx&quot; {
+  name    = &quot;nginx&quot;
+  tag     = &quot;1.10-alpine&quot;
+  timeout = &quot;60s&quot;
+}
+
+docker.container &quot;nginx&quot; {
+  name  = &quot;nginx-server&quot;
+  image = &quot;{{lookup `docker.image.nginx.name`}}:{{lookup `docker.image.nginx.tag`}}&quot;
+  force = &quot;true&quot;
+  expose = [
+    &quot;80&quot;,
+    &quot;443/tcp&quot;,
+    &quot;8080&quot;,
+  ]
+  publish_all_ports = &quot;false&quot;
+  ports = [
+    &quot;80&quot;,
+  ]
+  env {
+    &quot;FOO&quot; = &quot;BAR&quot;
+  }
+  dns = [&quot;8.8.8.8&quot;, &quot;8.8.4.4&quot;]
+}
+</code></pre>
+
+<p>As we can see, lookup syntax resembles that of parameters and add implicit
+dependencies between nodes.</p>
+
+<h2 id="explicit-dependencies">Explicit Dependencies</h2>
+
+<p>When we&rsquo;re walking our graph, there are a lot of operations that can be done in
+parallel. For this to work, you will need to specify dependencies between
+resources in the same file. Let&rsquo;s take the following example:</p>
+
+<pre><code class="language-hcl">task &quot;names&quot; {
+  check = &quot;test -d names&quot;
+  apply = &quot;mkdir names&quot;
+}
+
+file.content &quot;hello&quot; {
+  destination = &quot;names/hello.txt&quot;
+  content     = &quot;Hello, World!&quot;
+}
+</code></pre>
+
+<p>As a human reading this, we can clearly see that <code>file.content.hello</code> is
+dependent on <code>task.names</code>, because the file needs the directory to be created
+before it can write files into it. But Converge doesn&rsquo;t know that yet, so here&rsquo;s
+how it looks:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/dependencies/without-depends.png" alt="The graph output of the above module. Converge hasn&#39;t connected the directory and file." />
+    
+    
+    <figcaption>
+        <p>
+        The graph output of the above module. Converge hasn&#39;t connected the directory and file.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<p>To fix this, we&rsquo;ll need to specify <code>depends</code> on our <code>file.content</code>. <code>depends</code> is
+a list of resources in the current module that must be successfully walked
+before walking ours. They&rsquo;re specified as the resource type, a dot, then the
+resource name. So <code>task &quot;names&quot;</code> above becomes <code>task.names</code>.</p>
+
+<pre><code class="language-hcl">task &quot;names&quot; {
+  check = &quot;test -d names&quot;
+  apply = &quot;mkdir names&quot;
+}
+
+file.content &quot;hello&quot; {
+  destination = &quot;names/hello.txt&quot;
+  content     = &quot;Hello, World!&quot;
+
+  depends = [&quot;task.names&quot;] # added in the resource that needs the dependency
+}
+</code></pre>
+
+<p>Now Converge correctly sees that it needs to walk <code>task.names</code> before
+<code>file.content.hello</code>:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/dependencies/with-depends.png" alt="The graph output of the above module. Converge now sees the dependency between the directory and the file." />
+    
+    
+    <figcaption>
+        <p>
+        The graph output of the above module. Converge now sees the dependency between the directory and the file.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<div class="admonition note">
+<p class="admonition-title">Future Improvements</p>
+<p>We&rsquo;re working hard on making Converge better at detecting situations like this
+automatically. Ideally, you wouldn&rsquo;t have to specify dependencies at all, and it
+would all work like <a href="http://converge.aster.is/0.5.0/getting-started/#params">the param example in the getting started guide</a>. We&rsquo;re not quite there yet, but keep an eye
+out!</p>
+</div>
+
+<h2 id="grouping">Grouping</h2>
+
+<p>There can be some scenarios where a group of tasks are not explicitly dependent
+on each other but also cannot be run in parallel. A good example of this is
+package management tools like
+<a href="http://wiki.alpinelinux.org/wiki/Alpine_Linux_package_management">apk</a> or
+<a href="https://wiki.debian.org/Apt">apt</a>. As an example, let&rsquo;s look at this file which
+installs three packages:</p>
+
+<pre><code class="language-hcl">task &quot;install-tree&quot; {
+  check = &quot;dpkg -s tree &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y tree&quot;
+}
+
+task &quot;install-jq&quot; {
+  check = &quot;dpkg -s jq &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y jq&quot;
+}
+
+task &quot;install-build-essential&quot; {
+  check = &quot;dpkg -s build-essential &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y build-essential&quot;
+}
+</code></pre>
+
+<p>Here is what the corresponding graph looks like:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/dependencies/without-groups.png" alt="The graph output of the above module. Converge will attempt to run each task in parallel." />
+    
+    
+    <figcaption>
+        <p>
+        The graph output of the above module. Converge will attempt to run each task in parallel.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<p>If you were to execute apply against this graph, you would end up with errors
+that look something like this:</p>
+
+<pre><code class="language-bash">E: Could not get lock /var/lib/apt/lists/lock - open (11: Resource temporarily unavailable)
+E: Unable to lock directory /var/lib/apt/lists/
+</code></pre>
+
+<p>This is because multiple <code>apt-get</code> commands cannot be run at the same time.</p>
+
+<p>You could certainly use <code>depends</code> to chain these tasks together but this is
+tedious and error prone. Luckily, Converge supports <code>groups</code> which makes this
+much easier. We can add a named group to each task and Converge will modify the
+graph so that these tasks are not run in parallel.</p>
+
+<pre><code class="language-hcl">task &quot;install-tree&quot; {
+  check = &quot;dpkg -s tree &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y tree&quot;
+  group = &quot;apt&quot;
+}
+
+task &quot;install-jq&quot; {
+  check = &quot;dpkg -s jq &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y jq&quot;
+  group = &quot;apt&quot;
+}
+
+task &quot;install-build-essential&quot; {
+  check = &quot;dpkg -s build-essential &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get install -y build-essential&quot;
+  group = &quot;apt&quot;
+}
+</code></pre>
+
+<p>And the corresponding graph:</p>
+
+
+<figure >
+    
+        <img src="http://converge.aster.is/0.5.0/images/dependencies/with-groups.png" alt="The graph output of the above module. The tasks in the group will not run in parallel." />
+    
+    
+    <figcaption>
+        <p>
+        The graph output of the above module. The tasks in the group will not run in parallel.
+        
+            
+        
+        </p> 
+    </figcaption>
+    
+</figure>
+
+
+<div class="admonition note">
+<p class="admonition-title">Future Improvements</p>
+<p>In this example, we are installing packages by calling <code>apt-get</code> in Converge
+tasks. We plan to build higher-level resources to handle package management that
+will handle these details for you.</p>
+</div>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2016 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.5.0/module-verification/" title="Module Verification">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Module Verification
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.5.0/configuration/" title="Configuration">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              Configuration
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.5.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.5.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+
