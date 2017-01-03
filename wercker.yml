@@ -65,3 +65,16 @@ publish:
                 --secret_key=$AWS_SECRET_ACCESS_KEY \
                 manifest.txt \
                 $AWS_BUCKET_URL/manifest.txt
+
+    - script: 
+        name: upload installer to get.converge.sh
+        code: |
+          s3cmd put \
+                --access_key=$AWS_ACCESS_KEY_ID \
+                --secret_key=$AWS_SECRET_ACCESS_KEY \
+                install-converge.sh \
+                $GET_CONVERGE_BUCKET/install-converge.sh
+          s3cmd setacl \
+                --access_key=$AWS_ACCESS_KEY_ID \
+                --secret_key=$AWS_SECRET_ACCESS_KEY \
+                $GET_CONVERGE_BUCKET/install-converge.sh --acl-public
