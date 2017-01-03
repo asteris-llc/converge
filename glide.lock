@@ -1,5 +1,5 @@
-hash: 405232882c82ad3cd7b9701f0eb0093e6198809c1a7523f3af5489645b05d07a
-updated: 2016-12-06T13:33:56.037159467-06:00
+hash: a0b0b4bb55bc0a10bf2be65b44470b72d8e2f5ca15fcca514e57f735c93fb486
+updated: 2017-01-03T10:36:56.909568261-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -54,7 +54,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: 4d92237de1b34c8bf99e549db27b83fd087cd765
+  version: 88862e707affccf9c46347361689b2ffef39dc5c
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -102,6 +102,8 @@ imports:
   - proto
   - protoc-gen-go/descriptor
   - ptypes/empty
+- name: github.com/gosuri/uilive
+  version: efb88ccd059957c48f24f9d351d33a0eb00ede41
 - name: github.com/grpc-ecosystem/grpc-gateway
   version: a8f25bd1ab549f8b87afd48aa9181221e9d439bb
   subpackages:
@@ -237,6 +239,4 @@ imports:
   - transport
 - name: gopkg.in/yaml.v2
   version: a83829b6f1293c91addabc89d0571c246397bbf4
-- name: github.com/gosuri/uilive
-  version: efb88ccd059957c48f24f9d351d33a0eb00ede41
 testImports: []
