@@ -4,7 +4,7 @@ package.rpm "epel-install" {
 }
 
 package.rpm "pip-install" {
-  name  = "python-pip"
+  name  = "python2-pip"
   state = "present"
 
   depends = ["package.rpm.epel-install"]
