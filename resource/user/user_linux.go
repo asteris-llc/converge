@@ -46,6 +46,9 @@ func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	if options.Directory != "" {
 		args = append(args, "-d", options.Directory)
 	}
+	if options.Expiry != "" {
+		args = append(args, "-e", options.Expiry)
+	}
 
 	cmd := exec.Command("useradd", args...)
 	err := cmd.Run()

@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
@@ -29,6 +30,7 @@ import (
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -654,6 +656,11 @@ func TestApply(t *testing.T) {
 func TestDiffAdd(t *testing.T) {
 	t.Parallel()
 
+	zone := time.FixedZone(time.Now().In(time.Local).Zone())
+	expiryString := "1996-12-12"
+	expiry, err := time.ParseInLocation("2006-01-02", expiryString, zone)
+	require.NoError(t, err)
+
 	t.Run("set all options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = fakeUsername
@@ -663,6 +670,7 @@ func TestDiffAdd(t *testing.T) {
 		u.CreateHome = true
 		u.SkelDir = "/tmp/skel"
 		u.HomeDir = "/tmp/test"
+		u.Expiry = expiry
 		status := resource.NewStatus()
 
 		expected := &user.AddUserOptions{
@@ -672,6 +680,7 @@ func TestDiffAdd(t *testing.T) {
 			CreateHome: u.CreateHome,
 			SkelDir:    u.SkelDir,
 			Directory:  u.HomeDir,
+			Expiry:     expiryString,
 		}
 
 		options, err := u.DiffAdd(status)
@@ -694,6 +703,8 @@ func TestDiffAdd(t *testing.T) {
 		assert.Equal(t, u.HomeDir, status.Diffs()["skel_dir contents"].Current())
 		assert.Equal(t, "<default home>", status.Diffs()["home_dir name"].Original())
 		assert.Equal(t, u.HomeDir, status.Diffs()["home_dir name"].Current())
+		assert.Equal(t, "<default expiry>", status.Diffs()["expiry"].Original())
+		assert.Equal(t, expiryString, status.Diffs()["expiry"].Current())
 	})
 
 	t.Run("username", func(t *testing.T) {

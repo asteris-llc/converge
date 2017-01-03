@@ -17,6 +17,7 @@ package user
 import (
 	"fmt"
 	"os/user"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
@@ -67,6 +68,9 @@ type User struct {
 	// if the contents of the home directory should be moved
 	MoveDir bool `export:"movedir"`
 
+	// the date the user account will be disabled
+	Expiry time.Time `export:"expiry"`
+
 	// configured the user state
 	State State `export:"state"`
 
@@ -82,6 +86,7 @@ type AddUserOptions struct {
 	CreateHome bool
 	SkelDir    string
 	Directory  string
+	Expiry     string
 }
 
 // ModUserOptions are the options specified in the configuration to be used
@@ -382,6 +387,11 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 	if u.HomeDir != "" {
 		options.Directory = u.HomeDir
 		status.AddDifference("home_dir name", "<default home>", u.HomeDir, "")
+	}
+
+	if u.Expiry != (time.Time{}) {
+		options.Expiry = u.Expiry.Format("2006-01-02")
+		status.AddDifference("expiry", "<default expiry>", options.Expiry, "")
 	}
 
 	if resource.AnyChanges(status.Differences) {

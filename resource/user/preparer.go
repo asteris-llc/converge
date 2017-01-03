@@ -17,6 +17,7 @@ package user
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
@@ -72,6 +73,12 @@ type Preparer struct {
 	// HomeDir must also be indicated if MoveDir is set to true.
 	MoveDir bool `hcl:"move_dir"`
 
+	// Expiry is the date on which the user account will be disabled. The date is
+	// specified in the format YYYY-MM-DD. If not specified, the default expiry
+	// date specified by the EXPIRE variable in /ect/default/useradd, or an empty
+	// string (no expiry) will be used by default.
+	Expiry time.Time `hcl:"expiry"`
+
 	// State is whether the user should be present.
 	// The default value is present.
 	State State `hcl:"state" valid_values:"present,absent"`
@@ -111,6 +118,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 	usr.HomeDir = p.HomeDir
 	usr.MoveDir = p.MoveDir
 	usr.State = p.State
+	usr.Expiry = p.Expiry
 
 	if p.UID != nil {
 		usr.UID = fmt.Sprintf("%v", *p.UID)

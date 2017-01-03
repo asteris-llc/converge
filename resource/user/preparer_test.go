@@ -18,11 +18,13 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/user"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -138,6 +140,17 @@ func TestPrepare(t *testing.T) {
 		t.Run("home_dir and move_dir parameters", func(t *testing.T) {
 			p := user.Preparer{Username: "test", MoveDir: true, HomeDir: "tmp"}
 			_, err := p.Prepare(context.Background(), &fr)
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("expiry", func(t *testing.T) {
+			zone := time.FixedZone(time.Now().In(time.Local).Zone())
+			expiry, err := time.ParseInLocation("2006-01-02", "1996-12-12", zone)
+			require.NoError(t, err)
+
+			p := user.Preparer{Username: "test", Expiry: expiry}
+			_, err = p.Prepare(context.Background(), &fr)
 
 			assert.NoError(t, err)
 		})
