@@ -146,7 +146,7 @@ func TestPrepare(t *testing.T) {
 
 		t.Run("expiry", func(t *testing.T) {
 			zone := time.FixedZone(time.Now().In(time.Local).Zone())
-			expiry, err := time.ParseInLocation("2006-01-02", "1996-12-12", zone)
+			expiry, err := time.ParseInLocation(user.ShortForm, "1996-12-12", zone)
 			require.NoError(t, err)
 
 			p := user.Preparer{Username: "test", Expiry: expiry}

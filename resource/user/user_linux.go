@@ -17,9 +17,12 @@
 package user
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"os/user"
+	"strings"
+	"time"
 )
 
 // System implements SystemUtils
@@ -89,6 +92,9 @@ func (s *System) ModUser(userName string, options *ModUserOptions) error {
 			args = append(args, "-m")
 		}
 	}
+	if options.Expiry != "" {
+		args = append(args, "-e", options.Expiry)
+	}
 
 	cmd := exec.Command("usermod", args...)
 	err := cmd.Run()
@@ -96,6 +102,26 @@ func (s *System) ModUser(userName string, options *ModUserOptions) error {
 		return fmt.Errorf("usermod: %s", err)
 	}
 	return nil
+}
+
+// LookupUserExpiry looks up a user's expiry
+func (s *System) LookupUserExpiry(userName string) (time.Time, error) {
+	var out bytes.Buffer
+
+	args := []string{"-l", userName}
+	cmd := exec.Command("chage", args...)
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("chage: %s", err)
+	}
+
+	expiry, err := parseForExpiry(out.String())
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return expiry, nil
 }
 
 // Lookup looks up a user by name
@@ -120,4 +146,27 @@ func (s *System) LookupGroup(groupName string) (*user.Group, error) {
 // If the group cannot be found an error is returned
 func (s *System) LookupGroupID(groupID string) (*user.Group, error) {
 	return user.LookupGroupId(groupID)
+}
+
+func parseForExpiry(data string) (time.Time, error) {
+	var (
+		expiry time.Time
+		err    error
+	)
+
+	split := strings.Split(data, "\n")
+
+	for _, line := range split {
+		if strings.Contains(line, "Account expires") {
+			newsplit := strings.Split(line, ":")
+
+			zone := time.FixedZone(time.Now().In(time.Local).Zone())
+			expiry, err = time.ParseInLocation("Jan 2, 2006", strings.Trim(newsplit[1], " "), zone)
+			if err != nil {
+				return time.Time{}, err
+			}
+		}
+	}
+
+	return expiry, nil
 }

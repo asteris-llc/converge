@@ -33,6 +33,9 @@ const (
 
 	// StateAbsent indicates the user should be absent
 	StateAbsent State = "absent"
+
+	// ShortForm layout for time parsing
+	ShortForm = "2006-01-02"
 )
 
 // User manages user users
@@ -98,6 +101,7 @@ type ModUserOptions struct {
 	Comment   string
 	Directory string
 	MoveDir   bool
+	Expiry    string
 }
 
 // SystemUtils provides system utilities for user
@@ -105,6 +109,7 @@ type SystemUtils interface {
 	AddUser(userName string, options *AddUserOptions) error
 	DelUser(userName string) error
 	ModUser(userName string, options *ModUserOptions) error
+	LookupUserExpiry(userName string) (time.Time, error)
 	Lookup(userName string) (*user.User, error)
 	LookupID(userID string) (*user.User, error)
 	LookupGroup(groupName string) (*user.Group, error)
@@ -308,14 +313,6 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 	return status, nil
 }
 
-func noOptionsSet(u *User) bool {
-	switch {
-	case u.UID != "", u.GroupName != "", u.GID != "", u.Name != "", u.HomeDir != "":
-		return false
-	}
-	return true
-}
-
 // DiffAdd checks for differences between the current and desired state for the
 // user to be added indicated by the User fields. The options to be used for the
 // add command are set.
@@ -390,7 +387,7 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 	}
 
 	if u.Expiry != (time.Time{}) {
-		options.Expiry = u.Expiry.Format("2006-01-02")
+		options.Expiry = u.Expiry.Format(ShortForm)
 		status.AddDifference("expiry", "<default expiry>", options.Expiry, "")
 	}
 
@@ -472,6 +469,19 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 				options.MoveDir = true
 				status.AddDifference("home_dir contents", currUser.HomeDir, u.HomeDir, "")
 			}
+		}
+	}
+
+	if u.Expiry != (time.Time{}) {
+		expiry, err := u.system.LookupUserExpiry(u.Username)
+		if err != nil {
+			return nil, fmt.Errorf("could not acquire current expiry for %s: %s", u.Username, err)
+		}
+		currentExpiry := expiry.Format(ShortForm)
+		newExpiry := u.Expiry.Format(ShortForm)
+		if currentExpiry != newExpiry {
+			options.Expiry = newExpiry
+			status.AddDifference("expiry", currentExpiry, options.Expiry, "")
 		}
 	}
 

@@ -658,7 +658,7 @@ func TestDiffAdd(t *testing.T) {
 
 	zone := time.FixedZone(time.Now().In(time.Local).Zone())
 	expiryString := "1996-12-12"
-	expiry, err := time.ParseInLocation("2006-01-02", expiryString, zone)
+	expiry, err := time.ParseInLocation(user.ShortForm, expiryString, zone)
 	require.NoError(t, err)
 
 	t.Run("set all options", func(t *testing.T) {
@@ -1408,6 +1408,12 @@ func (m *MockSystem) DelUser(name string) error {
 func (m *MockSystem) ModUser(name string, options *user.ModUserOptions) error {
 	args := m.Called(name, options)
 	return args.Error(0)
+}
+
+// LookupUserExpiry looks up a user's expiry
+func (m *MockSystem) LookupUserExpiry(name string) (time.Time, error) {
+	args := m.Called(name)
+	return args.Get(0).(time.Time), args.Error(1)
 }
 
 // Lookup looks up a user by name
