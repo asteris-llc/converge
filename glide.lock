@@ -1,5 +1,5 @@
-hash: a0b0b4bb55bc0a10bf2be65b44470b72d8e2f5ca15fcca514e57f735c93fb486
-updated: 2017-01-03T10:36:56.909568261-06:00
+hash: 55b1fc5b1f99cfdb51fdcded02330424a8d6329bce48f37cf5486fdf6136a291
+updated: 2017-01-05T15:05:40.985799571-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -45,6 +45,10 @@ imports:
   - test_helpers
 - name: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/coreos/go-systemd
+  version: 7c9533367ef925dc1078d75e5b7141e10da2c4e8
+  subpackages:
+  - dbus
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -54,7 +58,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: 88862e707affccf9c46347361689b2ffef39dc5c
+  version: 43cc971d7694bc05c3c8b9641364f0a4e3775817
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -95,6 +99,8 @@ imports:
   version: 991e78ed454ce7de73ef3c559008095802e51fd2
 - name: github.com/go-ini/ini
   version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
+- name: github.com/godbus/dbus
+  version: 4b24ebee04561bf8a3bcc09aead82062edc56778
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:

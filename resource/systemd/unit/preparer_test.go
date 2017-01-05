@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestPreparerInterface ensures that the preparer implements the resource
@@ -36,6 +37,6 @@ func TestVaildPreparer(t *testing.T) {
 	t.Parallel()
 	fr := fakerenderer.FakeRenderer{}
 	prep := &unit.Preparer{Name: "systemd-journald.service", Active: true, UnitFileState: "enabled"}
-	_, err := prep.Prepare(&fr)
+	_, err := prep.Prepare(context.Background(), &fr)
 	assert.NoError(t, err)
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/systemd"
+	"golang.org/x/net/context"
 )
 
 // Preparer for Systemd Unit
@@ -74,7 +75,7 @@ type Preparer struct {
 }
 
 //Prepare returns a new systemd.unit task
-func (p *Preparer) Prepare(render resource.Renderer) (resource.Task, error) {
+func (p *Preparer) Prepare(_ context.Context, render resource.Renderer) (resource.Task, error) {
 	var t time.Duration
 	var err error
 	if p.Timeout == "" {

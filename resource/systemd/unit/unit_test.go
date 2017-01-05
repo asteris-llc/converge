@@ -31,6 +31,7 @@ import (
 	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestTaskInterface test  that unit taks implements Task
@@ -58,7 +59,7 @@ func TestCheckingActiveStates(t *testing.T) {
 	} else {
 
 		task := unit.Unit{Name: svc.Name, Active: true}
-		status, err := task.Check(&fr)
+		status, err := task.Check(context.Background(), &fr)
 		assert.NoError(t, err)
 		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		assert.False(t, status.HasChanges())
@@ -73,7 +74,7 @@ func TestCheckingActiveStates(t *testing.T) {
 	} else {
 
 		task := unit.Unit{Name: svc.Name, Active: false}
-		status, err := task.Check(&fr)
+		status, err := task.Check(context.Background(), &fr)
 		assert.NoError(t, err)
 		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		assert.False(t, status.HasChanges())
@@ -99,7 +100,7 @@ func TestCheckingUnitFileStates(t *testing.T) {
 	} else {
 
 		task := unit.Unit{Name: svc.Name, Active: true, UnitFileState: systemd.UFSMasked}
-		status, err := task.Check(&fr)
+		status, err := task.Check(context.Background(), &fr)
 		assert.NoError(t, err)
 		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		assert.False(t, status.HasChanges())
@@ -115,7 +116,7 @@ func TestCheckingUnitFileStates(t *testing.T) {
 	} else {
 
 		task := unit.Unit{Name: svc.Name, Active: false}
-		status, err := task.Check(&fr)
+		status, err := task.Check(context.Background(), &fr)
 		assert.NoError(t, err)
 		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		assert.False(t, status.HasChanges())
@@ -131,7 +132,7 @@ func TestCheckingUnitFileStates(t *testing.T) {
 	} else {
 
 		task := unit.Unit{Name: svc.Name, Active: false}
-		status, err := task.Check(&fr)
+		status, err := task.Check(context.Background(), &fr)
 		assert.NoError(t, err)
 		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		assert.False(t, status.HasChanges())
@@ -151,8 +152,8 @@ func TestInactiveToActiveUnit(t *testing.T) {
 	defer svc.Remove()
 
 	foo := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled-runtime", StartMode: "replace"}
-	foo.Apply()
-	status, err := foo.Check(&fr)
+	foo.Apply(context.Background())
+	status, err := foo.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled-runtime\", expected one of [\"enabled-runtime, static\"]", svc.Name))
@@ -172,11 +173,11 @@ func TestDisabledtoEnabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply()
+	_, err = disabled.Apply(context.Background())
 	assert.NoError(t, err)
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
-	enabled.Apply()
-	status, err := enabled.Check(&fr)
+	enabled.Apply(context.Background())
+	status, err := enabled.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled\", expected one of [\"enabled, static\"]", svc.Name))
@@ -196,11 +197,11 @@ func TestDisabledtoEnabledRuntimeUnit(t *testing.T) {
 	defer svc.Remove()
 
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply()
+	_, err = disabled.Apply(context.Background())
 	assert.NoError(t, err)
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: systemd.UFSEnabledRuntime, StartMode: "replace"}
-	enabled.Apply()
-	status, err := enabled.Check(&fr)
+	enabled.Apply(context.Background())
+	status, err := enabled.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"enabled-runtime\", expected one of [\"enabled-runtime, static\"]", svc.Name))
@@ -220,11 +221,11 @@ func TestEnabledToDisabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	enabled := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "enabled", StartMode: "replace"}
-	enabled.Apply()
+	enabled.Apply(context.Background())
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply()
+	_, err = disabled.Apply(context.Background())
 	assert.NoError(t, err)
-	status, err := disabled.Check(&fr)
+	status, err := disabled.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"disabled\", expected one of [\"disabled, bad\"]", svc.Name))
@@ -244,12 +245,12 @@ func TestStaticToDisabledUnit(t *testing.T) {
 	defer svc.Remove()
 
 	static := unit.Unit{Name: svc.Name, Active: true, UnitFileState: "static", StartMode: "replace"}
-	_, err = static.Apply()
+	_, err = static.Apply(context.Background())
 	assert.NoError(t, err)
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply()
+	_, err = disabled.Apply(context.Background())
 	assert.NoError(t, err)
-	status, err := disabled.Check(&fr)
+	status, err := disabled.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"bad\", expected one of [\"disabled, bad\"]", svc.Name))
@@ -268,9 +269,9 @@ func TestLinkedUnit(t *testing.T) {
 	defer svc.Remove()
 
 	linked := unit.Unit{Name: svc.Path, Active: true, UnitFileState: systemd.UFSLinked, StartMode: "replace"}
-	_, err = linked.Apply()
+	_, err = linked.Apply(context.Background())
 	assert.NoError(t, err)
-	status, err := linked.Check(&fr)
+	status, err := linked.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("property \"UnitFileState\" of unit %q is \"linked\", expected one of [\"linked\"]", svc.Name))
@@ -278,9 +279,9 @@ func TestLinkedUnit(t *testing.T) {
 
 	// Testing disabling
 	disabled := unit.Unit{Name: svc.Name, Active: false, UnitFileState: "disabled", StartMode: "replace"}
-	_, err = disabled.Apply()
+	_, err = disabled.Apply(context.Background())
 	assert.NoError(t, err)
-	status, err = disabled.Check(&fr)
+	status, err = disabled.Check(context.Background(), &fr)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.StatusWontChange, status.StatusCode())
 	assert.Contains(t, status.Messages(), fmt.Sprintf("unit %q does not exist, considered disabled", svc.Name))

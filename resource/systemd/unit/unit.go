@@ -15,11 +15,12 @@
 package unit
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/systemd"
@@ -45,7 +46,7 @@ var loadError = `LoadError: "[\"org.freedesktop.DBus.Error.FileNotFound\", \"No 
 // 1. Checks if the unit is currently loading, if so waits Default 5 seconds
 // 2. Checks if the unit is in the active state
 // 3. Check if the unit is in the unit file state
-func (t *Unit) Check(r resource.Renderer) (resource.TaskStatus, error) {
+func (t *Unit) Check(_ context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	systemd.ApplyDaemonReload()
 	/*First thing to do is to check if the Name given is outside
 	the normal search path of systemd. If so it should be linked
@@ -185,7 +186,7 @@ func (t *Unit) CheckLinkage(err error) (*resource.Status, error) {
 // Apply sets the properties
 // Apply active state
 // Apply UFS
-func (t *Unit) Apply() (resource.TaskStatus, error) {
+func (t *Unit) Apply(context.Context) (resource.TaskStatus, error) {
 	//First thing to do is to check if the Name given is outside
 	//the normal search path of systemd. If so it should be linked
 	_, unitName := filepath.Split(t.Name)
