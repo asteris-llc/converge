@@ -1304,6 +1304,67 @@ func TestDiffMod(t *testing.T) {
 		assert.Equal(t, u.HomeDir, status.Diffs()["home_dir name"].Current())
 	})
 
+	t.Run("expiry", func(t *testing.T) {
+		zone := time.FixedZone(time.Now().In(time.Local).Zone())
+		currExpiryStr := "1996-12-11"
+		newExpiryStr := "1996-12-12"
+
+		currExpiry, err := time.ParseInLocation(user.ShortForm, currExpiryStr, zone)
+		require.NoError(t, err)
+		newExpiry, err := time.ParseInLocation(user.ShortForm, newExpiryStr, zone)
+		require.NoError(t, err)
+		neverExpiry, err := time.ParseInLocation(user.ShortForm, user.MaxTime, zone)
+		require.NoError(t, err)
+
+		t.Run("date", func(t *testing.T) {
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = currUsername
+			u.Expiry = newExpiry
+			status := resource.NewStatus()
+
+			expected := &user.ModUserOptions{
+				Expiry: newExpiry.Format(user.ShortForm),
+			}
+
+			m.On("LookupUserExpiry", u.Username).Return(currExpiry, nil)
+
+			options, err := u.DiffMod(status, currUser)
+
+			m.AssertCalled(t, "LookupUserExpiry", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+			assert.Equal(t, currExpiryStr, status.Diffs()["expiry"].Original())
+			assert.Equal(t, newExpiryStr, status.Diffs()["expiry"].Current())
+		})
+
+		t.Run("never", func(t *testing.T) {
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = currUsername
+			u.Expiry = newExpiry
+			status := resource.NewStatus()
+
+			expected := &user.ModUserOptions{
+				Expiry: newExpiry.Format(user.ShortForm),
+			}
+
+			m.On("LookupUserExpiry", u.Username).Return(neverExpiry, nil)
+
+			options, err := u.DiffMod(status, currUser)
+
+			m.AssertCalled(t, "LookupUserExpiry", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+			assert.Equal(t, "never", status.Diffs()["expiry"].Original())
+			assert.Equal(t, newExpiryStr, status.Diffs()["expiry"].Current())
+		})
+	})
+
 	t.Run("no options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = currUsername

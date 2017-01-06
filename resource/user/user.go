@@ -36,6 +36,9 @@ const (
 
 	// ShortForm layout for time parsing
 	ShortForm = "2006-01-02"
+
+	// MaxTime is the max representable time
+	MaxTime = "2038-01-19"
 )
 
 // User manages user users
@@ -480,6 +483,9 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 		currentExpiry := expiry.Format(ShortForm)
 		newExpiry := u.Expiry.Format(ShortForm)
 		if currentExpiry != newExpiry {
+			if currentExpiry == MaxTime {
+				currentExpiry = "never"
+			}
 			options.Expiry = newExpiry
 			status.AddDifference("expiry", currentExpiry, options.Expiry, "")
 		}

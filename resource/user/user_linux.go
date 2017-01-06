@@ -18,7 +18,7 @@ package user
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/pkg/errors"
 	"os/exec"
 	"os/user"
 	"strings"
@@ -56,7 +56,7 @@ func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	cmd := exec.Command("useradd", args...)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("useradd: %s", err)
+		return errors.Wrap(err, "useradd")
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (s *System) DelUser(userName string) error {
 	cmd := exec.Command("userdel", userName)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("userdel: %s", err)
+		return errors.Wrap(err, "userdel")
 	}
 	return nil
 }
@@ -99,7 +99,7 @@ func (s *System) ModUser(userName string, options *ModUserOptions) error {
 	cmd := exec.Command("usermod", args...)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("usermod: %s", err)
+		return errors.Wrap(err, "usermod")
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (s *System) LookupUserExpiry(userName string) (time.Time, error) {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return time.Time{}, fmt.Errorf("chage: %s", err)
+		return time.Time{}, errors.Wrap(err, "chage")
 	}
 
 	expiry, err := parseForExpiry(out.String())
@@ -148,25 +148,25 @@ func (s *System) LookupGroupID(groupID string) (*user.Group, error) {
 	return user.LookupGroupId(groupID)
 }
 
+// parseForExpiry takes a string and extracts the account expiration date and
+// converts it to a time.Time. This function is specifically written to handle
+// the output from the `chage -l <username>` command.
 func parseForExpiry(data string) (time.Time, error) {
-	var (
-		expiry time.Time
-		err    error
-	)
-
 	split := strings.Split(data, "\n")
 
 	for _, line := range split {
 		if strings.Contains(line, "Account expires") {
 			newsplit := strings.Split(line, ":")
-
+			rawExpiry := strings.Trim(newsplit[1], " ")
 			zone := time.FixedZone(time.Now().In(time.Local).Zone())
-			expiry, err = time.ParseInLocation("Jan 2, 2006", strings.Trim(newsplit[1], " "), zone)
-			if err != nil {
-				return time.Time{}, err
+
+			if rawExpiry == "never" {
+				// set current user time to max time
+				return time.ParseInLocation(ShortForm, MaxTime, zone)
 			}
+			return time.ParseInLocation("Jan 2, 2006", strings.Trim(newsplit[1], " "), zone)
 		}
 	}
 
-	return expiry, nil
+	return time.Time{}, errors.New("could not parse expiry data for current user")
 }
