@@ -75,7 +75,7 @@ type Preparer struct {
 
 	// Expiry is the date on which the user account will be disabled. The date is
 	// specified in the format YYYY-MM-DD. If not specified, the default expiry
-	// date specified by the EXPIRE variable in /ect/default/useradd, or an empty
+	// date specified by the EXPIRE variable in /etc/default/useradd, or an empty
 	// string (no expiry) will be used by default.
 	Expiry time.Time `hcl:"expiry"`
 
