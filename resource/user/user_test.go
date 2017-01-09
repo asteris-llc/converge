@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
@@ -29,6 +30,7 @@ import (
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -654,6 +656,11 @@ func TestApply(t *testing.T) {
 func TestDiffAdd(t *testing.T) {
 	t.Parallel()
 
+	zone := time.FixedZone(time.Now().In(time.Local).Zone())
+	expiryString := "1996-12-12"
+	expiry, err := time.ParseInLocation(user.ShortForm, expiryString, zone)
+	require.NoError(t, err)
+
 	t.Run("set all options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = fakeUsername
@@ -663,6 +670,7 @@ func TestDiffAdd(t *testing.T) {
 		u.CreateHome = true
 		u.SkelDir = "/tmp/skel"
 		u.HomeDir = "/tmp/test"
+		u.Expiry = expiry
 		status := resource.NewStatus()
 
 		expected := &user.AddUserOptions{
@@ -672,6 +680,7 @@ func TestDiffAdd(t *testing.T) {
 			CreateHome: u.CreateHome,
 			SkelDir:    u.SkelDir,
 			Directory:  u.HomeDir,
+			Expiry:     expiryString,
 		}
 
 		options, err := u.DiffAdd(status)
@@ -694,6 +703,8 @@ func TestDiffAdd(t *testing.T) {
 		assert.Equal(t, u.HomeDir, status.Diffs()["skel_dir contents"].Current())
 		assert.Equal(t, "<default home>", status.Diffs()["home_dir name"].Original())
 		assert.Equal(t, u.HomeDir, status.Diffs()["home_dir name"].Current())
+		assert.Equal(t, "<default expiry>", status.Diffs()["expiry"].Original())
+		assert.Equal(t, expiryString, status.Diffs()["expiry"].Current())
 	})
 
 	t.Run("username", func(t *testing.T) {
@@ -1293,6 +1304,67 @@ func TestDiffMod(t *testing.T) {
 		assert.Equal(t, u.HomeDir, status.Diffs()["home_dir name"].Current())
 	})
 
+	t.Run("expiry", func(t *testing.T) {
+		zone := time.FixedZone(time.Now().In(time.Local).Zone())
+		currExpiryStr := "1996-12-11"
+		newExpiryStr := "1996-12-12"
+
+		currExpiry, err := time.ParseInLocation(user.ShortForm, currExpiryStr, zone)
+		require.NoError(t, err)
+		newExpiry, err := time.ParseInLocation(user.ShortForm, newExpiryStr, zone)
+		require.NoError(t, err)
+		neverExpiry, err := time.ParseInLocation(user.ShortForm, user.MaxTime, zone)
+		require.NoError(t, err)
+
+		t.Run("date", func(t *testing.T) {
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = currUsername
+			u.Expiry = newExpiry
+			status := resource.NewStatus()
+
+			expected := &user.ModUserOptions{
+				Expiry: newExpiry.Format(user.ShortForm),
+			}
+
+			m.On("LookupUserExpiry", u.Username).Return(currExpiry, nil)
+
+			options, err := u.DiffMod(status, currUser)
+
+			m.AssertCalled(t, "LookupUserExpiry", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+			assert.Equal(t, currExpiryStr, status.Diffs()["expiry"].Original())
+			assert.Equal(t, newExpiryStr, status.Diffs()["expiry"].Current())
+		})
+
+		t.Run("never", func(t *testing.T) {
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = currUsername
+			u.Expiry = newExpiry
+			status := resource.NewStatus()
+
+			expected := &user.ModUserOptions{
+				Expiry: newExpiry.Format(user.ShortForm),
+			}
+
+			m.On("LookupUserExpiry", u.Username).Return(neverExpiry, nil)
+
+			options, err := u.DiffMod(status, currUser)
+
+			m.AssertCalled(t, "LookupUserExpiry", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, options)
+			assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+			assert.Equal(t, "never", status.Diffs()["expiry"].Original())
+			assert.Equal(t, newExpiryStr, status.Diffs()["expiry"].Current())
+		})
+	})
+
 	t.Run("no options", func(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.Username = currUsername
@@ -1397,6 +1469,12 @@ func (m *MockSystem) DelUser(name string) error {
 func (m *MockSystem) ModUser(name string, options *user.ModUserOptions) error {
 	args := m.Called(name, options)
 	return args.Error(0)
+}
+
+// LookupUserExpiry looks up a user's expiry
+func (m *MockSystem) LookupUserExpiry(name string) (time.Time, error) {
+	args := m.Called(name)
+	return args.Get(0).(time.Time), args.Error(1)
 }
 
 // Lookup looks up a user by name
