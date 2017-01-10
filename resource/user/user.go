@@ -341,11 +341,26 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 func (u *User) DiffDel(status *resource.Status, userByName *user.User, nameNotFound bool) error {
 	switch {
 	case nameNotFound:
-		status.RaiseLevel(resource.StatusCantChange)
-		return errors.New("user does not exist")
+		return nil
 	case userByName != nil:
-		status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
-		status.RaiseLevel(resource.StatusWillChange)
+		switch {
+		case u.UID == "":
+			status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
+		case u.UID != "":
+			userByID, err := user.LookupId(u.UID)
+			_, uidNotFound := err.(user.UnknownUserIdError)
+
+			switch {
+			case uidNotFound:
+				status.RaiseLevel(resource.StatusCantChange)
+				return fmt.Errorf("uid %s does not exist", u.UID)
+			case userByID != nil && *userByID != *userByName:
+				status.RaiseLevel(resource.StatusCantChange)
+				return fmt.Errorf("uid %s belongs to different user", u.UID)
+			case userByID != nil && *userByID == *userByName:
+				status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
+			}
+		}
 	}
 
 	if resource.AnyChanges(status.Differences) {
