@@ -339,27 +339,26 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 // DiffDel checks for differences between the current and desired state for the
 // user to be deleted indicated by the User fields.
 func (u *User) DiffDel(status *resource.Status, userByName *user.User, nameNotFound bool) error {
-	switch {
-	case nameNotFound:
+	if nameNotFound || userByName == nil {
 		return nil
-	case userByName != nil:
-		switch {
-		case u.UID == "":
-			status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
-		case u.UID != "":
-			userByID, err := user.LookupId(u.UID)
-			_, uidNotFound := err.(user.UnknownUserIdError)
+	}
 
-			switch {
-			case uidNotFound:
-				status.RaiseLevel(resource.StatusCantChange)
-				return fmt.Errorf("uid %s does not exist", u.UID)
-			case userByID != nil && *userByID != *userByName:
-				status.RaiseLevel(resource.StatusCantChange)
-				return fmt.Errorf("uid %s belongs to different user", u.UID)
-			case userByID != nil && *userByID == *userByName:
-				status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
-			}
+	switch {
+	case u.UID == "":
+		status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
+	case u.UID != "":
+		userByID, err := user.LookupId(u.UID)
+		_, uidNotFound := err.(user.UnknownUserIdError)
+
+		switch {
+		case uidNotFound:
+			status.RaiseLevel(resource.StatusCantChange)
+			return fmt.Errorf("uid %s does not exist", u.UID)
+		case userByID != nil && *userByID != *userByName:
+			status.RaiseLevel(resource.StatusCantChange)
+			return fmt.Errorf("uid %s belongs to different user", u.UID)
+		case userByID != nil && *userByID == *userByName:
+			status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
 		}
 	}
 
