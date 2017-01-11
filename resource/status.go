@@ -280,6 +280,14 @@ func (t *Status) RaiseLevel(level StatusLevel) {
 	}
 }
 
+// RaiseLevelForDiffs raises the status level to StatusWillChange if there are
+// differences in the Differences map
+func (t *Status) RaiseLevelForDiffs() {
+	if AnyChanges(t.Differences) {
+		t.RaiseLevel(StatusWillChange)
+	}
+}
+
 // Diff represents a difference
 type Diff interface {
 	Original() string

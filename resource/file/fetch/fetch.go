@@ -184,7 +184,6 @@ func (f *Fetch) DiffFile(status *resource.Status, hsh hash.Hash) (*resource.Stat
 		} else if f.Force {
 			status.AddDifference("checksum", actual, f.Hash, "")
 			status.AddMessage("checksum mismatch")
-			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("checksum mismatch, use the \"force\" option to replace")
 			status.RaiseLevel(resource.StatusCantChange)
@@ -194,11 +193,12 @@ func (f *Fetch) DiffFile(status *resource.Status, hsh hash.Hash) (*resource.Stat
 		if f.Force {
 			status.AddDifference("destination", "<force fetch>", f.Destination, "")
 			status.AddMessage("file exists, will fetch due to \"force\"")
-			status.RaiseLevel(resource.StatusWillChange)
 		} else {
 			status.AddMessage("file exists")
 		}
 	}
+
+	status.RaiseLevelForDiffs()
 
 	return status, nil
 }

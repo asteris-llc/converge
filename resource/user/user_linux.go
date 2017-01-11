@@ -17,9 +17,12 @@
 package user
 
 import (
-	"fmt"
+	"bytes"
+	"github.com/pkg/errors"
 	"os/exec"
 	"os/user"
+	"strings"
+	"time"
 )
 
 // System implements SystemUtils
@@ -46,11 +49,14 @@ func (s *System) AddUser(userName string, options *AddUserOptions) error {
 	if options.Directory != "" {
 		args = append(args, "-d", options.Directory)
 	}
+	if options.Expiry != "" {
+		args = append(args, "-e", options.Expiry)
+	}
 
 	cmd := exec.Command("useradd", args...)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("useradd: %s", err)
+		return errors.Wrap(err, "useradd")
 	}
 	return nil
 }
@@ -60,7 +66,7 @@ func (s *System) DelUser(userName string) error {
 	cmd := exec.Command("userdel", userName)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("userdel: %s", err)
+		return errors.Wrap(err, "userdel")
 	}
 	return nil
 }
@@ -86,13 +92,36 @@ func (s *System) ModUser(userName string, options *ModUserOptions) error {
 			args = append(args, "-m")
 		}
 	}
+	if options.Expiry != "" {
+		args = append(args, "-e", options.Expiry)
+	}
 
 	cmd := exec.Command("usermod", args...)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("usermod: %s", err)
+		return errors.Wrap(err, "usermod")
 	}
 	return nil
+}
+
+// LookupUserExpiry looks up a user's expiry
+func (s *System) LookupUserExpiry(userName string) (time.Time, error) {
+	var out bytes.Buffer
+
+	args := []string{"-l", userName}
+	cmd := exec.Command("chage", args...)
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return time.Time{}, errors.Wrap(err, "chage")
+	}
+
+	expiry, err := parseForExpiry(out.String())
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return expiry, nil
 }
 
 // Lookup looks up a user by name
@@ -117,4 +146,27 @@ func (s *System) LookupGroup(groupName string) (*user.Group, error) {
 // If the group cannot be found an error is returned
 func (s *System) LookupGroupID(groupID string) (*user.Group, error) {
 	return user.LookupGroupId(groupID)
+}
+
+// parseForExpiry takes a string and extracts the account expiration date and
+// converts it to a time.Time. This function is specifically written to handle
+// the output from the `chage -l <username>` command.
+func parseForExpiry(data string) (time.Time, error) {
+	split := strings.Split(data, "\n")
+
+	for _, line := range split {
+		if strings.Contains(line, "Account expires") {
+			newsplit := strings.Split(line, ":")
+			rawExpiry := strings.Trim(newsplit[1], " ")
+			zone := time.FixedZone(time.Now().In(time.Local).Zone())
+
+			if rawExpiry == "never" {
+				// set current user time to max time
+				return time.ParseInLocation(ShortForm, MaxTime, zone)
+			}
+			return time.ParseInLocation("Jan 2, 2006", strings.Trim(newsplit[1], " "), zone)
+		}
+	}
+
+	return time.Time{}, errors.New("could not parse expiry data for current user")
 }
