@@ -115,7 +115,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 			case g.NewName == "":
 				switch {
 				case nameNotFound:
-					status.RaiseLevel(resource.StatusWillChange)
 					status.Output = append(status.Output, "add group")
 					status.AddDifference("group", string(StateAbsent), fmt.Sprintf("group %s", g.Name), "")
 				case groupByName != nil:
@@ -130,7 +129,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 					status.Output = append(status.Output, fmt.Sprintf("group modify: group %s does not exist", g.Name))
 					return status, errors.New("cannot modify group")
 				case newNameNotFound:
-					status.RaiseLevel(resource.StatusWillChange)
 					status.Output = append(status.Output, "modify group name")
 					status.AddDifference("group", fmt.Sprintf("group %s", g.Name), fmt.Sprintf("group %s", g.NewName), "")
 				case groupByNewName != nil:
@@ -147,7 +145,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 			case g.NewName == "":
 				switch {
 				case nameNotFound && gidNotFound:
-					status.RaiseLevel(resource.StatusWillChange)
 					status.Output = append(status.Output, "add group with gid")
 					status.AddDifference("group", string(StateAbsent), fmt.Sprintf("group %s with gid %s", g.Name, g.GID), "")
 				case nameNotFound:
@@ -155,7 +152,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 					status.Output = append(status.Output, fmt.Sprintf("group add: gid %s already exists", g.GID))
 					return status, errors.New("cannot add group")
 				case gidNotFound:
-					status.RaiseLevel(resource.StatusWillChange)
 					status.Output = append(status.Output, "modify group gid")
 					status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, groupByName.Gid), fmt.Sprintf("group %s with gid %s", g.Name, g.GID), "")
 				case groupByName != nil && groupByGid != nil && groupByName.Name != groupByGid.Name || groupByName.Gid != groupByGid.Gid:
@@ -172,7 +168,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 
 				switch {
 				case newNameNotFound && gidNotFound:
-					status.RaiseLevel(resource.StatusWillChange)
 					status.Output = append(status.Output, "modify group name and gid")
 					status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, groupByName.Gid), fmt.Sprintf("group %s with gid %s", g.NewName, g.GID), "")
 				case gidNotFound:
@@ -195,7 +190,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 			case nameNotFound:
 				status.Output = append(status.Output, fmt.Sprintf("group delete: group %s does not exist", g.Name))
 			case groupByName != nil:
-				status.RaiseLevel(resource.StatusWillChange)
 				status.Output = append(status.Output, "delete group")
 				status.AddDifference("group", fmt.Sprintf("group %s", g.Name), string(StateAbsent), "")
 			}
@@ -219,7 +213,6 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 				status.Output = append(status.Output, fmt.Sprintf("group delete: group %s and gid %s belong to different groups", g.Name, g.GID))
 				return status, errors.New("cannot delete group")
 			case groupByName != nil && groupByGid != nil && *groupByName == *groupByGid:
-				status.RaiseLevel(resource.StatusWillChange)
 				status.Output = append(status.Output, "delete group with gid")
 				status.AddDifference("group", fmt.Sprintf("group %s with gid %s", g.Name, g.GID), string(StateAbsent), "")
 			}
@@ -228,6 +221,8 @@ func (g *Group) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 		status.RaiseLevel(resource.StatusFatal)
 		return status, fmt.Errorf("group: unrecognized state %s", g.State)
 	}
+
+	status.RaiseLevelForDiffs()
 
 	return status, nil
 }
