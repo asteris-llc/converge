@@ -329,9 +329,7 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 		status.AddDifference("expiry", "<default expiry>", options.Expiry, "")
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
-	}
+	status.RaiseLevelForDiffs()
 
 	return options, nil
 }
@@ -362,9 +360,7 @@ func (u *User) DiffDel(status *resource.Status, userByName *user.User, nameNotFo
 		}
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
-	}
+	status.RaiseLevelForDiffs()
 
 	return nil
 }
@@ -459,9 +455,7 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 		}
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
-	}
+	status.RaiseLevelForDiffs()
 
 	return options, nil
 }

@@ -80,9 +80,7 @@ func (r *resourceFS) Check(context.Context, resource.Renderer) (resource.TaskSta
 		return nil, err
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.Level = resource.StatusWillChange
-	}
+	status.RaiseLevelForDiffs()
 
 	return status, nil
 }

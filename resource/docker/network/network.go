@@ -108,9 +108,7 @@ func (n *Network) Check(context.Context, resource.Renderer) (resource.TaskStatus
 		}
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
-	}
+	status.RaiseLevelForDiffs()
 
 	return status, nil
 }

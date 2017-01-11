@@ -83,9 +83,7 @@ func (v *Volume) Check(context.Context, resource.Renderer) (resource.TaskStatus,
 		// https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
-	}
+	status.RaiseLevelForDiffs()
 
 	return status, nil
 }
