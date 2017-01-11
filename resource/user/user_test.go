@@ -223,110 +223,32 @@ func TestCheck(t *testing.T) {
 		u := user.NewUser(new(user.System))
 		u.State = user.StateAbsent
 
-		t.Run("uid not provided", func(t *testing.T) {
-			t.Run("no delete-user does not exist", func(t *testing.T) {
-				u.Username = fakeUsername
-				status, err := u.Check(context.Background(), fakerenderer.New())
+		t.Run("no delete-user does not exist", func(t *testing.T) {
+			u.Username = fakeUsername
+			status, err := u.Check(context.Background(), fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s does not exist", u.Username), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
-
-			t.Run("delete user", func(t *testing.T) {
-				u.Username = currUsername
-				status, err := u.Check(context.Background(), fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s", u.Username), status.Diffs()["user"].Original())
-					assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
+			if runtime.GOOS == "linux" {
+				assert.NoError(t, err)
+				assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+				assert.False(t, status.HasChanges())
+			} else {
+				assert.EqualError(t, err, "user: not supported on this system")
+			}
 		})
 
-		t.Run("uid provided", func(t *testing.T) {
-			t.Run("no delete-user name and uid do not exist", func(t *testing.T) {
-				u.Username = fakeUsername
-				u.UID = fakeUID
-				status, err := u.Check(context.Background(), fakerenderer.New())
+		t.Run("delete user", func(t *testing.T) {
+			u.Username = currUsername
+			status, err := u.Check(context.Background(), fakerenderer.New())
 
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusNoChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s and uid %s do not exist", u.Username, u.UID), status.Messages()[0])
-					assert.False(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
-
-			t.Run("no delete-user name does not exist", func(t *testing.T) {
-				u.Username = fakeUsername
-				u.UID = currUID
-				status, err := u.Check(context.Background(), fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user does not exist", u.Username, u.UID))
-					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
-
-			t.Run("no delete-user uid does not exist", func(t *testing.T) {
-				u.Username = currUsername
-				u.UID = fakeUID
-				status, err := u.Check(context.Background(), fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: uid does not exist", u.Username, u.UID))
-					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
-
-			t.Run("no delete-user name and uid belong to different users", func(t *testing.T) {
-				u.Username = currUsername
-				u.UID = existingUID
-				status, err := u.Check(context.Background(), fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.EqualError(t, err, fmt.Sprintf("cannot delete user %s with uid %s: user and uid belong to different users", u.Username, u.UID))
-					assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
-
-			t.Run("delete user with uid", func(t *testing.T) {
-				u.Username = currUsername
-				u.UID = currUID
-				status, err := u.Check(context.Background(), fakerenderer.New())
-
-				if runtime.GOOS == "linux" {
-					assert.NoError(t, err)
-					assert.Equal(t, resource.StatusWillChange, status.StatusCode())
-					assert.Equal(t, fmt.Sprintf("user %s with uid %s", u.Username, u.UID), status.Diffs()["user"].Original())
-					assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
-					assert.True(t, status.HasChanges())
-				} else {
-					assert.EqualError(t, err, "user: not supported on this system")
-				}
-			})
+			if runtime.GOOS == "linux" {
+				assert.NoError(t, err)
+				assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+				assert.Equal(t, u.Username, status.Diffs()["user"].Original())
+				assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
+				assert.True(t, status.HasChanges())
+			} else {
+				assert.EqualError(t, err, "user: not supported on this system")
+			}
 		})
 	})
 
@@ -500,127 +422,62 @@ func TestApply(t *testing.T) {
 	})
 
 	t.Run("state=absent", func(t *testing.T) {
-		t.Run("uid not provided", func(t *testing.T) {
-			t.Run("delete user", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.State = user.StateAbsent
+		t.Run("delete user", func(t *testing.T) {
+			usr := &os.User{
+				Username: fakeUsername,
+			}
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = usr.Username
+			u.State = user.StateAbsent
 
-				m.On("Lookup", u.Username).Return(usr, nil)
-				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply(context.Background())
+			m.On("Lookup", u.Username).Return(usr, nil)
+			m.On("DelUser", u.Username).Return(nil)
+			status, err := u.Apply(context.Background())
 
-				m.AssertCalled(t, "DelUser", u.Username)
-				assert.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("deleted user %s", u.Username), status.Messages()[0])
-			})
-
-			t.Run("no delete-error deleting user", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.State = user.StateAbsent
-
-				m.On("Lookup", u.Username).Return(usr, nil)
-				m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-				status, err := u.Apply(context.Background())
-
-				m.AssertCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, "user delete: ")
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
-				assert.Equal(t, fmt.Sprintf("error deleting user %s", u.Username), status.Messages()[0])
-			})
-
-			t.Run("no delete-will not attempt delete", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.State = user.StateAbsent
-
-				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
-				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply(context.Background())
-
-				m.AssertNotCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s", u.Username))
-				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-			})
+			m.AssertCalled(t, "DelUser", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("deleted user %s", u.Username), status.Messages()[0])
+			assert.Equal(t, u.Username, status.Diffs()["user"].Original())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
+			assert.True(t, status.HasChanges())
 		})
 
-		t.Run("uid provided", func(t *testing.T) {
-			t.Run("delete user with uid", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-					Uid:      fakeUID,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.UID = usr.Uid
-				u.State = user.StateAbsent
+		t.Run("no delete-error deleting user", func(t *testing.T) {
+			usr := &os.User{
+				Username: fakeUsername,
+			}
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = usr.Username
+			u.State = user.StateAbsent
 
-				m.On("Lookup", u.Username).Return(usr, nil)
-				m.On("LookupID", u.UID).Return(usr, nil)
-				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply(context.Background())
+			m.On("Lookup", u.Username).Return(usr, nil)
+			m.On("DelUser", u.Username).Return(fmt.Errorf(""))
+			status, err := u.Apply(context.Background())
 
-				m.AssertCalled(t, "DelUser", u.Username)
-				assert.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("deleted user %s with uid %s", u.Username, u.UID), status.Messages()[0])
-			})
+			m.AssertCalled(t, "DelUser", u.Username)
+			assert.EqualError(t, err, "user delete: ")
+			assert.Equal(t, resource.StatusFatal, status.StatusCode())
+			assert.Equal(t, fmt.Sprintf("error deleting user %s", u.Username), status.Messages()[0])
+		})
 
-			t.Run("no delete-error deleting user", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-					Uid:      fakeUID,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.UID = usr.Uid
-				u.State = user.StateAbsent
+		t.Run("no delete-will not attempt delete", func(t *testing.T) {
+			usr := &os.User{
+				Username: fakeUsername,
+			}
+			m := &MockSystem{}
+			u := user.NewUser(m)
+			u.Username = usr.Username
+			u.State = user.StateAbsent
 
-				m.On("Lookup", u.Username).Return(usr, nil)
-				m.On("LookupID", u.UID).Return(usr, nil)
-				m.On("DelUser", u.Username).Return(fmt.Errorf(""))
-				status, err := u.Apply(context.Background())
+			m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
+			m.On("DelUser", u.Username).Return(nil)
+			status, err := u.Apply(context.Background())
 
-				m.AssertCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, "user delete: ")
-				assert.Equal(t, resource.StatusFatal, status.StatusCode())
-				assert.Equal(t, fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID), status.Messages()[0])
-			})
-
-			t.Run("no delete-will not attempt delete", func(t *testing.T) {
-				usr := &os.User{
-					Username: fakeUsername,
-					Uid:      fakeUID,
-				}
-				m := &MockSystem{}
-				u := user.NewUser(m)
-				u.Username = usr.Username
-				u.UID = usr.Uid
-				u.State = user.StateAbsent
-
-				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
-				m.On("LookupID", u.UID).Return(usr, nil)
-				m.On("DelUser", u.Username).Return(nil)
-				status, err := u.Apply(context.Background())
-
-				m.AssertNotCalled(t, "DelUser", u.Username)
-				assert.EqualError(t, err, fmt.Sprintf("will not attempt to delete user %s with uid %s", u.Username, u.UID))
-				assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-			})
+			m.AssertNotCalled(t, "DelUser", u.Username)
+			assert.NoError(t, err)
+			assert.Equal(t, resource.StatusNoChange, status.StatusCode())
 		})
 	})
 
@@ -1016,6 +873,109 @@ func TestDiffAdd(t *testing.T) {
 		assert.True(t, status.HasChanges())
 		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["username"].Original())
 		assert.Equal(t, u.Username, status.Diffs()["username"].Current())
+	})
+}
+
+// TestDiffDel tests DiffDel for user
+func TestDiffDel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("user does not exist", func(t *testing.T) {
+		u := user.NewUser(new(user.System))
+		u.Username = fakeUsername
+		u.State = user.StateAbsent
+		status := resource.NewStatus()
+
+		usr := os.User{}
+
+		err := u.DiffDel(status, &usr, true)
+
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+		assert.False(t, status.HasChanges())
+	})
+
+	t.Run("delete user", func(t *testing.T) {
+		u := user.NewUser(new(user.System))
+		u.Username = currUsername
+		u.State = user.StateAbsent
+		status := resource.NewStatus()
+
+		usr := os.User{Username: currUsername}
+
+		err := u.DiffDel(status, &usr, false)
+
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+		assert.Equal(t, u.Username, status.Diffs()["user"].Original())
+		assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("uid provided", func(t *testing.T) {
+		t.Run("user does not exist", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = fakeUsername
+			u.UID = fakeUID
+			u.State = user.StateAbsent
+			status := resource.NewStatus()
+
+			usr := os.User{}
+
+			err := u.DiffDel(status, &usr, true)
+
+			assert.NoError(t, err)
+			assert.Equal(t, resource.StatusNoChange, status.StatusCode())
+			assert.False(t, status.HasChanges())
+		})
+
+		t.Run("uid does not exist", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = currUsername
+			u.UID = fakeUID
+			u.State = user.StateAbsent
+			status := resource.NewStatus()
+
+			usr := os.User{Username: currUsername, Uid: currUID}
+
+			err := u.DiffDel(status, &usr, false)
+
+			assert.EqualError(t, err, fmt.Sprintf("uid %s does not exist", u.UID))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("uid belongs to different user", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = currUsername
+			u.UID = existingUID
+			u.State = user.StateAbsent
+			status := resource.NewStatus()
+
+			usr := os.User{Username: currUsername, Uid: currUID}
+
+			err := u.DiffDel(status, &usr, false)
+
+			assert.EqualError(t, err, fmt.Sprintf("uid %s belongs to different user", u.UID))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("delete user", func(t *testing.T) {
+			u := user.NewUser(new(user.System))
+			u.Username = currUsername
+			u.UID = currUID
+			u.State = user.StateAbsent
+			status := resource.NewStatus()
+
+			err := u.DiffDel(status, currUser, false)
+
+			assert.NoError(t, err)
+			assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+			assert.Equal(t, u.Username, status.Diffs()["user"].Original())
+			assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["user"].Current())
+			assert.True(t, status.HasChanges())
+		})
 	})
 }
 
