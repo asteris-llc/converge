@@ -280,20 +280,85 @@ func TestApply(t *testing.T) {
 					Username: fakeUsername,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.State = user.StatePresent
 				options := user.AddUserOptions{}
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
-				d.On("DiffAdd", mock.Anything).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply(context.Background())
 
 				m.AssertCalled(t, "AddUser", u.Username, &options)
 				assert.NoError(t, err)
 				assert.Equal(t, fmt.Sprintf("added user %s", u.Username), status.Messages()[0])
+			})
+
+			t.Run("add user-update default diffs", func(t *testing.T) {
+				t.Run("create_home", func(t *testing.T) {
+					usr := &os.User{
+						Username: fakeUsername,
+					}
+
+					m := &MockSystem2{}
+					u := user.NewUser(m)
+					u.Username = usr.Username
+					u.CreateHome = true
+					u.State = user.StatePresent
+					options := user.AddUserOptions{CreateHome: u.CreateHome}
+					usrAfterAdd := &os.User{
+						Username: u.Username,
+						HomeDir:  "/tmp/test",
+					}
+
+					m.userBeforeAdd = true
+					m.On("Lookup", usr.Username).Return(usr, usrAfterAdd, os.UnknownUserError(""))
+					m.On("AddUser", u.Username, &options).Return(nil)
+					m.On("Lookup", usrAfterAdd.Username).Return(usr, usrAfterAdd, nil)
+
+					status, err := u.Apply(context.Background())
+
+					m.AssertCalled(t, "AddUser", u.Username, &options)
+
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("added user %s", u.Username), status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["create_home"].Original())
+					assert.Equal(t, usrAfterAdd.HomeDir, status.Diffs()["create_home"].Current())
+				})
+
+				t.Run("create_home and skel_dir", func(t *testing.T) {
+					usr := &os.User{
+						Username: fakeUsername,
+					}
+
+					m := &MockSystem2{}
+					u := user.NewUser(m)
+					u.Username = usr.Username
+					u.CreateHome = true
+					u.SkelDir = "/tmp/skel"
+					u.State = user.StatePresent
+					options := user.AddUserOptions{CreateHome: u.CreateHome, SkelDir: u.SkelDir}
+					usrAfterAdd := &os.User{
+						Username: u.Username,
+						HomeDir:  "/tmp/test",
+					}
+
+					m.userBeforeAdd = true
+					m.On("Lookup", usr.Username).Return(usr, usrAfterAdd, os.UnknownUserError(""))
+					m.On("AddUser", u.Username, &options).Return(nil)
+					m.On("Lookup", usrAfterAdd.Username).Return(usr, usrAfterAdd, nil)
+
+					status, err := u.Apply(context.Background())
+
+					m.AssertCalled(t, "AddUser", u.Username, &options)
+
+					assert.NoError(t, err)
+					assert.Equal(t, fmt.Sprintf("added user %s", u.Username), status.Messages()[0])
+					assert.Equal(t, fmt.Sprintf("<%s>", string(user.StateAbsent)), status.Diffs()["create_home"].Original())
+					assert.Equal(t, usrAfterAdd.HomeDir, status.Diffs()["create_home"].Current())
+					assert.Equal(t, u.SkelDir, status.Diffs()["skel_dir contents"].Original())
+					assert.Equal(t, usrAfterAdd.HomeDir, status.Diffs()["skel_dir contents"].Current())
+				})
 			})
 
 			t.Run("will not attempt to add", func(t *testing.T) {
@@ -304,7 +369,6 @@ func TestApply(t *testing.T) {
 					Name: fakeGroupName,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.GroupName = grp.Name
@@ -314,7 +378,6 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
 				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
-				d.On("DiffAdd", mock.Anything).Return(nil, optErr)
 				m.On("AddUser", u.Username, &options).Return(nil)
 				status, err := u.Apply(context.Background())
 
@@ -328,14 +391,12 @@ func TestApply(t *testing.T) {
 					Username: fakeUsername,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.State = user.StatePresent
 				options := user.AddUserOptions{}
 
 				m.On("Lookup", u.Username).Return(usr, os.UnknownUserError(""))
-				d.On("DiffAdd", mock.Anything).Return(options, nil)
 				m.On("AddUser", u.Username, &options).Return(fmt.Errorf(""))
 				status, err := u.Apply(context.Background())
 
@@ -352,7 +413,6 @@ func TestApply(t *testing.T) {
 					Username: currUsername,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.Name = "test"
@@ -360,7 +420,6 @@ func TestApply(t *testing.T) {
 				options := user.ModUserOptions{Comment: u.Name}
 
 				m.On("Lookup", u.Username).Return(usr, nil)
-				d.On("DiffMod", mock.Anything, currUser).Return(options, nil)
 				m.On("ModUser", u.Username, &options).Return(nil)
 				status, err := u.Apply(context.Background())
 
@@ -377,7 +436,6 @@ func TestApply(t *testing.T) {
 					Name: fakeGroupName,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.GroupName = grp.Name
@@ -387,7 +445,6 @@ func TestApply(t *testing.T) {
 
 				m.On("Lookup", u.Username).Return(usr, nil)
 				m.On("LookupGroup", u.GroupName).Return(grp, os.UnknownGroupError(""))
-				d.On("DiffMod", mock.Anything, currUser).Return(nil, optErr)
 				m.On("ModUser", u.Username, &options).Return(nil)
 				status, err := u.Apply(context.Background())
 
@@ -401,7 +458,6 @@ func TestApply(t *testing.T) {
 					Username: currUsername,
 				}
 				m := &MockSystem{}
-				d := &MockDiff{}
 				u := user.NewUser(m)
 				u.Username = usr.Username
 				u.Name = "test"
@@ -409,7 +465,6 @@ func TestApply(t *testing.T) {
 				options := user.ModUserOptions{Comment: u.Name}
 
 				m.On("Lookup", u.Username).Return(usr, nil)
-				d.On("DiffMod", mock.Anything, currUser).Return(options, nil)
 				m.On("ModUser", u.Username, &options).Return(fmt.Errorf(""))
 				status, err := u.Apply(context.Background())
 
@@ -487,7 +542,6 @@ func TestApply(t *testing.T) {
 			Uid:      fakeUID,
 		}
 		m := &MockSystem{}
-		d := &MockDiff{}
 		u := user.NewUser(m)
 		u.Username = usr.Username
 		u.UID = usr.Uid
@@ -496,12 +550,10 @@ func TestApply(t *testing.T) {
 
 		m.On("Lookup", u.Username).Return(usr, nil)
 		m.On("LookupID", u.UID).Return(usr, nil)
-		d.On("DiffAdd", mock.Anything).Return(options, nil)
 		m.On("AddUser", u.Username, &options).Return(nil)
 		m.On("DelUser", u.Username).Return(nil)
 		status, err := u.Apply(context.Background())
 
-		d.AssertNotCalled(t, "DiffAdd", mock.Anything)
 		m.AssertNotCalled(t, "AddUser", u.Username, &options)
 		m.AssertNotCalled(t, "DelUser", u.Username)
 		assert.EqualError(t, err, fmt.Sprintf("user: unrecognized state %s", u.State))
@@ -1391,23 +1443,6 @@ func setFakeGid() (string, error) {
 	return "", fmt.Errorf("setFakeGid: could not set gid")
 }
 
-// MockDiff is a mock implementation for user diffs
-type MockDiff struct {
-	mock.Mock
-}
-
-// DiffAdd sets the diffs and options for adding a user
-func (m *MockDiff) DiffAdd(r resource.Status) (*user.AddUserOptions, error) {
-	args := m.Called(r)
-	return args.Get(0).(*user.AddUserOptions), args.Error(1)
-}
-
-// DiffMod sets the diffs and options for modifying a user
-func (m *MockDiff) DiffMod(r resource.Status, u *user.User) (*user.ModUserOptions, error) {
-	args := m.Called(r, u)
-	return args.Get(0).(*user.ModUserOptions), args.Error(1)
-}
-
 // MockSystem is a mock implementation of user.System
 type MockSystem struct {
 	mock.Mock
@@ -1459,4 +1494,30 @@ func (m *MockSystem) LookupGroup(name string) (*os.Group, error) {
 func (m *MockSystem) LookupGroupID(gid string) (*os.Group, error) {
 	args := m.Called(gid)
 	return args.Get(0).(*os.Group), args.Error(1)
+}
+
+// MockSystem2 is a mock implementation of user.System, with a special
+// implementation of Lookup
+type MockSystem2 struct {
+	mock.Mock
+	MockSystem
+	userBeforeAdd bool
+}
+
+// Lookup looks up a user by name
+// Based on the value of userBeforeAdd, a user either before the add or after
+// the add is returned
+func (m *MockSystem2) Lookup(name string) (*os.User, error) {
+	args := m.Called(name)
+	if m.userBeforeAdd {
+		m.userBeforeAdd = false
+		return args.Get(0).(*os.User), args.Error(2)
+	}
+	return args.Get(1).(*os.User), args.Error(2)
+}
+
+// AddUser adds a user
+func (m *MockSystem2) AddUser(name string, options *user.AddUserOptions) error {
+	args := m.Called(name, options)
+	return args.Error(0)
 }
