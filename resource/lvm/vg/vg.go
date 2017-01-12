@@ -91,9 +91,8 @@ func (r *resourceVG) Check(context.Context, resource.Renderer) (resource.TaskSta
 		status.AddDifference(r.name, "<not exists>", strings.Join(r.devicesToAdd, ", "), "")
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.Level = resource.StatusWillChange
-	}
+	status.RaiseLevelForDiffs()
+
 	return status, nil
 }
 

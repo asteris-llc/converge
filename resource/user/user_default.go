@@ -18,6 +18,7 @@ package user
 
 import (
 	"os/user"
+	"time"
 )
 
 // System implements SystemUtils
@@ -36,6 +37,11 @@ func (s *System) DelUser(userName string) error {
 // ModUser implementation for systems which are not supported
 func (s *System) ModUser(userName string, options *ModUserOptions) error {
 	return ErrUnsupported
+}
+
+// LookupUserExpiry implementation for systems which are not supported
+func (s *System) LookupUserExpiry(userName string) (time.Time, error) {
+	return time.Time{}, ErrUnsupported
 }
 
 // Lookup implementation for systems which are not supported

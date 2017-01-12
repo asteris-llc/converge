@@ -17,6 +17,7 @@ package user
 import (
 	"fmt"
 	"os/user"
+	"time"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/pkg/errors"
@@ -32,6 +33,12 @@ const (
 
 	// StateAbsent indicates the user should be absent
 	StateAbsent State = "absent"
+
+	// ShortForm layout for time parsing
+	ShortForm = "2006-01-02"
+
+	// MaxTime is the max representable time
+	MaxTime = "2038-01-19"
 )
 
 // User manages user users
@@ -67,6 +74,9 @@ type User struct {
 	// if the contents of the home directory should be moved
 	MoveDir bool `export:"movedir"`
 
+	// the date the user account will be disabled
+	Expiry time.Time `export:"expiry"`
+
 	// configured the user state
 	State State `export:"state"`
 
@@ -82,6 +92,7 @@ type AddUserOptions struct {
 	CreateHome bool
 	SkelDir    string
 	Directory  string
+	Expiry     string
 }
 
 // ModUserOptions are the options specified in the configuration to be used
@@ -93,6 +104,7 @@ type ModUserOptions struct {
 	Comment   string
 	Directory string
 	MoveDir   bool
+	Expiry    string
 }
 
 // SystemUtils provides system utilities for user
@@ -100,6 +112,7 @@ type SystemUtils interface {
 	AddUser(userName string, options *AddUserOptions) error
 	DelUser(userName string) error
 	ModUser(userName string, options *ModUserOptions) error
+	LookupUserExpiry(userName string) (time.Time, error)
 	Lookup(userName string) (*user.User, error)
 	LookupID(userID string) (*user.User, error)
 	LookupGroup(groupName string) (*user.Group, error)
@@ -118,19 +131,10 @@ func NewUser(system SystemUtils) *User {
 
 // Check if a user user exists
 func (u *User) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
-	var (
-		userByID *user.User
-		uidErr   error
-	)
-
-	// lookup the user by name and lookup the user by uid
-	// the lookups return ErrUnsupported if the system is not supported
+	// lookup the user by name
+	// ErrUnsupported is returned if the system is not supported
 	// Lookup returns user.UnknownUserError if the user is not found
-	// LookupID returns user.UnknownUserIdError if the uid is not found
 	userByName, nameErr := u.system.Lookup(u.Username)
-	if u.UID != "" {
-		userByID, uidErr = u.system.LookupID(u.UID)
-	}
 
 	status := resource.NewStatus()
 
@@ -139,10 +143,10 @@ func (u *User) Check(context.Context, resource.Renderer) (resource.TaskStatus, e
 		return status, ErrUnsupported
 	}
 
+	_, nameNotFound := nameErr.(user.UnknownUserError)
+
 	switch u.State {
 	case StatePresent:
-		_, nameNotFound := nameErr.(user.UnknownUserError)
-
 		switch {
 		case nameNotFound:
 			_, err := u.DiffAdd(status)
@@ -162,37 +166,12 @@ func (u *User) Check(context.Context, resource.Renderer) (resource.TaskStatus, e
 			}
 		}
 	case StateAbsent:
-		switch {
-		case u.UID == "":
-			_, nameNotFound := nameErr.(user.UnknownUserError)
-
-			switch {
-			case nameNotFound:
-				status.AddMessage(fmt.Sprintf("user %s does not exist", u.Username))
-			case userByName != nil:
-				status.RaiseLevel(resource.StatusWillChange)
-				status.AddDifference("user", fmt.Sprintf("user %s", u.Username), fmt.Sprintf("<%s>", string(StateAbsent)), "")
-			}
-		case u.UID != "":
-			_, nameNotFound := nameErr.(user.UnknownUserError)
-			_, uidNotFound := uidErr.(user.UnknownUserIdError)
-
-			switch {
-			case nameNotFound && uidNotFound:
-				status.AddMessage(fmt.Sprintf("user %s and uid %s do not exist", u.Username, u.UID))
-			case nameNotFound:
-				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("cannot delete user %s with uid %s: user does not exist", u.Username, u.UID)
-			case uidNotFound:
-				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("cannot delete user %s with uid %s: uid does not exist", u.Username, u.UID)
-			case userByName != nil && userByID != nil && userByName.Name != userByID.Name || userByName.Uid != userByID.Uid:
-				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("cannot delete user %s with uid %s: user and uid belong to different users", u.Username, u.UID)
-			case userByName != nil && userByID != nil && *userByName == *userByID:
-				status.RaiseLevel(resource.StatusWillChange)
-				status.AddDifference("user", fmt.Sprintf("user %s with uid %s", u.Username, u.UID), fmt.Sprintf("<%s>", string(StateAbsent)), "")
-			}
+		err := u.DiffDel(status, userByName, nameNotFound)
+		if err != nil {
+			return status, errors.Wrapf(err, "cannot delete user %s", u.Username)
+		}
+		if resource.AnyChanges(status.Differences) {
+			status.AddMessage("delete user")
 		}
 	default:
 		status.RaiseLevel(resource.StatusFatal)
@@ -204,19 +183,10 @@ func (u *User) Check(context.Context, resource.Renderer) (resource.TaskStatus, e
 
 // Apply changes for user
 func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
-	var (
-		userByID *user.User
-		uidErr   error
-	)
-
-	// lookup the user by name and lookup the user by uid
-	// the lookups return ErrUnsupported if the system is not supported
+	// lookup the user by name
+	// ErrUnsupported is returned if the system is not supported
 	// Lookup returns user.UnknownUserError if the user is not found
-	// LookupID returns user.UnknownUserIdError if the uid is not found
 	userByName, nameErr := u.system.Lookup(u.Username)
-	if u.UID != "" {
-		userByID, uidErr = u.system.LookupID(u.UID)
-	}
 
 	status := resource.NewStatus()
 
@@ -225,10 +195,10 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 		return status, ErrUnsupported
 	}
 
+	_, nameNotFound := nameErr.(user.UnknownUserError)
+
 	switch u.State {
 	case StatePresent:
-		_, nameNotFound := nameErr.(user.UnknownUserError)
-
 		switch {
 		case nameNotFound:
 			options, err := u.DiffAdd(status)
@@ -243,6 +213,9 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 					return status, errors.Wrap(err, "user add")
 				}
 				status.AddMessage(fmt.Sprintf("added user %s", u.Username))
+				if u.CreateHome {
+					u.createHomeDiffs(status)
+				}
 			}
 		case userByName != nil:
 			options, err := u.DiffMod(status, userByName)
@@ -260,40 +233,18 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 			}
 		}
 	case StateAbsent:
-		switch {
-		case u.UID == "":
-			_, nameNotFound := nameErr.(user.UnknownUserError)
-
-			switch {
-			case !nameNotFound && userByName != nil:
-				err := u.system.DelUser(u.Username)
-				if err != nil {
-					status.RaiseLevel(resource.StatusFatal)
-					status.AddMessage(fmt.Sprintf("error deleting user %s", u.Username))
-					return status, errors.Wrap(err, "user delete")
-				}
-				status.AddMessage(fmt.Sprintf("deleted user %s", u.Username))
-			default:
-				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt to delete user %s", u.Username)
+		err := u.DiffDel(status, userByName, nameNotFound)
+		if err != nil {
+			return status, errors.Wrapf(err, "will not attempt to delete user %s", u.Username)
+		}
+		if resource.AnyChanges(status.Differences) {
+			err = u.system.DelUser(u.Username)
+			if err != nil {
+				status.RaiseLevel(resource.StatusFatal)
+				status.AddMessage(fmt.Sprintf("error deleting user %s", u.Username))
+				return status, errors.Wrap(err, "user delete")
 			}
-		case u.UID != "":
-			_, nameNotFound := nameErr.(user.UnknownUserError)
-			_, uidNotFound := uidErr.(user.UnknownUserIdError)
-
-			switch {
-			case !nameNotFound && !uidNotFound && userByName != nil && userByID != nil && *userByName == *userByID:
-				err := u.system.DelUser(u.Username)
-				if err != nil {
-					status.RaiseLevel(resource.StatusFatal)
-					status.AddMessage(fmt.Sprintf("error deleting user %s with uid %s", u.Username, u.UID))
-					return status, errors.Wrap(err, "user delete")
-				}
-				status.AddMessage(fmt.Sprintf("deleted user %s with uid %s", u.Username, u.UID))
-			default:
-				status.RaiseLevel(resource.StatusCantChange)
-				return status, fmt.Errorf("will not attempt to delete user %s with uid %s", u.Username, u.UID)
-			}
+			status.AddMessage(fmt.Sprintf("deleted user %s", u.Username))
 		}
 	default:
 		status.RaiseLevel(resource.StatusFatal)
@@ -301,14 +252,6 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 	}
 
 	return status, nil
-}
-
-func noOptionsSet(u *User) bool {
-	switch {
-	case u.UID != "", u.GroupName != "", u.GID != "", u.Name != "", u.HomeDir != "":
-		return false
-	}
-	return true
 }
 
 // DiffAdd checks for differences between the current and desired state for the
@@ -384,11 +327,45 @@ func (u *User) DiffAdd(status *resource.Status) (*AddUserOptions, error) {
 		status.AddDifference("home_dir name", "<default home>", u.HomeDir, "")
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
+	if u.Expiry != (time.Time{}) {
+		options.Expiry = u.Expiry.Format(ShortForm)
+		status.AddDifference("expiry", "<default expiry>", options.Expiry, "")
 	}
 
+	status.RaiseLevelForDiffs()
+
 	return options, nil
+}
+
+// DiffDel checks for differences between the current and desired state for the
+// user to be deleted indicated by the User fields.
+func (u *User) DiffDel(status *resource.Status, userByName *user.User, nameNotFound bool) error {
+	if nameNotFound || userByName == nil {
+		return nil
+	}
+
+	switch {
+	case u.UID == "":
+		status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
+	case u.UID != "":
+		userByID, err := user.LookupId(u.UID)
+		_, uidNotFound := err.(user.UnknownUserIdError)
+
+		switch {
+		case uidNotFound:
+			status.RaiseLevel(resource.StatusCantChange)
+			return fmt.Errorf("uid %s does not exist", u.UID)
+		case userByID != nil && *userByID != *userByName:
+			status.RaiseLevel(resource.StatusCantChange)
+			return fmt.Errorf("uid %s belongs to different user", u.UID)
+		case userByID != nil && *userByID == *userByName:
+			status.AddDifference("user", u.Username, fmt.Sprintf("<%s>", string(StateAbsent)), "")
+		}
+	}
+
+	status.RaiseLevelForDiffs()
+
+	return nil
 }
 
 // DiffMod checks for differences between the user associated with u.Username
@@ -465,9 +442,37 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 		}
 	}
 
-	if resource.AnyChanges(status.Differences) {
-		status.RaiseLevel(resource.StatusWillChange)
+	if u.Expiry != (time.Time{}) {
+		expiry, err := u.system.LookupUserExpiry(u.Username)
+		if err != nil {
+			return nil, fmt.Errorf("could not acquire current expiry for %s: %s", u.Username, err)
+		}
+		currentExpiry := expiry.Format(ShortForm)
+		newExpiry := u.Expiry.Format(ShortForm)
+		if currentExpiry != newExpiry {
+			if currentExpiry == MaxTime {
+				currentExpiry = "never"
+			}
+			options.Expiry = newExpiry
+			status.AddDifference("expiry", currentExpiry, options.Expiry, "")
+		}
 	}
 
+	status.RaiseLevelForDiffs()
+
 	return options, nil
+}
+
+// createHomeDiffs calls AddDifference for create_home and skel_dir after
+// adding a user. The actual value of home_dir is accessed so the differences
+// can be updated to no longer show <default home>.
+func (u *User) createHomeDiffs(status *resource.Status) {
+	usr, _ := u.system.Lookup(u.Username)
+
+	if usr != nil && usr.HomeDir != "" {
+		status.AddDifference("create_home", fmt.Sprintf("<%s>", string(StateAbsent)), usr.HomeDir, "")
+		if u.SkelDir != "" {
+			status.AddDifference("skel_dir contents", u.SkelDir, usr.HomeDir, "")
+		}
+	}
 }

@@ -78,6 +78,8 @@ smoothly.  Of particular note are:
    which allows you to add a message that will be displayed to the user
 1. [`AddDifference`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.AddDifference)
    which inserts a difference that will be displayed to the user
+1. [`RaiseLevelForDiffs`](https://godoc.org/github.com/asteris-llc/converge/resource#Status.RaiseLevelForDiffs)
+   which raises the level to `StatusWillChange` if there are any differences
 
 `Status` has three fields: `Differences`, `Output`, and `Level`. They all have
 accurate documentation on their fields, which we will not repeat here. However,
@@ -86,7 +88,8 @@ These two fields are how you control execution of your Apply method. They follow
 these rules:
 
 1. If the level is equal to
-   [`resource.StatusWillChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel)
+   [`resource.StatusWillChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel),
+   [`resource.StatusMayChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel),
    or
    [`resource.StatusCantChange`](https://godoc.org/github.com/asteris-llc/converge/resource#StatusLevel),
    the Status will always show up as having changes
