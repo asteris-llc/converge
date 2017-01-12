@@ -213,6 +213,9 @@ func (u *User) Apply(context.Context) (resource.TaskStatus, error) {
 					return status, errors.Wrap(err, "user add")
 				}
 				status.AddMessage(fmt.Sprintf("added user %s", u.Username))
+				if u.CreateHome {
+					u.createHomeDiffs(status)
+				}
 			}
 		case userByName != nil:
 			options, err := u.DiffMod(status, userByName)
@@ -458,4 +461,18 @@ func (u *User) DiffMod(status *resource.Status, currUser *user.User) (*ModUserOp
 	status.RaiseLevelForDiffs()
 
 	return options, nil
+}
+
+// createHomeDiffs calls AddDifference for create_home and skel_dir after
+// adding a user. The actual value of home_dir is accessed so the differences
+// can be updated to no longer show <default home>.
+func (u *User) createHomeDiffs(status *resource.Status) {
+	usr, _ := u.system.Lookup(u.Username)
+
+	if usr != nil && usr.HomeDir != "" {
+		status.AddDifference("create_home", fmt.Sprintf("<%s>", string(StateAbsent)), usr.HomeDir, "")
+		if u.SkelDir != "" {
+			status.AddDifference("skel_dir contents", u.SkelDir, usr.HomeDir, "")
+		}
+	}
 }
