@@ -35,6 +35,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/file/fetch"
 	_ "github.com/asteris-llc/converge/resource/file/mode"
 	_ "github.com/asteris-llc/converge/resource/file/owner"
+	_ "github.com/asteris-llc/converge/resource/file/unarchive"
 	_ "github.com/asteris-llc/converge/resource/group"
 	_ "github.com/asteris-llc/converge/resource/lvm/fs"
 	_ "github.com/asteris-llc/converge/resource/lvm/lv"
