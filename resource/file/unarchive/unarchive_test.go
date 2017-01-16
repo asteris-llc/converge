@@ -15,12 +15,18 @@
 package unarchive_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/unarchive"
+	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -35,9 +41,39 @@ func TestUnarchiveInterface(t *testing.T) {
 func TestCheck(t *testing.T) {
 	t.Parallel()
 
-	u := unarchive.Unarchive{}
-	_, err := u.Check(context.Background(), fakerenderer.New())
-	assert.NoError(t, err)
+	src, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(t, err)
+	defer os.Remove(src.Name())
+
+	destInvalid, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(t, err)
+	defer os.Remove(destInvalid.Name())
+
+	t.Run("error", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      src.Name(),
+			Destination: destInvalid.Name(),
+		}
+
+		status, err := u.Check(context.Background(), fakerenderer.New())
+
+		assert.Error(t, err)
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      src.Name(),
+			Destination: "/tmp",
+		}
+
+		status, err := u.Check(context.Background(), fakerenderer.New())
+
+		assert.NoError(t, err)
+		assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+		assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
+		assert.True(t, status.HasChanges())
+	})
 }
 
 // TestApply tests the cases Apply handles
@@ -47,4 +83,75 @@ func TestApply(t *testing.T) {
 	u := unarchive.Unarchive{}
 	_, err := u.Apply(context.Background())
 	assert.NoError(t, err)
+}
+
+// TestDiff tests Diff for Unarchive
+func TestDiff(t *testing.T) {
+	t.Parallel()
+
+	src, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(t, err)
+	defer os.Remove(src.Name())
+
+	destInvalid, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(t, err)
+	defer os.Remove(destInvalid.Name())
+
+	tempFileDir := strings.Split(uuid.NewV4().String(), "-")
+	fakeFileDir := strings.Join(tempFileDir[0:], "")
+
+	t.Run("source does not exist", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      fakeFileDir,
+			Destination: "/tmp",
+		}
+		status := resource.NewStatus()
+
+		err := u.Diff(status)
+
+		assert.EqualError(t, err, fmt.Sprintf("cannot unarchive: stat %s: no such file or directory", u.Source))
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("destination is not directory", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      src.Name(),
+			Destination: destInvalid.Name(),
+		}
+		status := resource.NewStatus()
+
+		err := u.Diff(status)
+
+		assert.EqualError(t, err, fmt.Sprintf("invalid destination \"%s\", must be directory", u.Destination))
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("destination does not exist", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      src.Name(),
+			Destination: fakeFileDir,
+		}
+		status := resource.NewStatus()
+
+		err := u.Diff(status)
+
+		assert.EqualError(t, err, fmt.Sprintf("destination \"%s\" does not exist", u.Destination))
+		assert.True(t, status.HasChanges())
+	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      src.Name(),
+			Destination: "/tmp",
+		}
+		status := resource.NewStatus()
+
+		err := u.Diff(status)
+
+		assert.NoError(t, err)
+		assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+		assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
+		assert.True(t, status.HasChanges())
+	})
+
 }

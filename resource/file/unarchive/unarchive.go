@@ -15,7 +15,11 @@
 package unarchive
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/asteris-llc/converge/resource"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -32,6 +36,12 @@ type Unarchive struct {
 // Check if changes are needed for unarchive
 func (u *Unarchive) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+
+	err := u.Diff(status)
+	if err != nil {
+		return status, err
+	}
+
 	return status, nil
 }
 
@@ -39,4 +49,29 @@ func (u *Unarchive) Check(context.Context, resource.Renderer) (resource.TaskStat
 func (u *Unarchive) Apply(context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	return status, nil
+}
+
+// Diff evaluates the differences for unarchive
+func (u *Unarchive) Diff(status *resource.Status) error {
+	_, err := os.Stat(u.Source)
+	if os.IsNotExist(err) {
+		status.RaiseLevel(resource.StatusCantChange)
+		return errors.Wrap(err, "cannot unarchive")
+	}
+
+	stat, err := os.Stat(u.Destination)
+	if err == nil {
+		if !stat.IsDir() {
+			status.RaiseLevel(resource.StatusCantChange)
+			return fmt.Errorf("invalid destination %q, must be directory", u.Destination)
+		}
+	} else if os.IsNotExist(err) {
+		status.RaiseLevel(resource.StatusCantChange)
+		return fmt.Errorf("destination %q does not exist", u.Destination)
+	}
+
+	status.AddDifference("unarchive", u.Source, u.Destination, "")
+	status.RaiseLevelForDiffs()
+
+	return nil
 }
