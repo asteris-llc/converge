@@ -20,7 +20,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/file/unarchive"
+	"github.com/asteris-llc/converge/resource/unarchive"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )

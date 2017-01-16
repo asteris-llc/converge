@@ -23,7 +23,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Unarchive manages file unarchive
+// Unarchive manages unarchive
 type Unarchive struct {
 
 	// the source

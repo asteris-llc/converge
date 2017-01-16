@@ -23,7 +23,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/file/unarchive"
+	"github.com/asteris-llc/converge/resource/unarchive"
 	"github.com/fgrid/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

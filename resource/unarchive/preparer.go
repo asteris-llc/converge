@@ -26,12 +26,12 @@ import (
 
 // Preparer for Unarchive
 //
-// Unarchive renders file unarchive data
+// Unarchive renders unarchive data
 type Preparer struct {
 	// Source to unarchive
 	Source string `hcl:"source" required:"true" nonempty:"true"`
 
-	// Destination for the unarchived file
+	// Destination for the unarchive
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 }
 
@@ -57,5 +57,5 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 }
 
 func init() {
-	registry.Register("file.unarchive", (*Preparer)(nil), (*Unarchive)(nil))
+	registry.Register("unarchive", (*Preparer)(nil), (*Unarchive)(nil))
 }
