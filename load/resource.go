@@ -46,6 +46,7 @@ import (
 	_ "github.com/asteris-llc/converge/resource/shell"
 	_ "github.com/asteris-llc/converge/resource/shell/query"
 	_ "github.com/asteris-llc/converge/resource/unarchive"
+	_ "github.com/asteris-llc/converge/resource/systemd/unit"
 	_ "github.com/asteris-llc/converge/resource/user"
 	_ "github.com/asteris-llc/converge/resource/wait"
 	_ "github.com/asteris-llc/converge/resource/wait/port"

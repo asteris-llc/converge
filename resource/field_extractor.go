@@ -68,6 +68,7 @@ func newExportedField(input interface{}, index int) (*ExportedField, bool) {
 	if nil == input {
 		return nil, false
 	}
+
 	val, err := getStruct(reflect.ValueOf(input))
 	if err != nil {
 		return nil, false
@@ -89,6 +90,29 @@ func newExportedField(input interface{}, index int) (*ExportedField, bool) {
 	}, true
 }
 
+func isExportedField(input interface{}, index int) bool {
+	if nil == input {
+		return false
+	}
+
+	val, err := getStruct(reflect.ValueOf(input))
+	if err != nil {
+		return false
+	}
+
+	if index >= val.Type().NumField() {
+		return false
+	}
+	fieldType := val.Type().Field(index)
+	if _, ok := fieldType.Tag.Lookup("export"); ok {
+		return true
+	}
+	if _, ok := fieldType.Tag.Lookup("re-export-as"); ok {
+		return true
+	}
+	return false
+}
+
 // ExportedFields returns a slice of fields that have been exported from a
 // struct; including embedded fields
 func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
@@ -103,6 +127,10 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 	}
 	for i := 0; i < asStruct.Type().NumField(); i++ {
 		isAnon, anonErr := fieldIsAnonymous(input, i)
+		if !isExportedField(input, i) && !isAnon {
+			continue
+		}
+
 		if anonErr != nil {
 			return exported, anonErr
 		}
@@ -126,14 +154,22 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 
 		exportedAs, isReExported := asStruct.Type().Field(i).Tag.Lookup("re-export-as")
 		if isReExported {
-			isKind, kindErr := fieldIsKind(input, i, reflect.Struct)
-			if kindErr != nil {
-				return exported, kindErr
-			}
-			if !isKind {
+			if !asStruct.Field(i).IsValid() {
 				continue
 			}
-			thisField := asStruct.Field(i).Interface()
+
+			if k := asStruct.Field(i).Kind(); k == reflect.Ptr || k == reflect.Interface {
+				if asStruct.Field(i).IsNil() {
+					continue
+				}
+			}
+
+			val, err := getStruct(asStruct.Field(i))
+			if err != nil {
+				return exported, err
+			}
+
+			thisField := val.Interface()
 			fromEmbedded, err := ExportedFields(thisField)
 			if err != nil {
 				return exported, err
@@ -144,6 +180,7 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 			}
 			continue
 		}
+
 		if field, ok := newExportedField(input, i); ok {
 			nonEmbeddedFields[field.ReferenceName] = struct{}{}
 			exported = append(exported, field)

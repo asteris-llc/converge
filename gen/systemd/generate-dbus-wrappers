@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o pipefail
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+DEST="${REPO_ROOT}/resource/systemd/unit/systemd_properties.go"
+
+OS=$(uname)
+
+if [[ $OS != "Linux" ]]; then
+    echo "systemd api bindings must be generated from a GNU/Linux system"
+    exit 1
+fi
+
+GO=$(which go)
+if [[ ! -x ${GO} ]]; then
+    echo "'go' not found. see: https://golang.org/dl/"
+    exit 1
+fi
+
+GOIMPORTS=$(which goimports)
+if [[ ! -x ${GOIMPORTS} ]]; then
+    echo "'goimports' not found. see https://godoc.org/golang.org/x/tools/cmd/goimports"
+    exit 1
+fi
+
+TMPFILE=$(tempfile -s '.go')
+
+echo "Generating go file in: ${TMPFILE}"
+go run dbus-wrappers.go > ${TMPFILE}
+
+echo "Formatting code at: ${DEST}"
+goimports ${TMPFILE} > $DEST
+
+rm ${TMPFILE}
