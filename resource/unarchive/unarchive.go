@@ -15,10 +15,16 @@
 package unarchive
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"hash"
+	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/fetch"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -31,10 +37,13 @@ type Unarchive struct {
 
 	// the destination
 	Destination string `export:"destination"`
+
+	// the location of the fetched file
+	fetchLoc string
 }
 
 // Check if changes are needed for unarchive
-func (u *Unarchive) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 
 	err := u.Diff(status)
@@ -42,12 +51,54 @@ func (u *Unarchive) Check(context.Context, resource.Renderer) (resource.TaskStat
 		return status, err
 	}
 
+	err = u.setFetchLoc()
+	if err != nil {
+		status.RaiseLevel(resource.StatusCantChange)
+		return status, errors.Wrap(err, "error setting fetch location")
+	}
+
+	fetch := fetch.Fetch{
+		Source:      u.Source,
+		Destination: u.fetchLoc,
+	}
+
+	fetchStatus, err := fetch.Check(ctx, r)
+	if err != nil {
+		return fetchStatus, errors.Wrap(err, "cannot attempt unarchive: fetch error")
+	}
+
+	status.AddMessage(fmt.Sprintf("fetch and unarchive %q", u.Source))
+
 	return status, nil
 }
 
 // Apply changes for unarchive
-func (u *Unarchive) Apply(context.Context) (resource.TaskStatus, error) {
+func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+
+	err := u.Diff(status)
+	if err != nil {
+		return status, err
+	}
+
+	err = u.setFetchLoc()
+	if err != nil {
+		status.RaiseLevel(resource.StatusCantChange)
+		return status, errors.Wrap(err, "error setting fetch location")
+	}
+
+	fetch := fetch.Fetch{
+		Source:      u.Source,
+		Destination: u.fetchLoc,
+	}
+
+	fetchStatus, err := fetch.Apply(ctx)
+	if err != nil {
+		return fetchStatus, err
+	}
+
+	status.AddMessage(fmt.Sprintf("completed fetch and unarchive %q", u.Source))
+
 	return status, nil
 }
 
@@ -74,4 +125,40 @@ func (u *Unarchive) Diff(status *resource.Status) error {
 	status.RaiseLevelForDiffs()
 
 	return nil
+}
+
+// setFetchLoc sets the location for the fetch destination
+func (u *Unarchive) setFetchLoc() error {
+	if u.fetchLoc != "" {
+		return nil
+	}
+
+	base := filepath.Base(u.Source)
+	checksum, err := u.getChecksum(nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to get checksum of source")
+	}
+	u.fetchLoc = "/var/run/converge/cache/" + checksum + "/" + base
+
+	return nil
+}
+
+// getChecksum obtains the checksum of the destination
+// Defaults to sha256 if no hash type is specified
+func (u *Unarchive) getChecksum(hsh hash.Hash) (string, error) {
+	if hsh == nil {
+		hsh = sha256.New()
+	}
+
+	file, err := os.Open(u.Source)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to open file for checksum")
+	}
+	defer file.Close()
+
+	if _, err := io.Copy(hsh, file); err != nil {
+		return "", errors.Wrap(err, "failed to hash")
+	}
+
+	return hex.EncodeToString(hsh.Sum(nil)), nil
 }

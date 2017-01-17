@@ -80,9 +80,14 @@ func TestCheck(t *testing.T) {
 func TestApply(t *testing.T) {
 	t.Parallel()
 
-	u := unarchive.Unarchive{}
-	_, err := u.Apply(context.Background())
-	assert.NoError(t, err)
+	t.Run("error", func(t *testing.T) {
+		u := unarchive.Unarchive{}
+
+		status, err := u.Apply(context.Background())
+
+		assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
+		assert.True(t, status.HasChanges())
+	})
 }
 
 // TestDiff tests Diff for Unarchive
