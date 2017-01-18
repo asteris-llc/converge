@@ -19,6 +19,7 @@ package unit_test
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/stretchr/testify/assert"
 )
 
