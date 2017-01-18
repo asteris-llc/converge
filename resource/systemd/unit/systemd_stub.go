@@ -28,11 +28,13 @@ var ErrUnsupportedOS = errors.New("Error: Unsupported OS. Systemd is only suppor
 // ListUnits is a stub
 func (s StubExecutor) ListUnits() (units []string, err error) {
 	err = ErrUnsupportedOS
+	return
 }
 
 // QueryUnit is a stub
 func (s StubExecutor) QueryUnit(string) (u Unit, err error) {
 	err = ErrUnsupportedOS
+	return
 }
 
 // StartUnit is a stub
@@ -58,6 +60,7 @@ func (s StubExecutor) ReloadUnit(Unit) error {
 // UnitStatus is a stub
 func (s StubExecutor) UnitStatus(Unit) (u Unit, err error) {
 	err = ErrUnsupportedOS
+	return
 }
 
 func realExecutor() (SystemdExecutor, error) {
