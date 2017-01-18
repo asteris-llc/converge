@@ -24,17 +24,38 @@ type Resource struct {
 	State        string `export:"state"`
 	Reload       bool   `export:"reload"`
 	SignalName   string `export:"signal_name"`
-	SignalNumber int    `export:"signal_number"`
+	SignalNumber uint   `export:"signal_number"`
 
 	// These values are set automatically at check time and contain information
 	// about the current systemd process.  They are used for generating messages
 	// and to provide rich exported information about systemd processes.
-	Path   string `export:"path"`
+
+	// The full path to the unit file on disk
+	Path string `export:"path"`
+
+	// The name of the process that is executing
 	PSName string `export:"process_name"`
+
+	// The PID of the current job
+	Pid string `export:"pid"`
+
+	// Description of the services
+	Description string `export:"description"`
+
+	// The status represents the current status of the process.  It will be
+	// initialized during planning and updated after apply to reflect any changes.
+
+	Status string `export:"status"`
+	Type   string `export:"type"`
+
+	sendSignal bool
+
+	systemdExecutor SystemdExecutor
 }
 
 func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+
 	return status, nil
 }
 

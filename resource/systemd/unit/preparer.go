@@ -27,7 +27,7 @@ import (
 type Preparer struct {
 	// The name of the unit.  This may optionally include the unit type,
 	// e.g. "foo.service" and "foo" are both valid.
-	ServiceName string `hcl:"unit" required:"true"`
+	Name string `hcl:"unit" required:"true"`
 
 	// The desired state of the unit.  This will affect the current unit job.  Use
 	// `systemd.unit.file` to enable and disable jobs, or `systemd.unit.config` to
@@ -51,13 +51,43 @@ type Preparer struct {
 
 	// Sends a signal to the process, using it's signal number.  The value must be
 	// an unsigned integer value between 1 and 31 inclusive.
-	SignalNum int `hcl:"signal_number" mutually_exclusive:"signal_name,signal_num"`
+	SignalNumber uint `hcl:"signal_number" mutually_exclusive:"signal_name,signal_num"`
 }
 
 // Prepare a new task
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
+	var sendSignal bool
+	if p.SignalName != "" {
+		sendSignal = true
+		num, err := ParseSignalByName(p.SignalName)
+		if err != nil {
+			return nil, err
+		}
+		p.SignalNumber = uint(num)
+		sendSignal = true
+	} else if p.SignalNumber != 0 {
+		name, err := ParseSignalByNumber(p.SignalNumber)
+		if err != nil {
+			return nil, err
+		}
+		p.SignalName = name.String()
+		sendSignal = true
+	}
 
-	return &Resource{}, nil
+	executor, err := realExecutor()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Resource{
+		SignalName:      p.SignalName,
+		SignalNumber:    p.SignalNumber,
+		sendSignal:      sendSignal,
+		Reload:          p.Reload,
+		Name:            p.Name,
+		State:           p.State,
+		systemdExecutor: executor,
+	}, nil
 }
 
 func init() {
