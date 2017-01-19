@@ -67,6 +67,9 @@ type Fetch struct {
 	// whether the file will be fetched if it already exists
 	Force bool `export:"force"`
 
+	// whether the fetched file will be unarchived
+	Unarchive bool
+
 	hasApplied bool
 }
 
@@ -102,6 +105,7 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 		err      error
 		status   = resource.NewStatus()
 		checksum = ""
+		mode     = getter.ClientModeFile
 	)
 
 	if f.Hash != "" {
@@ -126,7 +130,11 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 	}
 
 	values := u.Query()
-	values.Set("archive", "false")
+	if f.Unarchive == false {
+		values.Set("archive", "false")
+	} else {
+		mode = getter.ClientModeAny
+	}
 	if f.Hash != "" {
 		checksum = fmt.Sprintf("checksum=%s:%s", f.HashType, f.Hash)
 	}
@@ -142,7 +150,7 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 		Src:  source,
 		Dst:  f.Destination,
 		Pwd:  pwd,
-		Mode: getter.ClientModeFile,
+		Mode: mode,
 	}
 	if err := client.Get(); err != nil {
 		status.RaiseLevel(resource.StatusFatal)
@@ -161,8 +169,14 @@ func (f *Fetch) DiffFile(status *resource.Status, hsh hash.Hash) (*resource.Stat
 	stat, err := os.Stat(f.Destination)
 	if err == nil {
 		if stat.IsDir() {
-			status.RaiseLevel(resource.StatusCantChange)
-			return status, fmt.Errorf("invalid destination %q, cannot be directory", f.Destination)
+			if f.Unarchive == false {
+				status.RaiseLevel(resource.StatusCantChange)
+				return status, fmt.Errorf("invalid destination %q, cannot be directory", f.Destination)
+			} else {
+				status.RaiseLevel(resource.StatusWillChange)
+				status.AddDifference("destination", "<absent>", f.Destination, "")
+				return status, nil
+			}
 		}
 	} else if os.IsNotExist(err) {
 		status.RaiseLevel(resource.StatusWillChange)

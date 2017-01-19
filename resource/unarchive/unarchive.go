@@ -21,7 +21,6 @@ import (
 	"hash"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/fetch"
@@ -60,6 +59,7 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 	fetch := fetch.Fetch{
 		Source:      u.Source,
 		Destination: u.fetchLoc,
+		Unarchive:   true,
 	}
 
 	fetchStatus, err := fetch.Check(ctx, r)
@@ -90,6 +90,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	fetch := fetch.Fetch{
 		Source:      u.Source,
 		Destination: u.fetchLoc,
+		Unarchive:   true,
 	}
 
 	fetchStatus, err := fetch.Apply(ctx)
@@ -133,12 +134,11 @@ func (u *Unarchive) setFetchLoc() error {
 		return nil
 	}
 
-	base := filepath.Base(u.Source)
 	checksum, err := u.getChecksum(nil)
 	if err != nil {
 		return errors.Wrap(err, "failed to get checksum of source")
 	}
-	u.fetchLoc = "/var/run/converge/cache/" + checksum + "/" + base
+	u.fetchLoc = "/var/run/converge/cache/" + checksum
 
 	return nil
 }

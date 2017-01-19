@@ -170,6 +170,7 @@ func TestApply(t *testing.T) {
 				HashType:    string(fetch.HashMD5),
 				Hash:        hex.EncodeToString(hash.Sum(nil)),
 			}
+			defer os.Remove(task.Destination)
 
 			stat := resource.NewStatus()
 			m.On("DiffFile", nil, stat).Return(stat, nil)
@@ -358,6 +359,35 @@ func TestApply(t *testing.T) {
 			assert.True(t, status.HasChanges())
 		})
 	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		src, err := ioutil.TempFile("", "fetch_test.txt")
+		require.NoError(t, err)
+		defer os.Remove(src.Name())
+
+		dest, err := ioutil.TempDir("", "fetch_test")
+		require.NoError(t, err)
+		defer os.Remove(dest)
+
+		m := &MockDiff{}
+		task := fetch.Fetch{
+			Source:      src.Name(),
+			Destination: dest,
+			Unarchive:   true,
+		}
+		defer os.RemoveAll(task.Destination)
+
+		stat := resource.NewStatus()
+		m.On("DiffFile", nil, stat).Return(stat, nil)
+
+		status, err := task.Apply(context.Background())
+
+		assert.NoError(t, err)
+		assert.Contains(t, status.Messages(), "fetched successfully")
+		assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+		assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+		assert.True(t, status.HasChanges())
+	})
 }
 
 // TestDiffFile tests DiffFile
@@ -394,6 +424,29 @@ func TestDiffFile(t *testing.T) {
 			assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
 			assert.True(t, status.HasChanges())
 		})
+	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		src, err := ioutil.TempFile("", "fetch_test.txt")
+		require.NoError(t, err)
+		defer os.Remove(src.Name())
+
+		dest, err := ioutil.TempDir("", "fetch_test")
+		require.NoError(t, err)
+		defer os.Remove(dest)
+
+		task := fetch.Fetch{
+			Source:      src.Name(),
+			Destination: dest,
+			Unarchive:   true,
+		}
+
+		status, err := task.Check(context.Background(), fakerenderer.New())
+
+		assert.NoError(t, err)
+		assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+		assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+		assert.True(t, status.HasChanges())
 	})
 
 	t.Run("destination error-directory", func(t *testing.T) {
