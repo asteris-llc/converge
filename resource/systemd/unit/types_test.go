@@ -38,6 +38,12 @@ var typeMap = map[unit.UnitType]string{
 	unit.UnitTypeUnknown:   "",
 }
 
+// TestUnitTypeZeroValue ensures that the zero value is unit.UnitTypeUnknown
+func TestUnitTypeZeroValue(t *testing.T) {
+	var u unit.UnitType
+	assert.Equal(t, unit.UnitTypeUnknown, u)
+}
+
 // Test conversion from a unit file name or service name
 func TestUnitTypeFromName(t *testing.T) {
 	t.Parallel()
@@ -60,6 +66,11 @@ func TestUnitTypeFromName(t *testing.T) {
 			name := "/foo/bar/baz/name." + v
 			assert.Equal(t, k, unit.UnitTypeFromName(name))
 		}
+	})
+	t.Run("when-dashes", func(t *testing.T) {
+		t.Parallel()
+		s := "sys-devices-platform-serial8250-tty-ttyS16.device"
+		assert.Equal(t, unit.UnitTypeDevice, unit.UnitTypeFromName(s))
 	})
 	t.Run("when-upper-case", func(t *testing.T) {
 		t.Parallel()
@@ -100,6 +111,7 @@ func TestUnitTypeString(t *testing.T) {
 		unit.UnitTypeScope:     "Scope",
 		unit.UnitTypeUnknown:   "",
 	}
+
 	for k, v := range typeMap {
 		assert.Equal(t, v, k.UnitTypeString())
 	}

@@ -54,6 +54,7 @@ JobPath:     %v
 
 func newFromStatus(status *dbus.UnitStatus, opts, typeOpts map[string]interface{}) *Unit {
 	var path string
+	
 	if fragment, ok := opts["FragmentPath"]; ok {
 		path = fragment.(string)
 	}

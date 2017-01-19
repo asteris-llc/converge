@@ -24,6 +24,9 @@ import (
 type UnitType uint
 
 const (
+	// UnitTypeUnknown represents a generic or unknown unit type
+	UnitTypeUnknown UnitType = iota
+	
 	// UnitTypeService represents a systemd.service(5)
 	UnitTypeService UnitType = iota
 
@@ -59,9 +62,6 @@ const (
 
 	// UnitTypeScope represents a systemd.scope(5)
 	UnitTypeScope UnitType = iota
-
-	// UnitTypeUnknown represents a generic or unknown unit type
-	UnitTypeUnknown UnitType = iota
 )
 
 // UnitTypeFromName takes a service name in the form of "foo.service" and

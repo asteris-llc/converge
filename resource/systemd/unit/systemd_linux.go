@@ -16,7 +16,10 @@
 
 package unit
 
-import "github.com/coreos/go-systemd/dbus"
+import (
+	"github.com/coreos/go-systemd/dbus"
+	"github.com/pkg/errors"
+)
 
 // LinuxExecutor provides a command executor for interacting with systemd on Linux
 type LinuxExecutor struct{}
@@ -34,13 +37,20 @@ func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
 		return units, err
 	}
 	for _, status := range unitStatuses {
+		var nameForType string
 		properties, err := conn.GetUnitProperties(status.Name)
 		if err != nil {
 			return units, err
 		}
-		typeProperties, err := conn.GetUnitTypeProperties(u.Name, u.Type.UnitTypeString())
+		if fragment, ok := properties["FragmentPath"]; ok && fragment != "" {
+			nameForType = fragment.(string)
+		} else {
+			nameForType = status.Name
+		}
+		nameForType = UnitTypeFromName(nameForType).UnitTypeString()
+		typeProperties, err := conn.GetUnitTypeProperties(status.Name, nameForType)
 		if err != nil {
-			return units, err
+			return units, errors.Wrap(err, "unable to get unit type properties")
 		}
 		u := newFromStatus(&status, properties, typeProperties)
 		units = append(units, u)
