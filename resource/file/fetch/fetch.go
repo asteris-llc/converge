@@ -165,18 +165,23 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 // DiffFile evaluates the differences of the file to be fetched and the current
 // state of the system
 func (f *Fetch) DiffFile(status *resource.Status, hsh hash.Hash) (*resource.Status, error) {
-	// verify the destination is not a directory
+	// the destination should be a file if fetching without an unarchive
+	// if unarchiving, the destination should be a directory
 	stat, err := os.Stat(f.Destination)
 	if err == nil {
 		if stat.IsDir() {
 			if f.Unarchive == false {
 				status.RaiseLevel(resource.StatusCantChange)
 				return status, fmt.Errorf("invalid destination %q, cannot be directory", f.Destination)
-			} else {
-				status.RaiseLevel(resource.StatusWillChange)
-				status.AddDifference("destination", "<absent>", f.Destination, "")
-				return status, nil
 			}
+			status.RaiseLevel(resource.StatusWillChange)
+			status.AddDifference("destination", "<absent>", f.Destination, "")
+			return status, nil
+		}
+
+		if f.Unarchive {
+			status.RaiseLevel(resource.StatusCantChange)
+			return status, fmt.Errorf("invalid destination %q for unarchiving, must be directory", f.Destination)
 		}
 	} else if os.IsNotExist(err) {
 		status.RaiseLevel(resource.StatusWillChange)
