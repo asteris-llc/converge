@@ -15,7 +15,7 @@
 package unit
 
 type SystemdExecutor interface {
-	ListUnits() ([]string, error)
+	ListUnits() ([]*Unit, error)
 	QueryUnit(string) (Unit, error)
 	StartUnit(Unit) error
 	StopUnit(Unit) error

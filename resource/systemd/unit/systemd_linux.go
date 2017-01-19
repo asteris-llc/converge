@@ -16,19 +16,46 @@
 
 package unit
 
-import "github.com/coreos/go-systemd/dbus"
+import (
+	"fmt"
+
+	"github.com/coreos/go-systemd/dbus"
+)
 
 // LinuxExecutor provides a command executor for interacting with systemd on Linux
 type LinuxExecutor struct{}
 
 // ListUnits will use dbus to get a list of all units
-func (l LinuxExecutor) ListUnits() ([]string, error) {
-	var units []string
+func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
+	var units []*Unit
 	conn, err := dbus.New()
 	if err != nil {
 		return units, err
 	}
 	defer conn.Close()
+	unitStatuses, err := conn.ListUnits()
+	if err != nil {
+		return units, err
+	}
+	for _, status := range unitStatuses {
+		properties, err := conn.GetUnitProperties(status.Name)
+		if err != nil {
+			fmt.Println("failed to get properties: ", err)
+		}
+		u := newFromStatus(&status, properties)
+		units = append(units, u)
+		if u.IsServiceUnit() {
+			fmt.Println(u.Name)
+			typeProperties, err := conn.GetUnitTypeProperties(u.Name, "Service")
+			if err != nil {
+				fmt.Println("failed to get typed properties on "+u.Name+": ", err)
+			} else {
+				for k, v := range typeProperties {
+					fmt.Println("\t ", k, " => ", v)
+				}
+			}
+		}
+	}
 	return units, nil
 }
 

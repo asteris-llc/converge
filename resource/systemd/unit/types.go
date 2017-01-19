@@ -134,3 +134,7 @@ func (u UnitType) Suffix() string {
 	}
 	return ""
 }
+
+func (u UnitType) UnitTypeString() string {
+	return strings.Title(u.Suffix())
+}
