@@ -71,10 +71,10 @@ const (
 func UnitTypeFromName(s string) UnitType {
 	basename := path.Base(s)
 	components := strings.Split(basename, ".")
-	if len(components) <= 1 {
+	if len(components) == 0 {
 		return UnitTypeUnknown
 	}
-	switch components[len(components)-1] {
+	switch strings.ToLower(components[len(components)-1]) {
 	case "service":
 		return UnitTypeService
 	case "socket":

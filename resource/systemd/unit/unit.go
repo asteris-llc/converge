@@ -14,11 +14,7 @@
 
 package unit
 
-import (
-	"fmt"
-
-	"github.com/coreos/go-systemd/dbus"
-)
+import "fmt"
 
 type Unit struct {
 	Name        string
@@ -32,19 +28,6 @@ func (u *Unit) IsServiceUnit() bool {
 	return UnitTypeService == UnitTypeFromName(u.Path)
 }
 
-func newFromStatus(status *dbus.UnitStatus, opts map[string]interface{}) *Unit {
-	var path string
-	if fragment, ok := opts["FragmentPath"]; ok {
-		path = fragment.(string)
-	}
-	return &Unit{
-		Name:        status.Name,
-		Description: status.Description,
-		ActiveState: status.ActiveState,
-		Path:        path,
-	}
-}
-
 func PPUnit(u *Unit) string {
 	fmtStr := `
 Unit
@@ -56,34 +39,4 @@ Path:        %s
 ---------------
 `
 	return fmt.Sprintf(fmtStr, u.Name, u.Description, u.ActiveState, u.Path)
-}
-
-func PPtUnitStatus(u *dbus.UnitStatus) string {
-	fmtStr := `
-UnitStatus
----------------
-Name:        %s
-Description: %s
-LoadState:   %s
-ActiveState: %s
-SubState:    %s
-Followed:    %s
-Path:        %v
-JobID:       %d
-JobType:     %s
-JobPath:     %v
----------------
-`
-	return fmt.Sprintf(fmtStr,
-		u.Name,
-		u.Description,
-		u.LoadState,
-		u.ActiveState,
-		u.SubState,
-		u.Followed,
-		u.Path,
-		u.JobId,
-		u.JobType,
-		u.JobPath,
-	)
 }

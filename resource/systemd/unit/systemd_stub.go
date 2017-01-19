@@ -26,7 +26,7 @@ type StubExecutor struct{}
 var ErrUnsupportedOS = errors.New("Error: Unsupported OS. Systemd is only supported on Linux systems.")
 
 // ListUnits is a stub
-func (s StubExecutor) ListUnits() (units []string, err error) {
+func (s StubExecutor) ListUnits() (units []*Unit, err error) {
 	err = ErrUnsupportedOS
 	return
 }
