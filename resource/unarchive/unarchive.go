@@ -28,6 +28,23 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Hash type for Unarchive
+type Hash string
+
+const (
+	// HashMD5 indicates hash type md5
+	HashMD5 Hash = "md5"
+
+	// HashSHA1 indicates hash type sha1
+	HashSHA1 Hash = "sha1"
+
+	// HashSHA256 indicates hash type sha256
+	HashSHA256 Hash = "sha256"
+
+	// HashSHA512 indicates hash type sha512
+	HashSHA512 Hash = "sha512"
+)
+
 // Unarchive manages unarchive
 type Unarchive struct {
 
@@ -36,6 +53,18 @@ type Unarchive struct {
 
 	// the destination
 	Destination string `export:"destination"`
+
+	// hash function used to generate the checksum hash of the source; value is
+	// available for lookup if set in the hcl
+	HashType string `export:"hash_type"`
+
+	// the checksum hash of the source; value is available for lookup if set in
+	// the hcl
+	Hash string `export:"hash"`
+
+	// whether a file from the unarchived source will replace a file in the
+	// destination if it already exists
+	Force bool `export:"force"`
 
 	// the location of the fetched file
 	fetchLoc string
