@@ -161,5 +161,48 @@ func TestDiff(t *testing.T) {
 		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
 		assert.True(t, status.HasChanges())
 	})
+}
 
+// TestEvaluateDuplicates tests EvaluateDuplicates for Unarchive
+func TestEvaluateDuplicates(t *testing.T) {
+	t.Parallel()
+
+	srcFile, err := ioutil.TempFile("", "unarchive_test.zip")
+	require.NoError(t, err)
+	defer os.Remove(srcFile.Name())
+
+	destDir, err := ioutil.TempDir("", "unarchive_test")
+	require.NoError(t, err)
+	defer os.Remove(destDir)
+
+	t.Run("create destination", func(t *testing.T) {
+		notExistDir := "/tmp/unarchive_test12345678"
+		_, err := os.Stat(notExistDir)
+		require.True(t, os.IsNotExist(err))
+
+		u := unarchive.Unarchive{
+			Source:      srcFile.Name(),
+			Destination: notExistDir,
+		}
+		defer os.RemoveAll(u.Destination)
+
+		err = u.EvaluateDuplicates()
+
+		_, exists := os.Stat(notExistDir)
+
+		assert.NoError(t, err)
+		assert.False(t, os.IsNotExist(exists))
+	})
+
+	t.Run("empty dest", func(t *testing.T) {
+		u := unarchive.Unarchive{
+			Source:      srcFile.Name(),
+			Destination: destDir,
+		}
+		defer os.RemoveAll(u.Destination)
+
+		err = u.EvaluateDuplicates()
+
+		assert.NoError(t, err)
+	})
 }

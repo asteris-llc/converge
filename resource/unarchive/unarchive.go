@@ -15,12 +15,16 @@
 package unarchive
 
 import (
+	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"hash"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/fetch"
@@ -88,6 +92,8 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 	fetch := fetch.Fetch{
 		Source:      u.Source,
 		Destination: u.fetchLoc,
+		HashType:    u.HashType,
+		Hash:        u.Hash,
 		Unarchive:   true,
 	}
 
@@ -119,12 +125,25 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	fetch := fetch.Fetch{
 		Source:      u.Source,
 		Destination: u.fetchLoc,
+		HashType:    u.HashType,
+		Hash:        u.Hash,
 		Unarchive:   true,
 	}
 
 	fetchStatus, err := fetch.Apply(ctx)
 	if err != nil {
 		return fetchStatus, err
+	}
+
+	if u.Force == false {
+		err = u.EvaluateDuplicates()
+		if err != nil {
+			status.RaiseLevel(resource.StatusFatal)
+			if strings.Contains(err.Error(), "checksum mismatch") {
+				status.AddMessage("use the \"force\" option to replace all files with checksum mismatch")
+			}
+			return status, err
+		}
 	}
 
 	status.AddMessage(fmt.Sprintf("completed fetch and unarchive %q", u.Source))
@@ -163,7 +182,7 @@ func (u *Unarchive) setFetchLoc() error {
 		return nil
 	}
 
-	checksum, err := u.getChecksum(nil)
+	checksum, err := u.getChecksum(u.Source)
 	if err != nil {
 		return errors.Wrap(err, "failed to get checksum of source")
 	}
@@ -172,14 +191,92 @@ func (u *Unarchive) setFetchLoc() error {
 	return nil
 }
 
-// getChecksum obtains the checksum of the destination
-// Defaults to sha256 if no hash type is specified
-func (u *Unarchive) getChecksum(hsh hash.Hash) (string, error) {
-	if hsh == nil {
-		hsh = sha256.New()
+// EvaluateDuplicates evaluates whether identical files exist in u.Destination
+// and the temporary fetch/unarchive location
+func (u *Unarchive) EvaluateDuplicates() error {
+	// create the unarchive destination directory if it does not exist
+	dest, err := os.Open(u.Destination)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(u.Destination, 1755)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
 	}
 
-	file, err := os.Open(u.Source)
+	// read the file names in the directory indicated by u.Destination
+	destContents, err := dest.Readdirnames(0)
+	if err != nil {
+		return errors.Wrapf(err, "could not read files from %q", u.Destination)
+	}
+
+	// if there are no files, we do not need to compare checksums with files in
+	// the temporary fetch/unarchive location
+	if len(destContents) == 0 {
+		return nil
+	}
+
+	// read the contents of the temporary fetch/unarchive location
+	fetchDir := u.fetchLoc
+	fetchDest, err := os.Open(fetchDir)
+	if err != nil {
+		return err
+	}
+	fetchDirContents, err := fetchDest.Readdir(0)
+	if err != nil {
+		return errors.Wrapf(err, "could not read dir %q", fetchDir)
+	}
+
+	// if one directory is within the temporary fetch/unarchive location, we need
+	// to use this as the directory to read file names
+	if len(fetchDirContents) == 1 && fetchDirContents[0].IsDir() {
+		fetchDir = u.fetchLoc + "/" + fetchDirContents[0].Name()
+	}
+
+	// read the file names in the temporary fetch/unarchive location
+	fetchDest, err = os.Open(fetchDir)
+	fetchContents, err := fetchDest.Readdirnames(0)
+	if err != nil {
+		return errors.Wrapf(err, "could not read files from %q", fetchDir)
+	}
+
+	// determine which directory has fewer items in order to minimize operations
+	dirA := destContents
+	dirB := fetchContents
+	if len(fetchContents) < len(destContents) {
+		dirA = fetchContents
+		dirB = destContents
+	}
+
+	// for each item in dirA, determine if it also exists in dirB
+	// compare the checksums for the files - if mismatch, return an error
+	for _, fileA := range dirA {
+		for _, fileB := range dirB {
+			checkA, err := u.getChecksum(fileA)
+			if err != nil {
+				return err
+			}
+			checkB, err := u.getChecksum(fileB)
+			if err != nil {
+				return err
+			}
+
+			if checkA != checkB {
+				return fmt.Errorf("will not replace, file %q exists at %q: checksum mismatch", fileA, u.Destination)
+			}
+		}
+	}
+
+	return nil
+}
+
+// getChecksum obtains the checksum of the provided file
+func (u *Unarchive) getChecksum(f string) (string, error) {
+	hsh := u.getHash()
+
+	file, err := os.Open(f)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to open file for checksum")
 	}
@@ -190,4 +287,21 @@ func (u *Unarchive) getChecksum(hsh hash.Hash) (string, error) {
 	}
 
 	return hex.EncodeToString(hsh.Sum(nil)), nil
+}
+
+// getHash returns a new hash based on the u.HashType
+// default hash is sha256
+func (u *Unarchive) getHash() hash.Hash {
+	switch u.HashType {
+	case string(HashMD5):
+		return md5.New()
+	case string(HashSHA1):
+		return sha1.New()
+	case string(HashSHA256):
+		return sha256.New()
+	case string(HashSHA512):
+		return sha512.New()
+	default:
+		return sha256.New()
+	}
 }
