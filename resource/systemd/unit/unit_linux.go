@@ -52,16 +52,43 @@ JobPath:     %v
 	)
 }
 
-func newFromStatus(status *dbus.UnitStatus, opts, typeOpts map[string]interface{}) *Unit {
-	var path string
-	
-	if fragment, ok := opts["FragmentPath"]; ok {
-		path = fragment.(string)
-	}
+func newFromStatus(status *dbus.UnitStatus) *Unit {
 	return &Unit{
 		Name:        status.Name,
 		Description: status.Description,
 		ActiveState: status.ActiveState,
-		Path:        path,
+		Type:        UnitTypeFromName(status.Name),
+	}
+}
+
+func (u *Unit) SetProperties(m map[string]interface{}) {
+	u.Properties = newPropertiesFromMap(m)
+	u.Path = u.FragmentPath
+}
+
+func (u *Unit) SetTypedProperties(m map[string]interface{}) {
+	switch u.Type {
+	case UnitTypeService:
+		u.ServiceProperties = newServiceTypePropertiesFromMap(m)
+	case UnitTypeSocket:
+		u.SocketProperties = newSocketTypePropertiesFromMap(m)
+	case UnitTypeDevice:
+		u.DeviceProperties = newDeviceTypePropertiesFromMap(m)
+	case UnitTypeMount:
+		u.MountProperties = newMountTypePropertiesFromMap(m)
+	case UnitTypeAutoMount:
+		u.AutomountProperties = newAutomountTypePropertiesFromMap(m)
+	case UnitTypeSwap:
+		u.SwapProperties = newSwapTypePropertiesFromMap(m)
+	case UnitTypePath:
+		u.PathProperties = newPathTypePropertiesFromMap(m)
+	case UnitTypeTimer:
+		u.TimerProperties = newTimerTypePropertiesFromMap(m)
+	case UnitTypeSlice:
+		u.SliceProperties = newSliceTypePropertiesFromMap(m)
+	case UnitTypeScope:
+		u.ScopeProperties = newScopeTypePropertiesFromMap(m)
+	case UnitTypeTarget, UnitTypeSnapshot, UnitTypeUnknown:
+		/* No type-specific properties for these unit types */
 	}
 }

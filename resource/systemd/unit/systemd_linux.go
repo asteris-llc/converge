@@ -36,60 +36,73 @@ func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
 		return units, err
 	}
 	defer conn.Close()
+
 	unitStatuses, err := conn.ListUnits()
+
 	if err != nil {
 		return units, err
 	}
+
 	for _, status := range unitStatuses {
-		var nameForType string
-		properties, err := conn.GetUnitProperties(status.Name)
+		unit, err := unitFromStatus(conn, &status)
 		if err != nil {
 			return units, err
 		}
-		if fragment, ok := properties["FragmentPath"]; ok && fragment != "" {
-			nameForType = fragment.(string)
-		} else {
-			nameForType = status.Name
-		}
-		nameForType = UnitTypeFromName(nameForType).UnitTypeString()
-		fmt.Println("Getting type properties: ", status.Name, nameForType)
-		typeProperties, err := conn.GetUnitTypeProperties(status.Name, nameForType)
-		if err != nil {
-			return units, errors.Wrap(err, "unable to get unit type properties")
-		}
-		u := newFromStatus(&status, properties, typeProperties)
-		units = append(units, u)
+		units = append(units, unit)
 	}
 	return units, nil
 }
 
 // QueryUnit will use dbus to get the unit status by name
-func (l LinuxExecutor) QueryUnit(string) (Unit, error) {
-	return Unit{}, nil
+func (l LinuxExecutor) QueryUnit(unitName string, verify bool) (*Unit, error) {
+	if verify {
+		units, err := l.ListUnits()
+		if err != nil {
+			return nil, errors.Wrap(err, "Cannot query unit by name")
+		}
+		for _, u := range units {
+			if u.Name == unitName {
+				return u, nil
+			}
+		}
+		return nil, fmt.Errorf("%s: no such unit known", unitName)
+	}
+	units, err := l.dbusConn.ListUnitsByNames([]string{unitName})
+	if err != nil {
+		return nil, errors.Wrap(err, "Cannot query unit by name")
+	}
+	if len(units) == 0 {
+		return nil, fmt.Errorf("no results when querying for unit named %s", unitName)
+	}
+	unit, err := unitFromStatus(conn, units[0])
+	if err != nil {
+		return nil, errors.Wrap(err, "Cannot query unit by name")
+	}
+	return unit, nil
 }
 
 // StartUnit will use dbus to start a unit
-func (l LinuxExecutor) StartUnit(Unit) error {
+func (l LinuxExecutor) StartUnit(*Unit) error {
 	return nil
 }
 
 // StopUnit will use dbus to stop a unit
-func (l LinuxExecutor) StopUnit(Unit) error {
+func (l LinuxExecutor) StopUnit(*Unit) error {
 	return nil
 }
 
 // RestartUnit will use dbus to restart a unit
-func (l LinuxExecutor) RestartUnit(Unit) error {
+func (l LinuxExecutor) RestartUnit(*Unit) error {
 	return nil
 }
 
 // ReloadUnit will use dbus to reload a unit
-func (l LinuxExecutor) ReloadUnit(Unit) error {
+func (l LinuxExecutor) ReloadUnit(*Unit) error {
 	return nil
 }
 
 // UnitStatus will use dbus to get the unit status
-func (l LinuxExecutor) UnitStatus(Unit) (Unit, error) {
+func (l LinuxExecutor) UnitStatus(*Unit) (*Unit, error) {
 	return Unit{}, nil
 }
 
@@ -99,4 +112,37 @@ func realExecutor() (SystemdExecutor, error) {
 
 func NewExecutor(c SystemdConnection) SystemdExecutor {
 	return LinuxExecutor{c}
+}
+
+func unitFromStatus(conn SystemdConnection, status *dbus.UnitStatus) (*Unit, error) {
+	u := newFromStatus(status)
+
+	properties, err := conn.GetUnitProperties(status.Name)
+	if err != nil {
+		return nil, err
+	}
+	u.SetProperties(properties)
+
+	if u.Type.HasProperties() {
+		typeProperties, err := conn.GetUnitTypeProperties(status.Name, u.Type.UnitTypeString())
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to get unit type properties")
+		}
+		u.SetTypedProperties(typeProperties)
+	}
+
+	return u, nil
+}
+
+func (l LinuxExecutor) unitExists(unitName string) (bool, error) {
+	units, err := l.ListUnits()
+	if err != nil {
+		return false, err
+	}
+	for _, u := range units {
+		if u.Name == unitName {
+			return true
+		}
+	}
+	return false
 }

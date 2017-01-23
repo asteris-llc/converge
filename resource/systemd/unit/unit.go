@@ -17,13 +17,25 @@ package unit
 import "fmt"
 
 type Unit struct {
-	Name           string
-	Description    string
-	ActiveState    string
-	Path           string
-	Type           UnitType
-	Properties     map[string]interface{}
-	TypeProperties map[string]interface{}
+	*Properties
+	Name        string
+	Description string
+	ActiveState string
+	Path        string
+	Type        UnitType
+
+	// Specific typed propertie sets.  Only the set that matches the Type field
+	// will be available.
+	ServiceProperties   *ServiceTypeProperties
+	SocketProperties    *SocketTypeProperties
+	DeviceProperties    *DeviceTypeProperties
+	MountProperties     *MountTypeProperties
+	AutomountProperties *AutomountTypeProperties
+	SwapProperties      *SwapTypeProperties
+	PathProperties      *PathTypeProperties
+	TimerProperties     *TimerTypeProperties
+	SliceProperties     *SliceTypeProperties
+	ScopeProperties     *ScopeTypeProperties
 }
 
 func (u *Unit) IsServiceUnit() bool {
@@ -35,10 +47,11 @@ func PPUnit(u *Unit) string {
 Unit
 ---------------
 Name:        %s
+Type:        %s
 Description: %s
 ActiveState: %s
 Path:        %s
 ---------------
 `
-	return fmt.Sprintf(fmtStr, u.Name, u.Description, u.ActiveState, u.Path)
+	return fmt.Sprintf(fmtStr, u.Name, u.Type, u.Description, u.ActiveState, u.Path)
 }

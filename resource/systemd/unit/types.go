@@ -26,7 +26,7 @@ type UnitType uint
 const (
 	// UnitTypeUnknown represents a generic or unknown unit type
 	UnitTypeUnknown UnitType = iota
-	
+
 	// UnitTypeService represents a systemd.service(5)
 	UnitTypeService UnitType = iota
 
@@ -137,4 +137,12 @@ func (u UnitType) Suffix() string {
 
 func (u UnitType) UnitTypeString() string {
 	return strings.Title(u.Suffix())
+}
+
+func (u UnitType) HasProperties() bool {
+	switch u {
+	case UnitTypeTarget, UnitTypeSnapshot, UnitTypeUnknown:
+		return false
+	}
+	return true
 }
