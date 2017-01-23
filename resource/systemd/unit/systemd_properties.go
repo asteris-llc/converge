@@ -96,7 +96,8 @@ type Properties struct {
 }
 
 // newPropertiesFromMap generates a new Properties given a systemd property map
-func (s Properties) newPropertiesFromMap(m map[string]interface{}) *Properties {
+func newPropertiesFromMap(m map[string]interface{}) *Properties {
+	s := &Properties{}
 
 	if val, ok := m["ActiveEnterTimestamp"]; ok {
 		s.ActiveEnterTimestamp = val.(uint64)
@@ -557,7 +558,8 @@ type ServiceTypeProperties struct {
 }
 
 // newServiceTypePropertiesFromMap generates a new ServiceTypeProperties given a systemd property map
-func (s ServiceTypeProperties) newServiceTypePropertiesFromMap(m map[string]interface{}) *ServiceTypeProperties {
+func newServiceTypePropertiesFromMap(m map[string]interface{}) *ServiceTypeProperties {
+	s := &ServiceTypeProperties{}
 
 	if val, ok := m["AmbientCapabilities"]; ok {
 		s.AmbientCapabilities = val.(uint64)
@@ -1357,7 +1359,8 @@ type SocketTypeProperties struct {
 }
 
 // newSocketTypePropertiesFromMap generates a new SocketTypeProperties given a systemd property map
-func (s SocketTypeProperties) newSocketTypePropertiesFromMap(m map[string]interface{}) *SocketTypeProperties {
+func newSocketTypePropertiesFromMap(m map[string]interface{}) *SocketTypeProperties {
+	s := &SocketTypeProperties{}
 
 	if val, ok := m["Accept"]; ok {
 		s.Accept = val.(bool)
@@ -2035,7 +2038,8 @@ type DeviceTypeProperties struct {
 }
 
 // newDeviceTypePropertiesFromMap generates a new DeviceTypeProperties given a systemd property map
-func (s DeviceTypeProperties) newDeviceTypePropertiesFromMap(m map[string]interface{}) *DeviceTypeProperties {
+func newDeviceTypePropertiesFromMap(m map[string]interface{}) *DeviceTypeProperties {
+	s := &DeviceTypeProperties{}
 
 	if val, ok := m["SysFSPath"]; ok {
 		s.SysFSPath = val.(string)
@@ -2177,7 +2181,8 @@ type MountTypeProperties struct {
 }
 
 // newMountTypePropertiesFromMap generates a new MountTypeProperties given a systemd property map
-func (s MountTypeProperties) newMountTypePropertiesFromMap(m map[string]interface{}) *MountTypeProperties {
+func newMountTypePropertiesFromMap(m map[string]interface{}) *MountTypeProperties {
+	s := &MountTypeProperties{}
 
 	if val, ok := m["AmbientCapabilities"]; ok {
 		s.AmbientCapabilities = val.(uint64)
@@ -2706,7 +2711,8 @@ type AutomountTypeProperties struct {
 }
 
 // newAutomountTypePropertiesFromMap generates a new AutomountTypeProperties given a systemd property map
-func (s AutomountTypeProperties) newAutomountTypePropertiesFromMap(m map[string]interface{}) *AutomountTypeProperties {
+func newAutomountTypePropertiesFromMap(m map[string]interface{}) *AutomountTypeProperties {
+	s := &AutomountTypeProperties{}
 
 	if val, ok := m["DirectoryMode"]; ok {
 		s.DirectoryMode = val.(uint32)
@@ -2856,7 +2862,8 @@ type SwapTypeProperties struct {
 }
 
 // newSwapTypePropertiesFromMap generates a new SwapTypeProperties given a systemd property map
-func (s SwapTypeProperties) newSwapTypePropertiesFromMap(m map[string]interface{}) *SwapTypeProperties {
+func newSwapTypePropertiesFromMap(m map[string]interface{}) *SwapTypeProperties {
+	s := &SwapTypeProperties{}
 
 	if val, ok := m["AmbientCapabilities"]; ok {
 		s.AmbientCapabilities = val.(uint64)
@@ -3365,7 +3372,8 @@ type TargetTypeProperties struct {
 }
 
 // newTargetTypePropertiesFromMap generates a new TargetTypeProperties given a systemd property map
-func (s TargetTypeProperties) newTargetTypePropertiesFromMap(m map[string]interface{}) *TargetTypeProperties {
+func newTargetTypePropertiesFromMap(m map[string]interface{}) *TargetTypeProperties {
+	s := &TargetTypeProperties{}
 	return s
 }
 
@@ -3379,7 +3387,8 @@ type PathTypeProperties struct {
 }
 
 // newPathTypePropertiesFromMap generates a new PathTypeProperties given a systemd property map
-func (s PathTypeProperties) newPathTypePropertiesFromMap(m map[string]interface{}) *PathTypeProperties {
+func newPathTypePropertiesFromMap(m map[string]interface{}) *PathTypeProperties {
+	s := &PathTypeProperties{}
 
 	if val, ok := m["DirectoryMode"]; ok {
 		s.DirectoryMode = val.(uint32)
@@ -3421,7 +3430,8 @@ type TimerTypeProperties struct {
 }
 
 // newTimerTypePropertiesFromMap generates a new TimerTypeProperties given a systemd property map
-func (s TimerTypeProperties) newTimerTypePropertiesFromMap(m map[string]interface{}) *TimerTypeProperties {
+func newTimerTypePropertiesFromMap(m map[string]interface{}) *TimerTypeProperties {
+	s := &TimerTypeProperties{}
 
 	if val, ok := m["AccuracyUSec"]; ok {
 		s.AccuracyUSec = val.(uint64)
@@ -3504,7 +3514,8 @@ type SliceTypeProperties struct {
 }
 
 // newSliceTypePropertiesFromMap generates a new SliceTypeProperties given a systemd property map
-func (s SliceTypeProperties) newSliceTypePropertiesFromMap(m map[string]interface{}) *SliceTypeProperties {
+func newSliceTypePropertiesFromMap(m map[string]interface{}) *SliceTypeProperties {
+	s := &SliceTypeProperties{}
 
 	if val, ok := m["BlockIOAccounting"]; ok {
 		s.BlockIOAccounting = val.(bool)
@@ -3630,7 +3641,8 @@ type ScopeTypeProperties struct {
 }
 
 // newScopeTypePropertiesFromMap generates a new ScopeTypeProperties given a systemd property map
-func (s ScopeTypeProperties) newScopeTypePropertiesFromMap(m map[string]interface{}) *ScopeTypeProperties {
+func newScopeTypePropertiesFromMap(m map[string]interface{}) *ScopeTypeProperties {
+	s := &ScopeTypeProperties{}
 
 	if val, ok := m["BlockIOAccounting"]; ok {
 		s.BlockIOAccounting = val.(bool)

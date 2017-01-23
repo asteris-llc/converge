@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build linux
+
 package unit
 
-import "github.com/coreos/go-systemd/dbus"
+import (
+	"testing"
 
-type SystemdExecutor interface {
-	ListUnits() ([]*Unit, error)
-	QueryUnit(string) (Unit, error)
-	StartUnit(Unit) error
-	StopUnit(Unit) error
-	RestartUnit(Unit) error
-	ReloadUnit(Unit) error
-	UnitStatus(Unit) (Unit, error)
-}
+	"github.com/coreos/go-systemd/dbus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-type SystemdConnection interface {
-	Close()
-	ListUnits() ([]dbus.UnitStatus, error)
-	GetUnitProperties(unit string) (map[string]interface{}, error)
-	GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error)
+func TestDbusConnectionImplementsSystemdConnection(t *testing.T) {
+	c, e := dbus.New()
+	require.NoError(t, e)
+	defer c.Close()
+	assert.Implements(t, (*SystemdConnection)(nil), c)
 }

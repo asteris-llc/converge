@@ -17,11 +17,13 @@ package unit
 import "fmt"
 
 type Unit struct {
-	Name        string
-	Description string
-	ActiveState string
-	Path        string
-	Type        UnitType
+	Name           string
+	Description    string
+	ActiveState    string
+	Path           string
+	Type           UnitType
+	Properties     map[string]interface{}
+	TypeProperties map[string]interface{}
 }
 
 func (u *Unit) IsServiceUnit() bool {

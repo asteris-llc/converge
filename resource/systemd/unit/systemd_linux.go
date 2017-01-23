@@ -17,12 +17,16 @@
 package unit
 
 import (
+	"fmt"
+
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/pkg/errors"
 )
 
 // LinuxExecutor provides a command executor for interacting with systemd on Linux
-type LinuxExecutor struct{}
+type LinuxExecutor struct {
+	dbusConn SystemdConnection
+}
 
 // ListUnits will use dbus to get a list of all units
 func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
@@ -48,6 +52,7 @@ func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
 			nameForType = status.Name
 		}
 		nameForType = UnitTypeFromName(nameForType).UnitTypeString()
+		fmt.Println("Getting type properties: ", status.Name, nameForType)
 		typeProperties, err := conn.GetUnitTypeProperties(status.Name, nameForType)
 		if err != nil {
 			return units, errors.Wrap(err, "unable to get unit type properties")
@@ -90,4 +95,8 @@ func (l LinuxExecutor) UnitStatus(Unit) (Unit, error) {
 
 func realExecutor() (SystemdExecutor, error) {
 	return LinuxExecutor{}, nil
+}
+
+func NewExecutor(c SystemdConnection) SystemdExecutor {
+	return LinuxExecutor{c}
 }
