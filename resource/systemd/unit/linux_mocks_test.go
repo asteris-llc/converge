@@ -17,6 +17,7 @@
 package unit_test
 
 import (
+	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,9 +28,9 @@ type ConnectorMock struct {
 }
 
 // New generates a new mock
-func (m *ConnectorMock) New() (unit.SystemdDbus, error) {
+func (m *ConnectorMock) New() (unit.SystemdConnection, error) {
 	args := m.Called()
-	return args.Get(0).(unit.SystemdDbus), args.Error(1)
+	return args.Get(0).(unit.SystemdConnection), args.Error(1)
 }
 
 // DbusMock mocks the actual dbus connection
@@ -57,13 +58,14 @@ func (m DbusMock) GetUnitTypeProperties(unit, unitType string) (map[string]inter
 
 // Close Closes
 func (m DbusMock) Close() {
-	args := m.Called()
+	m.Called()
 	return
 }
 
 func basicMockConnector() *ConnectorMock {
 	m := &ConnectorMock{}
 	m.On("New").Return(&DbusMock{}, nil)
+	return m
 }
 
 type rets struct {
@@ -77,30 +79,30 @@ type unitInfo struct {
 	TypeProps map[string]interface{}
 }
 
-func dbusMock(returns map[string]rets) *DbusMock {
+// func dbusMock(returns map[string]rets) *DbusMock {
 
-	u := []dbus.UnitState{defaultUnit}
-	m := &DbusMock{}
-	if ret, ok := returns["ListUnits"]; ok {
-		m.On("ListUnits").Return(ret.Val, ret.Err)
-	} else {
-		m.On("ListUnits").Return(u, nil)
-	}
-	if ret, ok := returns["GetUnitProperties"]; ok {
-		m.On("GetUnitProperties", mock.Anything).Return(ret.Val, ret.Err)
-	} else {
-		m.On("GetUnitProperties", mock.Antyhing).Return(map[string]interface{}{}, nil)
-	}
-}
+//	u := []dbus.UnitState{defaultUnit}
+//	m := &DbusMock{}
+//	if ret, ok := returns["ListUnits"]; ok {
+//		m.On("ListUnits").Return(ret.Val, ret.Err)
+//	} else {
+//		m.On("ListUnits").Return(u, nil)
+//	}
+//	if ret, ok := returns["GetUnitProperties"]; ok {
+//		m.On("GetUnitProperties", mock.Anything).Return(ret.Val, ret.Err)
+//	} else {
+//		m.On("GetUnitProperties", mock.Anything).Return(map[string]interface{}{}, nil)
+//	}
+// }
 
-var defaultUnit = makeUnitStatus("unit1", "description1", "loaded", "active", "/org.freedesktop.system1/")
+// var defaultUnit = makeUnitStatus("unit1", "description1", "loaded", "active", "/org.freedesktop.system1/")
 
-func makeUnitStatus(name, description, loadstate, activestate, path string) dbus.UnitStatus {
-	return &dbus.UnitStatus{
-		Name:        name,
-		Description: description,
-		LoadState:   loadstate,
-		ActiveState: activestate,
-		Path:        path,
-	}
-}
+// func makeUnitStatus(name, description, loadstate, activestate, path string) dbus.UnitStatus {
+//	return &dbus.UnitStatus{
+//		Name:        name,
+//		Description: description,
+//		LoadState:   loadstate,
+//		ActiveState: activestate,
+//		Path:        path,
+//	}
+// }
