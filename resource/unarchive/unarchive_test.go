@@ -162,7 +162,7 @@ func TestDiff(t *testing.T) {
 	})
 }
 
-// TestSetDirsAndContents tests SetDirsAndContents for Unarchive
+// TestSetDirsAndContents tests setDirsAndContents for Unarchive
 func TestSetDirsAndContents(t *testing.T) {
 	t.Parallel()
 
@@ -185,7 +185,7 @@ func TestSetDirsAndContents(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		evalDups, err := u.SetDirsAndContents()
+		evalDups, err := u.setDirsAndContents()
 
 		_, exists := os.Stat(notExistDir)
 
@@ -201,15 +201,15 @@ func TestSetDirsAndContents(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		evalDups, err := u.SetDirsAndContents()
+		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.False(t, evalDups)
-		assert.Equal(t, 0, len(u.DestContents))
+		assert.Equal(t, 0, len(u.destContents))
 	})
 }
 
-// TestEvaluateDuplicates tests EvaluateDuplicates for Unarchive
+// TestEvaluateDuplicates tests evaluateDuplicates for Unarchive
 func TestEvaluateDuplicates(t *testing.T) {
 	t.Parallel()
 
