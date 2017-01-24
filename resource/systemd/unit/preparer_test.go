@@ -12,20 +12,104 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package unit_test
+package unit
 
 import (
 	"testing"
 
+	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
+func TestPreparerInterface(t *testing.T) {
+	t.Parallel()
+	assert.Implements(t, (*resource.Resource)(nil), new(Preparer))
+}
+
+// TestPreparer runs a test
 func TestPreparer(t *testing.T) {
 	t.Parallel()
-	t.Run("implements interfaces", func(t *testing.T) {
+
+	t.Run("sets-signal-when-signal-name", func(t *testing.T) {
 		t.Parallel()
-		assert.Implements(t, (*resource.Resource)(nil), new(unit.Preparer))
+		t.Run("when-uppercase", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalName: "KILL"}
+			res, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
+			assert.Equal(t, uint(9), res.(*Resource).SignalNumber)
+			assert.True(t, res.(*Resource).sendSignal)
+		})
+		t.Run("when-lowercase", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalName: "kill"}
+			res, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
+			assert.Equal(t, uint(9), res.(*Resource).SignalNumber)
+			assert.True(t, res.(*Resource).sendSignal)
+		})
+		t.Run("when-sig-prefix", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalName: "sigkill"}
+			res, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
+			assert.Equal(t, uint(9), res.(*Resource).SignalNumber)
+			assert.True(t, res.(*Resource).sendSignal)
+		})
+		t.Run("when-mixed-case", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalName: randomizeCase("sigkill")}
+			res, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
+			assert.Equal(t, uint(9), res.(*Resource).SignalNumber)
+			assert.True(t, res.(*Resource).sendSignal)
+		})
+		t.Run("when-invalid", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalName: randomizeCase("badsignal1")}
+			_, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.Error(t, err)
+		})
 	})
+	t.Run("sets-signal-when-signal-number", func(t *testing.T) {
+		t.Parallel()
+		t.Run("when-valid", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalNumber: 9}
+			res, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.NoError(t, err)
+			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
+			assert.Equal(t, uint(9), res.(*Resource).SignalNumber)
+			assert.True(t, res.(*Resource).sendSignal)
+		})
+		t.Run("when-invalid", func(t *testing.T) {
+			t.Parallel()
+			p := &Preparer{SignalNumber: 99}
+			_, err := p.Prepare(context.Background(), fakerenderer.New())
+			require.Error(t, err)
+		})
+	})
+	t.Run("sets-fields", func(t *testing.T) {
+		t.Parallel()
+		res, err := (&Preparer{
+			Name:   "test1",
+			State:  "state1",
+			Reload: true,
+		}).Prepare(context.Background(), fakerenderer.New())
+		require.NoError(t, err)
+		assert.Equal(t, "test1", res.(*Resource).Name)
+		assert.Equal(t, "state1", res.(*Resource).State)
+		assert.True(t, res.(*Resource).Reload)
+		assert.False(t, res.(*Resource).sendSignal)
+		assert.Equal(t, "", res.(*Resource).SignalName)
+		assert.Equal(t, uint(0), res.(*Resource).SignalNumber)
+	})
+
 }

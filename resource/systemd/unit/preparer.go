@@ -56,38 +56,41 @@ type Preparer struct {
 
 // Prepare a new task
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
-	var sendSignal bool
+	var signal *Signal
 	if p.SignalName != "" {
-		sendSignal = true
 		num, err := ParseSignalByName(p.SignalName)
 		if err != nil {
 			return nil, err
 		}
-		p.SignalNumber = uint(num)
-		sendSignal = true
+		signal = &num
 	} else if p.SignalNumber != 0 {
 		name, err := ParseSignalByNumber(p.SignalNumber)
 		if err != nil {
 			return nil, err
 		}
-		p.SignalName = name.String()
-		sendSignal = true
+		signal = &name
 	}
 
 	executor, err := realExecutor()
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &Resource{
-		SignalName:      p.SignalName,
-		SignalNumber:    p.SignalNumber,
-		sendSignal:      sendSignal,
+	r := &Resource{
 		Reload:          p.Reload,
 		Name:            p.Name,
 		State:           p.State,
 		systemdExecutor: executor,
-	}, nil
+	}
+
+	if signal != nil {
+		r.SignalName = signal.String()
+		r.SignalNumber = uint(*signal)
+		r.sendSignal = true
+	}
+
+	return r, nil
 }
 
 func init() {
