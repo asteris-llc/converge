@@ -163,8 +163,8 @@ func TestDiff(t *testing.T) {
 	})
 }
 
-// TestEvaluateDuplicates tests EvaluateDuplicates for Unarchive
-func TestEvaluateDuplicates(t *testing.T) {
+// TestSetDirsAndContents tests SetDirsAndContents for Unarchive
+func TestSetDirsAndContents(t *testing.T) {
 	t.Parallel()
 
 	srcFile, err := ioutil.TempFile("", "unarchive_test.zip")
@@ -186,11 +186,12 @@ func TestEvaluateDuplicates(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		err = u.EvaluateDuplicates()
+		evalDups, err := u.SetDirsAndContents()
 
 		_, exists := os.Stat(notExistDir)
 
 		assert.NoError(t, err)
+		assert.False(t, evalDups)
 		assert.False(t, os.IsNotExist(exists))
 	})
 
@@ -201,8 +202,16 @@ func TestEvaluateDuplicates(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		err = u.EvaluateDuplicates()
+		evalDups, err := u.SetDirsAndContents()
 
 		assert.NoError(t, err)
+		assert.False(t, evalDups)
+		assert.Equal(t, 0, len(u.DestContents))
 	})
+}
+
+// TestEvaluateDuplicates tests EvaluateDuplicates for Unarchive
+func TestEvaluateDuplicates(t *testing.T) {
+	t.Parallel()
+
 }

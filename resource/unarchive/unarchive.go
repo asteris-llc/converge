@@ -70,6 +70,18 @@ type Unarchive struct {
 	// destination if it already exists
 	Force bool `export:"force"`
 
+	// the destination directory
+	DestDir *os.File
+
+	// the files within the destination directory
+	DestContents []string
+
+	// the intermediate directory containing fetched and unarchived file(s)
+	FetchDir *os.File
+
+	// the files within the intermediate fetch directory
+	FetchContents []string
+
 	// the location of the fetched file
 	fetchLoc string
 }
@@ -135,7 +147,12 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 		return fetchStatus, err
 	}
 
-	if u.Force == false {
+	evaluateDuplicates, err := u.SetDirsAndContents()
+	if err != nil {
+		return status, err
+	}
+
+	if u.Force == false && evaluateDuplicates {
 		err = u.EvaluateDuplicates()
 		if err != nil {
 			status.RaiseLevel(resource.StatusFatal)
@@ -176,6 +193,107 @@ func (u *Unarchive) Diff(status *resource.Status) error {
 	return nil
 }
 
+// SetDirsAndContents sets the Unarchive fields of unarchive destination and its
+// contents, and the temporary fetch/unarchive destination and its contents. A
+// bool indicating whether duplicates need to be evaluated between the unarchive
+// destination and the temporary fetch/unarchive destination.
+func (u *Unarchive) SetDirsAndContents() (bool, error) {
+	var err error
+
+	// create the unarchive destination directory if it does not exist
+	u.DestDir, err = os.Open(u.Destination)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(u.Destination, 1755)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	// read the file names in the directory indicated by u.Destination
+	u.DestContents, err = u.DestDir.Readdirnames(0)
+	if err != nil {
+		return false, errors.Wrapf(err, "could not read files from %q", u.Destination)
+	}
+
+	// if there are no files, we do not need to compare checksums with files in
+	// the temporary fetch/unarchive location
+	if len(u.DestContents) == 0 {
+		return false, nil
+	}
+
+	// read the contents of the temporary fetch/unarchive location
+	fetchDir := u.fetchLoc
+	u.FetchDir, err = os.Open(fetchDir)
+	if err != nil {
+		return false, err
+	}
+	fetchDirContents, err := u.FetchDir.Readdir(0)
+	if err != nil {
+		return false, errors.Wrapf(err, "could not read dir %q", fetchDir)
+	}
+
+	// if one directory is within the temporary fetch/unarchive location, we need
+	// to use this as the directory to read file names
+	if len(fetchDirContents) == 1 && fetchDirContents[0].IsDir() {
+		fetchDir = u.fetchLoc + "/" + fetchDirContents[0].Name()
+	}
+
+	// read the file names in the temporary fetch/unarchive location
+	u.FetchDir, err = os.Open(fetchDir)
+	u.FetchContents, err = u.FetchDir.Readdirnames(0)
+	if err != nil {
+		return false, errors.Wrapf(err, "could not read files from %q", fetchDir)
+	}
+
+	return true, nil
+}
+
+// EvaluateDuplicates evaluates whether identical files exist in u.Destination
+// and the temporary fetch/unarchive location
+func (u *Unarchive) EvaluateDuplicates() error {
+	// determine which directory has fewer items in order to minimize operations
+	filesA := u.DestContents
+	filesB := u.FetchContents
+	dirA := u.DestDir.Name()
+	dirB := u.FetchDir.Name()
+	if len(u.FetchContents) < len(u.DestContents) {
+		filesA = u.FetchContents
+		filesB = u.DestContents
+		dirA = u.FetchDir.Name()
+		dirB = u.DestDir.Name()
+	}
+
+	// for each item in filesA, determine if it also exists in filesB
+	// compare the checksums for the files - if mismatch, return an error
+	for _, fileA := range filesA {
+		for _, fileB := range filesB {
+
+			if fileA == fileB {
+				checkA, err := u.getChecksum(dirA + "/" + fileA)
+				if err != nil {
+					return err
+				}
+
+				checkB, err := u.getChecksum(dirB + "/" + fileB)
+				if err != nil {
+					return err
+				}
+
+				if checkA != checkB {
+					return fmt.Errorf("will not replace, file %q exists at %q: checksum mismatch", fileA, u.Destination)
+				}
+
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // setFetchLoc sets the location for the fetch destination
 func (u *Unarchive) setFetchLoc() error {
 	if u.fetchLoc != "" {
@@ -187,87 +305,6 @@ func (u *Unarchive) setFetchLoc() error {
 		return errors.Wrap(err, "failed to get checksum of source")
 	}
 	u.fetchLoc = "/var/run/converge/cache/" + checksum
-
-	return nil
-}
-
-// EvaluateDuplicates evaluates whether identical files exist in u.Destination
-// and the temporary fetch/unarchive location
-func (u *Unarchive) EvaluateDuplicates() error {
-	// create the unarchive destination directory if it does not exist
-	dest, err := os.Open(u.Destination)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(u.Destination, 1755)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	// read the file names in the directory indicated by u.Destination
-	destContents, err := dest.Readdirnames(0)
-	if err != nil {
-		return errors.Wrapf(err, "could not read files from %q", u.Destination)
-	}
-
-	// if there are no files, we do not need to compare checksums with files in
-	// the temporary fetch/unarchive location
-	if len(destContents) == 0 {
-		return nil
-	}
-
-	// read the contents of the temporary fetch/unarchive location
-	fetchDir := u.fetchLoc
-	fetchDest, err := os.Open(fetchDir)
-	if err != nil {
-		return err
-	}
-	fetchDirContents, err := fetchDest.Readdir(0)
-	if err != nil {
-		return errors.Wrapf(err, "could not read dir %q", fetchDir)
-	}
-
-	// if one directory is within the temporary fetch/unarchive location, we need
-	// to use this as the directory to read file names
-	if len(fetchDirContents) == 1 && fetchDirContents[0].IsDir() {
-		fetchDir = u.fetchLoc + "/" + fetchDirContents[0].Name()
-	}
-
-	// read the file names in the temporary fetch/unarchive location
-	fetchDest, err = os.Open(fetchDir)
-	fetchContents, err := fetchDest.Readdirnames(0)
-	if err != nil {
-		return errors.Wrapf(err, "could not read files from %q", fetchDir)
-	}
-
-	// determine which directory has fewer items in order to minimize operations
-	dirA := destContents
-	dirB := fetchContents
-	if len(fetchContents) < len(destContents) {
-		dirA = fetchContents
-		dirB = destContents
-	}
-
-	// for each item in dirA, determine if it also exists in dirB
-	// compare the checksums for the files - if mismatch, return an error
-	for _, fileA := range dirA {
-		for _, fileB := range dirB {
-			checkA, err := u.getChecksum(fileA)
-			if err != nil {
-				return err
-			}
-			checkB, err := u.getChecksum(fileB)
-			if err != nil {
-				return err
-			}
-
-			if checkA != checkB {
-				return fmt.Errorf("will not replace, file %q exists at %q: checksum mismatch", fileA, u.Destination)
-			}
-		}
-	}
 
 	return nil
 }
