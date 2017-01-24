@@ -14,15 +14,14 @@
 
 // +build linux
 
-package unit_test
+package unit
 
 import (
 	"testing"
 
-	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInterface(t *testing.T) {
-	assert.Implements(t, (*unit.SystemdExecutor)(nil), new(unit.LinuxExecutor))
+	assert.Implements(t, (*SystemdExecutor)(nil), new(LinuxExecutor))
 }

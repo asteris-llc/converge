@@ -14,10 +14,9 @@
 
 // +build linux
 
-package unit_test
+package unit
 
 import (
-	"github.com/asteris-llc/converge/resource/systemd/unit"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,9 +27,9 @@ type ConnectorMock struct {
 }
 
 // New generates a new mock
-func (m *ConnectorMock) New() (unit.SystemdConnection, error) {
+func (m *ConnectorMock) New() (SystemdConnection, error) {
 	args := m.Called()
-	return args.Get(0).(unit.SystemdConnection), args.Error(1)
+	return args.Get(0).(SystemdConnection), args.Error(1)
 }
 
 // DbusMock mocks the actual dbus connection
