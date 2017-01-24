@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package unarchive_test
+package unarchive
 
 import (
 	"crypto/md5"
@@ -25,7 +25,6 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/unarchive"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
@@ -34,7 +33,7 @@ import (
 func TestPreparerInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Resource)(nil), new(unarchive.Preparer))
+	assert.Implements(t, (*resource.Resource)(nil), new(Preparer))
 }
 
 // TestPreparer tests the valid and invalid cases of Prepare
@@ -43,7 +42,7 @@ func TestPreparer(t *testing.T) {
 
 	var (
 		fr       = fakerenderer.FakeRenderer{}
-		hashType = string(unarchive.HashMD5)
+		hashType = string(HashMD5)
 		hash     = hex.EncodeToString(md5.New().Sum(nil))
 		empty    = ""
 		space    = " "
@@ -51,7 +50,7 @@ func TestPreparer(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		t.Run("force=false", func(t *testing.T) {
-			p := unarchive.Preparer{
+			p := Preparer{
 				Source:      "/tmp/test.zip",
 				Destination: "/tmp/test",
 			}
@@ -61,7 +60,7 @@ func TestPreparer(t *testing.T) {
 		})
 
 		t.Run("force=true", func(t *testing.T) {
-			p := unarchive.Preparer{
+			p := &Preparer{
 				Source:      "/tmp/test.zip",
 				Destination: "/tmp/test",
 				Force:       true,
@@ -72,7 +71,7 @@ func TestPreparer(t *testing.T) {
 		})
 
 		t.Run("hashtype", func(t *testing.T) {
-			p := unarchive.Preparer{
+			p := &Preparer{
 				Source:      "/tmp/test.zip",
 				Destination: "/tmp/test",
 				Hash:        &hash,
@@ -87,7 +86,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("sha1", func(t *testing.T) {
-				hashType = string(unarchive.HashSHA1)
+				hashType = string(HashSHA1)
 				p.HashType = &hashType
 				hash = hex.EncodeToString(sha1.New().Sum(nil))
 				p.Hash = &hash
@@ -97,7 +96,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("sha256", func(t *testing.T) {
-				hashType = string(unarchive.HashSHA256)
+				hashType = string(HashSHA256)
 				p.HashType = &hashType
 				hash = hex.EncodeToString(sha256.New().Sum(nil))
 				p.Hash = &hash
@@ -107,7 +106,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("sha512", func(t *testing.T) {
-				hashType = string(unarchive.HashSHA512)
+				hashType = string(HashSHA512)
 				p.HashType = &hashType
 				hash = hex.EncodeToString(sha512.New().Sum(nil))
 				p.Hash = &hash
@@ -121,7 +120,7 @@ func TestPreparer(t *testing.T) {
 	t.Run("invalid", func(t *testing.T) {
 		t.Run("source", func(t *testing.T) {
 			t.Run("empty", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      empty,
 					Destination: "/tmp/test",
 				}
@@ -130,7 +129,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("space", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      space,
 					Destination: "/tmp/test",
 				}
@@ -139,7 +138,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("cannot parse", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      ":test",
 					Destination: "/tmp/test",
 				}
@@ -150,7 +149,7 @@ func TestPreparer(t *testing.T) {
 
 		t.Run("destination", func(t *testing.T) {
 			t.Run("empty", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      "/tmp/test.zip",
 					Destination: empty,
 				}
@@ -159,7 +158,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("space", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      "/tmp/test.zip",
 					Destination: space,
 				}
@@ -171,7 +170,7 @@ func TestPreparer(t *testing.T) {
 		t.Run("checksum", func(t *testing.T) {
 			t.Run("hashtype and hash", func(t *testing.T) {
 				t.Run("only hashtype", func(t *testing.T) {
-					p := unarchive.Preparer{
+					p := &Preparer{
 						Source:      "/tmp/test.zip",
 						Destination: "/tmp/test",
 						HashType:    &hashType,
@@ -181,7 +180,7 @@ func TestPreparer(t *testing.T) {
 				})
 
 				t.Run("only hash", func(t *testing.T) {
-					p := unarchive.Preparer{
+					p := &Preparer{
 						Source:      "/tmp/test.zip",
 						Destination: "/tmp/test",
 						Hash:        &hash,
@@ -192,7 +191,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("hashtype", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      "/tmp/test.zip",
 					Destination: "/tmp/test",
 					Hash:        &hash,
@@ -214,7 +213,7 @@ func TestPreparer(t *testing.T) {
 			})
 
 			t.Run("hash", func(t *testing.T) {
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      "/tmp/test.zip",
 					Destination: "/tmp/test",
 					HashType:    &hashType,
@@ -237,14 +236,14 @@ func TestPreparer(t *testing.T) {
 
 			t.Run("hash length", func(t *testing.T) {
 				hash = "invalid"
-				p := unarchive.Preparer{
+				p := &Preparer{
 					Source:      "/tmp/test.zip",
 					Destination: "/tmp/test",
 					Hash:        &hash,
 				}
 
 				t.Run("md5", func(t *testing.T) {
-					hashType = string(unarchive.HashMD5)
+					hashType = string(HashMD5)
 					p.HashType = &hashType
 
 					_, err := p.Prepare(context.Background(), &fr)
@@ -252,7 +251,7 @@ func TestPreparer(t *testing.T) {
 				})
 
 				t.Run("sha1", func(t *testing.T) {
-					hashType = string(unarchive.HashSHA1)
+					hashType = string(HashSHA1)
 					p.HashType = &hashType
 
 					_, err := p.Prepare(context.Background(), &fr)
@@ -260,7 +259,7 @@ func TestPreparer(t *testing.T) {
 				})
 
 				t.Run("sha256", func(t *testing.T) {
-					hashType = string(unarchive.HashSHA256)
+					hashType = string(HashSHA256)
 					p.HashType = &hashType
 
 					_, err := p.Prepare(context.Background(), &fr)
@@ -268,7 +267,7 @@ func TestPreparer(t *testing.T) {
 				})
 
 				t.Run("sha512", func(t *testing.T) {
-					hashType = string(unarchive.HashSHA512)
+					hashType = string(HashSHA512)
 					p.HashType = &hashType
 
 					_, err := p.Prepare(context.Background(), &fr)

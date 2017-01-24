@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package unarchive_test
+package unarchive
 
 import (
 	"fmt"
@@ -22,7 +22,6 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
-	"github.com/asteris-llc/converge/resource/unarchive"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
@@ -32,7 +31,7 @@ import (
 func TestUnarchiveInterface(t *testing.T) {
 	t.Parallel()
 
-	assert.Implements(t, (*resource.Task)(nil), new(unarchive.Unarchive))
+	assert.Implements(t, (*resource.Task)(nil), new(Unarchive))
 }
 
 // TestCheck tests the cases Check handles
@@ -48,7 +47,7 @@ func TestCheck(t *testing.T) {
 	defer os.Remove(destInvalid.Name())
 
 	t.Run("error", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      src.Name(),
 			Destination: destInvalid.Name(),
 		}
@@ -61,7 +60,7 @@ func TestCheck(t *testing.T) {
 	})
 
 	t.Run("unarchive", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      src.Name(),
 			Destination: "/tmp",
 		}
@@ -82,7 +81,7 @@ func TestApply(t *testing.T) {
 	t.Parallel()
 
 	t.Run("error", func(t *testing.T) {
-		u := unarchive.Unarchive{}
+		u := &Unarchive{}
 
 		status, err := u.Apply(context.Background())
 
@@ -105,7 +104,7 @@ func TestDiff(t *testing.T) {
 	defer os.Remove(destInvalid.Name())
 
 	t.Run("source does not exist", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      "",
 			Destination: "/tmp",
 		}
@@ -119,7 +118,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("destination is not directory", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      src.Name(),
 			Destination: destInvalid.Name(),
 		}
@@ -133,7 +132,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("destination does not exist", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      src.Name(),
 			Destination: "",
 		}
@@ -147,7 +146,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("unarchive", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      src.Name(),
 			Destination: "/tmp",
 		}
@@ -180,7 +179,7 @@ func TestSetDirsAndContents(t *testing.T) {
 		_, err := os.Stat(notExistDir)
 		require.True(t, os.IsNotExist(err))
 
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      srcFile.Name(),
 			Destination: notExistDir,
 		}
@@ -196,7 +195,7 @@ func TestSetDirsAndContents(t *testing.T) {
 	})
 
 	t.Run("empty dest", func(t *testing.T) {
-		u := unarchive.Unarchive{
+		u := &Unarchive{
 			Source:      srcFile.Name(),
 			Destination: destDir,
 		}
