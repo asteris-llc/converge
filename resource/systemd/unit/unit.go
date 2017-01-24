@@ -16,42 +16,76 @@ package unit
 
 import "fmt"
 
+// Unit represents a systemd unit
 type Unit struct {
-	*Properties
-	Name        string
-	Description string
-	ActiveState string
-	Path        string
-	Type        UnitType
+	// the global embedded properties of the unit
+	Properties
 
-	// Specific typed propertie sets.  Only the set that matches the Type field
-	// will be available.
-	ServiceProperties   *ServiceTypeProperties
-	SocketProperties    *SocketTypeProperties
-	DeviceProperties    *DeviceTypeProperties
-	MountProperties     *MountTypeProperties
-	AutomountProperties *AutomountTypeProperties
-	SwapProperties      *SwapTypeProperties
-	PathProperties      *PathTypeProperties
-	TimerProperties     *TimerTypeProperties
-	SliceProperties     *SliceTypeProperties
-	ScopeProperties     *ScopeTypeProperties
+	// the name of the unit
+	Name string
+
+	// the description of the unit
+	Description string
+
+	// the units current active state
+	ActiveState string
+
+	// the units current load state
+	LoadState string
+
+	// the path to the unit file, if any
+	Path string
+
+	// the type of unit file
+	Type UnitType
+
+	// ServiceProperties contain properties specific to Service unit types
+	ServiceProperties *ServiceTypeProperties `export:"service_properties"`
+
+	// SocketProperties contain properties specific to Socket unit types
+	SocketProperties *SocketTypeProperties `export:"SocketProperties"`
+
+	// DeviceProperties contain properties specific to Device unit types
+	DeviceProperties *DeviceTypeProperties `export:"DeviceProperties"`
+
+	// MountProperties contain properties specific to Mount unit types
+	MountProperties *MountTypeProperties `export:"MountProperties"`
+
+	// AutomountProperties contain properties specific for Autoumount unit types
+	AutomountProperties *AutomountTypeProperties `export:"AutomountProperties"`
+
+	// SwapProperties contain properties specific to Swap unit types
+	SwapProperties *SwapTypeProperties `export:"SwapProperties"`
+
+	// PathProperties contain properties specific to Path unit types
+	PathProperties *PathTypeProperties `export:"PathProperties"`
+
+	// TimerProperties contain properties specific to Timer unit types
+	TimerProperties *TimerTypeProperties `export:"TimerProperties"`
+
+	// SliceProperties contain properties specific to Slice unit types
+	SliceProperties *SliceTypeProperties `export:"SliceProperties"`
+
+	// ScopeProperties contain properties specific to Scope unit types
+	ScopeProperties *ScopeTypeProperties `export:"ScopeProperties"`
 }
 
+// IsServiceUnit returns true if the unit is a service
 func (u *Unit) IsServiceUnit() bool {
 	return UnitTypeService == UnitTypeFromName(u.Path)
 }
 
+// PPUnit pretty-prints a unit
 func PPUnit(u *Unit) string {
 	fmtStr := `
 Unit
----------------
+=================
 Name:        %s
 Type:        %s
 Description: %s
 ActiveState: %s
 Path:        %s
----------------
+=================
 `
 	return fmt.Sprintf(fmtStr, u.Name, u.Type, u.Description, u.ActiveState, u.Path)
 }

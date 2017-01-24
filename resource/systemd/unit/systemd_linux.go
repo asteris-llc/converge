@@ -31,20 +31,14 @@ type LinuxExecutor struct {
 // ListUnits will use dbus to get a list of all units
 func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
 	var units []*Unit
-	conn, err := dbus.New()
-	if err != nil {
-		return units, err
-	}
-	defer conn.Close()
-
-	unitStatuses, err := conn.ListUnits()
+	unitStatuses, err := l.dbusConn.ListUnits()
 
 	if err != nil {
 		return units, err
 	}
 
 	for _, status := range unitStatuses {
-		unit, err := unitFromStatus(conn, &status)
+		unit, err := unitFromStatus(l.dbusConn, &status)
 		if err != nil {
 			return units, err
 		}
@@ -74,7 +68,7 @@ func (l LinuxExecutor) QueryUnit(unitName string, verify bool) (*Unit, error) {
 	if len(units) == 0 {
 		return nil, fmt.Errorf("no results when querying for unit named %s", unitName)
 	}
-	unit, err := unitFromStatus(conn, units[0])
+	unit, err := unitFromStatus(l.dbusConn, &units[0])
 	if err != nil {
 		return nil, errors.Wrap(err, "Cannot query unit by name")
 	}
@@ -82,36 +76,75 @@ func (l LinuxExecutor) QueryUnit(unitName string, verify bool) (*Unit, error) {
 }
 
 // StartUnit will use dbus to start a unit
-func (l LinuxExecutor) StartUnit(*Unit) error {
-	return nil
+func (l LinuxExecutor) StartUnit(u *Unit) error {
+	return runDbusCommand(l.dbusConn.StartUnit, u.Name, "replace", "starting")
 }
 
 // StopUnit will use dbus to stop a unit
-func (l LinuxExecutor) StopUnit(*Unit) error {
-	return nil
+func (l LinuxExecutor) StopUnit(u *Unit) error {
+	return runDbusCommand(l.dbusConn.StopUnit, u.Name, "replace", "stopping")
 }
 
-// RestartUnit will use dbus to restart a unit
-func (l LinuxExecutor) RestartUnit(*Unit) error {
-	return nil
+// RestartUnit will restart a unit
+func (l LinuxExecutor) RestartUnit(u *Unit) error {
+	return runDbusCommand(l.dbusConn.RestartUnit, u.Name, "replace", "restarting")
 }
 
 // ReloadUnit will use dbus to reload a unit
-func (l LinuxExecutor) ReloadUnit(*Unit) error {
-	return nil
+func (l LinuxExecutor) ReloadUnit(u *Unit) error {
+	return runDbusCommand(l.dbusConn.ReloadUnit, u.Name, "replace", "reloading")
 }
 
-// UnitStatus will use dbus to get the unit status
-func (l LinuxExecutor) UnitStatus(*Unit) (*Unit, error) {
-	return Unit{}, nil
+// SendSignal will send a signal
+func (l LinuxExecutor) SendSignal(u *Unit, signal Signal) {
+	l.dbusConn.KillUnit(u.Name, int32(signal))
+}
+
+func runDbusCommand(f func(string, string, chan<- string) (int, error), name, mode, operation string) error {
+	ch := make(chan string)
+	defer close(ch)
+	_, err := f(name, mode, ch)
+	if err != nil {
+		return err
+	}
+	msg := <-ch
+	switch msg {
+	case "done":
+		return nil
+	case "canceled":
+		return fmt.Errorf("operation was cancelled while %s: %s", operation, name)
+	case "timeout":
+		return fmt.Errorf("operation timed out while %s: %s", operation, name)
+	case "failed":
+		return fmt.Errorf("operation failed while %s: %s", operation, name)
+	case "dependency":
+		return fmt.Errorf("operation depends on a failed unit when %s: %s", operation, name)
+	case "skipped":
+		return nil
+	}
+	return fmt.Errorf("unknown systemd status: %s", msg)
 }
 
 func realExecutor() (SystemdExecutor, error) {
-	return LinuxExecutor{}, nil
+	conn, err := dbus.New()
+	if err != nil {
+		return nil, err
+	}
+	return LinuxExecutor{conn}, nil
 }
 
-func NewExecutor(c SystemdConnection) SystemdExecutor {
-	return LinuxExecutor{c}
+// Close will close a connection
+func (l LinuxExecutor) Close() {
+	l.dbusConn.Close()
+}
+
+// NewSystemExecutor will generate a new real executor
+func NewSystemExecutor() SystemdExecutor {
+	executor, err := realExecutor()
+	if err != nil {
+		panic(err)
+	}
+	return executor
 }
 
 func unitFromStatus(conn SystemdConnection, status *dbus.UnitStatus) (*Unit, error) {
@@ -126,7 +159,7 @@ func unitFromStatus(conn SystemdConnection, status *dbus.UnitStatus) (*Unit, err
 	if u.Type.HasProperties() {
 		typeProperties, err := conn.GetUnitTypeProperties(status.Name, u.Type.UnitTypeString())
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get unit type properties")
+			return nil, err
 		}
 		u.SetTypedProperties(typeProperties)
 	}
@@ -141,8 +174,8 @@ func (l LinuxExecutor) unitExists(unitName string) (bool, error) {
 	}
 	for _, u := range units {
 		if u.Name == unitName {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }

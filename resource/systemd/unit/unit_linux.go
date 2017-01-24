@@ -22,6 +22,7 @@ import (
 	"github.com/coreos/go-systemd/dbus"
 )
 
+// PPUnitStatus pretty-prints a UnitStatus
 func PPtUnitStatus(u *dbus.UnitStatus) string {
 	fmtStr := `
 UnitStatus
@@ -57,15 +58,18 @@ func newFromStatus(status *dbus.UnitStatus) *Unit {
 		Name:        status.Name,
 		Description: status.Description,
 		ActiveState: status.ActiveState,
+		LoadState:   status.LoadState,
 		Type:        UnitTypeFromName(status.Name),
 	}
 }
 
+// SetProperties sets the global properties of a unit from a properties map
 func (u *Unit) SetProperties(m map[string]interface{}) {
-	u.Properties = newPropertiesFromMap(m)
+	u.Properties = *newPropertiesFromMap(m)
 	u.Path = u.FragmentPath
 }
 
+// SetTypedProperties sets type specific properties of a unit from a map
 func (u *Unit) SetTypedProperties(m map[string]interface{}) {
 	switch u.Type {
 	case UnitTypeService:
