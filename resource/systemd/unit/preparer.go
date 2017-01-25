@@ -52,6 +52,8 @@ type Preparer struct {
 	// Sends a signal to the process, using it's signal number.  The value must be
 	// an unsigned integer value between 1 and 31 inclusive.
 	SignalNumber uint `hcl:"signal_number" mutually_exclusive:"signal_name,signal_num"`
+
+	executor SystemdExecutor
 }
 
 // Prepare a new task
@@ -71,17 +73,19 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		signal = &name
 	}
 
-	executor, err := realExecutor()
-
-	if err != nil {
-		return nil, err
+	if p.executor == nil {
+		executor, err := realExecutor()
+		if err != nil {
+			return nil, err
+		}
+		p.executor = executor
 	}
 
 	r := &Resource{
 		Reload:          p.Reload,
 		Name:            p.Name,
 		State:           p.State,
-		systemdExecutor: executor,
+		systemdExecutor: p.executor,
 	}
 
 	if signal != nil {

@@ -99,9 +99,10 @@ func TestPreparer(t *testing.T) {
 	t.Run("sets-fields", func(t *testing.T) {
 		t.Parallel()
 		res, err := (&Preparer{
-			Name:   "test1",
-			State:  "state1",
-			Reload: true,
+			Name:     "test1",
+			State:    "state1",
+			Reload:   true,
+			executor: LinuxExecutor{DbusMock{}},
 		}).Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.Equal(t, "test1", res.(*Resource).Name)
