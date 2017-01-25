@@ -21,12 +21,8 @@ import (
 
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDbusConnectionImplementsSystemdConnection(t *testing.T) {
-	c, e := dbus.New()
-	require.NoError(t, e)
-	defer c.Close()
-	assert.Implements(t, (*SystemdConnection)(nil), c)
+	assert.Implements(t, (*SystemdConnection)(nil), new(dbus.Conn))
 }
