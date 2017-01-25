@@ -427,3 +427,38 @@ func TestListUnits(t *testing.T) {
 		})
 	})
 }
+
+// TestQueryUnit runs a test
+func TestQueryUnit(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when-verify", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("when-unit-exists", func(t *testing.T) {
+			t.Parallel()
+
+			unit := randomUnit()
+			m := &DbusMock{}
+			m.On("ListUnits").Return([]dbus.UnitStatus{unit}, nil)
+			m.On("GetUnitProperties", any, any).Return(map[string]interface{}{}, nil)
+			m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, nil)
+			l := LinuxExecutor{m}
+
+			actual, err := l.QueryUnit(unitName, true)
+			assert.NoError(t, err)
+		})
+
+		t.Run("when-unit-not-exists", func(t *testing.T) {
+			t.Parallel()
+
+		})
+
+	})
+
+	t.Run("when-not-verify", func(t *testing.T) {
+		t.Parallel()
+
+	})
+
+}
