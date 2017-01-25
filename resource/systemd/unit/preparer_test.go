@@ -37,7 +37,10 @@ func TestPreparer(t *testing.T) {
 		t.Parallel()
 		t.Run("when-uppercase", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalName: "KILL"}
+			p := &Preparer{
+				SignalName: "KILL",
+				executor:   LinuxExecutor{DbusMock{}},
+			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
@@ -46,7 +49,10 @@ func TestPreparer(t *testing.T) {
 		})
 		t.Run("when-lowercase", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalName: "kill"}
+			p := &Preparer{
+				SignalName: "kill",
+				executor:   LinuxExecutor{DbusMock{}},
+			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
@@ -55,7 +61,10 @@ func TestPreparer(t *testing.T) {
 		})
 		t.Run("when-sig-prefix", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalName: "sigkill"}
+			p := &Preparer{
+				SignalName: "sigkill",
+				executor:   LinuxExecutor{DbusMock{}},
+			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
@@ -64,7 +73,10 @@ func TestPreparer(t *testing.T) {
 		})
 		t.Run("when-mixed-case", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalName: randomizeCase("sigkill")}
+			p := &Preparer{
+				SignalName: randomizeCase("sigkill"),
+				executor:   LinuxExecutor{DbusMock{}},
+			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
@@ -73,7 +85,10 @@ func TestPreparer(t *testing.T) {
 		})
 		t.Run("when-invalid", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalName: randomizeCase("badsignal1")}
+			p := &Preparer{
+				SignalName: randomizeCase("badsignal1"),
+				executor:   LinuxExecutor{DbusMock{}},
+			}
 			_, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.Error(t, err)
 		})
@@ -82,7 +97,10 @@ func TestPreparer(t *testing.T) {
 		t.Parallel()
 		t.Run("when-valid", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalNumber: 9}
+			p := &Preparer{
+				SignalNumber: 9,
+				executor:     LinuxExecutor{DbusMock{}},
+			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
 			assert.Equal(t, "SIGKILL", res.(*Resource).SignalName)
@@ -91,7 +109,10 @@ func TestPreparer(t *testing.T) {
 		})
 		t.Run("when-invalid", func(t *testing.T) {
 			t.Parallel()
-			p := &Preparer{SignalNumber: 99}
+			p := &Preparer{
+				SignalNumber: 99,
+				executor:     LinuxExecutor{DbusMock{}},
+			}
 			_, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.Error(t, err)
 		})
