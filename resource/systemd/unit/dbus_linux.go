@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build linux
+
 package unit
 
-type SystemdExecutor interface {
-	// ListUnits will return a Unit slice
-	ListUnits() ([]*Unit, error)
+import "github.com/coreos/go-systemd/dbus"
 
-	// QueryUnit will construct a Unit from the given unit name.  If verify is
-	// true, the name will be compared against the currently loaded units by
-	// calling ListUnits.  This is slower but offers some additional guarantees
-	// since the underlying dbus API will return a result even for nonexistant
-	// unit names.
-	QueryUnit(unitName string, verify bool) (*Unit, error)
-	StartUnit(*Unit) error
-	StopUnit(*Unit) error
-	RestartUnit(*Unit) error
-	ReloadUnit(*Unit) error
-	UnitStatus(*Unit) (*Unit, error)
+type SystemdConnection interface {
+	Close()
+	ListUnits() ([]dbus.UnitStatus, error)
+	ListUnitsByNames(units []string) ([]dbus.UnitStatus, error)
+	GetUnitProperties(unit string) (map[string]interface{}, error)
+	GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error)
 }

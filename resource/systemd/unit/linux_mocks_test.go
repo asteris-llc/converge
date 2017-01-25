@@ -17,20 +17,12 @@
 package unit
 
 import (
+	"fmt"
+	"math/rand"
+
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/mock"
 )
-
-// ConnectorMock mocks DbusConnector
-type ConnectorMock struct {
-	mock.Mock
-}
-
-// New generates a new mock
-func (m *ConnectorMock) New() (SystemdConnection, error) {
-	args := m.Called()
-	return args.Get(0).(SystemdConnection), args.Error(1)
-}
 
 // DbusMock mocks the actual dbus connection
 type DbusMock struct {
@@ -40,6 +32,12 @@ type DbusMock struct {
 // ListUnits mocks ListUnits
 func (m DbusMock) ListUnits() ([]dbus.UnitStatus, error) {
 	args := m.Called()
+	return args.Get(0).([]dbus.UnitStatus), args.Error(1)
+}
+
+// ListUnits mocks ListUnitsByNames
+func (m DbusMock) ListUnitsByNames(names []string) ([]dbus.UnitStatus, error) {
+	args := m.Called(names)
 	return args.Get(0).([]dbus.UnitStatus), args.Error(1)
 }
 
@@ -61,12 +59,6 @@ func (m DbusMock) Close() {
 	return
 }
 
-func basicMockConnector() *ConnectorMock {
-	m := &ConnectorMock{}
-	m.On("New").Return(&DbusMock{}, nil)
-	return m
-}
-
 type rets struct {
 	Val interface{}
 	Err error
@@ -78,30 +70,19 @@ type unitInfo struct {
 	TypeProps map[string]interface{}
 }
 
-// func dbusMock(returns map[string]rets) *DbusMock {
-
-//	u := []dbus.UnitState{defaultUnit}
-//	m := &DbusMock{}
-//	if ret, ok := returns["ListUnits"]; ok {
-//		m.On("ListUnits").Return(ret.Val, ret.Err)
-//	} else {
-//		m.On("ListUnits").Return(u, nil)
-//	}
-//	if ret, ok := returns["GetUnitProperties"]; ok {
-//		m.On("GetUnitProperties", mock.Anything).Return(ret.Val, ret.Err)
-//	} else {
-//		m.On("GetUnitProperties", mock.Anything).Return(map[string]interface{}{}, nil)
-//	}
-// }
-
-// var defaultUnit = makeUnitStatus("unit1", "description1", "loaded", "active", "/org.freedesktop.system1/")
-
-// func makeUnitStatus(name, description, loadstate, activestate, path string) dbus.UnitStatus {
-//	return &dbus.UnitStatus{
-//		Name:        name,
-//		Description: description,
-//		LoadState:   loadstate,
-//		ActiveState: activestate,
-//		Path:        path,
-//	}
-// }
+func randomUnit() dbus.UnitStatus {
+	loadState := loadStates[rand.Intn(len(loadStates))]
+	activeState := activeStates[rand.Intn(len(activeStates))]
+	suffix := validTypes[rand.Intn(len(validTypes))]
+	var nameBytes []byte
+	for i := 0; i < 64; i++ {
+		nameBytes = append(nameBytes, alphabet[rand.Intn(len(alphabet))])
+	}
+	name := fmt.Sprintf("%s.%s", string(nameBytes), suffix)
+	return dbus.UnitStatus{
+		Name:        name,
+		Description: name,
+		LoadState:   loadState,
+		ActiveState: activeState,
+	}
+}
