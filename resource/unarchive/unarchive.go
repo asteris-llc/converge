@@ -203,11 +203,7 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 	// create the unarchive destination directory if it does not exist
 	u.destDir, err = os.Open(u.Destination)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(u.Destination, 1755)
-		if err != nil {
-			return false, err
-		}
-		return false, nil
+		return false, err
 	} else if err != nil {
 		return false, err
 	}

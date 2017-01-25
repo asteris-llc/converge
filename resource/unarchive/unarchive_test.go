@@ -171,7 +171,7 @@ func TestSetDirsAndContents(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(srcFile.Name())
 
-	t.Run("create destination", func(t *testing.T) {
+	t.Run("dest not exist", func(t *testing.T) {
 		notExistDir := "/tmp/unarchive_test12345678"
 		_, err := os.Stat(notExistDir)
 		require.True(t, os.IsNotExist(err))
@@ -186,9 +186,9 @@ func TestSetDirsAndContents(t *testing.T) {
 
 		_, exists := os.Stat(notExistDir)
 
-		assert.NoError(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("open %s: no such file or directory", u.Destination))
 		assert.False(t, evalDups)
-		assert.False(t, os.IsNotExist(exists))
+		assert.True(t, os.IsNotExist(exists))
 	})
 
 	t.Run("empty dest", func(t *testing.T) {
