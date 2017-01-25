@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
@@ -170,10 +171,6 @@ func TestSetDirsAndContents(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(srcFile.Name())
 
-	destDir, err := ioutil.TempDir("", "unarchive_test")
-	require.NoError(t, err)
-	defer os.Remove(destDir)
-
 	t.Run("create destination", func(t *testing.T) {
 		notExistDir := "/tmp/unarchive_test12345678"
 		_, err := os.Stat(notExistDir)
@@ -195,17 +192,95 @@ func TestSetDirsAndContents(t *testing.T) {
 	})
 
 	t.Run("empty dest", func(t *testing.T) {
+		emptyDir, err := ioutil.TempDir("", "unarchive_empty")
+		require.NoError(t, err)
+		defer os.RemoveAll(emptyDir)
+
 		u := &Unarchive{
 			Source:      srcFile.Name(),
-			Destination: destDir,
+			Destination: emptyDir,
 		}
 		defer os.RemoveAll(u.Destination)
+
+		_, tempFetchLoc, err := setupSetDirsAndContents(u, false)
+		require.NoError(t, err)
+		defer os.RemoveAll(tempFetchLoc)
+
+		expected := []string(nil)
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.False(t, evalDups)
 		assert.Equal(t, 0, len(u.destContents))
+		assert.Equal(t, expected, u.fetchContents)
+	})
+
+	t.Run("fetch dir", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "unarchive_dir")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		nestedDir, err := ioutil.TempDir(destDir, "unarchive_nest_dir")
+		require.NoError(t, err)
+		defer os.RemoveAll(nestedDir)
+
+		nestedFile, err := ioutil.TempFile(destDir, "unarchive_nest_file")
+		require.NoError(t, err)
+		defer os.Remove(nestedFile.Name())
+
+		u := &Unarchive{
+			Source:      srcFile.Name(),
+			Destination: destDir,
+		}
+		defer os.RemoveAll(u.Destination)
+
+		_, tempFetchLoc, err := setupSetDirsAndContents(u, false)
+		require.NoError(t, err)
+		defer os.RemoveAll(tempFetchLoc)
+
+		expected := [1]string{"fetchFileA.txt"}
+
+		evalDups, err := u.setDirsAndContents()
+
+		assert.NoError(t, err)
+		assert.True(t, evalDups)
+		assert.Equal(t, 1, len(u.fetchContents))
+		assert.Contains(t, u.fetchContents[0], expected[0])
+	})
+
+	t.Run("nested fetch dir", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "unarchive_dir")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		nestedDir, err := ioutil.TempDir(destDir, "unarchive_nest_dir")
+		require.NoError(t, err)
+		defer os.RemoveAll(nestedDir)
+
+		nestedFile, err := ioutil.TempFile(destDir, "unarchive_nest_file")
+		require.NoError(t, err)
+		defer os.Remove(nestedFile.Name())
+
+		u := &Unarchive{
+			Source:      srcFile.Name(),
+			Destination: destDir,
+		}
+		defer os.RemoveAll(u.Destination)
+
+		_, tempFetchLoc, err := setupSetDirsAndContents(u, true)
+		require.NoError(t, err)
+		defer os.RemoveAll(tempFetchLoc)
+
+		expected := [2]string{"fetchFileB.txt", "fetchFileC.txt"}
+
+		evalDups, err := u.setDirsAndContents()
+
+		assert.NoError(t, err)
+		assert.True(t, evalDups)
+		assert.Equal(t, 2, len(u.fetchContents))
+		assert.True(t, strings.Contains(u.fetchContents[0], expected[0]) || strings.Contains(u.fetchContents[1], expected[0]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expected[1]) || strings.Contains(u.fetchContents[1], expected[1]))
 	})
 }
 
@@ -213,4 +288,73 @@ func TestSetDirsAndContents(t *testing.T) {
 func TestEvaluateDuplicates(t *testing.T) {
 	t.Parallel()
 
+}
+
+// setupSetDirsAndContents performs some setup required to test
+// SetDirsAndContents
+func setupSetDirsAndContents(u *Unarchive, nested bool) (*resource.Status, string, error) {
+	status := resource.NewStatus()
+
+	err := u.setFetchLoc()
+	if err != nil {
+		return status, "", err
+	}
+
+	modifyFetchLocForTest(u)
+
+	f := stubFetch{}
+	status, tempFetchLoc, err := f.Apply(context.Background(), u.fetchLoc, nested)
+
+	// set the fetchLoc again based on the tempFetchLoc
+	u.fetchLoc = tempFetchLoc
+
+	return status, tempFetchLoc, err
+}
+
+// modifyFetchLocForTest changes the fetchLoc to reside in /tmp
+func modifyFetchLocForTest(u *Unarchive) {
+	info := strings.Split(u.fetchLoc, "/")
+	u.fetchLoc = "/tmp/" + info[len(info)-1]
+}
+
+// stubFetch stubs the Fetch resource
+type stubFetch struct{}
+
+func (f stubFetch) Apply(ctx context.Context, fetchLoc string, nested bool) (*resource.Status, string, error) {
+	status := resource.NewStatus()
+
+	info := strings.Split(fetchLoc, "/")
+
+	tempFetchLoc, err := ioutil.TempDir("", info[len(info)-1])
+	if err != nil {
+		return status, tempFetchLoc, err
+	}
+
+	if !nested {
+		_, err := ioutil.TempFile(tempFetchLoc, "fetchFileA.txt")
+		if err != nil {
+			return status, tempFetchLoc, err
+		}
+	} else {
+		nestedFetchDir, err := ioutil.TempDir(tempFetchLoc, "unarchive_fetch_nest")
+		if err != nil {
+			return status, tempFetchLoc, err
+		}
+
+		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileB.txt")
+		if err != nil {
+			return status, tempFetchLoc, err
+		}
+
+		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileC.txt")
+		if err != nil {
+			return status, tempFetchLoc, err
+		}
+	}
+
+	status.RaiseLevel(resource.StatusWillChange)
+	status.AddDifference("destination", "<absent>", fetchLoc, "")
+	status.AddMessage("fetched successfully")
+
+	return status, tempFetchLoc, nil
 }
