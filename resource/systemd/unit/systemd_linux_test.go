@@ -34,14 +34,51 @@ func TestInterface(t *testing.T) {
 func TestListUnits(t *testing.T) {
 	t.Parallel()
 
-	t.Run("list-units-returns-error", func(t *testing.T) {
-		t.Parallel()
-		m := &DbusMock{}
-		expected := errors.New("error1")
-		m.On("ListUnits").Return([]dbus.UnitStatus{}, expected)
-		l := LinuxExecutor{m}
-		_, err := l.ListUnits()
-		assert.Equal(t, expected, err)
+	t.Run("when-dbus-errors", func(t *testing.T) {
+		t.Run("list-units-returns-error", func(t *testing.T) {
+			t.Parallel()
+			m := &DbusMock{}
+			expected := errors.New("error1")
+			m.On("ListUnits").Return([]dbus.UnitStatus{}, expected)
+			l := LinuxExecutor{m}
+			_, err := l.ListUnits()
+			assert.Equal(t, expected, err)
+		})
+
+		t.Run("GetUnitProperties-fails", func(t *testing.T) {
+			t.Parallel()
+			m := &DbusMock{}
+			expected := errors.New("error1")
+			m.On("ListUnits").Return([]dbus.UnitStatus{dbus.UnitStatus{}}, nil)
+			m.On("GetUnitProperties", any).Return(map[string]interface{}{}, expected)
+			l := LinuxExecutor{m}
+			_, err := l.ListUnits()
+			assert.Equal(t, expected, err)
+		})
+		t.Run("GetUnitTypeProperties-fails", func(t *testing.T) {
+			t.Run("when-should-not-have-properties", func(t *testing.T) {
+				t.Parallel()
+				m := &DbusMock{}
+				expected := errors.New("error1")
+				m.On("ListUnits").Return([]dbus.UnitStatus{dbus.UnitStatus{}}, nil)
+				m.On("GetUnitProperties", any).Return(map[string]interface{}{}, nil)
+				m.On("GetUnitTypeProperties", any).Return(map[string]interface{}{}, expected)
+				l := LinuxExecutor{m}
+				_, err := l.ListUnits()
+				assert.NoError(t, err)
+			})
+			t.Run("when-should-have-type-properties", func(t *testing.T) {
+				t.Parallel()
+				m := &DbusMock{}
+				expected := errors.New("error1")
+				m.On("ListUnits").Return([]dbus.UnitStatus{dbus.UnitStatus{Name: "foo.service"}}, nil)
+				m.On("GetUnitProperties", any).Return(map[string]interface{}{}, nil)
+				m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, expected)
+				l := LinuxExecutor{m}
+				_, err := l.ListUnits()
+				assert.Equal(t, expected, err)
+			})
+		})
 	})
 
 	t.Run("returns-a-unit-for-each-returned-unit", func(t *testing.T) {
