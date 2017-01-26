@@ -24,4 +24,5 @@ type SystemdConnection interface {
 	ListUnitsByNames(units []string) ([]dbus.UnitStatus, error)
 	GetUnitProperties(unit string) (map[string]interface{}, error)
 	GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error)
+	StartUnit(name string, mode string, ch chan<- string) (int, error)
 }

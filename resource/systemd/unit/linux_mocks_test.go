@@ -27,36 +27,48 @@ import (
 // DbusMock mocks the actual dbus connection
 type DbusMock struct {
 	mock.Mock
+	startResp string
 }
 
 // ListUnits mocks ListUnits
-func (m DbusMock) ListUnits() ([]dbus.UnitStatus, error) {
+func (m *DbusMock) ListUnits() ([]dbus.UnitStatus, error) {
 	args := m.Called()
 	return args.Get(0).([]dbus.UnitStatus), args.Error(1)
 }
 
 // ListUnits mocks ListUnitsByNames
-func (m DbusMock) ListUnitsByNames(names []string) ([]dbus.UnitStatus, error) {
+func (m *DbusMock) ListUnitsByNames(names []string) ([]dbus.UnitStatus, error) {
 	args := m.Called(names)
 	return args.Get(0).([]dbus.UnitStatus), args.Error(1)
 }
 
 // GetUnitProperties mocks GetUnitProperties
-func (m DbusMock) GetUnitProperties(unit string) (map[string]interface{}, error) {
+func (m *DbusMock) GetUnitProperties(unit string) (map[string]interface{}, error) {
 	args := m.Called(unit)
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
 
 // GetUnitTypeProperties mocks GetUnitTypeProperties
-func (m DbusMock) GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error) {
+func (m *DbusMock) GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error) {
 	args := m.Called(unit, unitType)
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
 
 // Close Closes
-func (m DbusMock) Close() {
+func (m *DbusMock) Close() {
 	m.Called()
 	return
+}
+
+func (m *DbusMock) StartUnit(name string, mode string, ch chan<- string) (int, error) {
+	fmt.Println("StartUnit was called...")
+	args := m.Called(name, mode, ch)
+	if m.startResp != "" && ch != nil {
+		go func() {
+			ch <- m.startResp
+		}()
+	}
+	return args.Int(0), args.Error(1)
 }
 
 type rets struct {
@@ -70,7 +82,7 @@ type unitInfo struct {
 	TypeProps map[string]interface{}
 }
 
-func randomUnit() dbus.UnitStatus {
+func randomUnitStatus() dbus.UnitStatus {
 	loadState := loadStates[rand.Intn(len(loadStates))]
 	activeState := activeStates[rand.Intn(len(activeStates))]
 	suffix := validTypes[rand.Intn(len(validTypes))]
@@ -85,4 +97,43 @@ func randomUnit() dbus.UnitStatus {
 		LoadState:   loadState,
 		ActiveState: activeState,
 	}
+}
+
+func randomUnit(typeVal UnitType) *Unit {
+	st := randomUnitStatus()
+
+	name := fmt.Sprintf("%s.%s", st.Name, typeVal.Suffix())
+
+	u := &Unit{
+		Properties:  &Properties{},
+		Name:        name,
+		Description: name,
+		ActiveState: st.ActiveState,
+		LoadState:   st.LoadState,
+		Type:        typeVal,
+	}
+
+	switch typeVal {
+	case UnitTypeService:
+		u.ServiceProperties = &ServiceTypeProperties{}
+	case UnitTypeSocket:
+		u.SocketProperties = &SocketTypeProperties{}
+	case UnitTypeDevice:
+		u.DeviceProperties = &DeviceTypeProperties{}
+	case UnitTypeMount:
+		u.MountProperties = &MountTypeProperties{}
+	case UnitTypeAutoMount:
+		u.AutomountProperties = &AutomountTypeProperties{}
+	case UnitTypeSwap:
+		u.SwapProperties = &SwapTypeProperties{}
+	case UnitTypePath:
+		u.PathProperties = &PathTypeProperties{}
+	case UnitTypeTimer:
+		u.TimerProperties = &TimerTypeProperties{}
+	case UnitTypeSlice:
+		u.SliceProperties = &SliceTypeProperties{}
+	case UnitTypeScope:
+		u.ScopeProperties = &ScopeTypeProperties{}
+	}
+	return u
 }
