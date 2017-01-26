@@ -17,9 +17,10 @@
 package unit
 
 import (
-	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/stretchr/testify/assert"
@@ -431,34 +432,64 @@ func TestListUnits(t *testing.T) {
 // TestQueryUnit runs a test
 func TestQueryUnit(t *testing.T) {
 	t.Parallel()
-
 	t.Run("when-verify", func(t *testing.T) {
 		t.Parallel()
-
 		t.Run("when-unit-exists", func(t *testing.T) {
 			t.Parallel()
-
 			unit := randomUnit()
 			m := &DbusMock{}
 			m.On("ListUnits").Return([]dbus.UnitStatus{unit}, nil)
 			m.On("GetUnitProperties", any, any).Return(map[string]interface{}{}, nil)
 			m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, nil)
 			l := LinuxExecutor{m}
-
-			actual, err := l.QueryUnit(unitName, true)
+			actual, err := l.QueryUnit(unit.Name, true)
 			assert.NoError(t, err)
+			assertUnitStatusEqUnit(t, unit, actual)
 		})
-
 		t.Run("when-unit-not-exists", func(t *testing.T) {
 			t.Parallel()
-
+			unit := randomUnit()
+			m := &DbusMock{}
+			m.On("ListUnits").Return([]dbus.UnitStatus{randomUnit()}, nil)
+			m.On("GetUnitProperties", any, any).Return(map[string]interface{}{}, nil)
+			m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, nil)
+			l := LinuxExecutor{m}
+			_, err := l.QueryUnit(unit.Name, true)
+			assert.Error(t, err)
 		})
-
+		t.Run("when-list-units-error", func(t *testing.T) {
+			t.Parallel()
+			err := errors.New("error1")
+			m := &DbusMock{}
+			m.On("ListUnits").Return([]dbus.UnitStatus{}, err)
+			l := LinuxExecutor{m}
+			_, actual := l.QueryUnit("name1", true)
+			assert.Equal(t, err, errors.Cause(actual))
+		})
 	})
 
 	t.Run("when-not-verify", func(t *testing.T) {
-		t.Parallel()
-
+		t.Run("when-list-units-returns-value", func(t *testing.T) {
+			t.Parallel()
+			unit := randomUnit()
+			m := &DbusMock{}
+			m.On("ListUnitsByNames", any).Return([]dbus.UnitStatus{unit}, nil)
+			m.On("GetUnitProperties", any, any).Return(map[string]interface{}{}, nil)
+			m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, nil)
+			l := LinuxExecutor{m}
+			actual, err := l.QueryUnit(unit.Name, false)
+			assert.NoError(t, err)
+			assertUnitStatusEqUnit(t, unit, actual)
+		})
+		t.Run("when-list-units-returns-error", func(t *testing.T) {
+			t.Parallel()
+			expected := errors.New("error1")
+			m := &DbusMock{}
+			m.On("ListUnitsByNames", any).Return([]dbus.UnitStatus{}, expected)
+			l := LinuxExecutor{m}
+			_, actual := l.QueryUnit("name1", false)
+			assert.Equal(t, expected, errors.Cause(actual))
+		})
 	})
 
 }
