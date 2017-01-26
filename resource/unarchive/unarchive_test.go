@@ -81,14 +81,57 @@ func TestCheck(t *testing.T) {
 func TestApply(t *testing.T) {
 	t.Parallel()
 
+	srcDir, err := ioutil.TempDir("", "unarchive_srcDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(srcDir)
+
+	srcFile, err := ioutil.TempFile("", "unarchive_file.txt")
+	require.NoError(t, err)
+	defer os.Remove(srcFile.Name())
+
+	destDir, err := ioutil.TempDir("", "unarchive_destDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(destDir)
+
 	t.Run("error", func(t *testing.T) {
-		u := &Unarchive{}
+		t.Run("diff error", func(t *testing.T) {
+			u := &Unarchive{}
 
-		status, err := u.Apply(context.Background())
+			status, err := u.Apply(context.Background())
 
-		assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
-		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-		assert.True(t, status.HasChanges())
+			assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("setFetchLoc error", func(t *testing.T) {
+			u := &Unarchive{
+				Source:      srcDir,
+				Destination: destDir,
+			}
+
+			status, err := u.Apply(context.Background())
+
+			assert.EqualError(t, err, fmt.Sprintf("error setting fetch location: failed to get checksum of source: failed to hash: read %s: is a directory", srcDir))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("fetch error", func(t *testing.T) {
+			u := &Unarchive{
+				Source:      srcFile.Name(),
+				Destination: destDir,
+				HashType:    string(HashMD5),
+				Hash:        "notarealhashbutstringnonetheless",
+				Force:       false,
+			}
+
+			status, err := u.Apply(context.Background())
+
+			assert.EqualError(t, err, "failed to fetch: invalid checksum: encoding/hex: invalid byte: U+006E 'n'")
+			assert.Equal(t, resource.StatusFatal, status.StatusCode())
+			assert.False(t, status.HasChanges())
+		})
 	})
 }
 
@@ -288,6 +331,78 @@ func TestSetDirsAndContents(t *testing.T) {
 func TestEvaluateDuplicates(t *testing.T) {
 	t.Parallel()
 
+	destDir, err := ioutil.TempDir("", "destDir_unarchive")
+	require.NoError(t, err)
+	defer os.RemoveAll(destDir)
+	ddInfo, err := os.Open(destDir)
+	require.NoError(t, err)
+
+	fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+	require.NoError(t, err)
+	defer os.RemoveAll(fetchDir)
+	fdInfo, err := os.Open(fetchDir)
+	require.NoError(t, err)
+
+	t.Run("no duplicates", func(t *testing.T) {
+		u := &Unarchive{
+			destContents:  []string{"fileA.txt", "fileB.txt"},
+			destDir:       ddInfo,
+			fetchContents: []string{"fileC.txt", "fileD.txt"},
+			fetchDir:      fdInfo,
+		}
+
+		err = u.evaluateDuplicates()
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("duplicates", func(t *testing.T) {
+		fileADest, err := os.Create(destDir + "/fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileADest.Name())
+
+		fileAFetch, err := os.Create(fetchDir + "/fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileAFetch.Name())
+
+		t.Run("checksum match", func(t *testing.T) {
+			u := &Unarchive{
+				destContents:  []string{"fileA.txt"},
+				destDir:       ddInfo,
+				fetchContents: []string{"fileA.txt"},
+				fetchDir:      fdInfo,
+			}
+
+			err = u.evaluateDuplicates()
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("checksum mismatch", func(t *testing.T) {
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			_, err = fileBFetch.Write([]byte{1})
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Destination:   destDir,
+				destContents:  []string{"fileA.txt", "fileB.txt", "fileC.txt"},
+				destDir:       ddInfo,
+				fetchContents: []string{"fileA.txt", "fileB.txt"},
+				fetchDir:      fdInfo,
+			}
+
+			err = u.evaluateDuplicates()
+
+			assert.EqualError(t, err, fmt.Sprintf("will not replace, file \"fileB.txt\" exists at %q: checksum mismatch", u.Destination))
+		})
+	})
 }
 
 // setupSetDirsAndContents performs some setup required to test
