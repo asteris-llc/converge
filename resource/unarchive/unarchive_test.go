@@ -401,7 +401,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 			err = u.evaluateDuplicates()
 
-			assert.EqualError(t, err, fmt.Sprintf("will not replace, file \"fileB.txt\" exists at %q: checksum mismatch", u.Destination))
+			assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
 		})
 	})
 }

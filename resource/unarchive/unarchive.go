@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/asteris-llc/converge/resource"
@@ -257,35 +258,54 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 // and the temporary fetch/unarchive location
 func (u *Unarchive) evaluateDuplicates() error {
 	// determine which directory has fewer items in order to minimize operations
-	filesA := u.destContents
-	filesB := u.fetchContents
 	dirA := u.destDir.Name()
 	dirB := u.fetchDir.Name()
 	if len(u.fetchContents) < len(u.destContents) {
-		filesA = u.fetchContents
-		filesB = u.destContents
 		dirA = u.fetchDir.Name()
 		dirB = u.destDir.Name()
 	}
 
+	filesA := []string{}
+	filepath.Walk(dirA, func(path string, f os.FileInfo, err error) error {
+		filesA = append(filesA, path)
+		return nil
+	})
+
+	filesB := []string{}
+	filepath.Walk(dirB, func(path string, f os.FileInfo, err error) error {
+		filesB = append(filesB, path)
+		return nil
+	})
+
 	// for each item in filesA, determine if it also exists in filesB
 	// compare the checksums for the files - if mismatch, return an error
-	for _, fileA := range filesA {
-		for _, fileB := range filesB {
+	for _, fA := range filesA {
+		for _, fB := range filesB {
+			fileA := strings.TrimPrefix(fA, dirA)
+			fileB := strings.TrimPrefix(fB, dirB)
 
-			if fileA == fileB {
-				checkA, err := u.getChecksum(dirA + "/" + fileA)
+			faStat, err := os.Stat(fA)
+			if err != nil {
+				return err
+			}
+			fbStat, err := os.Stat(fB)
+			if err != nil {
+				return err
+			}
+
+			if !faStat.IsDir() && !fbStat.IsDir() && fileA == fileB {
+				checkA, err := u.getChecksum(fA)
 				if err != nil {
 					return err
 				}
 
-				checkB, err := u.getChecksum(dirB + "/" + fileB)
+				checkB, err := u.getChecksum(fB)
 				if err != nil {
 					return err
 				}
 
 				if checkA != checkB {
-					return fmt.Errorf("will not replace, file %q exists at %q: checksum mismatch", fileA, u.Destination)
+					return fmt.Errorf("will not replace, %q exists at %q: checksum mismatch", fileA, u.Destination)
 				}
 
 				break
@@ -297,32 +317,56 @@ func (u *Unarchive) evaluateDuplicates() error {
 }
 
 // copyToFinalDest copies the fetched and unarchived files from their temporary
-// directory to u.Destination
+// directory to the final destination
 func (u *Unarchive) copyToFinalDest() error {
-	// for each file in the fetchDir, copy to destDir
-	for _, file := range u.fetchContents {
-		// get the *File
-		src, err := os.Open(u.fetchDir.Name() + "/" + file)
+	fetchFiles := []string{}
+	filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+		fetchFiles = append(fetchFiles, path)
+		return nil
+	})
+
+	// for each item in the fetchDir, mkdir or copy to the final destination
+	for _, file := range fetchFiles {
+		src, err := os.Open(file)
 		if err != nil {
 			return err
 		}
 		defer src.Close()
 
-		// get src []byte
-		srcData, err := ioutil.ReadAll(src)
+		fileName := strings.TrimPrefix(file, u.fetchDir.Name())
+
+		fStat, err := os.Stat(file)
 		if err != nil {
 			return err
 		}
 
-		// get src FileInfo
-		srcInfo, err := src.Stat()
-		if err != nil {
-			return err
-		}
+		if fileName != "" {
+			if fStat.IsDir() {
+				err = os.Mkdir(u.destDir.Name()+fileName, fStat.Mode().Perm())
+				if err != nil {
+					if !os.IsNotExist(err) {
+						continue
+					}
+					return err
+				}
+			} else {
+				// get src []byte
+				srcData, err := ioutil.ReadAll(src)
+				if err != nil {
+					return err
+				}
 
-		err = ioutil.WriteFile(u.destDir.Name()+"/"+file, srcData, srcInfo.Mode().Perm())
-		if err != nil {
-			return err
+				// get src FileInfo
+				srcInfo, err := src.Stat()
+				if err != nil {
+					return err
+				}
+
+				err = ioutil.WriteFile(u.destDir.Name()+fileName, srcData, srcInfo.Mode().Perm())
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
