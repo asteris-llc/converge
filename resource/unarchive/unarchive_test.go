@@ -249,14 +249,15 @@ func TestSetDirsAndContents(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tempFetchLoc)
 
-		expected := []string(nil)
+		expected := [1]string{"fetchFileA.txt"}
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.False(t, evalDups)
+		assert.Equal(t, 1, len(u.fetchContents))
 		assert.Equal(t, 0, len(u.destContents))
-		assert.Equal(t, expected, u.fetchContents)
+		assert.Contains(t, u.fetchContents[0], expected[0])
 	})
 
 	t.Run("fetch dir", func(t *testing.T) {
@@ -401,6 +402,162 @@ func TestEvaluateDuplicates(t *testing.T) {
 			err = u.evaluateDuplicates()
 
 			assert.EqualError(t, err, fmt.Sprintf("will not replace, file \"fileB.txt\" exists at %q: checksum mismatch", u.Destination))
+		})
+	})
+}
+
+// TestCopyToFinalDest tests copyToFinalDest for Unarchive
+func TestCopyToFinalDest(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no duplicates", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		fileA, err := ioutil.TempFile(destDir, "fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileA.Name())
+
+		fileB, err := ioutil.TempFile(destDir, "fileB.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileB.Name())
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
+
+		fileC, err := ioutil.TempFile(fetchDir, "fileC.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileC.Name())
+
+		fileD, err := ioutil.TempFile(fetchDir, "fileD.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileD.Name())
+
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
+		dCont, err := ddInfo.Readdirnames(0)
+		require.NoError(t, err)
+
+		fCont, err := fdInfo.Readdirnames(0)
+		require.NoError(t, err)
+
+		u := &Unarchive{
+			destContents:  dCont,
+			destDir:       ddInfo,
+			fetchContents: fCont,
+			fetchDir:      fdInfo,
+		}
+
+		expected := append(dCont, fCont...)
+
+		testErr := u.copyToFinalDest()
+
+		ddActual, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		actual, err := ddActual.Readdirnames(0)
+		require.NoError(t, err)
+
+		assert.NoError(t, testErr)
+		assert.Equal(t, 4, len(actual))
+		assert.True(t, strings.Contains(actual[0], expected[0]) || strings.Contains(actual[1], expected[0]) || strings.Contains(actual[2], expected[0]) || strings.Contains(actual[3], expected[0]))
+		assert.True(t, strings.Contains(actual[0], expected[1]) || strings.Contains(actual[1], expected[1]) || strings.Contains(actual[2], expected[1]) || strings.Contains(actual[3], expected[1]))
+		assert.True(t, strings.Contains(actual[0], expected[2]) || strings.Contains(actual[1], expected[2]) || strings.Contains(actual[2], expected[2]) || strings.Contains(actual[3], expected[2]))
+		assert.True(t, strings.Contains(actual[0], expected[3]) || strings.Contains(actual[1], expected[3]) || strings.Contains(actual[2], expected[3]) || strings.Contains(actual[3], expected[3]))
+	})
+
+	t.Run("duplicates", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		fileADest, err := os.Create(destDir + "/fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileADest.Name())
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
+
+		fileAFetch, err := os.Create(fetchDir + "/fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileAFetch.Name())
+
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
+		t.Run("checksum match", func(t *testing.T) {
+			u := &Unarchive{
+				destContents:  []string{"fileA.txt"},
+				destDir:       ddInfo,
+				fetchContents: []string{"fileA.txt"},
+				fetchDir:      fdInfo,
+			}
+
+			expected := []string{"fileA.txt"}
+
+			testErr := u.copyToFinalDest()
+
+			ddActual, err := os.Open(destDir)
+			require.NoError(t, err)
+
+			actual, err := ddActual.Readdirnames(0)
+			require.NoError(t, err)
+
+			assert.NoError(t, testErr)
+			assert.Equal(t, 1, len(actual))
+			assert.Equal(t, actual[0], expected[0])
+		})
+
+		t.Run("checksum mismatch", func(t *testing.T) {
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			_, err = fileBFetch.Write([]byte{1})
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Destination:   destDir,
+				destContents:  []string{"fileA.txt", "fileB.txt"},
+				destDir:       ddInfo,
+				fetchContents: []string{"fileA.txt", "fileB.txt"},
+				fetchDir:      fdInfo,
+			}
+
+			expected := []string{"fileA.txt", "fileB.txt"}
+
+			testErr := u.copyToFinalDest()
+
+			ddActual, err := os.Open(destDir)
+			require.NoError(t, err)
+
+			actual, err := ddActual.Readdirnames(0)
+			require.NoError(t, err)
+
+			checksumBDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumBFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+
+			assert.NoError(t, testErr)
+			assert.Equal(t, 2, len(actual))
+			assert.True(t, strings.Contains(actual[0], expected[0]) || strings.Contains(actual[1], expected[0]))
+			assert.True(t, strings.Contains(actual[0], expected[1]) || strings.Contains(actual[1], expected[1]))
+			assert.Equal(t, checksumBDest, checksumBFetch)
 		})
 	})
 }

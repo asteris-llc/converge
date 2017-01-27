@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -163,6 +164,12 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 		}
 	}
 
+	err = u.copyToFinalDest()
+	if err != nil {
+		status.RaiseLevel(resource.StatusFatal)
+		return status, errors.Wrapf(err, "error placing files in %q", u.Destination)
+	}
+
 	status.AddMessage(fmt.Sprintf("completed fetch and unarchive %q", u.Source))
 
 	return status, nil
@@ -214,12 +221,6 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 		return false, errors.Wrapf(err, "could not read files from %q", u.Destination)
 	}
 
-	// if there are no files, we do not need to compare checksums with files in
-	// the temporary fetch/unarchive location
-	if len(u.destContents) == 0 {
-		return false, nil
-	}
-
 	// read the contents of the temporary fetch/unarchive location
 	fetchDir := u.fetchLoc
 	u.fetchDir, err = os.Open(fetchDir)
@@ -244,6 +245,11 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 		return false, errors.Wrapf(err, "could not read files from %q", fetchDir)
 	}
 
+	// if there are no files, we do not need to compare checksums with files in
+	// the temporary fetch/unarchive location
+	if len(u.destContents) == 0 {
+		return false, nil
+	}
 	return true, nil
 }
 
@@ -284,6 +290,39 @@ func (u *Unarchive) evaluateDuplicates() error {
 
 				break
 			}
+		}
+	}
+
+	return nil
+}
+
+// copyToFinalDest copies the fetched and unarchived files from their temporary
+// directory to u.Destination
+func (u *Unarchive) copyToFinalDest() error {
+	// for each file in the fetchDir, copy to destDir
+	for _, file := range u.fetchContents {
+		// get the *File
+		src, err := os.Open(u.fetchDir.Name() + "/" + file)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		// get src []byte
+		srcData, err := ioutil.ReadAll(src)
+		if err != nil {
+			return err
+		}
+
+		// get src FileInfo
+		srcInfo, err := src.Stat()
+		if err != nil {
+			return err
+		}
+
+		err = ioutil.WriteFile(u.destDir.Name()+"/"+file, srcData, srcInfo.Mode().Perm())
+		if err != nil {
+			return err
 		}
 	}
 
