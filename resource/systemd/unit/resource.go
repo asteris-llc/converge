@@ -15,6 +15,8 @@
 package unit
 
 import (
+	"fmt"
+
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
 )
@@ -33,28 +35,65 @@ type Resource struct {
 	// The full path to the unit file on disk
 	Path string `export:"path"`
 
-	// The name of the process that is executing
-	PSName string `export:"process_name"`
-
-	// The PID of the current job
-	Pid string `export:"pid"`
-
 	// Description of the services
 	Description string `export:"description"`
+
+	// The active state of the unit
+	ActiveState string `export:"activestate"`
+
+	// The load state of the unit
+	LoadState string `export:"loadstate"`
+
+	// The type of the unit
+	Type UnitType `export:"type"`
 
 	// The status represents the current status of the process.  It will be
 	// initialized during planning and updated after apply to reflect any changes.
 
 	Status string `export:"status"`
-	Type   string `export:"type"`
 
-	sendSignal bool
+	Properties          *Properties              `export:"global_properties"`
+	ServiceProperties   *ServiceTypeProperties   `export:"service_properties"`
+	SocketProperties    *SocketTypeProperties    `export:"SocketProperties"`
+	DeviceProperties    *DeviceTypeProperties    `export:"DeviceProperties"`
+	MountProperties     *MountTypeProperties     `export:"MountProperties"`
+	AutomountProperties *AutomountTypeProperties `export:"AutomountProperties"`
+	SwapProperties      *SwapTypeProperties      `export:"SwapProperties"`
+	PathProperties      *PathTypeProperties      `export:"PathProperties"`
+	TimerProperties     *TimerTypeProperties     `export:"TimerProperties"`
+	SliceProperties     *SliceTypeProperties     `export:"SliceProperties"`
+	ScopeProperties     *ScopeTypeProperties     `export:"ScopeProperties"`
 
+	sendSignal      bool
 	systemdExecutor SystemdExecutor
 }
 
 func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
+
+	if err != nil {
+		return nil, fmt.Errorf("No unit named '%s'. Is it loaded?", r.Name)
+	}
+
+	r.populateFromUnit(u)
+
+	if r.sendSignal {
+		status.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage(fmt.Sprintf("Sending signal `%s` to process", r.SignalName))
+	}
+
+	if r.Reload {
+		status.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage("Reloading unit configuration")
+		status.AddDifference("state", u.ActiveState, "reloaded", "")
+	}
+
+	if r.State == "restared" {
+		status.RaiseLevel(resource.StatusWillChange)
+		status.AddMessage("Restarting unit")
+		status.AddDifference("state", u.ActiveState, "restarted", "")
+	}
 
 	return status, nil
 }
@@ -62,4 +101,56 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	return status, nil
+}
+
+// We copy data from the unit into the resource to make the UX nicer for users
+// who want to access systemd information.
+func (r *Resource) populateFromUnit(u *Unit) {
+	r.Description = u.Description
+	r.Path = u.Path
+	r.Type = u.Type
+	r.Status = u.ActiveState
+	r.Properties = u.Properties
+	r.ServiceProperties = u.ServiceProperties
+	r.SocketProperties = u.SocketProperties
+	r.DeviceProperties = u.DeviceProperties
+	r.MountProperties = u.MountProperties
+	r.AutomountProperties = u.AutomountProperties
+	r.SwapProperties = u.SwapProperties
+	r.PathProperties = u.PathProperties
+	r.TimerProperties = u.TimerProperties
+	r.SliceProperties = u.SliceProperties
+	r.ScopeProperties = u.ScopeProperties
+}
+
+func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
+	switch u.ActiveState {
+	case "active":
+		st.AddMessage("already running")
+		return false
+	case "reloading":
+		st.AddMessage("unit is reloading, will re-check status during apply")
+		st.RaiseLevel(resource.StatusMayChange)
+	case "inactive":
+		st.RaiseLevel(resource.StatusWillChange)
+		st.AddDifference("state", "inactive", "active", "")
+	case "failed":
+		reason := getFailedReason(u)
+		st.AddMessage(fmt.Sprintf("unit has failed due to: %s; will attempt to restart", reason))
+		st.RaiseLevel(resource.StatusWillChange)
+		st.AddDifference("state", "failed", "active", "")
+	case "activating":
+		st.AddMessage("unit is alread activating, will re-check status during apply")
+		st.RaiseLevel(resource.StatusMayChange)
+		st.AddDifference("state", "activating", "active", "")
+	case "deactivating":
+		st.AddMessage("unit is currently deactivating, will re-check status during apply")
+		st.RaiseLevel(resource.StatusMayChange)
+		st.AddDifference("state", "deactivating", "active", "")
+	}
+	return false
+}
+
+func getFailedReason(u *Unit) string {
+	return ""
 }
