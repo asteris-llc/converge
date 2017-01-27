@@ -131,25 +131,59 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 	case "reloading":
 		st.AddMessage("unit is reloading, will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
+		return true
 	case "inactive":
 		st.RaiseLevel(resource.StatusWillChange)
 		st.AddDifference("state", "inactive", "active", "")
+		return true
 	case "failed":
 		reason := getFailedReason(u)
 		st.AddMessage("unit has failed; will attempt to restart")
 		st.AddMessage(fmt.Sprintf("unit previously failed, the message was: %s", reason))
 		st.RaiseLevel(resource.StatusWillChange)
 		st.AddDifference("state", "failed", "active", "")
+		return true
 	case "activating":
 		st.AddMessage("unit is alread activating, will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
-		st.AddDifference("state", "activating", "active", "")
+		return false
 	case "deactivating":
 		st.AddMessage("unit is currently deactivating, will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
 		st.AddDifference("state", "deactivating", "active", "")
+		return true
 	}
-	return false
+	return true
+}
+
+func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
+	switch u.ActiveState {
+	case "active":
+		st.AddDifference("state", "active", "inactive", "")
+		st.RaiseLevel(resource.StatusWillChange)
+		return true
+	case "reloading":
+		st.AddMessage("unit is reloading; will re-check status during apply")
+		st.AddDifference("state", "reloading", "inactive", "")
+		st.RaiseLevel(resource.StatusMayChange)
+		return true
+	case "inactive":
+		st.AddMessage("unit is already inactive")
+		return false
+	case "failed":
+		st.AddMessage("unit is not running because it has failed.  Will not restart")
+		st.AddMessage("unit failed due to: " + getFailedReason(u))
+		return false
+	case "activating":
+		st.AddDifference("state", "active", "inactive", "")
+		st.RaiseLevel(resource.StatusMayChange)
+		return true
+	case "deactivating":
+		st.AddMessage("unit is deactivating.  Will re-check status during apply")
+		st.RaiseLevel(resource.StatusMayChange)
+		return false
+	}
+	return true
 }
 
 func getFailedReason(u *Unit) string {
