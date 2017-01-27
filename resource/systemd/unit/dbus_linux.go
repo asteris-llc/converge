@@ -25,4 +25,6 @@ type SystemdConnection interface {
 	GetUnitProperties(unit string) (map[string]interface{}, error)
 	GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error)
 	StartUnit(name string, mode string, ch chan<- string) (int, error)
+	StopUnit(name string, mode string, ch chan<- string) (int, error)
+	RestartUnit(name string, mode string, ch chan<- string) (int, error)
 }

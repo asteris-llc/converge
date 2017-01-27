@@ -27,7 +27,9 @@ import (
 // DbusMock mocks the actual dbus connection
 type DbusMock struct {
 	mock.Mock
-	startResp string
+	startResp   string
+	stopResp    string
+	restartResp string
 }
 
 // ListUnits mocks ListUnits
@@ -61,11 +63,30 @@ func (m *DbusMock) Close() {
 }
 
 func (m *DbusMock) StartUnit(name string, mode string, ch chan<- string) (int, error) {
-	fmt.Println("StartUnit was called...")
 	args := m.Called(name, mode, ch)
 	if m.startResp != "" && ch != nil {
 		go func() {
 			ch <- m.startResp
+		}()
+	}
+	return args.Int(0), args.Error(1)
+}
+
+func (m *DbusMock) StopUnit(name string, mode string, ch chan<- string) (int, error) {
+	args := m.Called(name, mode, ch)
+	if m.stopResp != "" && ch != nil {
+		go func() {
+			ch <- m.stopResp
+		}()
+	}
+	return args.Int(0), args.Error(1)
+}
+
+func (m *DbusMock) RestartUnit(name string, mode string, ch chan<- string) (int, error) {
+	args := m.Called(name, mode, ch)
+	if m.restartResp != "" && ch != nil {
+		go func() {
+			ch <- m.restartResp
 		}()
 	}
 	return args.Int(0), args.Error(1)

@@ -534,7 +534,7 @@ func TestStartUnit(t *testing.T) {
 			m.On("StartUnit", any, any, any).Return(1, nil)
 			l := LinuxExecutor{m}
 			err := l.StartUnit(u)
-			assert.Equal(t, err, fmt.Errorf("operation timed out while starting %s", u.Name))
+			assert.Equal(t, err, fmt.Errorf("operation timed out while starting: %s", u.Name))
 		})
 		t.Run("failed", func(t *testing.T) {
 			t.Parallel()
@@ -543,7 +543,7 @@ func TestStartUnit(t *testing.T) {
 			m.On("StartUnit", any, any, any).Return(1, nil)
 			l := LinuxExecutor{m}
 			err := l.StartUnit(u)
-			assert.Equal(t, err, fmt.Errorf("operation failed while starting %s", u.Name))
+			assert.Equal(t, err, fmt.Errorf("operation failed while starting: %s", u.Name))
 		})
 		t.Run("dependency", func(t *testing.T) {
 			t.Parallel()
@@ -552,7 +552,7 @@ func TestStartUnit(t *testing.T) {
 			m.On("StartUnit", any, any, any).Return(1, nil)
 			l := LinuxExecutor{m}
 			err := l.StartUnit(u)
-			assert.Equal(t, err, fmt.Errorf("operation depends on a failed unit when starting %s", u.Name))
+			assert.Equal(t, err, fmt.Errorf("operation depends on a failed unit when starting: %s", u.Name))
 		})
 		t.Run("skipped", func(t *testing.T) {
 			t.Parallel()
@@ -581,6 +581,177 @@ func TestStartUnit(t *testing.T) {
 		m.On("StartUnit", any, any, any).Return(1, expected)
 		l := LinuxExecutor{m}
 		actual := l.StartUnit(u)
+		assert.Equal(t, expected, actual)
+	})
+}
+
+// TestStopUnit runs a test
+func TestStopUnit(t *testing.T) {
+	t.Parallel()
+	t.Run("call-stop-unit", func(t *testing.T) {
+		t.Parallel()
+		u := randomUnit(UnitTypeService)
+		m := &DbusMock{stopResp: "done"}
+		m.On("StopUnit", any, any, any).Return(1, nil)
+		l := LinuxExecutor{m}
+		err := l.StopUnit(u)
+		assert.NoError(t, err)
+		m.AssertCalled(t, "StopUnit", any, any, any)
+	})
+	t.Run("test-channel-return-values", func(t *testing.T) {
+		t.Parallel()
+		t.Run("done", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "done"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.NoError(t, err)
+		})
+		t.Run("canceled", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "canceled"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation was cancelled while stopping: %s", u.Name))
+		})
+		t.Run("timeout", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "timeout"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation timed out while stopping: %s", u.Name))
+		})
+		t.Run("failed", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "failed"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation failed while stopping: %s", u.Name))
+		})
+		t.Run("dependency", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "dependency"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation depends on a failed unit when stopping: %s", u.Name))
+		})
+		t.Run("skipped", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "skipped"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.NoError(t, err)
+		})
+		t.Run("bad-message", func(t *testing.T) {
+			t.Parallel()
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{stopResp: "msg1"}
+			m.On("StopUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.StopUnit(u)
+			assert.Equal(t, err, fmt.Errorf("unknown systemd status: msg1"))
+		})
+	})
+	t.Run("stop-unit-returns-error", func(t *testing.T) {
+		t.Parallel()
+		expected := errors.New("err1")
+		u := randomUnit(UnitTypeService)
+		m := &DbusMock{}
+		m.On("StopUnit", any, any, any).Return(1, expected)
+		l := LinuxExecutor{m}
+		actual := l.StopUnit(u)
+		assert.Equal(t, expected, actual)
+	})
+}
+
+// Test RestartUnit runs a test
+func TestRestartUnit(t *testing.T) {
+	t.Run("call-restart-unit", func(t *testing.T) {
+		u := randomUnit(UnitTypeService)
+		m := &DbusMock{restartResp: "done"}
+		m.On("RestartUnit", any, any, any).Return(1, nil)
+		l := LinuxExecutor{m}
+		err := l.RestartUnit(u)
+		assert.NoError(t, err)
+		m.AssertCalled(t, "RestartUnit", any, any, any)
+	})
+	t.Run("test-channel-return-values", func(t *testing.T) {
+		t.Run("done", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "done"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.NoError(t, err)
+		})
+		t.Run("canceled", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "canceled"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation was cancelled while restarting: %s", u.Name))
+		})
+		t.Run("timeout", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "timeout"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation timed out while restarting: %s", u.Name))
+		})
+		t.Run("failed", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "failed"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation failed while restarting: %s", u.Name))
+		})
+		t.Run("dependency", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "dependency"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.Equal(t, err, fmt.Errorf("operation depends on a failed unit when restarting: %s", u.Name))
+		})
+		t.Run("skipped", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "skipped"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.NoError(t, err)
+		})
+		t.Run("bad-message", func(t *testing.T) {
+			u := randomUnit(UnitTypeService)
+			m := &DbusMock{restartResp: "msg1"}
+			m.On("RestartUnit", any, any, any).Return(1, nil)
+			l := LinuxExecutor{m}
+			err := l.RestartUnit(u)
+			assert.Equal(t, err, fmt.Errorf("unknown systemd status: msg1"))
+		})
+	})
+	t.Run("restart-unit-returns-error", func(t *testing.T) {
+		expected := errors.New("err1")
+		u := randomUnit(UnitTypeService)
+		m := &DbusMock{}
+		m.On("RestartUnit", any, any, any).Return(1, expected)
+		l := LinuxExecutor{m}
+		actual := l.RestartUnit(u)
 		assert.Equal(t, expected, actual)
 	})
 }
