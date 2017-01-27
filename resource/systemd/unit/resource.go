@@ -136,7 +136,8 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 		st.AddDifference("state", "inactive", "active", "")
 	case "failed":
 		reason := getFailedReason(u)
-		st.AddMessage(fmt.Sprintf("unit has failed due to: %s; will attempt to restart", reason))
+		st.AddMessage("unit has failed; will attempt to restart")
+		st.AddMessage(fmt.Sprintf("unit previously failed, the message was: %s", reason))
 		st.RaiseLevel(resource.StatusWillChange)
 		st.AddDifference("state", "failed", "active", "")
 	case "activating":
@@ -152,5 +153,40 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 }
 
 func getFailedReason(u *Unit) string {
-	return ""
+	var reason string
+	switch u.Type {
+	case UnitTypeService:
+		reason = u.ServiceProperties.Result
+	case UnitTypeSocket:
+		reason = u.SocketProperties.Result
+	case UnitTypeMount:
+		reason = u.MountProperties.Result
+	case UnitTypeAutoMount:
+		reason = u.MountProperties.Result
+	case UnitTypeSwap:
+		reason = u.SwapProperties.Result
+	case UnitTypeTimer:
+		reason = u.TimerProperties.Result
+	}
+	switch reason {
+	case "success":
+		return "the unit was activated successfully"
+	case "resources":
+		return "not enough resources available to create the process"
+	case "timeout":
+		return "a timeout occurred while starting the unit"
+	case "exit-code":
+		return "unit exited with a non-zero exit code"
+	case "signal":
+		return "unit exited due to an unhandled signal"
+	case "core-dump":
+		return "unit exited and dumped core"
+	case "watchdog":
+		return "watchdog terminated the service due to slow or missing responses"
+	case "start-limit":
+		return "process has been restarted too many times"
+	case "service-failed-permanent":
+		return "continual failure of this socket"
+	}
+	return "unkown reason"
 }
