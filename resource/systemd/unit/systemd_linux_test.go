@@ -857,3 +857,22 @@ func TestReloadUnit(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+
+func TestSendSignal(t *testing.T) {
+	t.Parallel()
+	u := randomUnit(UnitTypeService)
+	m := &DbusMock{}
+	m.On("KillUnit", any, any).Return()
+	l := LinuxExecutor{m}
+	signals := []Signal{SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
+		SIGEMT, SIGFPE, SIGKILL, SIGBUS, SIGSEGV, SIGSYS, SIGPIPE, SIGALRM, SIGTERM,
+		SIGURG, SIGSTOP, SIGTSTP, SIGCONT, SIGCHLD, SIGTTIN, SIGTTOU, SIGIO,
+		SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, SIGWINCH, SIGINFO, SIGUSR1, SIGUSR2}
+	for _, signal := range signals {
+		t.Run(signal.String(), func(t *testing.T) {
+			t.Parallel()
+			l.SendSignal(u, signal)
+			m.AssertCalled(t, "KillUnit", u.Name, int32(signal))
+		})
+	}
+}

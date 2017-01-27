@@ -28,4 +28,5 @@ type SystemdConnection interface {
 	StopUnit(name string, mode string, ch chan<- string) (int, error)
 	RestartUnit(name string, mode string, ch chan<- string) (int, error)
 	ReloadUnit(name string, mode string, ch chan<- string) (int, error)
+	KillUnit(name string, signal int32)
 }

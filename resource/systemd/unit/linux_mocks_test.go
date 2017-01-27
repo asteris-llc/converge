@@ -103,6 +103,11 @@ func (m *DbusMock) ReloadUnit(name string, mode string, ch chan<- string) (int, 
 	return args.Int(0), args.Error(1)
 }
 
+func (m *DbusMock) KillUnit(name string, signal int32) {
+	m.Called(name, signal)
+	return
+}
+
 type rets struct {
 	Val interface{}
 	Err error
