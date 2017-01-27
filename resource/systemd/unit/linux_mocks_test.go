@@ -30,6 +30,7 @@ type DbusMock struct {
 	startResp   string
 	stopResp    string
 	restartResp string
+	reloadResp  string
 }
 
 // ListUnits mocks ListUnits
@@ -87,6 +88,16 @@ func (m *DbusMock) RestartUnit(name string, mode string, ch chan<- string) (int,
 	if m.restartResp != "" && ch != nil {
 		go func() {
 			ch <- m.restartResp
+		}()
+	}
+	return args.Int(0), args.Error(1)
+}
+
+func (m *DbusMock) ReloadUnit(name string, mode string, ch chan<- string) (int, error) {
+	args := m.Called(name, mode, ch)
+	if m.reloadResp != "" && ch != nil {
+		go func() {
+			ch <- m.reloadResp
 		}()
 	}
 	return args.Int(0), args.Error(1)
