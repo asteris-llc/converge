@@ -15,7 +15,9 @@
 package unarchive
 
 import (
+	"archive/zip"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -132,6 +134,123 @@ func TestApply(t *testing.T) {
 			assert.EqualError(t, err, "failed to fetch: invalid checksum: encoding/hex: invalid byte: U+006E 'n'")
 			assert.Equal(t, resource.StatusFatal, status.StatusCode())
 			assert.False(t, status.HasChanges())
+		})
+
+		t.Run("evaluateDuplicates error", func(t *testing.T) {
+			destDir, err := ioutil.TempDir("", "destDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(destDir)
+
+			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(fetchDir)
+
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			_, err = fileBFetch.Write([]byte{1})
+			require.NoError(t, err)
+
+			// zip fetchDir to use as our unarchive source
+			zipFile := "/tmp/unarchive_test_zip.zip"
+			err = zipFiles(fetchDir, zipFile)
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Source:      zipFile,
+				Destination: destDir,
+			}
+			defer os.Remove(u.Source)
+			defer os.RemoveAll(u.Destination)
+
+			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			require.NotEqual(t, checksumDest, checksumFetch)
+		})
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Run("checksum match", func(t *testing.T) {
+			destDir, err := ioutil.TempDir("", "destDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(destDir)
+
+			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(fetchDir)
+
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			// zip fetchDir to use as our unarchive source
+			zipFile := "/tmp/unarchive_test_zip.zip"
+			err = zipFiles(fetchDir, zipFile)
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Source:      zipFile,
+				Destination: destDir,
+			}
+			defer os.Remove(u.Source)
+			defer os.RemoveAll(u.Destination)
+
+			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			require.Equal(t, checksumDest, checksumFetch)
+		})
+
+		t.Run("checksum mismatch", func(t *testing.T) {
+			destDir, err := ioutil.TempDir("", "destDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(destDir)
+
+			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(fetchDir)
+
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			_, err = fileBFetch.Write([]byte{1})
+			require.NoError(t, err)
+
+			// zip fetchDir to use as our unarchive source
+			zipFile := "/tmp/unarchive_test_zip.zip"
+			err = zipFiles(fetchDir, zipFile)
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Source:      zipFile,
+				Destination: destDir,
+				Force:       true,
+			}
+			defer os.Remove(u.Source)
+			defer os.RemoveAll(u.Destination)
+
+			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			require.NotEqual(t, checksumDest, checksumFetch)
 		})
 	})
 }
@@ -866,8 +985,7 @@ func setupSetDirsAndContents(u *Unarchive, nested bool) (*resource.Status, strin
 
 	modifyFetchLocForTest(u)
 
-	f := stubFetch{}
-	status, tempFetchLoc, err := f.Apply(context.Background(), u.fetchLoc, nested)
+	status, tempFetchLoc, err := fetchApply(u.fetchLoc, nested)
 
 	// set the fetchLoc again based on the tempFetchLoc
 	u.fetchLoc = tempFetchLoc
@@ -881,10 +999,9 @@ func modifyFetchLocForTest(u *Unarchive) {
 	u.fetchLoc = "/tmp/" + info[len(info)-1]
 }
 
-// stubFetch stubs the Fetch resource
-type stubFetch struct{}
-
-func (f stubFetch) Apply(ctx context.Context, fetchLoc string, nested bool) (*resource.Status, string, error) {
+// fetchApply sets up a temporary fetch location with file(s) based on the
+// nested flag
+func fetchApply(fetchLoc string, nested bool) (*resource.Status, string, error) {
 	status := resource.NewStatus()
 
 	info := strings.Split(fetchLoc, "/")
@@ -921,4 +1038,67 @@ func (f stubFetch) Apply(ctx context.Context, fetchLoc string, nested bool) (*re
 	status.AddMessage("fetched successfully")
 
 	return status, tempFetchLoc, nil
+}
+
+// zipFiles zips the files in source and places them in destination
+func zipFiles(source, destination string) error {
+	base := ""
+
+	zipFile, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+
+	w := zip.NewWriter(zipFile)
+	defer w.Close()
+
+	f, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
+
+	if f.IsDir() {
+		base = filepath.Base(source)
+	}
+
+	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(f)
+		if err != nil {
+			return err
+		}
+
+		if base != "" {
+			header.Name = filepath.Join(base, strings.TrimPrefix(path, source))
+		}
+
+		if f.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := w.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if f.IsDir() {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(writer, file)
+		return err
+	})
+
+	return nil
 }

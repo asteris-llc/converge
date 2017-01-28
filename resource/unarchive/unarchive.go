@@ -86,11 +86,17 @@ type Unarchive struct {
 
 	// the location of the fetched file
 	fetchLoc string
+
+	hasApplied bool
 }
 
 // Check if changes are needed for unarchive
 func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+
+	if u.hasApplied {
+		return status, nil
+	}
 
 	err := u.Diff(status)
 	if err != nil {
@@ -160,6 +166,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 			status.RaiseLevel(resource.StatusFatal)
 			if strings.Contains(err.Error(), "checksum mismatch") {
 				status.AddMessage("use the \"force\" option to replace all files with checksum mismatch")
+				u.hasApplied = true
 			}
 			return status, err
 		}
@@ -172,6 +179,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	}
 
 	status.AddMessage(fmt.Sprintf("completed fetch and unarchive %q", u.Source))
+	u.hasApplied = true
 
 	return status, nil
 }
