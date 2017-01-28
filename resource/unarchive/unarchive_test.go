@@ -43,30 +43,69 @@ func TestUnarchiveInterface(t *testing.T) {
 func TestCheck(t *testing.T) {
 	t.Parallel()
 
-	src, err := ioutil.TempFile("", "unarchive_test.txt")
+	srcFile, err := ioutil.TempFile("", "unarchive_test.txt")
 	require.NoError(t, err)
-	defer os.Remove(src.Name())
+	defer os.Remove(srcFile.Name())
 
 	destInvalid, err := ioutil.TempFile("", "unarchive_test.txt")
 	require.NoError(t, err)
 	defer os.Remove(destInvalid.Name())
 
+	srcDir, err := ioutil.TempDir("", "unarchive_srcDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(srcDir)
+
+	destDir, err := ioutil.TempDir("", "unarchive_destDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(destDir)
+
+	tmpFetchDir, err := ioutil.TempDir("", "tmpFetchDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpFetchDir)
+
 	t.Run("error", func(t *testing.T) {
-		u := &Unarchive{
-			Source:      src.Name(),
-			Destination: destInvalid.Name(),
-		}
+		t.Run("diff error", func(t *testing.T) {
+			u := &Unarchive{
+				Source:      srcFile.Name(),
+				Destination: destInvalid.Name(),
+			}
 
-		status, err := u.Check(context.Background(), fakerenderer.New())
+			status, err := u.Check(context.Background(), fakerenderer.New())
 
-		assert.EqualError(t, err, fmt.Sprintf("invalid destination %q, must be directory", u.Destination))
-		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-		assert.True(t, status.HasChanges())
+			assert.EqualError(t, err, fmt.Sprintf("invalid destination %q, must be directory", u.Destination))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("fetch error", func(t *testing.T) {
+			u := &Unarchive{
+				Source:      srcFile.Name(),
+				Destination: destDir,
+				HashType:    string(HashMD5),
+				Hash:        "notarealhashbutstringnonetheless",
+				Force:       false,
+				fetchLoc:    destInvalid.Name(),
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
+			}
+
+			status, err := u.Check(context.Background(), fakerenderer.New())
+
+			assert.EqualError(t, err, fmt.Sprintf("cannot attempt unarchive: fetch error: invalid destination %q for unarchiving, must be directory", u.fetch.Destination))
+			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+			assert.True(t, status.HasChanges())
+		})
 	})
 
 	t.Run("unarchive", func(t *testing.T) {
 		u := &Unarchive{
-			Source:      src.Name(),
+			Source:      srcFile.Name(),
 			Destination: "/tmp",
 		}
 
@@ -97,6 +136,10 @@ func TestApply(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(destDir)
 
+	tmpFetchDir, err := ioutil.TempDir("", "tmpFetchDir")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpFetchDir)
+
 	t.Run("error", func(t *testing.T) {
 		t.Run("diff error", func(t *testing.T) {
 			u := &Unarchive{}
@@ -115,10 +158,8 @@ func TestApply(t *testing.T) {
 				HashType:    string(HashMD5),
 				Hash:        "notarealhashbutstringnonetheless",
 				Force:       false,
+				fetchLoc:    tmpFetchDir,
 			}
-
-			err = u.setFetchLoc()
-			require.NoError(t, err)
 
 			u.fetch = fetch.Fetch{
 				Source:      u.Source,
@@ -163,19 +204,79 @@ func TestApply(t *testing.T) {
 			u := &Unarchive{
 				Source:      zipFile,
 				Destination: destDir,
+				fetchLoc:    tmpFetchDir,
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
+			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
+
+			status, err := u.Apply(context.Background())
+
+			assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
+			assert.Equal(t, "use the \"force\" option to replace all files with checksum mismatch", status.Messages()[0])
+			assert.Equal(t, resource.StatusFatal, status.StatusCode())
+			assert.False(t, status.HasChanges())
 		})
 	})
 
 	t.Run("success", func(t *testing.T) {
+		t.Run("empty dest", func(t *testing.T) {
+			destDir, err := ioutil.TempDir("", "destDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(destDir)
+
+			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(fetchDir)
+
+			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			// zip fetchDir to use as our unarchive source
+			zipFile := "/tmp/unarchive_test_zip.zip"
+			err = zipFiles(fetchDir, zipFile)
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Source:      zipFile,
+				Destination: destDir,
+				fetchLoc:    tmpFetchDir,
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
+			}
+			defer os.Remove(u.Source)
+			defer os.RemoveAll(u.Destination)
+			defer os.RemoveAll(u.fetch.Destination)
+
+			status, err := u.Apply(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("completed fetch and unarchive %q", u.Source), status.Messages()[0])
+			assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
+		})
+
 		t.Run("checksum match", func(t *testing.T) {
 			destDir, err := ioutil.TempDir("", "destDir_unarchive")
 			require.NoError(t, err)
@@ -201,15 +302,32 @@ func TestApply(t *testing.T) {
 			u := &Unarchive{
 				Source:      zipFile,
 				Destination: destDir,
+				fetchLoc:    tmpFetchDir,
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
+			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
 			require.NoError(t, err)
 			require.Equal(t, checksumDest, checksumFetch)
+
+			status, err := u.Apply(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("completed fetch and unarchive %q", u.Source), status.Messages()[0])
+			assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
 		})
 
 		t.Run("checksum mismatch", func(t *testing.T) {
@@ -241,15 +359,38 @@ func TestApply(t *testing.T) {
 				Source:      zipFile,
 				Destination: destDir,
 				Force:       true,
+				fetchLoc:    tmpFetchDir,
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
+			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
+
+			status, testErr := u.Apply(context.Background())
+
+			checksumDest, err = u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err = u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+
+			assert.NoError(t, testErr)
+			assert.Equal(t, fmt.Sprintf("completed fetch and unarchive %q", u.Source), status.Messages()[0])
+			assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
+			assert.Equal(t, checksumDest, checksumFetch)
 		})
 	})
 }
