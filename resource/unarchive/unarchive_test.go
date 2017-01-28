@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -249,15 +250,18 @@ func TestSetDirsAndContents(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tempFetchLoc)
 
-		expected := [1]string{"fetchFileA.txt"}
+		expF := [2]string{tempFetchLoc, "fetchFileA.txt"}
+		expD := [1]string{emptyDir}
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.False(t, evalDups)
-		assert.Equal(t, 1, len(u.fetchContents))
-		assert.Equal(t, 0, len(u.destContents))
-		assert.Contains(t, u.fetchContents[0], expected[0])
+		assert.Equal(t, 2, len(u.fetchContents))
+		assert.Equal(t, 1, len(u.destContents))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[0]) || strings.Contains(u.fetchContents[1], expF[0]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[1]) || strings.Contains(u.fetchContents[1], expF[1]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[0]))
 	})
 
 	t.Run("fetch dir", func(t *testing.T) {
@@ -283,14 +287,20 @@ func TestSetDirsAndContents(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tempFetchLoc)
 
-		expected := [1]string{"fetchFileA.txt"}
+		expF := [2]string{tempFetchLoc, "fetchFileA.txt"}
+		expD := [3]string{destDir, nestedDir, nestedFile.Name()}
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.True(t, evalDups)
-		assert.Equal(t, 1, len(u.fetchContents))
-		assert.Contains(t, u.fetchContents[0], expected[0])
+		assert.Equal(t, 2, len(u.fetchContents))
+		assert.Equal(t, 3, len(u.destContents))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[0]) || strings.Contains(u.fetchContents[1], expF[0]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[1]) || strings.Contains(u.fetchContents[1], expF[1]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[0]) || strings.Contains(u.destContents[1], expD[0]) || strings.Contains(u.destContents[2], expD[0]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[1]) || strings.Contains(u.destContents[1], expD[1]) || strings.Contains(u.destContents[2], expD[1]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[2]) || strings.Contains(u.destContents[1], expD[2]) || strings.Contains(u.destContents[2], expD[2]))
 	})
 
 	t.Run("nested fetch dir", func(t *testing.T) {
@@ -316,15 +326,21 @@ func TestSetDirsAndContents(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tempFetchLoc)
 
-		expected := [2]string{"fetchFileB.txt", "fetchFileC.txt"}
+		expF := [3]string{tempFetchLoc, "fetchFileB.txt", "fetchFileC.txt"}
+		expD := [3]string{destDir, nestedDir, nestedFile.Name()}
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.True(t, evalDups)
-		assert.Equal(t, 2, len(u.fetchContents))
-		assert.True(t, strings.Contains(u.fetchContents[0], expected[0]) || strings.Contains(u.fetchContents[1], expected[0]))
-		assert.True(t, strings.Contains(u.fetchContents[0], expected[1]) || strings.Contains(u.fetchContents[1], expected[1]))
+		assert.Equal(t, 3, len(u.fetchContents))
+		assert.Equal(t, 3, len(u.destContents))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[0]) || strings.Contains(u.fetchContents[1], expF[0]) || strings.Contains(u.fetchContents[2], expF[0]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[1]) || strings.Contains(u.fetchContents[1], expF[1]) || strings.Contains(u.fetchContents[2], expF[1]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[2]) || strings.Contains(u.fetchContents[1], expF[2]) || strings.Contains(u.fetchContents[2], expF[2]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[0]) || strings.Contains(u.destContents[1], expD[0]) || strings.Contains(u.destContents[2], expD[0]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[1]) || strings.Contains(u.destContents[1], expD[1]) || strings.Contains(u.destContents[2], expD[1]))
+		assert.True(t, strings.Contains(u.destContents[0], expD[2]) || strings.Contains(u.destContents[1], expD[2]) || strings.Contains(u.destContents[2], expD[2]))
 	})
 }
 
@@ -332,25 +348,51 @@ func TestSetDirsAndContents(t *testing.T) {
 func TestEvaluateDuplicates(t *testing.T) {
 	t.Parallel()
 
-	destDir, err := ioutil.TempDir("", "destDir_unarchive")
-	require.NoError(t, err)
-	defer os.RemoveAll(destDir)
-	ddInfo, err := os.Open(destDir)
-	require.NoError(t, err)
-
-	fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
-	require.NoError(t, err)
-	defer os.RemoveAll(fetchDir)
-	fdInfo, err := os.Open(fetchDir)
-	require.NoError(t, err)
-
 	t.Run("no duplicates", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		fileA, err := ioutil.TempFile(destDir, "fileA.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileA.Name())
+
+		fileB, err := ioutil.TempFile(destDir, "fileB.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileB.Name())
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
+
+		fileC, err := ioutil.TempFile(fetchDir, "fileC.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileC.Name())
+
+		fileD, err := ioutil.TempFile(fetchDir, "fileD.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileD.Name())
+
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
 		u := &Unarchive{
-			destContents:  []string{"fileA.txt", "fileB.txt"},
-			destDir:       ddInfo,
-			fetchContents: []string{"fileC.txt", "fileD.txt"},
-			fetchDir:      fdInfo,
+			destDir:  ddInfo,
+			fetchDir: fdInfo,
 		}
+
+		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.destContents = append(u.destContents, path)
+			return nil
+		})
+
+		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.fetchContents = append(u.fetchContents, path)
+			return nil
+		})
 
 		err = u.evaluateDuplicates()
 
@@ -358,21 +400,49 @@ func TestEvaluateDuplicates(t *testing.T) {
 	})
 
 	t.Run("duplicates", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
 		fileADest, err := os.Create(destDir + "/fileA.txt")
 		require.NoError(t, err)
 		defer os.Remove(fileADest.Name())
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
 
 		fileAFetch, err := os.Create(fetchDir + "/fileA.txt")
 		require.NoError(t, err)
 		defer os.Remove(fileAFetch.Name())
 
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
 		t.Run("checksum match", func(t *testing.T) {
 			u := &Unarchive{
-				destContents:  []string{"fileA.txt"},
-				destDir:       ddInfo,
-				fetchContents: []string{"fileA.txt"},
-				fetchDir:      fdInfo,
+				destDir:  ddInfo,
+				fetchDir: fdInfo,
 			}
+
+			checksumDest, err := u.getChecksum(destDir + "/fileA.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileA.txt")
+			require.NoError(t, err)
+			require.Equal(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
 
 			err = u.evaluateDuplicates()
 
@@ -392,16 +462,139 @@ func TestEvaluateDuplicates(t *testing.T) {
 			require.NoError(t, err)
 
 			u := &Unarchive{
-				Destination:   destDir,
-				destContents:  []string{"fileA.txt", "fileB.txt", "fileC.txt"},
-				destDir:       ddInfo,
-				fetchContents: []string{"fileA.txt", "fileB.txt"},
-				fetchDir:      fdInfo,
+				Destination: destDir,
+				destDir:     ddInfo,
+				fetchDir:    fdInfo,
 			}
+
+			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			require.NotEqual(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
 
 			err = u.evaluateDuplicates()
 
 			assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
+		})
+	})
+
+	t.Run("recurse", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		stat, err := os.Stat(destDir)
+		require.NoError(t, err)
+
+		err = os.Mkdir(destDir+"/dirA", stat.Mode().Perm())
+		require.NoError(t, err)
+
+		err = os.Mkdir(destDir+"/dirA/dirB", stat.Mode().Perm())
+		require.NoError(t, err)
+
+		fileBDest, err := os.Create(destDir + "/dirA/dirB/fileB.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileBDest.Name())
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
+
+		stat, err = os.Stat(fetchDir)
+		require.NoError(t, err)
+
+		err = os.Mkdir(fetchDir+"/dirA", stat.Mode().Perm())
+		require.NoError(t, err)
+
+		err = os.Mkdir(fetchDir+"/dirA/dirB", stat.Mode().Perm())
+		require.NoError(t, err)
+
+		fileBFetch, err := os.Create(fetchDir + "/dirA/dirB/fileB.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileBFetch.Name())
+
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
+		t.Run("checksum match", func(t *testing.T) {
+			u := &Unarchive{
+				Destination: destDir,
+				destDir:     ddInfo,
+				fetchDir:    fdInfo,
+			}
+
+			checksumDest, err := u.getChecksum(destDir + "/dirA/dirB/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/dirA/dirB/fileB.txt")
+			require.NoError(t, err)
+			require.Equal(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
+
+			err = u.evaluateDuplicates()
+
+			assert.NoError(t, err)
+		})
+
+		t.Run("checksum mismatch", func(t *testing.T) {
+			fileCDest, err := os.Create(destDir + "/dirA/dirB/fileC.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileCDest.Name())
+
+			fileCFetch, err := os.Create(fetchDir + "/dirA/dirB/fileC.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileCFetch.Name())
+
+			_, err = fileCFetch.Write([]byte{2})
+			require.NoError(t, err)
+
+			u := &Unarchive{
+				Destination: destDir,
+				destDir:     ddInfo,
+				fetchDir:    fdInfo,
+			}
+
+			checksumDest, err := u.getChecksum(destDir + "/dirA/dirB/fileC.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/dirA/dirB/fileC.txt")
+			require.NoError(t, err)
+			require.NotEqual(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
+
+			err = u.evaluateDuplicates()
+
+			assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/dirA/dirB/fileC.txt\" exists at %q: checksum mismatch", u.Destination))
 		})
 	})
 }
@@ -441,35 +634,38 @@ func TestCopyToFinalDest(t *testing.T) {
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
 
-		dCont, err := ddInfo.Readdirnames(0)
-		require.NoError(t, err)
-
-		fCont, err := fdInfo.Readdirnames(0)
-		require.NoError(t, err)
-
 		u := &Unarchive{
-			destContents:  dCont,
-			destDir:       ddInfo,
-			fetchContents: fCont,
-			fetchDir:      fdInfo,
+			destDir:  ddInfo,
+			fetchDir: fdInfo,
 		}
 
-		expected := append(dCont, fCont...)
+		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.destContents = append(u.destContents, path)
+			return nil
+		})
+
+		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.fetchContents = append(u.fetchContents, path)
+			return nil
+		})
+
+		exp := []string{destDir, "fileA.txt", "fileB.txt", "fileC.txt", "fileD.txt"}
 
 		testErr := u.copyToFinalDest()
 
-		ddActual, err := os.Open(destDir)
-		require.NoError(t, err)
-
-		actual, err := ddActual.Readdirnames(0)
-		require.NoError(t, err)
+		act := []string{}
+		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			act = append(act, path)
+			return nil
+		})
 
 		assert.NoError(t, testErr)
-		assert.Equal(t, 4, len(actual))
-		assert.True(t, strings.Contains(actual[0], expected[0]) || strings.Contains(actual[1], expected[0]) || strings.Contains(actual[2], expected[0]) || strings.Contains(actual[3], expected[0]))
-		assert.True(t, strings.Contains(actual[0], expected[1]) || strings.Contains(actual[1], expected[1]) || strings.Contains(actual[2], expected[1]) || strings.Contains(actual[3], expected[1]))
-		assert.True(t, strings.Contains(actual[0], expected[2]) || strings.Contains(actual[1], expected[2]) || strings.Contains(actual[2], expected[2]) || strings.Contains(actual[3], expected[2]))
-		assert.True(t, strings.Contains(actual[0], expected[3]) || strings.Contains(actual[1], expected[3]) || strings.Contains(actual[2], expected[3]) || strings.Contains(actual[3], expected[3]))
+		assert.Equal(t, 5, len(act))
+		assert.True(t, strings.Contains(act[0], exp[0]) || strings.Contains(act[1], exp[0]) || strings.Contains(act[2], exp[0]) || strings.Contains(act[3], exp[0]) || strings.Contains(act[4], exp[0]))
+		assert.True(t, strings.Contains(act[0], exp[1]) || strings.Contains(act[1], exp[1]) || strings.Contains(act[2], exp[1]) || strings.Contains(act[3], exp[1]) || strings.Contains(act[4], exp[1]))
+		assert.True(t, strings.Contains(act[0], exp[2]) || strings.Contains(act[1], exp[2]) || strings.Contains(act[2], exp[2]) || strings.Contains(act[3], exp[2]) || strings.Contains(act[4], exp[2]))
+		assert.True(t, strings.Contains(act[0], exp[3]) || strings.Contains(act[1], exp[3]) || strings.Contains(act[2], exp[3]) || strings.Contains(act[3], exp[3]) || strings.Contains(act[4], exp[3]))
+		assert.True(t, strings.Contains(act[0], exp[4]) || strings.Contains(act[1], exp[4]) || strings.Contains(act[2], exp[4]) || strings.Contains(act[3], exp[4]) || strings.Contains(act[4], exp[4]))
 	})
 
 	t.Run("duplicates", func(t *testing.T) {
@@ -497,25 +693,40 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		t.Run("checksum match", func(t *testing.T) {
 			u := &Unarchive{
-				destContents:  []string{"fileA.txt"},
-				destDir:       ddInfo,
-				fetchContents: []string{"fileA.txt"},
-				fetchDir:      fdInfo,
+				destDir:  ddInfo,
+				fetchDir: fdInfo,
 			}
 
-			expected := []string{"fileA.txt"}
+			checksumDest, err := u.getChecksum(destDir + "/fileA.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileA.txt")
+			require.NoError(t, err)
+			require.Equal(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
+
+			exp := []string{destDir, "fileA.txt"}
 
 			testErr := u.copyToFinalDest()
 
-			ddActual, err := os.Open(destDir)
-			require.NoError(t, err)
-
-			actual, err := ddActual.Readdirnames(0)
-			require.NoError(t, err)
+			act := []string{}
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				act = append(act, path)
+				return nil
+			})
 
 			assert.NoError(t, testErr)
-			assert.Equal(t, 1, len(actual))
-			assert.Equal(t, actual[0], expected[0])
+			assert.Equal(t, 2, len(act))
+			assert.True(t, strings.Contains(act[0], exp[0]) || strings.Contains(act[1], exp[0]))
+			assert.True(t, strings.Contains(act[0], exp[1]) || strings.Contains(act[1], exp[1]))
 		})
 
 		t.Run("checksum mismatch", func(t *testing.T) {
@@ -531,34 +742,115 @@ func TestCopyToFinalDest(t *testing.T) {
 			require.NoError(t, err)
 
 			u := &Unarchive{
-				Destination:   destDir,
-				destContents:  []string{"fileA.txt", "fileB.txt"},
-				destDir:       ddInfo,
-				fetchContents: []string{"fileA.txt", "fileB.txt"},
-				fetchDir:      fdInfo,
+				Destination: destDir,
+				destDir:     ddInfo,
+				fetchDir:    fdInfo,
 			}
 
-			expected := []string{"fileA.txt", "fileB.txt"}
+			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			require.NoError(t, err)
+			require.NotEqual(t, checksumDest, checksumFetch)
+
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.destContents = append(u.destContents, path)
+				return nil
+			})
+
+			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				u.fetchContents = append(u.fetchContents, path)
+				return nil
+			})
+
+			exp := []string{destDir, "fileA.txt", "fileB.txt"}
 
 			testErr := u.copyToFinalDest()
 
-			ddActual, err := os.Open(destDir)
-			require.NoError(t, err)
+			act := []string{}
+			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				act = append(act, path)
+				return nil
+			})
 
-			actual, err := ddActual.Readdirnames(0)
+			checksumDest, err = u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
-
-			checksumBDest, err := u.getChecksum(destDir + "/fileB.txt")
-			require.NoError(t, err)
-			checksumBFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			checksumFetch, err = u.getChecksum(fetchDir + "/fileB.txt")
 			require.NoError(t, err)
 
 			assert.NoError(t, testErr)
-			assert.Equal(t, 2, len(actual))
-			assert.True(t, strings.Contains(actual[0], expected[0]) || strings.Contains(actual[1], expected[0]))
-			assert.True(t, strings.Contains(actual[0], expected[1]) || strings.Contains(actual[1], expected[1]))
-			assert.Equal(t, checksumBDest, checksumBFetch)
+			assert.Equal(t, 3, len(act))
+			assert.True(t, strings.Contains(act[0], exp[0]) || strings.Contains(act[1], exp[0]) || strings.Contains(act[2], exp[0]))
+			assert.True(t, strings.Contains(act[0], exp[1]) || strings.Contains(act[1], exp[1]) || strings.Contains(act[2], exp[1]))
+			assert.True(t, strings.Contains(act[0], exp[2]) || strings.Contains(act[1], exp[2]) || strings.Contains(act[2], exp[2]))
+			assert.Equal(t, checksumDest, checksumFetch)
 		})
+	})
+
+	t.Run("recurse", func(t *testing.T) {
+		destDir, err := ioutil.TempDir("", "destDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(destDir)
+
+		ddInfo, err := os.Open(destDir)
+		require.NoError(t, err)
+
+		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
+		require.NoError(t, err)
+		defer os.RemoveAll(fetchDir)
+
+		dirA, err := ioutil.TempDir(fetchDir, "dirA")
+		require.NoError(t, err)
+		defer os.RemoveAll(dirA)
+
+		dirB, err := ioutil.TempDir(dirA, "dirB")
+		require.NoError(t, err)
+		defer os.RemoveAll(dirB)
+
+		dirC, err := ioutil.TempDir(dirB, "dirC")
+		require.NoError(t, err)
+		defer os.RemoveAll(dirC)
+
+		fileC, err := os.Create(dirC + "/fileC.txt")
+		require.NoError(t, err)
+		defer os.Remove(fileC.Name())
+
+		fdInfo, err := os.Open(fetchDir)
+		require.NoError(t, err)
+
+		u := &Unarchive{
+			Destination: destDir,
+			destDir:     ddInfo,
+			fetchDir:    fdInfo,
+		}
+
+		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.destContents = append(u.destContents, path)
+			return nil
+		})
+
+		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			u.fetchContents = append(u.fetchContents, path)
+			return nil
+		})
+
+		exp := []string{destDir, "dirA", "dirB", "dirC", "fileC.txt"}
+
+		testErr := u.copyToFinalDest()
+
+		act := []string{}
+		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			act = append(act, path)
+			return nil
+		})
+
+		assert.NoError(t, testErr)
+		assert.Equal(t, 5, len(act))
+		assert.True(t, strings.Contains(act[0], exp[0]) || strings.Contains(act[1], exp[0]) || strings.Contains(act[2], exp[0]) || strings.Contains(act[3], exp[0]) || strings.Contains(act[4], exp[0]))
+		assert.True(t, strings.Contains(act[0], exp[1]) || strings.Contains(act[1], exp[1]) || strings.Contains(act[2], exp[1]) || strings.Contains(act[3], exp[1]) || strings.Contains(act[4], exp[1]))
+		assert.True(t, strings.Contains(act[0], exp[2]) || strings.Contains(act[1], exp[2]) || strings.Contains(act[2], exp[2]) || strings.Contains(act[3], exp[2]) || strings.Contains(act[4], exp[2]))
+		assert.True(t, strings.Contains(act[0], exp[3]) || strings.Contains(act[1], exp[3]) || strings.Contains(act[2], exp[3]) || strings.Contains(act[3], exp[3]) || strings.Contains(act[4], exp[3]))
+		assert.True(t, strings.Contains(act[0], exp[4]) || strings.Contains(act[1], exp[4]) || strings.Contains(act[2], exp[4]) || strings.Contains(act[3], exp[4]) || strings.Contains(act[4], exp[4]))
 	})
 }
 

@@ -208,19 +208,17 @@ func (u *Unarchive) Diff(status *resource.Status) error {
 func (u *Unarchive) setDirsAndContents() (bool, error) {
 	var err error
 
-	// create the unarchive destination directory if it does not exist
+	// set the unarchive destination directory
 	u.destDir, err = os.Open(u.Destination)
-	if os.IsNotExist(err) {
-		return false, err
-	} else if err != nil {
+	if err != nil {
 		return false, err
 	}
 
-	// read the file names in the directory indicated by u.Destination
-	u.destContents, err = u.destDir.Readdirnames(0)
-	if err != nil {
-		return false, errors.Wrapf(err, "could not read files from %q", u.Destination)
-	}
+	// walk the destination directory to set the destination contents
+	filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		u.destContents = append(u.destContents, path)
+		return nil
+	})
 
 	// read the contents of the temporary fetch/unarchive location
 	fetchDir := u.fetchLoc
@@ -237,18 +235,22 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 	// to use this as the directory to read file names
 	if len(fetchDirContents) == 1 && fetchDirContents[0].IsDir() {
 		fetchDir = u.fetchLoc + "/" + fetchDirContents[0].Name()
+		u.fetchDir, err = os.Open(fetchDir)
+		if err != nil {
+			return false, err
+		}
 	}
 
-	// read the file names in the temporary fetch/unarchive location
-	u.fetchDir, err = os.Open(fetchDir)
-	u.fetchContents, err = u.fetchDir.Readdirnames(0)
-	if err != nil {
-		return false, errors.Wrapf(err, "could not read files from %q", fetchDir)
-	}
+	// walk the fetch directory to set the fetch contents
+	filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+		u.fetchContents = append(u.fetchContents, path)
+		return nil
+	})
 
 	// if there are no files, we do not need to compare checksums with files in
-	// the temporary fetch/unarchive location
-	if len(u.destContents) == 0 {
+	// the temporary fetch/unarchive location. We check whether the length is 1
+	// because the directory is in the contents.
+	if len(u.destContents) == 1 {
 		return false, nil
 	}
 	return true, nil
@@ -260,22 +262,14 @@ func (u *Unarchive) evaluateDuplicates() error {
 	// determine which directory has fewer items in order to minimize operations
 	dirA := u.destDir.Name()
 	dirB := u.fetchDir.Name()
+	filesA := u.destContents
+	filesB := u.fetchContents
 	if len(u.fetchContents) < len(u.destContents) {
 		dirA = u.fetchDir.Name()
 		dirB = u.destDir.Name()
+		filesA = u.fetchContents
+		filesB = u.destContents
 	}
-
-	filesA := []string{}
-	filepath.Walk(dirA, func(path string, f os.FileInfo, err error) error {
-		filesA = append(filesA, path)
-		return nil
-	})
-
-	filesB := []string{}
-	filepath.Walk(dirB, func(path string, f os.FileInfo, err error) error {
-		filesB = append(filesB, path)
-		return nil
-	})
 
 	// for each item in filesA, determine if it also exists in filesB
 	// compare the checksums for the files - if mismatch, return an error
@@ -319,14 +313,8 @@ func (u *Unarchive) evaluateDuplicates() error {
 // copyToFinalDest copies the fetched and unarchived files from their temporary
 // directory to the final destination
 func (u *Unarchive) copyToFinalDest() error {
-	fetchFiles := []string{}
-	filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
-		fetchFiles = append(fetchFiles, path)
-		return nil
-	})
-
 	// for each item in the fetchDir, mkdir or copy to the final destination
-	for _, file := range fetchFiles {
+	for _, file := range u.fetchContents {
 		src, err := os.Open(file)
 		if err != nil {
 			return err
