@@ -72,6 +72,9 @@ type Unarchive struct {
 	// destination if it already exists
 	Force bool `export:"force"`
 
+	// fetch is used to fetch the file to be unarchived
+	fetch fetch.Fetch
+
 	// the destination directory
 	destDir *os.File
 
@@ -103,21 +106,7 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 		return status, err
 	}
 
-	err = u.setFetchLoc()
-	if err != nil {
-		status.RaiseLevel(resource.StatusCantChange)
-		return status, errors.Wrap(err, "error setting fetch location")
-	}
-
-	fetch := fetch.Fetch{
-		Source:      u.Source,
-		Destination: u.fetchLoc,
-		HashType:    u.HashType,
-		Hash:        u.Hash,
-		Unarchive:   true,
-	}
-
-	fetchStatus, err := fetch.Check(ctx, r)
+	fetchStatus, err := u.fetch.Check(ctx, r)
 	if err != nil {
 		return fetchStatus, errors.Wrap(err, "cannot attempt unarchive: fetch error")
 	}
@@ -136,21 +125,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 		return status, err
 	}
 
-	err = u.setFetchLoc()
-	if err != nil {
-		status.RaiseLevel(resource.StatusCantChange)
-		return status, errors.Wrap(err, "error setting fetch location")
-	}
-
-	fetch := fetch.Fetch{
-		Source:      u.Source,
-		Destination: u.fetchLoc,
-		HashType:    u.HashType,
-		Hash:        u.Hash,
-		Unarchive:   true,
-	}
-
-	fetchStatus, err := fetch.Apply(ctx)
+	fetchStatus, err := u.fetch.Apply(ctx)
 	if err != nil {
 		return fetchStatus, err
 	}

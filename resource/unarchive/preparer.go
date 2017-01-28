@@ -21,6 +21,7 @@ import (
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/fetch"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -99,6 +100,19 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 
 	if p.Hash != nil {
 		unarchive.Hash = *p.Hash
+	}
+
+	err = unarchive.setFetchLoc()
+	if err != nil {
+		return nil, errors.Wrap(err, "error setting fetch location")
+	}
+
+	unarchive.fetch = fetch.Fetch{
+		Source:      unarchive.Source,
+		Destination: unarchive.fetchLoc,
+		HashType:    unarchive.HashType,
+		Hash:        unarchive.Hash,
+		Unarchive:   true,
 	}
 
 	return unarchive, nil

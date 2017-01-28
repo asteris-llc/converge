@@ -26,6 +26,7 @@ import (
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/fetch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
@@ -107,19 +108,6 @@ func TestApply(t *testing.T) {
 			assert.True(t, status.HasChanges())
 		})
 
-		t.Run("setFetchLoc error", func(t *testing.T) {
-			u := &Unarchive{
-				Source:      srcDir,
-				Destination: destDir,
-			}
-
-			status, err := u.Apply(context.Background())
-
-			assert.EqualError(t, err, fmt.Sprintf("error setting fetch location: failed to get checksum of source: failed to hash: read %s: is a directory", srcDir))
-			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
-			assert.True(t, status.HasChanges())
-		})
-
 		t.Run("fetch error", func(t *testing.T) {
 			u := &Unarchive{
 				Source:      srcFile.Name(),
@@ -127,6 +115,17 @@ func TestApply(t *testing.T) {
 				HashType:    string(HashMD5),
 				Hash:        "notarealhashbutstringnonetheless",
 				Force:       false,
+			}
+
+			err = u.setFetchLoc()
+			require.NoError(t, err)
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
 			}
 
 			status, err := u.Apply(context.Background())

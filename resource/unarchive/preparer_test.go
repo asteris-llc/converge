@@ -21,11 +21,14 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/asteris-llc/converge/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -49,9 +52,13 @@ func TestPreparer(t *testing.T) {
 	)
 
 	t.Run("valid", func(t *testing.T) {
+		srcFile, err := ioutil.TempFile("", "src_unarchive")
+		require.NoError(t, err)
+		defer os.Remove(srcFile.Name())
+
 		t.Run("force=false", func(t *testing.T) {
 			p := Preparer{
-				Source:      "/tmp/test.zip",
+				Source:      srcFile.Name(),
 				Destination: "/tmp/test",
 			}
 
@@ -61,7 +68,7 @@ func TestPreparer(t *testing.T) {
 
 		t.Run("force=true", func(t *testing.T) {
 			p := &Preparer{
-				Source:      "/tmp/test.zip",
+				Source:      srcFile.Name(),
 				Destination: "/tmp/test",
 				Force:       true,
 			}
@@ -72,7 +79,7 @@ func TestPreparer(t *testing.T) {
 
 		t.Run("hashtype", func(t *testing.T) {
 			p := &Preparer{
-				Source:      "/tmp/test.zip",
+				Source:      srcFile.Name(),
 				Destination: "/tmp/test",
 				Hash:        &hash,
 			}
@@ -81,7 +88,6 @@ func TestPreparer(t *testing.T) {
 				p.HashType = &hashType
 
 				_, err := p.Prepare(context.Background(), &fr)
-				fmt.Printf("error=%v\n", err)
 				assert.NoError(t, err)
 			})
 
