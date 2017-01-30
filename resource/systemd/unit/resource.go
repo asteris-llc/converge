@@ -128,23 +128,21 @@ func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 		}
 	}
 
+	var runstateErr error
+
 	switch r.State {
 	case "running":
 		if r.shouldStart(u, tempStatus) {
-			if err := r.systemdExecutor.StartUnit(u); err != nil {
-				return nil, err
-			}
+			runstateErr = r.systemdExecutor.StartUnit(u)
 		}
 	case "stopped":
 		if r.shouldStop(u, tempStatus) {
-			if err := r.systemdExecutor.StopUnit(u); err != nil {
-				return nil, err
-			}
+			runstateErr = r.systemdExecutor.StopUnit(u)
 		}
 	case "restarted":
+		runstateErr = r.systemdExecutor.RestartUnit(u)
 	}
-
-	return status, nil
+	return status, runstateErr
 }
 
 // We copy data from the unit into the resource to make the UX nicer for users

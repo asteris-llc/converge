@@ -586,5 +586,34 @@ func TestApply(t *testing.T) {
 	})
 	t.Run("when-want-restarted", func(t *testing.T) {
 		t.Parallel()
+		t.Run("when-restart-returns-error", func(t *testing.T) {
+			t.Parallel()
+			r := &Resource{State: "restarted"}
+			u := &Unit{ActiveState: "active"}
+			e := &ExecutorMock{}
+			r.systemdExecutor = e
+			expected := errors.New("error1")
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("RestartUnit", any).Return(expected)
+			_, err := r.Apply(context.Background())
+			assert.Equal(t, expected, err)
+		})
+		t.Run("calls-restart", func(t *testing.T) {
+			t.Parallel()
+			states := []string{"active", "inactive", "activating", "deactivating", "reloading", "failed"}
+			for _, st := range states {
+				t.Run(st, func(t *testing.T) {
+					u := &Unit{ActiveState: st}
+					r := &Resource{State: "restarted"}
+					e := &ExecutorMock{}
+					e.On("RestartUnit", any).Return(nil)
+					e.On("QueryUnit", any, any).Return(u, nil)
+					r.systemdExecutor = e
+					_, err := r.Apply(context.Background())
+					require.NoError(t, err)
+					e.AssertCalled(t, "RestartUnit", u)
+				})
+			}
+		})
 	})
 }
