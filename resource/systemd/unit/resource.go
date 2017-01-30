@@ -107,6 +107,7 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 
 func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+	tempStatus := resource.NewStatus()
 
 	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
 
@@ -125,6 +126,22 @@ func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 		if err := r.systemdExecutor.ReloadUnit(u); err != nil {
 			return nil, err
 		}
+	}
+
+	switch r.State {
+	case "running":
+		if r.shouldStart(u, tempStatus) {
+			if err := r.systemdExecutor.StartUnit(u); err != nil {
+				return nil, err
+			}
+		}
+	case "stopped":
+		if r.shouldStop(u, tempStatus) {
+			if err := r.systemdExecutor.StopUnit(u); err != nil {
+				return nil, err
+			}
+		}
+	case "restarted":
 	}
 
 	return status, nil
@@ -176,7 +193,7 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 	case "activating":
 		st.AddMessage("unit is alread activating, will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
-		return false
+		return true
 	case "deactivating":
 		st.AddMessage("unit is currently deactivating, will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
@@ -215,7 +232,7 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 	case "deactivating":
 		st.AddMessage("unit is deactivating.  Will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
-		return false
+		return true
 	}
 	return true
 }

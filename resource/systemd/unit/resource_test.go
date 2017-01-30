@@ -397,6 +397,19 @@ func TestApply(t *testing.T) {
 
 	t.Run("when-want-running", func(t *testing.T) {
 		t.Parallel()
+		t.Run("start-returns-error", func(t *testing.T) {
+			r := &Resource{State: "running"}
+			u := &Unit{ActiveState: "inactive"}
+			e := &ExecutorMock{}
+			expected := errors.New("error1")
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(expected)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			assert.Equal(t, expected, err)
+		})
 		t.Run("status-is-active", func(t *testing.T) {
 			r := &Resource{State: "running"}
 			u := &Unit{ActiveState: "active"}
@@ -408,7 +421,7 @@ func TestApply(t *testing.T) {
 			r.systemdExecutor = e
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
-			e.AssertCalled(t, "StartUnit", u)
+			e.AssertNotCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-reloading", func(t *testing.T) {
 			r := &Resource{State: "running"}
@@ -419,7 +432,6 @@ func TestApply(t *testing.T) {
 			e.On("StopUnit", any).Return(nil)
 			e.On("RestartUnit", any).Return(nil)
 			r.systemdExecutor = e
-
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
 			e.AssertCalled(t, "StartUnit", u)
@@ -433,7 +445,6 @@ func TestApply(t *testing.T) {
 			e.On("StopUnit", any).Return(nil)
 			e.On("RestartUnit", any).Return(nil)
 			r.systemdExecutor = e
-
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
 			e.AssertCalled(t, "StartUnit", u)
@@ -447,7 +458,6 @@ func TestApply(t *testing.T) {
 			e.On("StopUnit", any).Return(nil)
 			e.On("RestartUnit", any).Return(nil)
 			r.systemdExecutor = e
-
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
 			e.AssertCalled(t, "StartUnit", u)
@@ -461,7 +471,6 @@ func TestApply(t *testing.T) {
 			e.On("StopUnit", any).Return(nil)
 			e.On("RestartUnit", any).Return(nil)
 			r.systemdExecutor = e
-
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
 			e.AssertCalled(t, "StartUnit", u)
@@ -475,14 +484,105 @@ func TestApply(t *testing.T) {
 			e.On("StopUnit", any).Return(nil)
 			e.On("RestartUnit", any).Return(nil)
 			r.systemdExecutor = e
-
 			_, err := r.Apply(context.Background())
 			require.NoError(t, err)
 			e.AssertCalled(t, "StartUnit", u)
 		})
 	})
+
 	t.Run("when-want-stopped", func(t *testing.T) {
 		t.Parallel()
+		t.Run("stop-returns-error", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "active"}
+			e := &ExecutorMock{}
+			expected := errors.New("error1")
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(expected)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			assert.Equal(t, expected, err)
+		})
+		t.Run("status-is-active", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "active"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertCalled(t, "StopUnit", u)
+		})
+		t.Run("status-is-reloading", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "reloading"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertCalled(t, "StopUnit", u)
+		})
+		t.Run("status-is-inactive", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "inactive"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertNotCalled(t, "StopUnit", u)
+		})
+		t.Run("status-is-failed", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "failed"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertNotCalled(t, "StopUnit", u)
+		})
+		t.Run("status-is-activating", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "activating"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertCalled(t, "StopUnit", u)
+		})
+		t.Run("status-is-deactivating", func(t *testing.T) {
+			r := &Resource{State: "stopped"}
+			u := &Unit{ActiveState: "deactivating"}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			e.On("StartUnit", any).Return(nil)
+			e.On("StopUnit", any).Return(nil)
+			e.On("RestartUnit", any).Return(nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			e.AssertCalled(t, "StopUnit", u)
+		})
 	})
 	t.Run("when-want-restarted", func(t *testing.T) {
 		t.Parallel()
