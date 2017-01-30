@@ -38,3 +38,12 @@ func replaceAt(replaceIn, replaceWith string, at int) string {
 	}
 	return replaceIn[0:at] + replaceWith + replaceIn[at+1:]
 }
+
+func includesString(haystack []string, needle string) bool {
+	for _, s := range haystack {
+		if needle == s {
+			return true
+		}
+	}
+	return false
+}

@@ -28,4 +28,5 @@ type SystemdExecutor interface {
 	StopUnit(*Unit) error
 	RestartUnit(*Unit) error
 	ReloadUnit(*Unit) error
+	SendSignal(u *Unit, signal Signal)
 }

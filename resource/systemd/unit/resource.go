@@ -15,6 +15,7 @@
 package unit
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/asteris-llc/converge/resource"
@@ -66,6 +67,7 @@ type Resource struct {
 
 	sendSignal      bool
 	systemdExecutor SystemdExecutor
+	hasRun          bool
 }
 
 func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
@@ -73,14 +75,14 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
 
 	if err != nil {
-		return nil, fmt.Errorf("No unit named '%s'. Is it loaded?", r.Name)
+		return nil, err
 	}
 
 	r.populateFromUnit(u)
 
 	if r.sendSignal {
 		status.RaiseLevel(resource.StatusWillChange)
-		status.AddMessage(fmt.Sprintf("Sending signal `%s` to process", r.SignalName))
+		status.AddMessage(fmt.Sprintf("Sending signal `%s` to unit", r.SignalName))
 	}
 
 	if r.Reload {
@@ -89,10 +91,15 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 		status.AddDifference("state", u.ActiveState, "reloaded", "")
 	}
 
-	if r.State == "restared" {
+	switch r.State {
+	case "restarted":
 		status.RaiseLevel(resource.StatusWillChange)
 		status.AddMessage("Restarting unit")
 		status.AddDifference("state", u.ActiveState, "restarted", "")
+	case "running":
+		r.shouldStart(u, status)
+	case "stopped":
+		r.shouldStop(u, status)
 	}
 
 	return status, nil
@@ -100,6 +107,26 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 
 func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+
+	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if r.sendSignal {
+		status.AddMessage(fmt.Sprintf("Sending signal `%s` to unit", r.SignalName))
+		r.systemdExecutor.SendSignal(u, Signal(r.SignalNumber))
+	}
+
+	if r.Reload {
+		status.AddMessage("Reloading unit configuration")
+		status.AddDifference("state", u.ActiveState, "reloaded", "")
+		if err := r.systemdExecutor.ReloadUnit(u); err != nil {
+			return nil, err
+		}
+	}
+
 	return status, nil
 }
 
@@ -137,9 +164,12 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 		st.AddDifference("state", "inactive", "active", "")
 		return true
 	case "failed":
-		reason := getFailedReason(u)
 		st.AddMessage("unit has failed; will attempt to restart")
-		st.AddMessage(fmt.Sprintf("unit previously failed, the message was: %s", reason))
+		if reason, err := getFailedReason(u); err != nil {
+			st.AddMessage(fmt.Sprintf("cannot determine root cause of failure: %v", err))
+		} else {
+			st.AddMessage(fmt.Sprintf("unit previously failed, the message was: %s", reason))
+		}
 		st.RaiseLevel(resource.StatusWillChange)
 		st.AddDifference("state", "failed", "active", "")
 		return true
@@ -172,7 +202,11 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 		return false
 	case "failed":
 		st.AddMessage("unit is not running because it has failed.  Will not restart")
-		st.AddMessage("unit failed due to: " + getFailedReason(u))
+		if reason, err := getFailedReason(u); err != nil {
+			st.AddMessage(fmt.Sprintf("cannot determine root cause of failure: %v", err))
+		} else {
+			st.AddMessage(fmt.Sprintf("unit previously failed, the message was: %s", reason))
+		}
 		return false
 	case "activating":
 		st.AddDifference("state", "active", "inactive", "")
@@ -186,41 +220,60 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 	return true
 }
 
-func getFailedReason(u *Unit) string {
+func getFailedReason(u *Unit) (string, error) {
+	err := errors.New("unable to determine cause of failure: no properties available")
 	var reason string
 	switch u.Type {
 	case UnitTypeService:
+		if u.ServiceProperties == nil {
+			return "", err
+		}
 		reason = u.ServiceProperties.Result
 	case UnitTypeSocket:
+		if u.SocketProperties == nil {
+			return "", err
+		}
 		reason = u.SocketProperties.Result
 	case UnitTypeMount:
+		if u.MountProperties == nil {
+			return "", err
+		}
 		reason = u.MountProperties.Result
 	case UnitTypeAutoMount:
-		reason = u.MountProperties.Result
+		if u.AutomountProperties == nil {
+			return "", err
+		}
+		reason = u.AutomountProperties.Result
 	case UnitTypeSwap:
+		if u.SwapProperties == nil {
+			return "", err
+		}
 		reason = u.SwapProperties.Result
 	case UnitTypeTimer:
+		if u.TimerProperties == nil {
+			return "", err
+		}
 		reason = u.TimerProperties.Result
 	}
 	switch reason {
 	case "success":
-		return "the unit was activated successfully"
+		return "the unit was activated successfully", nil
 	case "resources":
-		return "not enough resources available to create the process"
+		return "not enough resources available to create the process", nil
 	case "timeout":
-		return "a timeout occurred while starting the unit"
+		return "a timeout occurred while starting the unit", nil
 	case "exit-code":
-		return "unit exited with a non-zero exit code"
+		return "unit exited with a non-zero exit code", nil
 	case "signal":
-		return "unit exited due to an unhandled signal"
+		return "unit exited due to an unhandled signal", nil
 	case "core-dump":
-		return "unit exited and dumped core"
+		return "unit exited and dumped core", nil
 	case "watchdog":
-		return "watchdog terminated the service due to slow or missing responses"
+		return "watchdog terminated the service due to slow or missing responses", nil
 	case "start-limit":
-		return "process has been restarted too many times"
+		return "process has been restarted too many times", nil
 	case "service-failed-permanent":
-		return "continual failure of this socket"
+		return "continual failure of this socket", nil
 	}
-	return "unkown reason"
+	return "unknown reason", nil
 }
