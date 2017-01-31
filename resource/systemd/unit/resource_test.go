@@ -17,6 +17,7 @@ package unit
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/stretchr/testify/assert"
@@ -615,5 +616,84 @@ func TestApply(t *testing.T) {
 				})
 			}
 		})
+	})
+}
+
+// TestCheckAfterApply runs a test
+func TestCheckAfterApply(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when-send-signal", func(t *testing.T) {
+		t.Parallel()
+		r := &Resource{
+			State:        "running",
+			SignalName:   "SIGKILL",
+			SignalNumber: 9,
+			sendSignal:   true,
+		}
+		u := &Unit{ActiveState: "active"}
+		e := &ExecutorMock{}
+		r.systemdExecutor = e
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("SendSignal", any, any).Return()
+		status, err := r.Check(context.Background(), fakerenderer.New())
+		status, err = r.Apply(context.Background())
+		status, err = r.Check(context.Background(), fakerenderer.New())
+		assert.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+
+	t.Run("when-reload", func(t *testing.T) {
+		t.Parallel()
+		r := &Resource{
+			State:  "running",
+			Reload: true,
+		}
+		u := &Unit{ActiveState: "active"}
+		e := &ExecutorMock{}
+		r.systemdExecutor = e
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("ReloadUnit", any).Return(nil)
+		status, err := r.Check(context.Background(), fakerenderer.New())
+		status, err = r.Apply(context.Background())
+		status, err = r.Check(context.Background(), fakerenderer.New())
+		assert.NoError(t, err)
+		assert.False(t, status.HasChanges())
+	})
+}
+
+// TestHandlesContext runs a test
+func TestHandlesContext(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Check", func(t *testing.T) {
+		t.Parallel()
+		t.Run("when-timeout", func(t *testing.T) {
+			t.Parallel()
+			expected := errors.New("context was cancelled")
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+			time.Sleep(2 * time.Millisecond)
+			r := &Resource{}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
+			r.systemdExecutor = e
+			_, err := r.Check(ctx, fakerenderer.New())
+			assert.Equal(t, expected, err)
+			cancel()
+		})
+	})
+
+	t.Run("Apply", func(t *testing.T) {
+		t.Parallel()
+		expected := errors.New("context was cancelled")
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+		time.Sleep(2 * time.Millisecond)
+		r := &Resource{}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(&Unit{}, nil)
+		r.systemdExecutor = e
+		_, err := r.Apply(ctx)
+		assert.Equal(t, expected, err)
+		cancel()
 	})
 }

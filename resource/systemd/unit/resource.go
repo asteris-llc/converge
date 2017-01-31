@@ -70,27 +70,58 @@ type Resource struct {
 	hasRun          bool
 }
 
-func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+type response struct {
+	status resource.TaskStatus
+	err    error
+}
+
+func wrapCall(f func() (resource.TaskStatus, error)) <-chan response {
+	resp := make(chan response)
+	go func() {
+		st, err := f()
+		resp <- response{st, err}
+	}()
+	return resp
+}
+
+func (r *Resource) Check(ctx context.Context, _ resource.Renderer) (resource.TaskStatus, error) {
+	ch := wrapCall(r.runCheck)
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context was cancelled")
+	case results := <-ch:
+		return results.status, results.err
+	}
+	return nil, errors.New("unknown error")
+}
+
+func (r *Resource) Apply(ctx context.Context) (resource.TaskStatus, error) {
+	ch := wrapCall(r.runApply)
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context was cancelled")
+	case results := <-ch:
+		return results.status, results.err
+	}
+	return nil, errors.New("unknown error")
+}
+
+func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
-
 	if err != nil {
 		return nil, err
 	}
-
 	r.populateFromUnit(u)
-
-	if r.sendSignal {
+	if r.sendSignal && !r.hasRun {
 		status.RaiseLevel(resource.StatusWillChange)
 		status.AddMessage(fmt.Sprintf("Sending signal `%s` to unit", r.SignalName))
 	}
-
-	if r.Reload {
+	if r.Reload && !r.hasRun {
 		status.RaiseLevel(resource.StatusWillChange)
 		status.AddMessage("Reloading unit configuration")
 		status.AddDifference("state", u.ActiveState, "reloaded", "")
 	}
-
 	switch r.State {
 	case "restarted":
 		status.RaiseLevel(resource.StatusWillChange)
@@ -101,25 +132,21 @@ func (r *Resource) Check(context.Context, resource.Renderer) (resource.TaskStatu
 	case "stopped":
 		r.shouldStop(u, status)
 	}
-
+	r.hasRun = true
 	return status, nil
 }
 
-func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
+func (r *Resource) runApply() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	tempStatus := resource.NewStatus()
-
 	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
-
 	if err != nil {
 		return nil, err
 	}
-
 	if r.sendSignal {
 		status.AddMessage(fmt.Sprintf("Sending signal `%s` to unit", r.SignalName))
 		r.systemdExecutor.SendSignal(u, Signal(r.SignalNumber))
 	}
-
 	if r.Reload {
 		status.AddMessage("Reloading unit configuration")
 		status.AddDifference("state", u.ActiveState, "reloaded", "")
@@ -127,9 +154,7 @@ func (r *Resource) Apply(context.Context) (resource.TaskStatus, error) {
 			return nil, err
 		}
 	}
-
 	var runstateErr error
-
 	switch r.State {
 	case "running":
 		if r.shouldStart(u, tempStatus) {
