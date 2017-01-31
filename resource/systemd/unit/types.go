@@ -135,10 +135,12 @@ func (u UnitType) Suffix() string {
 	return ""
 }
 
+// UnitTypeString returns a stringified version of the unit type, in title case
 func (u UnitType) UnitTypeString() string {
 	return strings.Title(u.Suffix())
 }
 
+// HasProperties returns true if the unit type has type-specific properties
 func (u UnitType) HasProperties() bool {
 	switch u {
 	case UnitTypeTarget, UnitTypeSnapshot, UnitTypeUnknown:

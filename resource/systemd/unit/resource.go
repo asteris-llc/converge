@@ -23,6 +23,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Resource is the resource struct for systemd.unit
 type Resource struct {
 	Name         string `export:"unit"`
 	State        string `export:"state"`
@@ -51,20 +52,41 @@ type Resource struct {
 
 	// The status represents the current status of the process.  It will be
 	// initialized during planning and updated after apply to reflect any changes.
-
 	Status string `export:"status"`
 
-	Properties          *Properties              `export:"global_properties"`
-	ServiceProperties   *ServiceTypeProperties   `export:"service_properties"`
-	SocketProperties    *SocketTypeProperties    `export:"SocketProperties"`
-	DeviceProperties    *DeviceTypeProperties    `export:"DeviceProperties"`
-	MountProperties     *MountTypeProperties     `export:"MountProperties"`
+	// Properties are the global systemd unit properties and will be set for all
+	// unit types.
+	Properties *Properties `export:"global_properties"`
+
+	// ServiceProperties contain properties specific to Service unit types
+	ServiceProperties *ServiceTypeProperties `export:"service_properties"`
+
+	// SocketProperties contain properties specific to Socket unit types
+	SocketProperties *SocketTypeProperties `export:"SocketProperties"`
+
+	// DeviceProperties contain properties specific to Device unit types
+	DeviceProperties *DeviceTypeProperties `export:"DeviceProperties"`
+
+	// MountProperties contain properties specific to Mount unit types
+	MountProperties *MountTypeProperties `export:"MountProperties"`
+
+	// AutomountProperties contain properties specific for Autoumount unit types
 	AutomountProperties *AutomountTypeProperties `export:"AutomountProperties"`
-	SwapProperties      *SwapTypeProperties      `export:"SwapProperties"`
-	PathProperties      *PathTypeProperties      `export:"PathProperties"`
-	TimerProperties     *TimerTypeProperties     `export:"TimerProperties"`
-	SliceProperties     *SliceTypeProperties     `export:"SliceProperties"`
-	ScopeProperties     *ScopeTypeProperties     `export:"ScopeProperties"`
+
+	// SwapProperties contain properties specific to Swap unit types
+	SwapProperties *SwapTypeProperties `export:"SwapProperties"`
+
+	// PathProperties contain properties specific to Path unit types
+	PathProperties *PathTypeProperties `export:"PathProperties"`
+
+	// TimerProperties contain properties specific to Timer unit types
+	TimerProperties *TimerTypeProperties `export:"TimerProperties"`
+
+	// SliceProperties contain properties specific to Slice unit types
+	SliceProperties *SliceTypeProperties `export:"SliceProperties"`
+
+	// ScopeProperties contain properties specific to Scope unit types
+	ScopeProperties *ScopeTypeProperties `export:"ScopeProperties"`
 
 	sendSignal      bool
 	systemdExecutor SystemdExecutor
@@ -85,6 +107,7 @@ func wrapCall(f func() (resource.TaskStatus, error)) <-chan response {
 	return resp
 }
 
+// Check implements resource.Task
 func (r *Resource) Check(ctx context.Context, _ resource.Renderer) (resource.TaskStatus, error) {
 	ch := wrapCall(r.runCheck)
 	select {
@@ -95,6 +118,7 @@ func (r *Resource) Check(ctx context.Context, _ resource.Renderer) (resource.Tas
 	}
 }
 
+// Apply implemnts resource.Task
 func (r *Resource) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	ch := wrapCall(r.runApply)
 	select {

@@ -14,6 +14,7 @@
 
 package unit
 
+// SystemdExecutor is a lightweight interface to support mocking systemd
 type SystemdExecutor interface {
 	// ListUnits will return a Unit slice
 	ListUnits() ([]*Unit, error)
@@ -24,9 +25,23 @@ type SystemdExecutor interface {
 	// since the underlying dbus API will return a result even for nonexistant
 	// unit names.
 	QueryUnit(unitName string, verify bool) (*Unit, error)
+
+	// StartUnit will start a systemd unit, replacing any currently pending
+	// operations on that unit.
 	StartUnit(*Unit) error
+
+	// StopUnit will stop a systemd unit, replacing any currently pending
+	// operations on that unit.
 	StopUnit(*Unit) error
+
+	// Restart unit will restart a running unit, or start it if it's not currently
+	// running.  This will replace any currently pending operations on that unit.
 	RestartUnit(*Unit) error
+
+	// ReloadUnit will instruct a unit to reload it's configuration file. This
+	// will only work on systemd-aware processes.
 	ReloadUnit(*Unit) error
+
+	// Send a unix signal to a process.
 	SendSignal(u *Unit, signal Signal)
 }

@@ -18,15 +18,35 @@ package unit
 
 import "github.com/coreos/go-systemd/dbus"
 
+// SystemdConnection is a lightweight mock over *dbus.Connection
 type SystemdConnection interface {
+	// Close a systemd connection
 	Close()
+
+	// ListUnits that are currently loaded
 	ListUnits() ([]dbus.UnitStatus, error)
+
+	// ListUnitsByNames that they are known by
 	ListUnitsByNames(units []string) ([]dbus.UnitStatus, error)
+
+	// GetUnitProperties that are global to all unit types
 	GetUnitProperties(unit string) (map[string]interface{}, error)
+
+	// GetUnitTypeProperties that are specific to the specified unit type
 	GetUnitTypeProperties(unit, unitType string) (map[string]interface{}, error)
+
+	// StartUnit starts a unit
 	StartUnit(name string, mode string, ch chan<- string) (int, error)
+
+	// StopUnit stops a unit
 	StopUnit(name string, mode string, ch chan<- string) (int, error)
+
+	// RestartUnit restarts a unit
 	RestartUnit(name string, mode string, ch chan<- string) (int, error)
+
+	// ReloadUnit instructs a unit to reload it's configuration file
 	ReloadUnit(name string, mode string, ch chan<- string) (int, error)
+
+	// KillUnit sends a unix signal to the process
 	KillUnit(name string, signal int32)
 }
