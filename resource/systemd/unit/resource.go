@@ -15,8 +15,9 @@
 package unit
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -92,7 +93,6 @@ func (r *Resource) Check(ctx context.Context, _ resource.Renderer) (resource.Tas
 	case results := <-ch:
 		return results.status, results.err
 	}
-	return nil, errors.New("unknown error")
 }
 
 func (r *Resource) Apply(ctx context.Context) (resource.TaskStatus, error) {
@@ -103,7 +103,6 @@ func (r *Resource) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	case results := <-ch:
 		return results.status, results.err
 	}
-	return nil, errors.New("unknown error")
 }
 
 func (r *Resource) runCheck() (resource.TaskStatus, error) {

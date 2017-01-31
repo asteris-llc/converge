@@ -15,9 +15,10 @@
 package unit
 
 import (
-	"errors"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/asteris-llc/converge/helpers/fakerenderer"
 	"github.com/stretchr/testify/assert"
@@ -245,7 +246,7 @@ func TestGetFailedReason(t *testing.T) {
 		}
 		for _, typ := range supportedTypes {
 			_, err := getFailedReason(&Unit{Type: typ})
-			assert.Equal(t, errors.New("unable to determine cause of failure: no properties available"), err)
+			assert.EqualError(t, err, "unable to determine cause of failure: no properties available")
 		}
 	})
 	t.Run("looks-at-correct-field-for-type", func(t *testing.T) {
@@ -670,7 +671,7 @@ func TestHandlesContext(t *testing.T) {
 		t.Parallel()
 		t.Run("when-timeout", func(t *testing.T) {
 			t.Parallel()
-			expected := errors.New("context was cancelled")
+			expected := "context was cancelled"
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 			time.Sleep(2 * time.Millisecond)
 			r := &Resource{}
@@ -678,22 +679,46 @@ func TestHandlesContext(t *testing.T) {
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
 			_, err := r.Check(ctx, fakerenderer.New())
-			assert.Equal(t, expected, err)
+			assert.EqualError(t, err, expected)
 			cancel()
+		})
+		t.Run("when-canceled", func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			r := &Resource{}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
+			r.systemdExecutor = e
+			cancel()
+			_, err := r.Check(ctx, fakerenderer.New())
+			assert.Error(t, err)
 		})
 	})
 
 	t.Run("Apply", func(t *testing.T) {
-		t.Parallel()
-		expected := errors.New("context was cancelled")
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
-		time.Sleep(2 * time.Millisecond)
-		r := &Resource{}
-		e := &ExecutorMock{}
-		e.On("QueryUnit", any, any).Return(&Unit{}, nil)
-		r.systemdExecutor = e
-		_, err := r.Apply(ctx)
-		assert.Equal(t, expected, err)
-		cancel()
+		t.Run("when-timeout", func(t *testing.T) {
+			t.Parallel()
+			expected := "context was cancelled"
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+			time.Sleep(2 * time.Millisecond)
+			r := &Resource{}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
+			r.systemdExecutor = e
+			_, err := r.Apply(ctx)
+			assert.EqualError(t, err, expected)
+			cancel()
+		})
+		t.Run("when-canceled", func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			r := &Resource{}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
+			r.systemdExecutor = e
+			cancel()
+			_, err := r.Apply(ctx)
+			assert.Error(t, err)
+		})
 	})
 }
