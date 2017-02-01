@@ -56,37 +56,37 @@ type Resource struct {
 
 	// Properties are the global systemd unit properties and will be set for all
 	// unit types.
-	Properties *Properties `export:"global_properties"`
+	Properties *Properties `re-export-as:"global_properties"`
 
 	// ServiceProperties contain properties specific to Service unit types
-	ServiceProperties *ServiceTypeProperties `export:"service_properties"`
+	ServiceProperties *ServiceTypeProperties `re-export-as:"service_properties"`
 
 	// SocketProperties contain properties specific to Socket unit types
-	SocketProperties *SocketTypeProperties `export:"SocketProperties"`
+	SocketProperties *SocketTypeProperties `re-export-as:"socket_properties"`
 
 	// DeviceProperties contain properties specific to Device unit types
-	DeviceProperties *DeviceTypeProperties `export:"DeviceProperties"`
+	DeviceProperties *DeviceTypeProperties `re-export-as:"device_properties"`
 
 	// MountProperties contain properties specific to Mount unit types
-	MountProperties *MountTypeProperties `export:"MountProperties"`
+	MountProperties *MountTypeProperties `re-export-as:"mount_properties"`
 
 	// AutomountProperties contain properties specific for Autoumount unit types
-	AutomountProperties *AutomountTypeProperties `export:"AutomountProperties"`
+	AutomountProperties *AutomountTypeProperties `re-export-as:"automount_properties"`
 
 	// SwapProperties contain properties specific to Swap unit types
-	SwapProperties *SwapTypeProperties `export:"SwapProperties"`
+	SwapProperties *SwapTypeProperties `re-export-as:"swap_properties"`
 
 	// PathProperties contain properties specific to Path unit types
-	PathProperties *PathTypeProperties `export:"PathProperties"`
+	PathProperties *PathTypeProperties `re-export-as:"path_properties"`
 
 	// TimerProperties contain properties specific to Timer unit types
-	TimerProperties *TimerTypeProperties `export:"TimerProperties"`
+	TimerProperties *TimerTypeProperties `re-export-as:"timer_properties"`
 
 	// SliceProperties contain properties specific to Slice unit types
-	SliceProperties *SliceTypeProperties `export:"SliceProperties"`
+	SliceProperties *SliceTypeProperties `re-export-as:"slice_properties"`
 
 	// ScopeProperties contain properties specific to Scope unit types
-	ScopeProperties *ScopeTypeProperties `export:"ScopeProperties"`
+	ScopeProperties *ScopeTypeProperties `re-export-as:"scope_properties"`
 
 	sendSignal      bool
 	systemdExecutor SystemdExecutor
