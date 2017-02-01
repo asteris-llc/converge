@@ -39,7 +39,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalName: "KILL",
-				executor:   LinuxExecutor{&DbusMock{}},
+				executor:   &ExecutorMock{},
 			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalName: "kill",
-				executor:   LinuxExecutor{&DbusMock{}},
+				executor:   &ExecutorMock{},
 			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalName: "sigkill",
-				executor:   LinuxExecutor{&DbusMock{}},
+				executor:   &ExecutorMock{},
 			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalName: randomizeCase("sigkill"),
-				executor:   LinuxExecutor{&DbusMock{}},
+				executor:   &ExecutorMock{},
 			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalName: randomizeCase("badsignal1"),
-				executor:   LinuxExecutor{&DbusMock{}},
+				executor:   &ExecutorMock{},
 			}
 			_, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.Error(t, err)
@@ -99,7 +99,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalNumber: 9,
-				executor:     LinuxExecutor{&DbusMock{}},
+				executor:     &ExecutorMock{},
 			}
 			res, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.NoError(t, err)
@@ -111,7 +111,7 @@ func TestPreparer(t *testing.T) {
 			t.Parallel()
 			p := &Preparer{
 				SignalNumber: 99,
-				executor:     LinuxExecutor{&DbusMock{}},
+				executor:     &ExecutorMock{},
 			}
 			_, err := p.Prepare(context.Background(), fakerenderer.New())
 			require.Error(t, err)
@@ -123,7 +123,7 @@ func TestPreparer(t *testing.T) {
 			Name:     "test1",
 			State:    "state1",
 			Reload:   true,
-			executor: LinuxExecutor{&DbusMock{}},
+			executor: &ExecutorMock{},
 		}).Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.Equal(t, "test1", res.(*Resource).Name)

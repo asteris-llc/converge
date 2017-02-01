@@ -32,34 +32,32 @@ func (s StubExecutor) ListUnits() (units []*Unit, err error) {
 }
 
 // QueryUnit is a stub
-func (s StubExecutor) QueryUnit(string) (u Unit, err error) {
-	err = ErrUnsupportedOS
-	return
+func (s StubExecutor) QueryUnit(string, bool) (*Unit, error) {
+	return nil, ErrUnsupportedOS
 }
 
 // StartUnit is a stub
-func (s StubExecutor) StartUnit(Unit) error {
+func (s StubExecutor) StartUnit(*Unit) error {
 	return ErrUnsupportedOS
 }
 
 // StopUnit is a stub
-func (s StubExecutor) StopUnit(Unit) error {
+func (s StubExecutor) StopUnit(*Unit) error {
 	return ErrUnsupportedOS
 }
 
 // RestartUnit is a stub
-func (s StubExecutor) RestartUnit(Unit) error {
+func (s StubExecutor) RestartUnit(*Unit) error {
 	return ErrUnsupportedOS
 }
 
 // ReloadUnit is a stub
-func (s StubExecutor) ReloadUnit(Unit) error {
+func (s StubExecutor) ReloadUnit(*Unit) error {
 	return ErrUnsupportedOS
 }
 
-// UnitStatus is a stub
-func (s StubExecutor) UnitStatus(Unit) (u Unit, err error) {
-	err = ErrUnsupportedOS
+// SendSignal is a stub
+func (s StubExecutor) SendSignal(*Unit, Signal) {
 	return
 }
 
