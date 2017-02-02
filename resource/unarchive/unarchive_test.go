@@ -142,11 +142,14 @@ func TestApply(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		t.Run("diff error", func(t *testing.T) {
-			u := &Unarchive{}
+			u := &Unarchive{
+				Source:      srcFile.Name(),
+				Destination: "",
+			}
 
 			status, err := u.Apply(context.Background())
 
-			assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
+			assert.EqualError(t, err, fmt.Sprintf("destination \"%s\" does not exist", u.Destination))
 			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			assert.True(t, status.HasChanges())
 		})
@@ -416,8 +419,8 @@ func TestDiff(t *testing.T) {
 
 		err := u.Diff(status)
 
-		assert.EqualError(t, err, fmt.Sprintf("cannot unarchive: stat %s: no such file or directory", u.Source))
-		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
+		assert.NoError(t, err)
+		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
 		assert.True(t, status.HasChanges())
 	})
 

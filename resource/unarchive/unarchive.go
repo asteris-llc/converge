@@ -161,12 +161,6 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 
 // Diff evaluates the differences for unarchive
 func (u *Unarchive) Diff(status *resource.Status) error {
-	_, err := os.Stat(u.Source)
-	if os.IsNotExist(err) {
-		status.RaiseLevel(resource.StatusCantChange)
-		return errors.Wrap(err, "cannot unarchive")
-	}
-
 	stat, err := os.Stat(u.Destination)
 	if err == nil {
 		if !stat.IsDir() {
@@ -350,11 +344,7 @@ func (u *Unarchive) setFetchLoc() error {
 		return nil
 	}
 
-	checksum, err := u.getChecksum(u.Source)
-	if err != nil {
-		return errors.Wrap(err, "failed to get checksum of source")
-	}
-	u.fetchLoc = "/var/run/converge/cache/" + checksum
+	u.fetchLoc = "/var/run/converge/cache" + u.Destination
 
 	return nil
 }
