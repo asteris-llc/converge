@@ -142,7 +142,7 @@ func randomUnit(typeVal UnitType) *Unit {
 	name := fmt.Sprintf("%s.%s", st.Name, typeVal.Suffix())
 
 	u := &Unit{
-		Properties:  &Properties{},
+		Properties:  Properties{},
 		Name:        name,
 		Description: name,
 		ActiveState: st.ActiveState,

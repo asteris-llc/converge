@@ -56,7 +56,7 @@ type Resource struct {
 
 	// Properties are the global systemd unit properties and will be set for all
 	// unit types.
-	Properties *Properties `re-export-as:"global_properties"`
+	Properties Properties `re-export-as:"global_properties"`
 
 	// ServiceProperties contain properties specific to Service unit types
 	ServiceProperties *ServiceTypeProperties `re-export-as:"service_properties"`

@@ -129,7 +129,7 @@ func TestListUnits(t *testing.T) {
 			"StartLimitBurst":     uint32(7),
 		}
 
-		expected := &Properties{
+		expected := Properties{
 			DefaultDependencies: true,
 			LoadState:           "loaded",
 			Names:               []string{"name1", "name2", "name3"},
