@@ -15,7 +15,6 @@
 package resource
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -127,14 +126,10 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 		return exported, err
 	}
 	for i := 0; i < asStruct.Type().NumField(); i++ {
-
 		isAnon, anonErr := fieldIsAnonymous(input, i)
 		if !isExportedField(input, i) && !isAnon {
 			continue
 		}
-
-		fmt.Printf("extracting field %d (%s) - not exported and not anonymous\n", i, reflect.TypeOf(input).Field(i).Name)
-		fmt.Printf("\t field is of type: %s\n", asStruct.Type().Field(i).Type)
 
 		if anonErr != nil {
 			return exported, anonErr
@@ -157,34 +152,33 @@ func ExportedFields(input interface{}) (exported []*ExportedField, err error) {
 			continue
 		}
 
-		fmt.Printf("\t checking to see if this is a re-exported field...  ")
 		exportedAs, isReExported := asStruct.Type().Field(i).Tag.Lookup("re-export-as")
 		if isReExported {
-			fmt.Println("yes")
-			isKind, kindErr := fieldIsKind(input, i, reflect.Struct)
-			if kindErr != nil {
-				fmt.Println("got a kind error checking for field kind")
-				return exported, kindErr
-			}
-			if !isKind {
-				fmt.Println("!kind, continuing")
+			if !asStruct.Field(i).IsValid() {
 				continue
 			}
-			thisField := asStruct.Field(i).Interface()
-			fmt.Println("re-calling ExportedFields on this struct...")
+
+			if k := asStruct.Field(i).Kind(); k == reflect.Ptr || k == reflect.Interface {
+				if asStruct.Field(i).IsNil() {
+					continue
+				}
+			}
+
+			val, err := getStruct(asStruct.Field(i))
+			if err != nil {
+				return exported, err
+			}
+
+			thisField := val.Interface()
 			fromEmbedded, err := ExportedFields(thisField)
 			if err != nil {
-				fmt.Println("got an error calling ExportedFields...")
 				return exported, err
 			}
 			for _, f := range fromEmbedded {
 				f.ReferenceName = exportedAs + "." + f.ReferenceName
 				exported = append(exported, f)
 			}
-			fmt.Println("finished handling re-exported field, continuing...")
 			continue
-		} else {
-			fmt.Println("no")
 		}
 
 		if field, ok := newExportedField(input, i); ok {
