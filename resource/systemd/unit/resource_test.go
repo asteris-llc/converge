@@ -675,18 +675,19 @@ func TestHandlesContext(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 			time.Sleep(2 * time.Millisecond)
 			r := &Resource{}
-			e := &ExecutorMock{}
+			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
 			_, err := r.Check(ctx, fakerenderer.New())
 			assert.EqualError(t, err, expected)
 			cancel()
 		})
+
 		t.Run("when-canceled", func(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
 			r := &Resource{}
-			e := &ExecutorMock{}
+			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
 			cancel()
@@ -702,7 +703,7 @@ func TestHandlesContext(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 			time.Sleep(2 * time.Millisecond)
 			r := &Resource{}
-			e := &ExecutorMock{}
+			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
 			_, err := r.Apply(ctx)
@@ -713,7 +714,7 @@ func TestHandlesContext(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
 			r := &Resource{}
-			e := &ExecutorMock{}
+			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
 			cancel()

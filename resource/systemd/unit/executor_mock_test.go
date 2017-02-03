@@ -14,43 +14,62 @@
 
 package unit
 
-import "github.com/stretchr/testify/mock"
+import (
+	"time"
+
+	"github.com/stretchr/testify/mock"
+)
 
 type ExecutorMock struct {
 	mock.Mock
+	SleepFor time.Duration
+	DoSleep  bool
+}
+
+func (m *ExecutorMock) maybeSleep() {
+	if m.DoSleep {
+		time.Sleep(m.SleepFor)
+	}
 }
 
 func (m *ExecutorMock) ListUnits() ([]*Unit, error) {
+	m.maybeSleep()
 	args := m.Called()
 	return args.Get(0).([]*Unit), args.Error(1)
 }
 
 func (m *ExecutorMock) QueryUnit(unitName string, verify bool) (*Unit, error) {
+	m.maybeSleep()
 	args := m.Called(unitName, verify)
 	return args.Get(0).(*Unit), args.Error(1)
 }
 
 func (m *ExecutorMock) StartUnit(u *Unit) error {
+	m.maybeSleep()
 	args := m.Called(u)
 	return args.Error(0)
 }
 
 func (m *ExecutorMock) StopUnit(u *Unit) error {
+	m.maybeSleep()
 	args := m.Called(u)
 	return args.Error(0)
 }
 
 func (m *ExecutorMock) RestartUnit(u *Unit) error {
+	m.maybeSleep()
 	args := m.Called(u)
 	return args.Error(0)
 }
 
 func (m *ExecutorMock) ReloadUnit(u *Unit) error {
+	m.maybeSleep()
 	args := m.Called(u)
 	return args.Error(0)
 }
 
 func (m *ExecutorMock) SendSignal(u *Unit, signal Signal) {
+	m.maybeSleep()
 	m.Called(u, signal)
 	return
 }
