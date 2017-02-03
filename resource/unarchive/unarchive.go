@@ -339,14 +339,13 @@ func (u *Unarchive) copyToFinalDest() error {
 }
 
 // setFetchLoc sets the location for the fetch destination
-func (u *Unarchive) setFetchLoc() error {
+func (u *Unarchive) setFetchLoc() {
 	if u.fetchLoc != "" {
-		return nil
+		return
 	}
 
-	u.fetchLoc = "/var/run/converge/cache" + u.Destination
-
-	return nil
+	_, file := filepath.Split(u.Source)
+	u.fetchLoc = "/var/run/converge/cache/" + file
 }
 
 // getChecksum obtains the checksum of the provided file

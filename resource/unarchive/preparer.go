@@ -102,10 +102,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		unarchive.Hash = *p.Hash
 	}
 
-	err = unarchive.setFetchLoc()
-	if err != nil {
-		return nil, errors.Wrap(err, "error setting fetch location")
-	}
+	unarchive.setFetchLoc()
 
 	unarchive.fetch = fetch.Fetch{
 		Source:      unarchive.Source,

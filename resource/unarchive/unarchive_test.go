@@ -1116,15 +1116,40 @@ func TestCopyToFinalDest(t *testing.T) {
 	})
 }
 
+// TestSetFetchLoc tests setFetchLoc for Unarchive
+func TestSetFetchLoc(t *testing.T) {
+	t.Parallel()
+
+	file := "consul_0.6.4_linux_amd64.zip"
+	expected := "/var/run/converge/cache/" + file
+
+	t.Run("file", func(t *testing.T) {
+		u := &Unarchive{
+			Source: file,
+		}
+
+		u.setFetchLoc()
+
+		assert.Equal(t, u.fetchLoc, expected)
+	})
+
+	t.Run("dir path", func(t *testing.T) {
+		u := &Unarchive{
+			Source: "https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip",
+		}
+
+		u.setFetchLoc()
+
+		assert.Equal(t, u.fetchLoc, expected)
+	})
+}
+
 // setupSetDirsAndContents performs some setup required to test
 // SetDirsAndContents
 func setupSetDirsAndContents(u *Unarchive, nested bool) (*resource.Status, string, error) {
 	status := resource.NewStatus()
 
-	err := u.setFetchLoc()
-	if err != nil {
-		return status, "", err
-	}
+	u.setFetchLoc()
 
 	modifyFetchLocForTest(u)
 
