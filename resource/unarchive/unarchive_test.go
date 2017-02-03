@@ -395,6 +395,34 @@ func TestApply(t *testing.T) {
 			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
 			assert.Equal(t, checksumDest, checksumFetch)
 		})
+
+		t.Run("fetch with checksum", func(t *testing.T) {
+			u := &Unarchive{
+				Source:      "https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip",
+				Destination: destDir,
+				HashType:    "sha256",
+				Hash:        "abdf0e1856292468e2c9971420d73b805e93888e006c76324ae39416edcf0627",
+				fetchLoc:    tmpFetchDir,
+			}
+
+			u.fetch = fetch.Fetch{
+				Source:      u.Source,
+				Destination: u.fetchLoc,
+				HashType:    u.HashType,
+				Hash:        u.Hash,
+				Unarchive:   true,
+			}
+			defer os.Remove(u.Source)
+			defer os.RemoveAll(u.Destination)
+			defer os.RemoveAll(u.fetch.Destination)
+
+			status, err := u.Apply(context.Background())
+
+			assert.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("completed fetch and unarchive %q", u.Source), status.Messages()[0])
+			assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())
+			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
+		})
 	})
 }
 
