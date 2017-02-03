@@ -1,7 +1,7 @@
 ---
 title: "systemd.unit.state"
 slug: "systemd-unit-state"
-date: "2017-02-03T12:53:44-06:00"
+date: "2017-02-03T12:58:22-06:00"
 menu:
   main:
     parent: resources
