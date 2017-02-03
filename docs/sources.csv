@@ -8,7 +8,7 @@ file.fetch,../resource/file/fetch/preparer.go,../samples/fileFetch.hcl,Preparer,
 file.mode,../resource/file/mode/preparer.go,../samples/fileMode.hcl,Preparer,../resource/file/mode/mode.go,Mode
 file.owner,../resource/file/owner/preparer.go,../samples/fileOwner.hcl,Preparer,../resource/file/owner/owner.go,Owner
 filesystem,../resource/lvm/fs/preparer.go,../samples/lvm.hcl,Preparer,,
-systemd.unit.state,../resource/systemd/unit/preparer.go,../samples/systemd.hcl,Prepaer,../resource/systemd/unit/resource.go,Resource
+systemd.unit.state,../resource/systemd/unit/preparer.go,../samples/platform/linux/with-systemd/systemd.hcl,Prepaer,../resource/systemd/unit/resource.go,Resource
 lvm.volumegroup,../resource/lvm/vg/preparer.go,../samples/lvm.hcl,Preparer,,
 lvm.logicalvolume,../resource/lvm/lv/preparer.go,../samples/lvm.hcl,Preparer,,
 module,../resource/module/preparer.go,../samples/sourceFile.hcl,Preparer,,
