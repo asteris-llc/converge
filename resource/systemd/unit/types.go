@@ -135,6 +135,11 @@ func (u UnitType) Suffix() string {
 	return ""
 }
 
+// String provides a stringified-version of the type
+func (u UnitType) String() string {
+	return u.Suffix()
+}
+
 // UnitTypeString returns a stringified version of the unit type, in title case
 func (u UnitType) UnitTypeString() string {
 	return strings.Title(u.Suffix())

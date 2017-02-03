@@ -23,69 +23,126 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Resource is the resource struct for systemd.unit
+// Resource is the resource struct for systemd.unit.
+//
+// Many of the exported fields are derived from the systemd dbus api; see
+// https://www.freedesktop.org/wiki/Software/systemd/dbus/ for a full
+// description of the potential values for this fields and their meanings.
 type Resource struct {
-	Name         string `export:"unit"`
-	State        string `export:"state"`
-	Reload       bool   `export:"reload"`
-	SignalName   string `export:"signal_name"`
-	SignalNumber uint   `export:"signal_number"`
+	// The name of the unit, including the unit type.
+	Name string `export:"unit"`
 
-	// These values are set automatically at check time and contain information
-	// about the current systemd process.  They are used for generating messages
-	// and to provide rich exported information about systemd processes.
+	// The desired state of the unit as configured by the user. It will be one of
+	// `running`, `stopped`, or `restarted` if it was configured by the user, and
+	// an empty string otherwise.
+	State string `export:"state"`
 
-	// The full path to the unit file on disk
+	// This field is set to true if the reload flag was configured by the user.
+	Reload bool `export:"reload"`
+
+	// The human-readable name of a unix signal that will be sent to the process.
+	// If this is set the name will match the field set in SignalNumber.  See the
+	// man pages for `signal(3)` on BSD/Darwin or `signal(7)` on GNU Linux for a
+	// full explanation of these signals.
+	SignalName string `export:"signal_name"`
+
+	// The numeric identifier of a unix signal that will be sent to the process.
+	// If this is set it will match the field set in SignalName.  See the man
+	// pages for `signal(3)` on BSD/Darwin or `signal(7)` on GNU Linux for a full
+	// explanation of these signals.
+	SignalNumber uint `export:"signal_number"`
+
+	// The full path to the unit file on disk. This field will be empty if the
+	// unit was not started from a systemd unit file on disk.
 	Path string `export:"path"`
 
-	// Description of the services
+	// Description of the services. This field will be empty unless a description
+	// has been provided in the systemd unit file.
 	Description string `export:"description"`
 
-	// The active state of the unit
+	// The active state of the unit. It will always be one of: `active`,
+	// `reloading`, `inactive`, `failed`, `activating`, `deactivating`.
 	ActiveState string `export:"activestate"`
 
-	// The load state of the unit
+	// The load state of the unit.
 	LoadState string `export:"loadstate"`
 
-	// The type of the unit
+	// The type of the unit as an enumerated value.  See TypeStr for a human
+	// readable type.
 	Type UnitType `export:"type"`
+
+	// The type of the unit as a human readable string.  See the man page for
+	// `systemd(1)` for a full description of the types and their meaning.
+	TypeStr string `export:"typestr"`
 
 	// The status represents the current status of the process.  It will be
 	// initialized during planning and updated after apply to reflect any changes.
 	Status string `export:"status"`
 
 	// Properties are the global systemd unit properties and will be set for all
-	// unit types.
+	// unit types.  See
+	// http://converge.aster.is/extra/systemd-properties/systemd_Properties for
+	// more information.
 	Properties Properties `re-export-as:"global_properties"`
 
-	// ServiceProperties contain properties specific to Service unit types
+	// ServiceProperties contain properties specific to Service unit types.  This
+	// field is only exported when the unit type is `service`.  See
+	// http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties
+	// for for more information.
 	ServiceProperties *ServiceTypeProperties `re-export-as:"service_properties"`
 
-	// SocketProperties contain properties specific to Socket unit types
+	// SocketProperties contain properties specific to Socket unit types. This
+	// field is only exported when the unit type is `socket`. See
+	// http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties
+	// for for more information.
 	SocketProperties *SocketTypeProperties `re-export-as:"socket_properties"`
 
-	// DeviceProperties contain properties specific to Device unit types
+	// DeviceProperties contain properties specific to Device unit types. This
+	// field is only exported when the unit type is `device`. See
+	// http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties
+	// for for more information.
 	DeviceProperties *DeviceTypeProperties `re-export-as:"device_properties"`
 
-	// MountProperties contain properties specific to Mount unit types
+	// MountProperties contain properties specific to Mount unit types. This field
+	// is only exported when the unit type is `mount`. See
+	// http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties
+	// for for more information.
 	MountProperties *MountTypeProperties `re-export-as:"mount_properties"`
 
-	// AutomountProperties contain properties specific for Autoumount unit types
+	// AutomountProperties contain properties specific for Autoumount unit
+	// types. This field is only exported when the unit type is
+	// `automount`. http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties
+	// for for more information.
 	AutomountProperties *AutomountTypeProperties `re-export-as:"automount_properties"`
 
-	// SwapProperties contain properties specific to Swap unit types
+	// SwapProperties contain properties specific to Swap unit types. This field
+	// is only exported when the unit type is
+	// `swap`. http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties
+	// for for more information.
 	SwapProperties *SwapTypeProperties `re-export-as:"swap_properties"`
 
-	// PathProperties contain properties specific to Path unit types
+	// PathProperties contain properties specific to Path unit types. This field
+	// is only exported when the unit type is
+	// `path`. http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties
+	// for for more information.
 	PathProperties *PathTypeProperties `re-export-as:"path_properties"`
 
-	// TimerProperties contain properties specific to Timer unit types
+	// TimerProperties contain properties specific to Timer unit types. This field
+	// is only exported when the unit type is
+	// `timer`. http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties
+	// for for more information.
 	TimerProperties *TimerTypeProperties `re-export-as:"timer_properties"`
 
-	// SliceProperties contain properties specific to Slice unit types
+	// SliceProperties contain properties specific to Slice unit types. This field
+	// is only exported when the unit type is
+	// `slice`. http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties
+	// for for more information.
 	SliceProperties *SliceTypeProperties `re-export-as:"slice_properties"`
 
-	// ScopeProperties contain properties specific to Scope unit types
+	// ScopeProperties contain properties specific to Scope unit types. This field
+	// is only exported when the unit type is
+	// `scope`. http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties
+	// for for more information.
 	ScopeProperties *ScopeTypeProperties `re-export-as:"scope_properties"`
 
 	sendSignal      bool
@@ -199,6 +256,7 @@ func (r *Resource) populateFromUnit(u *Unit) {
 	r.Description = u.Description
 	r.Path = u.Path
 	r.Type = u.Type
+	r.TypeStr = u.Type.String()
 	r.Status = u.ActiveState
 	r.Properties = u.Properties
 	r.ServiceProperties = u.ServiceProperties
