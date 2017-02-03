@@ -1,5 +1,5 @@
 systemd.unit.state "ssh" {
-  unit = "ssh.service"
+  unit  = "ssh.service"
   state = "running"
 }
 
@@ -9,6 +9,7 @@ systemd.unit.state "acpid" {
 
 file.content "service-info" {
   destination = "out.txt"
+
   content = <<EOF
 Name:        {{lookup `systemd.unit.state.ssh.unit`}}
 Path:        {{lookup `systemd.unit.state.ssh.path`}}
@@ -28,6 +29,7 @@ EOF
 
 file.content "socket-info" {
   destination = "out.txt"
+
   content = <<EOF
 Name:        {{lookup `systemd.unit.state.acpid.unit`}}
 Path:        {{lookup `systemd.unit.state.acpid.path`}}
