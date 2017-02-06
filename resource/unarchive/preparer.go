@@ -37,7 +37,7 @@ type Preparer struct {
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
 	// HashType of the archive. It is the hash function used to generate the
-	// checksum hash
+	// checksum hash. Valid types are md5, sha1, sha256, and sha512.
 	HashType *string `hcl:"hash_type"`
 
 	// Hash of the archive. It is the checksum hash.

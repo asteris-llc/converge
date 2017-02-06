@@ -36,6 +36,7 @@ type Preparer struct {
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
 	// HashType is the hash function used to generate the checksum hash
+	// Valid types are md5, sha1, sha256, and sha512
 	HashType *string `hcl:"hash_type"`
 
 	// Hash is the checksum hash

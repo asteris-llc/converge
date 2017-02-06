@@ -729,42 +729,94 @@ func TestEvaluateDuplicates(t *testing.T) {
 		})
 
 		t.Run("checksum mismatch", func(t *testing.T) {
-			fileBDest, err := os.Create(destDir + "/fileB.txt")
-			require.NoError(t, err)
-			defer os.Remove(fileBDest.Name())
+			t.Run("different size", func(t *testing.T) {
+				fileBDest, err := os.Create(destDir + "/fileB.txt")
+				require.NoError(t, err)
+				defer os.Remove(fileBDest.Name())
 
-			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
-			require.NoError(t, err)
-			defer os.Remove(fileBFetch.Name())
+				fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+				require.NoError(t, err)
+				defer os.Remove(fileBFetch.Name())
 
-			_, err = fileBFetch.Write([]byte{1})
-			require.NoError(t, err)
+				_, err = fileBFetch.Write([]byte{1})
+				require.NoError(t, err)
 
-			u := &Unarchive{
-				Destination: destDir,
-				destDir:     ddInfo,
-				fetchDir:    fdInfo,
-			}
+				dStat, _ := os.Stat(destDir + "/fileB.txt")
+				fStat, _ := os.Stat(fetchDir + "/fileB.txt")
+				require.NotEqual(t, dStat.Size(), fStat.Size())
 
-			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
-			require.NoError(t, err)
-			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
-			require.NoError(t, err)
-			require.NotEqual(t, checksumDest, checksumFetch)
+				u := &Unarchive{
+					Destination: destDir,
+					destDir:     ddInfo,
+					fetchDir:    fdInfo,
+				}
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
-				u.destContents = append(u.destContents, path)
-				return nil
+				checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+				require.NoError(t, err)
+				checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+				require.NoError(t, err)
+				require.NotEqual(t, checksumDest, checksumFetch)
+
+				filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+					u.destContents = append(u.destContents, path)
+					return nil
+				})
+
+				filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+					u.fetchContents = append(u.fetchContents, path)
+					return nil
+				})
+
+				err = u.evaluateDuplicates()
+
+				assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
 			})
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
-				u.fetchContents = append(u.fetchContents, path)
-				return nil
+			t.Run("same size", func(t *testing.T) {
+				fileBDest, err := os.Create(destDir + "/fileB.txt")
+				require.NoError(t, err)
+				defer os.Remove(fileBDest.Name())
+
+				_, err = fileBDest.WriteString("a")
+				require.NoError(t, err)
+
+				fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+				require.NoError(t, err)
+				defer os.Remove(fileBFetch.Name())
+
+				_, err = fileBFetch.WriteString("b")
+				require.NoError(t, err)
+
+				dStat, _ := os.Stat(destDir + "/fileB.txt")
+				fStat, _ := os.Stat(fetchDir + "/fileB.txt")
+				require.Equal(t, dStat.Size(), fStat.Size())
+
+				u := &Unarchive{
+					Destination: destDir,
+					destDir:     ddInfo,
+					fetchDir:    fdInfo,
+				}
+
+				checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
+				require.NoError(t, err)
+				checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+				require.NoError(t, err)
+				require.NotEqual(t, checksumDest, checksumFetch)
+
+				filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+					u.destContents = append(u.destContents, path)
+					return nil
+				})
+
+				filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+					u.fetchContents = append(u.fetchContents, path)
+					return nil
+				})
+
+				err = u.evaluateDuplicates()
+
+				assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
 			})
-
-			err = u.evaluateDuplicates()
-
-			assert.EqualError(t, err, fmt.Sprintf("will not replace, \"/fileB.txt\" exists at %q: checksum mismatch", u.Destination))
 		})
 	})
 

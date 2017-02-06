@@ -135,7 +135,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 		return status, err
 	}
 
-	if u.Force == false && evaluateDuplicates {
+	if !u.Force && evaluateDuplicates {
 		err = u.evaluateDuplicates()
 		if err != nil {
 			status.RaiseLevel(resource.StatusFatal)
@@ -251,6 +251,11 @@ func (u *Unarchive) evaluateDuplicates() error {
 			}
 
 			if !faStat.IsDir() && !fbStat.IsDir() && fileA == fileB {
+
+				if faStat.Size() != fbStat.Size() {
+					return fmt.Errorf("will not replace, %q exists at %q: checksum mismatch", fileA, u.Destination)
+				}
+
 				checkA, err := u.getChecksum(fA)
 				if err != nil {
 					return err
