@@ -161,6 +161,12 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 
 // Diff evaluates the differences for unarchive
 func (u *Unarchive) Diff(status *resource.Status) error {
+	_, err := os.Stat(u.Source)
+	if os.IsNotExist(err) {
+		status.RaiseLevel(resource.StatusCantChange)
+		return errors.Wrap(err, "cannot unarchive")
+	}
+
 	stat, err := os.Stat(u.Destination)
 	if err == nil {
 		if !stat.IsDir() {

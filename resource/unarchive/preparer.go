@@ -30,7 +30,7 @@ import (
 //
 // Unarchive renders unarchive data
 type Preparer struct {
-	// Source to unarchive
+	// Source to unarchive - must exist locally
 	Source string `hcl:"source" required:"true" nonempty:"true"`
 
 	// Destination for the unarchive

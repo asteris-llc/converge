@@ -142,14 +142,11 @@ func TestApply(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		t.Run("diff error", func(t *testing.T) {
-			u := &Unarchive{
-				Source:      srcFile.Name(),
-				Destination: "",
-			}
+			u := &Unarchive{}
 
 			status, err := u.Apply(context.Background())
 
-			assert.EqualError(t, err, fmt.Sprintf("destination \"%s\" does not exist", u.Destination))
+			assert.EqualError(t, err, fmt.Sprintf("cannot unarchive: stat %s: no such file or directory", u.Source))
 			assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 			assert.True(t, status.HasChanges())
 		})
@@ -385,13 +382,34 @@ func TestApply(t *testing.T) {
 		})
 
 		t.Run("fetch with checksum", func(t *testing.T) {
+			destDir, err := ioutil.TempDir("", "destDir_unarchive")
+			require.NoError(t, err)
+			defer os.RemoveAll(destDir)
+
+			fileBDest, err := os.Create(destDir + "/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBDest.Name())
+
+			fileBFetch, err := os.Create("/tmp/fileB.txt")
+			require.NoError(t, err)
+			defer os.Remove(fileBFetch.Name())
+
+			// zip fetchDir to use as our unarchive source
+			zipFile := "/tmp/unarchive_test_zip.zip"
+			err = zipFiles(fileBFetch.Name(), zipFile)
+			require.NoError(t, err)
+
 			u := &Unarchive{
-				Source:      "https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip",
+				Source:      zipFile,
 				Destination: destDir,
-				HashType:    "sha256",
-				Hash:        "abdf0e1856292468e2c9971420d73b805e93888e006c76324ae39416edcf0627",
 				fetchLoc:    tmpFetchDir,
 			}
+
+			srcChecksum, err := u.getChecksum(zipFile)
+			require.NoError(t, err)
+
+			u.HashType = "sha256"
+			u.Hash = srcChecksum
 
 			u.fetch = fetch.Fetch{
 				Source:      u.Source,
@@ -435,8 +453,8 @@ func TestDiff(t *testing.T) {
 
 		err := u.Diff(status)
 
-		assert.NoError(t, err)
-		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
+		assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
+		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
 		assert.True(t, status.HasChanges())
 	})
 
