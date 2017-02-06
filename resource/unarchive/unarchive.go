@@ -203,20 +203,6 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fetchDirContents, err := u.fetchDir.Readdir(0)
-	if err != nil {
-		return false, errors.Wrapf(err, "could not read dir %q", fetchDir)
-	}
-
-	// if one directory is within the temporary fetch/unarchive location, we need
-	// to use this as the directory to read file names
-	if len(fetchDirContents) == 1 && fetchDirContents[0].IsDir() {
-		fetchDir = u.fetchLoc + "/" + fetchDirContents[0].Name()
-		u.fetchDir, err = os.Open(fetchDir)
-		if err != nil {
-			return false, err
-		}
-	}
 
 	// walk the fetch directory to set the fetch contents
 	filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {

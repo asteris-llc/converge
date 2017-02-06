@@ -184,15 +184,11 @@ func TestApply(t *testing.T) {
 			require.NoError(t, err)
 			defer os.RemoveAll(destDir)
 
-			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
-			require.NoError(t, err)
-			defer os.RemoveAll(fetchDir)
-
 			fileBDest, err := os.Create(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBDest.Name())
 
-			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			fileBFetch, err := os.Create("/tmp/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBFetch.Name())
 
@@ -201,7 +197,7 @@ func TestApply(t *testing.T) {
 
 			// zip fetchDir to use as our unarchive source
 			zipFile := "/tmp/unarchive_test_zip.zip"
-			err = zipFiles(fetchDir, zipFile)
+			err = zipFiles(fileBFetch.Name(), zipFile)
 			require.NoError(t, err)
 
 			u := &Unarchive{
@@ -223,7 +219,7 @@ func TestApply(t *testing.T) {
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
-			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			checksumFetch, err := u.getChecksum("/tmp/fileB.txt")
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
 
@@ -285,21 +281,17 @@ func TestApply(t *testing.T) {
 			require.NoError(t, err)
 			defer os.RemoveAll(destDir)
 
-			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
-			require.NoError(t, err)
-			defer os.RemoveAll(fetchDir)
-
 			fileBDest, err := os.Create(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBDest.Name())
 
-			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			fileBFetch, err := os.Create("/tmp/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBFetch.Name())
 
 			// zip fetchDir to use as our unarchive source
 			zipFile := "/tmp/unarchive_test_zip.zip"
-			err = zipFiles(fetchDir, zipFile)
+			err = zipFiles(fileBFetch.Name(), zipFile)
 			require.NoError(t, err)
 
 			u := &Unarchive{
@@ -321,7 +313,7 @@ func TestApply(t *testing.T) {
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
-			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			checksumFetch, err := u.getChecksum("/tmp/fileB.txt")
 			require.NoError(t, err)
 			require.Equal(t, checksumDest, checksumFetch)
 
@@ -338,15 +330,11 @@ func TestApply(t *testing.T) {
 			require.NoError(t, err)
 			defer os.RemoveAll(destDir)
 
-			fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
-			require.NoError(t, err)
-			defer os.RemoveAll(fetchDir)
-
 			fileBDest, err := os.Create(destDir + "/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBDest.Name())
 
-			fileBFetch, err := os.Create(fetchDir + "/fileB.txt")
+			fileBFetch, err := os.Create("/tmp/fileB.txt")
 			require.NoError(t, err)
 			defer os.Remove(fileBFetch.Name())
 
@@ -355,7 +343,7 @@ func TestApply(t *testing.T) {
 
 			// zip fetchDir to use as our unarchive source
 			zipFile := "/tmp/unarchive_test_zip.zip"
-			err = zipFiles(fetchDir, zipFile)
+			err = zipFiles(fileBFetch.Name(), zipFile)
 			require.NoError(t, err)
 
 			u := &Unarchive{
@@ -378,7 +366,7 @@ func TestApply(t *testing.T) {
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
-			checksumFetch, err := u.getChecksum(fetchDir + "/fileB.txt")
+			checksumFetch, err := u.getChecksum("/tmp/fileB.txt")
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
 
@@ -386,7 +374,7 @@ func TestApply(t *testing.T) {
 
 			checksumDest, err = u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
-			checksumFetch, err = u.getChecksum(fetchDir + "/fileB.txt")
+			checksumFetch, err = u.getChecksum("/tmp/fileB.txt")
 			require.NoError(t, err)
 
 			assert.NoError(t, testErr)
@@ -616,18 +604,19 @@ func TestSetDirsAndContents(t *testing.T) {
 		require.NoError(t, err)
 		defer os.RemoveAll(tempFetchLoc)
 
-		expF := [3]string{tempFetchLoc, "fetchFileB.txt", "fetchFileC.txt"}
+		expF := [4]string{tempFetchLoc, "/unarchive_fetch_nest", "fetchFileB.txt", "fetchFileC.txt"}
 		expD := [3]string{destDir, nestedDir, nestedFile.Name()}
 
 		evalDups, err := u.setDirsAndContents()
 
 		assert.NoError(t, err)
 		assert.True(t, evalDups)
-		assert.Equal(t, 3, len(u.fetchContents))
+		assert.Equal(t, 4, len(u.fetchContents))
 		assert.Equal(t, 3, len(u.destContents))
-		assert.True(t, strings.Contains(u.fetchContents[0], expF[0]) || strings.Contains(u.fetchContents[1], expF[0]) || strings.Contains(u.fetchContents[2], expF[0]))
-		assert.True(t, strings.Contains(u.fetchContents[0], expF[1]) || strings.Contains(u.fetchContents[1], expF[1]) || strings.Contains(u.fetchContents[2], expF[1]))
-		assert.True(t, strings.Contains(u.fetchContents[0], expF[2]) || strings.Contains(u.fetchContents[1], expF[2]) || strings.Contains(u.fetchContents[2], expF[2]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[0]) || strings.Contains(u.fetchContents[1], expF[0]) || strings.Contains(u.fetchContents[2], expF[0]) || strings.Contains(u.fetchContents[3], expF[0]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[1]) || strings.Contains(u.fetchContents[1], expF[1]) || strings.Contains(u.fetchContents[2], expF[1]) || strings.Contains(u.fetchContents[3], expF[1]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[2]) || strings.Contains(u.fetchContents[1], expF[2]) || strings.Contains(u.fetchContents[2], expF[2]) || strings.Contains(u.fetchContents[3], expF[2]))
+		assert.True(t, strings.Contains(u.fetchContents[0], expF[3]) || strings.Contains(u.fetchContents[1], expF[3]) || strings.Contains(u.fetchContents[2], expF[3]) || strings.Contains(u.fetchContents[3], expF[3]))
 		assert.True(t, strings.Contains(u.destContents[0], expD[0]) || strings.Contains(u.destContents[1], expD[0]) || strings.Contains(u.destContents[2], expD[0]))
 		assert.True(t, strings.Contains(u.destContents[0], expD[1]) || strings.Contains(u.destContents[1], expD[1]) || strings.Contains(u.destContents[2], expD[1]))
 		assert.True(t, strings.Contains(u.destContents[0], expD[2]) || strings.Contains(u.destContents[1], expD[2]) || strings.Contains(u.destContents[2], expD[2]))
