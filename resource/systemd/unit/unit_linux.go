@@ -22,7 +22,7 @@ import (
 	"github.com/coreos/go-systemd/dbus"
 )
 
-// PPUnitStatus pretty-prints a UnitStatus
+// PPtUnitStatus pretty-prints a UnitStatus
 func PPtUnitStatus(u *dbus.UnitStatus) string {
 	fmtStr := `
 UnitStatus

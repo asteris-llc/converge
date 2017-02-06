@@ -27,9 +27,9 @@ fi
 TMPFILE=$(tempfile -s '.go')
 
 echo "Generating go file in: ${TMPFILE}"
-go run dbus-wrappers.go > ${TMPFILE}
+go run dbus-wrappers.go > "${TMPFILE}"
 
 echo "Formatting code at: ${DEST}"
-goimports ${TMPFILE} > $DEST
+goimports "${TMPFILE}" > "$DEST"
 
-rm ${TMPFILE}
+rm "${TMPFILE}"
