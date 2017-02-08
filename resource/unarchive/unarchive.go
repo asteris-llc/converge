@@ -127,6 +127,11 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 		return status, err
 	}
 
+	err = u.setFetchLoc()
+	if err != nil {
+		return nil, errors.Wrap(err, "error setting fetch location")
+	}
+
 	fetchStatus, err := u.fetch.Apply(ctx)
 	if err != nil {
 		return fetchStatus, err
@@ -349,6 +354,7 @@ func (u *Unarchive) setFetchLoc() error {
 	}
 
 	u.fetchLoc = dir
+	u.fetch.Destination = u.fetchLoc
 
 	return nil
 }
