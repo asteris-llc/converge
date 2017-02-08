@@ -62,7 +62,10 @@ func TestPreparer(t *testing.T) {
 				Destination: "/tmp/test",
 			}
 
-			_, err := p.Prepare(context.Background(), &fr)
+			task, err := p.Prepare(context.Background(), &fr)
+			u := task.(*Unarchive)
+			defer os.RemoveAll(u.fetchLoc)
+
 			assert.NoError(t, err)
 		})
 
@@ -73,7 +76,10 @@ func TestPreparer(t *testing.T) {
 				Force:       true,
 			}
 
-			_, err := p.Prepare(context.Background(), &fr)
+			task, err := p.Prepare(context.Background(), &fr)
+			u := task.(*Unarchive)
+			defer os.RemoveAll(u.fetchLoc)
+
 			assert.NoError(t, err)
 		})
 
@@ -87,7 +93,10 @@ func TestPreparer(t *testing.T) {
 			t.Run("md5", func(t *testing.T) {
 				p.HashType = &hashType
 
-				_, err := p.Prepare(context.Background(), &fr)
+				task, err := p.Prepare(context.Background(), &fr)
+				u := task.(*Unarchive)
+				defer os.RemoveAll(u.fetchLoc)
+
 				assert.NoError(t, err)
 			})
 
@@ -97,7 +106,10 @@ func TestPreparer(t *testing.T) {
 				hash = hex.EncodeToString(sha1.New().Sum(nil))
 				p.Hash = &hash
 
-				_, err := p.Prepare(context.Background(), &fr)
+				task, err := p.Prepare(context.Background(), &fr)
+				u := task.(*Unarchive)
+				defer os.RemoveAll(u.fetchLoc)
+
 				assert.NoError(t, err)
 			})
 
@@ -107,7 +119,10 @@ func TestPreparer(t *testing.T) {
 				hash = hex.EncodeToString(sha256.New().Sum(nil))
 				p.Hash = &hash
 
-				_, err := p.Prepare(context.Background(), &fr)
+				task, err := p.Prepare(context.Background(), &fr)
+				u := task.(*Unarchive)
+				defer os.RemoveAll(u.fetchLoc)
+
 				assert.NoError(t, err)
 			})
 
@@ -117,7 +132,10 @@ func TestPreparer(t *testing.T) {
 				hash = hex.EncodeToString(sha512.New().Sum(nil))
 				p.Hash = &hash
 
-				_, err := p.Prepare(context.Background(), &fr)
+				task, err := p.Prepare(context.Background(), &fr)
+				u := task.(*Unarchive)
+				defer os.RemoveAll(u.fetchLoc)
+
 				assert.NoError(t, err)
 			})
 		})

@@ -212,7 +212,6 @@ func TestApply(t *testing.T) {
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
-			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
@@ -263,7 +262,6 @@ func TestApply(t *testing.T) {
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
-			defer os.RemoveAll(u.fetch.Destination)
 
 			status, err := u.Apply(context.Background())
 
@@ -306,7 +304,6 @@ func TestApply(t *testing.T) {
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
-			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
@@ -359,7 +356,6 @@ func TestApply(t *testing.T) {
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
-			defer os.RemoveAll(u.fetch.Destination)
 
 			checksumDest, err := u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
@@ -420,7 +416,6 @@ func TestApply(t *testing.T) {
 			}
 			defer os.Remove(u.Source)
 			defer os.RemoveAll(u.Destination)
-			defer os.RemoveAll(u.fetch.Destination)
 
 			status, err := u.Apply(context.Background())
 
@@ -542,11 +537,11 @@ func TestSetDirsAndContents(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		_, tempFetchLoc, err := setupSetDirsAndContents(u, false)
+		err = setupSetDirsAndContents(u, false)
 		require.NoError(t, err)
-		defer os.RemoveAll(tempFetchLoc)
+		defer os.RemoveAll(u.fetchLoc)
 
-		expF := [2]string{tempFetchLoc, "fetchFileA.txt"}
+		expF := [2]string{u.fetchLoc, "fetchFileA.txt"}
 		expD := [1]string{emptyDir}
 
 		evalDups, err := u.setDirsAndContents()
@@ -579,11 +574,11 @@ func TestSetDirsAndContents(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		_, tempFetchLoc, err := setupSetDirsAndContents(u, false)
+		err = setupSetDirsAndContents(u, false)
 		require.NoError(t, err)
-		defer os.RemoveAll(tempFetchLoc)
+		defer os.RemoveAll(u.fetchLoc)
 
-		expF := [2]string{tempFetchLoc, "fetchFileA.txt"}
+		expF := [2]string{u.fetchLoc, "fetchFileA.txt"}
 		expD := [3]string{destDir, nestedDir, nestedFile.Name()}
 
 		evalDups, err := u.setDirsAndContents()
@@ -618,11 +613,11 @@ func TestSetDirsAndContents(t *testing.T) {
 		}
 		defer os.RemoveAll(u.Destination)
 
-		_, tempFetchLoc, err := setupSetDirsAndContents(u, true)
+		err = setupSetDirsAndContents(u, true)
 		require.NoError(t, err)
-		defer os.RemoveAll(tempFetchLoc)
+		defer os.RemoveAll(u.fetchLoc)
 
-		expF := [4]string{tempFetchLoc, "/unarchive_fetch_nest", "fetchFileB.txt", "fetchFileC.txt"}
+		expF := [4]string{u.fetchLoc, "/unarchive_fetch_nest", "fetchFileB.txt", "fetchFileC.txt"}
 		expD := [3]string{destDir, nestedDir, nestedFile.Name()}
 
 		evalDups, err := u.setDirsAndContents()
@@ -1207,92 +1202,64 @@ func TestCopyToFinalDest(t *testing.T) {
 func TestSetFetchLoc(t *testing.T) {
 	t.Parallel()
 
-	file := "consul_0.6.4_linux_amd64.zip"
-	expected := "/var/run/converge/cache/" + file
+	srcFile, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(t, err)
+	defer os.Remove(srcFile.Name())
 
-	t.Run("file", func(t *testing.T) {
-		u := &Unarchive{
-			Source: file,
-		}
+	u := &Unarchive{
+		Source: srcFile.Name(),
+	}
 
-		u.setFetchLoc()
+	expected := "/tmp/tmpDirFetch"
 
-		assert.Equal(t, u.fetchLoc, expected)
-	})
+	err = u.setFetchLoc()
+	defer os.RemoveAll(u.fetchLoc)
 
-	t.Run("dir path", func(t *testing.T) {
-		u := &Unarchive{
-			Source: "https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip",
-		}
-
-		u.setFetchLoc()
-
-		assert.Equal(t, u.fetchLoc, expected)
-	})
+	assert.NoError(t, err)
+	assert.Contains(t, u.fetchLoc, expected)
 }
 
 // setupSetDirsAndContents performs some setup required to test
 // SetDirsAndContents
-func setupSetDirsAndContents(u *Unarchive, nested bool) (*resource.Status, string, error) {
-	status := resource.NewStatus()
+func setupSetDirsAndContents(u *Unarchive, nested bool) error {
 
-	u.setFetchLoc()
+	err := u.setFetchLoc()
+	if err != nil {
+		return err
+	}
 
-	modifyFetchLocForTest(u)
+	err = fetchApply(u.fetchLoc, nested)
 
-	status, tempFetchLoc, err := fetchApply(u.fetchLoc, nested)
-
-	// set the fetchLoc again based on the tempFetchLoc
-	u.fetchLoc = tempFetchLoc
-
-	return status, tempFetchLoc, err
-}
-
-// modifyFetchLocForTest changes the fetchLoc to reside in /tmp
-func modifyFetchLocForTest(u *Unarchive) {
-	info := strings.Split(u.fetchLoc, "/")
-	u.fetchLoc = "/tmp/" + info[len(info)-1]
+	return err
 }
 
 // fetchApply sets up a temporary fetch location with file(s) based on the
 // nested flag
-func fetchApply(fetchLoc string, nested bool) (*resource.Status, string, error) {
-	status := resource.NewStatus()
-
-	info := strings.Split(fetchLoc, "/")
-
-	tempFetchLoc, err := ioutil.TempDir("", info[len(info)-1])
-	if err != nil {
-		return status, tempFetchLoc, err
-	}
+func fetchApply(fetchLoc string, nested bool) error {
 
 	if !nested {
-		_, err := ioutil.TempFile(tempFetchLoc, "fetchFileA.txt")
+		_, err := ioutil.TempFile(fetchLoc, "fetchFileA.txt")
 		if err != nil {
-			return status, tempFetchLoc, err
+			return err
 		}
 	} else {
-		nestedFetchDir, err := ioutil.TempDir(tempFetchLoc, "unarchive_fetch_nest")
+		nestedFetchDir, err := ioutil.TempDir(fetchLoc, "unarchive_fetch_nest")
 		if err != nil {
-			return status, tempFetchLoc, err
+			return err
 		}
 
 		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileB.txt")
 		if err != nil {
-			return status, tempFetchLoc, err
+			return err
 		}
 
 		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileC.txt")
 		if err != nil {
-			return status, tempFetchLoc, err
+			return err
 		}
 	}
 
-	status.RaiseLevel(resource.StatusWillChange)
-	status.AddDifference("destination", "<absent>", fetchLoc, "")
-	status.AddMessage("fetched successfully")
-
-	return status, tempFetchLoc, nil
+	return nil
 }
 
 // zipFiles zips the files in source and places them in destination

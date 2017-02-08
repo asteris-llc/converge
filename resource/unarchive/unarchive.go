@@ -96,6 +96,7 @@ type Unarchive struct {
 // Check if changes are needed for unarchive
 func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+	defer os.RemoveAll(u.fetchLoc)
 
 	if u.hasApplied {
 		return status, nil
@@ -119,6 +120,7 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 // Apply changes for unarchive
 func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
+	defer os.RemoveAll(u.fetchLoc)
 
 	err := u.Diff(status)
 	if err != nil {
@@ -336,13 +338,19 @@ func (u *Unarchive) copyToFinalDest() error {
 }
 
 // setFetchLoc sets the location for the fetch destination
-func (u *Unarchive) setFetchLoc() {
+func (u *Unarchive) setFetchLoc() error {
 	if u.fetchLoc != "" {
-		return
+		return nil
 	}
 
-	_, file := filepath.Split(u.Source)
-	u.fetchLoc = "/var/run/converge/cache/" + file
+	dir, err := ioutil.TempDir("", "tmpDirFetch")
+	if err != nil {
+		return errors.Wrap(err, "failed to set temporary fetch location")
+	}
+
+	u.fetchLoc = dir
+
+	return nil
 }
 
 // getChecksum obtains the checksum of the provided file
