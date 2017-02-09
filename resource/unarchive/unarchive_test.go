@@ -1210,7 +1210,12 @@ func TestSetFetchLoc(t *testing.T) {
 		Source: srcFile.Name(),
 	}
 
-	expected := "/tmp/tmpDirFetch"
+	tmp := os.TempDir()
+	s := tmp[len(tmp)-1:]
+	expected := tmp + "tmpDirFetch"
+	if s != "/" {
+		expected = tmp + "/tmpDirFetch"
+	}
 
 	err = u.setFetchLoc()
 	defer os.RemoveAll(u.fetchLoc)

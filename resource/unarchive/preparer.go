@@ -17,6 +17,7 @@ package unarchive
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/asteris-llc/converge/load/registry"
@@ -104,7 +105,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 
 	unarchive.fetch = fetch.Fetch{
 		Source:      unarchive.Source,
-		Destination: "/tmp",
+		Destination: os.TempDir(),
 		HashType:    unarchive.HashType,
 		Hash:        unarchive.Hash,
 		Unarchive:   true,
