@@ -118,6 +118,17 @@ func TestCheck(t *testing.T) {
 		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
 		assert.True(t, status.HasChanges())
 	})
+
+	t.Run("context", func(t *testing.T) {
+		u := &Unarchive{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := u.Check(ctx, fakerenderer.New())
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
+	})
 }
 
 // TestApply tests the cases Apply handles
@@ -425,6 +436,17 @@ func TestApply(t *testing.T) {
 			assert.Equal(t, u.Destination, status.Diffs()["unarchive"].Current())
 		})
 	})
+
+	t.Run("context", func(t *testing.T) {
+		u := &Unarchive{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := u.Apply(ctx)
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
+	})
 }
 
 // TestDiff tests Diff for Unarchive
@@ -446,7 +468,7 @@ func TestDiff(t *testing.T) {
 		}
 		status := resource.NewStatus()
 
-		err := u.Diff(status)
+		err := u.diff(status)
 
 		assert.EqualError(t, err, "cannot unarchive: stat : no such file or directory")
 		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
@@ -460,7 +482,7 @@ func TestDiff(t *testing.T) {
 		}
 		status := resource.NewStatus()
 
-		err := u.Diff(status)
+		err := u.diff(status)
 
 		assert.EqualError(t, err, fmt.Sprintf("invalid destination \"%s\", must be directory", u.Destination))
 		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
@@ -474,7 +496,7 @@ func TestDiff(t *testing.T) {
 		}
 		status := resource.NewStatus()
 
-		err := u.Diff(status)
+		err := u.diff(status)
 
 		assert.EqualError(t, err, fmt.Sprintf("destination \"%s\" does not exist", u.Destination))
 		assert.Equal(t, resource.StatusCantChange, status.StatusCode())
@@ -488,7 +510,7 @@ func TestDiff(t *testing.T) {
 		}
 		status := resource.NewStatus()
 
-		err := u.Diff(status)
+		err := u.diff(status)
 
 		assert.NoError(t, err)
 		assert.Equal(t, u.Source, status.Diffs()["unarchive"].Original())

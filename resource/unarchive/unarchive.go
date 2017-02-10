@@ -97,8 +97,49 @@ type Unarchive struct {
 	hasApplied bool
 }
 
+// response struct
+// contains response (resource.TaskStatus and error) from Check and Apply
+type response struct {
+	status resource.TaskStatus
+	err    error
+}
+
 // Check if changes are needed for unarchive
 func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context, r resource.Renderer) {
+		status, err := u.checkWithContext(ctx, r)
+		ch <- response{status, err}
+	}(ctx, r)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case check := <-ch:
+		return check.status, check.err
+	}
+}
+
+// Apply changes for unarchive
+func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context) {
+		status, err := u.applyWithContext(ctx)
+		ch <- response{status, err}
+	}(ctx)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case apply := <-ch:
+		return apply.status, apply.err
+	}
+}
+
+// checkWithContext implements Check for Unarchive
+func (u *Unarchive) checkWithContext(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	defer os.RemoveAll(u.fetchLoc)
 
@@ -106,7 +147,7 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 		return status, nil
 	}
 
-	err := u.Diff(status)
+	err := u.diff(status)
 	if err != nil {
 		return status, err
 	}
@@ -121,12 +162,12 @@ func (u *Unarchive) Check(ctx context.Context, r resource.Renderer) (resource.Ta
 	return status, nil
 }
 
-// Apply changes for unarchive
-func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
+// applyWithContext implements Apply for Unarchive
+func (u *Unarchive) applyWithContext(ctx context.Context) (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	defer os.RemoveAll(u.fetchLoc)
 
-	err := u.Diff(status)
+	err := u.diff(status)
 	if err != nil {
 		return status, err
 	}
@@ -176,7 +217,7 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 }
 
 // Diff evaluates the differences for unarchive
-func (u *Unarchive) Diff(status *resource.Status) error {
+func (u *Unarchive) diff(status *resource.Status) error {
 	_, err := os.Stat(u.Source)
 	if os.IsNotExist(err) {
 		status.RaiseLevel(resource.StatusCantChange)
