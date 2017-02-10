@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/asteris-llc/converge/resource"
 	"github.com/asteris-llc/converge/resource/file/fetch"
@@ -90,6 +91,9 @@ type Unarchive struct {
 	// the location of the fetched file
 	fetchLoc string
 
+	// the size in bytes of the fetched/unarchived data
+	dataSize int64
+
 	hasApplied bool
 }
 
@@ -139,6 +143,11 @@ func (u *Unarchive) Apply(ctx context.Context) (resource.TaskStatus, error) {
 
 	evaluateDuplicates, err := u.setDirsAndContents()
 	if err != nil {
+		return status, err
+	}
+
+	mem, err := u.isMemAvailable()
+	if !mem || err != nil {
 		return status, err
 	}
 
@@ -205,10 +214,13 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 	}
 
 	// walk the destination directory to set the destination contents
-	filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+	err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 		u.destContents = append(u.destContents, path)
 		return nil
 	})
+	if err != nil {
+		return false, err
+	}
 
 	// read the contents of the temporary fetch/unarchive location
 	fetchDir := u.fetchLoc
@@ -217,11 +229,17 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 		return false, err
 	}
 
-	// walk the fetch directory to set the fetch contents
-	filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+	// walk the fetch directory to set the fetch contents and determine size
+	err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 		u.fetchContents = append(u.fetchContents, path)
+		if !f.IsDir() {
+			u.dataSize += f.Size()
+		}
 		return nil
 	})
+	if err != nil {
+		return false, err
+	}
 
 	// if there are no files, we do not need to compare checksums with files in
 	// the temporary fetch/unarchive location. We check whether the length is 1
@@ -229,6 +247,43 @@ func (u *Unarchive) setDirsAndContents() (bool, error) {
 	if len(u.destContents) == 1 {
 		return false, nil
 	}
+	return true, nil
+}
+
+// isMemAvailable determines whether adequate memory exists in both the
+// temporary fetch/unarchive location and the destination based on u.dataSize
+func (u *Unarchive) isMemAvailable() (bool, error) {
+	var (
+		destStat syscall.Statfs_t
+		tmpStat  syscall.Statfs_t
+	)
+
+	// determine available space in temporary fetch location
+	err := syscall.Statfs(os.TempDir(), &tmpStat)
+	if err != nil {
+		return false, err
+	}
+	tmpFetchAvailable := tmpStat.Bavail * uint64(tmpStat.Bsize)
+
+	// determine available space in destination
+	err = syscall.Statfs(u.destDir.Name(), &destStat)
+	if err != nil {
+		return false, err
+	}
+	destAvailable := destStat.Bavail * uint64(destStat.Bsize)
+
+	if strings.HasPrefix(u.destDir.Name(), os.TempDir()) {
+		if destAvailable < 2*uint64(u.dataSize) {
+			return false, fmt.Errorf("not enough memory in %q for fetch and unarchive", os.TempDir())
+		}
+	}
+	if tmpFetchAvailable < uint64(u.dataSize) {
+		return false, fmt.Errorf("not enough memory in %q for fetch", os.TempDir())
+	}
+	if destAvailable < uint64(u.dataSize) {
+		return false, fmt.Errorf("not enough memory in %q for unarchive", u.destDir.Name())
+	}
+
 	return true, nil
 }
 

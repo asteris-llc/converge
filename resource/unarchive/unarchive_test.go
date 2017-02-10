@@ -676,15 +676,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 			fetchDir: fdInfo,
 		}
 
-		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.destContents = append(u.destContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
-		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.fetchContents = append(u.fetchContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
 		err = u.evaluateDuplicates()
 
@@ -726,15 +728,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, checksumDest, checksumFetch)
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.destContents = append(u.destContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.fetchContents = append(u.fetchContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			err = u.evaluateDuplicates()
 
@@ -770,15 +774,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEqual(t, checksumDest, checksumFetch)
 
-				filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 					u.destContents = append(u.destContents, path)
 					return nil
 				})
+				require.NoError(t, err)
 
-				filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 					u.fetchContents = append(u.fetchContents, path)
 					return nil
 				})
+				require.NoError(t, err)
 
 				err = u.evaluateDuplicates()
 
@@ -816,15 +822,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEqual(t, checksumDest, checksumFetch)
 
-				filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+				err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 					u.destContents = append(u.destContents, path)
 					return nil
 				})
+				require.NoError(t, err)
 
-				filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+				err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 					u.fetchContents = append(u.fetchContents, path)
 					return nil
 				})
+				require.NoError(t, err)
 
 				err = u.evaluateDuplicates()
 
@@ -887,15 +895,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, checksumDest, checksumFetch)
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.destContents = append(u.destContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.fetchContents = append(u.fetchContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			err = u.evaluateDuplicates()
 
@@ -926,15 +936,17 @@ func TestEvaluateDuplicates(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.destContents = append(u.destContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.fetchContents = append(u.fetchContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			err = u.evaluateDuplicates()
 
@@ -983,25 +995,28 @@ func TestCopyToFinalDest(t *testing.T) {
 			fetchDir: fdInfo,
 		}
 
-		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.destContents = append(u.destContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
-		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.fetchContents = append(u.fetchContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
 		exp := []string{destDir, "fileA.txt", "fileB.txt", "fileC.txt", "fileD.txt"}
 
 		testErr := u.copyToFinalDest()
 
 		act := []string{}
-		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 			act = append(act, path)
 			return nil
 		})
+		require.NoError(t, err)
 
 		assert.NoError(t, testErr)
 		assert.Equal(t, 5, len(act))
@@ -1047,25 +1062,28 @@ func TestCopyToFinalDest(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, checksumDest, checksumFetch)
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.destContents = append(u.destContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.fetchContents = append(u.fetchContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			exp := []string{destDir, "fileA.txt"}
 
 			testErr := u.copyToFinalDest()
 
 			act := []string{}
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				act = append(act, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			assert.NoError(t, testErr)
 			assert.Equal(t, 2, len(act))
@@ -1097,25 +1115,28 @@ func TestCopyToFinalDest(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEqual(t, checksumDest, checksumFetch)
 
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.destContents = append(u.destContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
-			filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 				u.fetchContents = append(u.fetchContents, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			exp := []string{destDir, "fileA.txt", "fileB.txt"}
 
 			testErr := u.copyToFinalDest()
 
 			act := []string{}
-			filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+			err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 				act = append(act, path)
 				return nil
 			})
+			require.NoError(t, err)
 
 			checksumDest, err = u.getChecksum(destDir + "/fileB.txt")
 			require.NoError(t, err)
@@ -1168,25 +1189,28 @@ func TestCopyToFinalDest(t *testing.T) {
 			fetchDir:    fdInfo,
 		}
 
-		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.destContents = append(u.destContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
-		filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.fetchDir.Name(), func(path string, f os.FileInfo, err error) error {
 			u.fetchContents = append(u.fetchContents, path)
 			return nil
 		})
+		require.NoError(t, err)
 
 		exp := []string{destDir, "dirA", "dirB", "dirC", "fileC.txt"}
 
 		testErr := u.copyToFinalDest()
 
 		act := []string{}
-		filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
+		err = filepath.Walk(u.destDir.Name(), func(path string, f os.FileInfo, err error) error {
 			act = append(act, path)
 			return nil
 		})
+		require.NoError(t, err)
 
 		assert.NoError(t, testErr)
 		assert.Equal(t, 5, len(act))
@@ -1289,7 +1313,7 @@ func zipFiles(source, destination string) error {
 		base = filepath.Base(source)
 	}
 
-	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
+	err = filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -1326,6 +1350,9 @@ func zipFiles(source, destination string) error {
 		_, err = io.Copy(writer, file)
 		return err
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

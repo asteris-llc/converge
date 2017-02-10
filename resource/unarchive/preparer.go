@@ -34,7 +34,7 @@ type Preparer struct {
 	// Source to unarchive - must exist locally
 	Source string `hcl:"source" required:"true" nonempty:"true"`
 
-	// Destination for the unarchive
+	// Destination for the unarchive - must be a directory
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
 	// HashType of the archive. It is the hash function used to generate the
