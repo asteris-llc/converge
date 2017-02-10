@@ -174,6 +174,7 @@ func (u *Unarchive) applyWithContext(ctx context.Context) (resource.TaskStatus, 
 
 	err = u.setFetchLoc()
 	if err != nil {
+		status.RaiseLevel(resource.StatusFatal)
 		return nil, errors.Wrap(err, "error setting fetch location")
 	}
 
@@ -184,11 +185,13 @@ func (u *Unarchive) applyWithContext(ctx context.Context) (resource.TaskStatus, 
 
 	evaluateDuplicates, err := u.setDirsAndContents()
 	if err != nil {
+		status.RaiseLevel(resource.StatusFatal)
 		return status, err
 	}
 
 	mem, err := u.isMemAvailable()
 	if !mem || err != nil {
+		status.RaiseLevel(resource.StatusFatal)
 		return status, err
 	}
 
