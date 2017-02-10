@@ -92,6 +92,17 @@ func TestCheck(t *testing.T) {
 			assert.True(t, status.HasChanges())
 		})
 	})
+
+	t.Run("context", func(t *testing.T) {
+		task := fetch.Fetch{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := task.Check(ctx, fakerenderer.New())
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
+	})
 }
 
 // TestApply tests the cases Apply handles
@@ -442,6 +453,17 @@ func TestApply(t *testing.T) {
 				assert.True(t, status.HasChanges())
 			})
 		})
+	})
+
+	t.Run("context", func(t *testing.T) {
+		task := fetch.Fetch{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := task.Apply(ctx)
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
 	})
 }
 

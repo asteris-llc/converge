@@ -73,8 +73,49 @@ type Fetch struct {
 	hasApplied bool
 }
 
-// Check if the the file is on disk, and the hashes are availabe
-func (f *Fetch) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+// response struct
+// contains response (resource.TaskStatus and error) from Check and Apply
+type response struct {
+	status resource.TaskStatus
+	err    error
+}
+
+// Check if changes are needed for Fetch
+func (f *Fetch) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context, r resource.Renderer) {
+		status, err := f.checkWithContext(ctx, r)
+		ch <- response{status, err}
+	}(ctx, r)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case check := <-ch:
+		return check.status, check.err
+	}
+}
+
+// Apply changes for Fetch
+func (f *Fetch) Apply(ctx context.Context) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context) {
+		status, err := f.applyWithContext(ctx)
+		ch <- response{status, err}
+	}(ctx)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case apply := <-ch:
+		return apply.status, apply.err
+	}
+}
+
+// checkWithContext implements Check for Fetch
+func (f *Fetch) checkWithContext(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	var (
 		hsh    hash.Hash
 		err    error
@@ -98,8 +139,8 @@ func (f *Fetch) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 	return status, err
 }
 
-// Apply fetches the file
-func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
+// applyWithContext implements Apply for Fetch
+func (f *Fetch) applyWithContext(context.Context) (resource.TaskStatus, error) {
 	var (
 		hsh      hash.Hash
 		err      error
