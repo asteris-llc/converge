@@ -477,6 +477,7 @@ func TestQueryUnit(t *testing.T) {
 			m.On("ListUnitsByNames", any).Return([]dbus.UnitStatus{unit}, nil)
 			m.On("GetUnitProperties", any, any).Return(map[string]interface{}{}, nil)
 			m.On("GetUnitTypeProperties", any, any).Return(map[string]interface{}{}, nil)
+			m.On("ListUnits").Return([]dbus.UnitStatus{unit}, nil)
 			l := LinuxExecutor{m}
 			actual, err := l.QueryUnit(unit.Name, false)
 			assert.NoError(t, err)
@@ -487,6 +488,7 @@ func TestQueryUnit(t *testing.T) {
 			expected := errors.New("error1")
 			m := &DbusMock{}
 			m.On("ListUnitsByNames", any).Return([]dbus.UnitStatus{}, expected)
+			m.On("ListUnits").Return([]dbus.UnitStatus{}, expected)
 			l := LinuxExecutor{m}
 			_, actual := l.QueryUnit("name1", false)
 			assert.Equal(t, expected, errors.Cause(actual))

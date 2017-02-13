@@ -188,7 +188,7 @@ func (r *Resource) Apply(ctx context.Context) (resource.TaskStatus, error) {
 
 func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
-	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
+	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 func (r *Resource) runApply() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	tempStatus := resource.NewStatus()
-	u, err := r.systemdExecutor.QueryUnit(r.Name, true)
+	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +303,11 @@ func (r *Resource) shouldStart(u *Unit, st *resource.Status) bool {
 		st.RaiseLevel(resource.StatusMayChange)
 		st.AddDifference("state", "deactivating", "active", "")
 		return true
+	case "unknown":
+		st.AddMessage("unit was in an unknown state, will attempt to start")
+		st.RaiseLevel(resource.StatusMayChange)
+		st.AddDifference("state", "unknown", "active", "")
+		return true
 	}
 	return true
 }
@@ -336,6 +341,11 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 	case "deactivating":
 		st.AddMessage("unit is deactivating.  Will re-check status during apply")
 		st.RaiseLevel(resource.StatusMayChange)
+		return true
+	case "unknown":
+		st.AddMessage("unit was in an unknown state, will attempt to stop")
+		st.RaiseLevel(resource.StatusMayChange)
+		st.AddDifference("state", "unknown", "inactive", "")
 		return true
 	}
 	return true
