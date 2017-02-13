@@ -1,5 +1,5 @@
-hash: a0b0b4bb55bc0a10bf2be65b44470b72d8e2f5ca15fcca514e57f735c93fb486
-updated: 2017-02-10T22:19:47.124860154Z
+hash: 9484423982dd4de6e5f5295d332742724f2b90bc0746940940a1682e2bd41a16
+updated: 2017-02-13T16:10:49.617982015Z
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -136,7 +136,7 @@ imports:
 - name: github.com/hashicorp/logutils
   version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: dce175459a9b0bc1f42b1b0f919aae294a73a138
+  version: df4bcf64828598a25bd41f00470b2ab3a66f3169
   subpackages:
   - dag
   - vendor/github.com/hashicorp/errwrap
