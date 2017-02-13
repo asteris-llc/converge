@@ -76,7 +76,7 @@ func TestCheck(t *testing.T) {
 			r.systemdExecutor = e
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.Check(context.Background(), fakerenderer.New())
-			e.AssertCalled(t, "QueryUnit", r.Name, true)
+			e.AssertCalled(t, "QueryUnit", r.Name, false)
 		})
 		t.Run("when-status-active", func(t *testing.T) {
 			unit := &Unit{ActiveState: "active"}

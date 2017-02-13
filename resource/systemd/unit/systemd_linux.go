@@ -49,30 +49,26 @@ func (l LinuxExecutor) ListUnits() ([]*Unit, error) {
 
 // QueryUnit will use dbus to get the unit status by name
 func (l LinuxExecutor) QueryUnit(unitName string, verify bool) (*Unit, error) {
-	if verify {
-		units, err := l.ListUnits()
-		if err != nil {
-			return nil, errors.Wrap(err, "Cannot query unit by name")
-		}
-		for _, u := range units {
-			if u.Name == unitName {
-				return u, nil
-			}
-		}
-		return nil, fmt.Errorf("%s: no such unit known", unitName)
-	}
-	units, err := l.dbusConn.ListUnitsByNames([]string{unitName})
+	units, err := l.ListUnits()
+	var toReturn *Unit
+
 	if err != nil {
 		return nil, errors.Wrap(err, "Cannot query unit by name")
 	}
-	if len(units) == 0 {
-		return nil, fmt.Errorf("no results when querying for unit named %s", unitName)
+
+	for _, u := range units {
+		if u.Name == unitName {
+			toReturn = u
+		}
 	}
-	unit, err := unitFromStatus(l.dbusConn, &units[0])
-	if err != nil {
-		return nil, errors.Wrap(err, "Cannot query unit by name")
+
+	if toReturn == nil {
+		if verify {
+			return nil, fmt.Errorf("%s: no such unit known", unitName)
+		}
+		toReturn = &Unit{ActiveState: "unknown"}
 	}
-	return unit, nil
+	return toReturn, nil
 }
 
 // StartUnit will use dbus to start a unit
