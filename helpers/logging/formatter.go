@@ -17,6 +17,7 @@ package logging
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -37,7 +38,7 @@ type Formatter struct {
 }
 
 func (f *Formatter) init() {
-	isColorTerminal := logrus.IsTerminal() && (runtime.GOOS != "windows")
+	isColorTerminal := logrus.IsTerminal(os.Stderr) && (runtime.GOOS != "windows")
 	f.fancy = (!f.DisableColors && isColorTerminal)
 
 	f.replacer = strings.NewReplacer(
