@@ -18,7 +18,8 @@ import "github.com/spf13/cobra"
 
 // genCmd represents the gen command
 var genCmd = &cobra.Command{
-	Use: "gen",
+	Use:   "gen",
+	Short: "various generator commands",
 }
 
 func init() {
