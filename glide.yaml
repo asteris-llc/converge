@@ -1,95 +1,77 @@
 package: github.com/asteris-llc/converge
 import:
-- package: github.com/BurntSushi/toml
+- package: github.com/Sirupsen/logrus
+  version: ^0.11.2
+- package: github.com/arbovm/levenshtein
 - package: github.com/braintree/manners
-  subpackages:
-  - test_helpers
-- package: github.com/davecgh/go-spew
-  subpackages:
-  - spew
-- package: github.com/fsnotify/fsnotify
-  version: ^1.3.0
-- package: github.com/hashicorp/errwrap
-- package: github.com/hashicorp/go-multierror
-- package: github.com/hashicorp/hcl
-  subpackages:
-  - hcl/ast
-  - hcl/parser
-  - hcl/printer
-  - hcl/scanner
-  - hcl/strconv
-  - hcl/token
-  - json/parser
-  - json/scanner
-  - json/token
-- package: github.com/hashicorp/logutils
-- package: github.com/hashicorp/terraform
-  version: ^0.8.0
-  subpackages:
-  - dag
-  - vendor/github.com/hashicorp/go-multierror
-  - vendor/github.com/hashicorp/errwrap
-- package: github.com/inconshreveable/mousetrap
-- package: github.com/kardianos/osext
-- package: github.com/magiconair/properties
-  version: ^1.7.0
-- package: github.com/mattn/go-isatty
-- package: github.com/mitchellh/mapstructure
-- package: github.com/pkg/errors
-- package: github.com/pmezard/go-difflib
-  version: ~1.0.0
-  subpackages:
-  - difflib
-- package: github.com/spf13/cast
-- package: github.com/spf13/cobra
-  version: 1dd5ff2e11b6dca62fdcb275eb804b94607d8b06
-- package: github.com/spf13/jwalterweatherman
-- package: github.com/spf13/pflag
-- package: github.com/spf13/viper
-- package: github.com/stretchr/testify
-  subpackages:
-  - assert
-  - require
-  - vendor/github.com/davecgh/go-spew/spew
-  - vendor/github.com/pmezard/go-difflib/difflib
-  - mock
-- package: golang.org/x/net
-  subpackages:
-  - context
-- package: golang.org/x/sys
-  subpackages:
-  - unix
-- package: gopkg.in/yaml.v2
-  repo: git@github.com:go-yaml/yaml
-- package: github.com/streamrail/concurrent-map
-- package: github.com/stretchr/objx
-- package: github.com/mitchellh/hashstructure
-- package: github.com/fsouza/go-dockerclient
-- package: google.golang.org/grpc
-  version: ~1.0.0
-- package: github.com/grpc-ecosystem/grpc-gateway
-  version: ^1.1.0
-  subpackages:
-  - third_party/googleapis/google/api
+  version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
+- package: github.com/deckarep/golang-set
+  version: ^1.6.0
 - package: github.com/dgrijalva/jwt-go
   version: ^3.0.0
 - package: github.com/fgrid/uuid
   version: ^0.1.0
-- package: github.com/Sirupsen/logrus
-  version: ^0.10.0
-- package: github.com/deckarep/golang-set
-  version: ~1.5.0
+- package: github.com/fsouza/go-dockerclient
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+  - ptypes/empty
+- package: github.com/gosuri/uilive
+- package: github.com/grpc-ecosystem/grpc-gateway
+  version: ^1.1.0
+  subpackages:
+  - runtime
+  - third_party/googleapis/google/api
+  - utilities
+- package: github.com/hashicorp/go-getter
+- package: github.com/hashicorp/go-multierror
+- package: github.com/hashicorp/hcl
+  subpackages:
+  - hcl/ast
+  - hcl/printer
+- package: github.com/hashicorp/terraform
+  version: ^0.9.0-beta1
+  subpackages:
+  - dag
+- package: github.com/kardianos/osext
+- package: github.com/mattn/go-isatty
+  version: ^0.0.1
+- package: github.com/mitchellh/hashstructure
+- package: github.com/mitchellh/mapstructure
+- package: github.com/pkg/errors
+  version: ^0.8.0
+- package: github.com/soheilhy/cmux
+  version: ^0.1.2
+- package: github.com/spf13/cobra
+  subpackages:
+  - doc
+- package: github.com/spf13/pflag
+- package: github.com/spf13/viper
+- package: github.com/streamrail/concurrent-map
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
+  - mock
 - package: golang.org/x/crypto
   subpackages:
   - openpgp
-- package: github.com/arbovm/levenshtein
+- package: golang.org/x/net
+  subpackages:
+  - context
 - package: golang.org/x/sync
   subpackages:
   - errgroup
+- package: google.golang.org/grpc
+  version: ^1.0.5
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - metadata
+- package: gopkg.in/yaml.v2
+  repo: https://github.com/go-yaml/yaml
 - package: github.com/docker/docker
-  version: ^1.12.0
-- package: github.com/soheilhy/cmux
-  version: ^0.1.2
-- package: github.com/gosuri/uilive
-- package: github.com/cpuguy83/go-md2man
-  version: ^1.0.6
+  version: ^1.13.1
+  subpackages:
+  - api/types/swarm
