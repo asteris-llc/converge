@@ -42,6 +42,7 @@ import:
   - difflib
 - package: github.com/spf13/cast
 - package: github.com/spf13/cobra
+  version: 1dd5ff2e11b6dca62fdcb275eb804b94607d8b06
 - package: github.com/spf13/jwalterweatherman
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
@@ -59,6 +60,7 @@ import:
   subpackages:
   - unix
 - package: gopkg.in/yaml.v2
+  repo: git@github.com:go-yaml/yaml
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/objx
 - package: github.com/mitchellh/hashstructure

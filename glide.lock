@@ -1,5 +1,5 @@
-hash: 9484423982dd4de6e5f5295d332742724f2b90bc0746940940a1682e2bd41a16
-updated: 2017-02-13T16:10:49.617982015Z
+hash: 3a3c234c3cbcf3008b43ef985ebd70928f717d29debe54691f43a2600053e591
+updated: 2017-02-14T14:32:16.739836241-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -185,7 +185,7 @@ imports:
 - name: github.com/spf13/cast
   version: 27b586b42e29bec072fe7379259cc719e1289da6
 - name: github.com/spf13/cobra
-  version: f368244301305f414206f889b1735a54cfc8bde8
+  version: 1dd5ff2e11b6dca62fdcb275eb804b94607d8b06
   subpackages:
   - doc
 - name: github.com/spf13/jwalterweatherman
@@ -248,5 +248,6 @@ imports:
   - tap
   - transport
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
+  repo: git@github.com:go-yaml/yaml
 testImports: []
