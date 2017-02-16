@@ -395,45 +395,57 @@ func (u *Unarchive) evaluateDuplicates() error {
 func (u *Unarchive) copyToFinalDest() error {
 	// for each item in the fetchDir, mkdir or copy to the final destination
 	for _, file := range u.fetchContents {
-		src, err := os.Open(file)
+		err := u.readWrite(file)
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+	}
 
-		fileName := strings.TrimPrefix(file, u.fetchDir.Name())
+	return nil
+}
 
-		fStat, err := os.Stat(file)
-		if err != nil {
-			return err
-		}
+// readWrite handles reading a file and either creates a directory or writes the
+// file to the final unarchive destination
+func (u *Unarchive) readWrite(file string) error {
+	src, err := os.Open(file)
+	if err != nil {
+		return err
+	}
 
-		if fileName != "" {
-			if fStat.IsDir() {
-				err = os.Mkdir(u.destDir.Name()+fileName, fStat.Mode().Perm())
-				if err != nil {
-					if !os.IsNotExist(err) {
-						continue
-					}
-					return err
+	defer src.Close()
+
+	fileName := strings.TrimPrefix(file, u.fetchDir.Name())
+
+	fStat, err := os.Stat(file)
+	if err != nil {
+		return err
+	}
+
+	if fileName != "" {
+		if fStat.IsDir() {
+			err = os.Mkdir(u.destDir.Name()+fileName, fStat.Mode().Perm())
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return nil
 				}
-			} else {
-				// get src []byte
-				srcData, err := ioutil.ReadAll(src)
-				if err != nil {
-					return err
-				}
+				return err
+			}
+		} else {
+			// get src []byte
+			srcData, err := ioutil.ReadAll(src)
+			if err != nil {
+				return err
+			}
 
-				// get src FileInfo
-				srcInfo, err := src.Stat()
-				if err != nil {
-					return err
-				}
+			// get src FileInfo
+			srcInfo, err := src.Stat()
+			if err != nil {
+				return err
+			}
 
-				err = ioutil.WriteFile(u.destDir.Name()+fileName, srcData, srcInfo.Mode().Perm())
-				if err != nil {
-					return err
-				}
+			err = ioutil.WriteFile(u.destDir.Name()+fileName, srcData, srcInfo.Mode().Perm())
+			if err != nil {
+				return err
 			}
 		}
 	}

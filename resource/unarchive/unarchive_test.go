@@ -449,7 +449,7 @@ func TestApply(t *testing.T) {
 	})
 }
 
-// TestDiff tests Diff for Unarchive
+// TestDiff tests diff for Unarchive
 func TestDiff(t *testing.T) {
 	t.Parallel()
 
@@ -518,6 +518,57 @@ func TestDiff(t *testing.T) {
 		assert.Equal(t, resource.StatusWillChange, status.StatusCode())
 		assert.True(t, status.HasChanges())
 	})
+}
+
+// BenchmarkDiff benchmarks diff for Unarchive
+func BenchmarkDiff(b *testing.B) {
+	src, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(b, err)
+	defer os.Remove(src.Name())
+
+	destInvalid, err := ioutil.TempFile("", "unarchive_test.txt")
+	require.NoError(b, err)
+	defer os.Remove(destInvalid.Name())
+
+	status := resource.NewStatus()
+
+	benchmarks := []struct {
+		name string
+		Unarchive
+	}{
+		{"source does not exist",
+			Unarchive{
+				Source:      "",
+				Destination: "/tmp",
+			},
+		},
+		{"destination is not directory",
+			Unarchive{
+				Source:      src.Name(),
+				Destination: destInvalid.Name(),
+			},
+		},
+		{"destination does not exist",
+			Unarchive{
+				Source:      src.Name(),
+				Destination: "",
+			},
+		},
+		{"unarchive",
+			Unarchive{
+				Source:      src.Name(),
+				Destination: "/tmp",
+			},
+		},
+	}
+
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				bm.Unarchive.diff(status)
+			}
+		})
+	}
 }
 
 // TestSetDirsAndContents tests setDirsAndContents for Unarchive
@@ -677,6 +728,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -692,6 +744,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		u := &Unarchive{
 			destDir:  ddInfo,
@@ -726,6 +779,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -737,6 +791,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		t.Run("checksum match", func(t *testing.T) {
 			u := &Unarchive{
@@ -883,6 +938,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -903,6 +959,7 @@ func TestEvaluateDuplicates(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		t.Run("checksum match", func(t *testing.T) {
 			u := &Unarchive{
@@ -996,6 +1053,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -1011,6 +1069,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		u := &Unarchive{
 			destDir:  ddInfo,
@@ -1060,6 +1119,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -1071,6 +1131,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		t.Run("checksum match", func(t *testing.T) {
 			u := &Unarchive{
@@ -1181,6 +1242,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		ddInfo, err := os.Open(destDir)
 		require.NoError(t, err)
+		defer ddInfo.Close()
 
 		fetchDir, err := ioutil.TempDir("", "fetchDir_unarchive")
 		require.NoError(t, err)
@@ -1204,6 +1266,7 @@ func TestCopyToFinalDest(t *testing.T) {
 
 		fdInfo, err := os.Open(fetchDir)
 		require.NoError(t, err)
+		defer fdInfo.Close()
 
 		u := &Unarchive{
 			Destination: destDir,
@@ -1289,28 +1352,47 @@ func setupSetDirsAndContents(u *Unarchive, nested bool) error {
 func fetchApply(fetchLoc string, nested bool) error {
 
 	if !nested {
-		_, err := ioutil.TempFile(fetchLoc, "fetchFileA.txt")
+		err := createTempFile(fetchLoc)
 		if err != nil {
 			return err
 		}
 	} else {
-		nestedFetchDir, err := ioutil.TempDir(fetchLoc, "unarchive_fetch_nest")
-		if err != nil {
-			return err
-		}
-
-		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileB.txt")
-		if err != nil {
-			return err
-		}
-
-		_, err = ioutil.TempFile(nestedFetchDir, "fetchFileC.txt")
+		_, err := createTempDirAndFiles(fetchLoc)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// createTempFile will create a temp file in the provided location
+// the caller is responsible for removing this file
+func createTempFile(location string) error {
+	_, err := ioutil.TempFile(location, "fetchFileA.txt")
+	return err
+}
+
+// createTempDirAndFiles will create a temp directory and two temp files within
+// it in the provided location
+// the caller is responsible for removing the directory and files
+func createTempDirAndFiles(location string) (string, error) {
+	nestedFetchDir, err := ioutil.TempDir(location, "unarchive_fetch_nest")
+	if err != nil {
+		return nestedFetchDir, err
+	}
+
+	_, err = ioutil.TempFile(nestedFetchDir, "fetchFileB.txt")
+	if err != nil {
+		return nestedFetchDir, err
+	}
+
+	_, err = ioutil.TempFile(nestedFetchDir, "fetchFileC.txt")
+	if err != nil {
+		return nestedFetchDir, err
+	}
+
+	return nestedFetchDir, nil
 }
 
 // zipFiles zips the files in source and places them in destination
