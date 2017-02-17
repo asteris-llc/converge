@@ -407,13 +407,6 @@ func (u *Unarchive) copyToFinalDest() error {
 // readWrite handles reading a file and either creates a directory or writes the
 // file to the final unarchive destination
 func (u *Unarchive) readWrite(file string) error {
-	src, err := os.Open(file)
-	if err != nil {
-		return err
-	}
-
-	defer src.Close()
-
 	fileName := strings.TrimPrefix(file, u.fetchDir.Name())
 
 	fStat, err := os.Stat(file)
@@ -431,23 +424,37 @@ func (u *Unarchive) readWrite(file string) error {
 				return err
 			}
 		} else {
-			// get src []byte
-			srcData, err := ioutil.ReadAll(src)
-			if err != nil {
-				return err
-			}
-
-			// get src FileInfo
-			srcInfo, err := src.Stat()
-			if err != nil {
-				return err
-			}
-
-			err = ioutil.WriteFile(u.destDir.Name()+fileName, srcData, srcInfo.Mode().Perm())
-			if err != nil {
+			if err := u.copyFile(file, fileName); err != nil {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (u *Unarchive) copyFile(from, to string) error {
+	src, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+
+	// get src FileInfo
+	srcInfo, err := src.Stat()
+	if err != nil {
+		return err
+	}
+
+	defer src.Close()
+
+	dst, err := os.OpenFile(u.destDir.Name()+to, os.O_CREATE|os.O_RDWR, srcInfo.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
 	}
 
 	return nil
