@@ -21,6 +21,7 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
 	"github.com/asteris-llc/converge/helpers/logging"
@@ -294,7 +295,6 @@ func (b byDependencyCount) Less(i, j int) bool {
 func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "groupDeps").WithField("group", group)
 
-	addGroupDependenciesToGroup(ctx, g, group)
 	nodes := g.GroupNodes(group)
 	sort.Sort(byDependencyCount{g, nodes})
 
@@ -321,29 +321,6 @@ func groupDeps(ctx context.Context, g *graph.Graph, group string) (*graph.Graph,
 	}
 
 	return g, nil
-}
-
-func addGroupDependenciesToGroup(ctx context.Context, g *graph.Graph, group string) {
-	// add nodes that are dependent on a group node to the group
-	for _, node := range g.Nodes() {
-		if node.Group != "" {
-			continue
-		}
-		depIDs := g.Dependencies(node.ID)
-		for _, depID := range depIDs {
-			if dep, ok := g.Get(depID); ok {
-				if pnode, ok := node.Value().(*parse.Node); ok {
-					switch pnode.Kind() {
-					case "macro.case", "macro.switch": // ignore conditional nodes
-						continue
-					}
-					if dep.Group == group && !graph.IsRoot(node.ID) && !pnode.IsModule() {
-						node.Group = group
-					}
-				}
-			}
-		}
-	}
 }
 
 func alignEdgesInGroup(ctx context.Context, g *graph.Graph, id, group string) (*graph.Graph, error) {
@@ -411,6 +388,10 @@ func connectIsolatedGroupNodes(ctx context.Context, g *graph.Graph, nodes []*nod
 				from = groupDep(from)
 				to = groupDep(to)
 			}
+			logging.GetLogger(ctx).WithFields(logrus.Fields{
+				"from": from,
+				"to":   to,
+			}).Debug("connecting isolated group nodes")
 			if err := g.SafeConnect(from, to); err != nil {
 				return g, err
 			}
