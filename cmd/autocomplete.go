@@ -31,7 +31,10 @@ By default, completion file is written to ./converge.bash. Use
 
 Note that for the generated file to work on OS X/macOS, you'll need to install
 bash-completion (or equivalent) from Homebrew (or your package manager of
-choice.)`,
+choice) and follow the instructions for enabling completions.
+
+On Linux, you'll want to move the generated file to "/etc/bash_completion.d". On
+Mac using Homebrew, put it in "/usr/local/etc/bash_completion.d".`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := RootCmd.GenBashCompletionFile(viper.GetString("out")); err != nil {
 			logrus.WithError(err).Fatal("could not generate completion file")
