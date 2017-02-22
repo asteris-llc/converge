@@ -1,5 +1,5 @@
-hash: 9484423982dd4de6e5f5295d332742724f2b90bc0746940940a1682e2bd41a16
-updated: 2017-02-13T16:10:49.617982015Z
+hash: 72dc2a5591013d5da56903a54f2ec659a623441df6fe6d943973246005bc1d4e
+updated: 2017-02-22T13:42:48.182377118-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -45,6 +45,10 @@ imports:
   - test_helpers
 - name: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/coreos/go-systemd
+  version: 7f737a6bd38784c73b5bf5cd54d9b1d23295e3a0
+  subpackages:
+  - dbus
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -95,6 +99,8 @@ imports:
   version: 991e78ed454ce7de73ef3c559008095802e51fd2
 - name: github.com/go-ini/ini
   version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
+- name: github.com/godbus/dbus
+  version: 4b24ebee04561bf8a3bcc09aead82062edc56778
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
@@ -136,7 +142,7 @@ imports:
 - name: github.com/hashicorp/logutils
   version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: df4bcf64828598a25bd41f00470b2ab3a66f3169
+  version: 4e96da57eef7b1bfd6e2752839e897f932752656
   subpackages:
   - dag
   - vendor/github.com/hashicorp/errwrap
