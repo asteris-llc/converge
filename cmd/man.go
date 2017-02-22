@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/Sirupsen/logrus"
@@ -24,17 +25,22 @@ import (
 )
 
 const manSection = "8" // System Administration tools and daemons
+const manDestination = "/usr/local/share/man/man" + manSection
 
 // manCmd represents the man command
 var manCmd = &cobra.Command{
 	Use:   "man",
 	Short: "generate man pages for Converge",
-	Long: `Generate man pages for Converge
+	Long: fmt.Sprintf(
+		`Generate man pages for Converge
 
-By default, this places man pages into the "man/man` + manSection + `" directory under
-the current directory. Use "--path=PATH" to override the output directory. For
-example, to instally man pages globally on many Unix-like systems, use
-"--path=/usr/local/share/man/man` + manSection + `".`,
+By default, this places man pages into "%s". Use "--path=PATH" to override the
+output directory. For example, to install man pages locally, use
+"--path=./man/man%s". The specified destination will be created.
+`,
+		manDestination,
+		manSection,
+	),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := os.MkdirAll(viper.GetString("path"), os.FileMode(0755)); err != nil {
 			logrus.WithError(err).Fatal("could not create man tree path")
@@ -51,7 +57,7 @@ example, to instally man pages globally on many Unix-like systems, use
 }
 
 func init() {
-	manCmd.Flags().String("path", "man/man"+manSection, "path to generated man pages")
+	manCmd.Flags().String("path", manDestination, "path to generated man pages")
 
 	genCmd.AddCommand(manCmd)
 }
