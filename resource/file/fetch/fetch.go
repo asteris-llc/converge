@@ -67,11 +67,55 @@ type Fetch struct {
 	// whether the file will be fetched if it already exists
 	Force bool `export:"force"`
 
+	// whether the fetched file will be unarchived
+	Unarchive bool
+
 	hasApplied bool
 }
 
-// Check if the the file is on disk, and the hashes are availabe
-func (f *Fetch) Check(context.Context, resource.Renderer) (resource.TaskStatus, error) {
+// response struct
+// contains response (resource.TaskStatus and error) from Check and Apply
+type response struct {
+	status resource.TaskStatus
+	err    error
+}
+
+// Check if changes are needed for Fetch
+func (f *Fetch) Check(ctx context.Context, r resource.Renderer) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context, r resource.Renderer) {
+		status, err := f.checkWithContext(ctx, r)
+		ch <- response{status, err}
+	}(ctx, r)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case check := <-ch:
+		return check.status, check.err
+	}
+}
+
+// Apply changes for Fetch
+func (f *Fetch) Apply(ctx context.Context) (resource.TaskStatus, error) {
+	ch := make(chan response, 1)
+
+	go func(ctx context.Context) {
+		status, err := f.applyWithContext(ctx)
+		ch <- response{status, err}
+	}(ctx)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case apply := <-ch:
+		return apply.status, apply.err
+	}
+}
+
+// checkWithContext implements Check for Fetch
+func (f *Fetch) checkWithContext(context.Context, resource.Renderer) (resource.TaskStatus, error) {
 	var (
 		hsh    hash.Hash
 		err    error
@@ -95,13 +139,14 @@ func (f *Fetch) Check(context.Context, resource.Renderer) (resource.TaskStatus, 
 	return status, err
 }
 
-// Apply fetches the file
-func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
+// applyWithContext implements Apply for Fetch
+func (f *Fetch) applyWithContext(context.Context) (resource.TaskStatus, error) {
 	var (
 		hsh      hash.Hash
 		err      error
 		status   = resource.NewStatus()
 		checksum = ""
+		mode     = getter.ClientModeFile
 	)
 
 	if f.Hash != "" {
@@ -126,7 +171,11 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 	}
 
 	values := u.Query()
-	values.Set("archive", "false")
+	if f.Unarchive == false {
+		values.Set("archive", "false")
+	} else {
+		mode = getter.ClientModeAny
+	}
 	if f.Hash != "" {
 		checksum = fmt.Sprintf("checksum=%s:%s", f.HashType, f.Hash)
 	}
@@ -142,7 +191,7 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 		Src:  source,
 		Dst:  f.Destination,
 		Pwd:  pwd,
-		Mode: getter.ClientModeFile,
+		Mode: mode,
 	}
 	if err := client.Get(); err != nil {
 		status.RaiseLevel(resource.StatusFatal)
@@ -157,12 +206,23 @@ func (f *Fetch) Apply(context.Context) (resource.TaskStatus, error) {
 // DiffFile evaluates the differences of the file to be fetched and the current
 // state of the system
 func (f *Fetch) DiffFile(status *resource.Status, hsh hash.Hash) (*resource.Status, error) {
-	// verify the destination is not a directory
+	// the destination should be a file if fetching without an unarchive
+	// if unarchiving, the destination should be a directory
 	stat, err := os.Stat(f.Destination)
 	if err == nil {
 		if stat.IsDir() {
+			if f.Unarchive == false {
+				status.RaiseLevel(resource.StatusCantChange)
+				return status, fmt.Errorf("invalid destination %q, cannot be directory", f.Destination)
+			}
+			status.RaiseLevel(resource.StatusWillChange)
+			status.AddDifference("destination", "<absent>", f.Destination, "")
+			return status, nil
+		}
+
+		if f.Unarchive {
 			status.RaiseLevel(resource.StatusCantChange)
-			return status, fmt.Errorf("invalid destination %q, cannot be directory", f.Destination)
+			return status, fmt.Errorf("invalid destination %q for unarchiving, must be directory", f.Destination)
 		}
 	} else if os.IsNotExist(err) {
 		status.RaiseLevel(resource.StatusWillChange)

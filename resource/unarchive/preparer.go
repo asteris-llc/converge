@@ -1,4 +1,4 @@
-// Copyright © 2016 Asteris, LLC
+// Copyright © 2017 Asteris, LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,48 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fetch
+package unarchive
 
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
+	"github.com/asteris-llc/converge/resource/file/fetch"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
-// Preparer for file fetch
+// Preparer for Unarchive
 //
-// Fetch is responsible for fetching files
+// Unarchive renders unarchive data
 type Preparer struct {
-	// Source is the location of the file to fetch
+	// Source to unarchive - must exist locally
 	Source string `hcl:"source" required:"true" nonempty:"true"`
 
-	// Destination for the fetched file
+	// Destination for the unarchive - must be a directory
 	Destination string `hcl:"destination" required:"true" nonempty:"true"`
 
-	// HashType is the hash function used to generate the checksum hash
-	// Valid types are md5, sha1, sha256, and sha512
+	// HashType of the archive. It is the hash function used to generate the
+	// checksum hash. Valid types are md5, sha1, sha256, and sha512.
 	HashType *string `hcl:"hash_type"`
 
-	// Hash is the checksum hash
+	// Hash of the archive. It is the checksum hash.
 	Hash *string `hcl:"hash" nonempty:"true"`
 
-	// Force indicates whether the file will be fetched if it already exists
-	// If true, the file will be fetched if:
+	// Force indicates whether a file from the unarchived source will replace a
+	// file in the destination if it already exists
+	// If true, the file will be replaced if:
 	// 1. no checksum is provided
 	// 2. the checksum of the existing file differs from the checksum provided
 	Force bool `hcl:"force"`
 }
 
-// Prepare a new fetch task
+// Prepare a new task
 func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resource.Task, error) {
 	if strings.TrimSpace(p.Source) == "" {
 		return nil, errors.New("\"source\" must contain a value")
 	}
+
 	_, err := url.Parse(p.Source)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse \"source\"")
@@ -85,25 +89,33 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		}
 	}
 
-	fetch := &Fetch{
+	unarchive := &Unarchive{
 		Source:      p.Source,
 		Destination: p.Destination,
 		Force:       p.Force,
 	}
 
 	if p.HashType != nil {
-		fetch.HashType = *p.HashType
+		unarchive.HashType = *p.HashType
 	}
 
 	if p.Hash != nil {
-		fetch.Hash = *p.Hash
+		unarchive.Hash = *p.Hash
 	}
 
-	return fetch, nil
+	unarchive.fetch = fetch.Fetch{
+		Source:      unarchive.Source,
+		Destination: os.TempDir(),
+		HashType:    unarchive.HashType,
+		Hash:        unarchive.Hash,
+		Unarchive:   true,
+	}
+
+	return unarchive, nil
 }
 
 func init() {
-	registry.Register("file.fetch", (*Preparer)(nil), (*Fetch)(nil))
+	registry.Register("unarchive", (*Preparer)(nil), (*Unarchive)(nil))
 }
 
 // isValidHashType returns a bool indicating whether the hash type is valid

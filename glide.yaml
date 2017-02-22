@@ -24,6 +24,7 @@ import:
   - json/token
 - package: github.com/hashicorp/logutils
 - package: github.com/hashicorp/terraform
+  version: ^0.8.0
   subpackages:
   - dag
   - vendor/github.com/hashicorp/go-multierror

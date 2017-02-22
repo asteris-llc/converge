@@ -92,6 +92,17 @@ func TestCheck(t *testing.T) {
 			assert.True(t, status.HasChanges())
 		})
 	})
+
+	t.Run("context", func(t *testing.T) {
+		task := fetch.Fetch{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := task.Check(ctx, fakerenderer.New())
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
+	})
 }
 
 // TestApply tests the cases Apply handles
@@ -170,6 +181,7 @@ func TestApply(t *testing.T) {
 				HashType:    string(fetch.HashMD5),
 				Hash:        hex.EncodeToString(hash.Sum(nil)),
 			}
+			defer os.Remove(task.Destination)
 
 			stat := resource.NewStatus()
 			m.On("DiffFile", nil, stat).Return(stat, nil)
@@ -358,6 +370,101 @@ func TestApply(t *testing.T) {
 			assert.True(t, status.HasChanges())
 		})
 	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		t.Run("dest=file", func(t *testing.T) {
+			src, err := ioutil.TempFile("", "fetch_test.txt")
+			require.NoError(t, err)
+			defer os.Remove(src.Name())
+
+			dest, err := ioutil.TempFile("", "fetch_test2.txt")
+			require.NoError(t, err)
+			defer os.Remove(dest.Name())
+
+			m := &MockDiff{}
+			task := fetch.Fetch{
+				Source:      src.Name(),
+				Destination: dest.Name(),
+				Unarchive:   true,
+			}
+			defer os.Remove(task.Destination)
+
+			stat := resource.NewStatus()
+			m.On("DiffFile", nil, stat).Return(stat, nil)
+
+			status, err := task.Apply(context.Background())
+
+			assert.EqualError(t, err, fmt.Sprintf("invalid destination %q for unarchiving, must be directory", task.Destination))
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("dest=dir", func(t *testing.T) {
+			t.Run("dest not exist", func(t *testing.T) {
+				src, err := ioutil.TempFile("", "fetch_test.txt")
+				require.NoError(t, err)
+				defer os.Remove(src.Name())
+
+				m := &MockDiff{}
+				task := fetch.Fetch{
+					Source:      src.Name(),
+					Destination: "/tmp/fetch_test12345678",
+					Unarchive:   true,
+				}
+				defer os.RemoveAll(task.Destination)
+
+				stat := resource.NewStatus()
+				m.On("DiffFile", nil, stat).Return(stat, nil)
+
+				status, err := task.Apply(context.Background())
+
+				assert.NoError(t, err)
+				assert.Contains(t, status.Messages(), "fetched successfully")
+				assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+				assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+				assert.True(t, status.HasChanges())
+			})
+
+			t.Run("dest exists", func(t *testing.T) {
+				src, err := ioutil.TempFile("", "fetch_test.txt")
+				require.NoError(t, err)
+				defer os.Remove(src.Name())
+
+				dest, err := ioutil.TempDir("", "fetch_test")
+				require.NoError(t, err)
+				defer os.Remove(dest)
+
+				m := &MockDiff{}
+				task := fetch.Fetch{
+					Source:      src.Name(),
+					Destination: dest,
+					Unarchive:   true,
+				}
+				defer os.RemoveAll(task.Destination)
+
+				stat := resource.NewStatus()
+				m.On("DiffFile", nil, stat).Return(stat, nil)
+
+				status, err := task.Apply(context.Background())
+
+				assert.NoError(t, err)
+				assert.Contains(t, status.Messages(), "fetched successfully")
+				assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+				assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+				assert.True(t, status.HasChanges())
+			})
+		})
+	})
+
+	t.Run("context", func(t *testing.T) {
+		task := fetch.Fetch{}
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		status, err := task.Apply(ctx)
+
+		assert.EqualError(t, err, "context canceled")
+		assert.Nil(t, status)
+	})
 }
 
 // TestDiffFile tests DiffFile
@@ -373,7 +480,7 @@ func TestDiffFile(t *testing.T) {
 				Hash:        "notarealhashbutstringnonetheless",
 			}
 
-			status, err := task.Check(context.Background(), fakerenderer.New())
+			status, err := task.DiffFile(resource.NewStatus(), nil)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
@@ -387,12 +494,81 @@ func TestDiffFile(t *testing.T) {
 				Destination: "/tmp/converge.tar.gz",
 			}
 
-			status, err := task.Check(context.Background(), fakerenderer.New())
+			status, err := task.DiffFile(resource.NewStatus(), nil)
 
 			assert.NoError(t, err)
 			assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
 			assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
 			assert.True(t, status.HasChanges())
+		})
+	})
+
+	t.Run("unarchive", func(t *testing.T) {
+		t.Run("dest=file", func(t *testing.T) {
+			src, err := ioutil.TempFile("", "fetch_test.txt")
+			require.NoError(t, err)
+			defer os.Remove(src.Name())
+
+			dest, err := ioutil.TempFile("", "fetch_test.txt")
+			require.NoError(t, err)
+			defer os.Remove(dest.Name())
+
+			task := fetch.Fetch{
+				Source:      src.Name(),
+				Destination: dest.Name(),
+				Unarchive:   true,
+			}
+
+			status, err := task.DiffFile(resource.NewStatus(), nil)
+
+			assert.EqualError(t, err, fmt.Sprintf("invalid destination %q for unarchiving, must be directory", task.Destination))
+			assert.True(t, status.HasChanges())
+		})
+
+		t.Run("dest=dir", func(t *testing.T) {
+			t.Run("dest not exist", func(t *testing.T) {
+				src, err := ioutil.TempFile("", "fetch_test.txt")
+				require.NoError(t, err)
+				defer os.Remove(src.Name())
+
+				task := fetch.Fetch{
+					Source:      src.Name(),
+					Destination: "/tmp/fetch_test12345678",
+					Unarchive:   true,
+				}
+
+				status, err := task.DiffFile(resource.NewStatus(), nil)
+
+				assert.NoError(t, err)
+				assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+				assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+				assert.True(t, status.HasChanges())
+			})
+
+			t.Run("dest exists", func(t *testing.T) {
+				src, err := ioutil.TempFile("", "fetch_test.txt")
+				require.NoError(t, err)
+				defer os.Remove(src.Name())
+
+				dest, err := ioutil.TempDir("", "fetch_test")
+				require.NoError(t, err)
+				defer os.Remove(dest)
+
+				task := fetch.Fetch{
+					Source:      src.Name(),
+					Destination: dest,
+					Unarchive:   true,
+				}
+
+				status, err := task.DiffFile(resource.NewStatus(), nil)
+				fmt.Printf("fetch=%v\n", task)
+				fmt.Printf("status=%v\n", status)
+
+				assert.NoError(t, err)
+				assert.Equal(t, "<absent>", status.Diffs()["destination"].Original())
+				assert.Equal(t, task.Destination, status.Diffs()["destination"].Current())
+				assert.True(t, status.HasChanges())
+			})
 		})
 	})
 
@@ -405,7 +581,7 @@ func TestDiffFile(t *testing.T) {
 				Hash:        "notarealhashbutstringnonetheless",
 			}
 
-			status, err := task.Check(context.Background(), fakerenderer.New())
+			status, err := task.DiffFile(resource.NewStatus(), nil)
 
 			assert.EqualError(t, err, fmt.Sprintf("invalid destination \"%s\", cannot be directory", task.Destination))
 			assert.True(t, status.HasChanges())
@@ -417,7 +593,7 @@ func TestDiffFile(t *testing.T) {
 				Destination: "/tmp",
 			}
 
-			status, err := task.Check(context.Background(), fakerenderer.New())
+			status, err := task.DiffFile(resource.NewStatus(), nil)
 
 			assert.EqualError(t, err, fmt.Sprintf("invalid destination \"%s\", cannot be directory", task.Destination))
 			assert.True(t, status.HasChanges())

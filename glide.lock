@@ -1,5 +1,5 @@
-hash: a0b0b4bb55bc0a10bf2be65b44470b72d8e2f5ca15fcca514e57f735c93fb486
-updated: 2017-01-03T10:36:56.909568261-06:00
+hash: 9484423982dd4de6e5f5295d332742724f2b90bc0746940940a1682e2bd41a16
+updated: 2017-02-13T16:10:49.617982015Z
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -54,7 +54,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: 88862e707affccf9c46347361689b2ffef39dc5c
+  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -136,7 +136,7 @@ imports:
 - name: github.com/hashicorp/logutils
   version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: dce175459a9b0bc1f42b1b0f919aae294a73a138
+  version: df4bcf64828598a25bd41f00470b2ab3a66f3169
   subpackages:
   - dag
   - vendor/github.com/hashicorp/errwrap
@@ -171,7 +171,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+  version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/soheilhy/cmux
   version: bf4a8ede9e87c006fe1d4278c6c7f2b8be1fa84c
 - name: github.com/spf13/cast

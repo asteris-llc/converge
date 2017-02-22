@@ -16,6 +16,7 @@ package.apt,../resource/package/apt/preparer.go,../samples/apt.hcl,Preparer,../r
 param,../resource/param/preparer.go,../samples/basic.hcl,Preparer,,
 task,../resource/shell/preparer.go,../samples/basic.hcl,Preparer,../resource/shell/shell.go,Shell
 task.query,../resource/shell/query/preparer.go,../samples/query.hcl,Preparer,,
+unarchive,../resource/unarchive/preparer.go,../samples/unarchive.hcl,Preparer,../resource/unarchive/unarchive.go,Unarchive
 user.group,../resource/group/preparer.go,../samples/group.hcl,Preparer,../resource/group/group.go,Group
 user.user,../resource/user/preparer.go,../samples/user.hcl,Preparer,../resource/user/user.go,User
 wait.query,../resource/wait/preparer.go,../samples/wait.hcl,Preparer,,
