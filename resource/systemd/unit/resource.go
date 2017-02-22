@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
 )
@@ -190,6 +191,7 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	status := resource.NewStatus()
 	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
 	if err != nil {
+		status.AddMessage("query unit returned an error: " + err.Error())
 		return nil, err
 	}
 	r.populateFromUnit(u)
@@ -217,12 +219,20 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 }
 
 func (r *Resource) runApply() (resource.TaskStatus, error) {
+	log.WithField("Unit Name: ", r.Name).Infof("calling runApply()....")
 	status := resource.NewStatus()
 	tempStatus := resource.NewStatus()
 	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
 	if err != nil {
 		return nil, err
 	}
+
+	if u.ActiveState == "unknown" {
+		log.Infof("unable to query information about the unit. " +
+			"Making a best guess based on configured data")
+		u.Name = r.Name
+	}
+
 	if r.sendSignal {
 		status.AddMessage(fmt.Sprintf("Sending signal `%s` to unit", r.SignalName))
 		r.systemdExecutor.SendSignal(u, Signal(r.SignalNumber))
@@ -234,6 +244,7 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 			return nil, err
 		}
 	}
+
 	var runstateErr error
 	switch r.State {
 	case "running":
