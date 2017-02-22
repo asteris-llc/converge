@@ -1,7 +1,7 @@
 ---
 title: "user.user"
 slug: "user-user"
-date: "2016-12-22T11:43:15-06:00"
+date: "2017-02-22T10:32:05-06:00"
 menu:
   main:
     parent: resources
@@ -89,6 +89,13 @@ This field can be indicated when adding or modifying a user.
   MoveDir is used to move the contents of HomeDir when modifying a user.
 HomeDir must also be indicated if MoveDir is set to true.
 
+- `expiry` (time.Time)
+
+  Expiry is the date on which the user account will be disabled. The date is
+specified in the format YYYY-MM-DD. If not specified, the default expiry
+date specified by the EXPIRE variable in /etc/default/useradd, or an empty
+string (no expiry) will be used by default.
+
 - `state` (State)
 
 
@@ -143,6 +150,10 @@ will have their own fields exported under the re-exported namespace.
 - `movedir` (bool)
 
   if the contents of the home directory should be moved
+ 
+- `expiry` (time.Time)
+
+  the date the user account will be disabled
  
 - `state` (State)
 
