@@ -5,6 +5,10 @@ engines:
 
   golint:
     enabled: true
+    exclude_fingerprints:
+      - 0ed50df4002d9441c7bb1c0dc333314b
+      - 9aa21341d1441fc35334169dafd524dc
+      - ad820ed7bc5dd6c138c3d14a3dfae482
 
   govet:
     enabled: true
