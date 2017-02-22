@@ -19,6 +19,7 @@ package unit
 import (
 	"fmt"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/pkg/errors"
 )
@@ -101,6 +102,11 @@ func runDbusCommand(f func(string, string, chan<- string) (int, error), name, mo
 	defer close(ch)
 	_, err := f(name, mode, ch)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"operation": operation,
+			"unit name": name,
+			"mode":      mode,
+		}).Errorf("operation returned an error: %v", err)
 		return err
 	}
 	msg := <-ch
@@ -118,6 +124,11 @@ func runDbusCommand(f func(string, string, chan<- string) (int, error), name, mo
 	case "skipped":
 		return nil
 	}
+	log.WithFields(log.Fields{
+		"operation": operation,
+		"unit name": name,
+		"message":   msg,
+	}).Errorf("systemd returned an unknown message")
 	return fmt.Errorf("unknown systemd status: %s", msg)
 }
 
