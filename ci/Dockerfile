@@ -28,5 +28,8 @@ RUN curl https://glide.sh/get | sh
 RUN go get -v github.com/dvyukov/go-fuzz/go-fuzz
 RUN go get -v github.com/dvyukov/go-fuzz/go-fuzz-build
 
+# install man
+RUN apt-get install -y man
+
 WORKDIR /go
 CMD /bin/bash

@@ -1,5 +1,5 @@
-hash: 9484423982dd4de6e5f5295d332742724f2b90bc0746940940a1682e2bd41a16
-updated: 2017-02-13T16:10:49.617982015Z
+hash: 2a70ae6a1b12279c398e42f2c39ec3ae3e99fbb8a12ef75153f90dc448b6d6fa
+updated: 2017-02-17T13:08:17.322342297-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -41,16 +41,18 @@ imports:
   - netrc
 - name: github.com/braintree/manners
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
-  subpackages:
-  - test_helpers
 - name: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/cpuguy83/go-md2man
+  version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
+  subpackages:
+  - md2man
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/deckarep/golang-set
-  version: 52ba7f28f319e9d560acbf47c7fcf9b9ee7aa7d3
+  version: fc8930a5e645572ee00bf66358ed3414f3c13b90
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
@@ -133,14 +135,10 @@ imports:
   - json/parser
   - json/scanner
   - json/token
-- name: github.com/hashicorp/logutils
-  version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: df4bcf64828598a25bd41f00470b2ab3a66f3169
+  version: 4e96da57eef7b1bfd6e2752839e897f932752656
   subpackages:
   - dag
-  - vendor/github.com/hashicorp/errwrap
-  - vendor/github.com/hashicorp/go-multierror
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
@@ -150,7 +148,7 @@ imports:
 - name: github.com/magiconair/properties
   version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mattn/go-isatty
-  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
+  version: 3a115632dcd687f9c8cd01679c83a06a0e21c1f3
 - name: github.com/Microsoft/go-winio
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/mitchellh/go-homedir
@@ -165,11 +163,15 @@ imports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/pkg/errors
-  version: cc5fbb72d9b1b5f664ff3c11ed7896ee23ad9276
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/russross/blackfriday
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/Sirupsen/logrus
   version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/soheilhy/cmux
@@ -177,7 +179,9 @@ imports:
 - name: github.com/spf13/cast
   version: 27b586b42e29bec072fe7379259cc719e1289da6
 - name: github.com/spf13/cobra
-  version: f368244301305f414206f889b1735a54cfc8bde8
+  version: 1dd5ff2e11b6dca62fdcb275eb804b94607d8b06
+  subpackages:
+  - doc
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
@@ -189,13 +193,11 @@ imports:
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: c5d7a69bf8a2c9c374798160849c071093e41dd1
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - mock
   - require
-  - vendor/github.com/davecgh/go-spew/spew
-  - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/crypto
   version: b35ccbc95a0eaae49fb65c5d627cb7149ed8d1ab
   subpackages:
@@ -238,5 +240,6 @@ imports:
   - tap
   - transport
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
+  repo: https://github.com/go-yaml/yaml
 testImports: []

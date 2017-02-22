@@ -2,7 +2,7 @@ all: public
 
 -include resources.mk
 
-public: content/*.md static/**/* ${RESOURCES} content/license.md static/images/**/*.png
+public: content/commands content/*.md static/**/* ${RESOURCES} content/license.md static/images/**/*.png
 	hugo
 
 publish: public
@@ -14,6 +14,9 @@ extract: extract.go
 
 resources.mk: resources.awk sources.csv
 	awk -f resources.awk sources.csv > $@
+
+content/commands: ../cmd/*.go
+	go run ../main.go gen docs --path=$@
 
 # content to copy
 content/license.md: ../LICENSE

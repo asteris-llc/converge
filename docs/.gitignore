@@ -1,0 +1,8 @@
+extract
+converge
+resources.mk
+public
+
+# auto generated content files
+content/resources
+content/commands
