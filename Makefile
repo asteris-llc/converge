@@ -127,8 +127,6 @@ xcompile: vendor rpc/pb/root.pb.go rpc/pb/root.pb.gw.go test
 			-osarch="darwin/386" \
 			-osarch="darwin/amd64" \
 			-os="linux" \
-			-os="freebsd" \
-			-os="solaris" \
 			-output="build/${NAME}_${PACKAGE_VERSION}_{{.OS}}_{{.Arch}}/${NAME}"
 	find build -type f -execdir /bin/bash -c 'shasum -a 256 $$0 > $$0.sha256sum' \{\} \;
 
