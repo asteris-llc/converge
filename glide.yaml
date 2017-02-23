@@ -75,3 +75,5 @@ import:
   version: ^1.13.1
   subpackages:
   - api/types/swarm
+- package: github.com/coreos/go-systemd
+- package: github.com/godbus/dbus
