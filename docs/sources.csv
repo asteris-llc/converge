@@ -2,6 +2,9 @@ docker.container,../resource/docker/container/preparer.go,../samples/dockerConta
 docker.image,../resource/docker/image/preparer.go,../samples/dockerImage.hcl,Preparer,../resource/docker/image/image.go,Image
 docker.volume,../resource/docker/volume/preparer.go,../samples/dockerVolume.hcl,Preparer,../resource/docker/volume/volume.go,Volume
 docker.network,../resource/docker/network/preparer.go,../samples/dockerNetwork.hcl,Preparer,../resource/docker/network/network.go,Network
+error,../resource/error/usererror.go,../samples/error.hcl,Preparer,../resource/error/usererror.go,UserError
+error.plan,../resource/error/usererror.go,../samples/error.hcl,Preparer,../resource/error/usererror.go,UserError
+error.apply,../resource/error/usererror.go,../samples/error.hcl,ApplyPreparer,../resource/error/usererror.go,UserError
 file.content,../resource/file/content/preparer.go,../samples/fileContent.hcl,Preparer,../resource/file/content/content.go,Content
 file.directory,../resource/file/directory/preparer.go,../samples/fileDirectory.hcl,Preparer,../resource/file/directory/directory.go,Directory
 file.fetch,../resource/file/fetch/preparer.go,../samples/fileFetch.hcl,Preparer,../resource/file/fetch/fetch.go,Fetch

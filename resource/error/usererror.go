@@ -15,6 +15,8 @@
 package usererror
 
 import (
+	"errors"
+
 	"github.com/asteris-llc/converge/load/registry"
 	"github.com/asteris-llc/converge/resource"
 	"golang.org/x/net/context"
@@ -22,7 +24,13 @@ import (
 
 // Preparer for Error
 //
-// Generates a runtime error in the graph
+// `error`, along with `error.plan` and `error.apply` provide a mechanism for
+// specifying runtime errors due to invalid conditions in an hcl file.
+// `error.plan` is an alias for `error`, and generates a runtime error that will
+// occur during the plan phase. `error.apply` will only raise an error during
+// application. Error resources will not cause a failure if they are in an
+// unevaluated branch of a conditional, and are a safe way of aborting execution
+// if a prerequisite requirement isn't met.
 type Preparer struct {
 	Error string `hcl:"error" required:"true"`
 }
@@ -63,7 +71,7 @@ func (u *UserError) Check(context.Context, resource.Renderer) (resource.TaskStat
 	status.RaiseLevel(resource.StatusFatal)
 	status.AddMessage("runtime error: explicit error encountered")
 	status.AddMessage(u.Error)
-	return status, nil
+	return status, errors.New(u.Error)
 }
 
 // Apply returns an error during the apply phase
@@ -73,7 +81,7 @@ func (u *UserError) Apply(context.Context) (resource.TaskStatus, error) {
 	status.RaiseLevel(resource.StatusFatal)
 	status.AddMessage("runtime error: explicit error encountered")
 	status.AddMessage(u.Error)
-	return status, nil
+	return status, errors.New(u.Error)
 }
 
 func init() {

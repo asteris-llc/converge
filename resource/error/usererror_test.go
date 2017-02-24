@@ -58,7 +58,7 @@ func TestCheck(t *testing.T) {
 	t.Run("skips-when-skip-plan-true", func(t *testing.T) {
 		e := &UserError{SkipPlan: true}
 		result, err := e.Check(context.Background(), fakerenderer.New())
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.True(t, result.HasChanges())
 		assert.Equal(t, resource.StatusWillChange, result.StatusCode())
 	})
@@ -67,7 +67,7 @@ func TestCheck(t *testing.T) {
 		expected := "error1"
 		e := &UserError{Error: expected}
 		result, err := e.Check(context.Background(), fakerenderer.New())
-		require.NoError(t, err)
+		assert.EqualError(t, err, expected)
 		assert.Equal(t, resource.StatusFatal, result.StatusCode())
 		assert.Equal(t, []string{_testRuntimeErrorMsg, expected}, result.Messages())
 	})
@@ -77,7 +77,7 @@ func TestApply(t *testing.T) {
 	expected := "error1"
 	e := &UserError{Error: expected}
 	result, err := e.Apply(context.Background())
-	require.NoError(t, err)
+	assert.EqualError(t, err, expected)
 	assert.Equal(t, resource.StatusFatal, result.StatusCode())
 	assert.Equal(t, []string{_testRuntimeErrorMsg, expected}, result.Messages())
 	assert.True(t, e.changed)
