@@ -15,6 +15,7 @@
 package resource_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -86,6 +87,7 @@ func TestExportedFields(t *testing.T) {
 		assert.Equal(t, 3, actual[0].Value.Interface().(int))
 		assert.Equal(t, 4, actual[1].Value.Interface().(int))
 	})
+
 	t.Run("re-export-as-fields", func(t *testing.T) {
 		t.Parallel()
 		expected := []string{"embedded.b", "embedded.x"}
@@ -94,6 +96,33 @@ func TestExportedFields(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expected, fieldNames(actual))
 	})
+
+	t.Run("re-export-with-non-nil-pointer", func(t *testing.T) {
+		t.Parallel()
+		expected := []string{"embeddedptr.b", "embeddedptr.x"}
+		input := newReExportPtr(1, 2, 3)
+		actual, err := resource.ExportedFields(input)
+		if err != nil {
+			t.Log("error: ", err)
+		}
+		require.NoError(t, err)
+		fmt.Println("actual = ", actual)
+		assert.Equal(t, expected, fieldNames(actual))
+	})
+
+	t.Run("re-export-as-with-nil", func(t *testing.T) {
+		t.Parallel()
+		expected := []string{"notnilval.b", "notnilval.x"}
+		input := newReExportNil(1, 2, 3)
+		actual, err := resource.ExportedFields(input)
+		if err != nil {
+			t.Log("error: ", err)
+		}
+		require.NoError(t, err)
+		fmt.Println("actual = ", actual)
+		assert.Equal(t, expected, fieldNames(actual))
+	})
+
 }
 
 // TestGenerateLookupMap tests lookup map generation
@@ -118,7 +147,7 @@ func TestGenerateLookupMap(t *testing.T) {
 	assert.False(t, found)
 }
 
-// TestLookupMapFromStruct tests lookup map generation from a struct
+// TestLookupMapFromStiruct tests lookup map generation from a struct
 func TestLookupMapFromStruct(t *testing.T) {
 	t.Parallel()
 	testInput := &TestEmbeddingOverlap{
@@ -219,6 +248,24 @@ type TestEmbeddedStruct struct {
 // TestReexport is for testing
 type TestReexport struct {
 	Embedded TestEmbeddedStruct `re-export-as:"embedded"`
+}
+
+type TestReExportPtr struct {
+	Embedded *TestEmbeddedStruct `re-export-as:"embeddedptr"`
+}
+
+func newReExportPtr(a, b, c int) *TestReExportPtr {
+	return &TestReExportPtr{Embedded: &TestEmbeddedStruct{a, b, c}}
+}
+
+// TestReExportNil tests re-exporting a nil pointer
+type TestReExportNil struct {
+	NotNil TestEmbeddedStruct  `re-export-as:"notnilval"`
+	NilPtr *TestEmbeddedStruct `re-export-as:"nilval"`
+}
+
+func newReExportNil(a, b, c int) *TestReExportNil {
+	return &TestReExportNil{NotNil: TestEmbeddedStruct{a, b, c}}
 }
 
 func newOuterStruct(a, b, c, d int) *TestOuterStruct {

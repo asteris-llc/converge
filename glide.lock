@@ -1,5 +1,5 @@
-hash: 2a70ae6a1b12279c398e42f2c39ec3ae3e99fbb8a12ef75153f90dc448b6d6fa
-updated: 2017-02-17T13:08:17.322342297-06:00
+hash: 134989df6863230e3238b9483484d5fe912cfeca81dd44652cffd9b4ce3f367b
+updated: 2017-02-23T10:17:19.123838557-06:00
 imports:
 - name: github.com/arbovm/levenshtein
   version: 48b4e1c0c4d0b8b1864f1bd2cd31bb20147e4636
@@ -43,6 +43,10 @@ imports:
   version: 82a8879fc5fd0381fa8b2d8033b19bf255252088
 - name: github.com/BurntSushi/toml
   version: f0aeabca5a127c4078abb8c8d64298b147264b55
+- name: github.com/coreos/go-systemd
+  version: 7f737a6bd38784c73b5bf5cd54d9b1d23295e3a0
+  subpackages:
+  - dbus
 - name: github.com/cpuguy83/go-md2man
   version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
   subpackages:
@@ -97,6 +101,8 @@ imports:
   version: 991e78ed454ce7de73ef3c559008095802e51fd2
 - name: github.com/go-ini/ini
   version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
+- name: github.com/godbus/dbus
+  version: 4b24ebee04561bf8a3bcc09aead82062edc56778
 - name: github.com/golang/protobuf
   version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:

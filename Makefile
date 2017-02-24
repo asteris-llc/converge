@@ -14,7 +14,7 @@ SRCDIRS := $(shell find . -maxdepth 1 -mindepth 1 -type d -not -path './vendor')
 SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go')
 
 # binaries
-converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go
+converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go resource/systemd/unit/systemd_properties.go
 	go build -ldflags="-X ${REPO}/cmd.Version=${VERSION}"
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
@@ -28,6 +28,9 @@ rpc/pb/root.pb.gw.go: rpc/pb/root.proto
 		 -I vendor/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 		 --grpc-gateway_out=logtostderr=true:rpc/pb \
 		 rpc/pb/root.proto
+
+resource/systemd/unit/systemd_properties.go:
+	./gen/systemd/generate-dbus-wrappers
 
 # vendoring
 vendor: glide.yaml glide.lock
