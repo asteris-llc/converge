@@ -8,9 +8,8 @@ param "destination" {
   default = "/tmp/consul"
 }
 
-task "directory" {
-  check = "test -d {{param `destination`}}"
-  apply = "mkdir -p {{param `destination`}}"
+file.directory "consul" {
+  destination = "{{param `destination`}}"
 }
 
 file.fetch "consul.zip" {
@@ -22,5 +21,5 @@ unarchive "consul.zip" {
   source      = "{{param `zip`}}"
   destination = "{{param `destination`}}"
 
-  depends = ["task.directory", "file.fetch.consul.zip"]
+  depends = ["file.directory.consul", "file.fetch.consul.zip"]
 }
