@@ -136,7 +136,8 @@ file.content "render" {
 
 This [param]({{< ref "resources/param.md" >}}) allows us to add a parameter to
 our module when we call it. (Notice that we're using the result of our parameter
-in a template block in the `content` stanza of `file.content.render`.)
+in a [template]({{< ref "params-and-templates.md" >}}) block in the `content`
+stanza of `file.content.render`.)
 
 {{< note title="Templates" >}}
 Converge uses Go's `text/template` library. You can template most stanzas in
@@ -146,8 +147,9 @@ a handy reference to keep around as you're finding your feet with these
 templates.
 {{< /note >}}
 
-Let's change the name in the template to your name (I'm going to assume it's
-"Spartacus".) We'll use the `-p` flag to `converge plan` to see what'll happen:
+Let's change the name in the [template]({{< ref "params-and-templates.md" >}})
+to your name (I'm going to assume it's "Spartacus"). We'll use the `-p` flag to
+`converge plan` to see what'll happen:
 
 ```bash
 $ converge plan --local -p name=Spartacus helloWorld.hcl
@@ -181,10 +183,10 @@ this:
 
 ## Modules Calling Modules
 
-This is all well and good, but we don't want to have to write things the same
-*every time* right? Well, good news: that's what modules are for! Now that
-you've written a module, you can require it from any other module to add it to
-your tree. Create a new module, let's call it `helloYou.hcl`:
+Let's look at how we can take advantage of reusability. Good news: that's what
+modules are for! Now that you've written a module, you can require it from any
+other module to add it to your tree. Create a new module, let's call it
+`helloYou.hcl`. Put the following text in `helloYou.hcl`:
 
 ```hcl
 module "helloWorld.hcl" "hello" {
@@ -195,7 +197,7 @@ module "helloWorld.hcl" "hello" {
 ```
 
 Now try running `converge plan --local helloYou.hcl`. The same thing happens as
-if you had called the module yourself!
+if you had called the `helloWorld.hcl` module directly!
 
 But once again, how does this effect our graph? You remember before that we had
 a root, a file resource, and a param resource. We still have all those things,
@@ -216,11 +218,11 @@ depending on the value of expressions that are evaluated at runtime.  These
 execute differently depending on information such as:
 
 - `param`s passed in by the user
-- information gathered calls to `platform`
+- information gathered from calls to `platform`
 
 To understand how this works, let's consider the following example: You wish to
 create a file, `greeting.txt`. You want that file to contain a greeting in the
-users preferred language.  Here we have an example of a converge script that
+user's preferred language.  Here we have an example of a converge script that
 will allow the user to specify that they would prefer their greeting in spanish
 by passing in a param.
 
