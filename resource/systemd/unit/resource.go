@@ -1,4 +1,4 @@
-// Copyright © 2016 Asteris, LLC
+// Copyright © 2017 Asteris, LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package unit
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -52,6 +53,12 @@ type Resource struct {
 	// pages for `signal(3)` on BSD/Darwin or `signal(7)` on GNU Linux for a full
 	// explanation of these signals.
 	SignalNumber uint `export:"signal_number"`
+
+	// Set to true if the unit is enabled (symlinks exist in `/etc`)
+	Enabled bool `export:"enabled"`
+
+	// Set to tru if the unit is enabled for runtime (symlinks exist in `/run`)
+	EnabledRuntime bool `export:"enabled_runtime"`
 
 	// The full path to the unit file on disk. This field will be empty if the
 	// unit was not started from a systemd unit file on disk.
@@ -146,9 +153,12 @@ type Resource struct {
 	// for for more information.
 	ScopeProperties *ScopeTypeProperties `re-export-as:"scope_properties"`
 
-	sendSignal      bool
-	systemdExecutor SystemdExecutor
-	hasRun          bool
+	enableChange        *bool // enabled if true, disabled if false, unmodified if nil
+	enableRuntimeChange *bool // enabled if true, disabled if false, unmodified if nil
+	sendSignal          bool
+	systemdExecutor     SystemdExecutor
+	hasRun              bool
+	fs                  fsexecutor
 }
 
 type response struct {
@@ -214,12 +224,17 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	case "stopped":
 		r.shouldStop(u, status)
 	}
+	enabledRuntime, enabledPersistent, err := r.isEnabled(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to determine if the unit is enabled")
+	}
+	r.Enabled = enabledPersistent
+	r.EnabledRuntime = enabledRuntime
 	r.hasRun = true
 	return status, nil
 }
 
 func (r *Resource) runApply() (resource.TaskStatus, error) {
-	log.WithField("Unit Name: ", r.Name).Infof("calling runApply()....")
 	status := resource.NewStatus()
 	tempStatus := resource.NewStatus()
 	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
@@ -360,6 +375,58 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 		return true
 	}
 	return true
+}
+
+// isEnabled checks a unit file to see if it's enabled at runtime and/or
+// persistently. It returns a thruple of the runtime enablement, system
+// enablement, and an error
+func (r *Resource) isEnabled(unit *Unit) (runtime bool, persistent bool, err error) {
+	runtime, err = r.existsInTree("/run/systemd", unit)
+	if err != nil {
+		return false, false, err
+	}
+	persistent, err = r.existsInTree("/etc/systemd", unit)
+	if err != nil {
+		return false, false, err
+	}
+	return runtime, persistent, nil
+}
+
+func (r *Resource) existsInTree(root string, unit *Unit) (bool, error) {
+	var found bool
+	toFind := unit.Name
+	var checkSymlink bool
+
+	if unit.Path != "" {
+		toFind = unit.Path
+		checkSymlink = true
+	}
+
+	err := r.fs.Walk(root, func(path string, info os.FileInfo, err error) error {
+		fmt.Printf("walk gave us a path of: '%s'\n", path)
+		fmt.Printf("\t it's info.Name() gives us: '%s'\n", info.Name())
+		fmt.Printf("\t info.Name() == toFind: '%s' == '%s' => %v\n", info.Name(), toFind, info.Name() == toFind)
+		if info.IsDir() {
+			return nil
+		}
+		if checkSymlink {
+			matches, matchErr := r.symlinkTargetMatches(path, toFind)
+			found = found || matches
+			err = matchErr
+		} else if info.Name() == toFind {
+			found = true
+		}
+		return nil
+	})
+	return found, err
+}
+
+func (r *Resource) symlinkTargetMatches(symlinkPath, expectedPath string) (bool, error) {
+	canonical, err := r.fs.EvalSymlinks(symlinkPath)
+	if err != nil {
+		return false, err
+	}
+	return (canonical == expectedPath), nil
 }
 
 func getFailedReason(u *Unit) (string, error) {

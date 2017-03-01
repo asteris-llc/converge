@@ -39,6 +39,16 @@ func (m *DbusMock) ListUnits() ([]dbus.UnitStatus, error) {
 	return args.Get(0).([]dbus.UnitStatus), args.Error(1)
 }
 
+func (m *DbusMock) EnableUnitFiles(files []string, runtime, force bool) (bool, []dbus.EnableUnitFileChange, error) {
+	args := m.Called(files, runtime, force)
+	return args.Bool(0), args.Get(1).([]dbus.EnableUnitFileChange), args.Error(2)
+}
+
+func (m *DbusMock) DisableUnitFiles(files []string, runtime bool) ([]dbus.DisableUnitFileChange, error) {
+	args := m.Called(files, runtime)
+	return args.Get(1).([]dbus.DisableUnitFileChange), args.Error(2)
+}
+
 // ListUnits mocks ListUnitsByNames
 func (m *DbusMock) ListUnitsByNames(names []string) ([]dbus.UnitStatus, error) {
 	args := m.Called(names)

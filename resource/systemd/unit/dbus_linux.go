@@ -49,4 +49,8 @@ type SystemdConnection interface {
 
 	// KillUnit sends a unix signal to the process
 	KillUnit(name string, signal int32)
+
+	EnableUnitFiles(files []string, runtime bool, force bool) (bool, []dbus.EnableUnitFileChange, error)
+
+	DisableUnitFiles(files []string, runtime bool) ([]dbus.DisableUnitFileChange, error)
 }
