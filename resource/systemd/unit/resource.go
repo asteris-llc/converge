@@ -273,6 +273,14 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	case "restarted":
 		runstateErr = r.systemdExecutor.RestartUnit(u)
 	}
+
+	enabledRuntime, enabledPersistent, err := r.isEnabled(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to determine if the unit is enabled")
+	}
+	r.Enabled = enabledPersistent
+	r.EnabledRuntime = enabledRuntime
+
 	return status, runstateErr
 }
 
@@ -403,9 +411,6 @@ func (r *Resource) existsInTree(root string, unit *Unit) (bool, error) {
 	}
 
 	err := r.fs.Walk(root, func(path string, info os.FileInfo, err error) error {
-		fmt.Printf("walk gave us a path of: '%s'\n", path)
-		fmt.Printf("\t it's info.Name() gives us: '%s'\n", info.Name())
-		fmt.Printf("\t info.Name() == toFind: '%s' == '%s' => %v\n", info.Name(), toFind, info.Name() == toFind)
 		if info.IsDir() {
 			return nil
 		}

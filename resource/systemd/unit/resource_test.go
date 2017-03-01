@@ -747,59 +747,159 @@ func TestHandlesContext(t *testing.T) {
 			_, err := r.Apply(ctx)
 			assert.Error(t, err)
 		})
+		t.Run("tries-to-enable-unit", func(t *testing.T) {
+		})
+		t.Run("updates-enablement", func(t *testing.T) {
+			t.Parallel()
+			fs := newMockWithPaths(
+				"/run/systemd/system/name1.service",
+			)
+			fs.On("Walk", any, any).Return(nil)
+			fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name1.service", nil)
+			u := &Unit{
+				Name: "name1.service",
+				Path: "/lib/systemd/system/name1.service",
+			}
+			e := &ExecutorMock{}
+			e.On("QueryUnit", any, any).Return(u, nil)
+			r := &Resource{
+				Name:            "name1.service",
+				systemdExecutor: e,
+				fs:              fs,
+			}
+			_, err := r.Apply(context.Background())
+			require.NoError(t, err)
+			assert.True(t, r.EnabledRuntime)
+		})
 	})
 }
 
 // TestIsEnabled tests validation of whether or not a unit is enabled
 func TestIsEnabled(t *testing.T) {
-	//	t.Parallel()
-
+	t.Parallel()
 	t.Run("check-sets-fields", func(t *testing.T) {
-		//		t.Parallel()
-		t.Run("when-not-enabled", func(t *testing.T) {
-			//			t.Parallel()
-			fs := &mockFsExecutor{}
-			fs.On("Walk", any, any).Return(nil)
-			r := &Resource{fs: fs}
-			u := &Unit{Name: "name1.service", Path: ""}
-			runtime, persistent, err := r.isEnabled(u)
-			assert.NoError(t, err)
-			assert.False(t, runtime)
-			assert.False(t, persistent)
+		t.Parallel()
+		t.Run("when-no-path-set", func(t *testing.T) {
+			t.Run("when-not-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := &mockFsExecutor{}
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/etc/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.True(t, persistent)
+			})
+			t.Run("when-runtime-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled-and-runtime-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths(
+					"/run/systemd/system/name1.service",
+					"/etc/systemd/system/name1.service",
+				)
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.True(t, persistent)
+			})
 		})
-		t.Run("when-enabled", func(t *testing.T) {
-			//			t.Parallel()
-			fs := newMockWithPaths("/etc/systemd/system/name1.service")
-			fs.On("Walk", any, any).Return(nil)
-			r := &Resource{fs: fs}
-			u := &Unit{Name: "name1.service", Path: ""}
-			runtime, persistent, err := r.isEnabled(u)
-			assert.NoError(t, err)
-			assert.False(t, runtime)
-			assert.True(t, persistent)
-		})
-		t.Run("when-runtime-enabled", func(t *testing.T) {
-			//			t.Parallel()
-			fs := newMockWithPaths("/run/systemd/system/name1.service")
-			fs.On("Walk", any, any).Return(nil)
-			r := &Resource{fs: fs}
-			u := &Unit{Name: "name1.service", Path: ""}
-			runtime, persistent, err := r.isEnabled(u)
-			assert.NoError(t, err)
-			assert.True(t, runtime)
-			assert.False(t, persistent)
-		})
-		t.Run("when-enabled-and-runtime-enabled", func(t *testing.T) {
-			//			t.Parallel()
-			fs := newMockWithPaths("/run/systemd/system/name1.service", "/etc/systemd/system/name1.service")
-			fs.On("Walk", any, any).Return(nil)
-			r := &Resource{fs: fs}
-			u := &Unit{Name: "name1.service", Path: ""}
-			runtime, persistent, err := r.isEnabled(u)
-			assert.NoError(t, err)
-			assert.True(t, runtime)
-			assert.True(t, persistent)
+		t.Run("when-path-set", func(t *testing.T) {
+			t.Parallel()
+			t.Run("when-disabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths()
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/lib/systemd/system/name1.service"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("/path1", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/path1"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled-with-different-symlink", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("/path2", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/path1"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
 		})
 	})
+}
 
+func TestExistsInTree(t *testing.T) {
+	t.Parallel()
+	t.Run("when-path-and-symlink-target-match", func(t *testing.T) {
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name-full.service", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/lib/systemd/system/name-full.service"}
+		inTree, err := r.existsInTree("/run", u)
+		require.NoError(t, err)
+		assert.True(t, inTree)
+	})
+	t.Run("when-path-and-symlink-target-mismatch", func(t *testing.T) {
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name-full.service", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/etc/init.d/name-full"}
+		inTree, err := r.existsInTree("/run", u)
+		require.NoError(t, err)
+		assert.False(t, inTree)
+	})
+	t.Run("when-symlink-error", func(t *testing.T) {
+		expected := errors.New("error1")
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(expected)
+		fs.On("EvalSymlinks", any).Return("", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/etc/init.d/name-full"}
+		_, err := r.existsInTree("/run", u)
+		assert.Equal(t, expected, err)
+	})
 }
