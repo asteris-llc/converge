@@ -1,13 +1,13 @@
 #!/bin/sh
 
 # Copyright © 2016 Asteris, LLC
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@
 set -e
 
 # Default to latest stable
-version="0.5.0"
+version="0.6.0"
 
 install_dir="/usr/local/bin"
 
@@ -72,7 +72,7 @@ do_wget () {
 	echo "Trying wget..."
 	wget -O "$2" "$1" 2>"$tmp_dir/stderr"
 	rc="$?"
-	grep "ERROR404" "$tmp_dir/stderr" >/dev/null 2>&1 
+	grep "ERROR404" "$tmp_dir/stderr" >/dev/null 2>&1
 	if [ "$?" -eq 0 ]; then
 		not_supported
 	fi
