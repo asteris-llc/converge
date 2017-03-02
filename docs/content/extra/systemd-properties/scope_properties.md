@@ -4,7 +4,7 @@ slug: "systemd_ScopeTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## ScopeTypeProperties
 
@@ -42,4 +42,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `TasksCurrent` (`uint64`)
 - `TasksMax` (`uint64`)
 - `TimeoutStopUSec` (`uint64`)
-

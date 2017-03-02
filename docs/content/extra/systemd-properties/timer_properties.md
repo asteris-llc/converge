@@ -4,7 +4,7 @@ slug: "systemd_TimerTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## TimerTypeProperties
 
@@ -26,4 +26,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `TimersMonotonic` (`[][]interface{}`)
 - `Unit` (`string`)
 - `WakeSystem` (`bool`)
-

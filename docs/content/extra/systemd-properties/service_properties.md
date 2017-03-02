@@ -4,7 +4,7 @@ slug: "systemd_ServiceTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## ServiceTypeProperties
 
@@ -169,4 +169,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `WatchdogTimestampMonotonic` (`uint64`)
 - `WatchdogUSec` (`uint64`)
 - `WorkingDirectory` (`string`)
-

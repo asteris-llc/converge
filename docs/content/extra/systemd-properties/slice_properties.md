@@ -4,7 +4,7 @@ slug: "systemd_SliceTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## SliceTypeProperties
 
@@ -36,4 +36,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `TasksAccounting` (`bool`)
 - `TasksCurrent` (`uint64`)
 - `TasksMax` (`uint64`)
-

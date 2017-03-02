@@ -1,7 +1,7 @@
 ---
 title: "systemd.unit.state"
 slug: "systemd-unit-state"
-date: "2017-02-03T12:58:22-06:00"
+date: "2017-03-02T14:16:58-06:00"
 menu:
   main:
     parent: resources
@@ -14,7 +14,7 @@ menu:
 
 ```hcl
 systemd.unit.state "ssh" {
-  unit = "ssh.service"
+  unit  = "ssh.service"
   state = "running"
 }
 
@@ -24,6 +24,7 @@ systemd.unit.state "acpid" {
 
 file.content "service-info" {
   destination = "out.txt"
+
   content = <<EOF
 Name:        {{lookup `systemd.unit.state.ssh.unit`}}
 Path:        {{lookup `systemd.unit.state.ssh.path`}}
@@ -43,6 +44,7 @@ EOF
 
 file.content "socket-info" {
   destination = "out.txt"
+
   content = <<EOF
 Name:        {{lookup `systemd.unit.state.acpid.unit`}}
 Path:        {{lookup `systemd.unit.state.acpid.path`}}
