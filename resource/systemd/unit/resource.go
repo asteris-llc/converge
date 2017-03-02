@@ -281,7 +281,40 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	r.Enabled = enabledPersistent
 	r.EnabledRuntime = enabledRuntime
 
+	var symlinkChanges []*unitFileChange
+
+	if r.enableChange != nil {
+		changes, err := r.toggleUnitEnabled(u, false, *r.enableChange, enabledPersistent)
+		if err != nil {
+			return status, err
+		}
+		symlinkChanges = append(symlinkChanges, changes...)
+	}
+
+	if r.enableRuntimeChange != nil {
+		changes, err := r.toggleUnitEnabled(u, true, *r.enableRuntimeChange, enabledRuntime)
+		if err != nil {
+			return status, err
+		}
+		symlinkChanges = append(symlinkChanges, changes...)
+	}
+
+	for _, ch := range symlinkChanges {
+		status.AddDifference(ch.Type, "", fmt.Sprintf("%s -> %s", ch.Filename, ch.Destination), "")
+	}
+
 	return status, runstateErr
+}
+
+func (r *Resource) toggleUnitEnabled(u *Unit, runtime, shouldBeEnabled, isEnabled bool) ([]*unitFileChange, error) {
+	if shouldBeEnabled == isEnabled {
+		return []*unitFileChange{}, nil
+	}
+	if shouldBeEnabled {
+		_, c, e := r.systemdExecutor.EnableUnit(u, runtime, true)
+		return c, e
+	}
+	return r.systemdExecutor.DisableUnit(u, runtime)
 }
 
 // We copy data from the unit into the resource to make the UX nicer for users

@@ -637,6 +637,71 @@ func TestApply(t *testing.T) {
 			}
 		})
 	})
+	t.Run("tries-to-enable-unit", func(t *testing.T) {
+		True := true
+		fs := newMockWithPaths()
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("", nil)
+		u := &Unit{
+			Name: "name1.service",
+			Path: "/lib/systemd/system/name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("EnableUnit", any, any, any).Return(false, []*unitFileChange{}, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			enableChange:    &True,
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		e.AssertCalled(t, "EnableUnit", any, any, any)
+		require.NoError(t, err)
+	})
+	t.Run("tries-to-disable-unit", func(t *testing.T) {
+		fs := newMockWithPaths("/etc/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/etc/systemd/system/name1.service", nil)
+		u := &Unit{
+			Name: "name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("EnableUnit", any, any, any).Return(false, []*unitFileChange{}, nil)
+		e.On("DisableUnit", any, any).Return([]*unitFileChange{}, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			enableChange:    new(bool),
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		e.AssertCalled(t, "DisableUnit", any, any)
+		require.NoError(t, err)
+	})
+	t.Run("updates-enablement", func(t *testing.T) {
+		t.Parallel()
+		fs := newMockWithPaths(
+			"/run/systemd/system/name1.service",
+		)
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name1.service", nil)
+		u := &Unit{
+			Name: "name1.service",
+			Path: "/lib/systemd/system/name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		require.NoError(t, err)
+		assert.True(t, r.EnabledRuntime)
+	})
 }
 
 // TestCheckAfterApply runs a test
@@ -747,30 +812,7 @@ func TestHandlesContext(t *testing.T) {
 			_, err := r.Apply(ctx)
 			assert.Error(t, err)
 		})
-		t.Run("tries-to-enable-unit", func(t *testing.T) {
-		})
-		t.Run("updates-enablement", func(t *testing.T) {
-			t.Parallel()
-			fs := newMockWithPaths(
-				"/run/systemd/system/name1.service",
-			)
-			fs.On("Walk", any, any).Return(nil)
-			fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name1.service", nil)
-			u := &Unit{
-				Name: "name1.service",
-				Path: "/lib/systemd/system/name1.service",
-			}
-			e := &ExecutorMock{}
-			e.On("QueryUnit", any, any).Return(u, nil)
-			r := &Resource{
-				Name:            "name1.service",
-				systemdExecutor: e,
-				fs:              fs,
-			}
-			_, err := r.Apply(context.Background())
-			require.NoError(t, err)
-			assert.True(t, r.EnabledRuntime)
-		})
+
 	})
 }
 
