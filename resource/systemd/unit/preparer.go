@@ -105,6 +105,7 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 		systemdExecutor:     p.executor,
 		enableChange:        p.Enable,
 		enableRuntimeChange: p.EnableRuntime,
+		fs:                  realFsExecutor{},
 	}
 
 	if signal != nil {

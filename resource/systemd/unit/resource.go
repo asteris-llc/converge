@@ -230,8 +230,43 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	}
 	r.Enabled = enabledPersistent
 	r.EnabledRuntime = enabledRuntime
+
+	status = r.updateEnableStatus("persistent",
+		status,
+		r.Enabled,
+		r.enableChange)
+	status = r.updateEnableStatus("runtime",
+		status,
+		r.EnabledRuntime,
+		r.enableRuntimeChange)
 	r.hasRun = true
 	return status, nil
+}
+
+func (r *Resource) updateEnableStatus(
+	msg string,
+	status *resource.Status,
+	current bool,
+	want *bool) *resource.Status {
+	var tgt bool
+	if want == nil {
+		return status
+	}
+	tgt = *want
+	if tgt == current {
+		status.AddMessage(fmt.Sprintf("%s unit is already %s", msg, showEnabled(tgt)))
+		return status
+	}
+	status.RaiseLevel(resource.StatusWillChange)
+	status.AddDifference(msg, showEnabled(current), showEnabled(tgt), "")
+	return status
+}
+
+func showEnabled(b bool) string {
+	if b {
+		return "enabled"
+	}
+	return "disabled"
 }
 
 func (r *Resource) runApply() (resource.TaskStatus, error) {
@@ -284,7 +319,7 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	var symlinkChanges []*unitFileChange
 
 	if r.enableChange != nil {
-		changes, err := r.toggleUnitEnabled(u, false, *r.enableChange, enabledPersistent)
+		changes, err := r.toggleUnitEnabled(u, status, false, *r.enableChange, enabledPersistent)
 		if err != nil {
 			return status, err
 		}
@@ -292,7 +327,7 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	}
 
 	if r.enableRuntimeChange != nil {
-		changes, err := r.toggleUnitEnabled(u, true, *r.enableRuntimeChange, enabledRuntime)
+		changes, err := r.toggleUnitEnabled(u, status, true, *r.enableRuntimeChange, enabledRuntime)
 		if err != nil {
 			return status, err
 		}
@@ -306,8 +341,13 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	return status, runstateErr
 }
 
-func (r *Resource) toggleUnitEnabled(u *Unit, runtime, shouldBeEnabled, isEnabled bool) ([]*unitFileChange, error) {
+func (r *Resource) toggleUnitEnabled(u *Unit, status *resource.Status, runtime, shouldBeEnabled, isEnabled bool) ([]*unitFileChange, error) {
 	if shouldBeEnabled == isEnabled {
+		if isEnabled {
+			status.AddMessage("unit is already enabled")
+		} else {
+			status.AddMessage("unit is already disabled")
+		}
 		return []*unitFileChange{}, nil
 	}
 	if shouldBeEnabled {
@@ -437,6 +477,13 @@ func (r *Resource) existsInTree(root string, unit *Unit) (bool, error) {
 	var found bool
 	toFind := unit.Name
 	var checkSymlink bool
+
+	fmt.Fprintf(os.Stderr, "existsInTree (fprintf to stderr)\n")
+
+	if unit == nil {
+		fmt.Fprintf(os.Stderr, "unit is nil in existsInTree!")
+		return false, errors.New("unit is nil")
+	}
 
 	if unit.Path != "" {
 		toFind = unit.Path
