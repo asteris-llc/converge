@@ -19,6 +19,7 @@ Converge is in active development. APIs are not guaranteed until a 1.0 release.
 
 | Release | Date | Project | Milestone |
 |---------|------|---------|-----------|
+[0.6.0]({{< ref "release-notes/0.6.0.md" >}}) | 2017-03-02 | [Project](https://github.com/asteris-llc/converge/projects/5) | [Milestone](https://github.com/asteris-llc/converge/milestone/11?closed=1)
 [0.5.0]({{< ref "release-notes/0.5.0.md" >}}) | 2016-12-28 | [Project](https://github.com/asteris-llc/converge/projects/4) | [Milestone](https://github.com/asteris-llc/converge/milestone/10?closed=1)
 [0.4.0]({{< ref "release-notes/0.4.0.md" >}}) | 2016-11-21 | [Project](https://github.com/asteris-llc/converge/projects/3) | [Milestone](https://github.com/asteris-llc/converge/milestone/9?closed=1)
 [0.3.0]({{< ref "release-notes/0.3.0.md" >}}) | 2016-10-27 | [Project](https://github.com/asteris-llc/converge/projects/2) | [Milestone](https://github.com/asteris-llc/converge/milestone/7?closed=1)
