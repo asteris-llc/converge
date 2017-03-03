@@ -81,69 +81,68 @@ type Resource struct {
 	Status string `export:"status"`
 
 	// Properties are the global systemd unit properties and will be set for all
-	// unit types.  See
-	// http://converge.aster.is/extra/systemd-properties/systemd_Properties for
-	// more information.
+	// unit types. See the [systemd_Properties]({{< ref "properties.md" >}}) docs
+	// for more information.
 	Properties Properties `re-export-as:"global_properties"`
 
-	// ServiceProperties contain properties specific to Service unit types.  This
-	// field is only exported when the unit type is `service`.  See
-	// http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties
-	// for for more information.
+	// ServiceProperties contain properties specific to Service unit types. This
+	// field is only exported when the unit type is `service`. See the
+	// [systemd_ServiceTypeProperties]({{< ref "service_properties.md" >}}) docs
+	// for more information.
 	ServiceProperties *ServiceTypeProperties `re-export-as:"service_properties"`
 
 	// SocketProperties contain properties specific to Socket unit types. This
-	// field is only exported when the unit type is `socket`. See
-	// http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties
-	// for for more information.
+	// field is only exported when the unit type is `socket`. See the
+	// [systemd_SocketTypeProperties]({{< ref "socket_properties.md" >}}) docs for
+	// more information.
 	SocketProperties *SocketTypeProperties `re-export-as:"socket_properties"`
 
 	// DeviceProperties contain properties specific to Device unit types. This
-	// field is only exported when the unit type is `device`. See
-	// http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties
-	// for for more information.
+	// field is only exported when the unit type is `device`. See the
+	// [systemd_DeviceTypeProperties]({{< ref "device_properties.md" >}}) docs for
+	// more information.
 	DeviceProperties *DeviceTypeProperties `re-export-as:"device_properties"`
 
 	// MountProperties contain properties specific to Mount unit types. This field
-	// is only exported when the unit type is `mount`. See
-	// http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `mount`. See the
+	// [systemd_MountTypeProperties]({{< ref "mount_properties.md" >}}) docs for
+	// more information.
 	MountProperties *MountTypeProperties `re-export-as:"mount_properties"`
 
-	// AutomountProperties contain properties specific for Autoumount unit
-	// types. This field is only exported when the unit type is
-	// `automount`. http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties
-	// for for more information.
+	// AutomountProperties contain properties specific to Autoumount unit types.
+	// This field is only exported when the unit type is`automount`. See the
+	// [systemd_AutomountTypeProperties]({{< ref "automount_properties.md" >}})
+	// docs for more information.
 	AutomountProperties *AutomountTypeProperties `re-export-as:"automount_properties"`
 
 	// SwapProperties contain properties specific to Swap unit types. This field
-	// is only exported when the unit type is
-	// `swap`. http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `swap`. See the
+	// [systemd_SwapTypeProperties]({{< ref "swap_properties.md" >}}) docs for
+	// more information.
 	SwapProperties *SwapTypeProperties `re-export-as:"swap_properties"`
 
 	// PathProperties contain properties specific to Path unit types. This field
-	// is only exported when the unit type is
-	// `path`. http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `path`. See the
+	// [systemd_PathTypeProperties]({{< ref "path_properties.md" >}}) docs for
+	// more information.
 	PathProperties *PathTypeProperties `re-export-as:"path_properties"`
 
 	// TimerProperties contain properties specific to Timer unit types. This field
-	// is only exported when the unit type is
-	// `timer`. http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `timer`. See the
+	// [systemd_TimerTypeProperties]({{< ref "timer_properties.md" >}}) docs for
+	// more information.
 	TimerProperties *TimerTypeProperties `re-export-as:"timer_properties"`
 
 	// SliceProperties contain properties specific to Slice unit types. This field
-	// is only exported when the unit type is
-	// `slice`. http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `slice`. See the
+	// [systemd_SliceTypeProperties]({{< ref "slice_properties.md" >}}) docs for
+	// more information.
 	SliceProperties *SliceTypeProperties `re-export-as:"slice_properties"`
 
 	// ScopeProperties contain properties specific to Scope unit types. This field
-	// is only exported when the unit type is
-	// `scope`. http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties
-	// for for more information.
+	// is only exported when the unit type is `scope`. See the
+	// [systemd_ScopeTypeProperties]({{< ref "scope_properties.md" >}}) docs for
+	// more information.
 	ScopeProperties *ScopeTypeProperties `re-export-as:"scope_properties"`
 
 	sendSignal      bool
