@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Extra-rsses on Converge</title>
+    <link>http://converge.aster.is/0.6.0/extra/index.xml</link>
+    <description>Recent content in Extra-rsses on Converge</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>Released under the Apache 2.0 license</copyright>
+    <lastBuildDate>Fri, 03 Feb 2017 07:38:25 -0600</lastBuildDate>
+    <atom:link href="http://converge.aster.is/0.6.0/extra/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>systemd_AutomountTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_AutomountTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_AutomountTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;automounttypeproperties&#34;&gt;AutomountTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;AutomountTypeProperties represent the properties that can be set for automount
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;DirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutIdleUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Where&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_DeviceTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_DeviceTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_DeviceTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;devicetypeproperties&#34;&gt;DeviceTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;DeviceTypeProperties represent the properties that can be set for device
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;SysFSPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_MountTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;mounttypeproperties&#34;&gt;MountTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;MountTypeProperties represent the properties that can be set for mount
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AmbientCapabilities&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AppArmorProfile&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAffinity&lt;/code&gt; (&lt;code&gt;[]uint8&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPolicy&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingResetOnFork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Capabilities&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CapabilityBoundingSet&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Environment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;EnvironmentFiles&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMount&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecRemount&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecUnmount&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Group&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IOScheduling&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreSIGPIPE&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InaccessibleDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillSignal&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitAS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitASSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPU&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPUSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATA&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATASoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROC&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROCSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIO&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIOSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIME&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIMESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDING&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDINGSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MountFlags&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Nice&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NoNewPrivileges&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NonBlocking&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OOMScoreAdjust&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Options&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PAMName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassEnvironment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Personality&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateDevices&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateNetwork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateTmp&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectHome&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectSystem&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadOnlyDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadWriteDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RestrictAddressFamilies&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RootDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectory&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SELinuxContext&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SameProcessGroup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SecureBits&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGHUP&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGKILL&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SloppyOptions&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackProcessLabel&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardError&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardInput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardOutput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SupplementaryGroups&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogFacility&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevel&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevelPrefix&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallArchitectures&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallErrorNumber&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallFilter&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYReset&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVHangup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVTDisallocate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerSlackNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Type&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UMask&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;User&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;What&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Where&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WorkingDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_PathTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_PathTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_PathTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;pathtypeproperties&#34;&gt;PathTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;PathTypeProperties represent the properties that can be set for path units. The
+fields and their exported types are listed below; for a more comprehensive
+explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;DirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MakeDirectory&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Paths&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Unit&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_Properties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_Properties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_Properties/</guid>
+      <description>
+
+&lt;h2 id=&#34;properties&#34;&gt;Properties&lt;/h2&gt;
+
+&lt;p&gt;Properties represent the properties that can be set for all unit types. The
+fields and their exported types are listed below; for a more comprehensive
+explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ActiveEnterTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ActiveEnterTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ActiveExitTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ActiveExitTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ActiveState&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;After&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AllowIsolate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AssertResult&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AssertTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AssertTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Asserts&lt;/code&gt; (&lt;code&gt;interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Before&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BindsTo&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BoundBy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CanIsolate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CanReload&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CanStart&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CanStop&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ConditionResult&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ConditionTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ConditionTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Conditions&lt;/code&gt; (&lt;code&gt;interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ConflictedBy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Conflicts&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ConsistsOf&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DefaultDependencies&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Description&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Documentation&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DropInPaths&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Following&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FragmentPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Id&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreOnIsolate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InactiveEnterTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InactiveEnterTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InactiveExitTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InactiveExitTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Job&lt;/code&gt; (&lt;code&gt;interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;JobTimeoutAction&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;JobTimeoutRebootArgument&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;JobTimeoutUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;JoinsNamespaceOf&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LoadError&lt;/code&gt; (&lt;code&gt;interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LoadState&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Names&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NeedDaemonReload&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OnFailure&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OnFailureJobMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PartOf&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PropagatesReloadTo&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RebootArgument&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RefuseManualStart&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RefuseManualStop&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReloadPropagatedFrom&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RequiredBy&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Requires&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RequiresMountsFor&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Requisite&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RequisiteOf&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SourcePath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartLimitAction&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartLimitBurst&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartLimitInterval&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateChangeTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateChangeTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StopWhenUnneeded&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SubState&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Transient&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TriggeredBy&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Triggers&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UnitFilePreset&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UnitFileState&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WantedBy&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Wants&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_ScopeTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ScopeTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ScopeTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;scopetypeproperties&#34;&gt;ScopeTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;ScopeTypeProperties represent the properties that can be set for scope
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Controller&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillSignal&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGHUP&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGKILL&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutStopUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_ServiceTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ServiceTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ServiceTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;servicetypeproperties&#34;&gt;ServiceTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;ServiceTypeProperties represent the properties that can be set for service
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AmbientCapabilities&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AppArmorProfile&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BusName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAffinity&lt;/code&gt; (&lt;code&gt;uint8&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPolicy&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingResetOnFork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Capabilities&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CapabilityBoundingSet&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Environment&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;EnvironmentFiles&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainCode&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainExitTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainExitTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainStartTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainStartTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecMainStatus&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecReload&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStart&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStartPost&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStartPre&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStop&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStopPost&lt;/code&gt; (&lt;code&gt;interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FailureAction&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FileDescriptorStoreMax&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Group&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;GuessMainPID&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IOScheduling&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreSIGPIPE&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InaccessibleDirectories&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillSignal&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitAS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitASSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPU&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPUSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATA&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATASoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROC&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROCSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIO&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIOSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIME&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIMESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDING&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDINGSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MainPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MountFlags&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NFileDescriptorStore&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Nice&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NoNewPrivileges&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NonBlocking&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NotifyAccess&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OOMScoreAdjust&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PAMName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PIDFile&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassEnvironment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PermissionsStartOnly&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Personality&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateDevices&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateNetwork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateTmp&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectHome&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectSystem&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadOnlyDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadWriteDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RemainAfterExit&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Restart&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RestartUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RestrictAddressFamilies&lt;/code&gt; (&lt;code&gt;[]interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RootDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RootDirectoryStartOnly&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectory&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeMaxUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SELinuxContext&lt;/code&gt; (&lt;code&gt;[]interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SameProcessGroup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SecureBits&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGHUP&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGKILL&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackProcessLabel&lt;/code&gt; (&lt;code&gt;[]interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardError&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardInput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardOutput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StatusErrno&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StatusText&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SupplementaryGroups&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogFacility&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevel&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevelPrefix&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallArchitectures&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallErrorNumber&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallFilter&lt;/code&gt; (&lt;code&gt;[]interface&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYReset&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVHangup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVTDisallocate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutStartUSec&lt;/code&gt; (&lt;code&gt;uint6&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutStopUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerSlackNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Type&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UMask&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;USBFunctionDescriptors&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;USBFunctionStrings&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;User&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WatchdogTimestamp&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WatchdogTimestampMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WatchdogUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WorkingDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_SliceTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SliceTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SliceTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;slicetypeproperties&#34;&gt;SliceTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;SliceTypeProperties represent the properties that can be set for slice
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_SocketTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SocketTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SocketTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;sockettypeproperties&#34;&gt;SocketTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;SocketTypeProperties represent the properties that can be set for socket
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Accept&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AmbientCapabilities&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AppArmorProfile&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Backlog&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BindIPv6Only&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BindToDevice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Broadcast&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAffinity&lt;/code&gt; (&lt;code&gt;[]uint8&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPolicy&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingResetOnFork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Capabilities&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CapabilityBoundingSet&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeferAcceptUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Environment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;EnvironmentFiles&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStartPost&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStartPre&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStopPost&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecStopPre&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FileDescriptorName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;FreeBind&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Group&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IOScheduling&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IPTOS&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IPTTL&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreSIGPIPE&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InaccessibleDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KeepAlive&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KeepAliveIntervalUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KeepAliveProbes&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KeepAliveTimeUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillSignal&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitAS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitASSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPU&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPUSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATA&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATASoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROC&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROCSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIO&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIOSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIME&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIMESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDING&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDINGSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Listen&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Mark&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MaxConnections&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MessageQueueMaxMessages&lt;/code&gt; (&lt;code&gt;int64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MessageQueueMessageSize&lt;/code&gt; (&lt;code&gt;int64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MountFlags&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NAccepted&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NConnections&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Nice&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NoDelay&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NoNewPrivileges&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NonBlocking&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OOMScoreAdjust&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PAMName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassCredentials&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassEnvironment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassSecurity&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Personality&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PipeSize&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Priority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateDevices&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateNetwork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateTmp&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectHome&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectSystem&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadOnlyDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadWriteDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReceiveBuffer&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RemoveOnStop&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RestrictAddressFamilies&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReusePort&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RootDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectory&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SELinuxContext&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SameProcessGroup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SecureBits&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendBuffer&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGHUP&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGKILL&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackLabel&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackLabelIPIn&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackLabelIPOut&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackProcessLabel&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SocketGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SocketMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SocketProtocol&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SocketUser&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardError&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardInput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardOutput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SupplementaryGroups&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Symlinks&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogFacility&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevel&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevelPrefix&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallArchitectures&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallErrorNumber&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallFilter&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYReset&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVHangup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVTDisallocate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerSlackNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Transparent&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TriggerLimitBurst&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TriggerLimitIntervalSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UMask&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;User&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WorkingDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Writable&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_SwapTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SwapTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SwapTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;swaptypeproperties&#34;&gt;SwapTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;SwapTypeProperties represent the properties that can be set for swap units. The
+fields and their exported types are listed below; for a more comprehensive
+explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AmbientCapabilities&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;AppArmorProfile&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIODeviceWeight&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOReadBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BlockIOWriteBandwidth&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUAffinity&lt;/code&gt; (&lt;code&gt;[]uint8&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUQuotaPerSecUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPolicy&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUSchedulingResetOnFork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CPUUsageNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Capabilities&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CapabilityBoundingSet&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlGroup&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ControlPID&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Delegate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DeviceAllow&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DevicePolicy&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Environment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;EnvironmentFiles&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecActivate&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecDeactivate&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Group&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IOScheduling&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;IgnoreSIGPIPE&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InaccessibleDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;KillSignal&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitAS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitASSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCORESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPU&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitCPUSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATA&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitDATASoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitFSIZESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitLOCKSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMEMLOCKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitMSGQUEUESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNICESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILE&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNOFILESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROC&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitNPROCSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSS&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRSSSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIO&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTPRIOSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIME&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitRTTIMESoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDING&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSIGPENDINGSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACK&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LimitSTACKSoft&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MemoryLimit&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MountFlags&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Nice&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NoNewPrivileges&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NonBlocking&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;OOMScoreAdjust&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Options&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PAMName&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PassEnvironment&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Personality&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Priority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateDevices&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateNetwork&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PrivateTmp&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectHome&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ProtectSystem&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadOnlyDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ReadWriteDirectories&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RestrictAddressFamilies&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RootDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectory&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RuntimeDirectoryMode&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SELinuxContext&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SameProcessGroup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SecureBits&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGHUP&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SendSIGKILL&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Slice&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SmackProcessLabel&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardError&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardInput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StandardOutput&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupBlockIOWeight&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StartupCPUShares&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SupplementaryGroups&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogFacility&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevel&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogLevelPrefix&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SyslogPriority&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallArchitectures&lt;/code&gt; (&lt;code&gt;[]string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallErrorNumber&lt;/code&gt; (&lt;code&gt;int32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SystemCallFilter&lt;/code&gt; (&lt;code&gt;[]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYPath&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYReset&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVHangup&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TTYVTDisallocate&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksAccounting&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksCurrent&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TasksMax&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimeoutUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimerSlackNSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UMask&lt;/code&gt; (&lt;code&gt;uint32&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;User&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpIdentifier&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UtmpMode&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;What&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WorkingDirectory&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>systemd_TimerTypeProperties</title>
+      <link>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_TimerTypeProperties/</link>
+      <pubDate>Fri, 03 Feb 2017 07:38:25 -0600</pubDate>
+      
+      <guid>http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_TimerTypeProperties/</guid>
+      <description>
+
+&lt;h2 id=&#34;timertypeproperties&#34;&gt;TimerTypeProperties&lt;/h2&gt;
+
+&lt;p&gt;TimerTypeProperties represent the properties that can be set for timer
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+&lt;a href=&#34;https://www.freedesktop.org/wiki/Software/systemd/dbus/&#34;&gt;https://www.freedesktop.org/wiki/Software/systemd/dbus/&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;AccuracyUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LastTriggerUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LastTriggerUSecMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NextElapseUSecMonotonic&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;NextElapseUSecRealtime&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Persistent&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RandomizedDelayUSec&lt;/code&gt; (&lt;code&gt;uint64&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RemainAfterElapse&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Result&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimersCalendar&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TimersMonotonic&lt;/code&gt; (&lt;code&gt;[][]interface{}&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Unit&lt;/code&gt; (&lt;code&gt;string&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;WakeSystem&lt;/code&gt; (&lt;code&gt;bool&lt;/code&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

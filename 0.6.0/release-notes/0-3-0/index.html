@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>0.3.0 - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.6.0/release-notes/0-3-0/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.6.0/release-notes/0-3-0/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.6.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        0.3.0
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.6.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.6.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.6.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.6.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.6.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.6.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.6.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.6.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.6.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.6.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.6.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.6.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.6.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Extra" href="http://converge.aster.is/0.6.0/extra/">
+  
+  Extra
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.6.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="0.6.0" href="http://converge.aster.is/0.6.0/release-notes/0-6-0/">
+  
+  0.6.0
+</a>
+        
+        
+        <a  title="0.5.0" href="http://converge.aster.is/0.6.0/release-notes/0-5-0/">
+  
+  0.5.0
+</a>
+        
+        
+        <a  title="0.4.0" href="http://converge.aster.is/0.6.0/release-notes/0-4-0/">
+  
+  0.4.0
+</a>
+        
+        
+        <a class="current" title="0.3.0" href="http://converge.aster.is/0.6.0/release-notes/0-3-0/">
+  
+  0.3.0
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+        
+        <a  title="0.2.0" href="http://converge.aster.is/0.6.0/release-notes/0-2-0/">
+  
+  0.2.0
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="Command Reference" href="http://converge.aster.is/0.6.0/commands/">
+  
+  Command Reference
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>0.3.0 </h1>
+
+			
+
+<h2 id="release-date">Release Date</h2>
+
+<p>2016-10-27 0.3.0</p>
+
+<h2 id="features">Features</h2>
+
+<p>This release includes a number of significant improvements to the core engine including conditionals,
+wait queries, sequential task groups, and the ability to use lists and maps in parameters. The internal API has
+also been simplified to make it easier for programmers to create new modules.</p>
+
+<h3 id="module-improvements">Module Improvements</h3>
+
+<h4 id="rpm-resource">RPM Resource</h4>
+
+<p>RPM package install/uninstall support has been added via <a href="https://github.com/asteris-llc/converge/pull/373">#373</a>.</p>
+
+<pre><code class="language-hcl">rpm.package &quot;mc&quot; {
+    name  = &quot;mc&quot;
+    state = &quot;present&quot;
+}
+</code></pre>
+
+<h4 id="user-and-group">User and group</h4>
+
+<p>Linux user groups can now be modified via <a href="https://github.com/asteris-llc/converge/issues/279">#279</a></p>
+
+<h4 id="wait-query-and-wait-port">wait.query and wait.port</h4>
+
+<p>Converge now supports waiting for a task to complete or port <a href="https://github.com/asteris-llc/converge/pull/334">#334</a>.
+Users can create a dependency for a port to be open or a condition to be met.</p>
+
+<p>Below is an example of waiting for a port to be open using the <code>wait.port</code> resource:</p>
+
+<pre><code class="language-hcl">wait.port &quot;8080&quot; {
+  host         = &quot;localhost&quot;
+  port         = 8080
+  interval     = &quot;1s&quot;
+  max_retry    = 10
+  grace_period = &quot;2s&quot;
+}
+</code></pre>
+
+<p>The following shows using <code>wait.query</code> to wait using a task:</p>
+
+<pre><code class="language-hcl">wait.query &quot;service-health&quot; {
+  check        = &quot;nc -z localhost 8080&quot;
+  interval     = &quot;1s&quot;
+  max_retry    = 10
+  grace_period = &quot;1s&quot;
+}
+</code></pre>
+
+<p>Wait is documented at: <a href="http://converge.aster.is/0.6.0/resources/wait-port/">wait.port</a> and <a href="http://converge.aster.is/0.6.0/resources/wait-query/">wait.query</a>.</p>
+
+<h3 id="engine-improvements">Engine Improvements</h3>
+
+<h4 id="conditional-support">Conditional Support</h4>
+
+<p>Support for conditionals via <a href="https://github.com/asteris-llc/converge/pull/362">#362</a>.</p>
+
+<p>In the following example, the contents of file <code>greetings.txt</code> depend on the value of
+the <code>lang</code> parameter:</p>
+
+<pre><code class="language-hcl">param &quot;lang&quot; {
+  default = &quot;&quot;
+}
+
+switch &quot;test-switch&quot; {
+  case &quot;eq `spanish` `{{param `lang`}}`&quot; &quot;spanish&quot; {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;hola\n&quot;
+    }
+  }
+
+  case &quot;eq `french` `{{param `lang`}}`&quot; &quot;french&quot; {
+    file.content &quot;foo-file&quot; {
+      destination = &quot;greeting.txt&quot;
+      content     = &quot;salut\n&quot;
+    }
+  }
+
+</code></pre>
+
+<h4 id="task-groups">Task Groups</h4>
+
+<p>Tasks can be assigned to a group to force multiple tasks to run
+one at a time instead of in parallel. When a node is added to a task
+group the engine creates a dependency on another node in the group.</p>
+
+<p>Please note that task groups are not supported in conditionals in 0.3.</p>
+
+<p><a href="https://github.com/asteris-llc/converge/pull/392">#392</a></p>
+
+<p>For example, <code>apt</code> package installs cannot run in parallel. In the following example
+each task with the <code>apt</code> lock is run sequentially.</p>
+
+<pre><code class="language-hcl">task &quot;install-jq&quot; {
+  check = &quot;dpkg -s jq &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get update 2&gt;&amp;1 &gt; /dev/null &amp;&amp; apt-get -y install jq&quot;
+  group  = &quot;apt&quot;
+}
+
+task &quot;install-build-essential&quot; {
+  check = &quot;dpkg -s build-essential &gt;/dev/null 2&gt;&amp;1&quot;
+  apply = &quot;apt-get update 2&gt;&amp;1 &gt; /dev/null &amp;&amp; apt-get -y install build-essential&quot;
+  group  = &quot;apt&quot;
+}
+</code></pre>
+
+<h4 id="enhanced-parameter-values">Enhanced Parameter Values</h4>
+
+<p><code>bool</code>, <code>list</code>, and <code>map</code> types have been added to parameters via <a href="https://github.com/asteris-llc/converge/pull/340">#340</a>.</p>
+
+<p>See <a href="http://converge.aster.is/0.6.0/params-and-templates/#Values">values</a></p>
+
+<h4 id="output-improvements">Output Improvements</h4>
+
+<p>Rendered graphs have been cleaned and arrows now indicate the order of tasks <a href="https://github.com/asteris-llc/converge/pull/387">#387</a>.</p>
+
+<p>Text output for changes is now aligned via <a href="https://github.com/asteris-llc/converge/pull/317">#317</a>.</p>
+
+<h4 id="installation-script">Installation Script</h4>
+
+<p>An installation script (<code>install-converge.sh</code>) has been added that downloads the correct
+binary of converge after detecting the underlying Operating System and Processor.</p>
+
+<p>This can be used to install converge during system boot.</p>
+
+<p>For example, the <a href="https://github.com/asteris-llc/terraform-provisioner-converge">terraform provisioner</a>
+uses this script download the latest release of converge before configuring a node.</p>
+
+<h2 id="bug-fixes">Bug Fixes</h2>
+
+<p>Please refer to the <a href="https://github.com/asteris-llc/converge/blob/master/CHANGELOG.md">changelog</a> for
+a detailed report.</p>
+
+<h2 id="examples-documentation">Examples/Documentation</h2>
+
+<p>A Docker image was created in <a href="https://github.com/asteris-llc/converge/pull/372">#372</a> to speed up Wercker builds and automated tests.</p>
+
+<p>Documentation was updated in <a href="https://github.com/asteris-llc/converge/pull/371">#371</a> so that links like
+<a href="https://converge.aster.is/0.2.0">converge.aster.is/0.2.0</a> will resolve documentation for that version.</p>
+
+<p>The elasticsearch example has been updated to use new features in 0.3.0 <a href="https://github.com/asteris-llc/converge/pull/419">#419</a></p>
+
+<h2 id="support">Support</h2>
+
+<p>We provide support via <a href="http://converge-slack.aster.is/">the Converge Slack team</a> and through <a href="https://github.com/asteris-llc/converge/issues">GitHub issues</a></p>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2017 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.6.0/release-notes/" title="Release Notes">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              Release Notes
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.6.0/release-notes/0-2-0/" title="0.2.0">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              0.2.0
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.6.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+

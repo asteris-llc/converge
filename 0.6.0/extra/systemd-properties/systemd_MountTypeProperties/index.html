@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>systemd_MountTypeProperties - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.6.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        systemd_MountTypeProperty
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.6.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.6.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.6.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.6.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.6.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.6.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.6.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.6.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.6.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.6.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.6.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.6.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.6.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Extra" href="http://converge.aster.is/0.6.0/extra/">
+  
+  Extra
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="systemd_AutomountTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_AutomountTypeProperties/">
+  
+  systemd_AutomountTypeProperties
+</a>
+        
+        
+        <a  title="systemd_DeviceTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_DeviceTypeProperties/">
+  
+  systemd_DeviceTypeProperties
+</a>
+        
+        
+        <a class="current" title="systemd_MountTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/">
+  
+  systemd_MountTypeProperties
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+        
+        <a  title="systemd_PathTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_PathTypeProperties/">
+  
+  systemd_PathTypeProperties
+</a>
+        
+        
+        <a  title="systemd_Properties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_Properties/">
+  
+  systemd_Properties
+</a>
+        
+        
+        <a  title="systemd_ScopeTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ScopeTypeProperties/">
+  
+  systemd_ScopeTypeProperties
+</a>
+        
+        
+        <a  title="systemd_ServiceTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ServiceTypeProperties/">
+  
+  systemd_ServiceTypeProperties
+</a>
+        
+        
+        <a  title="systemd_SliceTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SliceTypeProperties/">
+  
+  systemd_SliceTypeProperties
+</a>
+        
+        
+        <a  title="systemd_SocketTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SocketTypeProperties/">
+  
+  systemd_SocketTypeProperties
+</a>
+        
+        
+        <a  title="systemd_SwapTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SwapTypeProperties/">
+  
+  systemd_SwapTypeProperties
+</a>
+        
+        
+        <a  title="systemd_TimerTypeProperties" href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_TimerTypeProperties/">
+  
+  systemd_TimerTypeProperties
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.6.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Command Reference" href="http://converge.aster.is/0.6.0/commands/">
+  
+  Command Reference
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>systemd_MountTypeProperties </h1>
+
+			
+
+<h2 id="mounttypeproperties">MountTypeProperties</h2>
+
+<p>MountTypeProperties represent the properties that can be set for mount
+units. The fields and their exported types are listed below; for a more
+comprehensive explanation of these fields see:
+<a href="https://www.freedesktop.org/wiki/Software/systemd/dbus/">https://www.freedesktop.org/wiki/Software/systemd/dbus/</a></p>
+
+<ul>
+<li><code>AmbientCapabilities</code> (<code>uint64</code>)</li>
+<li><code>AppArmorProfile</code> (<code>[]interface{}</code>)</li>
+<li><code>BlockIOAccounting</code> (<code>bool</code>)</li>
+<li><code>BlockIODeviceWeight</code> (<code>[][]interface{}</code>)</li>
+<li><code>BlockIOReadBandwidth</code> (<code>[][]interface{}</code>)</li>
+<li><code>BlockIOWeight</code> (<code>uint64</code>)</li>
+<li><code>BlockIOWriteBandwidth</code> (<code>[][]interface{}</code>)</li>
+<li><code>CPUAccounting</code> (<code>bool</code>)</li>
+<li><code>CPUAffinity</code> (<code>[]uint8</code>)</li>
+<li><code>CPUQuotaPerSecUSec</code> (<code>uint64</code>)</li>
+<li><code>CPUSchedulingPolicy</code> (<code>int32</code>)</li>
+<li><code>CPUSchedulingPriority</code> (<code>int32</code>)</li>
+<li><code>CPUSchedulingResetOnFork</code> (<code>bool</code>)</li>
+<li><code>CPUShares</code> (<code>uint64</code>)</li>
+<li><code>CPUUsageNSec</code> (<code>uint64</code>)</li>
+<li><code>Capabilities</code> (<code>string</code>)</li>
+<li><code>CapabilityBoundingSet</code> (<code>uint64</code>)</li>
+<li><code>ControlGroup</code> (<code>string</code>)</li>
+<li><code>ControlPID</code> (<code>uint32</code>)</li>
+<li><code>Delegate</code> (<code>bool</code>)</li>
+<li><code>DeviceAllow</code> (<code>[][]interface{}</code>)</li>
+<li><code>DevicePolicy</code> (<code>string</code>)</li>
+<li><code>DirectoryMode</code> (<code>uint32</code>)</li>
+<li><code>Environment</code> (<code>[]string</code>)</li>
+<li><code>EnvironmentFiles</code> (<code>[][]interface{}</code>)</li>
+<li><code>ExecMount</code> (<code>[][]interface{}</code>)</li>
+<li><code>ExecRemount</code> (<code>[][]interface{}</code>)</li>
+<li><code>ExecUnmount</code> (<code>[][]interface{}</code>)</li>
+<li><code>Group</code> (<code>string</code>)</li>
+<li><code>IOScheduling</code> (<code>int32</code>)</li>
+<li><code>IgnoreSIGPIPE</code> (<code>bool</code>)</li>
+<li><code>InaccessibleDirectories</code> (<code>[]string</code>)</li>
+<li><code>KillMode</code> (<code>string</code>)</li>
+<li><code>KillSignal</code> (<code>int32</code>)</li>
+<li><code>LimitAS</code> (<code>uint64</code>)</li>
+<li><code>LimitASSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitCORE</code> (<code>uint64</code>)</li>
+<li><code>LimitCORESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitCPU</code> (<code>uint64</code>)</li>
+<li><code>LimitCPUSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitDATA</code> (<code>uint64</code>)</li>
+<li><code>LimitDATASoft</code> (<code>uint64</code>)</li>
+<li><code>LimitFSIZE</code> (<code>uint64</code>)</li>
+<li><code>LimitFSIZESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitLOCKS</code> (<code>uint64</code>)</li>
+<li><code>LimitLOCKSSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitMEMLOCK</code> (<code>uint64</code>)</li>
+<li><code>LimitMEMLOCKSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitMSGQUEUE</code> (<code>uint64</code>)</li>
+<li><code>LimitMSGQUEUESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitNICE</code> (<code>uint64</code>)</li>
+<li><code>LimitNICESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitNOFILE</code> (<code>uint64</code>)</li>
+<li><code>LimitNOFILESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitNPROC</code> (<code>uint64</code>)</li>
+<li><code>LimitNPROCSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitRSS</code> (<code>uint64</code>)</li>
+<li><code>LimitRSSSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitRTPRIO</code> (<code>uint64</code>)</li>
+<li><code>LimitRTPRIOSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitRTTIME</code> (<code>uint64</code>)</li>
+<li><code>LimitRTTIMESoft</code> (<code>uint64</code>)</li>
+<li><code>LimitSIGPENDING</code> (<code>uint64</code>)</li>
+<li><code>LimitSIGPENDINGSoft</code> (<code>uint64</code>)</li>
+<li><code>LimitSTACK</code> (<code>uint64</code>)</li>
+<li><code>LimitSTACKSoft</code> (<code>uint64</code>)</li>
+<li><code>MemoryAccounting</code> (<code>bool</code>)</li>
+<li><code>MemoryCurrent</code> (<code>uint64</code>)</li>
+<li><code>MemoryLimit</code> (<code>uint64</code>)</li>
+<li><code>MountFlags</code> (<code>uint64</code>)</li>
+<li><code>Nice</code> (<code>int32</code>)</li>
+<li><code>NoNewPrivileges</code> (<code>bool</code>)</li>
+<li><code>NonBlocking</code> (<code>bool</code>)</li>
+<li><code>OOMScoreAdjust</code> (<code>int32</code>)</li>
+<li><code>Options</code> (<code>string</code>)</li>
+<li><code>PAMName</code> (<code>string</code>)</li>
+<li><code>PassEnvironment</code> (<code>[]string</code>)</li>
+<li><code>Personality</code> (<code>string</code>)</li>
+<li><code>PrivateDevices</code> (<code>bool</code>)</li>
+<li><code>PrivateNetwork</code> (<code>bool</code>)</li>
+<li><code>PrivateTmp</code> (<code>bool</code>)</li>
+<li><code>ProtectHome</code> (<code>string</code>)</li>
+<li><code>ProtectSystem</code> (<code>string</code>)</li>
+<li><code>ReadOnlyDirectories</code> (<code>[]string</code>)</li>
+<li><code>ReadWriteDirectories</code> (<code>[]string</code>)</li>
+<li><code>RestrictAddressFamilies</code> (<code>[]interface{}</code>)</li>
+<li><code>Result</code> (<code>string</code>)</li>
+<li><code>RootDirectory</code> (<code>string</code>)</li>
+<li><code>RuntimeDirectory</code> (<code>[]string</code>)</li>
+<li><code>RuntimeDirectoryMode</code> (<code>uint32</code>)</li>
+<li><code>SELinuxContext</code> (<code>[]interface{}</code>)</li>
+<li><code>SameProcessGroup</code> (<code>bool</code>)</li>
+<li><code>SecureBits</code> (<code>int32</code>)</li>
+<li><code>SendSIGHUP</code> (<code>bool</code>)</li>
+<li><code>SendSIGKILL</code> (<code>bool</code>)</li>
+<li><code>Slice</code> (<code>string</code>)</li>
+<li><code>SloppyOptions</code> (<code>bool</code>)</li>
+<li><code>SmackProcessLabel</code> (<code>[]interface{}</code>)</li>
+<li><code>StandardError</code> (<code>string</code>)</li>
+<li><code>StandardInput</code> (<code>string</code>)</li>
+<li><code>StandardOutput</code> (<code>string</code>)</li>
+<li><code>StartupBlockIOWeight</code> (<code>uint64</code>)</li>
+<li><code>StartupCPUShares</code> (<code>uint64</code>)</li>
+<li><code>SupplementaryGroups</code> (<code>[]string</code>)</li>
+<li><code>SyslogFacility</code> (<code>int32</code>)</li>
+<li><code>SyslogIdentifier</code> (<code>string</code>)</li>
+<li><code>SyslogLevel</code> (<code>int32</code>)</li>
+<li><code>SyslogLevelPrefix</code> (<code>bool</code>)</li>
+<li><code>SyslogPriority</code> (<code>int32</code>)</li>
+<li><code>SystemCallArchitectures</code> (<code>[]string</code>)</li>
+<li><code>SystemCallErrorNumber</code> (<code>int32</code>)</li>
+<li><code>SystemCallFilter</code> (<code>[]interface{}</code>)</li>
+<li><code>TTYPath</code> (<code>string</code>)</li>
+<li><code>TTYReset</code> (<code>bool</code>)</li>
+<li><code>TTYVHangup</code> (<code>bool</code>)</li>
+<li><code>TTYVTDisallocate</code> (<code>bool</code>)</li>
+<li><code>TasksAccounting</code> (<code>bool</code>)</li>
+<li><code>TasksCurrent</code> (<code>uint64</code>)</li>
+<li><code>TasksMax</code> (<code>uint64</code>)</li>
+<li><code>TimeoutUSec</code> (<code>uint64</code>)</li>
+<li><code>TimerSlackNSec</code> (<code>uint64</code>)</li>
+<li><code>Type</code> (<code>string</code>)</li>
+<li><code>UMask</code> (<code>uint32</code>)</li>
+<li><code>User</code> (<code>string</code>)</li>
+<li><code>UtmpIdentifier</code> (<code>string</code>)</li>
+<li><code>UtmpMode</code> (<code>string</code>)</li>
+<li><code>What</code> (<code>string</code>)</li>
+<li><code>Where</code> (<code>string</code>)</li>
+<li><code>WorkingDirectory</code> (<code>string</code>)</li>
+</ul>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2017 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_DeviceTypeProperties/" title="systemd_DeviceTypeProperties">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              systemd_DeviceTypeProperties
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_PathTypeProperties/" title="systemd_PathTypeProperties">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              systemd_PathTypeProperties
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.6.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+

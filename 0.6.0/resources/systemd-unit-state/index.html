@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+  
+  
+  
+  
+   <html class="no-js"> 
+
+  <head lang="en-us">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>systemd.unit.state - Converge</title>
+    <meta name="generator" content="Hugo 0.17" />
+
+    
+    <meta name="description" content="graph your configurations!">
+    
+    <link rel="canonical" href="http://converge.aster.is/0.6.0/resources/systemd-unit-state/">
+    
+    <meta name="author" content="Converge">
+    
+
+    <meta property="og:url" content="http://converge.aster.is/0.6.0/resources/systemd-unit-state/">
+    <meta property="og:title" content="Converge">
+    <meta property="og:image" content="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+    <meta name="apple-mobile-web-app-title" content="Converge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="shortcut icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="http://converge.aster.is/0.6.0/images/favicon.ico">
+
+    <style>
+      @font-face {
+        font-family: 'Icon';
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?52m981');
+        src: url('http://converge.aster.is/0.6.0/fonts/icon.eot?#iefix52m981')
+               format('embedded-opentype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.woff?52m981')
+               format('woff'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.ttf?52m981')
+               format('truetype'),
+             url('http://converge.aster.is/0.6.0/fonts/icon.svg?52m981#icon')
+               format('svg');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/application.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/temporary.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/highlight/converge.css">
+    <link rel="stylesheet" href="http://converge.aster.is/0.6.0/stylesheets/overrides.css"/>
+
+    
+    
+    
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Ubuntu:400,700|Ubuntu%2bMono">
+    <style>
+      body, input {
+        font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+      }
+      pre, code {
+        font-family: 'Ubuntu Mono', 'Courier New', 'Courier', monospace;
+      }
+    </style>
+
+    
+    <script src="http://converge.aster.is/0.6.0/javascripts/modernizr.js"></script>
+
+    
+
+  </head>
+  <body>
+
+
+
+	
+	
+
+
+<div class="backdrop">
+	<div class="backdrop-paper"></div>
+</div>
+
+<input class="toggle" type="checkbox" id="toggle-drawer">
+<input class="toggle" type="checkbox" id="toggle-search">
+<label class="toggle-button overlay" for="toggle-drawer"></label>
+
+<header class="header">
+	<nav aria-label="Header">
+  <div class="bar default">
+    <div class="button button-menu" role="button" aria-label="Menu">
+      <label class="toggle-button icon icon-menu" for="toggle-drawer">
+        <span></span>
+      </label>
+    </div>
+    <div class="stretch">
+      <div class="title">
+        systemd.unit.state
+      </div>
+    </div>
+
+    
+    <div class="button button-twitter" role="button" aria-label="Twitter">
+       <a href="https://twitter.com/asteris_llc" title="@asteris_llc on Twitter" target="_blank" class="toggle-button icon icon-twitter"></a>
+    </div>
+    
+
+    
+    <div class="button button-github" role="button" aria-label="GitHub">
+      <a href="https://github.com/asteris-llc/converge" title="@asteris-llc/converge on GitHub" target="_blank" class="toggle-button icon icon-github"></a>
+    </div>
+    
+    
+        
+  </div>
+  <div class="bar search">
+    <div class="button button-close" role="button" aria-label="Close">
+      <label class="toggle-button icon icon-back" for="toggle-search"></label>
+    </div>
+    <div class="stretch">
+      <div class="field">
+        <input class="query" type="text" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck>
+      </div>
+    </div>
+    <div class="button button-reset" role="button" aria-label="Search">
+      <button class="toggle-button icon icon-close" id="reset-search"></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="main">
+	<div class="drawer">
+		<nav aria-label="Navigation">
+  <a href="https://github.com/asteris-llc/converge" class="project">
+    <div class="banner">
+      
+        <div class="logo">
+          <img src="http://converge.aster.is/0.6.0/images/logo/Converge_Logo_Blue.png">
+        </div>
+      
+      <div class="name">
+        <strong>Converge <span class="version">0.6.0</span></strong>
+        
+          <br>
+          asteris-llc/converge
+        
+      </div>
+    </div>
+  </a>
+
+  <div class="scrollable">
+    <div class="wrapper">
+      
+        <ul class="repo">
+          <li class="repo-download">
+            <a href="https://github.com/asteris-llc/converge/archive/master.zip" target="_blank" title="Download" data-action="download">
+              <i class="icon icon-download"></i> Download
+            </a>
+          </li>
+          <li class="repo-stars">
+            <a href="https://github.com/asteris-llc/converge/stargazers" target="_blank" title="Stargazers" data-action="star">
+              <i class="icon icon-star"></i> Stars
+              <span class="count">&ndash;</span>
+            </a>
+          </li>
+        </ul>
+        <hr>
+      
+
+      <div class="toc">
+        
+        <ul>
+          
+
+
+
+
+<li>
+    <a  title="Converge" href="http://converge.aster.is/0.6.0/">
+  
+  Converge
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="Install" href="http://converge.aster.is/0.6.0/install/">
+  
+  Install
+</a>
+        
+        
+        <a  title="Platform Detection" href="http://converge.aster.is/0.6.0/platform/">
+  
+  Platform Detection
+</a>
+        
+        
+        <a  title="Getting Started" href="http://converge.aster.is/0.6.0/getting-started/">
+  
+  Getting Started
+</a>
+        
+        
+        <a  title="Module Verification" href="http://converge.aster.is/0.6.0/module-verification/">
+  
+  Module Verification
+</a>
+        
+        
+        <a  title="Using Dependencies" href="http://converge.aster.is/0.6.0/dependencies/">
+  
+  Using Dependencies
+</a>
+        
+        
+        <a  title="Params and Templates" href="http://converge.aster.is/0.6.0/params-and-templates/">
+  
+  Params and Templates
+</a>
+        
+        
+        <a  title="Server" href="http://converge.aster.is/0.6.0/server/">
+  
+  Server
+</a>
+        
+        
+        <a  title="Configuration" href="http://converge.aster.is/0.6.0/configuration/">
+  
+  Configuration
+</a>
+        
+        
+        <a  title="Resource Authors Guide" href="http://converge.aster.is/0.6.0/resource-authors-guide/">
+  
+  Resource Authors Guide
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="License" href="http://converge.aster.is/0.6.0/license/">
+  
+  License
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Resource Reference" href="http://converge.aster.is/0.6.0/resources/">
+  
+  Resource Reference
+</a>
+
+    
+    <ul>
+        
+        
+        <a  title="docker.container" href="http://converge.aster.is/0.6.0/resources/docker-container/">
+  
+  docker.container
+</a>
+        
+        
+        <a  title="docker.image" href="http://converge.aster.is/0.6.0/resources/docker-image/">
+  
+  docker.image
+</a>
+        
+        
+        <a  title="docker.network" href="http://converge.aster.is/0.6.0/resources/docker-network/">
+  
+  docker.network
+</a>
+        
+        
+        <a  title="docker.volume" href="http://converge.aster.is/0.6.0/resources/docker-volume/">
+  
+  docker.volume
+</a>
+        
+        
+        <a  title="file.content" href="http://converge.aster.is/0.6.0/resources/file-content/">
+  
+  file.content
+</a>
+        
+        
+        <a  title="file.directory" href="http://converge.aster.is/0.6.0/resources/file-directory/">
+  
+  file.directory
+</a>
+        
+        
+        <a  title="file.fetch" href="http://converge.aster.is/0.6.0/resources/file-fetch/">
+  
+  file.fetch
+</a>
+        
+        
+        <a  title="file.mode" href="http://converge.aster.is/0.6.0/resources/file-mode/">
+  
+  file.mode
+</a>
+        
+        
+        <a  title="file.owner" href="http://converge.aster.is/0.6.0/resources/file-owner/">
+  
+  file.owner
+</a>
+        
+        
+        <a  title="filesystem" href="http://converge.aster.is/0.6.0/resources/filesystem/">
+  
+  filesystem
+</a>
+        
+        
+        <a  title="lvm.logicalvolume" href="http://converge.aster.is/0.6.0/resources/lvm-logicalvolume/">
+  
+  lvm.logicalvolume
+</a>
+        
+        
+        <a  title="lvm.volumegroup" href="http://converge.aster.is/0.6.0/resources/lvm-volumegroup/">
+  
+  lvm.volumegroup
+</a>
+        
+        
+        <a  title="module" href="http://converge.aster.is/0.6.0/resources/module/">
+  
+  module
+</a>
+        
+        
+        <a  title="package.apt" href="http://converge.aster.is/0.6.0/resources/package-apt/">
+  
+  package.apt
+</a>
+        
+        
+        <a  title="package.rpm" href="http://converge.aster.is/0.6.0/resources/package-rpm/">
+  
+  package.rpm
+</a>
+        
+        
+        <a  title="param" href="http://converge.aster.is/0.6.0/resources/param/">
+  
+  param
+</a>
+        
+        
+        <a class="current" title="systemd.unit.state" href="http://converge.aster.is/0.6.0/resources/systemd-unit-state/">
+  
+  systemd.unit.state
+</a>
+<ul id="scrollspy">
+</ul>
+
+        
+        
+        <a  title="task" href="http://converge.aster.is/0.6.0/resources/task/">
+  
+  task
+</a>
+        
+        
+        <a  title="task.query" href="http://converge.aster.is/0.6.0/resources/task-query/">
+  
+  task.query
+</a>
+        
+        
+        <a  title="unarchive" href="http://converge.aster.is/0.6.0/resources/unarchive/">
+  
+  unarchive
+</a>
+        
+        
+        <a  title="user.group" href="http://converge.aster.is/0.6.0/resources/user-group/">
+  
+  user.group
+</a>
+        
+        
+        <a  title="user.user" href="http://converge.aster.is/0.6.0/resources/user-user/">
+  
+  user.user
+</a>
+        
+        
+        <a  title="wait.port" href="http://converge.aster.is/0.6.0/resources/wait-port/">
+  
+  wait.port
+</a>
+        
+        
+        <a  title="wait.query" href="http://converge.aster.is/0.6.0/resources/wait-query/">
+  
+  wait.query
+</a>
+        
+    </ul>
+    
+</li>
+
+
+
+<li>
+    <a  title="Extra" href="http://converge.aster.is/0.6.0/extra/">
+  
+  Extra
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Release Notes" href="http://converge.aster.is/0.6.0/release-notes/">
+  
+  Release Notes
+</a>
+
+    
+</li>
+
+
+
+<li>
+    <a  title="Command Reference" href="http://converge.aster.is/0.6.0/commands/">
+  
+  Command Reference
+</a>
+
+    
+</li>
+
+
+        </ul>
+        
+
+        
+        <hr>
+        <span class="section">The author</span>
+        
+        <ul>
+          
+          <li>
+            <a href="https://twitter.com/asteris_llc" target="_blank" title="@asteris_llc on Twitter">
+              @asteris_llc on Twitter
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://github.com/asteris-llc/converge" target="_blank" title="@asteris-llc/converge on GitHub">
+              @asteris-llc/converge on GitHub
+            </a>
+          </li>
+          
+        </ul>
+        
+      </div>
+    </div>
+  </div>
+</nav>
+
+	</div>
+
+	<article class="article">
+		<div class="wrapper">
+			<h1>systemd.unit.state </h1>
+
+			
+
+<h2 id="example">Example</h2>
+
+<pre><code class="language-hcl">systemd.unit.state &quot;ssh&quot; {
+  unit  = &quot;ssh.service&quot;
+  state = &quot;running&quot;
+}
+
+systemd.unit.state &quot;acpid&quot; {
+  unit = &quot;acpid.socket&quot;
+}
+
+file.content &quot;service-info&quot; {
+  destination = &quot;out.txt&quot;
+
+  content = &lt;&lt;EOF
+Name:        {{lookup `systemd.unit.state.ssh.unit`}}
+Path:        {{lookup `systemd.unit.state.ssh.path`}}
+Load State:  {{lookup `systemd.unit.state.ssh.loadstate`}}
+Type:        {{lookup `systemd.unit.state.ssh.type`}}
+Description: {{lookup `systemd.unit.state.ssh.description`}}
+
+Global Properties:
+Documentation: {{lookup `systemd.unit.state.ssh.global_properties.Documentation`}}
+
+
+Service Properties:
+AmbientCapabilities: {{lookup `systemd.unit.state.ssh.service_properties.AmbientCapabilities`}}
+User:                {{lookup `systemd.unit.state.ssh.service_properties.User`}}
+EOF
+}
+
+file.content &quot;socket-info&quot; {
+  destination = &quot;out.txt&quot;
+
+  content = &lt;&lt;EOF
+Name:        {{lookup `systemd.unit.state.acpid.unit`}}
+Path:        {{lookup `systemd.unit.state.acpid.path`}}
+Load State:  {{lookup `systemd.unit.state.acpid.loadstate`}}
+Type:        {{lookup `systemd.unit.state.acpid.type`}}
+Description: {{lookup `systemd.unit.state.acpid.description`}}
+
+Global Properties:
+Documentation: {{lookup `systemd.unit.state.acpid.global_properties.Documentation`}}
+
+Socket Properties:
+Accept:        {{lookup `systemd.unit.state.acpid.socket_properties.Accept`}}
+Broadcast:     {{lookup `systemd.unit.state.acpid.socket_properties.Broadcast`}}
+Mark:          {{lookup `systemd.unit.state.acpid.socket_properties.Mark`}}
+MaxConnection: {{lookup `systemd.unit.state.acpid.socket_properties.MaxConnections`}}
+PAMName:       {{lookup `systemd.unit.state.acpid.socket_properties.PAMName`}}
+Personality:   {{lookup `systemd.unit.state.acpid.socket_properties.Personality`}}
+EOF
+}
+
+</code></pre>
+
+<h2 id="parameters">Parameters</h2>
+
+<p>Here are the HCL fields that you can specify, along with their expected types
+and restrictions:</p>
+
+<h2 id="exported-fields">Exported Fields</h2>
+
+<p>Here are the fields that are exported for use with &lsquo;lookup&rsquo;.  Re-exported fields
+will have their own fields exported under the re-exported namespace.</p>
+
+<ul>
+<li><code>unit</code> (string)</li>
+</ul>
+
+<p>The name of the unit, including the unit type.</p>
+
+<ul>
+<li><code>state</code> (string)</li>
+</ul>
+
+<p>The desired state of the unit as configured by the user. It will be one of
+<code>running</code>, <code>stopped</code>, or <code>restarted</code> if it was configured by the user, and
+an empty string otherwise.</p>
+
+<ul>
+<li><code>reload</code> (bool)</li>
+</ul>
+
+<p>This field is set to true if the reload flag was configured by the user.</p>
+
+<ul>
+<li><code>signal_name</code> (string)</li>
+</ul>
+
+<p>The human-readable name of a unix signal that will be sent to the process.
+If this is set the name will match the field set in SignalNumber.  See the
+man pages for <code>signal(3)</code> on BSD/Darwin or <code>signal(7)</code> on GNU Linux for a
+full explanation of these signals.</p>
+
+<ul>
+<li><code>signal_number</code> (uint)</li>
+</ul>
+
+<p>The numeric identifier of a unix signal that will be sent to the process.
+If this is set it will match the field set in SignalName.  See the man
+pages for <code>signal(3)</code> on BSD/Darwin or <code>signal(7)</code> on GNU Linux for a full
+explanation of these signals.</p>
+
+<ul>
+<li><code>path</code> (string)</li>
+</ul>
+
+<p>The full path to the unit file on disk. This field will be empty if the
+unit was not started from a systemd unit file on disk.</p>
+
+<ul>
+<li><code>description</code> (string)</li>
+</ul>
+
+<p>Description of the services. This field will be empty unless a description
+has been provided in the systemd unit file.</p>
+
+<ul>
+<li><code>activestate</code> (string)</li>
+</ul>
+
+<p>The active state of the unit. It will always be one of: <code>active</code>,
+<code>reloading</code>, <code>inactive</code>, <code>failed</code>, <code>activating</code>, <code>deactivating</code>.</p>
+
+<ul>
+<li><code>loadstate</code> (string)</li>
+</ul>
+
+<p>The load state of the unit.</p>
+
+<ul>
+<li><code>type</code> (UnitType)</li>
+</ul>
+
+<p>The type of the unit as an enumerated value.  See TypeStr for a human
+readable type.</p>
+
+<ul>
+<li><code>typestr</code> (string)</li>
+</ul>
+
+<p>The type of the unit as a human readable string.  See the man page for
+<code>systemd(1)</code> for a full description of the types and their meaning.</p>
+
+<ul>
+<li><code>status</code> (string)</li>
+</ul>
+
+<p>The status represents the current status of the process.  It will be
+initialized during planning and updated after apply to reflect any changes.</p>
+
+<ul>
+<li><code>global_properties</code> re-exports fields from Properties</li>
+</ul>
+
+<p>Properties are the global systemd unit properties and will be set for all
+unit types.  See
+<a href="http://converge.aster.is/extra/systemd-properties/systemd_Properties">http://converge.aster.is/extra/systemd-properties/systemd_Properties</a> for
+more information.</p>
+
+<ul>
+<li><code>service_properties</code> re-exports fields from ServiceTypeProperties</li>
+</ul>
+
+<p>ServiceProperties contain properties specific to Service unit types.  This
+field is only exported when the unit type is <code>service</code>.  See
+<a href="http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>socket_properties</code> re-exports fields from SocketTypeProperties</li>
+</ul>
+
+<p>SocketProperties contain properties specific to Socket unit types. This
+field is only exported when the unit type is <code>socket</code>. See
+<a href="http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>device_properties</code> re-exports fields from DeviceTypeProperties</li>
+</ul>
+
+<p>DeviceProperties contain properties specific to Device unit types. This
+field is only exported when the unit type is <code>device</code>. See
+<a href="http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>mount_properties</code> re-exports fields from MountTypeProperties</li>
+</ul>
+
+<p>MountProperties contain properties specific to Mount unit types. This field
+is only exported when the unit type is <code>mount</code>. See
+<a href="http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>automount_properties</code> re-exports fields from AutomountTypeProperties</li>
+</ul>
+
+<p>AutomountProperties contain properties specific for Autoumount unit
+types. This field is only exported when the unit type is
+<code>automount</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>swap_properties</code> re-exports fields from SwapTypeProperties</li>
+</ul>
+
+<p>SwapProperties contain properties specific to Swap unit types. This field
+is only exported when the unit type is
+<code>swap</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>path_properties</code> re-exports fields from PathTypeProperties</li>
+</ul>
+
+<p>PathProperties contain properties specific to Path unit types. This field
+is only exported when the unit type is
+<code>path</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>timer_properties</code> re-exports fields from TimerTypeProperties</li>
+</ul>
+
+<p>TimerProperties contain properties specific to Timer unit types. This field
+is only exported when the unit type is
+<code>timer</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>slice_properties</code> re-exports fields from SliceTypeProperties</li>
+</ul>
+
+<p>SliceProperties contain properties specific to Slice unit types. This field
+is only exported when the unit type is
+<code>slice</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties</a>
+for for more information.</p>
+
+<ul>
+<li><code>scope_properties</code> re-exports fields from ScopeTypeProperties</li>
+</ul>
+
+<p>ScopeProperties contain properties specific to Scope unit types. This field
+is only exported when the unit type is
+<code>scope</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties</a>
+for for more information.</p>
+
+
+			<aside class="copyright" role="note">
+				
+				&copy; 2017 Released under the Apache 2.0 license &ndash;
+				
+				Documentation built with
+				<a href="https://www.gohugo.io" target="_blank">Hugo</a>
+				using the
+				<a href="http://github.com/digitalcraftsman/hugo-material-docs" target="_blank">Material</a> theme.
+			</aside>
+
+			<footer class="footer">
+				
+
+<nav class="pagination" aria-label="Footer">
+  <div class="previous">
+  
+      <a href="http://converge.aster.is/0.6.0/resources/lvm-volumegroup/" title="lvm.volumegroup">
+        <span class="direction">
+          Previous
+        </span>
+        <div class="page">
+          <div class="button button-previous" role="button" aria-label="Previous">
+            <i class="icon icon-back"></i>
+          </div>
+          <div class="stretch">
+            <div class="title">
+              lvm.volumegroup
+            </div>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+
+  <div class="next">
+  
+      <a href="http://converge.aster.is/0.6.0/commands/converge_root_command/" title="converge (root)">
+        <span class="direction">
+          Next
+        </span>
+        <div class="page">
+          <div class="stretch">
+            <div class="title">
+              converge (root)
+            </div>
+          </div>
+          <div class="button button-next" role="button" aria-label="Next">
+            <i class="icon icon-forward"></i>
+          </div>
+        </div>
+      </a>
+  
+  </div>
+</nav>
+
+
+
+
+
+			</footer>
+		</div>
+	</article>
+
+	<div class="results" role="status" aria-live="polite">
+		<div class="scrollable">
+			<div class="wrapper">
+				<div class="meta"></div>
+				<div class="list"></div>
+			</div>
+		</div>
+	</div>
+</main>
+
+    <script>
+    
+      var base_url = 'http:\/\/converge.aster.is\/0.6.0\/';
+      var repo_id  = 'asteris-llc\/converge';
+    
+    </script>
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/application.js"></script>
+    
+
+    <script>
+      /* Add headers to scrollspy */
+      var headers   = document.getElementsByTagName("h2");
+      var scrollspy = document.getElementById('scrollspy');
+
+      if(scrollspy) {
+        if(headers.length > 0) {
+          for(var i = 0; i < headers.length; i++) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "anchor");
+
+            var a  = document.createElement("a");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", headers[i].innerHTML);
+            a.innerHTML = headers[i].innerHTML;
+
+            li.appendChild(a)
+            scrollspy.appendChild(li);
+          }
+        } else {
+          scrollspy.parentElement.removeChild(scrollspy)
+        }
+
+
+        /* Add permanent link next to the headers */
+        var headers = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+        for(var i = 0; i < headers.length; i++) {
+            var a = document.createElement("a");
+            a.setAttribute("class", "headerlink");
+            a.setAttribute("href", "#" + headers[i].id);
+            a.setAttribute("title", "Permanent link")
+            a.innerHTML = "#";
+            headers[i].appendChild(a);
+        }
+      }
+    </script>
+
+    
+
+    <script src="http://converge.aster.is/0.6.0/javascripts/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
+
