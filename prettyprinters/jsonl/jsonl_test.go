@@ -41,7 +41,7 @@ func TestDrawNode(t *testing.T) {
 	out, err := printer.DrawNode(g, "x")
 
 	assert.NoError(t, err)
-	assert.Equal(t, `{"kind":"node","id":"x","meta":{"id":"x","group":""},"value":1}`+"\n", fmt.Sprint(out))
+	assert.Equal(t, `{"kind":"node","id":"x","meta":{"id":"x","group":"","source":"","parent-source":"","module":"root"},"value":1}`+"\n", fmt.Sprint(out))
 }
 
 func TestDrawEdge(t *testing.T) {

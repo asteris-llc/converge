@@ -15,6 +15,8 @@
 package preprocessor
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/asteris-llc/converge/parse"
@@ -74,10 +76,12 @@ func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, sto
 // until it encounters a module
 func TraverseUntilModule(g *graph.Graph, id string) bool {
 	if graph.IsRoot(id) {
+		fmt.Fprintf(os.Stderr, "TraverseUnitModule: encountered root, aborting\n") // DEBUG
 		return true
 	}
 	elemMeta, ok := g.Get(id)
 	if !ok {
+		fmt.Fprintf(os.Stderr, "TraverseUntilModule: %s isn't in graph, aborting\n", id) // DEBUG
 		return true
 	}
 	elem := elemMeta.Value()

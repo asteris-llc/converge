@@ -32,6 +32,7 @@ import (
 
 type source struct {
 	Parent       string
+	ParentName   string
 	ParentSource string
 	Source       string
 }
@@ -44,7 +45,7 @@ func (s *source) String() string {
 func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) {
 	logger := logging.GetLogger(ctx).WithField("function", "Nodes")
 
-	toLoad := []*source{{"root", root, root}}
+	toLoad := []*source{{"root", "root", root, root}}
 
 	out := graph.New()
 	out.Add(node.New("root", nil))
@@ -98,15 +99,23 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 				}
 				continue
 			}
+
 			newID := graph.ID(current.Parent, resource.ID())
-			out.Add(node.New(newID, resource))
+			n := node.New(newID, resource)
+			out.Add(n)
 			out.ConnectParent(current.Parent, newID)
+
+			n.Source = url
+			if current.Source != current.ParentSource {
+				n.ParentSource = current.ParentSource
+			}
 
 			if resource.IsModule() {
 				toLoad = append(
 					toLoad,
 					&source{
 						Parent:       newID,
+						ParentName:   resource.ID(),
 						ParentSource: url,
 						Source:       resource.Source(),
 					},

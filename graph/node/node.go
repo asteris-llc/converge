@@ -20,6 +20,10 @@ import (
 	"fmt"
 )
 
+const (
+	rootModuleName = "root"
+)
+
 // Groupable returns a group
 type Groupable interface {
 	Group() string
@@ -34,6 +38,10 @@ type Node struct {
 	ID    string `json:"id"`
 	Group string `json:"group"`
 
+	Source       string `json:"source"`
+	ParentSource string `json:"parent-source"`
+	Module       string `json:"module"`
+
 	metadata map[string]interface{}
 	value    interface{}
 }
@@ -43,6 +51,7 @@ func New(id string, value interface{}) *Node {
 	n := &Node{
 		ID:       id,
 		value:    value,
+		Module:   rootModuleName,
 		metadata: make(map[string]interface{}),
 	}
 	n.setGroup()
