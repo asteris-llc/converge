@@ -4,7 +4,7 @@ slug: "systemd_DeviceTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## DeviceTypeProperties
 
@@ -14,4 +14,3 @@ comprehensive explanation of these fields see:
 https://www.freedesktop.org/wiki/Software/systemd/dbus/
 
 - `SysFSPath` (`string`)
-

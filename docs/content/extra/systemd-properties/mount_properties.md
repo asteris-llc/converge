@@ -4,7 +4,7 @@ slug: "systemd_MountTypeProperties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## MountTypeProperties
 
@@ -143,4 +143,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `What` (`string`)
 - `Where` (`string`)
 - `WorkingDirectory` (`string`)
-

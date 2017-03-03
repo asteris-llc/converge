@@ -18,7 +18,7 @@ params:
   provider: GitHub
   repo_url: https://github.com/asteris-llc/converge
 
-  version: 0.5.0
+  version: 0.6.0
   logo: images/logo/Converge_Logo_Blue.png
   favicon: ""
 

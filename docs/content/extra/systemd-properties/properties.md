@@ -4,7 +4,7 @@ slug: "systemd_Properties"
 date: "2017-02-03T07:38:25-06:00"
 menu:
   main:
-    parent: resources
+    parent: extra
 ---
 ## Properties
 
@@ -87,4 +87,3 @@ https://www.freedesktop.org/wiki/Software/systemd/dbus/
 - `UnitFileState` (`string`)
 - `WantedBy` (`[]string`)
 - `Wants` (`[]string`)
-
