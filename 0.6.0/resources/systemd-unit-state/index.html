@@ -647,99 +647,98 @@ initialized during planning and updated after apply to reflect any changes.</p>
 </ul>
 
 <p>Properties are the global systemd unit properties and will be set for all
-unit types.  See
-<a href="http://converge.aster.is/extra/systemd-properties/systemd_Properties">http://converge.aster.is/extra/systemd-properties/systemd_Properties</a> for
-more information.</p>
+unit types. See the <a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_Properties/">systemd_Properties</a> docs
+for more information.</p>
 
 <ul>
 <li><code>service_properties</code> re-exports fields from ServiceTypeProperties</li>
 </ul>
 
-<p>ServiceProperties contain properties specific to Service unit types.  This
-field is only exported when the unit type is <code>service</code>.  See
-<a href="http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_ServiceTypeProperties</a>
-for for more information.</p>
+<p>ServiceProperties contain properties specific to Service unit types. This
+field is only exported when the unit type is <code>service</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ServiceTypeProperties/">systemd_ServiceTypeProperties</a> docs
+for more information.</p>
 
 <ul>
 <li><code>socket_properties</code> re-exports fields from SocketTypeProperties</li>
 </ul>
 
 <p>SocketProperties contain properties specific to Socket unit types. This
-field is only exported when the unit type is <code>socket</code>. See
-<a href="http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SocketTypeProperties</a>
-for for more information.</p>
+field is only exported when the unit type is <code>socket</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SocketTypeProperties/">systemd_SocketTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>device_properties</code> re-exports fields from DeviceTypeProperties</li>
 </ul>
 
 <p>DeviceProperties contain properties specific to Device unit types. This
-field is only exported when the unit type is <code>device</code>. See
-<a href="http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_DeviceTypeProperties</a>
-for for more information.</p>
+field is only exported when the unit type is <code>device</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_DeviceTypeProperties/">systemd_DeviceTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>mount_properties</code> re-exports fields from MountTypeProperties</li>
 </ul>
 
 <p>MountProperties contain properties specific to Mount unit types. This field
-is only exported when the unit type is <code>mount</code>. See
-<a href="http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_MountTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>mount</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_MountTypeProperties/">systemd_MountTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>automount_properties</code> re-exports fields from AutomountTypeProperties</li>
 </ul>
 
-<p>AutomountProperties contain properties specific for Autoumount unit
-types. This field is only exported when the unit type is
-<code>automount</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_AutomountTypeProperties</a>
-for for more information.</p>
+<p>AutomountProperties contain properties specific to Autoumount unit types.
+This field is only exported when the unit type is<code>automount</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_AutomountTypeProperties/">systemd_AutomountTypeProperties</a>
+docs for more information.</p>
 
 <ul>
 <li><code>swap_properties</code> re-exports fields from SwapTypeProperties</li>
 </ul>
 
 <p>SwapProperties contain properties specific to Swap unit types. This field
-is only exported when the unit type is
-<code>swap</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SwapTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>swap</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SwapTypeProperties/">systemd_SwapTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>path_properties</code> re-exports fields from PathTypeProperties</li>
 </ul>
 
 <p>PathProperties contain properties specific to Path unit types. This field
-is only exported when the unit type is
-<code>path</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_PathTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>path</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_PathTypeProperties/">systemd_PathTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>timer_properties</code> re-exports fields from TimerTypeProperties</li>
 </ul>
 
 <p>TimerProperties contain properties specific to Timer unit types. This field
-is only exported when the unit type is
-<code>timer</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_TimerTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>timer</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_TimerTypeProperties/">systemd_TimerTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>slice_properties</code> re-exports fields from SliceTypeProperties</li>
 </ul>
 
 <p>SliceProperties contain properties specific to Slice unit types. This field
-is only exported when the unit type is
-<code>slice</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_SliceTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>slice</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_SliceTypeProperties/">systemd_SliceTypeProperties</a> docs for
+more information.</p>
 
 <ul>
 <li><code>scope_properties</code> re-exports fields from ScopeTypeProperties</li>
 </ul>
 
 <p>ScopeProperties contain properties specific to Scope unit types. This field
-is only exported when the unit type is
-<code>scope</code>. <a href="http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties">http://converge.aster.is/extra/systemd-properties/systemd_ScopeTypeProperties</a>
-for for more information.</p>
+is only exported when the unit type is <code>scope</code>. See the
+<a href="http://converge.aster.is/0.6.0/extra/systemd-properties/systemd_ScopeTypeProperties/">systemd_ScopeTypeProperties</a> docs for
+more information.</p>
 
 
 			<aside class="copyright" role="note">
@@ -758,7 +757,7 @@ for for more information.</p>
 <nav class="pagination" aria-label="Footer">
   <div class="previous">
   
-      <a href="http://converge.aster.is/0.6.0/resources/docker-volume/" title="docker.volume">
+      <a href="http://converge.aster.is/0.6.0/resources/package-rpm/" title="package.rpm">
         <span class="direction">
           Previous
         </span>
@@ -768,7 +767,7 @@ for for more information.</p>
           </div>
           <div class="stretch">
             <div class="title">
-              docker.volume
+              package.rpm
             </div>
           </div>
         </div>

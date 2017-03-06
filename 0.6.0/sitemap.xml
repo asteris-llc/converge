@@ -3,127 +3,127 @@
   
   <url>
     <loc>http://converge.aster.is/0.6.0/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/docker-network/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/file-content/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/file-directory/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/file-fetch/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/file-mode/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/file-owner/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/filesystem/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/lvm-logicalvolume/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/lvm-volumegroup/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/module/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/package-apt/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://converge.aster.is/0.6.0/resources/package-rpm/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/param/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/task/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/task-query/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/unarchive/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/user-group/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/user-user/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/wait-port/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/wait-query/</loc>
-    <lastmod>2017-03-03T10:23:30-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:48-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/docker-container/</loc>
-    <lastmod>2017-03-03T10:23:29-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/docker-image/</loc>
-    <lastmod>2017-03-03T10:23:29-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/docker-network/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/docker-volume/</loc>
-    <lastmod>2017-03-03T10:23:29-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/file-content/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/file-directory/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/file-fetch/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/file-mode/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/file-owner/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/filesystem/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/lvm-logicalvolume/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/lvm-volumegroup/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/module/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://converge.aster.is/0.6.0/resources/package-rpm/</loc>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
   </url>
   
   <url>
     <loc>http://converge.aster.is/0.6.0/resources/systemd-unit-state/</loc>
-    <lastmod>2017-03-02T14:16:58-06:00</lastmod>
+    <lastmod>2017-03-06T09:59:47-06:00</lastmod>
   </url>
   
   <url>
