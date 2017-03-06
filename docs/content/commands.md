@@ -9,9 +9,10 @@ menu:
 
 ---
 
-Converge has resources that you can use to make various changes on your system.
-For example, `file.content` will control the content of a file, and `file.mode`
-will control that file's mode.
+Converge is a tool you can use to make various changes on your system. Commands
+such as `plan` and `apply` allow you to plan and apply changes to your system,
+respectively. Use the `graph` command to visualize the execution of your
+changes.
 
-For more details on how to use the resources, see the
-[getting started guide]({{< ref "getting-started.md" >}}).
+Each command has a dedicated section detailing its use, options, and a listing
+of related commands.

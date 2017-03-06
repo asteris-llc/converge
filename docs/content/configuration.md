@@ -29,7 +29,7 @@ variable.
 
 ## Config Files
 
-Converge will source a single config file as a fallback. This config file can
+Converge will source a single config file as a fallback. This config file can be
 JSON, TOML, YAML, HCL, or a Java properties file (this is detected by file
 extension.) The keys of this file are the same as the command-line flags.
 Converge looks in `/etc/converge/config.{ext}` by default, but you can change
