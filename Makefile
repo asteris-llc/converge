@@ -15,7 +15,7 @@ SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go')
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go resource/systemd/unit/systemd_properties.go
-	go build -ldflags="-X ${REPO}/cmd.Version=${VERSION}"
+	go build -ldflags="-X ${REPO}/cmd.Version=${VERSION} -s -w"
 
 rpc/pb/root.pb.go: rpc/pb/root.proto
 	protoc -I rpc/pb \
