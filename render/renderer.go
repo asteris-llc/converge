@@ -74,6 +74,8 @@ func (r *Renderer) Render(name, src string) (string, error) {
 	r.Language = r.Language.On(extensions.RefFuncName, r.lookup)
 	out, err := r.Language.Render(r.DotValue, name, src)
 	if err != nil {
+		fmt.Println("rendering language for ", name, "returned an error: ", err)
+		fmt.Println("src:\n", src)
 		if r.resolverErr {
 			return "", ErrUnresolvable{}
 		}
@@ -171,31 +173,38 @@ func (r *Renderer) paramRawValue(name string) (interface{}, error) {
 }
 
 func (r *Renderer) lookup(name string) (string, error) {
+	fmt.Println("in renderer.lookup...")
 	g := r.Graph()
 	// fully-qualified graph name
 	fqgn := graph.SiblingID(r.ID, name)
+	meta, _ := g.Get(r.ID)
 
 	vertexName, terms, found := preprocessor.VertexSplitTraverse(g,
 		name,
 		r.ID,
-		preprocessor.TraverseUntilModule,
+		preprocessor.TraverseWithinFile(meta.Source),
+		//		preprocessor.TraverseUntilModule,
 		make(map[string]struct{}),
 	)
 
 	if !validateLookup(g, r.ID, vertexName) {
+		fmt.Println("renderer.lookup failed to validate lookup")
 		return "", fmt.Errorf("%s cannot resolve inner-branch node at %s", r.ID, vertexName)
 	}
 
 	if !found {
+		fmt.Println("renderer.lookup node not found")
 		return "", fmt.Errorf("%s does not resolve to a valid node", fqgn)
 	}
 
+	fmt.Println("render.lookup getting ", vertexName, " out of the graph...")
 	meta, ok := g.Get(vertexName)
 	if !ok {
 		return "", fmt.Errorf("%s is empty", vertexName)
 	}
 
 	if _, isThunk := meta.Value().(*PrepareThunk); isThunk {
+		fmt.Println("the value is a PrepareThunk...")
 		log.WithField(
 			"proxy-reference",
 			vertexName,
@@ -206,8 +215,11 @@ func (r *Renderer) lookup(name string) (string, error) {
 				vertexName, terms,
 			),
 		)
+		fmt.Println("returning ErrUnresolvable")
 		r.resolverErr = true
 		return "", ErrUnresolvable{}
+	} else {
+		fmt.Printf("%T, not a PrepareThunk...", meta.Value())
 	}
 
 	if _, isPreparer := meta.Value().(*resource.Preparer); isPreparer {
@@ -222,9 +234,16 @@ func (r *Renderer) lookup(name string) (string, error) {
 		return "", errors.New("cannot lookup unevaluated field")
 	}
 
+	fmt.Println("resource was a tasker...")
+	embeddedTask, ok := asTasker.GetTask()
+	fmt.Printf("(%v) embedded task type: %T\n", ok, embeddedTask)
+
 	status := asTasker.GetStatus()
 
+	fmt.Printf("tasker unwrapped to %T\n", status)
+
 	if status == nil {
+		fmt.Println("status was nil, returning unresolvable")
 		log.WithField("status-reference", vertexName).Warn(r.ID + " no status for node " + vertexName)
 		r.resolverErr = true
 		return "", ErrUnresolvable{}

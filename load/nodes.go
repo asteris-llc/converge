@@ -109,6 +109,9 @@ func Nodes(ctx context.Context, root string, verify bool) (*graph.Graph, error) 
 			if current.Source != current.ParentSource {
 				n.ParentSource = current.ParentSource
 			}
+			if current.ParentName != "" {
+				n.Module = current.ParentName
+			}
 
 			if resource.IsModule() {
 				toLoad = append(

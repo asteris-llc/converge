@@ -76,6 +76,7 @@ func (f *Factory) GetRenderer(id string) (*Renderer, error) {
 
 // NewFactory generates a new Render factory
 func NewFactory(ctx context.Context, g *graph.Graph) (*Factory, error) {
+	fmt.Println("generating new factory...")
 	f := &Factory{
 		Graph:     g,
 		Language:  extensions.DefaultLanguage(),
@@ -98,6 +99,9 @@ func getParamOverrides(gFunc func() *graph.Graph, id string) (ValueThunk, bool) 
 			parentMeta, ok := gFunc().GetParent(id)
 			if !ok {
 				return "", false, fmt.Errorf("%q was missing from the graph", id)
+			}
+			if _, ok := parentMeta.Value().(*PrepareThunk); ok {
+				return "", false, ErrUnresolvable{}
 			}
 			parentTask, ok := resource.ResolveTask(parentMeta.Value())
 			if !ok {

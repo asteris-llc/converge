@@ -34,14 +34,17 @@ type Values map[string]resource.Value
 
 // Render a graph with the provided values
 func Render(ctx context.Context, g *graph.Graph, top Values) (*graph.Graph, error) {
+	fmt.Println("beginning to render graph...")
 	renderingPlant, err := NewFactory(ctx, g)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "render.Render is unable to render graph")
 	}
 	return g.RootFirstTransform(ctx, func(meta *node.Node, out *graph.Graph) error {
+		fmt.Println("generating pipeline")
 		pipeline := Pipeline(out, meta.ID, renderingPlant, top)
 		value, err := pipeline.Exec(ctx, meta.Value())
 		if err != nil {
+			fmt.Println("render pipeline failed at ", meta.ID, "with ", err)
 			return err
 		}
 		out.Add(meta.WithValue(value))
@@ -89,18 +92,20 @@ func (p pipelineGen) prepareNode(ctx context.Context, idi interface{}) (interfac
 		return nil, typeError("render.prepareNode", p.ID, "resource.Resource", idi)
 	}
 
-	renderer, err := p.RenderingPlant.GetRenderer(p.ID)
-	if err != nil {
-		return nil, err
-	}
+	renderer, renderErr := p.RenderingPlant.GetRenderer(p.ID)
 
 	if p.shouldRenderMetadata() {
 		_, metadataErr = p.renderMetadata(renderer)
 	}
 
-	prepared, err := res.Prepare(ctx, renderer)
+	merged := mergeMaybeUnresolvables(metadataErr, renderErr)
 
-	merged := mergeMaybeUnresolvables(err, metadataErr)
+	var prepared interface{}
+	var err error
+	if renderer != nil {
+		prepared, err = res.Prepare(ctx, renderer)
+		merged = mergeMaybeUnresolvables(merged, err)
+	}
 
 	if merged != nil {
 		if errIsUnresolvable(merged) {

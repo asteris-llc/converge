@@ -15,8 +15,9 @@
 package plan
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/asteris-llc/converge/graph"
 	"github.com/asteris-llc/converge/graph/node"
@@ -40,14 +41,16 @@ func WithNotify(ctx context.Context, in *graph.Graph, notify *graph.Notifier) (*
 		notify.Transform(func(meta *node.Node, out *graph.Graph) error {
 			renderingPlant, err := render.NewFactory(ctx, in)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to generate render while planning "+meta.ID)
 			}
 			renderingPlant.Graph = out
 
+			fmt.Println("plan executing pipeline for ", meta.ID)
 			pipeline := Pipeline(ctx, out, meta.ID, renderingPlant)
 
 			val, pipelineErr := pipeline.Exec(ctx, meta.Value())
 			if pipelineErr != nil {
+				fmt.Println("plan pipeline execution for ", meta.ID, "failed with ", pipelineErr)
 				return pipelineErr
 			}
 

@@ -178,8 +178,16 @@ func getXrefs(g *graph.Graph, id string, node *parse.Node) (out []string, err er
 		tmpl.Execute(ioutil.Discard, &struct{}{})
 	}
 	for _, call := range calls {
-		vertex, _, found := preprocessor.VertexSplitTraverse(g, call, id, preprocessor.TraverseUntilModule, make(map[string]struct{}))
+
+		vertex, _, found := preprocessor.VertexSplitTraverse(g,
+			call,
+			id,
+			preprocessor.TraverseWithinFile(meta.Source),
+			make(map[string]struct{}),
+		)
+		//		vertex, _, found := preprocessor.VertexSplitTraverse(g, call, id, preprocessor.TraverseUntilModule, make(map[string]struct{}))
 		if !found {
+			fmt.Println("VertexSplitTraverse returned not found looking up ", call, "from ", id)
 			return []string{}, fmt.Errorf("dependency generator: unresolvable call to %s", call)
 		}
 		if _, ok := nodeRefs[vertex]; !ok {

@@ -41,6 +41,7 @@ type taskWrapper struct {
 
 // Pipeline generates a pipeline to evaluate a single graph node
 func Pipeline(ctx context.Context, g *graph.Graph, id string, factory *render.Factory) executor.Pipeline {
+	fmt.Println("plan generating pipeline for ", id)
 	gen := &pipelineGen{Graph: g, RenderingPlant: factory, ID: id}
 	return executor.NewPipeline().
 		AndThen(gen.MaybeResolveConditional).
@@ -87,6 +88,9 @@ func (g *pipelineGen) MaybeResolveConditional(_ context.Context, idi interface{}
 			return "", err
 		}
 		result, err := r.Render(id, toRender)
+		if err != nil {
+			fmt.Println("MaybeResolveConditional returned an error:", err)
+		}
 		return result, err
 	})
 	if ok, err := conditional.ShouldEvaluate(g.Graph, meta); err != nil {

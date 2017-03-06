@@ -59,6 +59,29 @@ func New(id string, value interface{}) *Node {
 	return n
 }
 
+func (n *Node) String() string {
+	return fmt.Sprintf(` ID:     '%s'
+Group:  '%s'
+Module: '%s'
+------------
+Source: %s
+Parent: %s
+------------
+Value Type: %T
+------------
+Metadata:
+%s
+`,
+		n.ID,
+		n.Group,
+		n.Module,
+		n.Source,
+		n.ParentSource,
+		n.Value,
+		n.ShowMetadata(),
+	)
+}
+
 // Value gets the inner value of this node
 func (n *Node) Value() interface{} {
 	return n.value

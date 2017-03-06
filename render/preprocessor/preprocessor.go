@@ -16,7 +16,6 @@ package preprocessor
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/asteris-llc/converge/parse"
@@ -75,26 +74,44 @@ func VertexSplitTraverse(g *graph.Graph, toFind string, startingNode string, sto
 // VertexSplitTraverse and will cause vertex splitting to propogate upwards
 // until it encounters a module
 func TraverseUntilModule(g *graph.Graph, id string) bool {
+	fmt.Println("TraverseUntilModule: id = ", id)
 	if graph.IsRoot(id) {
-		fmt.Fprintf(os.Stderr, "TraverseUnitModule: encountered root, aborting\n") // DEBUG
+		fmt.Println("TraverseUnitModule: encountered root, aborting") // DEBUG
 		return true
 	}
 	elemMeta, ok := g.Get(id)
 	if !ok {
-		fmt.Fprintf(os.Stderr, "TraverseUntilModule: %s isn't in graph, aborting\n", id) // DEBUG
+		fmt.Printf("TraverseUntilModule: %s isn't in graph, aborting\n", id) // DEBUG
 		return true
 	}
 	elem := elemMeta.Value()
 	if _, ok := elem.(*module.Module); ok {
+		fmt.Println(id, "is a module, aborting")
 		return true
 	}
 	if _, ok := elem.(*module.Preparer); ok {
+		fmt.Println(id, "is a preparer for a module... aborting")
 		return true
 	}
 	if node, ok := elem.(*parse.Node); ok {
+		if node.Kind() == "module" {
+			fmt.Println(id, "is a node representing a module... aborting")
+		}
 		return node.Kind() == "module"
 	}
 	return false
+}
+
+// TraverseWithinFile returns a traversal function that will return true if the
+// node is outside of the file given by url.
+func TraverseWithinFile(url string) func(*graph.Graph, string) bool {
+	return func(g *graph.Graph, id string) bool {
+		meta, ok := g.Get(id)
+		if !ok {
+			return true
+		}
+		return meta.Source != url
+	}
 }
 
 // Find returns the first element of the string slice for which f returns true
