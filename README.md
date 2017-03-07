@@ -7,6 +7,10 @@ laptops and other devices.
 Key features:
 
 - Easy to install and run. A single binary and configuration file is all you need.
+- Resources to make changes on your system: docker images and containers, users
+and groups, systemd, and more. The Resource Reference at
+[converge.aster.is](http://converge.aster.is) has a complete list of resources
+and their configuration settings.
 - A powerful graph engine that automatically generates dependencies and
 runs tasks in parallel.
 - API-first communication using [grpc](http://grpc.io).
@@ -58,7 +62,7 @@ or download a release for your platform from the
 
 ## Documentation
 
-Comprehensive documentation can be found at [converge.aster.is](http://converge.aster.is). 
+Comprehensive documentation can be found at [converge.aster.is](http://converge.aster.is).
 
 You can learn more about Converge from the following blog posts and presentations:
 
