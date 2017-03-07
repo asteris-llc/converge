@@ -10,8 +10,8 @@ menu:
 ---
 
 Converge has resources you can use to make various changes on your system. For
-example, `file.content` will control the content of a file, and `file.mode`
-will control a file's mode.
+example, `file.content` will control what is in a file, and `file.mode` sets a
+file's permissions.
 
 Each resource has a dedicated section detailing use, configuration settings, and
 includes an example HCL file.

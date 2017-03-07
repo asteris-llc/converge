@@ -185,8 +185,8 @@ this:
 
 Let's look at how we can take advantage of reusability. Good news: that's what
 modules are for! Now that you've written a module, you can require it from any
-other module to add it to your tree. Create a new module, let's call it
-`helloYou.hcl`. Put the following text in `helloYou.hcl`:
+other module to add it to your tree. First, we need to create a new module
+called `helloYou.hcl`:
 
 ```hcl
 module "helloWorld.hcl" "hello" {

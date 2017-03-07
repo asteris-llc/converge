@@ -58,8 +58,9 @@ file.content "render" {
 ```
 
 It is a good idea to `converge plan --local samples/fileContent.hcl` to see what
-changes will be made before you apply them. Invoke this with `converge apply
---local samples/fileContent.hcl` to install Traefik from yum on your system.
+changes will be made before you apply them. If you like what you see, you can
+write some content to a file with `converge apply --local
+samples/fileContent.hcl`.
 
 ## Development
 
