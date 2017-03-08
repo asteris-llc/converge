@@ -15,6 +15,9 @@ laptops and other devices.
 Key features:
 
 - Easy to install and run. A single binary and configuration file is all you need.
+- Resources to make changes on your system: docker images and containers, users
+and groups, systemd, and more. The [resource reference]({{< ref "resources.md" >}})
+has a complete list of resources and their configuration settings.
 - A powerful graph engine that automatically generates dependencies and
 runs tasks in parallel.
 - API-first communication using [grpc](http://grpc.io).
@@ -29,8 +32,8 @@ runs tasks in parallel.
 
 ## Usage
 
-See [the docs](http://converge.aster.is)! It's pretty reasonable, though. Here's
-a summary:
+See the [getting started]({{< ref "getting-started.md" >}}) guide! It's pretty
+reasonable, though. Here's a summary:
 
 Converge uses [HCL](https://github.com/hashicorp/hcl) for syntax. HCL is a
 superset of JSON that looks (and acts) quite a bit nicer.
@@ -54,9 +57,10 @@ file.content "render" {
 }
 ```
 
-Invoke this with `converge apply --local samples/fileContent.hcl` to install
-Traefik from yum on your system. You can also `converge plan --local
-samples/fileContent.hcl` to see what changes will be made before you apply them.
+It is a good idea to `converge plan --local samples/fileContent.hcl` to see what
+changes will be made before you apply them. If you like what you see, you can
+write some content to a file with `converge apply --local
+samples/fileContent.hcl`.
 
 ## Development
 

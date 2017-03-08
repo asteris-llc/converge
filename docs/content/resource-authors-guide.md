@@ -114,9 +114,10 @@ your code as possible.
 
 The
 [`resource.Task`](https://godoc.org/github.com/asteris-llc/converge/resource#Task) interface
-is what you will implement to have converge run your `Check` and `Apply`
+is what you will implement to have Converge run your `Check` and `Apply`
 methods.  The `export` and `re-export-as` tags in your `resource.Task`
-implementation are used to define lookup methods from within converge.
+implementation are used to define within Converge what will be available
+for [lookup]({{< ref "dependencies.md" >}}#cross-node-references) in modules.
 
 Using the `Shell` module as an example we can see how tasks should be
 implemented:
@@ -141,8 +142,8 @@ type Shell struct {
 
 Converge will automatically extract values from a `resource.Task` that are
 annotated with the `export` or `re-export-as` struct tags.  For fields that are
-exported with `export`, they can be referenced directly.  For example if we have
-the following task which is implemented with `Shell`:
+exported with `export`, they can be referenced directly.  For example, if we
+have the following task which is implemented with `Shell`:
 
 ```hcl
 task "foo" {
@@ -211,9 +212,9 @@ and `apply`, and also the re-exported fields from our `status`.
 Before you can use your resource, it has to be deserialized from HCL. For this,
 we will write a
 [`resource.Resource`](https://godoc.org/github.com/asteris-llc/converge/resource#Resource).
-Resource exists to render a Task's fields and return it in it's executable
+Resource exists to render a Task's fields and return it in its executable
 state. In our case, our Resource would look like this (they're typically called
-`Preparer`).
+`Preparer`):
 
 ```go
 type Preparer struct {
@@ -233,8 +234,8 @@ necessary.
 ### Zero Values
 
 Sometimes you need to disambiguate between a zero value the user provided and
-one that Go did. In this case, use a pointer to that type. For example, your
-preparer may look like this:
+one that Go defaults to. In this case, use a pointer to that type. To start,
+your preparer may look like this:
 
 ```go
 type Preparer struct {
@@ -242,8 +243,7 @@ type Preparer struct {
 }
 ```
 
-But in this case, the value of `Field` would be zero in each of the two calls
-below!
+In the HCL below, the value of `Field` would be zero in either configuration!
 
 ```hcl
 mymodule "test" {
@@ -255,8 +255,8 @@ mymodule "test" {
 }
 ```
 
-If you need to tell which case happened, use a pointer. In other words, your
-preparer will now look like this:
+If you need to tell which case happened, use a pointer. Update your preparer to
+look like this:
 
 ```go
 type Preparer struct {
@@ -277,19 +277,21 @@ following struct tags control the values you get:
 
 We can also do some basic validation tasks with tags:
 
-- `required`: one valid value: `true`. If set, this field must be set in the
-  HCL, but may still have a zero value (for example, `int` can still be `0`.)
-  Example: [docker.container]({{< ref "resources/docker.container.md" >}}) uses
-  this to require an image for the container.
+- `required`: indicates a field must be set in the HCL. The `required` tag only
+  indicates a field must be set, so it may still have a zero value (for example,
+  `int` can still be `0`.) Example: [docker.container]
+  (https://github.com/asteris-llc/converge/blob/master/resource/docker/container/preparer.go)
+  uses this to require an image for the container.
 
 - `mutually_exclusive`: a comma-separated list of fields that cannot be set
-  together. Example: [user]({{< ref "resources/user.user.md" >}}) uses this
-  to disallow setting both `groupname` and `gid`.
+  together. Example: [user]
+  (https://github.com/asteris-llc/converge/blob/master/resource/user/preparer.go)
+  uses this to disallow setting both `groupname` and `gid`.
 
 - `valid_values`: a comma-separated list of values that will be accepted for
-  this field.
-  Example: [docker.container]({{< ref "resources/docker.container.md" >}}) uses
-  this to enforce status is only `running` or `created`.
+  this field. Example: [docker.container]
+  (https://github.com/asteris-llc/converge/blob/master/resource/docker/container/preparer.go)
+  uses this to enforce status is only `running` or `created`.
 
 ### The Renderer
 

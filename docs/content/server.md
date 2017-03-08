@@ -119,7 +119,7 @@ argument (or set `CONVERGE_LOCAL=1`.) This will:
 3. Shut down the RPC server
 
 During this process, a port (`localhost:47740`) will be opened and RPC will be
-running on it. This interface will be protected with an randomly-generated
+running on it. This interface will be protected with a randomly-generated
 token, unless you specify `--no-token`
 
 {{< warning title="Don't Disable Tokens" >}}
