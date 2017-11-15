@@ -33,8 +33,8 @@ resource/systemd/unit/systemd_properties.go:
 	./gen/systemd/generate-dbus-wrappers
 
 # vendoring
-vendor: glide.yaml glide.lock
-	glide install
+vendor: Gopkg.lock Gopkg.toml
+	dep ensure
 
 # testing
 .PHONY: test
