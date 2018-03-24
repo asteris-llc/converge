@@ -1,0 +1,127 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  name = "github.com/Sirupsen/logrus"
+  version = "0.11.2"
+
+[[constraint]]
+  name = "github.com/arbovm/levenshtein"
+
+[[constraint]]
+  name = "github.com/asteris-llc/converge"
+  version = "0.6.0"
+
+[[constraint]]
+  name = "github.com/braintree/manners"
+
+[[constraint]]
+  name = "github.com/coreos/go-systemd"
+
+[[constraint]]
+  name = "github.com/deckarep/golang-set"
+  version = "1.6.0"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.0.0"
+
+[[constraint]]
+  name = "github.com/fgrid/uuid"
+  version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/fsouza/go-dockerclient"
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
+
+[[constraint]]
+  name = "github.com/gosuri/uilive"
+
+[[constraint]]
+  name = "github.com/grpc-ecosystem/grpc-gateway"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-getter"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-multierror"
+
+[[constraint]]
+  name = "github.com/hashicorp/hcl"
+
+[[constraint]]
+  name = "github.com/hashicorp/terraform"
+  version = "0.9.0-beta1"
+
+[[constraint]]
+  name = "github.com/kardianos/osext"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.1"
+
+[[constraint]]
+  name = "github.com/mitchellh/hashstructure"
+
+[[constraint]]
+  name = "github.com/mitchellh/mapstructure"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/soheilhy/cmux"
+  version = "0.1.2"
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+
+[[constraint]]
+  name = "github.com/spf13/pflag"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+
+[[constraint]]
+  name = "github.com/streamrail/concurrent-map"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.1.4"
+
+[[constraint]]
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "golang.org/x/sync"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  version = "1.0.5"

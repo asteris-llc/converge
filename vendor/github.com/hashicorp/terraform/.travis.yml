@@ -1,0 +1,28 @@
+sudo: false
+language: go
+go:
+- 1.7.5
+- 1.8rc3
+install:
+# This script is used by the Travis build to install a cookie for
+# go.googlesource.com so rate limits are higher when using `go get` to fetch
+# packages that live there.
+# See: https://github.com/golang/go/issues/12933
+- bash scripts/gogetcookie.sh
+- go get github.com/kardianos/govendor
+script:
+- make vet test
+- GOOS=windows go build
+branches:
+  only:
+  - master
+notifications:
+  irc:
+    channels:
+    - irc.freenode.org#terraform-tool
+    skip_join: true
+    use_notice: true
+matrix:
+  fast_finish: true
+  allow_failures:
+  - go: tip

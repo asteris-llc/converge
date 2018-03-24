@@ -12,6 +12,7 @@ PACKAGE_VERSION = $(eval PACKAGE_VERSION := $$(subst -dirty,,$${VERSION}))$(valu
 # sources to evaluate
 SRCDIRS := $(shell find . -maxdepth 1 -mindepth 1 -type d -not -path './vendor')
 SRCFILES := main.go $(shell find ${SRCDIRS} -name '*.go')
+TESTDIRS := $(eval TESTDIRS := $$(shell find . -mindepth 1 -type f -not -path './vendor*' -not -path './.git*' -not -path './docs*' -not -path './samples*' -iname '*_test.go' -exec dirname {} \; | sort -u)$)$(value TESTDIRS)
 
 # binaries
 converge: vendor ${SRCFILES} rpc/pb/root.pb.go rpc/pb/root.pb.gw.go resource/systemd/unit/systemd_properties.go
@@ -33,8 +34,8 @@ resource/systemd/unit/systemd_properties.go:
 	./gen/systemd/generate-dbus-wrappers
 
 # vendoring
-vendor: glide.yaml glide.lock
-	glide install
+vendor: Gopkg.lock Gopkg.toml
+	dep ensure
 
 # testing
 .PHONY: test
@@ -42,7 +43,7 @@ test: vendor gotest validate-samples validate-error-samples blackbox
 
 .PHONY: gotest
 gotest:
-	go test $(shell glide novendor)
+	go test ${TESTDIRS}
 
 .PHONY: validate-samples
 validate-samples: converge samples/*.hcl
