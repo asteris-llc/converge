@@ -49,7 +49,7 @@ func registerRPCFlags(flags *pflag.FlagSet) {
 
 func registerLocalRPCFlags(flags *pflag.FlagSet) {
 	flags.String(rpcLocalAddrName, addrServerLocal, "address for local RPC connection")
-	flags.Bool(rpcEnableLocalName, false, "self host RPC")
+	flags.Bool(rpcEnableLocalName, true, "self host RPC")
 }
 
 func maybeStartSelfHostedRPC(ctx context.Context) error {
