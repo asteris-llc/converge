@@ -177,7 +177,7 @@ func TestNodeValidateName(t *testing.T) {
 		t.Parallel()
 		t.Run("when space", func(t *testing.T) {
 			t.Parallel()
-			spaceChars := []string{" ", "\t", "\n", "\v", "\f", "\r"}
+			spaceChars := []string{" ", "\t", "\v", "\f", "\r"}
 			for _, space := range spaceChars {
 				hcl := fmt.Sprintf("test \"abc%sdef\" { }", space)
 				validateTable(t, hcl, "1:1: resource name may not contain spaces")
