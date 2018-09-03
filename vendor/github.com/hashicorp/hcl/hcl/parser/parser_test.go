@@ -59,12 +59,12 @@ func TestListType(t *testing.T) {
 			[]token.Type{token.NUMBER, token.STRING},
 		},
 		{
-			`foo = []`,
-			[]token.Type{},
+			`foo = [false]`,
+			[]token.Type{token.BOOL},
 		},
 		{
-			`foo = ["123", 123]`,
-			[]token.Type{token.STRING, token.NUMBER},
+			`foo = []`,
+			[]token.Type{},
 		},
 		{
 			`foo = [1,
@@ -307,6 +307,8 @@ func TestObjectType(t *testing.T) {
 	}
 
 	for _, l := range literals {
+		t.Logf("Source: %s", l.src)
+
 		p := newParser([]byte(l.src))
 		// p.enableTrace = true
 		item, err := p.objectItem()
@@ -391,6 +393,7 @@ func TestCommentGroup(t *testing.T) {
 		groups int
 	}{
 		{"# Hello\n# World", 1},
+		{"# Hello\r\n# Windows", 1},
 	}
 
 	for _, tc := range cases {
@@ -420,6 +423,10 @@ func TestParse(t *testing.T) {
 		},
 		{
 			"comment.hcl",
+			false,
+		},
+		{
+			"comment_crlf.hcl",
 			false,
 		},
 		{
@@ -463,6 +470,10 @@ func TestParse(t *testing.T) {
 			false,
 		},
 		{
+			"complex_crlf.hcl",
+			false,
+		},
+		{
 			"types.hcl",
 			false,
 		},
@@ -494,20 +505,38 @@ func TestParse(t *testing.T) {
 			"object_key_without_value.hcl",
 			true,
 		},
+		{
+			"object_key_assign_without_value.hcl",
+			true,
+		},
+		{
+			"object_key_assign_without_value2.hcl",
+			true,
+		},
+		{
+			"object_key_assign_without_value3.hcl",
+			true,
+		},
+		{
+			"git_crypt.hcl",
+			true,
+		},
 	}
 
 	const fixtureDir = "./test-fixtures"
 
 	for _, tc := range cases {
-		d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.Name))
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
+		t.Run(tc.Name, func(t *testing.T) {
+			d, err := ioutil.ReadFile(filepath.Join(fixtureDir, tc.Name))
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
 
-		_, err = Parse(d)
-		if (err != nil) != tc.Err {
-			t.Fatalf("Input: %s\n\nError: %s", tc.Name, err)
-		}
+			v, err := Parse(d)
+			if (err != nil) != tc.Err {
+				t.Fatalf("Input: %s\n\nError: %s\n\nAST: %#v", tc.Name, err, v)
+			}
+		})
 	}
 }
 
