@@ -61,6 +61,16 @@ func (s StubExecutor) SendSignal(*Unit, Signal) {
 	return
 }
 
+// EnableUnit is a stub
+func (s StubExecutor) EnableUnit(*Unit, bool, bool) (bool, []*unitFileChange, error) {
+	return false, []*unitFileChange{}, ErrUnsupportedOS
+}
+
+// DisableUnit is a stub
+func (s StubExecutor) DisableUnit(*Unit, bool) ([]*unitFileChange, error) {
+	return []*unitFileChange{}, ErrUnsupportedOS
+}
+
 func realExecutor() (SystemdExecutor, error) {
 	return StubExecutor{}, ErrUnsupportedOS
 }

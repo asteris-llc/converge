@@ -119,11 +119,14 @@ func TestPreparer(t *testing.T) {
 	})
 	t.Run("sets-fields", func(t *testing.T) {
 		t.Parallel()
+		untrue := false
 		res, err := (&Preparer{
-			Name:     "test1",
-			State:    "state1",
-			Reload:   true,
-			executor: &ExecutorMock{},
+			Name:          "test1",
+			State:         "state1",
+			Reload:        true,
+			Enable:        &untrue,
+			EnableRuntime: &untrue,
+			executor:      &ExecutorMock{},
 		}).Prepare(context.Background(), fakerenderer.New())
 		require.NoError(t, err)
 		assert.Equal(t, "test1", res.(*Resource).Name)
@@ -132,6 +135,81 @@ func TestPreparer(t *testing.T) {
 		assert.False(t, res.(*Resource).sendSignal)
 		assert.Equal(t, "", res.(*Resource).SignalName)
 		assert.Equal(t, uint(0), res.(*Resource).SignalNumber)
+		assert.False(t, *res.(*Resource).enableChange)
+		assert.False(t, *res.(*Resource).enableRuntimeChange)
+	})
+	t.Run("handles-enable-disable", func(t *testing.T) {
+		t.Parallel()
+		valTrue := true
+		valFalse := false
+		t.Run("when-true-true", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:        &valTrue,
+				EnableRuntime: &valTrue,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-false-true", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:        &valFalse,
+				EnableRuntime: &valTrue,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-true-false", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:        &valTrue,
+				EnableRuntime: &valFalse,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-false-false", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:        &valFalse,
+				EnableRuntime: &valFalse,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-true-nil", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:   &valTrue,
+				executor: &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-false-nil", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				Enable:   &valFalse,
+				executor: &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-nil-true", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				EnableRuntime: &valTrue,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
+		t.Run("when-nil-alse", func(t *testing.T) {
+			t.Parallel()
+			_, err := (&Preparer{
+				EnableRuntime: &valFalse,
+				executor:      &ExecutorMock{},
+			}).Prepare(context.Background(), fakerenderer.New())
+			assert.NoError(t, err)
+		})
 	})
 
 }

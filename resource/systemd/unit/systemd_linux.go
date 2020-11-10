@@ -97,6 +97,57 @@ func (l LinuxExecutor) SendSignal(u *Unit, signal Signal) {
 	l.dbusConn.KillUnit(u.Name, int32(signal))
 }
 
+// EnableUnit will enable a unit file.  u specifies the unit file to enable,
+// runtime specifies whether the unit should be enabled at runtime (true) or
+// persistently (false), and force specifies whether any existing symlinks
+// should be overwritten.  It returns a thruple of a bool, which specifies
+// whether any enablement hooks (e.g. from an [Install] section) were run, a
+// list of changes that were made on the filesystem, and an error.
+func (l LinuxExecutor) EnableUnit(u *Unit, runtime, force bool) (bool, []*unitFileChange, error) {
+	var whatChanged []*unitFileChange
+	ranHooks, changes, err := l.dbusConn.EnableUnitFiles([]string{u.Name}, runtime, force)
+	for _, change := range changes {
+		convChanges, convErr := newUnitChange(&change)
+		if convErr != nil {
+			return false, []*unitFileChange{}, convErr
+		}
+		whatChanged = append(whatChanged, convChanges)
+	}
+	return ranHooks, whatChanged, err
+}
+
+// DisableUnit will disable a unit file.  u specidies the unit file to disable,
+// and runtime determines whether the unit file should be disabled for the
+// current run (true) or persistently (false).  It returns a list of changes and
+// an error.
+func (l LinuxExecutor) DisableUnit(u *Unit, runtime bool) ([]*unitFileChange, error) {
+	var whatChanged []*unitFileChange
+	changes, err := l.dbusConn.DisableUnitFiles([]string{u.Name}, runtime)
+	for _, change := range changes {
+		convChanges, convErr := newUnitChange(&change)
+		if convErr != nil {
+			return []*unitFileChange{}, convErr
+		}
+		whatChanged = append(whatChanged, convChanges)
+	}
+	return whatChanged, err
+}
+
+func newUnitChange(dbusChange interface{}) (*unitFileChange, error) {
+	switch in := dbusChange.(type) {
+	case dbus.EnableUnitFileChange:
+		return &unitFileChange{Type: in.Type, Filename: in.Filename, Destination: in.Destination}, nil
+	case dbus.DisableUnitFileChange:
+		return &unitFileChange{Type: in.Type, Filename: in.Filename, Destination: in.Destination}, nil
+	case *dbus.EnableUnitFileChange:
+		return newUnitChange(*in)
+	case *dbus.DisableUnitFileChange:
+		return newUnitChange(*in)
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", dbusChange)
+	}
+}
+
 func runDbusCommand(f func(string, string, chan<- string) (int, error), name, mode, operation string) error {
 	ch := make(chan string)
 	defer close(ch)

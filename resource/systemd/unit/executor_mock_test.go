@@ -73,3 +73,15 @@ func (m *ExecutorMock) SendSignal(u *Unit, signal Signal) {
 	m.Called(u, signal)
 	return
 }
+
+func (m *ExecutorMock) EnableUnit(u *Unit, runtime, force bool) (bool, []*unitFileChange, error) {
+	m.maybeSleep()
+	args := m.Called(u, runtime, force)
+	return args.Bool(0), args.Get(1).([]*unitFileChange), args.Error(2)
+}
+
+func (m *ExecutorMock) DisableUnit(u *Unit, runtime bool) ([]*unitFileChange, error) {
+	m.maybeSleep()
+	args := m.Called(u, runtime)
+	return args.Get(0).([]*unitFileChange), args.Error(1)
+}

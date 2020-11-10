@@ -42,6 +42,12 @@ type SystemdExecutor interface {
 	// will only work on systemd-aware processes.
 	ReloadUnit(*Unit) error
 
+	// EnableUnit will enable the unit file and return a list of any changes
+	EnableUnit(whichUnit *Unit, runtime, force bool) (bool, []*unitFileChange, error)
+
+	// DisableUnit will disable the unit file and return a list of any changes
+	DisableUnit(whichUnit *Unit, runtime bool) ([]*unitFileChange, error)
+
 	// Send a unix signal to a process.
 	SendSignal(u *Unit, signal Signal)
 }

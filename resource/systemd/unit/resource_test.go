@@ -27,6 +27,9 @@ import (
 )
 
 func TestCheck(t *testing.T) {
+	fs := &mockFsExecutor{}
+	fs.On("Walk", any, any).Return(nil)
+
 	t.Parallel()
 	t.Run("send-signal", func(t *testing.T) {
 		r := &Resource{
@@ -34,6 +37,7 @@ func TestCheck(t *testing.T) {
 			SignalName:   "SIGKILL",
 			SignalNumber: 9,
 			sendSignal:   true,
+			fs:           fs,
 		}
 		e := &ExecutorMock{}
 		r.systemdExecutor = e
@@ -47,6 +51,7 @@ func TestCheck(t *testing.T) {
 		r := &Resource{
 			State:  "running",
 			Reload: true,
+			fs:     fs,
 		}
 		e := &ExecutorMock{}
 		r.systemdExecutor = e
@@ -62,6 +67,7 @@ func TestCheck(t *testing.T) {
 		r := &Resource{
 			Name:  "resource1",
 			State: "running",
+			fs:    fs,
 		}
 		t.Run("query-unit-returns-error", func(t *testing.T) {
 			expected := errors.New("error1")
@@ -146,6 +152,7 @@ func TestCheck(t *testing.T) {
 		r := &Resource{
 			Name:  "resource1",
 			State: "stopped",
+			fs:    fs,
 		}
 		t.Run("when-status-active", func(t *testing.T) {
 			unit := &Unit{ActiveState: "active"}
@@ -210,6 +217,7 @@ func TestCheck(t *testing.T) {
 		r := &Resource{
 			Name:  "resource1",
 			State: "restarted",
+			fs:    fs,
 		}
 		e := &ExecutorMock{}
 		r.systemdExecutor = e
@@ -335,11 +343,14 @@ func TestGetFailedReason(t *testing.T) {
 
 // TestApply runs a test
 func TestApply(t *testing.T) {
+	fs := &mockFsExecutor{}
+	fs.On("Walk", any, any).Return(nil)
+
 	t.Parallel()
 	t.Run("query-unit-returns-error", func(t *testing.T) {
 		t.Parallel()
 		expected := errors.New("error1")
-		r := &Resource{}
+		r := &Resource{fs: fs}
 		e := &ExecutorMock{}
 		e.On("QueryUnit", any, any).Return((*Unit)(nil), expected)
 		r.systemdExecutor = e
@@ -350,7 +361,13 @@ func TestApply(t *testing.T) {
 	t.Run("when-send-signal", func(t *testing.T) {
 		t.Parallel()
 		u := &Unit{ActiveState: "active"}
-		r := &Resource{ActiveState: "running", SignalName: "SIGKILL", SignalNumber: 9, sendSignal: true}
+		r := &Resource{
+			ActiveState:  "running",
+			SignalName:   "SIGKILL",
+			SignalNumber: 9,
+			sendSignal:   true,
+			fs:           fs,
+		}
 		e := &ExecutorMock{}
 		e.On("QueryUnit", any, any).Return(u, nil)
 		e.On("SendSignal", any, any).Return()
@@ -369,6 +386,7 @@ func TestApply(t *testing.T) {
 			r := &Resource{
 				State:  "running",
 				Reload: true,
+				fs:     fs,
 			}
 			e := &ExecutorMock{}
 			u := &Unit{ActiveState: "active"}
@@ -385,6 +403,7 @@ func TestApply(t *testing.T) {
 			r := &Resource{
 				State:  "running",
 				Reload: true,
+				fs:     fs,
 			}
 			e := &ExecutorMock{}
 			u := &Unit{ActiveState: "active"}
@@ -400,7 +419,7 @@ func TestApply(t *testing.T) {
 	t.Run("when-want-running", func(t *testing.T) {
 		t.Parallel()
 		t.Run("start-returns-error", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "inactive"}
 			e := &ExecutorMock{}
 			expected := errors.New("error1")
@@ -413,7 +432,7 @@ func TestApply(t *testing.T) {
 			assert.Equal(t, expected, err)
 		})
 		t.Run("status-is-active", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "active"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -426,7 +445,7 @@ func TestApply(t *testing.T) {
 			e.AssertNotCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-reloading", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "reloading"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -439,7 +458,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-inactive", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "inactive"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -452,7 +471,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-failed", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "failed"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -465,7 +484,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-activating", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "activating"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -478,7 +497,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StartUnit", u)
 		})
 		t.Run("status-is-deactivating", func(t *testing.T) {
-			r := &Resource{State: "running"}
+			r := &Resource{State: "running", fs: fs}
 			u := &Unit{ActiveState: "deactivating"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -495,7 +514,7 @@ func TestApply(t *testing.T) {
 	t.Run("when-want-stopped", func(t *testing.T) {
 		t.Parallel()
 		t.Run("stop-returns-error", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "active"}
 			e := &ExecutorMock{}
 			expected := errors.New("error1")
@@ -508,7 +527,7 @@ func TestApply(t *testing.T) {
 			assert.Equal(t, expected, err)
 		})
 		t.Run("status-is-active", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "active"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -521,7 +540,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StopUnit", u)
 		})
 		t.Run("status-is-reloading", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "reloading"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -534,7 +553,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StopUnit", u)
 		})
 		t.Run("status-is-inactive", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "inactive"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -547,7 +566,7 @@ func TestApply(t *testing.T) {
 			e.AssertNotCalled(t, "StopUnit", u)
 		})
 		t.Run("status-is-failed", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "failed"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -560,7 +579,7 @@ func TestApply(t *testing.T) {
 			e.AssertNotCalled(t, "StopUnit", u)
 		})
 		t.Run("status-is-activating", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "activating"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -573,7 +592,7 @@ func TestApply(t *testing.T) {
 			e.AssertCalled(t, "StopUnit", u)
 		})
 		t.Run("status-is-deactivating", func(t *testing.T) {
-			r := &Resource{State: "stopped"}
+			r := &Resource{State: "stopped", fs: fs}
 			u := &Unit{ActiveState: "deactivating"}
 			e := &ExecutorMock{}
 			e.On("QueryUnit", any, any).Return(u, nil)
@@ -590,7 +609,7 @@ func TestApply(t *testing.T) {
 		t.Parallel()
 		t.Run("when-restart-returns-error", func(t *testing.T) {
 			t.Parallel()
-			r := &Resource{State: "restarted"}
+			r := &Resource{State: "restarted", fs: fs}
 			u := &Unit{ActiveState: "active"}
 			e := &ExecutorMock{}
 			r.systemdExecutor = e
@@ -606,7 +625,7 @@ func TestApply(t *testing.T) {
 			for _, st := range states {
 				t.Run(st, func(t *testing.T) {
 					u := &Unit{ActiveState: st}
-					r := &Resource{State: "restarted"}
+					r := &Resource{State: "restarted", fs: fs}
 					e := &ExecutorMock{}
 					e.On("RestartUnit", any).Return(nil)
 					e.On("QueryUnit", any, any).Return(u, nil)
@@ -618,11 +637,78 @@ func TestApply(t *testing.T) {
 			}
 		})
 	})
+	t.Run("tries-to-enable-unit", func(t *testing.T) {
+		True := true
+		fs := newMockWithPaths()
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("", nil)
+		u := &Unit{
+			Name: "name1.service",
+			Path: "/lib/systemd/system/name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("EnableUnit", any, any, any).Return(false, []*unitFileChange{}, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			enableChange:    &True,
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		e.AssertCalled(t, "EnableUnit", any, any, any)
+		require.NoError(t, err)
+	})
+	t.Run("tries-to-disable-unit", func(t *testing.T) {
+		fs := newMockWithPaths("/etc/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/etc/systemd/system/name1.service", nil)
+		u := &Unit{
+			Name: "name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		e.On("EnableUnit", any, any, any).Return(false, []*unitFileChange{}, nil)
+		e.On("DisableUnit", any, any).Return([]*unitFileChange{}, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			enableChange:    new(bool),
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		e.AssertCalled(t, "DisableUnit", any, any)
+		require.NoError(t, err)
+	})
+	t.Run("updates-enablement", func(t *testing.T) {
+		t.Parallel()
+		fs := newMockWithPaths(
+			"/run/systemd/system/name1.service",
+		)
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name1.service", nil)
+		u := &Unit{
+			Name: "name1.service",
+			Path: "/lib/systemd/system/name1.service",
+		}
+		e := &ExecutorMock{}
+		e.On("QueryUnit", any, any).Return(u, nil)
+		r := &Resource{
+			Name:            "name1.service",
+			systemdExecutor: e,
+			fs:              fs,
+		}
+		_, err := r.Apply(context.Background())
+		require.NoError(t, err)
+		assert.True(t, r.EnabledRuntime)
+	})
 }
 
 // TestCheckAfterApply runs a test
 func TestCheckAfterApply(t *testing.T) {
 	t.Parallel()
+	fs := &mockFsExecutor{}
+	fs.On("Walk", any, any).Return(nil)
 
 	t.Run("when-send-signal", func(t *testing.T) {
 		t.Parallel()
@@ -631,6 +717,7 @@ func TestCheckAfterApply(t *testing.T) {
 			SignalName:   "SIGKILL",
 			SignalNumber: 9,
 			sendSignal:   true,
+			fs:           fs,
 		}
 		u := &Unit{ActiveState: "active"}
 		e := &ExecutorMock{}
@@ -649,6 +736,7 @@ func TestCheckAfterApply(t *testing.T) {
 		r := &Resource{
 			State:  "running",
 			Reload: true,
+			fs:     fs,
 		}
 		u := &Unit{ActiveState: "active"}
 		e := &ExecutorMock{}
@@ -665,6 +753,9 @@ func TestCheckAfterApply(t *testing.T) {
 
 // TestHandlesContext runs a test
 func TestHandlesContext(t *testing.T) {
+	fs := &mockFsExecutor{}
+	fs.On("Walk", any, any).Return(nil)
+
 	t.Parallel()
 
 	t.Run("Check", func(t *testing.T) {
@@ -674,7 +765,7 @@ func TestHandlesContext(t *testing.T) {
 			expected := "context was cancelled"
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 			time.Sleep(2 * time.Millisecond)
-			r := &Resource{}
+			r := &Resource{fs: fs}
 			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
@@ -686,7 +777,7 @@ func TestHandlesContext(t *testing.T) {
 		t.Run("when-canceled", func(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
-			r := &Resource{}
+			r := &Resource{fs: fs}
 			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
@@ -702,7 +793,7 @@ func TestHandlesContext(t *testing.T) {
 			expected := "context was cancelled"
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 			time.Sleep(2 * time.Millisecond)
-			r := &Resource{}
+			r := &Resource{fs: fs}
 			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
@@ -713,7 +804,7 @@ func TestHandlesContext(t *testing.T) {
 		t.Run("when-canceled", func(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
-			r := &Resource{}
+			r := &Resource{fs: fs}
 			e := &ExecutorMock{DoSleep: true, SleepFor: (10 * time.Millisecond)}
 			e.On("QueryUnit", any, any).Return(&Unit{}, nil)
 			r.systemdExecutor = e
@@ -721,5 +812,136 @@ func TestHandlesContext(t *testing.T) {
 			_, err := r.Apply(ctx)
 			assert.Error(t, err)
 		})
+
+	})
+}
+
+// TestIsEnabled tests validation of whether or not a unit is enabled
+func TestIsEnabled(t *testing.T) {
+	t.Parallel()
+	t.Run("check-sets-fields", func(t *testing.T) {
+		t.Parallel()
+		t.Run("when-no-path-set", func(t *testing.T) {
+			t.Run("when-not-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := &mockFsExecutor{}
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/etc/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.True(t, persistent)
+			})
+			t.Run("when-runtime-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled-and-runtime-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths(
+					"/run/systemd/system/name1.service",
+					"/etc/systemd/system/name1.service",
+				)
+				fs.On("Walk", any, any).Return(nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: ""}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.True(t, persistent)
+			})
+		})
+		t.Run("when-path-set", func(t *testing.T) {
+			t.Parallel()
+			t.Run("when-disabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths()
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/lib/systemd/system/name1.service"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("/path1", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/path1"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.True(t, runtime)
+				assert.False(t, persistent)
+			})
+			t.Run("when-enabled-with-different-symlink", func(t *testing.T) {
+				t.Parallel()
+				fs := newMockWithPaths("/run/systemd/system/name1.service")
+				fs.On("Walk", any, any).Return(nil)
+				fs.On("EvalSymlinks", any).Return("/path2", nil)
+				r := &Resource{fs: fs}
+				u := &Unit{Name: "name1.service", Path: "/path1"}
+				runtime, persistent, err := r.isEnabled(u)
+				assert.NoError(t, err)
+				assert.False(t, runtime)
+				assert.False(t, persistent)
+			})
+		})
+	})
+}
+
+func TestExistsInTree(t *testing.T) {
+	t.Parallel()
+	t.Run("when-path-and-symlink-target-match", func(t *testing.T) {
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name-full.service", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/lib/systemd/system/name-full.service"}
+		inTree, err := r.existsInTree("/run", u)
+		require.NoError(t, err)
+		assert.True(t, inTree)
+	})
+	t.Run("when-path-and-symlink-target-mismatch", func(t *testing.T) {
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(nil)
+		fs.On("EvalSymlinks", any).Return("/lib/systemd/system/name-full.service", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/etc/init.d/name-full"}
+		inTree, err := r.existsInTree("/run", u)
+		require.NoError(t, err)
+		assert.False(t, inTree)
+	})
+	t.Run("when-symlink-error", func(t *testing.T) {
+		expected := errors.New("error1")
+		fs := newMockWithPaths("/run/systemd/system/name1.service")
+		fs.On("Walk", any, any).Return(expected)
+		fs.On("EvalSymlinks", any).Return("", nil)
+		r := &Resource{fs: fs}
+		u := &Unit{Name: "name1.service", Path: "/etc/init.d/name-full"}
+		_, err := r.existsInTree("/run", u)
+		assert.Equal(t, expected, err)
 	})
 }

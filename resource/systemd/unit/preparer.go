@@ -25,9 +25,16 @@ import (
 // UnitState configures loaded systemd units, allowing you to start, stop, or
 // restart them, reload configuration files, and send unix signals.
 type Preparer struct {
-	// The name of the unit.  This may optionally include the unit type,
-	// e.g. "foo.service" and "foo" are both valid.
+	// The name of the unit.  This may optionally omit the unit type if there is
+	// only a single unit type of the given name.  e.g. "foo.service" and "foo"
+	// are both valid if, and only if, no other unit type named "foo" exists.
 	Name string `hcl:"unit" required:"true"`
+
+	// The full path to the unit. If path is specified then it will be used when
+	// determining if the unit has been enabled or disabled.  Note that this path
+	// must exist within one of the normal systemd search directories
+	// (e.g. `/lib/systemd/system`)
+	Path string `hcl:"path"`
 
 	// The desired state of the unit.  This will affect the current unit job.  Use
 	// `systemd.unit.file` to enable and disable jobs, or `systemd.unit.config` to
@@ -52,6 +59,16 @@ type Preparer struct {
 	// Sends a signal to the process, using it's signal number.  The value must be
 	// an unsigned integer value between 1 and 31 inclusive.
 	SignalNumber uint `hcl:"signal_number" mutually_exclusive:"signal_name,signal_num"`
+
+	// Specifies that a unit file should be persistently enabled or disabled.  If
+	// true, enable the unit, if false, disable it, otherwise leave the current
+	// settings unmodified.
+	Enable *bool `hcl:"enabled"`
+
+	// Specifies that a unit file should be temporarily enabled or disabled.  If
+	// true, enable the unit, if false, disable it, otherwise leave the current
+	// settings unmodified.
+	EnableRuntime *bool `hcl:"enabled_runtime"`
 
 	executor SystemdExecutor
 }
@@ -82,10 +99,13 @@ func (p *Preparer) Prepare(ctx context.Context, render resource.Renderer) (resou
 	}
 
 	r := &Resource{
-		Reload:          p.Reload,
-		Name:            p.Name,
-		State:           p.State,
-		systemdExecutor: p.executor,
+		Reload:              p.Reload,
+		Name:                p.Name,
+		State:               p.State,
+		systemdExecutor:     p.executor,
+		enableChange:        p.Enable,
+		enableRuntimeChange: p.EnableRuntime,
+		fs:                  realFsExecutor{},
 	}
 
 	if signal != nil {

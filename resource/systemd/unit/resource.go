@@ -1,4 +1,4 @@
-// Copyright © 2016 Asteris, LLC
+// Copyright © 2017 Asteris, LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package unit
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -52,6 +53,12 @@ type Resource struct {
 	// pages for `signal(3)` on BSD/Darwin or `signal(7)` on GNU Linux for a full
 	// explanation of these signals.
 	SignalNumber uint `export:"signal_number"`
+
+	// Set to true if the unit is enabled (symlinks exist in `/etc`)
+	Enabled bool `export:"enabled"`
+
+	// Set to tru if the unit is enabled for runtime (symlinks exist in `/run`)
+	EnabledRuntime bool `export:"enabled_runtime"`
 
 	// The full path to the unit file on disk. This field will be empty if the
 	// unit was not started from a systemd unit file on disk.
@@ -145,9 +152,12 @@ type Resource struct {
 	// more information.
 	ScopeProperties *ScopeTypeProperties `re-export-as:"scope_properties"`
 
-	sendSignal      bool
-	systemdExecutor SystemdExecutor
-	hasRun          bool
+	enableChange        *bool // enabled if true, disabled if false, unmodified if nil
+	enableRuntimeChange *bool // enabled if true, disabled if false, unmodified if nil
+	sendSignal          bool
+	systemdExecutor     SystemdExecutor
+	hasRun              bool
+	fs                  fsexecutor
 }
 
 type response struct {
@@ -213,12 +223,52 @@ func (r *Resource) runCheck() (resource.TaskStatus, error) {
 	case "stopped":
 		r.shouldStop(u, status)
 	}
+	enabledRuntime, enabledPersistent, err := r.isEnabled(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to determine if the unit is enabled")
+	}
+	r.Enabled = enabledPersistent
+	r.EnabledRuntime = enabledRuntime
+
+	status = r.updateEnableStatus("persistent",
+		status,
+		r.Enabled,
+		r.enableChange)
+	status = r.updateEnableStatus("runtime",
+		status,
+		r.EnabledRuntime,
+		r.enableRuntimeChange)
 	r.hasRun = true
 	return status, nil
 }
 
+func (r *Resource) updateEnableStatus(
+	msg string,
+	status *resource.Status,
+	current bool,
+	want *bool) *resource.Status {
+	var tgt bool
+	if want == nil {
+		return status
+	}
+	tgt = *want
+	if tgt == current {
+		status.AddMessage(fmt.Sprintf("%s unit is already %s", msg, showEnabled(tgt)))
+		return status
+	}
+	status.RaiseLevel(resource.StatusWillChange)
+	status.AddDifference(msg, showEnabled(current), showEnabled(tgt), "")
+	return status
+}
+
+func showEnabled(b bool) string {
+	if b {
+		return "enabled"
+	}
+	return "disabled"
+}
+
 func (r *Resource) runApply() (resource.TaskStatus, error) {
-	log.WithField("Unit Name: ", r.Name).Infof("calling runApply()....")
 	status := resource.NewStatus()
 	tempStatus := resource.NewStatus()
 	u, err := r.systemdExecutor.QueryUnit(r.Name, false)
@@ -257,7 +307,53 @@ func (r *Resource) runApply() (resource.TaskStatus, error) {
 	case "restarted":
 		runstateErr = r.systemdExecutor.RestartUnit(u)
 	}
+
+	enabledRuntime, enabledPersistent, err := r.isEnabled(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to determine if the unit is enabled")
+	}
+	r.Enabled = enabledPersistent
+	r.EnabledRuntime = enabledRuntime
+
+	var symlinkChanges []*unitFileChange
+
+	if r.enableChange != nil {
+		changes, err := r.toggleUnitEnabled(u, status, false, *r.enableChange, enabledPersistent)
+		if err != nil {
+			return status, err
+		}
+		symlinkChanges = append(symlinkChanges, changes...)
+	}
+
+	if r.enableRuntimeChange != nil {
+		changes, err := r.toggleUnitEnabled(u, status, true, *r.enableRuntimeChange, enabledRuntime)
+		if err != nil {
+			return status, err
+		}
+		symlinkChanges = append(symlinkChanges, changes...)
+	}
+
+	for _, ch := range symlinkChanges {
+		status.AddDifference(ch.Type, "", fmt.Sprintf("%s -> %s", ch.Filename, ch.Destination), "")
+	}
+
 	return status, runstateErr
+}
+
+func (r *Resource) toggleUnitEnabled(u *Unit, status *resource.Status, runtime, shouldBeEnabled, isEnabled bool) ([]*unitFileChange, error) {
+	if shouldBeEnabled == isEnabled {
+		if isEnabled {
+			status.AddMessage("unit is already enabled")
+		} else {
+			status.AddMessage("unit is already disabled")
+		}
+		return []*unitFileChange{}, nil
+	}
+	if shouldBeEnabled {
+		_, c, e := r.systemdExecutor.EnableUnit(u, runtime, true)
+		return c, e
+	}
+	return r.systemdExecutor.DisableUnit(u, runtime)
 }
 
 // We copy data from the unit into the resource to make the UX nicer for users
@@ -359,6 +455,62 @@ func (r *Resource) shouldStop(u *Unit, st *resource.Status) bool {
 		return true
 	}
 	return true
+}
+
+// isEnabled checks a unit file to see if it's enabled at runtime and/or
+// persistently. It returns a thruple of the runtime enablement, system
+// enablement, and an error
+func (r *Resource) isEnabled(unit *Unit) (runtime bool, persistent bool, err error) {
+	runtime, err = r.existsInTree("/run/systemd", unit)
+	if err != nil {
+		return false, false, err
+	}
+	persistent, err = r.existsInTree("/etc/systemd", unit)
+	if err != nil {
+		return false, false, err
+	}
+	return runtime, persistent, nil
+}
+
+func (r *Resource) existsInTree(root string, unit *Unit) (bool, error) {
+	var found bool
+	toFind := unit.Name
+	var checkSymlink bool
+
+	fmt.Fprintf(os.Stderr, "existsInTree (fprintf to stderr)\n")
+
+	if unit == nil {
+		fmt.Fprintf(os.Stderr, "unit is nil in existsInTree!")
+		return false, errors.New("unit is nil")
+	}
+
+	if unit.Path != "" {
+		toFind = unit.Path
+		checkSymlink = true
+	}
+
+	err := r.fs.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if checkSymlink {
+			matches, matchErr := r.symlinkTargetMatches(path, toFind)
+			found = found || matches
+			err = matchErr
+		} else if info.Name() == toFind {
+			found = true
+		}
+		return nil
+	})
+	return found, err
+}
+
+func (r *Resource) symlinkTargetMatches(symlinkPath, expectedPath string) (bool, error) {
+	canonical, err := r.fs.EvalSymlinks(symlinkPath)
+	if err != nil {
+		return false, err
+	}
+	return (canonical == expectedPath), nil
 }
 
 func getFailedReason(u *Unit) (string, error) {
